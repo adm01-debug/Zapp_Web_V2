@@ -6,10 +6,10 @@ Registro das decisões (id · decisão · classificação · status). Fonte de v
 ## Gate 1 — aprovado em 2026-08-26
 
 | ID | Decisão | Classificação | Status |
-|----|---------|---------------|--------|
+|----|---------|---------------|---------|
 | D1 | Restaurar `contacts` + FKs + policies de `contact_tags`/`contact_custom_fields` a partir das migrations Lovable | perda na origem (drop out-of-band) | ✅ EXECUTADO — destino tem `contacts` + 34 FKs + policies restauradas |
 | D2 | Aplicar SÓ as 256 migrations Lovable (UUID); excluir as 3 retro-datadas e as 7 de junho (lote v3/self-hosted) | paridade com a origem | ✅ EXECUTADO — 256/256 sem erro real, 258 registradas em `schema_migrations` |
-| D3 | Hardening `20260412230000_fix_rls_policies_security` | revisado → **DROP** | ⛔ NÃO aplicado. Split afrouxaria a baseline Lovable de `entity_versions` (troca "Block authenticated version inserts" por "allow own" + alarga SELECT com `changed_by IS NULL`); família e-mail incompatível (`profile_id` inexistente — origem usa `user_id`) e redundante. Destino mantém RLS Lovable = paridade com a origem. |
+| D3 | Hardening `20260412230000_fix_rls_policies_security` | revisado → **DROP** | ⛔ NÃO aplicado. Split afrouxaria a baseline Lovable de `entity_versions`; família e-mail incompatível; redundante. Destino mantém RLS Lovable = paridade com a origem. |
 | D4 | Recriar cron `cleanup-link-preview-cache` (`0 3 * * *` → `SELECT public.cleanup_link_preview_cache()`) | paridade de config | ✅ EXECUTADO — hash do comando idêntico à origem |
 | D5 | Publication realtime curada = origem(3) ∪ frontend-subscribed existentes = 11 tabelas, todas `REPLICA IDENTITY FULL` | funcionalidade > paridade | ✅ EXECUTADO — tabelas mortas do CRM/v3 não entram (não existem) |
 | D6 | Manter lab `zapp-replay` na VPS até o Gate 2 | — | ✅ mantido |
@@ -24,3 +24,9 @@ Ver `PARITY-REPORT.md`. Zero divergência inexplicada: tudo = D1 (restauração 
 
 ## Gates seguintes (pendentes)
 16 SSH · 22 descartar `supabase-export/` · 51 dados (~60 linhas: migrar vs nascer limpo) · 57 PAT do destino · 60 `LOVABLE_API_KEY` · 66 backend · 77 merge · 78 tag · 79 budget Actions · 88 firewall · 90 go-live · 98 congelar origem.
+
+## Plano de 30 etapas — decisões adicionais (sessão 3, 2026-08-26)
+
+| ID | Decisão | Classificação | Status |
+|----|---------|---------------|---------|
+| D7 | Publication realtime = expansão funcional; `supabase_realtime` com 11 tabelas criado no step 38, mas assinantes confirmados somente após deploy das functions (step 61). Criar sem subscriber não quebra nada. | expansão intencional documentada | ✅ Registrado |
