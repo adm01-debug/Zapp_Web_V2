@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@axe-core/react": "^4.11.1",
-    "@elevenlabs/react": "^0.12.3",
+    "@elevenlabs/react": "^1.13.0",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^3.10.0",
     "@lovable.dev/cloud-auth-js": "^1.1.1",
