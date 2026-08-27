@@ -28,7 +28,7 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'sync-contacts';
-    const instanceName = body.instanceName || 'wpp2';
+    const instanceName = body.instanceName || Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
     const page = body.page || 1;
     const offset = body.offset || 100;
 

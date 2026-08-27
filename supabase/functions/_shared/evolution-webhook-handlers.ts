@@ -16,7 +16,7 @@ export {
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
   const status = (baseData.status as string) === 'open' ? 'connected' :
-    (baseData.status as string) === 'close' ? 'disconnected' : 'pending';
+    (baseData.status as string) === 'close' ? 'disconnected' : 'qr_pending';
 
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
@@ -283,7 +283,7 @@ export async function handleApplicationStartup(supabase: any, instance: string) 
     .select('id, status').eq('instance_id', instance).maybeSingle();
   if (conn && conn.status === 'disconnected') {
     await supabase.from('whatsapp_connections')
-      .update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', conn.id);
+      .update({ status: 'qr_pending', updated_at: new Date().toISOString() }).eq('id', conn.id);
   }
 }
 

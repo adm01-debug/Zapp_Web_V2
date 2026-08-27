@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       .select("instance_id")
       .eq("id", connId)
       .single();
-    const instanceName = conn?.instance_id || "wpp2";
+    const instanceName = conn?.instance_id || Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
 
     if (dry_run) {
       return new Response(JSON.stringify({

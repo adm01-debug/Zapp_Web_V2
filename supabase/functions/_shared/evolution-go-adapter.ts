@@ -6,26 +6,41 @@
 import { isRecord } from './evolution-helpers.ts';
 
 const GO_EVENT_MAP: Record<string, string> = {
+  // Mensagens
   message: 'messages.upsert',
+  sendmessage: 'send.message',           // B2: enviadas pelo celular físico
+  // Conexão
   connected: 'connection.update',
   pairsuccess: 'connection.update',
   qrsuccess: 'connection.update',
   loggedout: 'connection.update',
   disconnected: 'connection.update',
+  // QR
   qrcode: 'qrcode.updated',
   qrtimeout: 'qrcode.updated',
+  // Recibos
   readreceipt: 'messages.update',
   receipt: 'messages.update',
+  // Presença
   presence: 'presence.update',
   chatpresence: 'presence.update',
+  // Histórico / Contatos
   historysync: 'messages.set',
   contact: 'contacts.upsert',
-  pushnamesetting: 'contacts.update',
+  pushname: 'contacts.update',           // B4: nome real da GO
+  pushnamesetting: 'contacts.update',    // compat
+  // Grupos
   groupinfo: 'group.update',
   joinedgroup: 'groups.upsert',
+  // Labels
   labeledit: 'labels.edit',
   labelassociation: 'labels.association',
+  labelassociationchat: 'labels.association',    // B5
+  labelassociationmessage: 'labels.association', // B5
+  // Chamadas
   calloffer: 'call',
+  callterminate: 'call',
+  callrelaylatency: 'call',
 };
 
 const GO_STATE_MAP: Record<string, string> = {
@@ -58,23 +73,43 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     data,
   };
 
-  if (rawEvent === 'message') {
+  // B2: SendMessage usa mesma estrutura Info/Message que Message
+  if (rawEvent === 'message' || rawEvent === 'sendmessage') {
     const chat = str(info.Chat);
     const sender = str(info.Sender);
     const tsRaw = str(info.Timestamp);
     const ts = tsRaw ? Math.floor(Date.parse(tsRaw) / 1000) : undefined;
+    // T2.1d: remover sufixo :device para comparar sender vs chat
+    const senderBase = sender?.replace(/:\d+@/, '@');
     out.data = {
       key: {
         id: str(info.ID),
         remoteJid: chat,
         fromMe: info.IsFromMe === true,
-        ...(sender && chat && sender !== chat ? { participant: sender } : {}),
+        ...(senderBase && chat && senderBase !== chat ? { participant: sender } : {}),
       },
       pushName: str(info.PushName),
       message: isRecord(data.Message) ? data.Message : {},
       ...(ts && Number.isFinite(ts) ? { messageTimestamp: ts } : {}),
       source: 'evolution-go',
     };
+  }
+
+  // B3: Receipt → {MessageIDs:[]} → {updates:[{key:{id},status}]}
+  if (v2Event === 'messages.update' && (rawEvent === 'receipt' || rawEvent === 'readreceipt')) {
+    const rawState = str(payload.state as unknown) ?? str((data as Record<string, unknown>).Type as unknown) ?? '';
+    const statusMap: Record<string, string> = {
+      read: 'READ', readself: 'DELIVERY_ACK',
+      delivered: 'DELIVERY_ACK', delivery_ack: 'DELIVERY_ACK',
+    };
+    const v2Status = statusMap[rawState.toLowerCase()] ?? 'PLAYED';
+    const ids = Array.isArray((data as Record<string, unknown>).MessageIDs)
+      ? (data as Record<string, unknown>).MessageIDs as string[] : [];
+    const chat = str((data as Record<string, unknown>).Chat as unknown);
+    const sender = str((data as Record<string, unknown>).Sender as unknown);
+    out.data = { updates: ids.map((id: string) => ({
+      key: { id, remoteJid: chat, fromMe: chat === sender }, status: v2Status,
+    })) };
   }
 
   if (v2Event === 'connection.update') {

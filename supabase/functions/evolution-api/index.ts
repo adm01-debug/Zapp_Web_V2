@@ -63,7 +63,7 @@ serve(async (req) => {
       const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
       const qrData = await qrRes.json();
       const qrcode = qrData?.data?.qrcode;
-      if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'pending', instance_id: instance }).eq('instance_id', instance);
+      if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
       return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 

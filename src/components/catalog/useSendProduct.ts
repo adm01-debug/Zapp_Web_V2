@@ -97,7 +97,7 @@ export function useSendToContact(onSuccess: () => void) {
         const { data: apiResult } = await supabase.functions.invoke('evolution-api', {
           body: {
             action: 'send-media',
-            instanceName: connection?.name || 'wpp2',
+            instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
             number: contact.phone,
             mediatype: 'image',
             media: imgUrl,
@@ -126,7 +126,7 @@ export function useSendToContact(onSuccess: () => void) {
       const { data: textApiResult } = await supabase.functions.invoke('evolution-api', {
         body: {
           action: 'send-text',
-          instanceName: connection?.name || 'wpp2',
+          instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
           number: contact.phone,
           text: message,
         },

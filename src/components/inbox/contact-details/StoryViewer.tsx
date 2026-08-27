@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatRelativeTime } from '@/lib/formatters';
 
-const DEFAULT_INSTANCE_NAME = 'wpp2';
+// DEFAULT_INSTANCE_NAME removido: stories off (EVENT_IGNORE_STATUS=true).
 
 const getMediaType = (msg: WhatsAppStatusMessage): 'image' | 'video' | 'text' => {
   if (msg.message?.imageMessage) return 'image';
@@ -93,7 +93,9 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
     const loadMedia = async () => {
       setMediaLoading(true);
       try {
-        const response = await getMediaBase64(DEFAULT_INSTANCE_NAME, current, mediaType === 'video') as { base64?: string; mimetype?: string } | null;
+        const instanceName = (typeof window !== 'undefined' && (window as any).__activeInstance__) || '';
+        if (!instanceName) return;
+        const response = await getMediaBase64(instanceName, current, mediaType === 'video') as { base64?: string; mimetype?: string } | null;
         if (cancelled) return;
         const src = toDataUrl(response?.base64 ?? null, response?.mimetype ?? null);
         if (!src) { setMediaError('Não foi possível carregar a mídia deste status.'); setResolvedMedia({ src: null, mimetype: response?.mimetype ?? null }); return; }
