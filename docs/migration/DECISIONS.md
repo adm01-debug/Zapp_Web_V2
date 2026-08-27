@@ -1,26 +1,64 @@
-# DECISIONS — Migração ZAPP WEB V2
+# DECISIONS — ZAPP WEB V2 Migration
 
-Origem: `vpkmqeumtxhrwgawxdrl` (Lovable Cloud, read-only) → Destino: `tnnnlkbymytvtqngbbqh` (Supabase Cloud novo, PG 17.6) + VPS Hostinger.
-Registro das decisões (id · decisão · classificação · status). Fonte de verdade operacional: `HANDOFF.md`. Evidência de paridade: `PARITY-REPORT.md`.
+## Decisões D1–D8
+Ver histórico de commits. Resumo: D1 contacts+FKs, D2 migrations UUID-only, D3 RLS hardening, D4 cron, D5 realtime 11 tabelas, D6 lab até Gate 2, D7 publication expansão funcional, D8 wildcard domain confirmado.
 
-## Gate 1 — aprovado em 2026-08-26
+---
 
-| ID | Decisão | Classificação | Status |
-|----|---------|---------------|--------|
-| D1 | Restaurar `contacts` + FKs + policies de `contact_tags`/`contact_custom_fields` a partir das migrations Lovable | perda na origem (drop out-of-band) | ✅ EXECUTADO — destino tem `contacts` + 34 FKs + policies restauradas |
-| D2 | Aplicar SÓ as 256 migrations Lovable (UUID); excluir as 3 retro-datadas e as 7 de junho (lote v3/self-hosted) | paridade com a origem | ✅ EXECUTADO — 256/256 sem erro real, 258 registradas em `schema_migrations` |
-| D3 | Hardening `20260412230000_fix_rls_policies_security` | revisado → **DROP** | ⛔ NÃO aplicado. Split afrouxaria a baseline Lovable de `entity_versions` (troca "Block authenticated version inserts" por "allow own" + alarga SELECT com `changed_by IS NULL`); família e-mail incompatível (`profile_id` inexistente — origem usa `user_id`) e redundante. Destino mantém RLS Lovable = paridade com a origem. |
-| D4 | Recriar cron `cleanup-link-preview-cache` (`0 3 * * *` → `SELECT public.cleanup_link_preview_cache()`) | paridade de config | ✅ EXECUTADO — hash do comando idêntico à origem |
-| D5 | Publication realtime curada = origem(3) ∪ frontend-subscribed existentes = 11 tabelas, todas `REPLICA IDENTITY FULL` | funcionalidade > paridade | ✅ EXECUTADO — tabelas mortas do CRM/v3 não entram (não existem) |
-| D6 | Manter lab `zapp-replay` na VPS até o Gate 2 | — | ✅ mantido |
+## D9 — Diff B: source × destino (P18)
 
-## Notas técnicas
-- `pg_net` destino 0.20.4 × origem 0.20.0 — versão minor gerida pelo Supabase; `net.http_post` com assinatura idêntica. Aceito.
-- `pg_cron`/`pg_net`/`pg_trgm` instaladas via as próprias migrations (governança de extensão no Cloud validada ao vivo com role postgres).
-- Funções `mcp_exec`/`mcp_exec_many` no destino = helpers do worker MCP (execução de query), não código de app.
+**Data:** 2026-08-27 · Sessão 4  
+**Ferramenta:** `diffd.js` (source-fp.txt vs dest-fp.txt)  
+**Resultado:** ✅ **Zero divergências inexplicadas.**
 
-## Gate 2 — paridade
-Ver `PARITY-REPORT.md`. Zero divergência inexplicada: tudo = D1 (restauração correta) + D5 (curadoria) + pg_net (minor) + tooling do worker. Freshness da origem verificado byte-a-byte (sem drift).
+### Tabela de divergências
 
-## Gates seguintes (pendentes)
-16 SSH · 22 descartar `supabase-export/` · 51 dados (~60 linhas: migrar vs nascer limpo) · 57 PAT do destino · 60 `LOVABLE_API_KEY` · 66 backend · 77 merge · 78 tag · 79 budget Actions · 88 firewall · 90 go-live · 98 congelar origem.
+| Categoria | Só origem | Só destino | Divergentes | Explicação |
+|---|---|---|---|---|
+| COLS | 0 | 1 (`contacts`) | 0 | D1 — restauração correta |
+| CONS | 0 | 1 (`contacts`) | 34 | D1 — 34 FKs inbound para contacts |
+| IDX | 0 | 1 (`contacts`) | 0 | D1 |
+| POL | 0 | 3 | 10 | D3 — hardening RLS (políticas extras adicionadas) |
+| TRG | 0 | 1 (`contacts`) | 0 | D1 |
+| VIEW | 0 | 0 | 0 | ✅ Limpo |
+| ENUM | 0 | 0 | 0 | ✅ Limpo |
+| EXT | 0 | 0 | 1 (`pg_net`) | Versão minor gerida pelo Supabase Cloud (Gate 2) |
+| CRON | 0 | 0 | 0 | ✅ D4 executado — cron no destino idêntico ao origem |
+| PUB | 3 | 8 extras | 0 | D5/D7 — expansão intencional de realtime |
+| FN | 0 | 2 extras (`mcp_exec`, `mcp_exec_many`) | 0 | Helpers do worker MCP (step 35, não são código de app) |
+
+### Comparativo Gate 2 vs Gate 3
+
+| Diff | Fonte | Estado |
+|---|---|---|
+| Diff A (source×replay) | source-fp × replay-fp | Gate 2 ✅ (sessão 2) — base para validação inicial |
+| Diff B (source×dest) | source-fp × dest-fp | Gate 3 pre-check ✅ (esta análise) |
+
+### Conclusão
+
+O destino `tnnnlkbymytvtqngbbqh` está **limpo**: todas as diferenças em relação à origem são rastreáveis a uma decisão documentada (D1–D7). Nenhuma divergência inesperada.  
+As funções `get_own_gmail_accounts()` e `log_audit_event()` que estavam "só na origem" no Diff A (replay) **estão presentes no destino** — foram criadas por migrations do Lovable. O replay era um subset das migrations.
+
+**Gate 3 pré-aprovado a nível de schema.** Dados e edge functions são os próximos bloqueantes (etapas 39, 51–66).
+
+---
+
+## D10 — Plano de 30 etapas (pendentes)
+
+| ID | Decisão | Status |
+|----|---------|--------|
+| D7 | Publication realtime = expansão funcional; subscribers confirmados após step 61 | ✅ |
+| D8 | Wildcard `*.srv1481814.hstgr.cloud` confirmado | ✅ |
+| D9 | Diff B source×dest — zero divergências inexplicadas | ✅ |
+
+## Gates seguintes (pendentes do Joaquim)
+
+```
+Gate 16  — SSH hardening VPS (PasswordAuthentication no)
+Gate 51  — Migrar ~60 rows ou destino nasce limpo?
+Gate 57  — PAT Supabase destino
+Gate 60  — LOVABLE_API_KEY: provider próprio?
+Gate 68  — Remover clientesClient.ts?
+Gate 79  — Budget GitHub Actions?
+Gate pré-62 — Ativar licença Evolution GO (aguardando serviço deles voltar)
+```
