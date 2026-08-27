@@ -38,7 +38,7 @@ export function translateV2ToGo(path: string, method: string, body: any): GoRout
   }
   if (m(/^\/message\/sendWhatsAppAudio\/[^/]+$/)) {
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
-      number: b.number, url: b.audio, type: 'audio',
+      number: b.number, url: b.audio ?? b.media, type: 'audio',
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   }
@@ -77,6 +77,11 @@ export function translateV2ToGo(path: string, method: string, body: any): GoRout
       number: jidToNumber(msgs[0]?.remoteJid),
     }};
   }
+
+  if (m(/^\/chat\/updatePresence\/[^/]+$/))
+    return { path: '/message/presence', method: 'POST', auth: 'instance', body: {
+      number: b.number, state: b.presence,
+    }};
 
   // ── Instância ──
   if (m(/^\/instance\/connectionState\/[^/]+$/))

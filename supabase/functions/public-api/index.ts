@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
 
 const SendActionSchema = z.object({
   action: z.literal('send'),
@@ -134,20 +135,18 @@ Deno.serve(async (req) => {
       const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
 
       if (evolutionUrl && evolutionKey && connection.instance_id) {
-        const sendRes = await fetch(
-          `${evolutionUrl}/message/sendText/${connection.instance_id}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': evolutionKey },
-            body: JSON.stringify({ number: phone, text: message }),
-          }
+        const sendRes = await evoFetch(
+          evolutionUrl, evolutionKey,
+          `/message/sendText/${connection.instance_id}`,
+          { number: phone, text: message }
         );
         const sendData = await sendRes.json();
 
-        if (sendData?.key?.id) {
+        const externalId = extractMessageId(sendData);
+        if (externalId) {
           await supabase
             .from('messages')
-            .update({ external_id: sendData.key.id, status: 'sent' })
+            .update({ external_id: externalId, status: 'sent' })
             .eq('id', msg.id);
         }
       }

@@ -5,6 +5,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { evoFetch } from "../_shared/evolution-send.ts";
 
 function getGreeting(): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "numeric", hour12: false });
@@ -159,11 +160,9 @@ Deno.serve(async (req) => {
         const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
 
         try {
-          await fetch(`${evolutionUrl}/chat/updatePresence/${connection.instance_id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", apikey: evolutionKey },
-            body: JSON.stringify({ number: phone, presence: "composing" }),
-          });
+          await evoFetch(evolutionUrl, evolutionKey,
+            `/chat/updatePresence/${connection.instance_id}`,
+            { number: phone, presence: "composing" });
         } catch { /* Presence update is best-effort */ }
 
         await sleep(typingDelay);
@@ -173,23 +172,17 @@ Deno.serve(async (req) => {
 
         if (hasMedia) {
           const mediaEndpoint = getMediaEndpoint(campaign.media_type);
-          sendResponse = await fetchWithRetry(
-            `${evolutionUrl}/message/${mediaEndpoint}/${connection.instance_id}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json", apikey: evolutionKey },
-              body: JSON.stringify({ number: phone, mediatype: campaign.media_type, media: campaign.media_url, caption: personalizedMsg, delay: 0 }),
-            }
+          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
+            `/message/${mediaEndpoint}/${connection.instance_id}`,
+            { number: phone, mediatype: campaign.media_type, media: campaign.media_url, caption: personalizedMsg, delay: 0 },
+            fetchWithRetry
           );
           sendResult = await sendResponse.json();
         } else {
-          sendResponse = await fetchWithRetry(
-            `${evolutionUrl}/message/sendText/${connection.instance_id}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json", apikey: evolutionKey },
-              body: JSON.stringify({ number: phone, text: personalizedMsg, delay: 0 }),
-            }
+          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
+            `/message/sendText/${connection.instance_id}`,
+            { number: phone, text: personalizedMsg, delay: 0 },
+            fetchWithRetry
           );
           sendResult = await sendResponse.json();
         }
