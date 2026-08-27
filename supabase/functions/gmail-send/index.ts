@@ -147,9 +147,6 @@ Deno.serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return errorResponse("Unauthorized", 401, req);
 
-    const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
-    if (!profile) return errorResponse("Profile not found", 404, req);
-
     const parsed = parseBody(GmailSendActionSchema, await req.json());
     if (!parsed.success) return errorResponse(parsed.error, 400, req);
 
@@ -158,8 +155,8 @@ Deno.serve(async (req) => {
 
     const { data: account } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, token_expires_at, profile_id")
-      .eq("id", account_id).eq("profile_id", profile.id).eq("is_active", true).single();
+      .select("id, email_address, is_active, token_expires_at, user_id")
+      .eq("id", account_id).eq("user_id", user.id).eq("is_active", true).single();
 
     if (!account) return errorResponse("Gmail account not found or inactive", 404, req);
 
