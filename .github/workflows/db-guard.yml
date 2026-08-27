@@ -1,0 +1,106 @@
+# =================================================
+# ZAPP-WEB · Guardas de banco de dados
+# =================================================
+# Origem: plano da auditoria de 27/08/2026, etapas 11, 98 e 99.
+# Ver docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md
+#
+# Tres jobs, de proposito separados por dependencia de credencial:
+#
+#   usage-guard      OFFLINE. Roda sempre, inclusive em PR de fork.
+#   migration-drift  precisa de DESTINO_URL. Pula com aviso se ausente.
+#   catalog-fresh    precisa de DESTINO_URL. So no agendamento semanal / manual.
+# =================================================
+
+name: DB Guard
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'scripts/db-audit/**'
+      - '.github/workflows/db-guard.yml'
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # segunda-feira 06:00 UTC (03:00 em Curitiba)
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # ===========================================
+  # JOB 1: acoplamento codigo <-> banco (offline)
+  # ===========================================
+  usage-guard:
+    name: 🔗 Acoplamento codigo/banco
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Sem `install`: o script nao tem dependencia, e node puro.
+      - name: 🔗 Validar .from() e .rpc() contra o catalogo
+        run: node scripts/db-audit/supabase-usage-guard.mjs
+
+  # ===========================================
+  # JOB 2: drift entre arquivos e schema_migrations
+  # ===========================================
+  migration-drift:
+    name: 🧭 Drift de migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🐘 Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: 🧭 Comparar arquivos com schema_migrations
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: node scripts/db-audit/check-migration-drift.mjs
+
+  # ===========================================
+  # JOB 3: frescura do catalogo (semanal)
+  # ===========================================
+  catalog-fresh:
+    name: 🗂️ Frescura do catalogo
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🐘 Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: 🗂️ Regerar catalogo e comparar com o commitado
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "DESTINO_URL ausente - checagem de frescura pulada."
+            exit 0
+          fi
+          psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > /tmp/fresh.json
+          node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
