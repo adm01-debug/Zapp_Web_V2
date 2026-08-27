@@ -7,6 +7,7 @@ import {
   type WebhookPayload,
 } from "../_shared/evolution-helpers.ts";
 import { parseMessageContent } from "../_shared/evolution-media.ts";
+import { isGoPayload, translateGoPayload } from "../_shared/evolution-go-adapter.ts";
 import {
   handleConnectionUpdate, handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
   handleContactsUpsert, handlePresenceUpdate, handleChatsUpdate,
@@ -32,7 +33,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const payload: WebhookPayload = await req.json();
+    let payload: WebhookPayload = await req.json();
+    if (isGoPayload(payload)) payload = translateGoPayload(payload) as WebhookPayload;
     const event = normalizeEventName(payload.event);
     const instance = payload.instance;
     const data = payload.data ?? {};

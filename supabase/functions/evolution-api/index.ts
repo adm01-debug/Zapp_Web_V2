@@ -57,15 +57,21 @@ serve(async (req) => {
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
-      const response = await fetch(`${evolutionApiUrl}/instance/connect/${instance}`, { method: 'GET', headers: { 'apikey': evolutionApiKey } });
+      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+      const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: '{}' });
       const data = await response.json();
-      if (data.qrcode) await supabase.from('whatsapp_connections').update({ qr_code: data.qrcode.base64, status: 'pending', instance_id: instance }).eq('instance_id', instance);
-      return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
+      const qrData = await qrRes.json();
+      const qrcode = qrData?.data?.qrcode;
+      if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'pending', instance_id: instance }).eq('instance_id', instance);
+      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
-      const response = await fetch(`${evolutionApiUrl}/instance/connectionState/${instance}`, { method: 'GET', headers: { 'apikey': evolutionApiKey } });
+      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+      const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       const data = await response.json();
+      if (data?.data && data.state === undefined) data.state = (data.data.loggedIn ?? data.data.LoggedIn) ? 'open' : 'close';
       const status = data.state === 'open' ? 'connected' : 'disconnected';
       await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -75,7 +81,7 @@ serve(async (req) => {
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
     if (action === 'disconnect') {
-      const response = await fetch(`${evolutionApiUrl}/instance/logout/${instance}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
+      const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
       const data = await response.json();
       await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance);
       return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

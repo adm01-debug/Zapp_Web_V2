@@ -1,4 +1,5 @@
 // Shared proxy logic for Evolution API edge function
+import { translateV2ToGo } from "./evolution-go-routes.ts";
 
 const TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
@@ -16,6 +17,17 @@ export async function proxyToEvolution(
   body?: unknown,
   instanceInPath?: string
 ): Promise<Response> {
+  let apikey = evolutionApiKey;
+  if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
+    const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
+    const go = translateV2ToGo(v2Path, method, body);
+    if (go) {
+      path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
+      if (go.auth === "instance") apikey = Deno.env.get("EVOLUTION_INSTANCE_TOKEN") ?? evolutionApiKey;
+      console.log(`[Evolution GO] translated → ${method} ${path}`);
+    }
+  }
+
   const fullUrl = instanceInPath
     ? `${evolutionApiUrl}${path}/${instanceInPath}`
     : `${evolutionApiUrl}${path}`;
@@ -24,7 +36,7 @@ export async function proxyToEvolution(
     method,
     headers: {
       'Content-Type': 'application/json',
-      'apikey': evolutionApiKey,
+      'apikey': apikey,
     },
   };
   if (body && method !== 'GET') {
