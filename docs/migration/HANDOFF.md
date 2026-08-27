@@ -52,25 +52,28 @@ Este arquivo é a fonte de verdade da migração. Leia inteiro antes de executar
 - `PORTAINER - MCP` é da VPS AtomicaBR (NÃO da Hostinger). Hostinger só via ssh/Hostinger MCP.
 - Bug conhecido: `supabase_apply_migration` do MCP self-hosted (coluna `executed_at`) — não se aplica ao destino (worker próprio), mas não usar aquele MCP aqui.
 
-## 5. Estado atual (26/08 19:40 UTC)
+## 5. Estado atual (26/08 ~22:00 UTC — sessão 3)
 ### FEITO (com evidência)
-- Gate 0: destino = `tnnnlkbymytvtqngbbqh` (Joaquim: "ESSE É O CERTO"). Região fica us-west-2. Lab na VPS autorizado implicitamente ("USE OS MCPS").
-- Etapa 9 ✅ `public.mcp_exec(sql, max_rows)` v2.1 no destino: cursor-first; qualquer erro do cursor (exceto `query_canceled`/`lock_not_available`) cai em `EXECUTE`; SECURITY DEFINER, `search_path=pg_catalog,public`, EXECUTE só service_role. DDL em `/workspace/tmp/pgcli/mcp_exec_v2.sql`. Provado via RPC: comentário+select devolve linhas, INSERT…RETURNING devolve linhas, multi-statement dependente (create+insert) OK, 42P01/42601 sobem intactos.
-- Etapa 10 ✅ `ALTER ROLE service_role SET statement_timeout='120s'` — `pg_sleep(12)` via RPC passa; worker remoto mostra `statement_timeout=2min`.
-- Etapa 11 ✅ `public.mcp_exec_many(statements text[], max_rows int)` — 1 transação, resultado por statement, erro reverte tudo (provado). DDL em `/workspace/tmp/pgcli/mcp_exec_many.sql`.
-- Etapa 12 ✅ Worker v1.1.0 DEPLOYADO (deployment `bc9555dea9574aa0ba4e4d055c7c26dd`, etag `8a522154…`). Commit local feito em `/workspace/repos/supabase-lovable-mcp` (msg "fix(zapp-web-v2): v1.1.0 — …"), PUSH PENDENTE (git creds do container zeradas). Harness: `/workspace/tmp/wtest2.mjs` contra `/workspace/tmp/w.mjs` (cópia idêntica do worker.js) — todos os casos OK.
-- Etapa 13 ✅ harness v1.1 executado (bigint, transaction, batch, migration versão, slow_queries, export).
-- Etapa 14 ⚠️ não aplicável: worker de auditoria não tem `DEST_MCP_*` (ver seção 2). Substituído pelo diff por fingerprint.
-- Etapa 15 ✅ `graphify update . --force` rodado em `/workspace/repos/zapp-web-v2` (`graphify-out/GRAPH_REPORT.md`). Usar `graphify explain "<tabela>"` nas etapas 24/56.
-- Etapa 17 ✅ parcial: fingerprints da origem (md5 por objeto) em `/workspace/tmp/migration/source-fp.txt` (COLS, CONS, IDX, POL, TRG, VIEW, ENUM, EXT, CRON, PUB, FN) + grants/defpriv/dbset/storage policies/schemas colhidos (ver seção 8). DDL completo NÃO extraído (só necessário para objetos divergentes — próximo passo 2).
-- Etapas 18–20 ✅ lab `zapp-replay` na VPS: 267 migrations → 243 OK / 24 FAIL, 124 tabelas em public. Log `/root/zapp-replay/replay2.log`, fingerprints `/root/zapp-replay/replay-fp.txt` (cópia em `/workspace/tmp/migration/replay-fp.txt`). Shim do storage em `/root/storage-shim.sql` (a imagem não traz `storage.buckets/objects`; rodar shim como `supabase_admin -d postgres`).
-- Etapa 21 ✅ Diff A calculado (`node /workspace/tmp/migration/diff.js`) e classificado — seção 8.
+- Gate 0 ✅ destino `tnnnlkbymytvtqngbbqh`. Região us-west-2. Lab na VPS autorizado.
+- Etapas 9–15 ✅ ferramental completo (mcp_exec v2.1, mcp_exec_many, worker v1.1.0 deployado no Cloudflare, harness 77 tools 0 FAIL, graphify).
+- Etapa 17 ✅ DDL completo dos objetos divergentes → `docs/migration/source-ddl/` (10 arquivos: table_contacts, table_email_*, table_entity_versions, table_gmail_accounts, table_saved_filters, contacts_inbound_fks, functions_views).
+- Etapas 18–21 ✅ lab zapp-replay (supabase/postgres:17.6.1.166), 267 migrations → 243 OK / 24 FAIL, fingerprints, Diff A classificado.
+- **Gate 1 ✅ D1–D6 todos APROVADOS e executados** (ver DECISIONS.md para status por ID).
+- **Etapas 29–50 ✅ Fase 3 concluída**: 256 migrations aplicadas no destino, contacts restaurada (D1), cron D4, storage 7 buckets + 23 políticas, realtime D5 (11 tabelas), role/db settings, paridade atingida.
+- **Gate 2 ✅ PARITY-REPORT.md assinado** — zero divergência inexplicada. Destino: 123 tabelas, 8 ext, 64 fn, 7 views, 4 enums, 1 cron, 11 pub.
+- Etapas 1, 4, 5 ✅ branch `feat/fresh-install-hostinger` criada, docs/migration/ commitados (plano de 30 etapas — sessão 3).
+- Worker v1.1.0 no Cloudflare ✅ | push para GitHub pendente (etapa 4 do plano-30).
 ### PENDENTE
-- Gate 1 (etapa 28): D1–D6 da seção 9 aguardam `APROVADO` do Joaquim.
-- Etapa 1: persistir plano em `docs/migration/PLANO.md` (branch) — não feito. Etapa 4: `docs/migration/DECISIONS.md` — conteúdo pronto na seção 9, arquivo não commitado. Etapa 5: branch não criada.
-- Etapa 16 (GATE): hardening SSH da VPS.
-- Etapas 22–27, 29–100: não iniciadas.
-- Push do worker v1.1.0 para o repo (via `github_put_file` em `workers/zapp-web-v2/worker.js`, conteúdo = `/workspace/repos/supabase-lovable-mcp/workers/zapp-web-v2/worker.js`, sha256 do arquivo: conferir com `sha256sum`).
+- **Plano de 30 etapas (aprovado 26/08 sessão 3)**: ver `docs/migration/HANDOFF.md` seção 5 e DECISIONS.md — em execução.
+- Worker v1.1.1 (etapas 6–9 do plano-30): GAPs max_rows/line-size/schema db_select.
+- apply-batch.js (etapa 11 do plano-30): executor de migrations em lotes.
+- Etapa 16 🔒 SSH hardening VPS.
+- Etapas 22–27: diff B, mapa infra-deps, matriz fn×tabela, Evolution inventory, auth/storage inventory, wildcard domain.
+- Fase 4 (dados) 🔒 Gate 51.
+- Fase 5 (functions/Evolution) 🔒 Gate 57.
+- Fase 6 (código) ⏳ etapas 67–78.
+- Fase 7 (VPS deploy) ⏳ etapas 79–90.
+- Fase 8 (cutover/pós) ⏳ etapas 91–100.
 
 ## 6. Inventário de artefatos
 ### Container claude-code (`/workspace`)
@@ -137,15 +140,15 @@ Também: `20260401002519_b7df7d1f…` contém `DROP TABLE … contacts` (verific
 Gates seguintes: 16 (SSH), 22 (descartar `supabase-export/`), 35 (recriar contacts), 50 (paridade), 51 (migrar ~60 linhas?), 57 (PAT), 60 (LOVABLE_API_KEY → provider próprio), 68 (remover clientesClient.ts), 77 (merge), 79 (budget Actions), 88 (firewall), 90 (go-live), 98 (congelar origem).
 
 ## 10. Plano de 100 etapas — status (✅ feito · ⏳ pendente · 🔒 gate)
-Fase 0 — 1⏳ persistir plano em docs/migration/PLANO.md (branch) · 2✅ destino tnnn… · 3✅ origem read-only, baseline em source-fp.txt · 4⏳ DECISIONS.md (seção 9) · 5⏳ branch feat/fresh-install-hostinger · 6⏳ domínio: testar wildcard `*.srv1481814.hstgr.cloud` (`dig zapp.srv1481814.hstgr.cloud`), senão domínio próprio · 7⏳ planilha dos 28 secrets (fonte: agent5-report.md) · 8✅ credenciais a rotacionar listadas (seção 3).
-Fase 1 — 9✅ · 10✅ · 11✅ · 12✅(push pendente) · 13✅ · 14⚠️N/A · 15✅ · 16🔒 SSH hardening (drop-in `/etc/ssh/sshd_config.d/99-hardening.conf`: PasswordAuthentication no, PermitRootLogin prohibit-password; validar as 2 chaves antes).
-Fase 2 — 17⏳ DDL completo só dos divergentes → `docs/migration/source-ddl/` · 18✅ · 19✅ · 20✅ · 21✅ · 22🔒 Diff B export×replay (recomendar descartar export) · 23⏳ dependências de infra antiga no SQL (`notify_sicoob_on_reply`, `net.http_post`, URLs atomicabr) · 24⏳ matriz function×tabela (graphify + grep `.from("…")`) · 25⏳ decisão por ref de projeto no código · 26⏳ inventário Evolution API v2 × Evolution GO (endpoints de `_shared/evolution*`) · 27⏳ inventário auth/storage não-SQL da origem · 28🔒 GATE 1.
-Fase 3 (destino) — 29⏳ pré-checks (PG 17.6, extensões, região) · 30⏳ extensões · 31⏳ default privileges/grants iguais à origem (seção 8 DEFPRIV: postgres→anon/authenticated/service_role arwdDxtm em public) · 32⏳ migrations em lotes de 20 pelo pooler (`sql.js`), 1 transação por lote, `schema_migrations.version` = timestamp do arquivo · 33⏳ fail-fast · 34⏳ `ALTER DATABASE postgres SET app.settings.supabase_url='https://tnnnlkbymytvtqngbbqh.supabase.co'` (+ service_role via Vault, decisão) · 35🔒 recriar contacts · 36⏳ cron (D4) · 37⏳ 7 buckets + 23 policies storage.objects · 38⏳ publication (D5) · 39⏳ auth config (site_url, redirects, providers) · 40⏳ role/db settings (seção 8 DBSET) · 41–48⏳ views/enums/sequences/índices/constraints/policies/funções/triggers 1:1 por fingerprint (fp.sql) · 49⏳ PARITY-REPORT.md · 50🔒 GATE 2.
-Fase 4 (dados) — 51🔒 migrar ~60 linhas? · 52⏳ export/import topológico (`SET CONSTRAINTS ALL DEFERRED`) · 53⏳ 3 auth users via `auth_create_user` + `auth_generate_link recovery` · 54✅(0 objetos) · 55⏳ counts origem×destino · 56⏳ seed mínimo.
-Fase 5 (functions/Evolution) — 57🔒 PAT · 58⏳ config.toml (project_id + verify_jwt=false nas webhook: evolution-webhook, gmail-webhook, sicoob-bridge-*) · 59⏳ deploy 62 functions (`_shared` primeiro) · 60🔒 secrets (LOVABLE_API_KEY) · 61⏳ smoke por function · 62⏳ webhook Evolution GO → `/functions/v1/evolution-webhook` · 63⏳ paridade Evolution GO · 64⏳ trigger sicoob via `net._http_response` · 65⏳ cron job_run_details · 66🔒 GATE 3.
-Fase 6 (código) — 67⏳ client.ts/externalClient.ts via `import.meta.env` com fallback=destino · 68🔒 remover clientesClient.ts + preconnect órfão · 69⏳ .env.production/.env.example · 70⏳ Dockerfile ARG/ENV VITE_* + `find dist -name '*.map' -delete` · 71⏳ nginx headers · 72⏳ .nvmrc 20.19.0 + ci.yml (bun) · 73⏳ compose/.dockerignore no repo · 74⏳ registrar tsc/testes pré-existentes · 75⏳ graphify commit · 76⏳ PR único + review por agente · 77🔒 merge · 78⏳ tag v2.0.0-hostinger.
-Fase 7 (VPS) — 79🔒 budget Actions · 80⏳ projeto Docker Manager `zapp-web-v2` (repo + env ZAPP_DOMAIN, VITE_*) · 81⏳ build/health/Traefik/LE · 82⏳ E2E HTTP · 83⏳ fluxo real de usuário · 84⏳ observabilidade (query_logs, docker logs, n8n health) · 85⏳ snapshot VPS + backups · 86⏳ runbook redeploy (`VPS_updateProjectV1`) · 87⏳ Evolution GO: pinar imagem, backup volumes, instância nova (QR) · 88🔒 firewall · 89🔒 prune + traefik v3.6 pinado · 90🔒 GATE 4.
-Fase 8 — 91⏳ diff final = 0 · 92⏳ smoke completo · 93⏳ carga leve (autocannon) → BASELINE.md · 94⏳ RUNBOOK/PARITY/DECISIONS fechados · 95⏳ cérebro (claude-cerebro) · 96⏳ grep vínculos antigos = 0 (`atomicabr`, `allrjhk…`, `rqmb…`, `wpp2`) · 97⏳ rotação de credenciais · 98🔒 congelar origem/Lovable · 99⏳ backlog residual (CSP, chunks >500 kB, tsc, teste timeout, db_select schema) · 100⏳ revisão de 7 dias.
+Fase 0 — 1✅ · 2✅ · 3✅ · 4✅ · 5✅ · 6��� domínio wildcard · 7⏳ planilha 28 secrets · 8✅
+Fase 1 — 9✅ · 10✅ · 11✅ · 12✅(push worker pendente) · 13✅ · 14⚠️N/A · 15✅ · 16🔒 SSH hardening
+Fase 2 — 17✅ · 18✅ · 19✅ · 20✅ · 21✅ · 22🔒 Diff B (export×replay) · 23⏳ · 24⏳ · 25⏳ · 26⏳ · 27⏳ · 28✅(Gate 1 executado)
+Fase 3 — 29✅ · 30✅ · 31✅ · 32✅ · 33✅ · 34✅ · 35✅(D1) · 36✅(D4) · 37✅ · 38✅(D5) · 39⏳ auth config · 40✅ · 41–48✅ · 49✅(PARITY-REPORT) · 50✅(Gate 2)
+Fase 4 — 51🔒 · 52⏳ · 53⏳ · 54✅(0 objetos) · 55⏳ · 56⏳
+Fase 5 — 57🔒 PAT · 58⏳ · 59⏳ · 60🔒 LOVABLE_API_KEY · 61⏳ · 62⏳ · 63⏳ · 64⏳ · 65⏳ · 66🔒 Gate 3
+Fase 6 — 67⏳ · 68🔒 · 69⏳ · 70⏳ · 71⏳ · 72⏳ · 73⏳ · 74⏳ · 75⏳ · 76⏳ · 77🔒 merge · 78⏳
+Fase 7 — 79🔒 budget · 80⏳ · 81⏳ · 82⏳ · 83⏳ · 84⏳ · 85⏳ · 86⏳ · 87⏳ · 88🔒 firewall · 89🔒 prune · 90🔒 Gate 4
+Fase 8 — 91⏳ · 92⏳ · 93⏳ · 94⏳ · 95⏳ · 96⏳ · 97⏳ · 98🔒 · 99⏳ · 100⏳
 
 ## 11. Procedimentos prontos
 ### 11.1 Lab de replay (VPS Hostinger)
@@ -187,9 +190,17 @@ Preferir escrever um runner `apply-batch.js` (Node, usa `pg`, BEGIN/COMMIT por l
 - Evolution GO ≠ Evolution API v2: paridade de endpoints ainda não provada (etapa 63).
 - Não confundir PORTAINER (AtomicaBR) com a VPS Hostinger.
 
-## 13. Próximos passos imediatos (ordem)
-1. Ler este handoff + conferir estado real (worker /health, lab, destino vazio).
-2. Se Joaquim já respondeu D1–D6: montar a lista de migrations do destino (UUID + eventuais manuais aprovadas), replicar no lab (`migrations-lovable/`), exigir 0 FAIL, salvar `replay3-fp.txt` e re-rodar diff.js contra a origem (esperado: só as diferenças classificadas como perda/hotfix).
-3. Extrair DDL vivo da origem dos objetos divergentes (saved_filters, entity_versions, gmail_accounts, email_*, audit_logs, ensure_single_default_filter, get_own_gmail_accounts, log_audit_event, view gmail_accounts_safe) para confirmar estado vivo = versão Lovable.
-4. Push do worker v1.1.0 para o repo via GitHub MCP; criar branch `feat/fresh-install-hostinger` e commitar `docs/migration/{HANDOFF,DECISIONS,PLANO}.md` (este arquivo é o HANDOFF).
-5. Etapas 22–27 e Gate 1 → Fase 3.
+## 13. Próximos passos imediatos (plano-30, sessão 3)
+**Em execução (sessão 3):**
+1. Etapas 1–5 do plano-30: branch criada, docs/migration/ commitados ✅
+2. Etapa 4: push worker v1.1.0 para supabase-lovable-mcp GitHub → em execução
+3. Etapas 6–9: worker v1.1.1 (GAPs max_rows, line-size, schema db_select)
+4. Etapas 10–12: DDL divergentes commitados ✅; apply-batch.js; mapa infra-deps
+5. Etapas 23–27: mapa Evolution, auth/storage, planilha secrets, wildcard domain
+6. Etapas 28–30: pré-checks dest-fp.sql + PARITY-REPORT template atualizado (Gate 2 já assinado)
+
+**Para sessão seguinte (fornecer na abertura):**
+- Gate 51: dados migram ou destino nasce limpo?
+- Gate 57: Supabase PAT do destino
+- Gate 60: decisão LOVABLE_API_KEY (provider próprio)
+- Decisão 39: site_url + redirect URLs + providers auth do destino.
