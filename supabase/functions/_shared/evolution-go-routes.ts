@@ -90,9 +90,9 @@ export function translateV2ToGo(path: string, method: string, body: any): GoRout
   if (m(/^\/instance\/qr(code)?\/[^/]+$/) || m(/^\/instance\/qr$/))
     return { path: '/instance/qr', method: 'GET', auth: 'instance' };
 
-  // ── Verificação de número ──
+  // ── Verificação de número (FIX: campo 'number' não 'numbers') ──
   if (m(/^\/chat\/whatsappNumbers\/[^/]+$/))
-    return { path: '/user/check', method: 'POST', auth: 'instance', body: { numbers: b.numbers } };
+    return { path: '/user/check', method: 'POST', auth: 'instance', body: { number: b.numbers } };
 
   // Não mapeado: passa intacto (paths GO nativos ou endpoints sem equivalente).
   return null;

@@ -78,7 +78,9 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
   }
 
   if (v2Event === 'connection.update') {
-    out.data = { ...data, state: GO_STATE_MAP[rawEvent] ?? 'connecting' };
+    // FIX: setar tanto `state` (formato GO) quanto `status` (formato que o handler v2 espera)
+    const mappedState = GO_STATE_MAP[rawEvent] ?? 'connecting';
+    out.data = { ...data, state: mappedState, status: mappedState };
   }
 
   if (v2Event === 'qrcode.updated') {
