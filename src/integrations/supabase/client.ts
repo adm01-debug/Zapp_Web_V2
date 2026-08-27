@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Self-hosted Supabase em supabase.atomicabr.com.br.
+// Banco oficial: Supabase Cloud, projeto tnnnlkbymytvtqngbbqh.
 // IMPORTANTE: NÃO ler VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY — essas
 // variáveis são auto-injetadas pelo Lovable Cloud apontando para o projeto interno
 // (vpkmqeumtxhrwgawxdrl) e levariam o app para o banco errado. Secrets do tipo
 // EXTERNAL_* só existem em edge functions, não no bundle, então usamos valores
 // fixos aqui (a ANON KEY é pública por design).
-export const SUPABASE_URL = 'https://supabase.atomicabr.com.br';
+export const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 
 export const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.rvamc0XHuSCYB1glBwOCCxgfd9yxWVYLnhFzg5-7TRk';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
