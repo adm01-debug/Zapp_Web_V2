@@ -17,6 +17,8 @@ on:
 env:
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+  VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
+  VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
 
 jobs:
   # ===========================================
@@ -102,6 +104,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
+          VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
 
       # Artifact de dist/ so em PR — em push para main o deploy e feito pela
       # Vercel, e o upload custava 41.6k GigabyteHours de storage em agosto.
