@@ -1,4 +1,4 @@
--- ─────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────────
 -- Migration: Rate limiting + audit logging for admin_criar_usuario_painel
 --
 -- Problem: admin_criar_usuario_painel is SECURITY DEFINER with direct access
@@ -9,7 +9,7 @@
 --   2. Audit log: every creation attempt is recorded with metadata
 --
 -- Applied: 2026-06-12
--- ─────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.admin_criar_usuario_painel(
   p_email text,
@@ -28,12 +28,12 @@ DECLARE
   v_recent_count  INT;
   v_rate_limit    CONSTANT INT := 10; -- max creations per hour per admin
 BEGIN
-  -- ── 1. Authorisation ──────────────────────────────────────────────────────
+  -- ── 1. Authorisation ────────────────────────────────────────────────
   IF NOT public.is_admin_painel() THEN
     RAISE EXCEPTION 'Acesso negado: apenas admins do painel podem criar usuários';
   END IF;
 
-  -- ── 2. Input validation ───────────────────────────────────────────────────
+  -- ── 2. Input validation ─────────────────────────────────────────────
   IF p_email IS NULL OR length(trim(p_email)) = 0 THEN
     RAISE EXCEPTION 'Email é obrigatório';
   END IF;
@@ -47,7 +47,7 @@ BEGIN
     RAISE EXCEPTION 'Nome é obrigatório';
   END IF;
 
-  -- ── 3. Rate limiting ──────────────────────────────────────────────────────
+  -- ── 3. Rate limiting ────────────────────────────────────────────────
   -- Count how many user-creation events this admin triggered in the last hour.
   -- Uses the existing audit_logs table (user_id, action, created_at indexed).
   SELECT COUNT(*) INTO v_recent_count
@@ -62,14 +62,14 @@ BEGIN
       v_rate_limit;
   END IF;
 
-  -- ── 4. Duplicate check ────────────────────────────────────────────────────
+  -- ── 4. Duplicate check ──────────────────────────────────────────────
   v_email := lower(trim(p_email));
 
   IF EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
     RAISE EXCEPTION 'Email já cadastrado: %', v_email;
   END IF;
 
-  -- ── 5. Create auth.users + identity ───────────────────────────────────────
+  -- ── 5. Create auth.users + identity ────────────────────────────────────
   v_user_id := gen_random_uuid();
 
   INSERT INTO auth.users (
@@ -101,7 +101,7 @@ BEGIN
     'email', v_email, now(), now(), now()
   );
 
-  -- ── 6. Upsert profile ─────────────────────────────────────────────────────
+  -- ── 6. Upsert profile ───────────────────────────────────────────────
   INSERT INTO public.perfis_usuarios (id, email, nome, role, ativo, deletado)
   VALUES (v_user_id, v_email, p_nome, p_role, TRUE, FALSE)
   ON CONFLICT (id) DO UPDATE
@@ -111,7 +111,7 @@ BEGIN
         deletado  = FALSE,
         updated_at = now();
 
-  -- ── 7. Audit log ──────────────────────────────────────────────────────────
+  -- ── 7. Audit log ────────────────────────────────────────────────────
   -- This entry is also used for rate-limit counting (step 3 above).
   INSERT INTO public.audit_logs (
     id, user_id, action, entity_type, entity_id,
