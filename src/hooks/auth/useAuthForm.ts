@@ -208,9 +208,12 @@ export function useAuthForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      const { lovable } = await import('@/integrations/lovable/index');
-      const { error } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
+      // Usa o cliente oficial (projeto tnnnlkbymytvtqngbbqh). O cliente do Lovable
+      // aponta para o projeto interno vpkmqeumtxhrwgawxdrl — backend errado, a
+      // sessao voltava de outro banco. Callback tratado em /auth/callback.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) {
         toast({ title: 'Erro ao conectar com Google', description: error.message, variant: 'destructive' });
