@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
  *
  * IMPORTANT: auth.persistSession=false, realtime desabilitado
  * para evitar Multiple GoTrueClient e conflito de WebSocket
- * com o cliente principal (supabase.atomicabr.com.br)
+ * com o cliente principal (tnnnlkbymytvtqngbbqh)
  */
 
 const CLIENTES_URL =
