@@ -1,1 +1,19 @@
 project_id = "tnnnlkbymytvtqngbbqh"
+
+[functions.evolution-webhook]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.gmail-webhook]
+verify_jwt = false
+
+[functions.elevenlabs-webhook]
+verify_jwt = false
+
+[functions.public-api]
+verify_jwt = false
+
+[functions.webhook-diagnostic]
+verify_jwt = false
