@@ -129,7 +129,7 @@ serve(async (req) => {
     // Find the gmail account (without token columns)
     const { data: account, error: accountError } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, token_expires_at, history_id, profile_id")
+      .select("id, email_address, is_active, token_expires_at, history_id, user_id")
       .eq("email_address", emailAddress)
       .eq("is_active", true)
       .single();
