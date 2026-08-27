@@ -23,7 +23,7 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 - Dados em trânsito, em processamento e em repouso
 
 **Sistemas abrangidos:**
-- Supabase `allrjhkpuscmgbsnmjlv` (banco principal)
+- Supabase `tnnnlkbymytvtqngbbqh` (banco principal)
 - Supabase `pgxfvjmuubtbowutlide` (CRM externo)
 - Storage buckets (avatars, audio-messages, whatsapp-media)
 

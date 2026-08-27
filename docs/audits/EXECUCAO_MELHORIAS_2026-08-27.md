@@ -56,7 +56,7 @@ A bridge está corrigida no trigger (sem `channel_type='internal_chat'`), mas o 
 ```sql
 -- Adicionar no Supabase Dashboard > Vault:
 -- Name: sicoob_service_role_key
--- Value: <service_role_key do projeto allrjhkpuscmgbsnmjlv>
+-- Value: <service_role_key do projeto tnnnlkbymytvtqngbbqh>
 ```
 
 ### 2. M-01 — `search_contacts` bypassa RLS

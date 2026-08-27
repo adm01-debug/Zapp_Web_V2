@@ -9,7 +9,7 @@
 
 ### Opção 1: Via Supabase Dashboard (RECOMENDADO)
 
-1. Acesse: https://supabase.com/dashboard/project/allrjhkpuscmgbsnmjlv/sql
+1. Acesse: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/sql
 2. Copie todo o conteúdo do arquivo `supabase/migrations/20260412230000_fix_rls_policies_security.sql`
 3. Cole no SQL Editor
 4. Clique em "Run"
@@ -22,7 +22,7 @@
 supabase login
 
 # 2. Link ao projeto
-supabase link --project-ref allrjhkpuscmgbsnmjlv
+supabase link --project-ref tnnnlkbymytvtqngbbqh
 
 # 3. Aplicar migrations
 supabase db push
@@ -35,7 +35,7 @@ supabase db push
 cd /path/to/zapp-web
 
 # Aplicar todas as migrations pendentes
-supabase db push --project-ref allrjhkpuscmgbsnmjlv
+supabase db push --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ## Verificação Pós-Aplicação
@@ -79,7 +79,7 @@ CREATE POLICY "policy_name" ON table_name FOR SELECT USING (true);
 ## Contato
 
 - **Responsável:** ti@promobrindes.com.br
-- **Projeto:** allrjhkpuscmgbsnmjlv
+- **Projeto:** tnnnlkbymytvtqngbbqh
 
 ---
 

@@ -4,7 +4,7 @@
 
 Este projeto é um sistema de **WhatsApp Multiatendimento** (zapp-web) conectado a dois bancos Supabase:
 
-1. **Supabase principal** (`allrjhkpuscmgbsnmjlv`) — banco do próprio zapp-web com contacts, messages, conversations, queues, etc.
+1. **Supabase principal** (`tnnnlkbymytvtqngbbqh`) — banco do próprio zapp-web com contacts, messages, conversations, queues, etc.
 2. **Supabase externo CRM** (`pgxfvjmuubtbowutlide`) — banco com 111 tabelas contendo 57.727 empresas, 4.753 contatos enriquecidos, 10.453 interações, scores RFM, perfis DISC, etc.
 
 Já foram criados e commitados no GitHub:

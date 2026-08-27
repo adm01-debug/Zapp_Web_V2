@@ -15,7 +15,7 @@ Este documento define a estratégia completa de backup, restore e disaster recov
 
 | Componente | Provedor | Localização |
 |------------|----------|-------------|
-| **Database Principal** | Supabase | `allrjhkpuscmgbsnmjlv` |
+| **Database Principal** | Supabase | `tnnnlkbymytvtqngbbqh` |
 | **Database CRM Externo** | Supabase | `pgxfvjmuubtbowutlide` |
 | **Storage** | Supabase Storage | 3 buckets |
 | **Edge Functions** | Supabase (Deno) | 20 funções |
@@ -83,7 +83,7 @@ Criar cron job para backup semanal:
 set -e
 
 # Configurações
-PROJECT_REF="allrjhkpuscmgbsnmjlv"
+PROJECT_REF="tnnnlkbymytvtqngbbqh"
 BACKUP_DIR="/backups/zapp-web"
 RETENTION_DAYS=30
 DATE=$(date +%Y%m%d_%H%M%S)

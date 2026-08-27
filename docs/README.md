@@ -63,7 +63,7 @@
 
 - **Repositório:** [github.com/adm01-debug/zapp-web](https://github.com/adm01-debug/zapp-web)
 - **Produção:** [pronto-talk-suite.lovable.app](https://pronto-talk-suite.lovable.app)
-- **Supabase Dashboard:** [supabase.com/dashboard](https://supabase.com/dashboard/project/allrjhkpuscmgbsnmjlv)
+- **Supabase Dashboard:** [supabase.com/dashboard](https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh)
 
 ---
 

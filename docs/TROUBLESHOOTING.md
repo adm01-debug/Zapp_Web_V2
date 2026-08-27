@@ -118,7 +118,7 @@ curl -X GET "https://evolution.atomicabr.com.br/webhook/find/instancia" \
 
 ```bash
 # Ver logs
-supabase functions logs evolution-api --project-ref allrjhkpuscmgbsnmjlv
+supabase functions logs evolution-api --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ### Função não é encontrada
@@ -134,7 +134,7 @@ supabase functions logs evolution-api --project-ref allrjhkpuscmgbsnmjlv
 
 ```bash
 # Deploy manual
-supabase functions deploy evolution-api --project-ref allrjhkpuscmgbsnmjlv
+supabase functions deploy evolution-api --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ### CORS Error
