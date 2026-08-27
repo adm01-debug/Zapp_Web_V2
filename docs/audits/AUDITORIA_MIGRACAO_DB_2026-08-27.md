@@ -171,6 +171,15 @@ Repo tem **267** arquivos; destino tem **259** registros.
 **11 no repo, sem registro no destino:**
 
 *Grupo 1 — DDL aplicado, registro ausente (4):*
+
+> ⚠️ **CORREÇÃO (27/08/2026):** esta classificação estava ERRADA. Foi baseada só em
+> `to_regclass()` ("a tabela existe"). Comparação objeto-a-objeto (policies, triggers,
+> colunas, constraints) provou que a DDL DESTES arquivos nunca rodou no destino — as
+> tabelas foram criadas por OUTRAS migrations já registradas, com formato diferente
+> (ex.: `entity_versions.created_at` vs `changed_at` do arquivo; gmail com `*_encrypted
+> bytea` vs texto puro do arquivo). Registrá-los gravaria afirmação falsa no ledger e um
+> `db push` reintroduziria schema menos seguro. Os 4 foram movidos para
+> `supabase/migrations/_superseded/` (ver README de lá). **NÃO registrar. Ver passos 3-6.**
 | Arquivo | Objetos que cria | Existe no destino? |
 |---|---|---|
 | `20241231000000_saved_filters.sql` | `saved_filters` | ✅ sim |
@@ -328,10 +337,10 @@ Nenhuma etapa remove tabela, coluna ou função sem aprovação individual.
 
 1. Mover as 7 migrations de outro banco (`20260611120000`, `20260612110000`, `20260612120000`, `20260612140000`, `20260612141500`, `20260612150000`, `20260612160000`) para `supabase/migrations/_foreign/` no repo, fora do caminho do `db push`.
 2. Abrir issue documentando a qual banco pertencem (Supabase self-hosted / Evolution) e para qual repo devem migrar.
-3. Registrar `20241231000000` (saved_filters) em `schema_migrations` do destino como já aplicada.
-4. Registrar `20241231000001` (entity_versions) em `schema_migrations` do destino.
-5. Registrar `20260403024714` (gmail_integration) em `schema_migrations` do destino.
-6. Registrar `20260412230000` (fix_rls_policies_security) em `schema_migrations` do destino.
+3. ~~Registrar `20241231000000` (saved_filters)~~ — **CANCELADO, NÃO FAZER.** Ver correção em A-05 e `supabase/migrations/_superseded/README.md`. A DDL deste arquivo nunca rodou no destino (a tabela veio de `20260315163251`+`20260315172343`); policies/triggers do arquivo divergem do banco. Registrar = afirmação falsa no ledger. Arquivo movido para `_superseded/`.
+4. ~~Registrar `20241231000001` (entity_versions)~~ — **CANCELADO.** Idem. Arquivo usa `changed_at` e policy `USING(true)`; banco tem `created_at` e policies admin-only. Registrar seria mentira + regressão de segurança latente no próximo `db push`.
+5. ~~Registrar `20260403024714` (gmail_integration)~~ — **CANCELADO.** Idem. Arquivo tem tokens em texto puro e referencia `email_attachments` (inexistente); banco tem `access_token_encrypted`/`refresh_token_encrypted bytea`. Movido para `_superseded/`.
+6. ~~Registrar `20260412230000` (fix_rls_policies_security)~~ — **CANCELADO.** Idem. Patch de RLS para o schema antigo; as policies atuais do destino já são mais estritas. Movido para `_superseded/`.
 7. Criar `supabase/migrations/20260826210100_cron_cleanup_link_preview_cache.sql` a partir do `statements` gravado no banco.
 8. Criar `supabase/migrations/20260826210200_realtime_publication_d5.sql` idem.
 9. Criar `supabase/migrations/20260827000100_security_revoke_mcp_exec.sql` idem.
