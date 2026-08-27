@@ -3,22 +3,16 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "_severidade": {
-    "approve-password-reset": "ALTA - fluxo vivo, invocado por src/components/security/PasswordResetRequestsPanel.tsx. O .rpc('store_reset_token') esta no caminho de sucesso e o erro NAO e checado, entao a solicitacao vira 'approved' e devolve resetLink sem gravar o hash do token.",
     "gmail-oauth / gmail-webhook / gmail-send / _shared": "MEDIA - fluxo Gmail invocado pela UI mas com o backend incompleto. gmail_accounts tem 0 linhas.",
-    "inbox.service.ts": "BAIXA - modulo morto, 11 exports com zero consumidores fora do proprio arquivo. Usa 'as any' para silenciar o type-check.",
     "analyze-external-db": "BAIXA - edge function orfa, nunca invocada (achado A-07).",
     "evolution-health": "BAIXA - edge function orfa; consulta tabelas do Evolution self-hosted usando o SUPABASE_URL deste projeto."
   },
   "known": [
-    "from:conversations:src/services/inbox.service.ts",
-    "from:evolution_messages_wpp2:src/services/inbox.service.ts",
-    "rpc:get_latest_messages:src/services/inbox.service.ts",
     "from:email_attachments:supabase/functions/_shared/gmail-helpers.ts",
     "rpc:get_gmail_tokens:supabase/functions/_shared/gmail-helpers.ts",
     "rpc:store_gmail_tokens:supabase/functions/_shared/gmail-helpers.ts",
     "rpc:get_tables_info:supabase/functions/analyze-external-db/index.ts",
     "rpc:get_all_table_names:supabase/functions/analyze-external-db/index.ts",
-    "rpc:store_reset_token:supabase/functions/approve-password-reset/index.ts",
     "from:messages_whatsapp:supabase/functions/evolution-health/index.ts",
     "from:message_queue:supabase/functions/evolution-health/index.ts",
     "from:system_logs:supabase/functions/evolution-health/index.ts",
@@ -28,5 +22,9 @@
     "rpc:store_gmail_tokens:supabase/functions/gmail-send/index.ts",
     "rpc:get_gmail_tokens:supabase/functions/gmail-webhook/index.ts",
     "rpc:store_gmail_tokens:supabase/functions/gmail-webhook/index.ts"
-  ]
+  ],
+  "_resolvido": {
+    "store_reset_token": "DROP do subsistema de reset custom - migration 20260827170000; chamada removida do edge approve-password-reset",
+    "inbox.service.ts": "modulo morto removido - src/services/inbox.service.ts deletado + linha do barrel services/index.ts"
+  }
 }
