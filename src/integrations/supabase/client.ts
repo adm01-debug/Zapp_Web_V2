@@ -12,6 +12,11 @@ export const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 export const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
+// Google OAuth esta DESLIGADO no projeto tnnnlkbymytvtqngbbqh (GET /auth/v1/settings
+// retorna external.google=false). Enquanto nao for habilitado no dashboard, o botao
+// fica escondido na tela de login em vez de falhar depois do clique.
+export const GOOGLE_OAUTH_ENABLED = false;
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,

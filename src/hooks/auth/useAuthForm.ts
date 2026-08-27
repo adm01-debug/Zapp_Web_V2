@@ -101,7 +101,20 @@ export function useAuthForm() {
     e.preventDefault();
     setErrors({});
     
-    const result = loginSchema.safeParse(formData);
+    // O browser pode autopreencher os campos sem disparar onChange — acontece
+    // sobretudo depois que a senha e limpada num login recusado. Lemos o DOM do
+    // proprio form para nao validar contra um estado desatualizado.
+    const fd = new FormData(e.currentTarget as HTMLFormElement);
+    const credentials = {
+      ...formData,
+      email: ((fd.get("email") as string | null) ?? formData.email).trim(),
+      password: (fd.get("password") as string | null) || formData.password,
+    };
+    if (credentials.email !== formData.email || credentials.password !== formData.password) {
+      setFormData(credentials);
+    }
+
+    const result = loginSchema.safeParse(credentials);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
@@ -111,7 +124,7 @@ export function useAuthForm() {
       return;
     }
 
-    const currentLock = await checkAccountLock(formData.email);
+    const currentLock = await checkAccountLock(credentials.email);
     if (currentLock.isLocked) {
       setLockStatus(currentLock);
       toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
@@ -119,11 +132,11 @@ export function useAuthForm() {
     }
 
     setLoading(true);
-    const { error } = await signIn(formData.email, formData.password);
+    const { error } = await signIn(credentials.email, credentials.password);
     setLoading(false);
 
     if (error) {
-      const lockResult = await recordFailedLogin(formData.email);
+      const lockResult = await recordFailedLogin(credentials.email);
       setLockStatus(lockResult);
       // BUG-F4 FIX: never keep the rejected password in memory after a
       // failed attempt — forces the user to retype and avoids leaking it
@@ -142,7 +155,7 @@ export function useAuthForm() {
         });
       }
     } else {
-      await clearLoginAttempts(formData.email);
+      await clearLoginAttempts(credentials.email);
       toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
       // BUG-F2 FIX: rely on the single useEffect above that watches `user`
       // to redirect, avoiding a double navigate (race between sync
