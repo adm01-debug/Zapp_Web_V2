@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -52,13 +53,12 @@ Deno.serve(async (req) => {
 
         try {
           const baseUrl = evolutionUrl.replace(/\/+$/, '');
-          const resp = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instanceId}`, {
-            method: 'POST', headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: contact.phone }), signal: AbortSignal.timeout(5000),
-          });
+          const resp = await evoFetch(baseUrl, evolutionKey,
+            `/chat/fetchProfilePictureUrl/${instanceId}`, { number: contact.phone },
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
           if (!resp.ok) { failed++; return; }
           const result = await resp.json();
-          const picUrl = result?.profilePictureUrl || result?.picture || result?.url || null;
+          const picUrl = extractAvatarUrl(result);
           if (!picUrl) { failed++; return; }
 
           const imgResp = await fetch(picUrl, { signal: AbortSignal.timeout(8000) });

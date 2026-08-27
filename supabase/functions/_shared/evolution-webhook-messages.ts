@@ -1,4 +1,5 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
+import { evoFetch, extractBase64Media } from './evolution-send.ts';
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -250,16 +251,14 @@ export async function handleStickerMedia(
       const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
       const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
       if (evolutionUrl && evolutionKey) {
-        const apiUrl = `${evolutionUrl.replace(/\/+$/, '')}/chat/getBase64FromMediaMessage/${instance}`;
-        const resp = await fetch(apiUrl, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': evolutionKey },
-          body: JSON.stringify({ message: { key: data.key, message: data.message }, convertToMp4: false }),
-          signal: AbortSignal.timeout(15000),
-        });
+        const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ''), evolutionKey,
+          `/chat/getBase64FromMediaMessage/${instance}`,
+          { message: { key: data.key, message: data.message }, convertToMp4: false },
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
         if (resp.ok) {
           const result = await resp.json();
-          const b64 = (result.base64 as string) || (result.data as string) || (result.media as string);
-          if (b64) mediaUrl = await uploadBase64Sticker(b64);
+          const media = extractBase64Media(result);
+          if (media) mediaUrl = await uploadBase64Sticker(media.base64);
         }
       }
     } catch (apiErr) { console.error('[STICKER] API fetch error:', apiErr); }

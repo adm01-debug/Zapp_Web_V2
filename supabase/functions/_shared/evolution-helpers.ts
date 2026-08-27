@@ -1,4 +1,5 @@
 // Shared helpers for Evolution API webhook and sync functions
+import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
 
 export interface WebhookPayload {
   event: string;
@@ -266,15 +267,12 @@ export async function fetchProfilePicFromApi(instance: string, phone: string): P
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
     if (!evolutionUrl || !evolutionKey) return null;
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
-    const resp = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instance}`, {
-      method: 'POST',
-      headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number: phone }),
-      signal: AbortSignal.timeout(5000),
-    });
+    const resp = await evoFetch(baseUrl, evolutionKey,
+      `/chat/fetchProfilePictureUrl/${instance}`, { number: phone },
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
     if (!resp.ok) return null;
     const result = await resp.json();
-    return result?.profilePictureUrl || result?.picture || result?.url || null;
+    return extractAvatarUrl(result);
   } catch { return null; }
 }
 

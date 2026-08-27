@@ -3,6 +3,9 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCors, Logger } from '../_shared/validation.ts';
+import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+
+const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
 interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -50,19 +53,35 @@ Deno.serve(async (req) => {
     const alerts: string[] = []
 
     // 1. Check Evolution API reachability
+    // v2: /manager/version. GO: não existe → /instance/all (admin), que também
+    // devolve o registro da instância (webhook/events) usado no check 3.
     let apiReachable = false
     let apiLatency = 0
     let apiVersion = ''
+    // deno-lint-ignore no-explicit-any
+    let goInstanceRecord: any = null
     try {
       const apiStart = Date.now()
-      const apiResponse = await fetch(`${EVOLUTION_API_URL}/manager/version`, {
-        headers: { 'apikey': EVOLUTION_API_KEY }
-      })
-      apiLatency = Date.now() - apiStart
-      if (apiResponse.ok) {
-        apiReachable = true
-        const data = await apiResponse.json()
-        apiVersion = data.version || 'unknown'
+      if (IS_GO) {
+        const apiResponse = await evoFetch(EVOLUTION_API_URL, EVOLUTION_API_KEY, '/instance/fetchInstances', undefined, undefined, 'GET')
+        apiLatency = Date.now() - apiStart
+        if (apiResponse.ok) {
+          apiReachable = true
+          apiVersion = 'evolution-go'
+          const data = await apiResponse.json()
+          const records = Array.isArray(data?.data) ? data.data : []
+          goInstanceRecord = records.find((r: { name?: string }) => r?.name === INSTANCE_NAME) ?? records[0] ?? null
+        }
+      } else {
+        const apiResponse = await fetch(`${EVOLUTION_API_URL}/manager/version`, {
+          headers: { 'apikey': EVOLUTION_API_KEY }
+        })
+        apiLatency = Date.now() - apiStart
+        if (apiResponse.ok) {
+          apiReachable = true
+          const data = await apiResponse.json()
+          apiVersion = data.version || 'unknown'
+        }
       }
     } catch {
       alerts.push('Evolution API is unreachable')
@@ -73,15 +92,15 @@ Deno.serve(async (req) => {
     let instanceState = 'unknown'
     let phoneNumber = ''
     try {
-      const instanceResponse = await fetch(
-        `${EVOLUTION_API_URL}/instance/connectionState/${INSTANCE_NAME}`,
-        { headers: { 'apikey': EVOLUTION_API_KEY } }
+      const instanceResponse = await evoFetch(
+        EVOLUTION_API_URL, EVOLUTION_API_KEY,
+        `/instance/connectionState/${INSTANCE_NAME}`, undefined, undefined, 'GET'
       )
       if (instanceResponse.ok) {
         const data = await instanceResponse.json()
-        instanceState = data.instance?.state || 'unknown'
+        instanceState = extractConnectionState(data)
         instanceConnected = instanceState === 'open'
-        phoneNumber = data.instance?.phoneNumber || ''
+        phoneNumber = data.instance?.phoneNumber || goInstanceRecord?.jid || ''
         
         if (!instanceConnected) {
           alerts.push(`WhatsApp disconnected: state=${instanceState}`)
@@ -96,24 +115,37 @@ Deno.serve(async (req) => {
     let webhookUrl = ''
     let webhookEvents: string[] = []
     try {
-      const webhookResponse = await fetch(
-        `${EVOLUTION_API_URL}/webhook/find/${INSTANCE_NAME}`,
-        { headers: { 'apikey': EVOLUTION_API_KEY } }
-      )
-      if (webhookResponse.ok) {
-        const data = await webhookResponse.json()
-        webhookUrl = data.webhook?.url || ''
-        webhookEvents = data.webhook?.events || []
-        webhookConfigured = !!webhookUrl
-        
-        if (!webhookConfigured) {
-          alerts.push('Webhook not configured')
+      if (IS_GO) {
+        // GO não expõe /webhook/find. Webhook por instância vem em /instance/all;
+        // vazio significa WEBHOOK_URL global via env do container (não introspectável).
+        webhookUrl = goInstanceRecord?.webhook || 'env:WEBHOOK_URL (global)'
+        webhookEvents = typeof goInstanceRecord?.events === 'string' && goInstanceRecord.events
+          ? goInstanceRecord.events.split(',')
+          : []
+        webhookConfigured = true
+        if (goInstanceRecord && !webhookEvents.includes('All') && !webhookEvents.includes('ALL') && !webhookEvents.includes('Message') && !webhookEvents.includes('MESSAGE')) {
+          alerts.push(`Instance not subscribed to Message events (events=${goInstanceRecord.events ?? ''})`)
         }
-        
-        const criticalEvents = ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED']
-        const missingEvents = criticalEvents.filter(e => !webhookEvents.includes(e))
-        if (missingEvents.length > 0) {
-          alerts.push(`Missing webhook events: ${missingEvents.join(', ')}`)
+      } else {
+        const webhookResponse = await fetch(
+          `${EVOLUTION_API_URL}/webhook/find/${INSTANCE_NAME}`,
+          { headers: { 'apikey': EVOLUTION_API_KEY } }
+        )
+        if (webhookResponse.ok) {
+          const data = await webhookResponse.json()
+          webhookUrl = data.webhook?.url || ''
+          webhookEvents = data.webhook?.events || []
+          webhookConfigured = !!webhookUrl
+
+          if (!webhookConfigured) {
+            alerts.push('Webhook not configured')
+          }
+
+          const criticalEvents = ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED']
+          const missingEvents = criticalEvents.filter(e => !webhookEvents.includes(e))
+          if (missingEvents.length > 0) {
+            alerts.push(`Missing webhook events: ${missingEvents.join(', ')}`)
+          }
         }
       }
     } catch {

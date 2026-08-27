@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -28,15 +29,14 @@ Deno.serve(async (req) => {
       let responseTime = 0;
 
       try {
-        const resp = await fetch(`${baseUrl}/instance/connectionState/${conn.instance_id}`, {
-          method: 'GET', headers: { 'apikey': evolutionKey },
-          signal: AbortSignal.timeout(10000),
-        });
+        const resp = await evoFetch(baseUrl, evolutionKey,
+          `/instance/connectionState/${conn.instance_id}`, undefined,
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
         responseTime = Math.round(performance.now() - start);
 
         if (resp.ok) {
           const data = await resp.json();
-          const state = data?.instance?.state || data?.state || 'unknown';
+          const state = extractConnectionState(data);
           healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
 
           const dbStatus = state === 'open' ? 'connected' : 'disconnected';

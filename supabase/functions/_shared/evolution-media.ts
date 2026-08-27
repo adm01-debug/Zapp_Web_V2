@@ -1,5 +1,6 @@
 // Shared media persistence helpers for Evolution API functions
 import { isRecord } from "./evolution-helpers.ts";
+import { evoFetch, extractBase64Media } from "./evolution-send.ts";
 
 export function isValidMediaBytes(bytes: Uint8Array, messageType: string): boolean {
   if (bytes.length < 4) return false;
@@ -93,18 +94,17 @@ export async function persistMediaViaApi(
     if (!evolutionUrl || !evolutionKey) return null;
 
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
-    const resp = await fetch(`${baseUrl}/chat/getBase64FromMediaMessage/${instance}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': evolutionKey },
-      body: JSON.stringify({ message: { key: data.key, message: data.message }, convertToMp4: false }),
-      signal: AbortSignal.timeout(15000),
-    });
+    const resp = await evoFetch(baseUrl, evolutionKey,
+      `/chat/getBase64FromMediaMessage/${instance}`,
+      { message: { key: data.key, message: data.message }, convertToMp4: false },
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
 
     if (!resp.ok) { console.error(`[MEDIA] getBase64 API error (${resp.status})`); return null; }
 
     const result = await resp.json();
-    const b64 = (result.base64 as string) || (result.data as string) || (result.media as string);
-    if (!b64) return null;
+    const media = extractBase64Media(result);
+    if (!media) return null;
+    const b64 = media.base64;
 
     const raw = b64.includes(',') ? b64.split(',')[1] : b64;
     const binaryStr = atob(raw);
@@ -112,7 +112,7 @@ export async function persistMediaViaApi(
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
     if (bytes.length < 100) return null;
 
-    const mimeType = (result.mimetype as string) || 'application/octet-stream';
+    const mimeType = media.mimetype;
     let ext = 'bin';
     if (mimeType.includes('jpeg') || mimeType.includes('jpg')) ext = 'jpg';
     else if (mimeType.includes('png')) ext = 'png';
