@@ -1,161 +1,188 @@
-# HANDOFF ‚Äî Migra√ß√£o ZAPP WEB V2 (Lovable Cloud ‚Üí Supabase Cloud novo + VPS Hostinger)
+# HANDOFF ‚Äî Migra√ß√£o ZAPP WEB V2 ‚Äî fim da Sess√£o 4 (2026-08-27)
 
-Gerado: 2026-08-26 ~19:40 UTC ¬∑ De: Claude (sess√£o 1) ¬∑ Para: Claude (sess√£o 2) ¬∑ Dono: Joaquim / Promo Brindes
-Este arquivo √© a fonte de verdade da migra√ß√£o. Leia inteiro antes de executar qualquer coisa. Atualize a se√ß√£o 5 (status) a cada etapa conclu√≠da.
+> Documento de continuidade para nova sess√£o de chat. Leia INTEIRO antes de agir.
+> Regras do Joaquim valem sempre: diff m√≠nimo, execu√ß√£o end-to-end via MCP, diagn√≥stico
+> antes de patch, resultado primeiro, bloco "Pr√≥ximos passos" com 3 itens ao fim de execu√ß√£o.
 
 ---
-## 0. Como come√ßar (kickoff da sess√£o nova)
-1. `tool_search` para carregar: `code_exec`, `code_read_file`, `src_query`, `db_query` (SUPABASE - ZAPP WEB V2 - MCP), `cf_worker_deploy`, `cf_secret_list`, `github_put_file`, `github_push_files`, `github_create_branch`, `VPS_getVirtualMachinesV1`.
-2. Ler este arquivo (`code_read_file /workspace/notes/zapp-web-v2-migration-handoff.md`) e `/workspace/tmp/migration/*` (fingerprints + diff).
-3. Conferir estado real antes de agir (regra 7 do Joaquim): `ssh` na VPS (lab `zapp-replay`), `curl` no worker `/health` (deve responder `version 1.1.0, tools 77`), `db_migrations` no destino (deve estar vazio).
-4. Perguntar ao Joaquim SOMENTE o que est√° marcado como GATE/DECIS√ÉO. Tudo o que est√° marcado ‚è≥ sem gate: executar.
-5. Respostas em PT-BR, resultado primeiro, diff m√≠nimo, sem hedging, fechar com bloco `Pr√≥ximos passos` (exatamente 3, execut√°veis via MCP).
 
-## 1. Contrato de trabalho (resumo das regras do Joaquim)
-- Execu√ß√£o end-to-end via MCP; nunca "copie e cole". Decidir como dev s√™nior; perguntar s√≥ para custo, arquitetura, dado destrutivo em produ√ß√£o, trade-off real.
-- Verdade acima de valida√ß√£o: nunca dizer que testou o que n√£o rodou. Zero churn: n√£o refatorar o que n√£o foi pedido.
-- `APROVADO` = executar exatamente o plano. Diagn√≥stico antes de patch (ler logs/estado real).
-- Origem `vpkmqeumtxhrwgawxdrl` √© SOMENTE LEITURA desde a etapa 3. Nada √© criado/alterado/apagado sem autoriza√ß√£o expl√≠cita ‚Äî inclusive no destino quando destrutivo.
-- Nenhum segredo em repo, nota ou chat (os que vazaram no chat 1 est√£o listados na se√ß√£o 3 para rota√ß√£o na etapa 97).
+## 0. PR√ìXIMA A√á√ÉO IMEDIATA (retomar exatamente aqui)
 
-## 2. Identidades e endere√ßos
-| Item | Valor |
-|---|---|
-| ORIGEM (Lovable Cloud, read-only) | `https://vpkmqeumtxhrwgawxdrl.supabase.co` ‚Äî acesso s√≥ via MCP `src_query` (role postgres, DDL/DML bloqueados) |
-| DESTINO (Supabase Cloud novo, confirmado pelo Joaquim) | `https://tnnnlkbymytvtqngbbqh.supabase.co` ¬∑ ref `tnnnlkbymytvtqngbbqh` ¬∑ regi√£o `us-west-2` (Joaquim n√£o pediu mudan√ßa ‚Üí fica) ¬∑ PG 17.6 |
-| Pooler destino | `aws-0-us-west-2.pooler.supabase.com:5432` (session) ‚Äî usado por `/workspace/tmp/pgcli/sql.js` |
-| Repo app | `https://github.com/adm01-debug/zapp-web-v2` (branch de trabalho prevista: `feat/fresh-install-hostinger`, ainda N√ÉO criada) |
-| Repo do worker MCP | `https://github.com/adm01-debug/supabase-lovable-mcp` ‚Äî `workers/zapp-web-v2/worker.js` |
-| Worker MCP do destino | `supabase-zapp-web-v2-mcp` (Cloudflare) ¬∑ `https://supabase-zapp-web-v2-mcp.adm01.workers.dev/<MCP_TOKEN>/mcp` ¬∑ v1.1.0 ¬∑ 77 tools ¬∑ conector Claude: "SUPABASE - ZAPP WEB V2 - MCP" |
-| Worker de auditoria (origem) | `supabase-zapp-audit-mcp` ¬∑ conector "MCP - SUPABASE / LOVABLE CLOUD - ZAPP WEB V2" ¬∑ secrets: FIREBASE_API_KEY, LOVABLE_REFRESH_TOKEN, WORKER_BEARER (l√™ a origem pela API do Lovable). N√ÉO tem `DEST_MCP_*` ‚Üí `dest_query`/`audit_diff` n√£o funcionam; o diff √© feito por fingerprint (se√ß√£o 11) |
-| VPS Hostinger | KVM 4 ¬∑ `srv1481814.hstgr.cloud` ¬∑ `187.77.151.129` ¬∑ Docker + Traefik v3.6 (`traefik:latest`) ¬∑ Docker Manager (projetos) ¬∑ sshd ainda com PasswordAuthentication yes / PermitRootLogin yes |
-| Evolution GO (j√° instalada na VPS) | projeto Docker Manager `evolution-go-rxj2` ¬∑ porta 4000 ¬∑ `https://evolution-go-rxj2.srv1481814.hstgr.cloud` ¬∑ GLOBAL_API_KEY no env do projeto (ler com `VPS_getProjectContentsV1`) ¬∑ imagem `:latest` (pinar na etapa 87) |
-| Container claude-code (VPS AtomicaBR) | workspace `/workspace` ¬∑ sem python3 ¬∑ shell dash ¬∑ git push QUEBRADO (`/workspace/.git-credentials` 0 bytes) |
-| Lab de replay | VPS Hostinger, container `zapp-replay` (`supabase/postgres:17.6.1.166`, `127.0.0.1:15432`, senha `replay`), scripts em `/root/` |
+**Step 63-ENVIO, ~90% pronto.** O tradutor `supabase/functions/_shared/evolution-go-routes.ts`
+est√° CRIADO (commitado neste mesmo commit e presente no workspace do container). Falta:
 
-## 3. Credenciais ‚Äî ONDE est√£o (nunca copiar valores para c√°)
-- Destino: `/root/.secrets/zapp-v2.env` no container claude-code (SUPABASE_URL, SUPABASE_REF, ANON_KEY, SERVICE_ROLE_KEY, PUBLISHABLE_KEY, SECRET_KEY, PGPASSWORD, DATABASE_URL). Carregar com `set -a; . /root/.secrets/zapp-v2.env; set +a`.
-- Token do worker MCP: `/root/.secrets/zapp-v2-mcp-token`.
-- SSH da VPS Hostinger: `/root/.ssh/hostinger_vps` (`ssh -i ~/.ssh/hostinger_vps -o BatchMode=yes root@187.77.151.129`).
-- Evolution GO: env do projeto `evolution-go-rxj2` via Hostinger MCP.
-- Supabase PAT do dono do destino: N√ÉO EXISTE ainda ‚Äî Joaquim fornece na etapa 57 (deploy de edge functions/secrets). Guardar em `/root/.secrets/`.
-- Rota√ß√£o obrigat√≥ria (etapa 97) ‚Äî vazaram no chat 1: service_role e sb_secret_ do destino, senha do Postgres do destino, MCP_TOKEN do worker, GLOBAL_API_KEY e POSTGRES_PASSWORD da Evolution GO.
+1. **Patch no `supabase/functions/_shared/evolution-api-proxy.ts`** (125 linhas, √∫nico ponto
+   por onde TODAS as ~40 actions da function `evolution-api` passam). Editar via `node -e`
+   no container (str_replace do sandbox N√ÉO alcan√ßa o container). Patch:
+   - topo: `import { translateV2ToGo } from './evolution-go-routes.ts';`
+   - dentro de `proxyToEvolution`, ANTES de montar `fullUrl`:
+     ```ts
+     const flavor = Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go';
+     let apikey = evolutionApiKey;
+     if (flavor !== 'v2') {
+       const t = translateV2ToGo(path, method, body);
+       if (t) {
+         path = t.path; method = t.method; body = t.body; instanceInPath = undefined;
+         if (t.auth === 'instance') apikey = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+         console.log(`[Evolution GO] traduzido -> ${method} ${path}`);
+       }
+     }
+     ```
+   - trocar `'apikey': evolutionApiKey` por `'apikey': apikey` no headers.
+   - Obs: `path`/`method`/`body`/`instanceInPath` s√£o params por assinatura ‚Äî para reatribuir,
+     renomear params para `pathIn/methodIn/bodyIn/instanceInPathIn` e criar `let path = pathIn`
+     etc. no topo da fun√ß√£o (diff m√≠nimo).
+2. **Deploy s√≥ da `evolution-api`** (√∫nica function que importa o proxy ‚Äî verificado via grep):
+   `export SUPABASE_ACCESS_TOKEN=$(cat /root/.secrets/zapp-v2-supabase-pat); cd /workspace/repos/zapp-web-v2 && npx supabase functions deploy evolution-api --project-ref tnnnlkbymytvtqngbbqh --use-api`
+3. **Teste real de envio** via function. N√∫mero correto da inst√¢ncia: `551146375517`
+   (teste anterior falhou por typo `5511463755170`, 0 extra no fim):
+   ```sh
+   curl -sS -X POST "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-api" \
+     -H "Authorization: Bearer <ANON_KEY, ver /root/.secrets/zapp-v2.env>" -H "Content-Type: application/json" \
+     -d '{"action":"send-text","instanceName":"PRINCIPAL","number":"551146375517","text":"teste envio GO"}'
+   ```
+   Sucesso = `{message:success,data:{...}}` do GO + mensagem chega no WhatsApp.
+4. **Commitar** `evolution-api-proxy.ts` patchado + `supabase/config.toml` (j√° reescrito no
+   workspace: `project_id = \"tnnnlkbymytvtqngbbqh\"` + `verify_jwt = false` para
+   evolution-webhook, whatsapp-webhook, gmail-webhook, elevenlabs-webhook, public-api,
+   webhook-diagnostic). Ler conte√∫do do container e commitar via `github_push_files` (text).
+5. **Fetches diretos fora do proxy** em `evolution-api/index.ts` (actions `connect`, `status`,
+   `disconnect` usam `fetch()` cru com paths v2 `/instance/connect/{i}`,
+   `/instance/connectionState/{i}`, `/instance/logout/{i}` + apikey GLOBAL). N√ÉO passam
+   pelo tradutor ‚Üí status/connect/disconnect quebrados no GO (polling n√£o atualiza
+   `whatsapp_connections`). Fix curto: trocar os 3 fetches para chamar o proxy (que traduz),
+   preservando os UPDATEs no banco que cada action faz com a resposta. Antes, conferir no
+   Swagger o shape da resposta GO de `/instance/status` para mapear connected/disconnected.
 
-## 4. Ferramentas MCP ‚Äî qual usar para qu√™ + armadilhas
-- `CLAUDE CODE - VPS - MCP:code_exec` ‚Äî shell no container claude-code. `working_dir` PRECISA existir antes (sen√£o "chdir failed"). Comandos >~100 s d√£o `error code: 524` (gateway) mas continuam rodando: usar `nohup ‚Ä¶ &` e consultar depois. Sem bashisms.
-- `MCP - SUPABASE / LOVABLE CLOUD - ZAPP WEB V2:src_query` ‚Äî SELECT na origem. Retorna JSON no contexto: use `string_agg`/`md5` para sa√≠da compacta. `relkind`/`defaclobjtype` s√£o `"char"`: castar `::text`. N√£o existe `supabase_functions.hooks` na origem.
-- `SUPABASE - ZAPP WEB V2 - MCP:*` (destino, worker v1.1.0): `db_query` (raw JSON, bigint √≠ntegro, timeout 120 s, multi-statement OK), `db_transaction` (array JSON de statements ‚Üí `mcp_exec_many`, at√¥mico, resultado por statement), `db_batch_query` (array JSON), `db_apply_migration` (registra em `supabase_migrations.schema_migrations`, vers√£o sem colis√£o), `storage_*`, `auth_*`, `functions_*`. Alternativa direta: `node /workspace/tmp/pgcli/sql.js -f arquivo.sql` (pooler, role postgres, sem PostgREST).
-- `CLOUDFLARE - MCP - WORKERS:cf_worker_deploy` ‚Äî deploy via API preserva secrets (comprovado). `cf_secret_list/put` para secrets.
-- `GITHUB - MCP - FOREVER:*` ‚Äî √∫nica forma de escrever nos repos `adm01-debug` (git push do container est√° quebrado; MCP GitHub padr√£o d√° 403). GitHub Actions da conta est√° SEM BUDGET ‚Üí CI n√£o roda.
-- `HOSTINGER - MCP:VPS_*` ‚Äî Docker Manager (`VPS_createNewProjectV1`, `VPS_getProjectLogsV1`, `VPS_updateProjectV1`, `VPS_createSnapshotV1`, firewall). Descobrir `virtualMachineId` com `VPS_getVirtualMachinesV1`.
-- `Lovable:query_database` (MCP oficial) ‚Äî alternativa de leitura da origem se o worker de auditoria cair.
-- `PORTAINER - MCP` √© da VPS AtomicaBR (N√ÉO da Hostinger). Hostinger s√≥ via ssh/Hostinger MCP.
-- Bug conhecido: `supabase_apply_migration` do MCP self-hosted (coluna `executed_at`) ‚Äî n√£o se aplica ao destino (worker pr√≥prio), mas n√£o usar aquele MCP aqui.
+---
 
-## 5. Estado atual (26/08 ~22:00 UTC ‚Äî sess√£o 3)
-### FEITO (com evid√™ncia)
-- Gate 0 ‚úÖ destino `tnnnlkbymytvtqngbbqh`. Regi√£o us-west-2. Lab na VPS autorizado.
-- Etapas 9‚Äì15 ‚úÖ ferramental completo (mcp_exec v2.1, mcp_exec_many, worker v1.1.0 deployado no Cloudflare, harness 77 tools 0 FAIL, graphify).
-- Etapa 17 ‚úÖ DDL completo dos objetos divergentes ‚Üí `docs/migration/source-ddl/` (10 arquivos: table_contacts, table_email_*, table_entity_versions, table_gmail_accounts, table_saved_filters, contacts_inbound_fks, functions_views).
-- Etapas 18‚Äì21 ‚úÖ lab zapp-replay (supabase/postgres:17.6.1.166), 267 migrations ‚Üí 243 OK / 24 FAIL, fingerprints, Diff A classificado.
-- **Gate 1 ‚úÖ D1‚ÄìD6 todos APROVADOS e executados** (ver DECISIONS.md para status por ID).
-- **Etapas 29‚Äì50 ‚úÖ Fase 3 conclu√≠da**: 256 migrations aplicadas no destino, contacts restaurada (D1), cron D4, storage 7 buckets + 23 pol√≠ticas, realtime D5 (11 tabelas), role/db settings, paridade atingida.
-- **Gate 2 ‚úÖ PARITY-REPORT.md assinado** ‚Äî zero diverg√™ncia inexplicada. Destino: 123 tabelas, 8 ext, 64 fn, 7 views, 4 enums, 1 cron, 11 pub.
-- Etapas 1, 4, 5 ‚úÖ branch `feat/fresh-install-hostinger` criada, docs/migration/ commitados (plano de 30 etapas ‚Äî sess√£o 3).
-- Worker v1.1.0 no Cloudflare ‚úÖ | push para GitHub pendente (etapa 4 do plano-30).
-### PENDENTE
-- **Plano de 30 etapas (aprovado 26/08 sess√£o 3)**: ver `docs/migration/HANDOFF.md` se√ß√£o 5 e DECISIONS.md ‚Äî em execu√ß√£o.
-- Worker v1.1.1 (etapas 6‚Äì9 do plano-30): GAPs max_rows/line-size/schema db_select.
-- apply-batch.js (etapa 11 do plano-30): executor de migrations em lotes.
-- Etapa 16 üîí SSH hardening VPS.
-- Etapas 22‚Äì27: diff B, mapa infra-deps, matriz fn√ótabela, Evolution inventory, auth/storage inventory, wildcard domain.
-- Fase 4 (dados) üîí Gate 51.
-- Fase 5 (functions/Evolution) üîí Gate 57.
-- Fase 6 (c√≥digo) ‚è≥ etapas 67‚Äì78.
-- Fase 7 (VPS deploy) Õo>Ìà? ‚è≥ etapas 79‚Äì90.
-- Fase 8 (cutover/p√≥s) ‚è≥ etapas 91‚Äì100.
+## 1. Vis√£o geral da migra√ß√£o
 
-## 6. Invent√°rio de artefatos
-### Container claude-code (`/workspace`)
-- `/workspace/repos/zapp-web-v2` ‚Äî clone do app (267 migrations em `supabase/migrations`, 62 edge functions em `supabase/functions`, `supabase-export/` defasado de 2026-05-12, `graphify-out/`).
-- `/workspace/repos/supabase-lovable-mcp/workers/zapp-web-v2/worker.js` ‚Äî worker v1.1.0 (commit local √† frente de origin/main).
-- `/workspace/tmp/pgcli/sql.js` (executor SQL direto via `DATABASE_URL`; `-f arquivo` ou `-c "sql"`), `mcp_exec_v2.sql`, `mcp_exec_many.sql`.
-- `/workspace/tmp/w.mjs` + `/workspace/tmp/wtest2.mjs` (harness local do worker; exporta env de `/root/.secrets/zapp-v2.env` + `MCP_TOKEN`).
-- `/workspace/tmp/migration/source-fp.txt`, `replay-fp.txt`, `diff.js`.
-- `/workspace/tmp/audit/agent{1..5}-report.md` ‚Äî relat√≥rios da auditoria (PASS 161 ¬∑ FAIL 21 ¬∑ GAT 28).
-- `/workspace/tmp/storage-shim.sql`, `/workspace/tmp/fp.sql`, `/workspace/tmp/replay.sh`, `/workspace/tmp/replay2.sh` (c√≥pias dos scripts do lab).
-- `/workspace/tmp/graphify.log`.
-### VPS Hostinger (`/root`)
-- `/root/zapp-build-test/` ‚Äî clone do repo + `Dockerfile`, `docker/nginx.conf`, `docker-compose.yml`, `.dockerignore` validados (imagem `zapp-web-v2:test` constru√≠da; nginx -t OK, SPA fallback, gzip, 196 `.map` dentro da imagem = 14 MB a remover).
-- `/root/zapp-replay/` ‚Äî lab (`replay.log` = 1¬™ rodada sem shim, `replay2.log` = rodada v√°lida, `replay-fp.txt`, `tables.txt`, `last.out`).
-- `/root/storage-shim.sql`, `/root/fp.sql`, `/root/replay.sh`, `/root/replay2.sh` (j√° com `-U supabase_admin -d postgres` no shim).
-- Deploy key do GitHub instalada para clone do `zapp-web-v2` (somente leitura).
-### Destino (`tnnnlkbymytvtqngbbqh`)
-- Schema public: S√ì `mcp_exec`, `mcp_exec_many` (nada do app ainda). `supabase_migrations.schema_migrations(version, statements, name)` existe e est√° vazia (testes de migra√ß√£o foram limpos). Setting de role: service_role statement_timeout 120s.
-### Cloudflare
-- Worker `supabase-zapp-web-v2-mcp` v1.1.0 (secrets SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPAAASE_ANON_KEY, MCP_TOKEN). Repo do worker sem `CF_API_TOKEN` no GitHub (s√≥ `CF_ACCOUNT_ID`) ‚Üí deploy sempre por `cf_worker_deploy`.
+- **Origem:** Lovable Cloud, projeto Supabase `vpkmqeumtxhrwgawxdrl` (READ-ONLY, n√£o tocar).
+- **Destino:** Supabase Cloud `tnnnlkbymytvtqngbbqh` (us-west-2, PG 17.6) + VPS Hostinger.
+- **VPS Hostinger:** `srv1481814.hstgr.cloud` / `187.77.151.129`, SSH key
+  `/root/.ssh/hostinger_vps` (ou `~/.ssh/hostinger_vps` dentro do container claude-code).
+- **Repo app:** `adm01-debug/zapp-web-v2`, branch de trabalho `feat/fresh-install-hostinger`.
+- **Gates 0/1/2 APROVADOS. Fases 0‚Äì3 CONCLU√çDAS. Fase 5 (edge functions) ~95%.**
+- Decis√µes D1‚ÄìD9 em `docs/migration/DECISIONS.md`; plano em `docs/migration/PLANO.md`.
 
-## 7. Achados da auditoria (5 agentes) ‚Äî o que ainda importa
-- Agente 1 (protocolo): auth OK (401 sem token), sem inje√ß√£o via `ID()/L()`, JWT nunca vaza. Corrigidos no v1.1.0: batch JSON-RPC. GAPs abertos: sem teto de tamanho por linha; `max_rows` sem valida√ß√£o estrita; `schema` ignorado em `db_select` fora de public (backlog etapa 99).
-- Agente 2 (PostgreSQL): corrigido em v2.1. PostgREST demora ~1‚Äì2 s para recarregar schema ap√≥s DDL (`notify pgrst,'reload schema'` j√° est√° nos scripts).
-- Agente 3 (VPS): sshd inseguro (etapa 16); Traefik `:latest`; `.map` na imagem; docker-compose OK com Traefik v3.6; ~13 GB de imagens recuper√°veis (`docker system prune` s√≥ com APROVADO) ; sem firewall_group na Hostinger; portas 32771/48592 publicadas direto (outros projetos).
-- Agente 4 (worker/CI): 77 tools 1:1; CI bloqueada por "Actions budget"; `CF_API_TOKEN` ausente; wrangler dry-run OK (41 KB / 11 KB gzip).
-- Agente 5 (frontend): `src/integrations/supabase/client.ts` e `externalClient.ts` hardcoded para `supabase.atomicabr.com.br` (coment√°rio diz para ignorar env porque o Lovable injeta `vpkm‡äf`); 4 refs de projeto no c√≥digo: `vpkm‚Ä¶` (config.toml), `allrjhkpuscmgbsnmjlv` (fallback hardcoded no trigger `notify_sicoob_on_reply` + `.env.example`), `atomicabr` (client/.env.production), `pgxfvjmuubtbowutlide` (`clientesClient.ts`, c√≥digo morto com credenciais); `verify_jwt` n√£o definido por function no config.toml; `index.html` com preconnect √≥rf√£o `rqmbchomazwsaupnuduf`; build OK (bun 5,4 s install + 14,3 s build); `tsc` 3 erros pr√©-existentes; testes 2463/2496 (1 timeout); `ci.yml` usa `npm ci` mas s√≥ existe `bun.lock` e tem job `audit-report` fora de `jobs:`; `.nvmrc` ausente (Node 20.19.0); 28 secrets √∫nicos nas 62 functions (lista completa no agent5-report.md; inclui SUPABASE_*, EVOLUTION_API_URL/KEY, LOVABLE_API_KEY, ELEVENLABS_*, GOOGLE_*, MAPBOX_PUBLIC_TOKEN, RESEND_API_KEY).
+## 2. Credenciais (fonte da verdade = arquivos no container claude-code)
 
-## 8. Baseline da origem + Diff A (origem viva √ó replay das migrations)
-Contagens origem: 122 tabelas ¬∑ 64 fun√ß√µes ¬∑ 335 policies (120 tabelas com policy; `contact_tags` e `contact_custom_fields` t√™m RLS ligado e ZERO policies) ¬∑ 54 tabelas com trigger ¬∑ 7 views ¬∑ 4 enums ¬∑ 8 extens√µes (pg_cron 1.6.4, pg_net 0.20.0, pg_stat_statements, pg_trgm, pgcrypto, plpgsql, supabase_vault, uuid-ossp) ¬∑ 1 cron (`cleanup-link-preview-cache`, `0 3 * * *`, ativo) ¬∑ publication `supabase_realtime` = messages, queue_members, queues ¬∑ 7 buckets (audio-memes/pub, audio-messages, avatars/pub, custom-emojis/pub, stickers/pub, team-chat-files, whatsapp-media) com 23 policies em storage.objects ¬∑ grants: todas as tabelas/views com o mesmo hash 388594fd (anon/authenticated/service_role ALL) ¬∑ role settings: anon 3s, authenticated 8s, authenticator 8s+lock 8s+safeupdate, DB `app.settings.jwt_exp=3600`, `idle_in_transaction_session_timeout=15min` ¬∑ schemas: auth, cron, extensions, graphql, graphql_public, net, public, realtime, storage, supabase_migrations, vault ¬∑ dados ‚âà60 linhas (3 auth users, 2 profiles, 2 user_roles, 2 agent_stats, 7 messages, 50 m√©tricas), 0 objetos em storage.
-Replay (repo, 267 migrations): 243 OK / 24 FAIL, 124 tabelas.
+- **`/root/.secrets/zapp-v2.env`**: DB destino, service_role, anon key, EVOLUTION_API_URL/
+  KEY/INSTANCE_NAME/INSTANCE_TOKEN, WEBHOOK_SECRET, WHATSAPP_VERIFY_TOKEN,
+  MAPBOX_PUBLIC_TOKEN, RESEND_API_KEY, ELEVENLABS_API_KEY.
+  Carregar: `set -a; . /root/.secrets/zapp-v2.env; set +a`
+- **`/root/.secrets/zapp-v2-pat`**: PAT GitHub.
+- **`/root/.secrets/zapp-v2-supabase-pat`**: PAT Supabase (Gate 57) ‚Äî **VALIDADE 1 DIA,
+  recebido 2026-08-27 ~13h. Se expirado, PEDIR NOVO ao Joaquim antes de qualquer
+  `npx supabase` ou Management API.**
+- **Evolution GO GLOBAL_API_KEY**: em `/root/.secrets/zapp-v2.env` (EVOLUTION_API_KEY);
+  rota√ß√£o prevista etapa 97.
+- **Inst√¢ncia PRINCIPAL:** id `c66e1968-fe9e-4686-8c31-ed64bf0d5de6`, token em
+  EVOLUTION_INSTANCE_TOKEN, n√∫mero `551146375517`, conectada, perfil "Promo Brindes".
+  Row em `whatsapp_connections` id `3b0f7f2e-887a-4c00-97de-012313649f9b`.
+- **Fase 8 rotaciona TUDO** que passou pelo chat (service_role, sb_secret_, senha PG,
+  MCP_TOKEN, GLOBAL_API_KEY, PATs, MAPBOX, RESEND, ELEVENLABS, tokens de inst√¢ncia).
 
-| Categoria | Origem | Replay | S√≥ origem | S√≥ replay | Divergentes |
-|---|---|---|---|---|---|
-| COLS | 122 | 124 | 0 | contacts, email_attachments | email_labels, email_messages, email_threads, entity_versions, gmail_accounts, messages, saved_filters |
-| CONS | 122 | 124 | 0 | contacts, email_attachments | 39 tabelas (FKs para contacts + cadeia gmail/email) |
-| IDX | 122 | 124 | 0 | contacts, email_attachments | audit_logs, email_messages, email_threads, entity_versions, gmail_accounts, saved_filters |
-| POL | 120 | 124 | 0 | contact_custom_fields, contact_tags, contacts, email_attachments | 20 tabelas (ai_conversation_tags, audit_logs, chatbot_executions, connection_health_logs, contact_notes, conversation_analyses, conversation_events, conversation_sla, email_*, entity_versions, followup_executions, gmail_accounts, message_reactions, messages, queue_positions, saved_filters, webhook_rate_limits, whatsapp_connection_queues) |
-| TRG | 54 | 55 | 0 | contacts | email_threads, gmail_accounts, saved_filters |
-| VIEW | 7 | 6 | gmail_accounts_safe | 0 | 0 |
-| ENUM | 4 | 4 | 0 | 0 | 0 |
-| FN | 64 | 68 | get_own_gmail_accounts(), log_audit_event(‚Ä¶) | admin_criar_usuario_painel, fn_process_pending_scans, fn_purge_processed_webhook_events, fn_trg_security_check_media_queue, update_gmail_updated_at, update_saved_filters_updated_at | ensure_single_default_filter() |
-| CRON | 1 | 0 | cleanup-link-preview-cache | ‚Äî | ‚Äî |
-| PUB | 3 tabelas | 8 tabelas | ‚Äî | conversation_sla, email_messages, email_threads, message_reactions, notifications | ‚Äî |
+## 3. Evolution GO (VPS Hostinger) ‚Äî modelo mental
 
-Classifica√ß√£o (evid√™ncia: `replay2.log` + greps no repo):
-A. PERDA REAL NA ORIGEM ‚Äî `contacts` dropada em 26/08 ("security test"); cascata: FKs para contacts sumiram em ~30 tabelas, policies de `contact_tags`/`contact_custom_fields` derrubadas (tabelas inacess√≠veis), 6 fun√ß√µes que referenciam contacts (`search_contacts`, `auto_assign_contact`, `is_contact_visible_to_user`, `contacts_count_by_type`, `normalize_contact_phone`, `skill_based_assign`) quebram em runtime.
-B. DRIFT DO REPO (11 migrations com nome manual, nunca rodaram na origem ‚Äî Lovable s√≥ aplica as UUID):
-   - 3 retro-datadas que colidem com Lovable posteriores: saved_filters, entity_versions, gmail_integration. No replay rodam antes e causam 16 FAILs em cascata.
-   - 7 do lote junho/2026 para o self-hosted AtomicaBR/v3.
-   - `20260412230000_fix_rls_policies_security.sql`: aplicou no lab, n√£o existe na origem ‚Äî hardening n√£o versionado.
-C. CONFIG FORA DE MIGRATION ‚Äî cron cleanup-link-preview-cache criado √† m√£o na origem; publication realtime: origem 3 tabelas, migrations declaram 8+.
+- Diret√≥rio: `/docker/evolution-go-rxj2/`. Licen√ßa ATIVA (saga conclu√≠da, watchdog removido).
+- **Porta da API rotaciona** a cada restart: `docker port evolution-go-rxj2-api-1 4000`.
+  URL p√∫blica est√°vel: `https://evolution-go-rxj2.srv1481814.hstgr.cloud` (Traefik).
+- DB: `docker exec evolution-go-rxj2-postgres-1 psql -U evolution -d evogo_users`.
+- **Auth (CR√çTICO):** rotas admin (`/instance/create|all|info/:id|delete/:id|logs/:id`)
+  ‚Üí header `apikey: GLOBAL_API_KEY`. Rotas per-instance (`/send/*`, `/instance/status|qr|
+  connect|disconnect|logout`, `/message/*`, `/chat/*`, `/user/*`) ‚Üí `apikey: TOKEN_DA_INST√ÇNCIA`.
+- **Webhook:** coluna `instances.webhook` no DB (j√° aponta para
+  `https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-webhook`, events
+  `MESSAGE,CONNECTED,DISCONNECTED,QRCODE,MESSAGES_UPSERT`). Lido fresco a cada evento,
+  sem restart. N√ÉO usar WEBHOOK_URL global (duplica entrega). Retry 5x/30s.
+- Fonte clonada em `/tmp/evgo` (container). Swagger: `<url>/swagger/index.html`.
+- Payloads outbound GO (confirmados no fonte, `pkg/sendMessage/service/send_service.go` e
+  `pkg/message/service/message_service.go`):
+  TextStruct `{number,text,id?,delay?,mentionedJid?,mentionAll?,quoted{messageId,participant}?}`;
+  MediaStruct `{number,url,type,caption?,filename?,delay?,...}` (√°udio = type:'audio');
+  PollStruct `{number,question,maxAnswer,options}`; ReactStruct `{number,reaction,id,fromMe,participant?}`;
+  MarkReadStruct `{id[],number}`; EditMessageStruct `{chat,message,messageId}`;
+  delete MessageStruct `{chat,messageId}` (POST, n√£o DELETE).
 
-## 9. DECISIONS.md ‚Äî Gate 1 (todas PENDENTES; Joaquim responde por id)
-| ID | Decis√£o proposta | Impacto |
+## 4. O que a Sess√£o 4 entregou
+
+| Item | Estado | Ref |
 |---|---|---|
-| D1 | Restaurar `contacts` + FKs + policies de `contact_tags`/`contact_custom_fields` no destino a partir das migrations Lovable | corrige a perda A |
-| D2 | Aplicar no destino SOMENTE migrations Lovable (UUID) ‚Äî excluir as 3 retro-datadas e as 7 de junho | paridade com a origem; replay limpo esperado 257/257 |
-| D3 | Manter `20260412230000_fix_rls_policies_security` (hardening) | quebra paridade estrita, ganha seguran√ßa |
-| D4 | Recriar cron `cleanup-link-preview-cache` (`0 3 * * *` ‚Üí `select public.cleanup_link_preview_cache()`) | paridade C |
-| D5 | Publication realtime = tabelas que o front assina e existem (messages, team_messages, whatsapp_connections, contacts, talkx_campaigns, security_alerts, message_reactions, conversation_sla) + queues, queue_members (e demais declaradas nas migrations) | funcionalidade > paridade |
-| D6 | Manter lab `zapp-replay` na VPS at√© o Gate 2 | re-validar cada lote |
-Gates seguintes: 16 (SSH), 22 (descartar supabase-export/), 35 (recriar contacts), 50 (paridade), 51 (migrar ~60 linhas?), 57 (PAT), 60 (LOVABLE_API_KEY ‚Üí provider pr√≥prio), 68 (remover clientesClient.ts), 77 (merge), 79 (budget Actions), 88 (firewall), 90 (go-live), 98 (congelar origem).
+| Deploy 62/62 edge functions no destino | OK, 0 falhas | script `/tmp/deploy-functions.sh`, log `/tmp/deploy-functions.log` |
+| config.toml reescrito (project_id + verify_jwt=false p/ 6 fn) | OK no workspace, N√ÉO commitado | `supabase/config.toml` |
+| Secrets pr√≥prios (9): EVOLUTION_*(4), WEBHOOK_SECRET, WHATSAPP_VERIFY_TOKEN, MAPBOX, RESEND, ELEVENLABS_API_KEY | OK setados | `npx supabase secrets set` |
+| Adapter INGEST√ÉO GO‚Üív2 | OK, commit `91cbbd97`, **VALIDADO EM PRODU√á√ÉO** (10+ messages, 7+ contacts reais: texto, imagem, √°udio) | `_shared/evolution-go-adapter.ts` + 2 linhas em `evolution-webhook/index.ts` |
+| Seed `whatsapp_connections` (obrigat√≥rio: getConnectionByInstance retorna early sem row) | OK | id `3b0f7f2e-...` |
+| Tradutor ENVIO v2‚ÜíGO | OK criado+commitado (este commit) | `_shared/evolution-go-routes.ts` (99 linhas, `translateV2ToGo`) |
+| Patch no proxy + deploy + teste envio | PENDENTE | se√ß√£o 0 |
 
-## 10. Plano de 100 etapas ‚Äî status (‚úÖ feito ¬∑ ‚è≥ pendente ¬∑ üîí gate)
-Fase 0 T at√© Fase 8: ver `PLANO.md` na mesma pasta.
+- `SUPABASE_FUNCTIONS_URL` como secret foi REJEITADO (prefixo reservado) ‚Äî function que
+  depender disso precisa de fallback no c√≥digo.
+- Logs de function: MCP `Supabase:query_logs` NEGADO para esse projeto; usar Management API:
+  ```sh
+  curl -sS "https://api.supabase.com/v1/projects/tnnnlkbymytvtqngbbqh/analytics/endpoints/logs.all" \
+    -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" --get \
+    --data-urlencode "sql=select timestamp, event_message from function_logs order by timestamp desc limit 25"
+  ```
 
-## 11. Procedimentos prontos
-### 11.1 Lab de replay (VPS Hostinger)
-```sh
-# recriar do zero (container ef√™mero, 127.0.0.1 apenas)
-ssh -i ~/.ssh/hostinger_vps -o BatchMode=yes root@187.77.151.129 'nohup /root/replay2.sh > /root/replay2.nohup 2>&1 &'
-# ~2 min; acompanhar
-ssh -i ~/.ssh/hostinger_vps -o BatchMode=yes root@187.77.151.129 'tail -1 /root/zapp-replay/replay2.log; grep "^FAIL" /root/zapp-replay/replay2.log | cut -c6-200'
-# psql direto no lab
-docker exec -i zapp-replay psql -U postgres -h 127.0.0.1 -v ON_ERROR_STOP=1 -q -f - < arquivo.sql
-```
-### 11.2 Fingerprint e diff
-- `/workspace/tmp/fp.sql` ‚Äî query das 11 categorias.
-- Naquele formato: `node /workspace/tmp/pgcli/sql.js -f /workspace/tmp/fp.sql` ou MCP `db_query` categoria por categoria.
-- `node diff.js` compara source-fp.txt X dest-fp.txt.
-### 11.3 Aplicar lote no destino
-```sh
-cd /workspace/tmp/pgcli && set -a && . /root/.secrets/zapp-v2.env && set +a
-node sql.js -c "begin; $(cat /path/20261–@HN∏„S ’H¿¿ôµ•ù…Ö—•Ω∏πÕ≈∞§ÏÄ∏∏πçΩµµ•–Ïà)ÅÅÄ(åååÄƒƒ∏–ÅIΩ±±âÖç¨ÅëºÅëïÕ—•πº)Åë…Ω¿ÅÕç°ïµÑÅ¡’â±•åÅçÖÕçÖëîÏÅç…ïÖ—îÅÕç°ïµÑÅ¡’â±•åÏÅù…Öπ–ÅÖ±∞ÅΩ∏ÅÕç°ïµÑÅ¡’â±•åÅ—ºÅ¡ΩÕ—ù…ïÃ∞ÅÖπΩ∏∞ÅÖ’—°ïπ—•çÖ—ïê∞ÅÕï…Ÿ•çï}…Ω±îÌÄÅîÅ…ïÖ¡±•çÖ»Åµç¡}ï·ïç}ÿ»πÕ≈∞Ä¨Åµç¡}ï·ïç}µÖπ‰πÕ≈∞∏(åååÄƒƒ∏‘Å]Ω…≠ï»(¥ÅAÖ—ç†ËÅïë•—Ö»ÅÖ…≈’•Ÿº∞ÅÅπΩëîÄ¥µç°ïç≠Ä∞ÅÅç¡ÄÅ¡Ö…ÑÅ‹πµ©Ã∞ÅÅπΩëîÅ›—ïÕ–»πµ©ÕÄ∏(¥Åï¡±Ω‰ËÅÅçô}›Ω…≠ï…}ëï¡±ΩÂÄÄ¨ÅÅç’…∞ÄΩ°ïÖ±—°Ä∏(¥ÅIï¡ºËÅÅù•—°’â}¡’—}ô•±ïÄÄ°%Q!UÄ¥Å5@Ä¥Å=IYH§∏(åååÄƒƒ∏ÿÅ=…•ùï¥Ä°±ï•—’…Ñ§)ÅÕ…ç}≈’ï…ÂÄÅçΩ¥ÅÕ—…•πù}ÖùúΩµê‘Å¡Ö…ÑÅÕáµëÖÃÅçΩµ¡Öç—ÖÃ∏((ååÄƒ»∏ÅI•ÕçΩÃÅîÅ¡ïùÖë•π°ÖÃ(¥ÅÅçΩëï}ï·ïçÄÄ¯ƒ¿¿ÅÃÉäHÄ‘»–ÏÅÕïµ¡…îÅπΩ°’¿Ä¨Å¡Ω±∞∏(¥ÅM°•¥ÅÕ—Ω…ÖùîÅ¡…ïç•ÕÑÅ¡Õ≈∞ÅçΩµºÅÕ’¡ÖâÖÕï}Öëµ•∏ÄµêÅ¡ΩÕ—ù…ïÃ∏(¥Åµç¡}ï·ïåÅç’…ÕΩ»µô•…Õ–ËÅÕ—Ö—ïµïπ–Åµ’±—§µÕ—Ö—ïµïπ–Åëï¡ïπëïπ—îÅçÖ§Åï¥ÅaUQ∏(¥Å1ΩŸÖâ±îÅ•π©ï—ÑÅŸ¡≠∑äôÄÅπºÅâ’•±êÄ¥¯Å¡Ω§ÅÑÅµ•ù…Ö»Åëï•·ÑÅëîÅÕï»ÅÖ±ŸºÅëîÅëï¡±Ω‰∏((ååÄƒÃ∏ÅAÀÕ·•µΩÃÅ¡ÖÕÕΩÃÅ•µïë•Ö—ΩÃ(®©Ö—ïÃÅÑÅôΩ…πïçï»ÅπÑÅÕïÕœçºÅÕïù’•π—îË®®(¥ÅÖ—îÄ‘ƒËÅëÖëΩÃÅµ•ù…Ö¥ÅΩ‘ÅëïÕ—•πºÅπÖÕçîÅ±•µ¡º¸(¥ÅÖ—îÄ‘‹ËÅM’¡ÖâÖÕîÅAPÅëºÅëïÕ—•πºÄ°Ö—îÄ‘‹§(¥ÅÖ—îÄÿ¿ËÅëïç•œçºÅ1=Y	1}A%}-dÄ°¡…ΩŸ•ëï»Å¡ÀÕ¡…•º§(¥Åïç•œçºÄÃ‰ËÅÕ•—ï}’…∞Ä¨Å…ïë•…ïç–ÅUI1ÃÄ¨Å¡…ΩŸ•ëï…ÃÅÖ’—†ÅëºÅëïÕ—•πº(
+## 5. Secrets AINDA FALTANDO (pedir valores ao Joaquim quando chegar a hora)
+
+ELEVENLABS_AGENT_ID, GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI, BITRIX_WEBHOOK_URL,
+SICOOB_GIFTS_URL/BRIDGE_SECRET, EXTERNAL_SUPABASE_URL/ANON_KEY,
+PROMOGIFTS_SUPABASE_URL/ANON_KEY, SIP_PASSWORD, LOVABLE_API_KEY (Gate 60 = decis√£o de
+arquitetura, precisa APROVADO expl√≠cito).
+
+## 6. Armadilhas do ambiente (N√ÉO REDESCOBRIR DO ZERO)
+
+1. `git push` de dentro do container est√° QUEBRADO ‚Üí escrever no GitHub SEMPRE via
+   `GITHUB - MCP - FOREVER` `github_push_files` (aceita `text` OU `content_base64` INLINE;
+   N√ÉO aceita refer√™ncia a arquivo).
+2. **GitHub secret scanning BLOQUEIA push com secrets no conte√∫do** (422 "Secret detected").
+   Referenciar caminhos de `/root/.secrets/*` em docs, nunca valores.
+3. MCP GitHub padr√£o d√° 403 em write nos repos `adm01-debug`; usar o FOREVER.
+4. `code_exec` >100s ‚Üí erro 524 do gateway. Tarefa longa: `nohup ... &` + poll no log
+   (padr√£o usado no deploy das functions).
+5. Shell dos containers √© `dash`: sem `[[ ]]`, arrays, `source` (usar `.`).
+6. Sem `python3` no container claude-code ‚Üí Node.js.
+7. `str_replace`/`create_file` do sandbox N√ÉO alcan√ßam o container ‚Üí editar via `node -e`
+   ou heredoc dentro de `code_exec`.
+8. `supabase_apply_migration` (MCP self-hosted) bugado; para o DESTINO cloud usar
+   `npx supabase` CLI (2.116.0 via npx) com o PAT.
+9. SQL no destino: `set -a; . /root/.secrets/zapp-v2.env; set +a && node /workspace/tmp/pgcli/sql.js "SELECT ..."`.
+10. Teste de envio anterior falhou por TYPO no n√∫mero (`5511463755170`, 0 extra).
+    N√∫mero correto: `551146375517`.
+11. Portainer exec: IDs de container rotacionam ‚Üí resolver fresco via `portainer_list_containers`.
+
+## 7. Estado do destino `tnnnlkbymytvtqngbbqh`
+
+258 migrations aplicadas (D9: zero diverg√™ncias vs origem), 7 buckets storage,
+cron `cleanup-link-preview-cache` (0 3 * * *), realtime em 11 tabelas, 62 functions
+deployadas, 9 secrets pr√≥prios + autom√°ticos, **J√Å RECEBE PRODU√á√ÉO** via webhook
+(pipeline WhatsApp‚ÜíGO‚Üíevolution-webhook‚Üíadapter‚ÜíINSERT vivo desde 2026-08-27).
+Tabela `messages`: id, contact_id, whatsapp_connection_id, sender, content, message_type,
+media_url, is_read, agent_id, external_id, created_at, transcription, status.
+
+## 8. Gates/tarefas pendentes (backlog ordenado)
+
+- **Step 63-ENVIO** (se√ß√£o 0 ‚Äî AGORA)
+- Step 61 ‚Äî smoke das 62 functions; Step 39 ‚Äî auth config destino (site_url, providers, redirects)
+- Step 64 ‚Äî trigger notify_sicoob_on_reply; Step 65 ‚Äî validar cron 03:00 via `cron.job_run_details`
+- Gate 51 ‚Äî decidir migra√ß√£o de ~60 rows antigos da origem (3 auth users:
+  ti@promobrindes.com.br email, ti02.promobrindes@gmail.com google, adm01@promobrindes.com.br google)
+- Gate 60 ‚Äî LOVABLE_API_KEY/provider pr√≥prio (mudan√ßa de arquitetura, exige APROVADO)
+- Gate 16 ‚Äî SSH hardening VPS; Gate 68 ‚Äî remover clientesClient.ts; Gate 79 ‚Äî budget GH Actions
+- P23‚ÄìP26, P28 (pr√©-checks formais), P29 (fp-dest), P30 (template Gate 3)
+- Fase 6 ‚Äî c√≥digo app (steps 67‚Äì78); Fase 7 ‚Äî deploy VPS (79‚Äì90); Fase 8 ‚Äî cutover +
+  ROTA√á√ÉO DE TODAS as credenciais expostas
+- Endpoints v2 SEM equivalente GO (caem no passthrough ‚Üí 404 amig√°vel): `/webhook/set`,
+  `/settings/*`, `/chat/findChats`, `/chat/findMessages`, restart-instance. Avaliar na Fase 6
+  se o front usa e precisa de stub.
+
+## 9. Docs no repo (branch feat/fresh-install-hostinger)
+
+`docs/migration/`: HANDOFF.md (este), DECISIONS.md (D1‚ÄìD9), PLANO.md (commit `8e65f8e9`),
+secrets.md, source-ddl/ (10 sql + infra-deps.md), function-table-matrix.csv,
+auth-storage-inventory.md, evolution-compat.md v2 (commit `b36a1a63` ‚Äî Swagger real, auth
+model, webhook, mapa v2√óGO), scripts/apply-batch.js (`6661f790`). Adapter ingest√£o: `91cbbd97`.
