@@ -74,7 +74,7 @@ jobs:
         run: node scripts/db-audit/check-migration-drift.mjs
 
   # ===========================================
-  # JOB 3: frescura do catalogo (semanal)
+  # JOB 3: frescura do catalogo + seguranca (semanal)
   # ===========================================
   catalog-fresh:
     name: 🗂️ Frescura do catalogo
@@ -104,3 +104,33 @@ jobs:
           fi
           psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > /tmp/fresh.json
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
+
+      - name: 🔒 Verificar ACL de mcp_exec e mcp_exec_many
+        # mcp_exec e mcp_exec_many sao funcoes SECURITY DEFINER que executam SQL
+        # arbitrario. Se authenticated ou anon ganharem EXECUTE, qualquer usuario
+        # logado teria SQL arbitrario como superusuario. Ver docs/DB-SECURITY.md s1.
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "DESTINO_URL ausente - verificacao de ACL pulada."
+            exit 0
+          fi
+          FALHA=0
+          for func in mcp_exec mcp_exec_many; do
+            acl=$(psql "$DESTINO_URL" -At -c \
+              "SELECT proacl::text FROM pg_proc p \
+               JOIN pg_namespace n ON n.oid=p.pronamespace \
+               WHERE n.nspname='public' AND p.proname='${func}'")
+            echo "${func} ACL: ${acl}"
+            case "${acl}" in
+              *authenticated=X*|*anon=X*)
+                echo "FALHA: ${func} executavel por authenticated ou anon!"
+                FALHA=1
+                ;;
+              *)
+                echo "OK: ${func} restrito a postgres e service_role"
+                ;;
+            esac
+          done
+          exit $FALHA
