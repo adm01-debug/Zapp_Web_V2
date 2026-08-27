@@ -28,19 +28,19 @@ Assinatura fresca da origem (md5+length por categoria) via `src_query` == `sourc
 ## Classificação das divergências (todas intencionais)
 
 1. **contacts + cascata (D1).** `contacts` restaurada no destino; origem a perdeu out-of-band.
-   - CONS: as 34 tabelas com FK→`contacts` no destino = **exatamente** as 34 CONS-divergentes.
-   - POL: nas 10 tabelas divergentes, o nº de policies que referenciam `contacts` no destino = **exatamente** o delta.
+   - CONS: as 34 tabelas com FK→`contacts` no destino = **exatamente** as 34 CONS-divergentes. Origem perdeu essas FKs no `DROP TABLE contacts CASCADE`.
+   - POL: nas 10 tabelas divergentes, o nº de policies que referenciam a tabela `contacts` no destino = **exatamente** o delta (origem⊂destino). Origem perdeu essas policies no cascade.
    - `contact_tags`/`contact_custom_fields`: policies restauradas (origem estava com RLS on e 0 policies).
    - **Destino é MAIS correto que a origem** nesta dimensão.
 
-2. **PUB (D5).** Publication curada = origem(3) ∪ frontend-subscribed existentes = 11 tabelas, todas REPLICA IDENTITY FULL.
+2. **PUB (D5).** Publication curada = origem(3) ∪ frontend-subscribed existentes = 11 tabelas, todas REPLICA IDENTITY FULL. Tabelas mortas do CRM/v3 não entram (não existem).
 
 3. **EXT pg_net.** 0.20.0 (origem) × 0.20.4 (destino) — versão minor gerida pelo Supabase; `net.http_post` com assinatura idêntica. Sem ação.
 
-4. **FN mcp_exec/mcp_exec_many.** Funções-helper do próprio worker MCP do destino, não código de app.
+4. **FN mcp_exec/mcp_exec_many.** Funções-helper do próprio worker MCP do destino (execução de query), não código de app.
 
 ## Não aplicado
-- **D3 hardening = DROP.** Inspeção mostrou que o hardening afrouxaria a baseline Lovable de `entity_versions`. Destino mantém RLS Lovable = paridade com a origem.
+- **D3 hardening = DROP.** Inspeção mostrou que o hardening de `entity_versions` afrouxaria a baseline Lovable (troca "block inserts" estrito por "allow own" + alarga SELECT). Destino mantém RLS Lovable = paridade com a origem.
 
 ## Veredito
-**Paridade estrutural atingida.** Zero divergência inexplicada. Todas as diferenças = D1 (restauração correta) + D5 (curadoria intencional) + pg_net (minor) + tooling do worker. **Gate 2 assinado.**
+**Paridade estrutural atingida.** Zero divergência inexplicada. Todas as diferenças = D1 (restauração correta) + D5 (curadoria intencional) + pg_net (minor) + tooling do worker. **Pronto para sign-off do Gate 2.**
