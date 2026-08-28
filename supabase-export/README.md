@@ -1,5 +1,21 @@
 # 📦 supabase-export/ — Padrão de Exportação
 
+> ⚠️ **SNAPSHOT LEGADO — NÃO APLICAR SEM REGERAR (auditoria 2026-08-28)**
+>
+> Os blocos atuais foram exportados **antes** da migração para o banco oficial
+> `tnnnlkbymytvtqngbbqh.supabase.co` e estão **defasados** do schema real
+> (ex.: 390 RLS policies no export vs 658 nas migrations — ver
+> `docs/migration/PLANO.md` etapa 22 e `docs/migration/DECISIONS.md` gate 22,
+> que prevê descartar esta pasta). A fonte de verdade do schema é
+> **`supabase/migrations/`**.
+>
+> Em 2026-08-28 as URLs de banco **antigo** embutidas em funções
+> (`notify_sicoob_on_reply` em `BLOCO_01/04/10/15`) foram corrigidas para o
+> banco oficial, mas o conteúdo continua defasado. O workflow
+> `.github/workflows/supabase-sync.yml` passou a ser **somente manual**
+> (`workflow_dispatch`) para impedir aplicação automática deste snapshot.
+> Detalhes: `docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md`.
+
 Pasta **única e oficial** para todos os artefatos de exportação/migração do banco.
 Toda geração de bloco DEVE seguir este padrão — sem exceção.
 

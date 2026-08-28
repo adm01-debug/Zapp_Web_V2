@@ -99,17 +99,25 @@ describe('MFABackupCodes', () => {
 
     it('reverts copy icon after timeout', async () => {
       vi.useFakeTimers();
-      const { unmount } = render(<MFABackupCodes />);
-      fireEvent.click(screen.getByText('Copiar'));
-      // O setTimeout(→ setCopied(false), 2000) dispara fora de um event handler;
-      // o avanço dos timers precisa de act() para o React descarregar o re-render.
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2500);
-      });
-      const btn = screen.getByText('Copiar').closest('button');
-      expect(btn?.querySelector('.lucide-copy')).toBeInTheDocument();
-      unmount();
-      vi.useRealTimers();
+      try {
+        const { unmount } = render(<MFABackupCodes />);
+        await act(async () => {
+          await vi.runAllTimersAsync();
+        });
+        fireEvent.click(screen.getByText('Copiar'));
+        // setCopied(false) roda dentro de setTimeout — fora de act() o React agenda
+        // o re-render no scheduler (MessageChannel), que os fake timers não avançam,
+        // e a asserção lia o DOM antes do flush. act() garante o flush determinístico.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2500);
+        });
+        // After timeout, icon should revert
+        const btn = screen.getByText('Copiar').closest('button');
+        expect(btn?.querySelector('.lucide-copy')).toBeInTheDocument();
+        unmount();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
