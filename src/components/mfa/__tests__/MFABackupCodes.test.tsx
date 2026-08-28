@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MFABackupCodes } from '../MFABackupCodes';
 
 // Mock clipboard
@@ -100,10 +100,12 @@ describe('MFABackupCodes', () => {
     it('reverts copy icon after timeout', async () => {
       vi.useFakeTimers();
       const { unmount } = render(<MFABackupCodes />);
-      await vi.runAllTimersAsync();
       fireEvent.click(screen.getByText('Copiar'));
-      await vi.advanceTimersByTimeAsync(2500);
-      // After timeout, icon should revert
+      // O setTimeout(→ setCopied(false), 2000) dispara fora de um event handler;
+      // o avanço dos timers precisa de act() para o React descarregar o re-render.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2500);
+      });
       const btn = screen.getByText('Copiar').closest('button');
       expect(btn?.querySelector('.lucide-copy')).toBeInTheDocument();
       unmount();
