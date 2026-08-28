@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useGlobalSearchData, type SearchResult } from './useGlobalSearchData';
 import { GlobalSearchFilters } from './search/GlobalSearchFilters';
 import { GlobalSearchResults } from './search/GlobalSearchResults';
@@ -92,6 +92,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Busca de mensagens</DialogTitle>
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
