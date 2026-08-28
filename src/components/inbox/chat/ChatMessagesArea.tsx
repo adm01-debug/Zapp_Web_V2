@@ -44,7 +44,7 @@ export interface ChatMessagesAreaRef {
   scrollToMessage: (messageId: string) => void;
 }
 
-export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({
+export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
@@ -71,10 +71,9 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
 
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        virtualizer.scrollToIndex(messages.length - 1, { align: 'end', behavior: 'smooth' });
-      }
+      if (!scrollContainerRef.current || messages.length === 0) return;
+      // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
+      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
     },
     registerMessageRef: (messageId: string, el: HTMLDivElement | null) => {
       messageRefs.current[messageId] = el;
@@ -82,8 +81,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     scrollToMessage: (messageId: string) => {
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
-        virtualizer.scrollToIndex(index, { align: 'center', behavior: 'smooth' });
-        // Highlighting after scroll is handled via highlightedMessageIds prop
+        virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
   }));

@@ -36,7 +36,7 @@ type ListItem =
   | { type: 'date-separator'; date: Date; key: string }
   | { type: 'message'; message: Message; key: string };
 
-export const VirtualizedMessageList = forwardRef<VirtualizedMessageListRef, VirtualizedMessageListProps>(({
+export const VirtualizedMessageList = forwardRef<VirtualizedMessageListRef, VirtualizedMessageListProps>(({ 
   messages, onReply, onForward, onCopy, onInteractiveButtonClick,
   ttsLoading, ttsPlaying, ttsMessageId, onSpeak, onStopSpeak, isContactTyping = false,
 }, ref) => {
@@ -67,11 +67,25 @@ export const VirtualizedMessageList = forwardRef<VirtualizedMessageListRef, Virt
 
   const virtualizer = useVirtualizer({ count: listItems.length, getScrollElement: () => parentRef.current, estimateSize: getItemSize, overscan: 10 });
 
-  const scrollToBottom = useCallback(() => { if (listItems.length > 0) virtualizer.scrollToIndex(listItems.length - 1, { align: 'end' }); }, [listItems.length, virtualizer]);
-  const scrollToMessage = useCallback((messageId: string) => { const index = listItems.findIndex(item => item.type === 'message' && item.message.id === messageId); if (index !== -1) virtualizer.scrollToIndex(index, { align: 'center' }); }, [listItems, virtualizer]);
+  const scrollToBottom = useCallback(() => {
+    if (listItems.length === 0 || !parentRef.current) return;
+    virtualizer.scrollToIndex(listItems.length - 1, { align: 'end' });
+  }, [listItems.length, virtualizer]);
+
+  const scrollToMessage = useCallback((messageId: string) => {
+    const index = listItems.findIndex(item => item.type === 'message' && item.message.id === messageId);
+    if (index !== -1) virtualizer.scrollToIndex(index, { align: 'center' });
+  }, [listItems, virtualizer]);
 
   useImperativeHandle(ref, () => ({ scrollToBottom, scrollToMessage }), [scrollToBottom, scrollToMessage]);
-  useEffect(() => { scrollToBottom(); }, [messages.length, isContactTyping, scrollToBottom]);
+
+  // Adia o scroll para o proximo frame: no mesmo frame que o componente
+  // monta, parentRef.current ainda nao existe e o virtualizer lancaria
+  // "Failed to scroll to index X after 10 attempts".
+  useEffect(() => {
+    const id = requestAnimationFrame(scrollToBottom);
+    return () => cancelAnimationFrame(id);
+  }, [messages.length, isContactTyping, scrollToBottom]);
 
   if (messages.length === 0) {
     return <div className="flex items-center justify-center h-full"><EmptyState icon={Clock} title="Nenhuma mensagem ainda" description="As mensagens aparecerão aqui quando a conversa começar" illustration="messages" size="sm" /></div>;
