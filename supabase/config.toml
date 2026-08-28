@@ -20,3 +20,6 @@ verify_jwt = false
 # Autenticacao propria via header x-api-key (retorna 401 sem ele).
 [functions.public-api]
 verify_jwt = false
+
+[functions.migrate-helper]
+verify_jwt = false
