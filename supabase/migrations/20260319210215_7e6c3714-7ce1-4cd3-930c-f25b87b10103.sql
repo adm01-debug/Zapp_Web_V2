@@ -1,4 +1,10 @@
 
+-- [2026-08-28] Auditoria de refs de banco: o fallback de URL desta funcao
+-- apontava para um banco antigo do projeto e foi corrigido retroativamente para
+-- o banco oficial (tnnnlkbymytvtqngbbqh). Historico no header de 20260827140000;
+-- estado vigente da funcao: 20260827150000.
+-- Ver docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md.
+
 -- Enable pg_net extension for HTTP calls from triggers
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
@@ -25,7 +31,7 @@ BEGIN
       v_supabase_url := current_setting('app.settings.supabase_url', true);
       
       IF v_supabase_url IS NULL OR v_supabase_url = '' THEN
-        v_supabase_url := 'https://allrjhkpuscmgbsnmjlv.supabase.co';
+        v_supabase_url := 'https://tnnnlkbymytvtqngbbqh.supabase.co';
       END IF;
 
       -- Call the sicoob-bridge-reply edge function via pg_net
