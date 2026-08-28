@@ -1,0 +1,17 @@
+name: _Set Gmail Redirect URI (temp — auto-delete after run)
+on:
+  workflow_dispatch:
+jobs:
+  set-secret:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Set GOOGLE_REDIRECT_URI
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase secrets set GOOGLE_REDIRECT_URI=https://zapp-web-v2.vercel.app \
+            --project-ref tnnnlkbymytvtqngbbqh
+          echo "Done. Secret updated to https://zapp-web-v2.vercel.app"
