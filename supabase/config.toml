@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.webhook-diagnostic]
 verify_jwt = false
+
+[functions.migrate-helper]
+verify_jwt = false
