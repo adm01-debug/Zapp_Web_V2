@@ -73,6 +73,26 @@ Notas de segurança das correções:
 - `supabase/migrations/_foreign/` — migrations do self-hosted, já fora do glob do `db push`, com README explicando.
 - Handoffs históricos — agora com banner de obsolescência (correção acima).
 
+## Validação exaustiva pós-implementação (2026-08-28, 5 agentes)
+
+Todas as correções acima foram testadas por 5 frentes independentes de validação. Veredito consolidado: **nenhuma falha nas correções**.
+
+| Frente | Método | Resultado |
+|---|---|---|
+| **Replay dinâmico** (Postgres 16 local) | Harness com stubs de `extensions.http_post`/`net.http_post` capturando URLs; replay da cadeia sicoob completa (215→228→130100→140000→150000) pós-fix e pré-fix; 4 cenários de disparo por estágio + ramo do GUC + guard do vault; funções extraídas dos 4 BLOCOs | ✅ URL oficial capturada em 13/13 cenários pós-fix; cadeia pré-fix reproduz o bug (URL antiga); estado final converge com `pg_get_functiondef` **md5-idêntico** com ou sem o fix no histórico; BLOCOs criam sem erro novo |
+| **Diff forense** | Revisão hunk a hunk; ref oficial char a char em 4 fontes (client.ts, config.toml, claim do JWT, arquivos editados); encoding/BOM/CRLF; parser YAML; links dos banners | ✅ Só o declarado mudou; bloco `jobs:` do workflow **byte-idêntico** (sha256); `on:` só com `workflow_dispatch`; zero corrupção |
+| **Busca adversarial** | Fragmentos base64 determinísticos de JWTs dos bancos antigos (com controle positivo), hex, reverso, substrings ≥8, binários via `strings` + parsing de PDF/PNG, refs 20-chars desconhecidos, connection strings, história do git p/ segredos | ✅ Zero refs fora da whitelist documental; zero refs desconhecidos; **nenhuma service_role key jamais commitada** |
+| **Banco vivo** (só leitura) | Funções/triggers/views/matviews/rules/constraints/comments/defaults/GUCs/FDW/pg_net/cron/vault/publications + busca em dados (global + 33 colunas JSONB + storage + auth); drift schema_migrations × arquivos | ✅ Zero resquício em todas as superfícies; drift **277=277, zero diferenças**; 5 versões sicoob registradas; `sicoob-bridge-reply` responde 200; worker pg_net ativo |
+| **CI/CD & GitHub** | Tree-id do PR × local (prova criptográfica); runs de workflow pós-push; secrets; outras automações | ✅ Conteúdo do PR bit-idêntico ao local; **zero disparos** do supabase-sync após a neutralização (223/223 runs históricos = failure no guard, nunca aplicou nada); DB Guard verde (sem drift) |
+
+Achados colaterais da validação (pré-existentes, não introduzidos pelas correções):
+
+1. **CI vermelho herdado do `main`**: o teste `MFABackupCodes > reverts copy icon after timeout` já falhava no commit-base do PR e nos 12 pushes anteriores do `main` (asserção lê o DOM antes do flush do React — `setCopied(false)` dispara fora de `act()`). Corrigido neste PR (fix portado: `act()` + `try/finally`), o que também deixa o CI do `main` verde após o merge.
+2. `supabase-export/BLOCO_10_functions.sql` não é executável como está (defeito do formato do export: `SET search_path` mangled e dollar-quotes achatados) — pré-existente, com prova de erro byte-idêntico pré/pós-fix; reforça a recomendação de regerar o export.
+3. `main` sem branch protection; até o merge deste PR, o `supabase-sync.yml` do `main` mantém os gatilhos antigos (inofensivo hoje: `DESTINO_URL` não existe e o guard aborta antes do import — comportamento de 223/223 runs históricos).
+4. Cron fantasma no banco (jobid=2, `VACUUM` multi-statement) falhou 2× em 27/08 e já foi removido — sem URLs, apenas higiene.
+5. Rótulo do `.env.production` chamava o banco oficial de "self-hosted" — corrigido para "Supabase Cloud — banco oficial".
+
 ## Recomendações (fora do escopo deste PR)
 
 1. **Secrets do GitHub Actions**: `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` não são lidos por código nenhum (o `client.ts` é fixo no oficial por decisão documentada). Conferir os valores ou removê-los para eliminar ambiguidade. `VITE_CLIENTES_*` seguem em uso pelo `externalClient.ts`.
