@@ -61,17 +61,22 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          ESPERADAS="elevenlabs-webhook evolution-webhook gmail-webhook migrate-helper public-api webhook-diagnostic whatsapp-webhook"
+          # As excecoes sao DERIVADAS do config.toml, nunca uma copia manual.
+          # Em 28/08 a whitelist fixa listava migrate-helper e aprovou a
+          # regressao que reabriu o backdoor de credenciais.
+          ESPERADAS=$(grep -B1 'verify_jwt = false' supabase/config.toml \
+            | grep '^\[functions\.' | sed 's/\[functions\.//;s/\]//' | sort | tr '\n' ' ')
+          echo "excecoes declaradas no config.toml: $ESPERADAS"
           ABERTAS=$(curl -s "https://api.supabase.com/v1/projects/$PROJECT_REF/functions" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).filter(f=>f.verify_jwt===false).map(f=>f.slug).sort().join(' '))})")
-          echo "verify_jwt=false em producao: $ABERTAS"
+          echo "verify_jwt=false em producao:      $ABERTAS"
           FALHOU=0
           for F in $ABERTAS; do
             case " $ESPERADAS " in
               *" $F "*) ;;
-              *) echo "FALHA: $F esta SEM verify_jwt e nao e excecao declarada"; FALHOU=1 ;;
+              *) echo "FALHA: $F esta SEM verify_jwt e nao e excecao no config.toml"; FALHOU=1 ;;
             esac
           done
           if [ "$FALHOU" = "1" ]; then exit 1; fi
-          echo "OK: nenhuma funcao exposta fora da lista de excecoes."
+          echo "OK: nenhuma funcao exposta fora do config.toml."
