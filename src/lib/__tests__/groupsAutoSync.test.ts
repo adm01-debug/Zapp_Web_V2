@@ -18,7 +18,7 @@ interface EvolutionGroup {
   JID?: string;
   Name?: string;
   Topic?: string;
-  Participants?: any[];
+  Participants?: unknown[];
   IsAnnounce?: boolean;
 }
 
