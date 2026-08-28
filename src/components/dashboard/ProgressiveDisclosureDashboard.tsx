@@ -43,11 +43,7 @@ export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefres
   const toggleSection = (id: string) => {
     setOpenSections(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };

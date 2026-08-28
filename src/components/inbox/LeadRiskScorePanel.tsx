@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { createRunGuard } from '@/lib/runGuard';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -31,25 +30,17 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
   const [consentStatus, setConsentStatus] = useState('');
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  // Troca rápida de contato: respostas atrasadas não podem sobrescrever a atual
-  const guard = useRef(createRunGuard()).current;
 
-  const loadData = useCallback(async () => {
-    const runId = guard.start();
-    // Volta ao skeleton E zera os campos durante a carga: se a busca falhar ou
-    // vier vazia, o formulário não pode reexpor — nem deixar SALVAR — os scores
-    // do contato anterior em cima do contato recém-selecionado
-    setLoaded(false);
-    setLeadScore(0);
-    setRiskScore(0);
-    setLeadOrigin('');
-    setConsentStatus('');
+  useEffect(() => {
+    loadData();
+  }, [contactId]);
+
+  const loadData = async () => {
     const { data } = await supabase
       .from('contacts')
       .select('lead_score, risk_score, lead_origin, consent_status')
       .eq('id', contactId)
       .single();
-    if (!guard.isCurrent(runId)) return;
     if (data) {
       setLeadScore(data.lead_score ?? 0);
       setRiskScore(data.risk_score ?? 0);
@@ -57,11 +48,7 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
       setConsentStatus(data.consent_status ?? '');
     }
     setLoaded(true);
-  }, [contactId, guard]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   const save = async () => {
     setSaving(true);

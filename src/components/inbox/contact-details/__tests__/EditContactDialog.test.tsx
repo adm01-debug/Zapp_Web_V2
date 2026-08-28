@@ -26,6 +26,11 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// job_title is a Select whose options come from useExternalCargos; mock it so 'Dev' is a valid option
+vi.mock('@/hooks/crm/useExternalCargos', () => ({
+  useExternalCargos: () => ({ data: ['Dev', 'CTO', 'Designer'] }),
+}));
+
 const baseContact = {
   id: 'c1',
   name: 'John Doe',
@@ -95,7 +100,7 @@ describe('EditContactDialog', () => {
 
   it('pre-fills job_title', () => {
     renderDialog();
-    // job_title is a Select component, check the trigger text
+    // job_title is rendered inside a Radix Select trigger as visible text
     expect(screen.getByText('Dev')).toBeInTheDocument();
   });
 

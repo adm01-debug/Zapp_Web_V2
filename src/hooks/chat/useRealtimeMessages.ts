@@ -5,9 +5,10 @@ import { getLogger } from '@/lib/logger';
 import { MessageRow } from '@/types/chat';
 import { ContactRow } from '@/types/contact';
 import { RealtimeService } from '@/services/realtime.service';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 import { sendMessageToContact } from '../realtime/messageSender';
 import {
-  normalizeMessage, buildConversation, buildConversations,
+  normalizeMessage, buildConversation,
 } from '../realtime/realtimeUtils';
 import { useRealtimeNotifications } from '../realtime/useRealtimeNotifications';
 import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
@@ -107,14 +108,6 @@ export function useRealtimeMessages() {
     [commitConversations, hydrateConversationForMessage, notifyAboutIncomingMessage]
   );
 
-  const handleNewMessageRef = useRef(handleNewMessage);
-  const handleMessageUpdateRef = useRef(handleMessageUpdate);
-
-  useEffect(() => {
-    handleNewMessageRef.current = handleNewMessage;
-    handleMessageUpdateRef.current = handleMessageUpdate;
-  }, [handleNewMessage, handleMessageUpdate]);
-
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
@@ -133,26 +126,17 @@ export function useRealtimeMessages() {
     } finally { setLoading(false); }
   }, [commitConversations]);
 
-  const channelIdRef = useRef(`messages-realtime-${crypto.randomUUID().slice(0, 8)}`);
-
   useEffect(() => {
     fetchConversations();
-    
-    const channelId = channelIdRef.current;
-    
-    // Stable handlers that use refs to avoid re-subscribing the channel
-    const stableOnInsert: Parameters<typeof RealtimeService.subscribeToMessages>[0] =
-      (payload) => handleNewMessageRef.current(payload);
-    const stableOnUpdate: Parameters<typeof RealtimeService.subscribeToMessages>[1] =
-      (payload) => handleMessageUpdateRef.current(payload);
+  }, [fetchConversations]);
 
-    const channel = RealtimeService.subscribeToMessages(stableOnInsert, stableOnUpdate, channelId);
-    
-    return () => { 
-      log.debug('Cleaning up realtime channel:', channelId);
-      supabase.removeChannel(channel); 
-    };
-  }, [fetchConversations]); // Minimal dependencies
+  useSupabaseRealtime<RealtimeMessage>({
+    channelName: 'global-messages-realtime',
+    table: 'messages',
+    onInsert: handleNewMessage,
+    onUpdate: handleMessageUpdate,
+    enabled: true
+  });
 
   const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string) => {
     return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload);

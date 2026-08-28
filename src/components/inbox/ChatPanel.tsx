@@ -24,7 +24,6 @@ import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
-import type { DialogKey, DialogState, ActiveTool } from './chat/dialogKeys';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -48,7 +47,13 @@ interface ChatPanelProps {
   hideHeader?: boolean;
 }
 
-type DialogAction =
+type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
+  'callDialog' | 'globalSearch' | 'chatSearch' | 'interactiveBuilder' | 'forwardDialog' | 
+  'locationPicker' | 'aiAssistant' | 'catalogDirect' | 'whisper' | 'templatesWithVars' | 
+  'realtimeTranscription' | 'closeDialog';
+
+type DialogState = Record<DialogKey, boolean>;
+type DialogAction = 
   | { type: 'TOGGLE'; key: DialogKey }
   | { type: 'OPEN'; key: DialogKey }
   | { type: 'CLOSE'; key: DialogKey }
@@ -76,6 +81,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
   }
 }
 
+type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
 export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
@@ -86,11 +92,6 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const handleSetActiveTool = useCallback((tool: ActiveTool) => {
     setActiveTool(prev => prev === tool ? null : tool);
   }, []);
-
-  useEffect(() => {
-    dispatch({ type: activeTool === 'chatSearch' ? 'OPEN' : 'CLOSE', key: 'chatSearch' });
-    dispatch({ type: activeTool === 'aiAssistant' ? 'OPEN' : 'CLOSE', key: 'aiAssistant' });
-  }, [activeTool]);
 
   const [callDirection, setCallDirection] = useState<'inbound' | 'outbound'>('outbound');
   const [highlightedMessageIds, setHighlightedMessageIds] = useState<Set<string>>(new Set());
@@ -121,10 +122,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const handlers = useChatPanelHandlers({
     conversationId: conversation.id, contactId: conversation.contact.id, contactPhone: conversation.contact.phone,
     instanceName, onSendMessage, editMessageApi: editMessage, applySignature,
-    handleTypingStart, handleTypingStop, openDialog, closeDialog, handleSetActiveTool,
+    handleTypingStart, handleTypingStop, openDialog: openDialog as any, closeDialog: closeDialog as any, handleSetActiveTool,
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- resolve dados externos uma vez por contato
   useEffect(() => { initResolve(); }, [conversation.contact.id]);
   useEffect(() => { messagesAreaRef.current?.scrollToBottom(); }, [messages.length, isContactTyping]);
   useEffect(() => {
@@ -151,7 +151,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); handleSetActiveTool('chatSearch'); } };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [handleSetActiveTool]);
+  }, []);
 
   // Stable refs for ChatMessagesArea to prevent re-renders on input change
   const contactJid = useMemo(() => conversation.contact.phone ? `${conversation.contact.phone}@s.whatsapp.net` : '', [conversation.contact.phone]);

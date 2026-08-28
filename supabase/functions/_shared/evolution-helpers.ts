@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "./deno-types.ts";
 // Shared helpers for Evolution API webhook and sync functions
+import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
 
 export interface WebhookPayload {
   event: string;
@@ -132,18 +132,70 @@ export function shouldUpdateStatus(currentStatus: string | null, newStatus: stri
   return newPriority > currentPriority;
 }
 
-export async function getConnectionByInstance(supabase: SupabaseClient, instance: string): Promise<{ id: string } | null> {
+// ─────────────────────────────────────────────────────────────────────────────
+// CONNECTION CACHE
+//
+// whatsapp_connections has exactly 2 rows but was receiving 37.9M seq scans
+// because getConnectionByInstance() queried it on every single message.
+//
+// Deno isolates are stateful between warm invocations (module-level state
+// persists). A module-level Map acts as an L1 cache: lookup is O(1) vs a
+// network round-trip to Postgres.
+//
+// TTL: 5 minutes. Low enough that connection changes propagate in reasonable
+// time; high enough to absorb thousands of webhook bursts per minute.
+//
+// Invalidation: call invalidateConnectionCache(instance) whenever a
+// connection.update or disconnect event is received (done in
+// evolution-webhook-handlers.ts → handleConnectionUpdate).
+// ─────────────────────────────────────────────────────────────────────────────
+const CONNECTION_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+
+interface CachedConnection {
+  data: { id: string } | null;
+  expiresAt: number;
+}
+
+// Shared across warm invocations within the same isolate.
+const connectionCache = new Map<string, CachedConnection>();
+
+export function invalidateConnectionCache(instance?: string): void {
+  if (instance) {
+    connectionCache.delete(instance);
+  } else {
+    connectionCache.clear();
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function getConnectionByInstance(
+  supabase: any,
+  instance: string,
+): Promise<{ id: string } | null> {
+  const now = Date.now();
+  const cached = connectionCache.get(instance);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
   const { data } = await supabase
     .from('whatsapp_connections')
     .select('id')
     .eq('instance_id', instance)
     .maybeSingle();
+
+  connectionCache.set(instance, {
+    data,
+    expiresAt: now + CONNECTION_CACHE_TTL_MS,
+  });
+
   return data;
 }
 
 // deno-lint-ignore no-explicit-any
 export async function getContactByPhone(
-  supabase: SupabaseClient,
+  supabase: any,
   phone: string,
   connectionId: string
 ): Promise<{ id: string; avatar_url: string | null; assigned_to: string | null; name: string | null } | null> {
@@ -215,19 +267,17 @@ export async function fetchProfilePicFromApi(instance: string, phone: string): P
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
     if (!evolutionUrl || !evolutionKey) return null;
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
-    const resp = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instance}`, {
-      method: 'POST',
-      headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number: phone }),
-      signal: AbortSignal.timeout(5000),
-    });
+    const resp = await evoFetch(baseUrl, evolutionKey,
+      `/chat/fetchProfilePictureUrl/${instance}`, { number: phone },
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
     if (!resp.ok) return null;
     const result = await resp.json();
-    return result?.profilePictureUrl || result?.picture || result?.url || null;
+    return extractAvatarUrl(result);
   } catch { return null; }
 }
 
-export async function persistProfilePicture(supabase: SupabaseClient, phone: string, profilePicUrl: string): Promise<string | null> {
+// deno-lint-ignore no-explicit-any
+export async function persistProfilePicture(supabase: any, phone: string, profilePicUrl: string): Promise<string | null> {
   try {
     const response = await fetch(profilePicUrl, { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return null;
@@ -253,7 +303,8 @@ export async function persistProfilePicture(supabase: SupabaseClient, phone: str
   } catch (err) { console.error('Avatar persist error:', err); return null; }
 }
 
-export async function handleReactionEvent(supabase: SupabaseClient, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
+// deno-lint-ignore no-explicit-any
+export async function handleReactionEvent(supabase: any, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
   const emoji = (reactionMessage.text as string) || '';
   const reactKey = reactionMessage.key as Record<string, unknown> | undefined;
   if (!reactKey?.id) return;
@@ -262,6 +313,9 @@ export async function handleReactionEvent(supabase: SupabaseClient, reactionMess
   const { data: targetMessage } = await supabase
     .from('messages').select('id, contact_id').eq('external_id', targetExternalId).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
+  // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
+  // reaction_author_check exige autor — reagir aqui só geraria 23514.
+  if (!targetMessage.contact_id) { console.log(`Reaction target ${targetExternalId} has no contact — skipping`); return; }
 
   if (emoji === '') {
     if (!actorFromMe) {

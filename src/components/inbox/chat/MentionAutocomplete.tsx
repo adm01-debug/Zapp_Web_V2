@@ -94,7 +94,7 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
               )}
             >
               {agent.avatar_url ? (
-                <img src={agent.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                <img src={agent.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover"  loading="lazy" decoding="async"/>
               ) : (
                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
                   {agent.name.charAt(0).toUpperCase()}

@@ -1,6 +1,5 @@
 import { AppRole } from './role.service';
-import type { LucideIcon } from 'lucide-react';
-import {
+import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
   Building2, Wallet, Package, CreditCard, Tag, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
@@ -12,16 +11,10 @@ import {
 
 export interface NavItem {
   id: string;
-  icon: LucideIcon;
+  icon: any;
   label: string;
   roles?: AppRole[];
   permission?: string;
-}
-
-export interface NavGroup {
-  label: string;
-  icon: LucideIcon;
-  items: NavItem[];
 }
 
 export class NavigationService {
@@ -38,7 +31,7 @@ export class NavigationService {
     ];
   }
 
-  static getGroups(): NavGroup[] {
+  static getGroups() {
     return [
       {
         label: 'Vendas & CRM',

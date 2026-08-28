@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Search, Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -39,14 +39,28 @@ export const Sidebar = React.memo(function Sidebar({
    const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
    const { roles } = useUserRole();
  
-   const filteredPrimaryNav = NavigationService.filterNavItems(primaryNav, roles);
-   const filteredGroups = sidebarGroups.map(group => ({
-     ...group,
-     items: NavigationService.filterNavItems(group.items, roles)
-   })).filter(group => group.items.length > 0);
+   const filteredPrimaryNav = useMemo(() => 
+     NavigationService.filterNavItems(primaryNav as any, roles),
+     [roles]
+   );
+
+   const filteredGroups = useMemo(() => 
+     sidebarGroups.map(group => ({
+       ...group,
+       items: NavigationService.filterNavItems(group.items as any, roles)
+     })).filter(group => group.items.length > 0),
+     [roles]
+   );
  
-   const allNavItems = [...primaryNav, ...sidebarGroups.flatMap(g => g.items), ...advancedNav];
-  const favoriteItems = favorites.map(id => allNavItems.find(item => item.id === id)).filter(Boolean) as typeof allNavItems;
+   const allNavItems = useMemo(() => 
+     [...primaryNav, ...sidebarGroups.flatMap(g => g.items), ...advancedNav],
+     []
+   );
+
+   const favoriteItems = useMemo(() => 
+     favorites.map(id => allNavItems.find(item => item.id === id)).filter(Boolean) as typeof allNavItems,
+     [favorites, allNavItems]
+   );
 
   return (
     <aside id="main-navigation" role="navigation" aria-label="Menu de navegação principal"
@@ -82,7 +96,7 @@ export const Sidebar = React.memo(function Sidebar({
            {filteredPrimaryNav.map((item) => (
              <li key={item.id}>
                <SidebarNavItem
-                 item={item}
+                 item={item as any}
                  currentView={currentView}
                  onViewChange={onViewChange}
                  badge={item.id === 'inbox' ? inboxBadge : undefined}
@@ -127,7 +141,7 @@ export const Sidebar = React.memo(function Sidebar({
                key={group.label}
                label={group.label}
                icon={group.icon}
-               items={group.items}
+               items={group.items as any}
                currentView={currentView}
                onViewChange={onViewChange}
                collapsed={collapsed}

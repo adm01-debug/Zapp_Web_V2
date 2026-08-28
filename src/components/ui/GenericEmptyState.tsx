@@ -1,22 +1,37 @@
+/**
+ * GenericEmptyState — backward-compatibility shim.
+ *
+ * This file re-exports a thin wrapper around the canonical EmptyState
+ * component so that all existing imports of GenericEmptyState continue
+ * to work without changes.
+ *
+ * Migration path:
+ *   Before: import { GenericEmptyState } from '@/components/ui/GenericEmptyState'
+ *   After:  import { EmptyState } from '@/components/ui/EmptyState'
+ *           (pass icon, title, description directly; omit variant)
+ *
+ * This shim will be removed once all call sites are migrated to EmptyState.
+ */
 import { motion } from 'framer-motion';
-import { LucideIcon } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface GenericEmptyStateProps {
+export interface GenericEmptyStateProps {
   icon: LucideIcon;
   title: string;
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** @deprecated Use actionLabel/onAction for primary action */
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
   className?: string;
 }
 
 /**
- * Premium empty state component with animated icon cluster.
- * Use across all modules for consistent empty-state UX.
+ * @deprecated Use EmptyState from '@/components/ui/EmptyState' instead.
+ * This component will be removed in a future cleanup pass.
  */
 export function GenericEmptyState({
   icon: Icon,

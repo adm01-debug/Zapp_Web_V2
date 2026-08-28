@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { Sparkles } from "lucide-react";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { PageTransitionProvider } from "@/components/transitions";
 
 // Route components
 const Index = lazyWithRetry(() => import("../pages/Index"));
@@ -44,6 +45,7 @@ export function AppRoutes() {
   return (
     <ErrorBoundary fallback={<div className="p-4 text-center">Erro ao carregar roteamento</div>}>
       <Suspense fallback={<RouteLoadingFallback />}>
+        <PageTransitionProvider>
         <Routes>
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/auth" element={<Auth />} />
@@ -111,6 +113,7 @@ export function AppRoutes() {
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </PageTransitionProvider>
       </Suspense>
     </ErrorBoundary>
   );

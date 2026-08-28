@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
@@ -14,7 +15,6 @@ interface UseTextToSpeechOptions {
 }
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
-  const { onVoiceChange, onSpeedChange, useStreaming } = options;
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
@@ -45,8 +45,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
   const setVoiceId = useCallback((newVoiceId: string) => {
     setVoiceIdState(newVoiceId);
-    onVoiceChange?.(newVoiceId);
-  }, [onVoiceChange]);
+    options.onVoiceChange?.(newVoiceId);
+  }, [options.onVoiceChange]);
 
   const setSpeed = useCallback((newSpeed: number) => {
     // Clamp speed between 0.5 and 2.0
@@ -56,8 +56,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     if (audioRef.current) {
       audioRef.current.playbackRate = clampedSpeed;
     }
-    onSpeedChange?.(clampedSpeed);
-  }, [onSpeedChange]);
+    options.onSpeedChange?.(clampedSpeed);
+  }, [options.onSpeedChange]);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -96,17 +96,17 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     setCurrentMessageId(messageId || null);
 
     try {
-      const endpoint = useStreaming
+      const endpoint = options.useStreaming
         ? 'elevenlabs-tts-stream'
         : 'elevenlabs-tts';
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+        `${SUPABASE_URL}/functions/v1/${endpoint}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({ 
             text: cleanText,
@@ -154,7 +154,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [voiceId, speed, stop, useStreaming]);
+  }, [voiceId, speed, stop]);
 
   return {
     speak,

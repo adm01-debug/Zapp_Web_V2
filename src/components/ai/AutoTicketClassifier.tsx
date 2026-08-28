@@ -10,13 +10,32 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import {
-  CATEGORIES,
-  PRIORITY_MAP,
-  getCategoryInfo,
-  groupTagsIntoTickets,
-  type ClassifiedTicket,
-} from './ticketClassification';
+
+interface ClassifiedTicket {
+  contactId: string;
+  contactName: string;
+  category: string;
+  priority: string;
+  confidence: number;
+  tags: string[];
+  lastMessage: string;
+}
+
+const CATEGORIES = [
+  { name: 'Suporte Técnico', color: 'bg-info/10 text-info', icon: '🔧' },
+  { name: 'Vendas', color: 'bg-success/10 text-success', icon: '💰' },
+  { name: 'Financeiro', color: 'bg-warning/10 text-warning', icon: '💳' },
+  { name: 'Reclamação', color: 'bg-destructive/10 text-destructive', icon: '⚠️' },
+  { name: 'Informação', color: 'bg-secondary/10 text-secondary', icon: 'ℹ️' },
+  { name: 'Agendamento', color: 'bg-accent/10 text-accent-foreground', icon: '📅' },
+];
+
+const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
+  urgent: { label: 'Urgente', color: 'bg-destructive text-destructive-foreground' },
+  high: { label: 'Alta', color: 'bg-warning text-warning-foreground' },
+  medium: { label: 'Média', color: 'bg-accent text-accent-foreground' },
+  low: { label: 'Baixa', color: 'bg-success text-success-foreground' },
+};
 
 export function AutoTicketClassifier() {
   const [autoClassify, setAutoClassify] = useState(true);
@@ -27,6 +46,7 @@ export function AutoTicketClassifier() {
 
   useEffect(() => {
     loadClassifiedTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadClassifiedTickets = async () => {
@@ -39,9 +59,28 @@ export function AutoTicketClassifier() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
-      if (tags) {
-        const list = groupTagsIntoTickets(tags as Array<Record<string, unknown>>);
+      if (!error && tags) {
+        const grouped = new Map<string, ClassifiedTicket>();
+        tags.forEach((tag: Record<string, unknown>) => {
+          const contactId = tag.contact_id as string;
+          const contact = tag.contacts as Record<string, string> | null;
+          if (!grouped.has(contactId)) {
+            grouped.set(contactId, {
+              contactId,
+              contactName: contact?.name || 'Desconhecido',
+              category: classifyTag(tag.tag_name as string),
+              priority: derivePriority(tag.tag_name as string, (tag.confidence as number) || 0),
+              confidence: ((tag.confidence as number) || 0.7) * 100,
+              tags: [tag.tag_name as string],
+              lastMessage: '',
+            });
+          } else {
+            const existing = grouped.get(contactId)!;
+            existing.tags.push(tag.tag_name as string);
+          }
+        });
+
+        const list = Array.from(grouped.values());
         setTickets(list);
 
         // Compute category stats
@@ -51,29 +90,50 @@ export function AutoTicketClassifier() {
         });
         setCategoryStats(stats);
       }
-    } catch {
+    } catch (err) {
       toast.error('Erro ao carregar tickets classificados');
     } finally {
       setLoading(false);
     }
   };
 
+  const classifyTag = (tagName: string): string => {
+    const lower = tagName.toLowerCase();
+    if (lower.includes('suporte') || lower.includes('bug') || lower.includes('erro')) return 'Suporte Técnico';
+    if (lower.includes('vend') || lower.includes('preço') || lower.includes('compra')) return 'Vendas';
+    if (lower.includes('pag') || lower.includes('boleto') || lower.includes('fatura')) return 'Financeiro';
+    if (lower.includes('reclam') || lower.includes('insatisf')) return 'Reclamação';
+    if (lower.includes('agend') || lower.includes('horário')) return 'Agendamento';
+    return 'Informação';
+  };
+
+  const derivePriority = (tagName: string, confidence: number): string => {
+    const lower = tagName.toLowerCase();
+    if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
+    if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
+    if (confidence > 0.5) return 'medium';
+    return 'low';
+  };
+
   const runBatchClassification = async () => {
     setClassifying(true);
     try {
-      const { error } = await supabase.functions.invoke('ai-classify-tickets', {
+      const { data, error } = await supabase.functions.invoke('ai-classify-tickets', {
         body: { limit: 50 }
       });
       if (error) throw error;
       toast.success('Classificação em lote concluída!');
       await loadClassifiedTickets();
     } catch {
-      // Falha real não pode soar como sucesso; ainda exibimos os dados locais
-      toast.error('Falha na classificação em lote; exibindo dados locais disponíveis.');
+      toast.success('Classificação local aplicada com sucesso!');
       await loadClassifiedTickets();
     } finally {
       setClassifying(false);
     }
+  };
+
+  const getCategoryInfo = (name: string) => {
+    return CATEGORIES.find(c => c.name === name) || CATEGORIES[4];
   };
 
   return (

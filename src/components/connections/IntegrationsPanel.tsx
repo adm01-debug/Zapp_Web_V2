@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { createRunGuard } from '@/lib/runGuard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -113,34 +112,26 @@ export function IntegrationsPanel({
   const [chatwoot, setChatwoot] = useState<Record<string, unknown>>({ enabled: false });
   const [evolutionBot, setEvolutionBot] = useState<Record<string, unknown>>({ enabled: false });
 
-  // Troca rápida de instância: respostas atrasadas não podem sobrescrever a atual
-  const guard = useRef(createRunGuard()).current;
+  useEffect(() => {
+    if (open && instanceName) loadAll();
+  }, [open, instanceName]);
 
-  // Getters individuais são useCallback estáveis; o objeto `api` é recriado a
-  // cada render e jamais pode entrar em deps (causaria refetch em loop)
-  const { getTypebot, getOpenAI, getDify, getFlowise, getChatwoot, getEvolutionBot } = api;
-  const loadAll = useCallback(async () => {
-    const runId = guard.start();
+  const loadAll = async () => {
     const load = async (getter: (n: string) => Promise<unknown>, setter: (v: Record<string, unknown>) => void) => {
       try {
         const data = await getter(instanceName);
-        if (!guard.isCurrent(runId)) return;
         if (data && typeof data === 'object') setter({ enabled: true, ...(data as Record<string, unknown>) });
       } catch (err) { log.error('Unexpected error in IntegrationsPanel:', err); }
     };
     await Promise.allSettled([
-      load(getTypebot, setTypebot),
-      load(getOpenAI, setOpenai),
-      load(getDify, setDify),
-      load(getFlowise, setFlowise),
-      load(getChatwoot, setChatwoot),
-      load(getEvolutionBot, setEvolutionBot),
+      load(api.getTypebot, setTypebot),
+      load(api.getOpenAI, setOpenai),
+      load(api.getDify, setDify),
+      load(api.getFlowise, setFlowise),
+      load(api.getChatwoot, setChatwoot),
+      load(api.getEvolutionBot, setEvolutionBot),
     ]);
-  }, [getTypebot, getOpenAI, getDify, getFlowise, getChatwoot, getEvolutionBot, instanceName, guard]);
-
-  useEffect(() => {
-    if (open && instanceName) loadAll();
-  }, [open, instanceName, loadAll]);
+  };
 
   const typebotFields = [
     { key: 'url', label: 'URL do Typebot', placeholder: 'https://typebot.io' },

@@ -49,15 +49,11 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
   const [statusData, setStatusData] = useState<StatusData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const rangeFromIso = dateRange.from.toISOString();
-  const rangeToIso = dateRange.to.toISOString();
-
   useEffect(() => {
     if (queueId && dateRange.from && dateRange.to) {
       fetchAnalytics();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch apenas quando fila/período mudam; fetchAnalytics lê sempre o range corrente
-  }, [queueId, rangeFromIso, rangeToIso]);
+  }, [queueId, dateRange.from.toISOString(), dateRange.to.toISOString()]);
 
   const fetchAnalytics = async () => {
     try {

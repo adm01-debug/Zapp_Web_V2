@@ -681,7 +681,7 @@ BEGIN
     WHERE id = NEW.contact_id;
 
     IF v_contact_type = 'sicoob_gifts' THEN
-      v_supabase_url := 'https://allrjhkpuscmgbsnmjlv.supabase.co';
+      v_supabase_url := 'https://tnnnlkbymytvtqngbbqh.supabase.co';
 
       PERFORM extensions.http_post(
         url := v_supabase_url || '/functions/v1/sicoob-bridge-reply',

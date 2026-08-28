@@ -70,7 +70,7 @@ export function TalkXLiveMonitor({ campaignId }: Props) {
 
     if (!recipients || recipients.length === 0) return;
 
-    const rows = recipients.map((r) => ({
+    const rows = recipients.map((r: any) => ({
       Nome: r.contacts?.name || '',
       Apelido: r.contacts?.nickname || '',
       Telefone: r.contacts?.phone || '',

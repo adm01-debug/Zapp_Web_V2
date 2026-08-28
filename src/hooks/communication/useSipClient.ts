@@ -41,7 +41,7 @@ export function useSipClient() {
 
   const findContactByPhone = useCallback(async (phone: string): Promise<string | null> => {
     try {
-      const n = phone.replace(/[\s\-()]/g, '');
+      const n = phone.replace(/[\s\-\(\)]/g, '');
       const { data } = await supabase.from('contacts').select('id').or(`phone.eq.${n},phone.eq.+${n},phone.ilike.%${n.slice(-8)}%`).limit(1).maybeSingle();
       return data?.id || null;
     } catch { return null; }
@@ -107,10 +107,7 @@ export function useSipClient() {
 
   const hangUp = useCallback(() => {
     if (sessionRef.current) {
-      try {
-        if (sessionRef.current.state === SessionState.Established) sessionRef.current.bye();
-        else sessionRef.current.cancel();
-      } catch (err) { log.error('Hangup error:', err); }
+      try { sessionRef.current.state === SessionState.Established ? sessionRef.current.bye() : sessionRef.current.cancel(); } catch (err) { log.error('Hangup error:', err); }
       sessionRef.current = null;
     }
     stopTimer(); setCallStatus('idle'); callStatusRef.current = 'idle'; setIsMuted(false);

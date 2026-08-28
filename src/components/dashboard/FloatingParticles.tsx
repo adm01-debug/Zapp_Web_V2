@@ -1,3 +1,27 @@
+/**
+ * FloatingParticles — dashboard background decoration.
+ *
+ * Uses **framer-motion** to render 30 animated div particles + 4 large
+ * glowing orbs as a fixed full-screen background layer (z-0).
+ *
+ * Key traits:
+ *   - No props — always renders the same ambient effect
+ *   - forwardRef<HTMLDivElement> — parent can ref the wrapper if needed
+ *   - pointer-events-none — never intercepts user interactions
+ *   - Colors sourced from CSS vars: bg-primary/30, bg-secondary/40, bg-accent/30
+ *
+ * ─── vs. voice/FloatingParticles ─────────────────────────────────────────────
+ * The voice/ version is a completely different implementation:
+ *   - Uses Canvas API + requestAnimationFrame (no React DOM overhead)
+ *   - Accepts `phase: VoiceAgentPhase` prop — behavior changes with voice state
+ *   - Draws constellation lines between nearby particles (O(n²) with cap at 30)
+ *   - Respects `prefers-reduced-motion` (draws static dots instead of animating)
+ *   - Positioned `absolute inset-0` inside its parent, not `fixed`
+ *
+ * Do NOT merge these — they serve fundamentally different purposes and use
+ * different rendering strategies (DOM animation vs Canvas rasterization).
+ * ──────────────────────────────────────────────────────────────────────────────
+ */
 import { motion } from 'framer-motion';
 import { useMemo, forwardRef } from 'react';
 

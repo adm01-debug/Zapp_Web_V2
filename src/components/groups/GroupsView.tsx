@@ -210,7 +210,7 @@ export function GroupsView() {
             return (
               <motion.div key={group.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card
-                  className={`border transition-all cursor-pointer ${isSelected ? 'border-primary bg-primary/5 shadow-[0_0_20px_hsl(var(--primary)/0.2)]' : 'border-secondary/20 bg-card hover:border-secondary/40 hover:shadow-[0_0_20px_hsl(var(--secondary)/0.2)]'}`}
+                  className={`border transition-all cursor-pointer ${isSelected ? 'border-primary bg-primary/5 shadow-glow-primary-md' : 'border-secondary/20 bg-card hover:border-secondary/40 hover:shadow-glow-secondary-sm'}`}
                   onClick={() => toggleGroupSelection(group.id)}
                 >
                   <CardHeader className="pb-3">

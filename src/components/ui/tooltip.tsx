@@ -20,7 +20,7 @@ const tooltipVariants = cva(
         success: "bg-success px-3 py-2 text-success-foreground border-0",
         warning: "bg-warning px-3 py-2 text-warning-foreground border-0",
         error: "bg-destructive px-3 py-2 text-destructive-foreground border-0",
-        neon: "bg-card border border-secondary/50 px-3 py-2 text-foreground shadow-[0_0_15px_hsl(var(--secondary)/0.3)]",
+        neon: "bg-card border border-secondary/50 px-3 py-2 text-foreground shadow-glow-secondary-sm",
       },
       size: {
         sm: "text-xs px-2 py-1",

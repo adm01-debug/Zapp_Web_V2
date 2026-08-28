@@ -19,46 +19,9 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // Desligado deliberadamente: o projeto usa os padrões idiomáticos de
-      // Provider+hook de contexto e componente+helpers no mesmo arquivo
-      // (shadcn inclusive). A regra só afeta granularidade de HMR no dev
-      // server — não corretude — e o ruído esconderia avisos reais.
-      "react-refresh/only-export-components": "off",
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       "no-console": ["warn", { allow: ["warn", "error"] }],
-    },
-  },
-  {
-    // Testes e mocks: tipagem flexível é aceitável em stubs/mocks (vitest)
-    files: [
-      "**/__tests__/**/*.{ts,tsx}",
-      "**/*.{test,spec}.{ts,tsx}",
-      "src/test/**/*.{ts,tsx}",
-    ],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
-    },
-  },
-  {
-    // Edge Functions (Deno): console é o mecanismo oficial de logging do Supabase;
-    // sem typecheck Deno no CI, `any` em fronteiras de I/O fica como aviso, não erro
-    files: ["supabase/functions/**/*.ts"],
-    languageOptions: {
-      globals: {
-        Deno: "readonly",
-      },
-    },
-    rules: {
-      "no-console": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
-    },
-  },
-  {
-    // Scripts de build/config executados em Node
-    files: ["*.config.{js,ts}", "generate_audit_pdf.ts"],
-    languageOptions: {
-      globals: globals.node,
     },
   },
 );

@@ -68,13 +68,13 @@ export function CommandPalette({
 
   const handleQueryChange = (v: string) => { setQuery(v); setSelectedIndex(0); debouncedSearch(v); };
 
-  const executeCommand = React.useCallback((item: CommandItem) => {
+  const executeCommand = (item: CommandItem) => {
     if (item.disabled) return;
     if (item.action) item.action();
     else if (item.href) window.location.href = item.href;
     else if (item.id.startsWith('nav-')) onNavigate?.(item.id.replace('nav-', ''));
     onOpenChange(false); setQuery('');
-  }, [onNavigate, onOpenChange]);
+  };
 
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -85,7 +85,7 @@ export function CommandPalette({
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [open, allItems, selectedIndex, executeCommand]);
+  }, [open, allItems, selectedIndex]);
 
   React.useEffect(() => {
     if (!open) { setQuery(''); setSearchResults([]); setSelectedIndex(0); }

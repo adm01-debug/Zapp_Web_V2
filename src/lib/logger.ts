@@ -1,6 +1,5 @@
 // Centralized logging utility with correlation IDs and structured output
 // Logs are automatically filtered in production builds
-/* eslint-disable no-console -- este módulo é o wrapper oficial de console do app */
 
 const isDev = import.meta.env.DEV;
 
@@ -66,11 +65,12 @@ class Logger {
 
   /** Log with explicit correlation ID for request tracing */
   withCorrelation(correlationId: string) {
+    const self = this;
     return {
-      debug: (msg: string, ...a: unknown[]) => this.debug(`[cid:${correlationId}] ${msg}`, ...a),
-      info: (msg: string, ...a: unknown[]) => this.info(`[cid:${correlationId}] ${msg}`, ...a),
-      warn: (msg: string, ...a: unknown[]) => this.warn(`[cid:${correlationId}] ${msg}`, ...a),
-      error: (msg: string, ...a: unknown[]) => this.error(`[cid:${correlationId}] ${msg}`, ...a),
+      debug: (msg: string, ...a: unknown[]) => self.debug(`[cid:${correlationId}] ${msg}`, ...a),
+      info: (msg: string, ...a: unknown[]) => self.info(`[cid:${correlationId}] ${msg}`, ...a),
+      warn: (msg: string, ...a: unknown[]) => self.warn(`[cid:${correlationId}] ${msg}`, ...a),
+      error: (msg: string, ...a: unknown[]) => self.error(`[cid:${correlationId}] ${msg}`, ...a),
     };
   }
 }

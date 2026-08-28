@@ -30,7 +30,7 @@ export function RankBadge({ rank, previousRank }: { rank: number; previousRank: 
   const rankChange = previousRank - rank;
   const getRankStyle = () => {
     switch (rank) {
-      case 1: return { bg: 'bg-gradient-to-br from-primary to-warning', shadow: 'shadow-[0_0_15px_hsl(var(--primary)/0.4)]', icon: Crown, iconColor: 'text-primary-foreground' };
+      case 1: return { bg: 'bg-gradient-to-br from-primary to-warning', shadow: 'shadow-glow-primary-sm', icon: Crown, iconColor: 'text-primary-foreground' };
       case 2: return { bg: 'bg-gradient-to-br from-slate-400 to-slate-500', shadow: '', icon: Medal, iconColor: 'text-muted-foreground' };
       case 3: return { bg: 'bg-gradient-to-br from-warning to-warning/80', shadow: '', icon: Medal, iconColor: 'text-warning-foreground' };
       default: return { bg: 'bg-muted', shadow: '', icon: null, iconColor: '' };

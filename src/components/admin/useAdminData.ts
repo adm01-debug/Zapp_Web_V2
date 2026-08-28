@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AppRole } from '@/hooks/system/useUserRole';
 
@@ -211,7 +211,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        `${SUPABASE_URL}/functions/v1/create-user`,
         {
           method: 'POST',
           headers: {

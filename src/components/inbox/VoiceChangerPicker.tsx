@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 
 const VOICE_PRESETS = [
   // Masculinas
@@ -115,12 +115,12 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       const { data: { session } } = await supabase.auth.getSession();
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-changer`,
+        `${SUPABASE_URL}/functions/v1/voice-changer`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
           },
           body: formData,
         }

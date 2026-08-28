@@ -56,7 +56,6 @@ export function MFAVerify({
     if (code.length === 6 && !verifying) {
       handleVerify();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-submit apenas quando o código muda; incluir verifying/handleVerify causaria re-verificação em loop após falha
   }, [code]);
 
   return (

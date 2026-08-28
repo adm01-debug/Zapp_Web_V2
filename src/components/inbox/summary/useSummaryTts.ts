@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { playTtsAudio, type TtsPlayback, type PlayTtsOptions } from '@/hooks/voice/playTtsAudio';
 import { toast } from 'sonner';
@@ -40,7 +41,7 @@ export function useSummaryTts(contactId?: string) {
       },
     };
 
-    const playback = playTtsAudio(text, import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, ttsOptions);
+    const playback = playTtsAudio(text, SUPABASE_URL, SUPABASE_ANON_KEY, ttsOptions);
     ttsRef.current = playback;
     setIsTtsPlaying(true);
     playback.promise.then(() => setIsTtsPlaying(false)).catch(() => setIsTtsPlaying(false));

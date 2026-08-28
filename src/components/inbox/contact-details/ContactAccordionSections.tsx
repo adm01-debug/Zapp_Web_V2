@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Tag, Sparkles, User, FileText, Clock, BarChart3, Brain, Info, TagsIcon, Smartphone, Image, ListTodo, Bell, TrendingUp, ShoppingBag, GitBranch, X } from 'lucide-react';
+import { Plus, Tag, Sparkles, User, FileText, Clock, BarChart3, Brain, Info, TagsIcon, Smartphone, Image, ListTodo, Bell, TrendingUp, ShoppingBag, GitBranch, X, BadgeCheck } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
@@ -12,6 +12,7 @@ import { SLAAndAITagsSection } from './SLAAndAITagsSection';
 import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
+import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
 import { CustomFieldsSection } from '@/components/contacts/CustomFieldsSection';
 import { PrivateNotes } from '../PrivateNotes';
 import { ConversationHistory } from '../ConversationHistory';
@@ -54,6 +55,12 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
       <Section index={1} value="whatsapp-status" icon={<Smartphone className="w-3.5 h-3.5 text-primary" />} label="Status WhatsApp">
         <WhatsAppStatusSection phone={contact.phone} />
       </Section>
+
+      {isExternalConfigured && (
+        <Section index={1.5} value="evolution-profile" icon={<BadgeCheck className="w-3.5 h-3.5 text-primary" />} label="Perfil WhatsApp">
+          <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />
+        </Section>
+      )}
 
       {(slaInfo || aiTags.length > 0) && (
         <Section index={1} value="sla-ai" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="SLA & Inteligência">

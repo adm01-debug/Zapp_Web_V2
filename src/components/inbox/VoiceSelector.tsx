@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { log } from '@/lib/logger';
@@ -78,13 +79,13 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({ 
             text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,

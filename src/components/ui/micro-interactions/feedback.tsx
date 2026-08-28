@@ -48,7 +48,7 @@ export function SpinnerGlow({ size = 'md', className }: { size?: 'sm' | 'md' | '
   const sizes = { sm: 'w-4 h-4 border-2', md: 'w-8 h-8 border-2', lg: 'w-12 h-12 border-3' };
   return (
     <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-      className={cn('rounded-full border-primary border-t-transparent shadow-[0_0_15px_hsl(var(--primary)/0.4)]', sizes[size], className)}
+      className={cn('rounded-full border-primary border-t-transparent shadow-glow-primary-sm', sizes[size], className)}
     />
   );
 }

@@ -39,7 +39,7 @@ export function SoundCustomizationPanel() {
   const [masterVolume, setMasterVolume] = useState(80);
 
   const handleSoundChange = (category: string, soundId: string) => {
-    updateSettings({ [`${category}_sound_type`]: soundId });
+    updateSettings({ [`${category}_sound_type`]: soundId } as any);
     if (soundId !== 'none') { playSoundPreview(soundId); setPlayingSound(`${category}-${soundId}`); setTimeout(() => setPlayingSound(null), 500); }
   };
 

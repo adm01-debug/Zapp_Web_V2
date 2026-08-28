@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -18,17 +19,20 @@ function isValidAudioBytes(bytes: Uint8Array): boolean {
   return isOgg || isMp3Id3 || isMp3Sync || isWebm || isWav;
 }
 
+// v2: lookup por key.id no store da API. Evolution GO exige o waE2E.Message
+// completo (URL/mediaKey) — lookup só por id não tem equivalente (GO_GAPS),
+// então na GO este utilitário só recupera o que ainda estiver acessível e
+// reporta o resto como falha, sem quebrar.
 async function getMediaBase64(instanceName: string, messageId: string): Promise<string | null> {
   try {
-    const url = `${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
-      body: JSON.stringify({ message: { key: { id: messageId } }, convertToMp4: false }),
-    });
+    const resp = await evoFetch(EVOLUTION_API_URL.replace(/\/+$/, ""), EVOLUTION_API_KEY,
+      `/chat/getBase64FromMediaMessage/${instanceName}`,
+      { message: { key: { id: messageId } }, convertToMp4: false });
     if (!resp.ok) return null;
     const data = await resp.json();
-    return data?.base64 || null;
+    const media = extractBase64Media(data);
+    if (!media) return null;
+    return media.base64.includes(",") ? media.base64.split(",")[1] : media.base64;
   } catch (err) {
     console.error(`Failed to fetch media for ${messageId}:`, err);
     return null;
@@ -68,7 +72,7 @@ Deno.serve(async (req) => {
       .select("instance_id")
       .eq("id", connId)
       .single();
-    const instanceName = conn?.instance_id || "wpp2";
+    const instanceName = conn?.instance_id || Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
 
     if (dry_run) {
       return new Response(JSON.stringify({

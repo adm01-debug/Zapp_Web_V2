@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useCustomShortcuts } from './useCustomShortcuts';
@@ -13,8 +13,8 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
   const location = useLocation();
   const { shortcuts, getActiveBinding } = useCustomShortcuts();
 
-  // Default global actions (identidade estável para não re-registrar o listener a cada render)
-  const defaultActions: Record<string, () => void> = useMemo(() => ({
+  // Default global actions
+  const defaultActions: Record<string, () => void> = {
     'global-search': () => {
       document.dispatchEvent(new CustomEvent('open-global-search'));
     },
@@ -52,16 +52,13 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     'toggle-notifications': () => {
       document.dispatchEvent(new CustomEvent('toggle-notifications'));
     },
-  }), [navigate]);
+  };
 
   // Merge custom actions with defaults
-  const actions = useMemo(() => {
-    const merged = { ...defaultActions };
-    customActions?.forEach(({ id, action }) => {
-      merged[id] = action;
-    });
-    return merged;
-  }, [defaultActions, customActions]);
+  const actions = { ...defaultActions };
+  customActions?.forEach(({ id, action }) => {
+    actions[id] = action;
+  });
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Don't trigger shortcuts when typing in inputs (except for specific ones)

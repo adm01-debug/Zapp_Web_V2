@@ -97,7 +97,6 @@ export function useConnectionsManager() {
       supabase.removeChannel(channel);
       if (pollingInterval) clearInterval(pollingInterval);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- ciclo de polling do QR controlado só por open/connected; demais valores são lidos frescos a cada tick
   }, []);
 
   const fetchConnections = async () => {

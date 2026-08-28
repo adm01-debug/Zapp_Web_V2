@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // Animated counter
@@ -7,15 +7,12 @@ interface AnimatedCounterProps { value: number; duration?: number; className?: s
 
 export function AnimatedCounter({ value, duration = 1, className }: AnimatedCounterProps) {
   const [displayValue, setDisplayValue] = useState(0);
-  // useRef de verdade: um objeto literal seria recriado a cada render e a
-  // animação recomeçaria sempre do zero em vez do valor anterior
-  const prevRef = useRef(0);
+  const prevRef = { current: 0 };
 
   useEffect(() => {
     let startTime: number;
-    let frame = 0;
+    let frame: number;
     const start = prevRef.current;
-    let lastAnimatedValue = start;
     const diff = value - start;
     if (diff === 0) return;
 
@@ -23,18 +20,12 @@ export function AnimatedCounter({ value, duration = 1, className }: AnimatedCoun
       if (!startTime) startTime = ts;
       const progress = Math.min((ts - startTime) / (duration * 1000), 1);
       const ease = 1 - Math.pow(1 - progress, 3);
-      lastAnimatedValue = Math.round(start + diff * ease);
-      setDisplayValue(lastAnimatedValue);
+      setDisplayValue(Math.round(start + diff * ease));
       if (progress < 1) frame = requestAnimationFrame(animate);
       else prevRef.current = value;
     };
     frame = requestAnimationFrame(animate);
-    return () => {
-      // Persiste o progresso parcial: se `value` mudar no meio da animação,
-      // o próximo ciclo parte do último valor exibido em vez de saltar
-      prevRef.current = lastAnimatedValue;
-      cancelAnimationFrame(frame);
-    };
+    return () => cancelAnimationFrame(frame);
   }, [value, duration]);
 
   return <motion.span key={displayValue} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className={className}>{displayValue.toLocaleString()}</motion.span>;

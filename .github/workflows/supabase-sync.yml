@@ -1,12 +1,12 @@
 name: Supabase Sync & Validate
 
+# [2026-08-28] Somente execucao MANUAL. Antes, qualquer push/PR tocando
+# supabase-export/** aplicava automaticamente o export no banco apontado por
+# DESTINO_URL — e o export e um snapshot LEGADO, anterior a migracao para o
+# banco oficial tnnnlkbymytvtqngbbqh e defasado do schema real (ver
+# supabase-export/README.md e docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md).
+# Regerar o export a partir do banco oficial antes de reativar qualquer gatilho.
 on:
-  push:
-    paths:
-      - 'supabase-export/**'
-  pull_request:
-    paths:
-      - 'supabase-export/**'
   workflow_dispatch:
 
 jobs:
@@ -14,10 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          # Nenhum step faz git push: não persistir credenciais no workspace
-          persist-credentials: false
+        uses: actions/checkout@v4
 
       - name: Install PostgreSQL client
         run: |
@@ -36,9 +33,10 @@ jobs:
 
       - name: Archive validation logs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v4
         with:
           name: validation-logs
           path: |
             supabase-export/validation_result.json
             supabase-export/validation_log.csv
+          if-no-files-found: ignore

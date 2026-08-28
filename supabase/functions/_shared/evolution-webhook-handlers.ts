@@ -4,6 +4,7 @@
 import {
   isRecord, normalizePhone, toEventRecords,
   getConnectionByInstance, getContactByPhone, persistProfilePicture,
+  invalidateConnectionCache,
 } from "./evolution-helpers.ts";
 
 // Re-export message handlers for backward compatibility
@@ -11,18 +12,29 @@ export {
   handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
   handleMessagesSet, handleMessagesEdited,
 } from "./evolution-webhook-msg-handlers.ts";
-import type { SupabaseClient } from "./deno-types.ts";
 
-export async function handleConnectionUpdate(supabase: SupabaseClient, instance: string, baseData: Record<string, unknown>) {
+// deno-lint-ignore no-explicit-any
+export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
   const status = (baseData.status as string) === 'open' ? 'connected' :
-    (baseData.status as string) === 'close' ? 'disconnected' : 'pending';
+    (baseData.status as string) === 'close' ? 'disconnected' : 'qr_pending';
 
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
 
+  // Evolution GO envia jid/pushName no Connected — aproveita para preencher
+  // o número quando ainda não temos (paridade com o que o v2 preenchia).
+  const connectedPhone = status === 'connected' && typeof baseData.jid === 'string'
+    ? normalizePhone(baseData.jid) : null;
   await supabase.from('whatsapp_connections')
-    .update({ status, qr_code: null, updated_at: new Date().toISOString() })
+    .update({
+      status, qr_code: null, updated_at: new Date().toISOString(),
+      ...(connectedPhone && !prevConn?.phone_number ? { phone_number: connectedPhone } : {}),
+    })
     .eq('instance_id', instance);
+
+  // Invalidate cache so next message processing fetches fresh connection data.
+  // This is the correct invalidation point: after every status change.
+  invalidateConnectionCache(instance);
 
   console.log(`Connection ${instance} status: ${status}`);
 
@@ -46,7 +58,8 @@ export async function handleConnectionUpdate(supabase: SupabaseClient, instance:
   }
 }
 
-export async function handleContactsUpsert(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleContactsUpsert(supabase: any, instance: string, data: unknown) {
   const contacts = Array.isArray(data) ? data : [data];
   for (const contact of contacts) {
     const contactData = contact as Record<string, unknown>;
@@ -86,7 +99,8 @@ export async function handleContactsUpsert(supabase: SupabaseClient, instance: s
   }
 }
 
-export async function handlePresenceUpdate(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handlePresenceUpdate(supabase: any, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
   const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
@@ -117,7 +131,8 @@ export async function handlePresenceUpdate(supabase: SupabaseClient, instance: s
   }
 }
 
-export async function handleChatsUpdate(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleChatsUpdate(supabase: any, instance: string, data: unknown) {
   const chats = Array.isArray(data) ? data : [data];
   for (const chat of chats) {
     const chatData = chat as Record<string, unknown>;
@@ -140,7 +155,8 @@ export async function handleChatsUpdate(supabase: SupabaseClient, instance: stri
   }
 }
 
-export async function handleLabelsEdit(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleLabelsEdit(supabase: any, instance: string, data: unknown) {
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;
@@ -152,7 +168,8 @@ export async function handleLabelsEdit(supabase: SupabaseClient, instance: strin
   if (!connection) return;
 
   if (deleted) {
-    await supabase.from('tags').delete().eq('name', `wa:${labelId}:${labelName}`);
+    // GO pode mandar delete sem name; casa pelo prefixo estável wa:{id}:
+    await supabase.from('tags').delete().ilike('name', `wa:${labelId}:%`);
   } else {
     const tagName = labelName || `Label ${labelId}`;
     const { data: existingTag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
@@ -164,7 +181,8 @@ export async function handleLabelsEdit(supabase: SupabaseClient, instance: strin
   }
 }
 
-export async function handleLabelsAssociation(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleLabelsAssociation(supabase: any, instance: string, data: unknown) {
   const assocData = isRecord(data) ? data : {};
   const labelId = assocData.labelId as string || (assocData.label as Record<string, unknown>)?.id as string;
   const chatId = assocData.chatId as string;
@@ -191,7 +209,8 @@ export async function handleLabelsAssociation(supabase: SupabaseClient, instance
   }
 }
 
-export async function handleCallEvent(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleCallEvent(supabase: any, instance: string, data: unknown) {
   const callData = isRecord(data) ? data : {};
   const from = callData.from as string;
   const isVideo = callData.isVideo as boolean;
@@ -221,10 +240,18 @@ export async function handleCallEvent(supabase: SupabaseClient, instance: string
   }
   if (!contact) return;
 
+  // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed);
+  // o v2 emite nomes fora da lista (offer/reject/timeout…) — mapeia antes.
+  const CALL_STATUS_MAP: Record<string, string> = {
+    offer: 'ringing', ringing: 'ringing', answered: 'answered', accept: 'answered',
+    ended: 'ended', terminate: 'ended', reject: 'missed', timeout: 'missed',
+    missed: 'missed', busy: 'busy', failed: 'failed',
+  };
   const agentId = contact.assigned_to || null;
   await supabase.from('calls').insert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, agent_id: agentId,
-    direction: 'inbound', status: callStatus || 'ringing', started_at: new Date().toISOString(),
+    direction: 'inbound', status: CALL_STATUS_MAP[(callStatus || '').toLowerCase()] ?? 'ringing',
+    started_at: new Date().toISOString(),
     notes: isVideo ? 'Chamada de vídeo' : 'Chamada de voz',
   });
 
@@ -242,7 +269,8 @@ export async function handleCallEvent(supabase: SupabaseClient, instance: string
   }
 }
 
-export async function handleChatsDelete(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleChatsDelete(supabase: any, instance: string, data: unknown) {
   const chats = Array.isArray(data) ? data : [data];
   for (const chat of chats) {
     const chatData = isRecord(chat) ? chat : {};
@@ -262,17 +290,21 @@ export async function handleChatsDelete(supabase: SupabaseClient, instance: stri
   }
 }
 
-export async function handleApplicationStartup(supabase: SupabaseClient, instance: string) {
+// deno-lint-ignore no-explicit-any
+export async function handleApplicationStartup(supabase: any, instance: string) {
   console.log(`Application startup event from instance: ${instance}`);
+  // Also invalidate cache on startup so stale connection data is refreshed.
+  invalidateConnectionCache(instance);
   const { data: conn } = await supabase.from('whatsapp_connections')
     .select('id, status').eq('instance_id', instance).maybeSingle();
   if (conn && conn.status === 'disconnected') {
     await supabase.from('whatsapp_connections')
-      .update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', conn.id);
+      .update({ status: 'qr_pending', updated_at: new Date().toISOString() }).eq('id', conn.id);
   }
 }
 
-export async function handleContactsSet(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleContactsSet(supabase: any, instance: string, data: unknown) {
   const contacts = toEventRecords(data, ['contacts']);
   if (contacts.length === 0) return;
 
@@ -298,7 +330,8 @@ export async function handleContactsSet(supabase: SupabaseClient, instance: stri
   console.log(`contacts.set: synced ${synced}, skipped ${skipped} for ${instance}`);
 }
 
-export async function handleChatsSet(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleChatsSet(supabase: any, instance: string, data: unknown) {
   const chats = toEventRecords(data, ['chats']);
   const connection = await getConnectionByInstance(supabase, instance);
   if (!connection || chats.length === 0) return;

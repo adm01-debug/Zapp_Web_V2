@@ -9,8 +9,6 @@ import type { MessageReaction } from './types';
 export function useMessagesReactions(messageIds: string[]) {
   const [reactionsMap, setReactionsMap] = useState<Record<string, MessageReaction[]>>({});
   const [isLoading, setIsLoading] = useState(false);
-  // Chave estável: o array costuma ser recriado a cada render pelo chamador
-  const messageIdsKey = messageIds.join(',');
 
   useEffect(() => {
     if (messageIds.length === 0) return;
@@ -40,8 +38,7 @@ export function useMessagesReactions(messageIds: string[]) {
     };
 
     fetchReactions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- messageIdsKey representa o conteúdo de messageIds
-  }, [messageIdsKey]);
+  }, [messageIds.join(',')]);
 
   return { reactionsMap, isLoading };
 }

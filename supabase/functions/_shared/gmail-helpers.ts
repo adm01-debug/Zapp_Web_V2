@@ -1,26 +1,6 @@
 // Shared Gmail helpers extracted from gmail-sync/index.ts
 
 import { Logger, requireEnv } from "./validation.ts";
-import type { SupabaseClient } from "./deno-types.ts";
-
-// ─── Tipos mínimos da Gmail API (somente campos utilizados) ───
-export interface GmailLabel {
-  id: string;
-  name: string;
-  type?: string;
-  color?: { backgroundColor?: string };
-  messagesTotal?: number;
-  messagesUnread?: number;
-}
-
-export interface GmailAccountRow {
-  id: string;
-  email?: string;
-  token_expires_at: string;
-  history_id?: string | null;
-  [key: string]: unknown;
-}
-
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -100,13 +80,15 @@ export function extractAttachments(payload: GmailMessage["payload"]): Array<{
   return attachments;
 }
 
-export async function getTokens(supabase: SupabaseClient, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
+// deno-lint-ignore no-explicit-any
+export async function getTokens(supabase: any, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
   const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
   if (error || !data?.length) throw new Error("Failed to retrieve tokens");
   return data[0];
 }
 
-export async function storeTokens(supabase: SupabaseClient, accountId: string, accessToken: string, refreshToken?: string | null) {
+// deno-lint-ignore no-explicit-any
+export async function storeTokens(supabase: any, accountId: string, accessToken: string, refreshToken?: string | null) {
   await supabase.rpc("store_gmail_tokens", {
     p_account_id: accountId,
     p_access_token: accessToken,
@@ -114,7 +96,8 @@ export async function storeTokens(supabase: SupabaseClient, accountId: string, a
   });
 }
 
-export async function ensureValidToken(supabase: SupabaseClient, account: GmailAccountRow, log: Logger): Promise<string> {
+// deno-lint-ignore no-explicit-any
+export async function ensureValidToken(supabase: any, account: any, log: Logger): Promise<string> {
   const now = new Date();
   const expiresAt = new Date(account.token_expires_at);
   const storedTokens = await getTokens(supabase, account.id);
@@ -148,8 +131,7 @@ export async function ensureValidToken(supabase: SupabaseClient, account: GmailA
   return tokens.access_token;
 }
 
-// Resposta JSON dinâmica da Gmail API — campos validados nos call sites
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// deno-lint-ignore no-explicit-any
 export async function gmailFetch(accessToken: string, path: string): Promise<any> {
   const response = await fetch(`${GMAIL_API}${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -161,10 +143,11 @@ export async function gmailFetch(accessToken: string, path: string): Promise<any
   return response.json();
 }
 
-export async function syncLabels(supabase: SupabaseClient, accountId: string, accessToken: string) {
+// deno-lint-ignore no-explicit-any
+export async function syncLabels(supabase: any, accountId: string, accessToken: string) {
   const data = await gmailFetch(accessToken, "/labels");
 
-  for (const label of (data.labels || []) as GmailLabel[]) {
+  for (const label of data.labels || []) {
     await supabase.from("email_labels").upsert({
       gmail_account_id: accountId,
       gmail_label_id: label.id,
@@ -177,15 +160,17 @@ export async function syncLabels(supabase: SupabaseClient, accountId: string, ac
   }
 }
 
+// deno-lint-ignore no-explicit-any
 export async function syncMessages(
-  supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger,
+  supabase: any, accountId: string, accessToken: string, log: Logger,
   query: string = "", maxResults: number = 50
 ) {
   const params = new URLSearchParams({ maxResults: String(maxResults) });
   if (query) params.set("q", query);
 
   const listData = await gmailFetch(accessToken, `/messages?${params.toString()}`);
-  const messageIds = ((listData.messages || []) as Array<{ id: string }>).map((m) => m.id);
+  // deno-lint-ignore no-explicit-any
+  const messageIds = (listData.messages || []).map((m: any) => m.id);
   const results = [];
 
   for (const msgId of messageIds) {

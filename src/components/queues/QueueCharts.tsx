@@ -83,7 +83,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart><Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">{statusData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color} />)}</Pie><Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`${value}%`, '']} /></PieChart>
+                <PieChart><Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">{statusData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color} />)}</Pie><Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any) => [`${value}%`, '']} /></PieChart>
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center gap-4 mt-2">

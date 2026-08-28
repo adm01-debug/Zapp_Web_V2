@@ -7,8 +7,7 @@ describe('cn (classnames utility)', () => {
   });
 
   it('handles conditional classes', () => {
-    const isHidden: boolean = false;
-    expect(cn('base', isHidden && 'hidden', 'visible')).toBe('base visible');
+    expect(cn('base', false && 'hidden', 'visible')).toBe('base visible');
   });
 
   it('handles undefined and null', () => {

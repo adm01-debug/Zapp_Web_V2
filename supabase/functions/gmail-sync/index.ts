@@ -35,9 +35,6 @@ serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
-    if (!profile) throw new Error("Profile not found");
-
     const rawBody = await req.json();
     const parsed = GmailSyncActionSchema.safeParse(rawBody);
     if (!parsed.success) {
@@ -52,8 +49,8 @@ serve(async (req) => {
 
     const { data: account } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, sync_status, token_expires_at, history_id, profile_id")
-      .eq("id", body.account_id).eq("profile_id", profile.id).eq("is_active", true).single();
+      .select("id, email_address, is_active, sync_status, token_expires_at, history_id, user_id")
+      .eq("id", body.account_id).eq("user_id", user.id).eq("is_active", true).single();
 
     if (!account) throw new Error("Gmail account not found or inactive");
 

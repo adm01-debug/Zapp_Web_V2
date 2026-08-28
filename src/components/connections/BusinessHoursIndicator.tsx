@@ -28,7 +28,6 @@ export function BusinessHoursIndicator({
     // Check every minute
     const interval = setInterval(checkBusinessHours, 60000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [connectionId]);
 
   const checkBusinessHours = async () => {

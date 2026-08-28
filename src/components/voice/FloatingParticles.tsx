@@ -150,7 +150,7 @@ export function FloatingParticles({ phase }: FloatingParticlesProps) {
       cancelAnimationFrame(animRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [phase, prefersReduced]);
+  }, [phase]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 }

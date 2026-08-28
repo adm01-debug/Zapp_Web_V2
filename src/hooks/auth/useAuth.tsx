@@ -24,59 +24,92 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
 
+  /**
+   * BUG-6 FIX: wrap fetchProfile in try/catch so errors don't leave
+   * fetchingRef.current stuck at `true` (causing all subsequent fetches to
+   * silently no-op, leaving profile as null indefinitely).
+   */
    const fetchProfile = useCallback(async (userId: string) => {
      if (fetchingRef.current) return;
      fetchingRef.current = true;
-     const data = await AuthService.fetchProfile(userId);
-     if (data) setProfile(data);
-     fetchingRef.current = false;
+     try {
+       const data = await AuthService.fetchProfile(userId);
+       if (data) setProfile(data);
+     } catch (err) {
+       log.error('[AuthProvider] Failed to fetch profile:', err);
+     } finally {
+       fetchingRef.current = false;
+     }
    }, []);
 
   useEffect(() => {
-    log.debug('[BOOT] AuthProvider initialized, starting session check');
-    
-    // Check for existing session first to prevent flickering
-    AuthService.getSession()
-      .then(async (session) => {
-        log.debug('[BOOT] Initial session retrieved:', session ? 'User Found' : 'No User');
+    let mounted = true;
+    log.info('[BOOT] AuthProvider initialized, starting session check');
+
+    // Safety timeout to prevent infinite loading if Supabase doesn't respond
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) {
+        log.warn('[BOOT] Auth session check timed out, forcing loading to false');
+        setLoading(false);
+      }
+    }, 10000);
+
+    // Initial fetch
+    const initSession = async () => {
+      try {
+        const session = await AuthService.getSession();
+        if (!mounted) return;
+
+        log.info('[BOOT] Initial session retrieved:', session ? 'User Found' : 'No User');
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           void fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         log.error('[BOOT] Error fetching session:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-        log.debug('[BOOT] Auth initial load finished');
-      });
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+          log.info('[BOOT] Auth initial load finished');
+        }
+      }
+    };
+
+    void initSession();
 
     const subscription = AuthService.onAuthStateChange(async (event, session) => {
-      log.debug('[BOOT] Auth state change:', event, session ? 'Authenticated' : 'Unauthenticated');
-      
+      if (!mounted) return;
+      log.info('[BOOT] Auth state change:', event, session ? 'Authenticated' : 'Unauthenticated');
+
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
+        /**
+         * BUG-7 FIX: Reset the guard when auth state changes so a new user
+         * session always triggers a fresh profile fetch.
+         */
+        fetchingRef.current = false;
         void fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
-      
-      // Handle login/logout specific UI feedback if needed
+
       if (event === 'SIGNED_IN') {
-        log.debug('[AUTH] User signed in');
+        log.info('[AUTH] User signed in');
       } else if (event === 'SIGNED_OUT') {
-        log.debug('[AUTH] User signed out');
+        log.info('[AUTH] User signed out');
       }
     });
 
     return () => {
+      mounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -92,15 +125,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
      const { error } = await AuthService.signIn(email, password);
      return { error };
    };
- 
+
    const signUp = async (email: string, password: string, name: string) => {
      const { error } = await AuthService.signUp(email, password, name);
      return { error };
    };
- 
+
    const signOut = async () => {
-     await AuthService.signOut();
-     setProfile(null);
+     try {
+       await AuthService.signOut();
+     } catch (err) {
+       // BUG-F1 FIX: log but do not rethrow — ensure local state is always
+       // cleared so the UI never shows a stale profile after a sign-out
+       // attempt (e.g. network failure). The next onAuthStateChange will
+       // reconcile if the server-side sign-out actually succeeded.
+       log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
+     } finally {
+       setProfile(null);
+       setSession(null);
+       setUser(null);
+     }
    };
 
   return (

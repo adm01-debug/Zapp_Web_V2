@@ -79,20 +79,20 @@ bun run preview
 
 ```bash
 # Deploy de todas as funções
-supabase functions deploy --project-ref allrjhkpuscmgbsnmjlv
+supabase functions deploy --project-ref tnnnlkbymytvtqngbbqh
 
 # Deploy de função específica
-supabase functions deploy evolution-api --project-ref allrjhkpuscmgbsnmjlv
+supabase functions deploy evolution-api --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ### 3. Aplicar migrations
 
 ```bash
 # Aplicar migrations pendentes
-supabase db push --project-ref allrjhkpuscmgbsnmjlv
+supabase db push --project-ref tnnnlkbymytvtqngbbqh
 
 # Ver status das migrations
-supabase migration list --project-ref allrjhkpuscmgbsnmjlv
+supabase migration list --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ---
@@ -100,9 +100,9 @@ supabase migration list --project-ref allrjhkpuscmgbsnmjlv
 ## Configuração do Supabase
 
 ### Projeto Principal
-- **ID**: `allrjhkpuscmgbsnmjlv`
-- **URL**: https://allrjhkpuscmgbsnmjlv.supabase.co
-- **Dashboard**: https://supabase.com/dashboard/project/allrjhkpuscmgbsnmjlv
+- **ID**: `tnnnlkbymytvtqngbbqh`
+- **URL**: https://tnnnlkbymytvtqngbbqh.supabase.co
+- **Dashboard**: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh
 
 ### Banco de Dados Externo (CRM)
 - **ID**: `pgxfvjmuubtbowutlide`
@@ -147,10 +147,10 @@ supabase migration list --project-ref allrjhkpuscmgbsnmjlv
 
 ```bash
 # Via CLI
-supabase secrets set EVOLUTION_API_KEY=xxx --project-ref allrjhkpuscmgbsnmjlv
+supabase secrets set EVOLUTION_API_KEY=xxx --project-ref tnnnlkbymytvtqngbbqh
 
 # Listar secrets
-supabase secrets list --project-ref allrjhkpuscmgbsnmjlv
+supabase secrets list --project-ref tnnnlkbymytvtqngbbqh
 ```
 
 ---
@@ -161,8 +161,8 @@ supabase secrets list --project-ref allrjhkpuscmgbsnmjlv
 
 ```env
 # .env.local
-VITE_SUPABASE_URL=https://allrjhkpuscmgbsnmjlv.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=xxx
+VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
+VITE_SUPABASE_ANON_KEY=xxx
 
 # Externo
 VITE_EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co

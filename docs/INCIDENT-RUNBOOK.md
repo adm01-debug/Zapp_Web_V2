@@ -49,14 +49,14 @@ Este runbook define procedimentos padronizados para resposta a incidentes no sis
 
 ```bash
 # 1. Verificar Supabase Dashboard
-https://supabase.com/dashboard/project/allrjhkpuscmgbsnmjlv
+https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh
 
 # 2. Verificar status público
 https://status.supabase.com/
 https://status.lovable.dev/
 
 # 3. Testar conectividade DB
-curl -X POST "https://allrjhkpuscmgbsnmjlv.supabase.co/rest/v1/" \
+curl -X POST "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/" \
   -H "apikey: <anon_key>" \
   -H "Content-Type: application/json"
 ```
@@ -278,7 +278,7 @@ LIMIT 10;
 ## 📚 Recursos Úteis
 
 ### Dashboards
-- [Supabase Dashboard](https://supabase.com/dashboard/project/allrjhkpuscmgbsnmjlv)
+- [Supabase Dashboard](https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh)
 - [Lovable Dashboard](https://lovable.dev/projects)
 - [ZAPP-WEB Produção](https://pronto-talk-suite.lovable.app)
 

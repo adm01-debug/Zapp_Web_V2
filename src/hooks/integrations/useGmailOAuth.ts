@@ -8,7 +8,7 @@
    setPendingIntegrationView
  } from '@/lib/gmailOAuth';
  
- export function useGmailOAuth(user: { id: string } | null | undefined, loading: boolean, setCurrentView: (view: string) => void) {
+ export function useGmailOAuth(user: any, loading: boolean, setCurrentView: (view: string) => void) {
    const queryClient = useQueryClient();
    const handledRef = useRef(false);
  

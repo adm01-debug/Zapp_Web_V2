@@ -35,13 +35,6 @@ export interface UserSettings {
   quiet_hours_enabled: boolean;
   quiet_hours_start: string;
   quiet_hours_end: string;
-
-  // Sons por categoria (colunas *_sound_type em user_settings)
-  message_sound_type?: string;
-  mention_sound_type?: string;
-  sla_sound_type?: string;
-  goal_sound_type?: string;
-  transcription_sound_type?: string;
   
   // Appearance
   theme: string;

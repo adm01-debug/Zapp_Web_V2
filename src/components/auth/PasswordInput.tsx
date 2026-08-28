@@ -31,11 +31,13 @@ export function PasswordInput({ id, className, ...props }: PasswordInputProps) {
         className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
         onClick={() => setShowPassword(!showPassword)}
         tabIndex={-1}
+        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+        aria-pressed={showPassword}
       >
         {showPassword ? (
-          <EyeOff className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+          <EyeOff aria-hidden="true" className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
         ) : (
-          <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+          <Eye aria-hidden="true" className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
         )}
       </Button>
     </div>

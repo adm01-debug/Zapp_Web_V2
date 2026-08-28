@@ -109,7 +109,7 @@ export function VoiceSearchOverlay({
         <motion.div className="relative z-10 flex flex-col items-center gap-5 p-8 rounded-3xl max-w-[340px] w-full mx-4 overflow-visible" style={{ background: 'transparent' }}
           initial={prefersReduced ? {} : { scale: 0.9, y: 20 }} animate={prefersReduced ? {} : { scale: 1, y: 0 }} transition={prefersReduced ? {} : { duration: 0.4, ease: 'easeOut' }}
         >
-          <motion.div className="absolute -inset-6 rounded-[36px] pointer-events-none" style={{ filter: 'blur(28px)', background: `radial-gradient(ellipse at center, ${colors.glow1.replace('hsl(', 'hsla(').replace(')', ', 0.25)')}, ${colors.glow2.replace('hsl(', 'hsla(').replace(')', ', 0.15)')}, transparent 70%)` }}
+          <motion.div className="absolute -inset-6 rounded-token-2xl pointer-events-none" style={{ filter: 'blur(28px)', background: `radial-gradient(ellipse at center, ${colors.glow1.replace('hsl(', 'hsla(').replace(')', ', 0.25)')}, ${colors.glow2.replace('hsl(', 'hsla(').replace(')', ', 0.15)')}, transparent 70%)` }}
             animate={prefersReduced ? {} : { opacity: isActive ? [0.6, 1, 0.6] : [0.4, 0.7, 0.4], scale: isActive ? [1, 1.06, 1] : [1, 1.03, 1] }}
             transition={prefersReduced ? {} : { duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />

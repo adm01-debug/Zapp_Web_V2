@@ -95,7 +95,7 @@ export function WhatsAppTemplatesManager() {
                         <TableCell><Badge className={cn('text-xs gap-1', statusInfo.className)}><StatusIcon className="w-3 h-3" />{statusInfo.label}</Badge></TableCell>
                         <TableCell>
                           {(template.variables?.length || 0) > 0 ? (
-                            <div className="flex gap-1">{template.variables?.map((v: string, i: number) => <Badge key={i} variant="outline" className="text-xs">{v}</Badge>)}</div>
+                            <div className="flex gap-1">{template.variables?.map((v: string, i: number) => <Badge key={`${v}-${i}`} variant="outline" className="text-xs">{v}</Badge>)}</div>
                           ) : <span className="text-xs text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-right">
@@ -161,7 +161,7 @@ export function WhatsAppTemplatesManager() {
               <Label>Conteúdo do Template</Label>
               <Textarea value={editingTemplate.content || ''} onChange={(e) => handleContentChange(e.target.value)} rows={6} placeholder="Olá {{1}}, seu pedido {{2}} foi confirmado!" />
               <div className="flex items-center gap-2 text-xs text-muted-foreground"><Variable className="w-3 h-3" />Use {"{{1}}"}, {"{{2}}"}, etc. para variáveis dinâmicas</div>
-              {(editingTemplate.variables?.length || 0) > 0 && <div className="flex gap-1 flex-wrap mt-1">{editingTemplate.variables?.map((v, i) => <Badge key={i} variant="secondary" className="text-xs">{v}</Badge>)}</div>}
+              {(editingTemplate.variables?.length || 0) > 0 && <div className="flex gap-1 flex-wrap mt-1">{editingTemplate.variables?.map((v, i) => <Badge key={`${v}-${i}`} variant="secondary" className="text-xs">{v}</Badge>)}</div>}
             </div>
             <div className="space-y-2"><Label>Rodapé (opcional)</Label><Input value={editingTemplate.footer_text || ''} onChange={(e) => setEditingTemplate(prev => ({ ...prev, footer_text: e.target.value }))} placeholder="Texto do rodapé" /></div>
           </div>
@@ -184,7 +184,7 @@ export function WhatsAppTemplatesManager() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Valores das variáveis:</Label>
                   {previewTemplate.variables?.map((v: string, i: number) => (
-                    <div key={i} className="flex items-center gap-2">
+                    <div key={`${v}-${i}`} className="flex items-center gap-2">
                       <Badge variant="outline" className="shrink-0">{v}</Badge>
                       <Input value={previewVariables[v] || ''} onChange={(e) => setPreviewVariables(prev => ({ ...prev, [v]: e.target.value }))} placeholder={`Valor para ${v}`} className="flex-1" />
                     </div>

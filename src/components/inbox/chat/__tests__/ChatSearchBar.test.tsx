@@ -29,6 +29,7 @@ const MESSAGES: Message[] = [
 ];
 
 describe('ChatSearchBar', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let onClose: any;
   let onNavigateToMessage: any;
   let onHighlightChange: any;

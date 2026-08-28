@@ -6,7 +6,6 @@ import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from 
 import { SlashCommand } from '../SlashCommands';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
-import type { DialogKey, ActiveTool } from './dialogKeys';
 
 interface UseChatPanelHandlersOptions {
   conversationId: string;
@@ -14,13 +13,13 @@ interface UseChatPanelHandlersOptions {
   contactPhone: string;
   instanceName?: string;
   onSendMessage: (content: string) => void;
-  editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<unknown>;
+  editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<any>;
   applySignature: (text: string) => string;
   handleTypingStart: () => void;
   handleTypingStop: () => void;
-  openDialog: (key: DialogKey) => void;
-  closeDialog: (key: DialogKey) => void;
-  handleSetActiveTool: (tool: ActiveTool) => void;
+  openDialog: (key: string) => void;
+  closeDialog: (key: string) => void;
+  handleSetActiveTool: (tool: any) => void;
 }
 
 export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
@@ -50,6 +49,9 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   const replyToMessageRef = useRef(replyToMessage);
   replyToMessageRef.current = replyToMessage;
+
+  const forwardMessageRef = useRef(forwardMessage);
+  forwardMessageRef.current = forwardMessage;
 
   const EDIT_WINDOW_MINUTES = 15;
 
@@ -115,7 +117,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   const handleCopyMessage = useCallback((content: string) => { navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
   const handleForwardMessage = useCallback((message: Message) => { setForwardMessage(message); openDialog('forwardDialog'); }, [openDialog]);
-  const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessage }); }, [forwardMessage]);
+  const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessageRef.current }); }, []);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;

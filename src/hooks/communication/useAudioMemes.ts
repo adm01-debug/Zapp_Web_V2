@@ -38,12 +38,14 @@ export function useAudioMemes(open: boolean) {
 
   const fetchMemes = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('audio_memes')
-      .select('*')
-      .order('use_count', { ascending: false })
-      .limit(1000);
+    // Uses the per-user RPC so `is_favorite` reflects the logged-in agent
+    const { data, error } = await supabase.rpc('fn_list_audio_memes_for_user', {
+      p_category: null,
+      p_only_favs: false,
+      p_search: null,
+    });
     if (!error && data) setMemes(data as AudioMemeItem[]);
+    else if (error) log.error('[AudioMeme] List error:', error);
     setLoading(false);
   }, []);
 
@@ -162,14 +164,22 @@ export function useAudioMemes(open: boolean) {
     if (audioRef.current) { audioRef.current.pause(); setPlayingId(null); }
     onSend(meme.audio_url);
     onClose();
-    await supabase.from('audio_memes').update({ use_count: (meme.use_count || 0) + 1 }).eq('id', meme.id);
+    // Atomic increment via SECURITY DEFINER RPC (avoids race conditions on use_count)
+    await supabase.rpc('fn_send_audio_meme', { p_meme_id: meme.id });
+    setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, use_count: (m.use_count || 0) + 1 } : m));
   }, []);
 
   const toggleFavorite = useCallback(async (e: React.MouseEvent, meme: AudioMemeItem) => {
     e.stopPropagation();
     const newVal = !meme.is_favorite;
     setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, is_favorite: newVal } : m));
-    await supabase.from('audio_memes').update({ is_favorite: newVal }).eq('id', meme.id);
+    // Per-user favorite (audio_meme_favorites table)
+    const { error } = await supabase.rpc('fn_toggle_user_meme_favorite', { p_meme_id: meme.id });
+    if (error) {
+      log.error('[AudioMeme] Toggle favorite error:', error);
+      // Revert optimistic update
+      setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, is_favorite: !newVal } : m));
+    }
   }, []);
 
   const handleCategoryChange = useCallback(async (meme: AudioMemeItem, newCategory: string) => {

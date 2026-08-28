@@ -41,7 +41,6 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   useEffect(() => {
     startRecording();
     return () => cancelRecording();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- grava do mount ao unmount; reexecutar cancelaria a gravação em curso
   }, []);
 
   // Playback progress tracking

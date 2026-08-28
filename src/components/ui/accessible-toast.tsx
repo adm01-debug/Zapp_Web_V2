@@ -98,6 +98,7 @@ interface ToastContainerProps {
 function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   return (
     <div
+      role="region"
       aria-live="polite"
       aria-label="Notificações"
       className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-md w-full pointer-events-none"

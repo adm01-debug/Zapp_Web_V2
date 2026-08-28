@@ -36,31 +36,20 @@ export function useQueues() {
    const fetchQueues = useCallback(async () => {
      try {
        setLoading(true);
-       const [
-         { data: queuesData, error: queuesError },
-         { data: membersData, error: membersError },
-         { data: waitingData, error: waitingError },
-       ] = await Promise.all([
+       const [{ data: queuesData, error: queuesError }, { data: membersData, error: membersError }] = await Promise.all([
          QueueService.fetchQueues(),
-         QueueService.fetchMembers(),
-         QueueService.fetchWaitingContacts(),
+         QueueService.fetchMembers()
        ]);
-
+ 
        if (queuesError) throw queuesError;
        if (membersError) throw membersError;
-       if (waitingError) throw waitingError;
-
-       const waitingByQueue = new Map<string, number>();
-       (waitingData || []).forEach((c) => {
-         if (c.queue_id) waitingByQueue.set(c.queue_id, (waitingByQueue.get(c.queue_id) || 0) + 1);
-       });
-
+ 
        const queuesWithMembers: QueueWithMembers[] = (queuesData || []).map(queue => ({
          ...queue,
          members: (membersData || []).filter(m => m.queue_id === queue.id) as QueueMember[],
-         waiting_count: waitingByQueue.get(queue.id) || 0
+         waiting_count: 0 // Waiting counts logic could be moved to service if needed
        }));
-
+ 
        setQueues(queuesWithMembers);
        setError(null);
      } catch (err) {
@@ -209,15 +198,10 @@ export function useQueues() {
 
       toast({
         title: queueId ? 'Contato atribuído' : 'Contato removido da fila',
-        description: queueId
+        description: queueId 
           ? 'O contato foi atribuído à fila e será distribuído automaticamente.'
           : 'O contato foi removido da fila.'
       });
-
-      // Atualiza waiting_count imediatamente após a atribuição.
-      // Não assinamos realtime de `contacts` de propósito: updated_at muda a
-      // cada mensagem recebida e geraria um refetch para cada evento de chat.
-      await fetchQueues();
     } catch (err) {
       log.error('Error assigning contact:', err);
       toast({

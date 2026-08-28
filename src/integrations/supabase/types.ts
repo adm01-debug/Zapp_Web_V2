@@ -422,6 +422,35 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_meme_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          meme_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meme_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meme_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_meme_favorites_meme_id_fkey"
+            columns: ["meme_id"]
+            isOneToOne: false
+            referencedRelation: "audio_memes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audio_memes: {
         Row: {
           audio_url: string
@@ -3383,6 +3412,60 @@ export type Database = {
           },
         ]
       }
+      link_preview_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          preview: Json | null
+          updated_at: string
+          url: string
+          url_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          preview?: Json | null
+          updated_at?: string
+          url: string
+          url_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          preview?: Json | null
+          updated_at?: string
+          url?: string
+          url_hash?: string
+        }
+        Relationships: []
+      }
+      link_preview_cache_metrics: {
+        Row: {
+          deleted_count: number
+          duration_ms: number
+          id: string
+          ran_at: string
+          remaining_count: number
+          table_size_bytes: number
+        }
+        Insert: {
+          deleted_count?: number
+          duration_ms?: number
+          id?: string
+          ran_at?: string
+          remaining_count?: number
+          table_size_bytes?: number
+        }
+        Update: {
+          deleted_count?: number
+          duration_ms?: number
+          id?: string
+          ran_at?: string
+          remaining_count?: number
+          table_size_bytes?: number
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempt_count: number
@@ -3517,6 +3600,8 @@ export type Database = {
       messages: {
         Row: {
           agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
           channel_connection_id: string | null
           channel_type: string | null
           contact_id: string | null
@@ -3527,8 +3612,16 @@ export type Database = {
           is_deleted: boolean | null
           is_edited: boolean
           is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
           media_url: string | null
           message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
           sender: string
           status: string | null
           status_updated_at: string | null
@@ -3539,6 +3632,8 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          audio_meme_id?: string | null
+          caption?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           contact_id?: string | null
@@ -3549,8 +3644,16 @@ export type Database = {
           is_deleted?: boolean | null
           is_edited?: boolean
           is_read?: boolean | null
+          link_preview?: Json | null
+          media_filename?: string | null
+          media_meta?: Json | null
+          media_mimetype?: string | null
+          media_size?: number | null
+          media_type?: string | null
           media_url?: string | null
           message_type?: string
+          ptt?: boolean | null
+          reply_to_id?: string | null
           sender: string
           status?: string | null
           status_updated_at?: string | null
@@ -3561,6 +3664,8 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          audio_meme_id?: string | null
+          caption?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           contact_id?: string | null
@@ -3571,8 +3676,16 @@ export type Database = {
           is_deleted?: boolean | null
           is_edited?: boolean
           is_read?: boolean | null
+          link_preview?: Json | null
+          media_filename?: string | null
+          media_meta?: Json | null
+          media_mimetype?: string | null
+          media_size?: number | null
+          media_type?: string | null
           media_url?: string | null
           message_type?: string
+          ptt?: boolean | null
+          reply_to_id?: string | null
           sender?: string
           status?: string | null
           status_updated_at?: string | null
@@ -3597,6 +3710,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "messages_audio_meme_id_fkey"
+            columns: ["audio_meme_id"]
+            isOneToOne: false
+            referencedRelation: "audio_memes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_channel_connection_id_fkey"
             columns: ["channel_connection_id"]
             isOneToOne: false
@@ -3615,6 +3735,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
@@ -7084,6 +7211,15 @@ export type Database = {
     Functions: {
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       cleanup_expired_challenges: { Args: never; Returns: undefined }
+      cleanup_link_preview_cache: {
+        Args: never
+        Returns: {
+          deleted_count: number
+          duration_ms: number
+          remaining_count: number
+          table_size_bytes: number
+        }[]
+      }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
       contacts_count_by_type: {
         Args: never
@@ -7094,6 +7230,50 @@ export type Database = {
       }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
+      fn_list_audio_meme_categories: {
+        Args: never
+        Returns: {
+          category: string
+          total: number
+        }[]
+      }
+      fn_list_audio_memes_for_user: {
+        Args: { p_category?: string; p_only_favs?: boolean; p_search?: string }
+        Returns: {
+          audio_url: string
+          category: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          is_favorite: boolean
+          name: string
+          use_count: number
+        }[]
+      }
+      fn_send_audio_meme: {
+        Args: { p_meme_id: string }
+        Returns: {
+          audio_url: string
+          category: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          is_favorite: boolean
+          name: string
+          uploaded_by: string | null
+          use_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audio_memes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_toggle_user_meme_favorite: {
+        Args: { p_meme_id: string }
+        Returns: boolean
+      }
       get_channel_credentials: {
         Args: { _connection_id: string }
         Returns: Json

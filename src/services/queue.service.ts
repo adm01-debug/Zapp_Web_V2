@@ -21,15 +21,6 @@ export class QueueService {
       `);
   }
 
-  /** Contatos em fila aguardando atribuição de agente. */
-  static async fetchWaitingContacts() {
-    return supabase
-      .from('contacts')
-      .select('queue_id')
-      .not('queue_id', 'is', null)
-      .is('assigned_to', null);
-  }
-
   static async createQueue(payload: Database['public']['Tables']['queues']['Insert']) {
     return supabase.from('queues').insert(payload).select().single();
   }

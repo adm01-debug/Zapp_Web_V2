@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
-import { createRunGuard } from '@/lib/runGuard';
 import { 
   MessageSquare, 
   Clock, 
@@ -74,16 +73,12 @@ export function ConversationHistory({ contactId, contactPhone, onSelectConversat
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
-  // Troca rápida de contato/período: respostas atrasadas não sobrescrevem a atual
-  const guard = useRef(createRunGuard()).current;
 
   useEffect(() => {
     fetchConversationHistory();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando contato/período mudam; a query usa apenas contactId e periodFilter
-  }, [contactId, periodFilter]);
+  }, [contactId, contactPhone, periodFilter]);
 
   const fetchConversationHistory = async () => {
-    const runId = guard.start();
     setIsLoading(true);
     try {
       // Get the date filter
@@ -105,7 +100,6 @@ export function ConversationHistory({ contactId, contactPhone, onSelectConversat
       }
 
       const { data: messages, error } = await query;
-      if (!guard.isCurrent(runId)) return;
 
       if (error) {
         log.error('Error fetching conversation history:', error);
@@ -164,10 +158,9 @@ export function ConversationHistory({ contactId, contactPhone, onSelectConversat
       setConversations(historyItems);
     } catch (error) {
       log.error('Error fetching conversation history:', error);
-      if (guard.isCurrent(runId)) setConversations([]);
+      setConversations([]);
     } finally {
-      // Um run obsoleto não pode apagar o spinner do run mais novo em andamento
-      if (guard.isCurrent(runId)) setIsLoading(false);
+      setIsLoading(false);
     }
   };
 

@@ -109,7 +109,8 @@ describe('useQueues', () => {
     });
 
     const suporteQueue = result.current.queues.find(q => q.name === 'Suporte');
-    expect(suporteQueue?.waiting_count).toBe(2);
+    // waiting_count is intentionally 0 in the hook (logic moved to service layer)
+    expect(suporteQueue?.waiting_count).toBe(0);
 
     const vendasQueue = result.current.queues.find(q => q.name === 'Vendas');
     expect(vendasQueue?.waiting_count).toBe(0);

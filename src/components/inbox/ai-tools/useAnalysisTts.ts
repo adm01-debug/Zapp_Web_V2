@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { playTtsAudio, type TtsPlayback, type PlayTtsOptions } from '@/hooks/voice/playTtsAudio';
 import { toast } from 'sonner';
@@ -34,8 +35,8 @@ export function useAnalysisTts() {
     setAutoplayBlocked(false);
     setLastTtsText(text);
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseKey = SUPABASE_ANON_KEY;
 
     const ttsOptions: PlayTtsOptions = {
       onLoadingChange: setIsTtsLoading,

@@ -61,7 +61,7 @@ function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedF
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           {queuedFile.preview ? (
-            <img src={queuedFile.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
+            <img src={queuedFile.preview} alt="Preview" className="w-12 h-12 object-cover rounded"  loading="lazy" decoding="async"/>
           ) : (
             <div className="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary">
               {getCategoryIcon(queuedFile.validation.category || 'document')}
@@ -145,7 +145,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     {logic.filePreview.preview && logic.filePreview.file.type !== 'application/pdf' ? (
-                      <img src={logic.filePreview.preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg" />
+                      <img src={logic.filePreview.preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg"  loading="lazy" decoding="async"/>
                     ) : (
                       <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                         {getCategoryIcon(logic.filePreview.validation.category || 'document')}

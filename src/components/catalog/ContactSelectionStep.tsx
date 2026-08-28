@@ -49,7 +49,7 @@ export function ContactSelectionStep({
       <div className="px-5 space-y-3">
         <div className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/30">
           {productImageUrl && (
-            <img src={productImageUrl} alt={productName} className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+            <img src={productImageUrl} alt={productName} className="w-10 h-10 rounded-md object-cover flex-shrink-0"  loading="lazy" decoding="async"/>
           )}
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate">{productName}</p>

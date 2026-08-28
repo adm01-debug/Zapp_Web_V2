@@ -83,7 +83,7 @@ export function AIUsageDashboard() {
                 {functionUsage.length > 0 ? (
                   <>
                     <ResponsiveContainer width="100%" height={180}>
-                      <PieChart><Pie data={functionUsage} dataKey="tokens" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={40}>{functionUsage.map((entry) => <Cell key={entry.name} fill={FUNCTION_COLORS[entry.name] || '#666'} />)}</Pie><Tooltip formatter={(v: number) => v.toLocaleString() + ' tokens'} /></PieChart>
+                      <PieChart><Pie data={functionUsage} dataKey="tokens" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={40}>{functionUsage.map((entry) => <Cell key={entry.name} fill={FUNCTION_COLORS[entry.name] || '#666'} />)}</Pie><Tooltip formatter={(v: any) => v.toLocaleString() + ' tokens'} /></PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-1.5 mt-2">
                       {functionUsage.map(f => (

@@ -121,7 +121,6 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
     }
 
     lastSyncedStatus.current = conversation.status;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sincroniza só na transição de status; campos usados estão listados individualmente
   }, [conversation.status, conversation.id, conversation.contact.phone, isConfigured, syncConversation, messageCount, agentName, conversation.contact.name, messages, sentiment]);
 
   return null; // Invisible component

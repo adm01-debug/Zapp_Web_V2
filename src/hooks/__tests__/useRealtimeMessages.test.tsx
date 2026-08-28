@@ -56,6 +56,9 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
   }),
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useRealtimeMessages } from '@/hooks/chat/useRealtimeMessages';

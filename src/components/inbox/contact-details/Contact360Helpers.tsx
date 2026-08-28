@@ -102,7 +102,7 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
     <div className="space-y-2 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 rounded-xl p-3 border border-primary/10">
       <div className="flex items-start gap-3">
         {company.logo_url ? (
-          <img src={company.logo_url} alt={displayName || ''} className="w-10 h-10 rounded-lg object-contain bg-background border border-border/30" />
+          <img src={company.logo_url} alt={displayName || ''} className="w-10 h-10 rounded-lg object-contain bg-background border border-border/30"  loading="lazy" decoding="async"/>
         ) : (
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building className="w-5 h-5 text-primary" /></div>
         )}

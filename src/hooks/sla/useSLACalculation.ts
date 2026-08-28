@@ -91,20 +91,22 @@ export function formatTimeRemaining(ms: number): string {
 }
 
 export function useSLACalculation(params: UseSLACalculationParams): SLATimerState {
-  const { firstMessageAt, firstResponseAt, resolvedAt, firstResponseMinutes, resolutionMinutes } = params;
   const [state, setState] = useState<SLATimerState>(() => compute(params));
 
-  const recompute = useCallback(
-    () => setState(compute({ firstMessageAt, firstResponseAt, resolvedAt, firstResponseMinutes, resolutionMinutes })),
-    [firstMessageAt, firstResponseAt, resolvedAt, firstResponseMinutes, resolutionMinutes]
-  );
+  const recompute = useCallback(() => setState(compute(params)), [
+    params.firstMessageAt,
+    params.firstResponseAt,
+    params.resolvedAt,
+    params.firstResponseMinutes,
+    params.resolutionMinutes,
+  ]);
 
   useEffect(() => {
     recompute();
-    if (firstResponseAt && resolvedAt) return;
+    if (params.firstResponseAt && params.resolvedAt) return;
     const interval = setInterval(recompute, 1000);
     return () => clearInterval(interval);
-  }, [recompute, firstResponseAt, resolvedAt]);
+  }, [recompute, params.firstResponseAt, params.resolvedAt]);
 
   return state;
 }

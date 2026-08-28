@@ -19,6 +19,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  logger: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useMessages } from '@/hooks/chat/useMessages';
@@ -69,11 +72,10 @@ describe('useMessages', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // O hook enriquece cada linha com campos derivados (timestamp, flags)
-    expect(result.current.messages).toHaveLength(2);
-    expect(result.current.messages[0]).toMatchObject({ ...mockMessages[0], isEdited: false, is_deleted: false });
-    expect(result.current.messages[1]).toMatchObject({ ...mockMessages[1], isEdited: false, is_deleted: false });
-    expect(result.current.messages[0].timestamp).toBeInstanceOf(Date);
+    // Hook enriches each message with derived fields (timestamp, mediaUrl, type, etc.)
+    expect(result.current.messages).toHaveLength(mockMessages.length);
+    expect(result.current.messages[0]).toMatchObject({ id: 'msg-1', content: 'Hello', sender: 'contact', isEdited: false });
+    expect(result.current.messages[1]).toMatchObject({ id: 'msg-2', content: 'Hi!', sender: 'agent', isEdited: false });
   });
 
   it('sets error when fetch fails', async () => {

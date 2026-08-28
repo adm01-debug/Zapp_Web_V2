@@ -49,13 +49,14 @@ export function useActionFeedback() {
     return new Promise((resolve) => {
       const { description, undoDuration = 5000, onUndo, onConfirm } = options;
       let undone = false;
-      const timeoutId = setTimeout(async () => {
-        if (!undone) { try { const r = await action(); onConfirm?.(r); resolve(r); } catch (err) { error(err instanceof Error ? err.message : 'Erro'); resolve(undefined); } }
-      }, undoDuration);
+      let timeoutId: NodeJS.Timeout;
       const toastResult = showFeedback('info', {
         description, duration: undoDuration,
         action: { label: 'Desfazer', onClick: () => { undone = true; clearTimeout(timeoutId); toastResult.dismiss(); onUndo(); info('Ação desfeita'); resolve('undone'); } },
       });
+      timeoutId = setTimeout(async () => {
+        if (!undone) { try { const r = await action(); onConfirm?.(r); resolve(r); } catch (err) { error(err instanceof Error ? err.message : 'Erro'); resolve(undefined); } }
+      }, undoDuration);
     });
   }, [showFeedback, info, error]);
 

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -28,15 +29,14 @@ Deno.serve(async (req) => {
       let responseTime = 0;
 
       try {
-        const resp = await fetch(`${baseUrl}/instance/connectionState/${conn.instance_id}`, {
-          method: 'GET', headers: { 'apikey': evolutionKey },
-          signal: AbortSignal.timeout(10000),
-        });
+        const resp = await evoFetch(baseUrl, evolutionKey,
+          `/instance/connectionState/${conn.instance_id}`, undefined,
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
         responseTime = Math.round(performance.now() - start);
 
         if (resp.ok) {
           const data = await resp.json();
-          const state = data?.instance?.state || data?.state || 'unknown';
+          const state = extractConnectionState(data);
           healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
 
           const dbStatus = state === 'open' ? 'connected' : 'disconnected';
@@ -69,11 +69,14 @@ Deno.serve(async (req) => {
     }
 
     for (const alert of alertsToCreate) {
+      // Schema real de warroom_alerts: alert_type/title/message/source
+      // (severity/description/metadata não existem — o insert antigo falhava
+      // com PGRST204 e o alerta crítico nunca era gravado).
       await supabase.from('warroom_alerts').insert({
-        alert_type: 'connection_down', severity: 'critical',
-        title: `Conexão ${alert.instance_id} desconectada`,
-        description: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp.`,
-        metadata: { connection_id: alert.connection_id, instance_id: alert.instance_id },
+        alert_type: 'critical',
+        title: `🔴 Conexão ${alert.instance_id} desconectada`,
+        message: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp. Reconecte para evitar perda de mensagens.`,
+        source: 'connection-health-check',
       }).then(({ error }) => { if (error) log.warn("Failed to create warroom alert", { error: error.message }); });
     }
 

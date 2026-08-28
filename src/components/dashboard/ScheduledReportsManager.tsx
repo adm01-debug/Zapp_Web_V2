@@ -1,3 +1,27 @@
+/**
+ * ScheduledReportsManager — dashboard/ version
+ *
+ * PURPOSE: Lightweight Card widget for embedding inside the Dashboard page.
+ * Manages scheduled report configs inline using direct Supabase mutations
+ * (no custom hook abstraction). Designed to be dropped anywhere a Card
+ * fits without additional context.
+ *
+ * KEY DIFFERENCES from reports/ScheduledReportsManager:
+ *  - Self-contained state: formName, formType, formFrequency, formRecipients
+ *  - Direct useQuery + useMutation wired to Supabase (no custom hook)
+ *  - Recipients: plain-text comma-separated Input  ← simple UX
+ *  - Actions: create + toggle active + delete  (NO edit, NO send-now)
+ *  - No format field (pdf/csv/etc.)
+ *  - No next_send_at display
+ *  - No framer-motion (no AnimatePresence on card list)
+ *  - Renders as a single <Card> with an inline Dialog
+ *  - Does NOT include <ScheduledReportConfigs />
+ *
+ * DO NOT merge with reports/ScheduledReportsManager — that file uses the
+ * useScheduledReports() hook, supports edit + send-now + format selector,
+ * manages recipients as chips, includes AnimatePresence animations and
+ * composes <ScheduledReportConfigs /> below the list.
+ */
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailOAuthActionSchema, parseBody } from "../_shared/schemas.ts";
-import type { SupabaseClient } from "../_shared/deno-types.ts";
 
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -61,13 +60,15 @@ async function getGmailProfile(accessToken: string): Promise<{ emailAddress: str
   return response.json();
 }
 
-async function getTokens(supabase: SupabaseClient, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
+// deno-lint-ignore no-explicit-any
+async function getTokens(supabase: any, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
   const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
   if (error || !data?.length) throw new Error("Failed to retrieve tokens");
   return data[0];
 }
 
-async function storeTokens(supabase: SupabaseClient, accountId: string, accessToken: string, refreshToken?: string | null) {
+// deno-lint-ignore no-explicit-any
+async function storeTokens(supabase: any, accountId: string, accessToken: string, refreshToken?: string | null) {
   await supabase.rpc("store_gmail_tokens", {
     p_account_id: accountId,
     p_access_token: accessToken,
@@ -99,9 +100,6 @@ Deno.serve(async (req) => {
 
     if (authError || !user) return errorResponse("Unauthorized", 401, req);
 
-    const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
-    if (!profile) return errorResponse("Profile not found", 404, req);
-
     const parsed = parseBody(GmailOAuthActionSchema, await req.json());
     if (!parsed.success) return errorResponse(parsed.error, 400, req);
 
@@ -123,13 +121,12 @@ Deno.serve(async (req) => {
         const { data: account, error: upsertError } = await supabase
           .from("gmail_accounts")
           .upsert({
-            profile_id: profile.id,
+            user_id: user.id,
             email_address: gmailProfile.emailAddress,
             token_expires_at: expiresAt,
-            scopes: tokens.scope.split(" "),
             is_active: true,
             sync_status: "pending",
-          }, { onConflict: "profile_id,email_address" })
+          }, { onConflict: "email_address" })
           .select()
           .single();
 
@@ -147,7 +144,7 @@ Deno.serve(async (req) => {
 
       case "refresh-token": {
         if (!account_id) return errorResponse("Missing account_id", 400, req);
-        const { data: account } = await supabase.from("gmail_accounts").select("id, profile_id, token_expires_at").eq("id", account_id).eq("profile_id", profile.id).single();
+        const { data: account } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at").eq("id", account_id).eq("user_id", user.id).single();
         if (!account) return errorResponse("Gmail account not found", 404, req);
 
         const storedTokens = await getTokens(supabase, account.id);
@@ -163,7 +160,7 @@ Deno.serve(async (req) => {
 
       case "disconnect": {
         if (!account_id) return errorResponse("Missing account_id", 400, req);
-        const { data: account } = await supabase.from("gmail_accounts").select("id, profile_id").eq("id", account_id).eq("profile_id", profile.id).single();
+        const { data: account } = await supabase.from("gmail_accounts").select("id, user_id").eq("id", account_id).eq("user_id", user.id).single();
 
         if (account) {
           try {
@@ -185,7 +182,7 @@ Deno.serve(async (req) => {
         const { data: accounts } = await supabase
           .from("gmail_accounts")
           .select("id, email_address, is_active, sync_status, last_sync_at, created_at")
-          .eq("profile_id", profile.id)
+          .eq("user_id", user.id)
           .eq("is_active", true);
 
         log.done(200, { action, count: accounts?.length });

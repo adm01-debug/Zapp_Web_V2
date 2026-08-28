@@ -56,7 +56,7 @@ export function ChatbotL1Config() {
     if (flow) {
       setIsActive(flow.is_active ?? false);
       setName(flow.name ?? 'Chatbot IA L1');
-      const vars = flow.variables as { confidence_threshold?: number; welcome_message?: string; transfer_message?: string } | null;
+      const vars = flow.variables as Record<string, any> | null;
       if (vars) {
         if (vars.confidence_threshold) setConfidenceThreshold(vars.confidence_threshold);
         if (vars.welcome_message) setWelcomeMessage(vars.welcome_message);

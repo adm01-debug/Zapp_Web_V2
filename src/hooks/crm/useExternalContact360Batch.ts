@@ -10,10 +10,20 @@
  * Returns a Map<phone, CRMBatchResult> for O(1) lookup per conversation item.
  */
 import { useQuery } from '@tanstack/react-query';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
-import { ExternalCRMService, type CRMBatchResult } from '@/services/crm/external-crm.service';
+ import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { ExternalCRMService } from '@/services/crm/external-crm.service';
+import { log } from '@/lib/logger';
 
-export type { CRMBatchResult } from '@/services/crm/external-crm.service';
+export interface CRMBatchResult {
+  company_name: string | null;
+  logo_url: string | null;
+  vendedor_nome: string | null;
+  cliente_ativado: boolean | null;
+  total_pedidos: number | null;
+  valor_total_compras: number | null;
+  rfm_segment: string | null;
+  rfm_score: number | null;
+}
 
 function cleanPhone(phone: string): string {
   return phone.replace(/[^0-9]/g, '');

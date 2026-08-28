@@ -33,7 +33,6 @@ export default function QueueDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   useEffect(() => { if (id && user) fetchQueueData(); }, [id, user]);
 
   const fetchQueueData = async () => {

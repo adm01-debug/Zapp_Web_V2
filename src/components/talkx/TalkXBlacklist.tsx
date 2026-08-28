@@ -258,7 +258,7 @@ export function TalkXBlacklist() {
             >
               <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center text-xs font-bold text-destructive shrink-0">
                 {entry.contacts?.avatar_url ? (
-                  <img src={entry.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                  <img src={entry.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover"  loading="lazy" decoding="async"/>
                 ) : (
                   (entry.contacts?.name || '?')[0].toUpperCase()
                 )}

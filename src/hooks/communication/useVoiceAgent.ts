@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useScribe, CommitStrategy } from '@elevenlabs/react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import type { VoiceAgentPhase, VoiceAgentAction, UseVoiceAgentOptions, UseVoiceAgentReturn } from '../voice/types';
 import { processVoiceTranscript } from '../voice/processTranscript';
@@ -29,9 +29,6 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const autoRestartRef = useRef<ReturnType<typeof setTimeout>>();
   const errorResetRef = useRef<ReturnType<typeof setTimeout>>();
   const mountedRef = useRef(true);
-  // Estado de conexão do scribe via ref: o hook é criado depois deste callback
-  // (ciclo intencional) e o timeout deve ler o valor do momento do reset
-  const scribeConnectedRef = useRef(false);
   const processingAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -51,8 +48,8 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     };
   }, []);
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = SUPABASE_URL;
+  const supabaseKey = SUPABASE_ANON_KEY;
 
   // Safe state setter — only updates if still mounted
   const safeSetPhase = useCallback((p: VoiceAgentPhase) => {
@@ -109,7 +106,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
 
       safeSetPhase('idle');
       autoRestartRef.current = setTimeout(() => {
-        if (mountedRef.current && scribeConnectedRef.current) {
+        if (mountedRef.current && scribe.isConnected) {
           safeSetPhase('listening');
         }
       }, AUTO_RESTART_DELAY_MS);
@@ -133,7 +130,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       errorResetRef.current = setTimeout(() => {
         if (!mountedRef.current) return;
         setError('');
-        safeSetPhase(scribeConnectedRef.current ? 'listening' : 'idle');
+        safeSetPhase(scribe.isConnected ? 'listening' : 'idle');
       }, ERROR_RESET_DELAY_MS);
     }
   }, [supabaseUrl, supabaseKey, safeSetPhase]);
@@ -154,7 +151,6 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       }
     },
   });
-  scribeConnectedRef.current = scribe.isConnected;
 
   const startListening = useCallback(async () => {
     if (phaseRef.current === 'booting' || phaseRef.current === 'processing') return;

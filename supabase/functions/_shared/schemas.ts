@@ -9,7 +9,6 @@ export { z };
 // ─── Common reusable schemas ─────────────────────────────────
 export const UUIDSchema = z.string().uuid("Must be a valid UUID");
 export const EmailSchema = z.string().email("Invalid email").max(255);
-// eslint-disable-next-line no-control-regex -- sanitizador: remover control chars é o objetivo
 export const SafeStringSchema = (maxLen = 10000) => z.string().max(maxLen).transform(s => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim());
 
 // ─── AI function schemas ─────────────────────────────────────

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { WebhookTestResult, WebhookConfig, DiagnosticResult } from './types';
 
@@ -56,7 +56,7 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
   const reconfigureWebhook = useCallback(async (instanceId: string) => {
     setReconfiguring(true);
     try {
-      const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evolution-webhook`;
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
       const { error } = await supabase.functions.invoke('evolution-api/set-webhook', { method: 'POST', body: {
         instanceName: instanceId, webhook: { url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: [
           'MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_SET','SEND_MESSAGE',

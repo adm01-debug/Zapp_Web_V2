@@ -169,7 +169,7 @@ export function AgentsView() {
 
             return (
               <StaggeredItem key={agent.id}>
-                <Card className="cursor-pointer border border-secondary/20 bg-card hover:border-secondary/40 transition-all duration-200 hover:shadow-[0_0_20px_hsl(var(--secondary)/0.2)] hover:-translate-y-0.5">
+                <Card className="cursor-pointer border border-secondary/20 bg-card hover:border-secondary/40 transition-all duration-200 hover:shadow-glow-secondary-sm hover:-translate-y-0.5">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">

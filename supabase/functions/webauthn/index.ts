@@ -130,7 +130,8 @@ Deno.serve(async (req) => {
 
       case 'authentication-options': {
         const challenge = generateChallenge();
-        let allowCredentials: Array<{ type: string; id: string }> = [];
+        // deno-lint-ignore no-explicit-any
+        let allowCredentials: any[] = [];
         let authUserId: string | null = null;
 
         if (userEmail) {

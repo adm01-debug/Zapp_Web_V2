@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { Plus, Trash2, Play, Loader2, Users, Mic } from 'lucide-react';
 
 const VOICES = [
@@ -60,13 +60,13 @@ export function ElevenLabsDialogue() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-dialogue`,
+        `${SUPABASE_URL}/functions/v1/elevenlabs-dialogue`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
             script: validLines.map(l => ({ voice_id: l.voice_id, text: l.text })),

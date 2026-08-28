@@ -93,14 +93,8 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Store token hash in isolated table via SECURITY DEFINER function
-    if (resetData.properties?.hashed_token) {
-      await supabaseAdmin.rpc("store_reset_token", {
-        p_request_id: requestId,
-        p_token: resetData.properties.hashed_token,
-        p_expires_at: expiresAt,
-      });
-    }
+    // Reset e coberto pelo action_link nativo do GoTrue (resetData.properties.action_link).
+    // O par store_reset_token/validate_reset_token era subsistema morto - removido na migration 20260827170000.
 
     log.done(200, { action: "approved" });
     return jsonResponse({

@@ -108,7 +108,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
       signatureName={signatureName} onToggleSignature={onToggleSignature}
       onPollSent={onPollSent} onContactSent={onContactSent}
     />
-  ), [instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply, signatureEnabled, signatureName, onToggleSignature, onPollSent, onContactSent]);
+  ), [instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, signatureEnabled, signatureName, onToggleSignature]);
 
   return (
     <>

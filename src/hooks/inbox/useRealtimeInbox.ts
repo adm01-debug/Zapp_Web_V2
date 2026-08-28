@@ -30,11 +30,7 @@ export function useRealtimeInbox() {
   const conversations = USE_EXTERNAL_DB ? externalData.conversations : localRealtime.conversations;
   const loading = USE_EXTERNAL_DB ? externalData.loading : localRealtime.loading;
   const error = USE_EXTERNAL_DB ? externalData.error : localRealtime.error;
-  const externalRefetch = externalData.refetch;
-  const refetch = useMemo(
-    () => (USE_EXTERNAL_DB ? () => { externalRefetch(); } : localRealtime.refetch),
-    [externalRefetch, localRealtime.refetch]
-  );
+  const refetch = USE_EXTERNAL_DB ? (() => { externalData.refetch(); }) : localRealtime.refetch;
 
   // These features only available on local for now
   const { sendMessage, markAsRead } = localRealtime;
@@ -76,7 +72,7 @@ export function useRealtimeInbox() {
     };
     window.addEventListener('open-contact-chat', handler);
     return () => window.removeEventListener('open-contact-chat', handler);
-  }, [setPendingContactId]);
+  }, []);
 
   // Load fallback contact
   const selectedConversation = useMemo(
@@ -122,7 +118,7 @@ export function useRealtimeInbox() {
     setSelectedContactId(contactId);
     setSelectedContact(contactId);
     markAsRead(contactId);
-  }, [setSelectedContactId, setSelectedContact, markAsRead]);
+  }, [setSelectedContact, markAsRead]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
@@ -143,12 +139,13 @@ export function useRealtimeInbox() {
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!selectedContactId) return;
+    const currentId = selectedContactId;
     try {
-      await sendMessage(selectedContactId, content);
-    } catch {
-      toast.error('Erro ao enviar mensagem');
-    } finally {
+      await sendMessage(currentId, content);
       await refreshActiveConversation();
+    } catch (err) {
+      log.error('Error sending message:', err);
+      toast.error('Erro ao enviar mensagem');
     }
   }, [selectedContactId, sendMessage, refreshActiveConversation]);
 
@@ -171,10 +168,11 @@ export function useRealtimeInbox() {
     [resolvedSelectedConversation]
   );
 
-  const legacyMessages: Message[] = useMemo(() => {
-    const messageSource = selectedContactId ? selectedMessages : resolvedSelectedConversation?.messages || [];
-    return messageSource.map((m) => mapRealtimeMessageToMessage(m, selectedContactId || resolvedSelectedConversation?.contact.id));
-  }, [selectedMessages, selectedContactId, resolvedSelectedConversation]);
+  const messageSource = selectedContactId ? selectedMessages : resolvedSelectedConversation?.messages || [];
+  const legacyMessages: Message[] = useMemo(() => 
+    messageSource.map((m) => mapRealtimeMessageToMessage(m, selectedContactId || resolvedSelectedConversation?.contact.id)),
+    [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id]
+  );
 
    return {
      ...uiState,

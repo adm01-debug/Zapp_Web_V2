@@ -42,7 +42,7 @@
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://rqmbchomazwsaupnuduf.supabase.co" />
+    <link rel="preconnect" href="https://tnnnlkbymytvtqngbbqh.supabase.co" />
     <link rel="dns-prefetch" href="https://api.elevenlabs.io" />
     <link rel="dns-prefetch" href="https://ai.gateway.lovable.dev" />
     
@@ -96,6 +96,48 @@
     </script>
     <script>
       try { sessionStorage.removeItem('zapp-preview-boot-retry-done'); } catch(e) {}
+    </script>
+    <script>
+      // Boot diagnostic — captures any error before React mounts and surfaces
+      // a visible reason if mount doesn't happen within the timeout.
+      (function(){
+        window.__ZAPP_BOOT_ERRORS__ = [];
+        var mounted = false;
+        window.__ZAPP_MARK_APP_MOUNTED__ = function(){ mounted = true; };
+        function record(label, err){
+          try {
+            window.__ZAPP_BOOT_ERRORS__.push({
+              label: label,
+              message: (err && (err.message || err.reason && err.reason.message)) || String(err),
+              stack: (err && err.stack) || (err && err.reason && err.reason.stack) || null,
+              at: new Date().toISOString()
+            });
+          } catch(e) {}
+        }
+        window.addEventListener('error', function(e){ record('window.error', e.error || e); });
+        window.addEventListener('unhandledrejection', function(e){ record('unhandledrejection', e.reason || e); });
+        setTimeout(function(){
+          if (mounted) return;
+          var root = document.getElementById('root');
+          if (!root) return;
+          var errs = window.__ZAPP_BOOT_ERRORS__ || [];
+          var html = ''
+            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:Outfit,system-ui,sans-serif;padding:24px;overflow:auto;">'
+            + '<div style="max-width:880px;margin:0 auto;">'
+            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">⚠️ Falha ao inicializar o app</h1>'
+            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React não montou em 8s. Detalhes abaixo:</p>'
+            + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'
+            + (errs.length
+                ? errs.map(function(e){
+                    return '['+e.label+'] '+e.at+'\n'+e.message+(e.stack?('\n\n'+e.stack):'');
+                  }).join('\n\n---\n\n')
+                : 'Nenhum erro JS foi capturado. Possíveis causas:\n• Bundle não carregou (verifique aba Network)\n• Variáveis de ambiente VITE_SUPABASE_* ausentes\n• Loop infinito ou import circular no boot')
+            + '</div>'
+            + '<button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Recarregar</button>'
+            + '</div></div>';
+          root.innerHTML = html;
+        }, 8000);
+      })();
     </script>
     
   

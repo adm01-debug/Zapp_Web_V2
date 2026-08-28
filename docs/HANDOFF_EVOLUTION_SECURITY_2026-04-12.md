@@ -1,5 +1,11 @@
 # 🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements
 
+> ⚠️ **DOCUMENTO HISTÓRICO — REFERÊNCIAS DE BANCO DESATUALIZADAS (auditoria 2026-08-28)**
+> O projeto Supabase citado abaixo como "Supabase ZAPP" (`allrjhkpuscmgbsnmjlv`)
+> é um banco **antigo e desativado**. O banco oficial do ZAPP é
+> `https://tnnnlkbymytvtqngbbqh.supabase.co` (ver `docs/DEPLOYMENT.md`).
+> Mantido apenas como registro histórico — não usar como referência operacional.
+
 **Data:** 2026-04-12  
 **Sessão:** Execução sequencial de 10 melhorias rumo a 10/10  
 **Status:** MELHORIA 1/10 — 95% COMPLETA  

@@ -130,7 +130,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       );
     }
     return <FallbackView currentView={currentView} />;
-  }, [currentView, userId, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo]);
+  }, [currentView, userId]);
 
   return (
     <WithHeader viewId={currentView}>

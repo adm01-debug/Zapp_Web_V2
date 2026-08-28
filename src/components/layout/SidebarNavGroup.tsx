@@ -23,7 +23,6 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
 
   useEffect(() => {
     if (hasActiveItem && !isOpen) setIsOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- abre só quando o item ativo entra no grupo; isOpen nas deps reabriria após fechamento manual
   }, [hasActiveItem]);
 
   const triggerButton = (

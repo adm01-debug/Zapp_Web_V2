@@ -14,7 +14,7 @@ const cardVariants = cva(
         selected: "border-primary bg-primary/5 shadow-md shadow-primary/10 ring-1 ring-primary/20",
         ghost: "border-transparent bg-transparent",
         glass: "border-border/30 bg-card/80 backdrop-blur-lg shadow-lg",
-        neon: "border-secondary/50 bg-card shadow-[0_0_15px_hsl(var(--secondary)/0.15)] hover:shadow-[0_0_25px_hsl(var(--secondary)/0.25)] hover:border-secondary/70",
+        neon: "border-secondary/50 bg-card shadow-glow-secondary-sm hover:shadow-glow-secondary-md hover:border-secondary/70",
         gradient: "border-0 bg-gradient-to-br from-card via-card to-muted/30 shadow-lg",
       },
       padding: {

@@ -3,6 +3,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+
+const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -48,14 +51,12 @@ Deno.serve(async (req: Request) => {
       // 2a. Check instance status - try multiple endpoints
       try {
         let state = 'unknown';
-        // Try v2 endpoint first
-        const statusRes = await fetch(`${evolutionUrl}/instance/connect/${conn.instance_id}`, {
-          headers: { apikey: evolutionKey },
-          signal: AbortSignal.timeout(10000),
-        });
+        const statusRes = await evoFetch(evolutionUrl, evolutionKey,
+          `/instance/connectionState/${conn.instance_id}`, undefined,
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
         if (statusRes.ok) {
           const statusData = await statusRes.json();
-          state = statusData?.instance?.state || statusData?.state || 'unknown';
+          state = extractConnectionState(statusData);
         }
         // Fallback: use DB status if API unreachable
         if (state === 'unknown') {
@@ -71,19 +72,39 @@ Deno.serve(async (req: Request) => {
 
       // 2b. Check webhook configuration
       try {
-        const whRes = await fetch(`${evolutionUrl}/webhook/find/${conn.instance_id}`, {
-          headers: { apikey: evolutionKey },
-          signal: AbortSignal.timeout(10000),
-        });
-        const whData = await whRes.json();
-        const webhook = whData?.webhook || whData;
-        
         const expectedUrl = `${supabaseUrl}/functions/v1/evolution-webhook`;
-        const currentUrl = webhook?.url || webhook?.webhookUrl || '';
-        const events = webhook?.events || [];
+        // deno-lint-ignore no-explicit-any
+        let webhook: any = null;
+        let currentUrl = '';
+        let events: string[] = [];
+        let goEnvManaged = false;
+        if (IS_GO) {
+          const allRes = await evoFetch(evolutionUrl, evolutionKey, '/instance/fetchInstances', undefined,
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
+          const allData = await allRes.json();
+          const records = Array.isArray(allData?.data) ? allData.data : [];
+          webhook = records.find((r: { name?: string }) => r?.name === conn.instance_id) ?? null;
+          currentUrl = webhook?.webhook || '';
+          events = typeof webhook?.events === 'string' && webhook.events ? webhook.events.split(',') : [];
+          // webhook por instância vazio ⇒ GO usa WEBHOOK_URL global do env do container
+          goEnvManaged = !currentUrl;
+          if (goEnvManaged) currentUrl = expectedUrl; // configurado no compose (env), não via API
+        } else {
+          const whRes = await fetch(`${evolutionUrl}/webhook/find/${conn.instance_id}`, {
+            headers: { apikey: evolutionKey },
+            signal: AbortSignal.timeout(10000),
+          });
+          const whData = await whRes.json();
+          webhook = whData?.webhook || whData;
+          currentUrl = webhook?.url || webhook?.webhookUrl || '';
+          events = webhook?.events || [];
+        }
 
-        const criticalEvents = ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED', 'CONTACTS_UPSERT', 'SEND_MESSAGE'];
-        const missingEvents = criticalEvents.filter(e => !events.includes(e));
+        const criticalEvents = IS_GO
+          ? ['Message'] // GO: subscribe por evento (Message, ReadReceipt, ...) ou ALL
+          : ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED', 'CONTACTS_UPSERT', 'SEND_MESSAGE'];
+        const hasAll = events.includes('ALL') || events.includes('All');
+        const missingEvents = hasAll ? [] : criticalEvents.filter(e => !events.includes(e) && !events.includes(e.toUpperCase()));
 
         diag.webhook = {
           url: currentUrl,
@@ -95,6 +116,7 @@ Deno.serve(async (req: Request) => {
           enabled: webhook?.enabled !== false,
           webhookByEvents: webhook?.webhookByEvents,
           webhookBase64: webhook?.webhookBase64,
+          ...(IS_GO ? { goEnvManaged } : {}),
         };
 
         // Severity assessment
@@ -131,7 +153,21 @@ Deno.serve(async (req: Request) => {
       // 2d. Auto-fix if requested
       if (action === 'auto-fix' && (diag.webhookSeverity === 'critical' || diag.webhookSeverity === 'warning')) {
         try {
-          const fixRes = await fetch(`${evolutionUrl}/webhook/set/${conn.instance_id}`, {
+          const fixRes = IS_GO
+            ? await fetch(`${evolutionUrl}/instance/connect`, {
+                method: 'POST',
+                headers: {
+                  apikey: Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionKey,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  webhookUrl: `${supabaseUrl}/functions/v1/evolution-webhook`,
+                  subscribe: ['ALL'],
+                  immediate: true,
+                }),
+                signal: AbortSignal.timeout(15000),
+              })
+            : await fetch(`${evolutionUrl}/webhook/set/${conn.instance_id}`, {
             method: 'POST',
             headers: { apikey: evolutionKey, 'Content-Type': 'application/json' },
             body: JSON.stringify({

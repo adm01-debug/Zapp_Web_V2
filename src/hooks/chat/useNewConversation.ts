@@ -84,7 +84,7 @@ export function useNewConversation(
       });
       if (msgError) throw msgError;
       await supabase.functions.invoke('evolution-api', {
-        body: { action: 'send-text', instanceName: connections.find(c => c.id === selectedConnection)?.name || 'wpp2',
+        body: { action: 'send-text', instanceName: connections.find(c => c.id === selectedConnection)?.instance_id || connections.find(c => c.id === selectedConnection)?.name || 'PRINCIPAL',
           number: selectedContact?.phone || newPhone, text: messageText.trim() },
       });
       toast.success('Mensagem enviada!');

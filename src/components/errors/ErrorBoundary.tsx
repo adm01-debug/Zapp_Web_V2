@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, type ComponentType, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // IMPORTANT: No framer-motion here! If framer-motion caused the error,
       // using it in the fallback would create an infinite crash loop.
       return (
-        <div 
+        <div
           className="min-h-screen flex items-center justify-center bg-background p-4"
           role="alert"
           aria-live="assertive"
@@ -84,7 +84,10 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {/* BUG-5 FIX: use import.meta.env.DEV, not process.env.NODE_ENV
+                  process.env.NODE_ENV is not populated by Vite in browser builds,
+                  so this block would NEVER render in development with the old code. */}
+              {import.meta.env.DEV && this.state.error && (
                 <details className="text-sm bg-muted/50 rounded-lg p-3 border border-border">
                   <summary className="cursor-pointer font-medium text-foreground flex items-center gap-2">
                     <Bug className="w-4 h-4" />
@@ -138,9 +141,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// HOC para envolver componentes com Error Boundary
+// HOC para envolver componentes com Error Boundary.
+// Uses ComponentType<P> directly (imported), NOT React.ComponentType<P>,
+// to avoid requiring React as a namespace when using named imports only.
 export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+  WrappedComponent: ComponentType<P>,
   fallback?: ReactNode
 ) {
   return function WithErrorBoundaryWrapper(props: P) {

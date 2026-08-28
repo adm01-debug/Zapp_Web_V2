@@ -1,5 +1,5 @@
-import { useRef, useState, useCallback, useMemo, memo } from 'react';
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
+import { useRef, useState, useCallback, useMemo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -108,18 +108,7 @@ export function VirtualizedRealtimeList({
   );
 }
 
-interface ConversationRowProps {
-  index: number;
-  conversation: ConversationWithMessages;
-  virtualRow: VirtualItem;
-  selectedContactId: string | null;
-  isSelected: boolean;
-  isPinned: boolean;
-  selectionMode: boolean;
-  onSelectConversation: (contactId: string) => void;
-  onToggleSelection?: (contactId: string) => void;
-  handleClick: (contactId: string, e: React.MouseEvent) => void;
-}
+import { memo } from 'react';
 
 const ConversationRow = memo(({
   conversation,
@@ -130,7 +119,7 @@ const ConversationRow = memo(({
   selectionMode,
   onToggleSelection,
   handleClick
-}: ConversationRowProps) => {
+}: any) => {
   const contactId = conversation.contact.id;
 
   return (
@@ -239,7 +228,7 @@ const ConversationRow = memo(({
           </p>
           {conversation.contact.tags && conversation.contact.tags.length > 0 && (
             <div className="flex gap-1 mt-1.5">
-              {conversation.contact.tags.slice(0, 2).map((tag) => (
+              {conversation.contact.tags.slice(0, 2).map((tag: any) => (
                 <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
                   {tag}
                 </Badge>

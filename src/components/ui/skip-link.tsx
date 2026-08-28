@@ -61,6 +61,7 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
 // Enhanced skip links container with multiple navigation options
 export function SkipLinks() {
   const [showIndicator, setShowIndicator] = useState(false);
+  const [availableTargets, setAvailableTargets] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,6 +74,28 @@ export function SkipLinks() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Only render skip-links whose target actually exists in the DOM.
+  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
+  // and on a small interval to catch async-mounted regions.
+  useEffect(() => {
+    const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
+    const detect = () => {
+      const found = new Set<string>();
+      candidates.forEach((id) => {
+        if (document.querySelector(id)) found.add(id);
+      });
+      setAvailableTargets((prev) => {
+        if (prev.size === found.size && [...found].every((v) => prev.has(v))) return prev;
+        return found;
+      });
+    };
+    detect();
+    const t = window.setInterval(detect, 1500);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const has = (id: string) => availableTargets.has(id);
 
   return (
     <nav 
@@ -93,33 +116,26 @@ export function SkipLinks() {
         )}
       </AnimatePresence>
 
-      <SkipLink 
-        href="#main-content" 
-        icon={<LayoutDashboard className="w-4 h-4" />}
-      >
-        Pular para conteúdo principal
-      </SkipLink>
-      
-      <SkipLink 
-        href="#main-navigation"
-        icon={<Navigation className="w-4 h-4" />}
-      >
-        Pular para navegação
-      </SkipLink>
-      
-      <SkipLink 
-        href="#inbox-section"
-        icon={<MessageSquare className="w-4 h-4" />}
-      >
-        Pular para conversas
-      </SkipLink>
-      
-      <SkipLink 
-        href="#search-input"
-        icon={<Search className="w-4 h-4" />}
-      >
-        Pular para busca
-      </SkipLink>
+      {has('#main-content') && (
+        <SkipLink href="#main-content" icon={<LayoutDashboard className="w-4 h-4" />}>
+          Pular para conteúdo principal
+        </SkipLink>
+      )}
+      {has('#main-navigation') && (
+        <SkipLink href="#main-navigation" icon={<Navigation className="w-4 h-4" />}>
+          Pular para navegação
+        </SkipLink>
+      )}
+      {has('#inbox-section') && (
+        <SkipLink href="#inbox-section" icon={<MessageSquare className="w-4 h-4" />}>
+          Pular para conversas
+        </SkipLink>
+      )}
+      {has('#search-input') && (
+        <SkipLink href="#search-input" icon={<Search className="w-4 h-4" />}>
+          Pular para busca
+        </SkipLink>
+      )}
     </nav>
   );
 }

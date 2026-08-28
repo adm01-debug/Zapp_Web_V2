@@ -21,7 +21,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
   const activeMembers = queue.members.filter(m => m.is_active && m.profile?.is_active);
 
   return (
-    <Card className="relative overflow-hidden border border-secondary/20 bg-card hover:border-secondary/40 transition-all hover:shadow-[0_0_20px_hsl(var(--secondary)/0.2)]">
+    <Card className="relative overflow-hidden border border-secondary/20 bg-card hover:border-secondary/40 transition-all hover:shadow-glow-secondary-sm">
       <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: queue.color }} />
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">

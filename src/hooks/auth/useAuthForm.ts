@@ -57,9 +57,20 @@ export function useAuthForm() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (isSupported()) {
-      isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
-    }
+    // BUG-F3 FIX: guard against setState after unmount when the
+    // platform-authenticator probe resolves slowly.
+    if (!isSupported()) return;
+    let cancelled = false;
+    isPlatformAuthenticatorAvailable()
+      .then((available) => {
+        if (!cancelled) setPasskeyAvailable(available);
+      })
+      .catch(() => {
+        if (!cancelled) setPasskeyAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isSupported, isPlatformAuthenticatorAvailable]);
 
   useEffect(() => {
@@ -90,17 +101,30 @@ export function useAuthForm() {
     e.preventDefault();
     setErrors({});
     
-    const result = loginSchema.safeParse(formData);
+    // O browser pode autopreencher os campos sem disparar onChange — acontece
+    // sobretudo depois que a senha e limpada num login recusado. Lemos o DOM do
+    // proprio form para nao validar contra um estado desatualizado.
+    const fd = new FormData(e.currentTarget as HTMLFormElement);
+    const credentials = {
+      ...formData,
+      email: ((fd.get("email") as string | null) ?? formData.email).trim(),
+      password: (fd.get("password") as string | null) || formData.password,
+    };
+    if (credentials.email !== formData.email || credentials.password !== formData.password) {
+      setFormData(credentials);
+    }
+
+    const result = loginSchema.safeParse(credentials);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
       });
       setErrors(fieldErrors);
       return;
     }
 
-    const currentLock = await checkAccountLock(formData.email);
+    const currentLock = await checkAccountLock(credentials.email);
     if (currentLock.isLocked) {
       setLockStatus(currentLock);
       toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
@@ -108,12 +132,16 @@ export function useAuthForm() {
     }
 
     setLoading(true);
-    const { error } = await signIn(formData.email, formData.password);
+    const { error } = await signIn(credentials.email, credentials.password);
     setLoading(false);
 
     if (error) {
-      const lockResult = await recordFailedLogin(formData.email);
+      const lockResult = await recordFailedLogin(credentials.email);
       setLockStatus(lockResult);
+      // BUG-F4 FIX: never keep the rejected password in memory after a
+      // failed attempt — forces the user to retype and avoids leaking it
+      // through React DevTools or accidental form-state serialization.
+      setFormData((prev) => ({ ...prev, password: '' }));
       if (lockResult.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lockResult.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lockResult.remainingTime)}.`, variant: 'destructive' });
       } else {
@@ -127,9 +155,11 @@ export function useAuthForm() {
         });
       }
     } else {
-      await clearLoginAttempts(formData.email);
+      await clearLoginAttempts(credentials.email);
       toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
-      navigate('/');
+      // BUG-F2 FIX: rely on the single useEffect above that watches `user`
+      // to redirect, avoiding a double navigate (race between sync
+      // navigate + async onAuthStateChange → user → effect → navigate).
     }
   };
 
@@ -140,8 +170,8 @@ export function useAuthForm() {
     const result = signupSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
       });
       setErrors(fieldErrors);
       return;
@@ -178,9 +208,12 @@ export function useAuthForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      const { lovable } = await import('@/integrations/lovable/index');
-      const { error } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
+      // Usa o cliente oficial (projeto tnnnlkbymytvtqngbbqh). O cliente do Lovable
+      // aponta para o projeto interno vpkmqeumtxhrwgawxdrl — backend errado, a
+      // sessao voltava de outro banco. Callback tratado em /auth/callback.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) {
         toast({ title: 'Erro ao conectar com Google', description: error.message, variant: 'destructive' });

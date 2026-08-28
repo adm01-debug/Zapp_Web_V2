@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef, forwardRef, memo, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, memo, useMemo, lazy, Suspense, useTransition } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { log } from '@/lib/logger';
 import { SLANotificationProvider } from '@/components/notifications/SLANotificationProvider';
 import { GoalNotificationProvider } from '@/components/notifications/GoalNotificationProvider';
 import { TourProvider, DEFAULT_ONBOARDING_STEPS, useTour } from '@/components/onboarding/OnboardingTour';
@@ -33,6 +32,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
   const { startTour } = useTour();
   const { currentView, navigateTo: rawNavigateTo, goBack: rawGoBack, goForward: rawGoForward, canGoBack, canGoForward, breadcrumbTrail } = useNavigationHistory('inbox');
   const navDirectionRef = useRef<'forward' | 'back'>('forward');
+  const [isPending, startTransition] = useTransition();
 
   // Only run checklist queries when on dashboard view
   const { isComplete: checklistComplete, isDismissed: checklistDismissed } = useOnboardingChecklist({
@@ -40,18 +40,24 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
   });
 
   const setCurrentView = useCallback((viewId: string) => {
-    navDirectionRef.current = 'forward';
-    rawNavigateTo(viewId);
+    startTransition(() => {
+      navDirectionRef.current = 'forward';
+      rawNavigateTo(viewId);
+    });
   }, [rawNavigateTo]);
 
   const goBack = useCallback(() => {
-    navDirectionRef.current = 'back';
-    rawGoBack();
+    startTransition(() => {
+      navDirectionRef.current = 'back';
+      rawGoBack();
+    });
   }, [rawGoBack]);
 
   const goForward = useCallback(() => {
-    navDirectionRef.current = 'forward';
-    rawGoForward();
+    startTransition(() => {
+      navDirectionRef.current = 'forward';
+      rawGoForward();
+    });
   }, [rawGoForward]);
 
   const [showWelcome, setShowWelcome] = useState(false);
@@ -169,14 +175,6 @@ function LoadingSplash() {
 const Index = memo(forwardRef<HTMLDivElement>(function Index(_props, _ref) {
   const { user } = useAuth();
   const { completeOnboarding } = useOnboarding();
-
-  // O ProtectedRoute já garante que o usuário esteja autenticado,
-  // mas mantemos um log para depuração se necessário.
-  useEffect(() => {
-    if (user) {
-      log.debug('[Index] Usuário autenticado:', user.email);
-    }
-  }, [user]);
 
   if (!user) {
     return <LoadingSplash />;

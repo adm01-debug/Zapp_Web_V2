@@ -2,7 +2,6 @@
  import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
  import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
  import { ChatService, Message } from '@/services/chat.service';
-import type { MessageRow } from '@/types/chat';
  import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
  import { log } from '@/lib/logger';
 
@@ -26,30 +25,42 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Fetch messages for contact
   const fetchMessages = useCallback(async () => {
-    if (!contactId || !mountedRef.current) {
-      if (mountedRef.current) { setMessages([]); setLoading(false); }
-      setLoading(false);
+    if (!contactId) {
+      if (mountedRef.current) {
+        setMessages([]);
+        setLoading(false);
+      }
       return;
     }
 
-     try {
-       setLoading(true);
-       setError(null);
-       const { data, error: fetchError } = await ChatService.fetchMessages(contactId);
-       if (fetchError) throw fetchError;
-        if (mountedRef.current) setMessages((data || []).map(mapMessageRowToMessage));
-     } catch (err) {
-       log.error('Error fetching messages:', err);
-       if (mountedRef.current) setError(err instanceof Error ? err.message : 'Failed to fetch messages');
-     } finally {
-       if (mountedRef.current) setLoading(false);
-     }
+    try {
+      if (mountedRef.current) {
+        setLoading(true);
+        setError(null);
+      }
+      
+      const { data, error: fetchError } = await ChatService.fetchMessages(contactId);
+      if (fetchError) throw fetchError;
+      
+      if (mountedRef.current && data) {
+        setMessages(data.map(mapMessageRowToMessage as any));
+      }
+    } catch (err) {
+      log.error('Error fetching messages:', err);
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch messages');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+    }
   }, [contactId]);
 
   // Handle new message from realtime
   const handleNewMessage = useCallback(
-    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const newMessage = mapMessageRowToMessage(payload.new as MessageRow);
+    (payload: RealtimePostgresChangesPayload<Message>) => {
+      const newMessage = mapMessageRowToMessage(payload.new as any);
       
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
@@ -69,8 +80,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Handle message update from realtime
   const handleMessageUpdate = useCallback(
-    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const updatedMessage = mapMessageRowToMessage(payload.new as MessageRow);
+    (payload: RealtimePostgresChangesPayload<Message>) => {
+      const updatedMessage = mapMessageRowToMessage(payload.new as any);
 
       if (updatedMessage.contact_id === contactId) {
         setMessages((prev) =>
@@ -83,7 +94,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Handle message delete from realtime
   const handleMessageDelete = useCallback(
-    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
+    (payload: RealtimePostgresChangesPayload<Message>) => {
       const deletedMessage = payload.old as Message;
 
       if (deletedMessage.contact_id === contactId) {
@@ -107,7 +118,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   }, [contactId, enabled, fetchMessages]);
 
    // Subscribe to realtime updates using the standardized hook
-   useSupabaseRealtime<MessageRow>({
+   useSupabaseRealtime<Message>({
      channelName: `messages:${contactId}`,
      table: 'messages',
      filter: contactId ? `contact_id=eq.${contactId}` : undefined,

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { memo } from 'react';
 import { Conversation } from '@/types/chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ interface ChatPanelHeaderProps {
   onSelectSuggestion?: (text: string) => void;
 }
 
-export function ChatPanelHeader({
+function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, activeTool, onSetActiveTool,
@@ -125,3 +126,5 @@ export function ChatPanelHeader({
     </div>
   );
 }
+
+export const ChatPanelHeader = memo(ChatPanelHeaderBase);

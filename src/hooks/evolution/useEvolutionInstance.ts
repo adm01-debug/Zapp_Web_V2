@@ -1,8 +1,11 @@
 import { useCallback } from 'react';
-import type { CallApiFn, WithToastFn } from './useEvolutionApiCore';
+import type { HttpMethod } from './useEvolutionApiCore';
 import type { CreateInstanceParams, SettingsConfig, WebhookConfig } from '../integrations/evolutionApi.types';
 
-export function useEvolutionInstance(callApi: CallApiFn, withToast: WithToastFn) {
+export function useEvolutionInstance(
+  callApi: (action: string, body?: object, method?: HttpMethod) => Promise<any>,
+  withToast: (action: string, body: object | undefined, successMsg: string, errorMsg: string, method?: HttpMethod) => Promise<any>
+) {
   const createInstance = useCallback((params: CreateInstanceParams) =>
     withToast('create-instance', params, 'Instância criada com sucesso', 'Erro ao criar instância'), [withToast]);
 

@@ -3,7 +3,6 @@
  * Logs token consumption per user to ai_usage_logs table.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import type { SupabaseClient } from "./deno-types.ts";
 
 interface AiUsageEntry {
   functionName: string;
@@ -49,8 +48,9 @@ export function extractUserIdFromRequest(req: Request): string | null {
 }
 
 /** Resolve profile_id from user_id via profiles table */
+// deno-lint-ignore no-explicit-any
 async function resolveProfileId(
-  supabase: SupabaseClient,
+  supabase: any,
   userId: string | null | undefined
 ): Promise<string | null> {
   if (!userId) return null;

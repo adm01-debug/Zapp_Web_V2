@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { getLogger } from '@/lib/logger';
@@ -18,21 +18,12 @@ export function useContactSearch(step: 'configure' | 'selectContact') {
   const [searchingContacts, setSearchingContacts] = useState(false);
   const [selectedContact, setSelectedContact] = useState<ContactResult | null>(null);
 
-  // Espelha o termo corrente para callbacks assíncronos decidirem com o valor
-  // mais recente, não com a closure do momento do disparo
-  const latestSearchRef = useRef('');
-  useEffect(() => {
-    latestSearchRef.current = contactSearch.trim();
-  }, [contactSearch]);
-
   // Search contacts with debounce
   useEffect(() => {
     if (step !== 'selectContact' || !contactSearch.trim()) {
       setContactResults([]);
-      setSearchingContacts(false);
       return;
     }
-    let cancelled = false;
     const timeout = setTimeout(async () => {
       setSearchingContacts(true);
       const { data } = await supabase
@@ -40,21 +31,15 @@ export function useContactSearch(step: 'configure' | 'selectContact') {
         .select('id, name, phone, avatar_url')
         .or(`name.ilike.%${contactSearch}%,phone.ilike.%${contactSearch}%`)
         .limit(15);
-      if (cancelled) return;
       setContactResults(data || []);
       setSearchingContacts(false);
     }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
+    return () => clearTimeout(timeout);
   }, [contactSearch, step]);
 
   // Load recent contacts when entering step 2
   useEffect(() => {
     if (step !== 'selectContact') return;
-    const searchTermAtDispatch = contactSearch.trim();
-    let cancelled = false;
     setSearchingContacts(true);
     supabase
       .from('contacts')
@@ -62,18 +47,9 @@ export function useContactSearch(step: 'configure' | 'selectContact') {
       .order('updated_at', { ascending: false })
       .limit(15)
       .then(({ data }) => {
-        if (cancelled) return;
-        // Só aplica os recentes se o usuário continua sem digitar nada:
-        // uma resposta tardia não pode sobrescrever resultados da busca
-        if (!searchTermAtDispatch && !latestSearchRef.current) {
-          setContactResults(data || []);
-        }
+        if (!contactSearch.trim()) setContactResults(data || []);
         setSearchingContacts(false);
       });
-    return () => {
-      cancelled = true;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- dispara só ao entrar no passo; o termo é capturado no disparo e revalidado via ref
   }, [step]);
 
   const resetContactSelection = useCallback(() => {
@@ -101,7 +77,7 @@ export function useSendToContact(onSuccess: () => void) {
     try {
       const { data: connections } = await supabase
         .from('whatsapp_connections')
-        .select('id, name')
+        .select('id, name, instance_id')
         .eq('status', 'connected')
         .limit(1);
 
@@ -118,10 +94,10 @@ export function useSendToContact(onSuccess: () => void) {
           whatsapp_connection_id: connection?.id || null,
         }).select('id').single();
 
-        const { data: apiResult } = await supabase.functions.invoke('evolution-api', {
+        const { data: apiResult, error: apiError } = await supabase.functions.invoke('evolution-api', {
           body: {
             action: 'send-media',
-            instanceName: connection?.name || 'wpp2',
+            instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
             number: contact.phone,
             mediatype: 'image',
             media: imgUrl,
@@ -130,10 +106,15 @@ export function useSendToContact(onSuccess: () => void) {
         });
 
         const externalId = apiResult?.key?.id || null;
-        if (dbResult?.id && externalId) {
-          await supabase.from('messages')
-            .update({ external_id: externalId, status: 'sent' })
-            .eq('id', dbResult.id);
+        if (dbResult?.id) {
+          // Falha da API não pode deixar a mensagem em 'sending' para sempre
+          if (apiError || apiResult?.error) {
+            await supabase.from('messages').update({ status: 'failed' }).eq('id', dbResult.id);
+          } else {
+            await supabase.from('messages')
+              .update({ external_id: externalId, status: 'sent' })
+              .eq('id', dbResult.id);
+          }
         }
       }
 
@@ -147,20 +128,24 @@ export function useSendToContact(onSuccess: () => void) {
         whatsapp_connection_id: connection?.id || null,
       }).select('id').single();
 
-      const { data: textApiResult } = await supabase.functions.invoke('evolution-api', {
+      const { data: textApiResult, error: textApiError } = await supabase.functions.invoke('evolution-api', {
         body: {
           action: 'send-text',
-          instanceName: connection?.name || 'wpp2',
+          instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
           number: contact.phone,
           text: message,
         },
       });
 
       const textExternalId = textApiResult?.key?.id || null;
-      if (textDbResult?.id && textExternalId) {
-        await supabase.from('messages')
-          .update({ external_id: textExternalId, status: 'sent' })
-          .eq('id', textDbResult.id);
+      if (textDbResult?.id) {
+        if (textApiError || textApiResult?.error) {
+          await supabase.from('messages').update({ status: 'failed' }).eq('id', textDbResult.id);
+        } else {
+          await supabase.from('messages')
+            .update({ external_id: textExternalId, status: 'sent' })
+            .eq('id', textDbResult.id);
+        }
       }
 
       toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });

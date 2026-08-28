@@ -45,7 +45,6 @@ export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: 
       const draft = localStorage.getItem(`${DRAFT_KEY_PREFIX}${conversationId}`);
       if (draft && !text) setText(draft);
     } catch (err) { log.error('Unexpected error in useTeamChatDraft:', err); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- restaura apenas ao trocar de conversa; reler a cada tecla sobrescreveria a digitação
   }, [conversationId]);
 
   // Clear draft on send

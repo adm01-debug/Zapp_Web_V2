@@ -1,0 +1,28 @@
+{
+  "budgets": {
+    "initial-js": {
+      "maxKB": 350,
+      "description": "Max initial JS bundle (excluding lazy chunks)"
+    },
+    "initial-css": {
+      "maxKB": 80,
+      "description": "Max initial CSS bundle"
+    },
+    "largest-chunk": {
+      "maxKB": 200,
+      "description": "Max single lazy-loaded chunk"
+    },
+    "total-assets": {
+      "maxKB": 2000,
+      "description": "Max total assets (all JS + CSS + images)"
+    }
+  },
+  "web-vitals": {
+    "LCP": { "target": 2500, "unit": "ms", "rating": "good" },
+    "FID": { "target": 100, "unit": "ms", "rating": "good" },
+    "INP": { "target": 200, "unit": "ms", "rating": "good" },
+    "CLS": { "target": 0.1, "unit": "score", "rating": "good" },
+    "TTFB": { "target": 800, "unit": "ms", "rating": "good" }
+  },
+  "notes": "Run 'npx vite-bundle-visualizer' to audit. Check Web Vitals via src/lib/web-vitals.ts"
+}

@@ -76,7 +76,7 @@ export function TalkXRecipientsList({ campaignId }: Props) {
           >
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0 overflow-hidden">
               {r.contacts?.avatar_url ? (
-                <img src={r.contacts.avatar_url} alt="" className="w-full h-full object-cover" />
+                <img src={r.contacts.avatar_url} alt="" className="w-full h-full object-cover"  loading="lazy" decoding="async"/>
               ) : (
                 (r.contacts?.name || '?')[0].toUpperCase()
               )}

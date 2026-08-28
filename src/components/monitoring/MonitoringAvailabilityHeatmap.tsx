@@ -113,7 +113,7 @@ export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
                     <TooltipTrigger asChild>
                       <div
                         className={cn(
-                          'flex-1 h-5 rounded-[3px] transition-colors cursor-default',
+                          'flex-1 h-5 rounded-token-xs transition-colors cursor-default',
                           cell.total === 0 ? 'bg-muted/20' : getCellColor(cell.ratio, cell.total)
                         )}
                       />

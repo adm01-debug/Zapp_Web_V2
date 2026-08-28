@@ -2,9 +2,10 @@
  * AI Proxy Edge Function
  * Routes AI calls through admin-configured provider with automatic fallback to Lovable AI.
  */
-import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody } from "../_shared/schemas.ts";
 import { logAiUsage, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
@@ -99,6 +100,12 @@ function dispatchProvider(
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+  const authCheck = await requireAuth(req);
+  if (authCheck instanceof Response) return authCheck;
+  const __uid = (authCheck as { userId: string }).userId;
+  const __guard = await enforceAiGuards({ functionName: "ai-proxy", userId: __uid, req });
+  if (__guard) return __guard;
+
 
   const log = new Logger("ai-proxy");
   const userId = extractUserIdFromRequest(req);
@@ -117,7 +124,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const provider = await getProvider(supabase, use_for as string, provider_id);
+    const provider = await getProvider(supabase as any, use_for as string, provider_id);
     const providerType = provider?.provider_type || 'lovable_ai';
     const providerName = provider?.name || 'Lovable AI';
 

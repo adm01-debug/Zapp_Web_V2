@@ -27,16 +27,14 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     switch (period) {
       case 'today':
         return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      case 'week': {
+      case 'week':
         const weekAgo = new Date(now);
         weekAgo.setDate(weekAgo.getDate() - 7);
         return weekAgo.toISOString();
-      }
-      case 'month': {
+      case 'month':
         const monthAgo = new Date(now);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
         return monthAgo.toISOString();
-      }
     }
   };
 

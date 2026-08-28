@@ -1,16 +1,69 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
+import { evoFetch, extractBase64Media } from './evolution-send.ts';
 
 import {
   isRecord, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
   generatePhoneVariants,
 } from "./evolution-helpers.ts";
-import { persistMediaToStorage, persistMediaViaApi, parseMessageContent } from "./evolution-media.ts";
-import type { SupabaseClient } from "./deno-types.ts";
+import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+
+// Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
+// com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
+// download via API. Retorna a URL permanente no Storage ou null.
+// deno-lint-ignore no-explicit-any
+async function persistIncomingMedia(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  messageType: string, msgId: string, parsedUrl: string | null,
+): Promise<string | null> {
+  const message = data.message as Record<string, unknown> | undefined;
+  const webhookB64 = (data.base64 as string) || (message?.base64 as string);
+  if (typeof webhookB64 === 'string' && webhookB64) {
+    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId);
+    if (fromB64) return fromB64;
+  }
+  const directUrl = parsedUrl || (data.mediaUrl as string) || (message?.mediaUrl as string) || null;
+  if (directUrl && directUrl.startsWith('http')) {
+    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId);
+    if (fromUrl) return fromUrl;
+  }
+  return await persistMediaViaApi(supabase, instance, data, messageType, msgId);
+}
+
+const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
+
+// Fire-and-forget OG enrichment for received messages.
+// deno-lint-ignore no-explicit-any
+async function enrichIncomingLinkPreview(
+  supabase: any, messageId: string, content: string | null | undefined,
+  supabaseUrl: string, supabaseServiceKey: string,
+): Promise<void> {
+  try {
+    if (!content) return;
+    const match = content.match(URL_REGEX);
+    if (!match) return;
+    const url = match[0].replace(/[).,;!?]+$/, '');
+    const resp = await fetch(`${supabaseUrl}/functions/v1/fetch-link-preview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseServiceKey}`,
+        apikey: supabaseServiceKey,
+      },
+      body: JSON.stringify({ url }),
+    });
+    if (!resp.ok) { await resp.text().catch(() => ''); return; }
+    const json = await resp.json().catch(() => null) as { preview?: unknown } | null;
+    if (!json?.preview) return;
+    await supabase.from('messages').update({ link_preview: json.preview }).eq('id', messageId);
+  } catch (err) {
+    console.error('[INCOMING] link_preview enrichment failed:', err);
+  }
+}
 
 // deno-lint-ignore no-explicit-any
 export async function handleOutgoingWhatsAppMessage(
-  supabase: SupabaseClient, instance: string, data: Record<string, unknown>,
+  supabase: any, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
@@ -37,11 +90,10 @@ export async function handleOutgoingWhatsAppMessage(
   if (!parsed.content && parsed.messageType === 'text') return;
 
   let { mediaUrl } = parsed;
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
     const msgId = key.id.replace(/[^a-zA-Z0-9]/g, '');
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, parsed.messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else { const apiUrl = await persistMediaViaApi(supabase, instance, data, parsed.messageType, msgId); if (apiUrl) mediaUrl = apiUrl; }
   }
 
   const messageCreatedAt = (data.messageTimestamp as number)
@@ -70,7 +122,7 @@ export async function handleOutgoingWhatsAppMessage(
 
 // deno-lint-ignore no-explicit-any
 export async function handleIncomingMessage(
-  supabase: SupabaseClient, instance: string, data: Record<string, unknown>,
+  supabase: any, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
 ) {
@@ -88,18 +140,21 @@ export async function handleIncomingMessage(
   let { mediaUrl } = parsed;
   const { content, messageType } = parsed;
 
+  // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
+  // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
+  if (!content && messageType === 'text' && !mediaUrl) {
+    console.log(`[INCOMING] Ignored empty message ${key.id}`);
+    return;
+  }
+
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
   }
 
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(messageType)) {
     const msgId = key.id || `${Date.now()}`;
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else {
-      const apiUrl = await persistMediaViaApi(supabase, instance, data, messageType, msgId);
-      if (apiUrl) mediaUrl = apiUrl;
-    }
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
@@ -165,11 +220,14 @@ export async function handleIncomingMessage(
     return;
   }
   if (messageType === 'audio' && mediaUrl && insertedMessage) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (messageType === 'text' && insertedMessage?.id && content) {
+    void enrichIncomingLinkPreview(supabase, insertedMessage.id, content, supabaseUrl, supabaseServiceKey);
+  }
 }
 
 // deno-lint-ignore no-explicit-any
 export async function handleStickerMedia(
-  supabase: SupabaseClient, instance: string, data: Record<string, unknown>,
+  supabase: any, instance: string, data: Record<string, unknown>,
   message: Record<string, unknown> | undefined, key: { id: string }
 ): Promise<string | null> {
   let mediaUrl: string | null = null;
@@ -191,7 +249,8 @@ export async function handleStickerMedia(
     } catch { return null; }
   };
 
-  const b64Direct = (data.base64 as string) || ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
+  const b64Direct = (data.base64 as string) || (message?.base64 as string) ||
+    ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
   if (b64Direct) mediaUrl = await uploadBase64Sticker(b64Direct);
 
   if (!mediaUrl) {
@@ -217,16 +276,14 @@ export async function handleStickerMedia(
       const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
       const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
       if (evolutionUrl && evolutionKey) {
-        const apiUrl = `${evolutionUrl.replace(/\/+$/, '')}/chat/getBase64FromMediaMessage/${instance}`;
-        const resp = await fetch(apiUrl, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': evolutionKey },
-          body: JSON.stringify({ message: { key: data.key, message: data.message }, convertToMp4: false }),
-          signal: AbortSignal.timeout(15000),
-        });
+        const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ''), evolutionKey,
+          `/chat/getBase64FromMediaMessage/${instance}`,
+          { message: { key: data.key, message: data.message }, convertToMp4: false },
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
         if (resp.ok) {
           const result = await resp.json();
-          const b64 = (result.base64 as string) || (result.data as string) || (result.media as string);
-          if (b64) mediaUrl = await uploadBase64Sticker(b64);
+          const media = extractBase64Media(result);
+          if (media) mediaUrl = await uploadBase64Sticker(media.base64);
         }
       }
     } catch (apiErr) { console.error('[STICKER] API fetch error:', apiErr); }
@@ -252,7 +309,8 @@ export async function handleStickerMedia(
   return mediaUrl;
 }
 
-export async function handleAudioTranscription(supabase: SupabaseClient, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
+// deno-lint-ignore no-explicit-any
+export async function handleAudioTranscription(supabase: any, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
   const { data: globalSetting } = await supabase.from('global_settings')
     .select('value').eq('key', 'auto_transcription_enabled').maybeSingle();
   if (globalSetting?.value === 'false') return;

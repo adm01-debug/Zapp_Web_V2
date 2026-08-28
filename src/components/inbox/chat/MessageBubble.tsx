@@ -1,4 +1,4 @@
-import { useCallback, lazy, Suspense } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { motion, AnimatePresence } from '@/components/ui/motion';
 import { cn } from '@/lib/utils';
@@ -15,15 +15,14 @@ import { DocumentPreview, VideoPreview } from '../MediaPreview';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
-// Lazy: LocationMessage puxa mapbox-gl (~1 MB); mensagens de localização são raras
-const LocationMessageDisplay = lazy(() =>
-  import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
-);
+import { LocationMessageDisplay } from '../LocationMessage';
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatMessageTime, MessageStatusIcon } from './messageUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
+import { QuarantineBadge } from '@/components/security/QuarantineBadge';
+import { LinkPreviewCard } from './LinkPreviewCard';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('MessageBubble');
@@ -148,7 +147,7 @@ export const MessageBubble = memo(function MessageBubble({
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-br-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tr-sm rounded-br-md',
                         !isFirstInGroup && !isLastInGroup && 'rounded-xl rounded-tr-sm rounded-br-sm')
-                    : cn('bg-card border border-border/30 text-foreground shadow-[var(--shadow-sm)]',
+                    : cn('bg-card border border-border/30 text-foreground shadow-sm',
                         isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-bl-md',
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-bl-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tl-sm rounded-bl-md',
@@ -160,18 +159,23 @@ export const MessageBubble = memo(function MessageBubble({
                 {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} />}
 
                 {message.type === 'image' && message.mediaUrl && (
-                  <div className={cn("overflow-hidden", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>
+                  <div className={cn("overflow-hidden relative", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>
                     <MessageImage src={message.mediaUrl} />
+                    <QuarantineBadge messageId={message.id} className="absolute m-1.5 left-0 top-0" />
                   </div>
                 )}
 
                 {message.type === 'video' && message.mediaUrl && (
-                  <div className="mb-1.5"><VideoPreview url={message.mediaUrl} caption={message.content} isSent={isSent} /></div>
+                  <div className="mb-1.5 relative">
+                    <VideoPreview url={message.mediaUrl} caption={message.content} isSent={isSent} />
+                    <QuarantineBadge messageId={message.id} className="absolute m-1.5 left-0 top-0" />
+                  </div>
                 )}
 
                 {message.type === 'audio' && message.mediaUrl && (
                   <div className="mb-1">
                     <AudioMessagePlayer audioUrl={message.mediaUrl} messageId={message.id} isSent={isSent} existingTranscription={message.transcription} transcriptionStatus={message.transcriptionStatus} />
+                    <QuarantineBadge messageId={message.id} className="mt-1" />
                     {searchQuery && highlightedMessageIds?.has(message.id) && message.transcription && (
                       <p className="text-[11px] mt-1 px-1 italic text-muted-foreground"><HighlightedText text={message.transcription} query={searchQuery} /></p>
                     )}
@@ -181,21 +185,19 @@ export const MessageBubble = memo(function MessageBubble({
                 {message.type === 'document' && message.mediaUrl && (
                   <div className="mb-1.5">
                     <DocumentPreview url={message.mediaUrl} fileName={searchQuery && highlightedMessageIds?.has(message.id) && message.content ? undefined : (message.content || 'documento')} isSent={isSent} />
+                    <QuarantineBadge messageId={message.id} className="mt-1" />
                     {searchQuery && highlightedMessageIds?.has(message.id) && message.content && (
                       <p className="text-[12px] mt-1 px-1"><HighlightedText text={message.content} query={searchQuery} /></p>
                     )}
                   </div>
                 )}
 
-                {message.type === 'location' && message.location && (
-                  <Suspense fallback={<div className="w-64 h-40 rounded-lg bg-muted/40 animate-pulse" />}>
-                    <LocationMessageDisplay location={message.location} isSent={isSent} />
-                  </Suspense>
-                )}
+                {message.type === 'location' && message.location && <LocationMessageDisplay location={message.location} isSent={isSent} />}
 
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">
                     <img src={message.mediaUrl} alt="Sticker" className="max-w-[160px] max-h-[160px] object-contain drop-shadow-lg" loading="lazy" />
+                    <QuarantineBadge messageId={message.id} className="absolute top-1 left-1" />
                     {!isSent && (
                       <button
                         onClick={async (e) => {
@@ -223,9 +225,14 @@ export const MessageBubble = memo(function MessageBubble({
                 )}
 
                 {message.content && message.type !== 'audio' && message.type !== 'location' && message.type !== 'video' && message.type !== 'document' && message.type !== 'sticker' && (
+                  <>
+                  {message.link_preview && (
+                    <LinkPreviewCard preview={message.link_preview} isSent={isSent} />
+                  )}
                   <p className="text-[13.5px] whitespace-pre-wrap leading-[1.45]">
                     {searchQuery && highlightedMessageIds?.has(message.id) ? <HighlightedText text={message.content} query={searchQuery} /> : message.content}
                   </p>
+                  </>
                 )}
 
                 <div className={cn(

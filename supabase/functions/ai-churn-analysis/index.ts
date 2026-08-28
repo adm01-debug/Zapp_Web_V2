@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AiChurnAnalysisSchema, parseBody } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
@@ -24,6 +25,8 @@ Deno.serve(async (req) => {
     });
     const { data: { user } } = await callerClient.auth.getUser();
     if (!user) return errorResponse("Não autorizado", 401, req);
+    const __guard = await enforceAiGuards({ functionName: "ai-churn-analysis", userId: user.id, req });
+    if (__guard) return __guard;
 
     const parsed = parseBody(AiChurnAnalysisSchema, await req.json());
     if (!parsed.success) return errorResponse(parsed.error, 400, req);

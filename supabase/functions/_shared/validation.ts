@@ -137,7 +137,6 @@ export function handleCors(req: Request): Response | null {
 export function sanitizeString(input: unknown, maxLength = 10000): string | null {
   if (typeof input !== 'string') return null;
   // Remove control characters except newlines/tabs
-  // eslint-disable-next-line no-control-regex -- sanitizador: remover control chars é o objetivo
   const cleaned = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
   return cleaned.length > 0 ? cleaned.slice(0, maxLength) : null;
 }
@@ -196,4 +195,31 @@ export function requireEnv(name: string): string {
     throw new Error(`${name} is not configured`);
   }
   return value;
+}
+
+/**
+ * Require a valid Supabase JWT in the Authorization header.
+ * Returns the authenticated user id, or a Response (401) to short-circuit.
+ */
+export async function requireAuth(req: Request): Promise<{ userId: string } | Response> {
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
+  if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+    return errorResponse("Missing Authorization bearer token", 401, req);
+  }
+  try {
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+    const client = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data, error } = await client.auth.getUser();
+    if (error || !data?.user) {
+      return errorResponse("Invalid or expired token", 401, req);
+    }
+    return { userId: data.user.id };
+  } catch (_err) {
+    return errorResponse("Authentication failed", 401, req);
+  }
 }

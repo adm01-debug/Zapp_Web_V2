@@ -1,6 +1,11 @@
 /**
  * useExternalEvolution — Hooks for reading evolution_messages from external FATOR X DB
  * Replaces the local DB reads for the Inbox when external DB is the source of truth.
+ *
+ * LEGADO (instalação Evolution API antiga, infra AtomicaBR/wpp2): a tabela
+ * `evolution_messages` pertence à instância v2 desativada. A instalação atual é a
+ * Evolution GO (webhook → banco local). Mantido desligado via USE_EXTERNAL_DB=false
+ * em useRealtimeInbox; não reativar contra a infra antiga.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -49,7 +54,7 @@ export function useExternalMessages(remoteJid: string | null) {
       return evoMessages.map(evolutionToRealtimeMessage);
     },
     enabled: !!remoteJid,
-    refetchInterval: remoteJid ? POLL_INTERVAL : false,
+    refetchInterval: !!remoteJid ? POLL_INTERVAL : false,
     staleTime: POLL_INTERVAL - 1000,
   });
 

@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { createRunGuard } from '@/lib/runGuard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,12 +35,11 @@ export function NextBestActionEngine({ contactId, contactName }: NextBestActionP
   const [actions, setActions] = useState<NextAction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Invalida execuções antigas: trocar de contato no meio de uma análise não
-  // pode deixar a resposta atrasada sobrescrever os dados do contato atual
-  const guard = useRef(createRunGuard()).current;
+  useEffect(() => {
+    analyzeAndSuggest();
+  }, [contactId]);
 
-  const analyzeAndSuggest = useCallback(async () => {
-    const runId = guard.start();
+  const analyzeAndSuggest = async () => {
     setLoading(true);
     const suggestedActions: NextAction[] = [];
 
@@ -157,17 +155,9 @@ export function NextBestActionEngine({ contactId, contactName }: NextBestActionP
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     suggestedActions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-    if (!guard.isCurrent(runId)) return;
     setActions(suggestedActions);
     setLoading(false);
-  }, [contactId, contactName, guard]);
-
-  useEffect(() => {
-    analyzeAndSuggest();
-    return () => {
-      guard.invalidate();
-    };
-  }, [analyzeAndSuggest, guard]);
+  };
 
   const priorityColors = {
     high: 'border-destructive/30 bg-destructive/5',

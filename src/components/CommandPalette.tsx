@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/command';
  import { sidebarGroups, primaryNav } from '@/components/layout/sidebarNavConfig';
  import { useUserRole } from '@/hooks/system/useUserRole';
- import { NavigationService, type NavItem } from '@/services/navigation.service';
+ import { NavigationService } from '@/services/navigation.service';
 import type { NavItemConfig } from '@/components/layout/SidebarNavItem';
 
 interface CommandPaletteProps {
@@ -43,7 +43,7 @@ function pushRecent(id: string) {
      ];
      return groups.map(g => ({
        ...g,
-       items: NavigationService.filterNavItems(g.items, roles)
+       items: NavigationService.filterNavItems(g.items as any, roles)
      })).filter(g => g.items.length > 0);
    }, [roles]);
  
@@ -73,9 +73,7 @@ function pushRecent(id: string) {
   }, []);
 
    const recentItems = useMemo(
-     () => recent
-       .map(id => allItems.find(i => i.id === id))
-       .filter((item): item is NavItem => Boolean(item)),
+     () => recent.map(id => allItems.find(i => i.id === id)).filter(Boolean) as any[],
      [recent, allItems]
    );
 

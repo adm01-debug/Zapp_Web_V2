@@ -16,12 +16,18 @@ vi.mock('@/hooks/integrations/useWhatsAppStatus', () => ({
   useWhatsAppStatus: () => mockData,
 }));
 
-// Mock useEvolutionApi — referências estáveis: identidade nova por render
-// dispararia o efeito de mídia em loop (o hook real usa useCallback)
+// Mock useEvolutionApi.
+// IMPORTANT: getMediaBase64 must keep a STABLE identity across renders. In
+// production it is memoized via useCallback, so StoryViewer's media effect
+// (deps include getMediaBase64) runs only when index/messages change. If the
+// mock returned a fresh fn each render, that effect would re-run every render
+// and its setResolvedMedia({...}) call would create a new object each time —
+// an infinite render loop that synchronously hangs the whole test suite.
 const mockGetMediaBase64 = vi.fn().mockResolvedValue({ base64: '', mimetype: 'image/jpeg' });
-const mockEvolutionApi = { getMediaBase64: mockGetMediaBase64 };
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
-  useEvolutionApi: () => mockEvolutionApi,
+  useEvolutionApi: () => ({
+    getMediaBase64: mockGetMediaBase64,
+  }),
 }));
 
 // Mock formatRelativeTime

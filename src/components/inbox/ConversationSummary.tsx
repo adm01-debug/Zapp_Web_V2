@@ -37,7 +37,6 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
   const canGenerateSummary = filteredMessages.length >= 10;
 
   useEffect(() => { setSummary(null); setHasGenerated(false); }, [contactId]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- invalida o resumo só quando o período muda; hasGenerated aqui é leitura, não gatilho
   useEffect(() => { if (hasGenerated) { setSummary(null); setHasGenerated(false); } }, [analysisPeriod, customDateFrom, customDateTo]);
   useEffect(() => { if (initialSummary) { setSummary(initialSummary as unknown as SummaryData); setHasGenerated(true); } }, [initialSummary]);
 

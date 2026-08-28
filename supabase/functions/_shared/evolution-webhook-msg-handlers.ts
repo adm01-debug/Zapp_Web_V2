@@ -4,9 +4,9 @@ import {
   isRecord, normalizePhone, resolveEventJid, toEventRecords, shouldUpdateStatus,
   getConnectionByInstance, getContactByPhone,
 } from "./evolution-helpers.ts";
-import type { SupabaseClient } from "./deno-types.ts";
 
-export async function handleSendMessage(supabase: SupabaseClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
+// deno-lint-ignore no-explicit-any
+export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
@@ -66,7 +66,8 @@ export async function handleSendMessage(supabase: SupabaseClient, instance: stri
   }
 }
 
-export async function handleMessagesUpdate(supabase: SupabaseClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
+// deno-lint-ignore no-explicit-any
+export async function handleMessagesUpdate(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const statusMap: Record<string, string> = {
     'DELIVERY_ACK': 'delivered', 'READ': 'read', 'PLAYED': 'read', 'SERVER_ACK': 'sent', 'ERROR': 'failed',
   };
@@ -74,7 +75,7 @@ export async function handleMessagesUpdate(supabase: SupabaseClient, instance: s
 
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
-    const key = keySource as { id?: string } | null;
+    const key = keySource as { id?: string; fromMe?: boolean } | null;
     const rawStatus = (entry.status as string) || (baseData.status as string) || '';
     const newStatus = statusMap[rawStatus] || rawStatus.toLowerCase();
 
@@ -88,6 +89,11 @@ export async function handleMessagesUpdate(supabase: SupabaseClient, instance: s
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.log(`Message ${key.id} status: ${currentMessage.status} → ${newStatus}`);
         }
+      } else if (key.fromMe === true) {
+        // Recibo de mensagem NOSSA que o frontend ainda não estampou com
+        // external_id (corrida envio×webhook): criar stub aqui duplicaria a
+        // mensagem — o eco send.message / o frontend resolvem em seguida.
+        console.log(`Receipt for own message ${key.id} before external_id landed — skipping stub`);
       } else {
         let contactId: string | null = null;
         if (connection?.id) {
@@ -111,7 +117,8 @@ export async function handleMessagesUpdate(supabase: SupabaseClient, instance: s
   }
 }
 
-export async function handleMessagesDelete(supabase: SupabaseClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
+// deno-lint-ignore no-explicit-any
+export async function handleMessagesDelete(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
@@ -142,7 +149,8 @@ export async function handleMessagesDelete(supabase: SupabaseClient, instance: s
   }
 }
 
-export async function handleMessagesSet(supabase: SupabaseClient, instance: string, data: unknown) {
+// deno-lint-ignore no-explicit-any
+export async function handleMessagesSet(supabase: any, instance: string, data: unknown) {
   const messages = toEventRecords(data, ['messages']);
   if (messages.length === 0) return;
 
@@ -187,7 +195,8 @@ export async function handleMessagesSet(supabase: SupabaseClient, instance: stri
   console.log(`messages.set: synced ${synced}, skipped ${skipped} for ${instance}`);
 }
 
-export async function handleMessagesEdited(supabase: SupabaseClient, data: unknown, baseData: Record<string, unknown>) {
+// deno-lint-ignore no-explicit-any
+export async function handleMessagesEdited(supabase: any, data: unknown, baseData: Record<string, unknown>) {
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string } | null;

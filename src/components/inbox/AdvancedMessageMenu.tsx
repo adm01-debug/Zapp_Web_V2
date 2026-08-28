@@ -189,7 +189,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
             </div>
             {stickerUrl && (
               <div className="flex justify-center p-4 bg-muted/20 rounded-lg">
-                <img src={stickerUrl} alt="Preview" className="max-w-32 max-h-32 object-contain" />
+                <img src={stickerUrl} alt="Preview" className="max-w-32 max-h-32 object-contain"  loading="lazy" decoding="async"/>
               </div>
             )}
             <Button onClick={handleSendSticker} disabled={isLoading || !stickerUrl.trim()} className="w-full">

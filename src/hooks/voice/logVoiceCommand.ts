@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('logVoiceCommand');
@@ -20,8 +20,8 @@ export function logVoiceCommand(params: VoiceCommandLogParams) {
       if (!user) return;
 
       // voice_command_logs may not be in generated types yet — use rpc or raw fetch
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/voice_command_logs`;
-      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const url = `${SUPABASE_URL}/rest/v1/voice_command_logs`;
+      const key = SUPABASE_ANON_KEY;
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || key;
 

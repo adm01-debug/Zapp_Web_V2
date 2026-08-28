@@ -1,3 +1,25 @@
+/**
+ * ConversationHeatmap — reports/ version
+ *
+ * PURPOSE: Self-contained, zero-prop widget for embedding inside the
+ * Reports page. Fetches its own data and exposes a period selector
+ * that the dashboard version does not have.
+ *
+ * KEY DIFFERENCES from dashboard/ConversationHeatmap:
+ *  - Named export (imported directly by AdvancedReportsView)
+ *  - Zero props — fully self-contained, no external data injection
+ *  - Period selector dropdown: 7 / 30 / 90 days  ← UNIQUE TO THIS FILE
+ *  - Single metric: volume only (no response_time / satisfaction tabs)
+ *  - useState + useEffect (no TanStack Query / no cache)
+ *  - Simple Tailwind opacity classes for color (bg-primary/25 …/60, bg-warning/80, bg-destructive/80)
+ *  - No animations (no framer-motion dependency)
+ *  - No onCellClick callback
+ *  - No hotspot detection, no stats summary row
+ *
+ * DO NOT merge with dashboard/ConversationHeatmap — that file is a
+ * configurable, prop-driven widget with multi-metric tabs, Framer Motion
+ * and TanStack Query caching. Both serve distinct UI contexts.
+ */
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +43,6 @@ export function ConversationHeatmap() {
 
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [period]);
 
   const loadData = async () => {

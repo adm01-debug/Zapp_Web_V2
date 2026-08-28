@@ -1,6 +1,50 @@
 /* ===== DESIGN TOKENS — Light & Dark mode CSS variables ===== */
 
 :root {
+    /* ===== RADIUS SCALE — coerência de raios em toda UI ===== */
+    --radius-none: 0;
+    --radius-xs: 0.25rem;   /* 4px  — chips, tags */
+    --radius-sm: 0.375rem;  /* 6px  — inputs pequenos */
+    --radius-md: 0.5rem;    /* 8px  — botões */
+    --radius-lg: 0.75rem;   /* 12px — cards */
+    --radius-xl: 1rem;      /* 16px — surfaces */
+    --radius-2xl: 1.5rem;   /* 24px — modais */
+    --radius-full: 9999px;  /* pills/avatars */
+
+    /* ===== ELEVATION SCALE — superfícies por profundidade ===== */
+    --elev-0: none;
+    --elev-1: 0 1px 2px hsl(221 20% 12% / 0.05);
+    --elev-2: 0 2px 4px hsl(221 20% 12% / 0.06), 0 1px 2px hsl(221 20% 12% / 0.04);
+    --elev-3: 0 6px 12px -2px hsl(221 20% 12% / 0.08), 0 2px 4px hsl(221 20% 12% / 0.04);
+    --elev-4: 0 12px 24px -6px hsl(221 20% 12% / 0.10), 0 4px 8px -2px hsl(221 20% 12% / 0.05);
+    --elev-5: 0 24px 48px -12px hsl(221 20% 12% / 0.18), 0 8px 16px -4px hsl(221 20% 12% / 0.08);
+
+    /* ===== TONAL PALETTE — Primary (Corporate Blue) 50→950 ===== */
+    --primary-50:  221 100% 97%;
+    --primary-100: 221 95%  93%;
+    --primary-200: 221 92%  86%;
+    --primary-300: 221 90%  76%;
+    --primary-400: 221 87%  64%;
+    --primary-500: 221 83%  53%;
+    --primary-600: 221 83%  46%;
+    --primary-700: 221 80%  38%;
+    --primary-800: 221 75%  30%;
+    --primary-900: 221 70%  22%;
+    --primary-950: 221 65%  14%;
+
+    /* ===== TONAL PALETTE — Neutral 50→950 ===== */
+    --neutral-50:  221 20% 98%;
+    --neutral-100: 221 18% 95%;
+    --neutral-200: 221 16% 90%;
+    --neutral-300: 221 14% 82%;
+    --neutral-400: 221 12% 64%;
+    --neutral-500: 221 10% 46%;
+    --neutral-600: 221 12% 36%;
+    --neutral-700: 221 14% 26%;
+    --neutral-800: 221 16% 18%;
+    --neutral-900: 221 18% 12%;
+    --neutral-950: 221 20% 6%;
+
     /* ===== FONTS ===== */
     --font-sans: 'Outfit', system-ui, sans-serif;
     --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -172,6 +216,29 @@
     --shadow-glow-purple: 0 4px 14px hsl(221 83% 53% / 0.3);
     --shadow-header: 0 1px 3px hsl(221 20% 12% / 0.06);
 
+    /* ===== GLOW SCALE — auras coloridas semânticas (sm/md/lg) ===== */
+    --glow-primary-sm: 0 0 15px hsl(var(--primary) / 0.3);
+    --glow-primary-md: 0 0 20px hsl(var(--primary) / 0.4);
+    --glow-primary-lg: 0 0 30px hsl(var(--primary) / 0.5);
+    --glow-secondary-sm: 0 0 15px hsl(var(--secondary) / 0.3);
+    --glow-secondary-md: 0 0 20px hsl(var(--secondary) / 0.4);
+    --glow-secondary-lg: 0 0 30px hsl(var(--secondary) / 0.5);
+    --glow-accent-sm: 0 0 10px hsl(var(--accent) / 0.3);
+    --glow-accent-md: 0 0 20px hsl(var(--accent) / 0.4);
+    --glow-destructive-md: 0 0 20px hsl(var(--destructive) / 0.5);
+    --glow-success-md: 0 0 20px hsl(var(--success) / 0.5);
+    --glow-whatsapp-md: 0 0 25px hsl(var(--whatsapp) / 0.6);
+    --glow-whatsapp-lg: 0 0 30px hsl(var(--whatsapp) / 0.5);
+    --glow-xp-md: 0 0 20px hsl(var(--xp) / 0.4);
+    --glow-coins-md: 0 0 20px hsl(var(--coins) / 0.4);
+    --glow-streak-md: 0 0 20px hsl(var(--streak) / 0.4);
+    --glow-rank-gold-md: 0 0 20px hsl(var(--rank-gold) / 0.4);
+    /* compostos (multi-layer) */
+    --glow-aura-secondary: 0 0 30px hsl(var(--secondary) / 0.6), 0 0 60px hsl(var(--secondary) / 0.3);
+    --glow-aura-gradient: 0 0 30px hsl(var(--secondary) / 0.5), 0 0 60px hsl(var(--primary) / 0.3);
+    --glow-aura-neon: 0 0 25px hsl(var(--secondary) / 0.5), 0 0 50px hsl(var(--secondary) / 0.2);
+    --glow-neon-inset: 0 0 20px hsl(var(--secondary) / 0.5), inset 0 0 20px hsl(var(--secondary) / 0.1);
+
     /* ===== GLASS ===== */
     --glass-bg: 0 0% 100% / 1;
     --glass-border: 221 15% 88% / 1;
@@ -210,6 +277,36 @@
 /* ===== DARK MODE - Corporate Blue ===== */
 .dark {
     --background: 0 0% 4%;
+    /* ===== ELEVATION (dark) — sombras mais profundas ===== */
+    --elev-0: none;
+    --elev-1: 0 1px 2px hsl(0 0% 0% / 0.5);
+    --elev-2: 0 2px 4px hsl(0 0% 0% / 0.55), 0 1px 2px hsl(0 0% 0% / 0.45);
+    --elev-3: 0 6px 12px -2px hsl(0 0% 0% / 0.6), 0 2px 4px hsl(0 0% 0% / 0.45);
+    --elev-4: 0 12px 24px -6px hsl(0 0% 0% / 0.65), 0 4px 8px -2px hsl(0 0% 0% / 0.5);
+    --elev-5: 0 24px 48px -12px hsl(0 0% 0% / 0.75), 0 8px 16px -4px hsl(0 0% 0% / 0.55);
+    /* ===== TONAL PALETTE (dark adjustments) ===== */
+    --primary-50:  221 60% 14%;
+    --primary-100: 221 65% 18%;
+    --primary-200: 221 70% 24%;
+    --primary-300: 221 75% 32%;
+    --primary-400: 221 80% 42%;
+    --primary-500: 221 83% 53%;
+    --primary-600: 221 87% 62%;
+    --primary-700: 221 90% 72%;
+    --primary-800: 221 92% 82%;
+    --primary-900: 221 95% 90%;
+    --primary-950: 221 100% 96%;
+    --neutral-50:  221 18% 8%;
+    --neutral-100: 221 16% 12%;
+    --neutral-200: 221 14% 18%;
+    --neutral-300: 221 12% 26%;
+    --neutral-400: 221 10% 38%;
+    --neutral-500: 221 10% 54%;
+    --neutral-600: 221 12% 68%;
+    --neutral-700: 221 14% 80%;
+    --neutral-800: 221 16% 88%;
+    --neutral-900: 221 18% 94%;
+    --neutral-950: 221 20% 98%;
     --foreground: 0 0% 97%;
     --card: 240 7% 11%;
     --card-foreground: 0 0% 97%;

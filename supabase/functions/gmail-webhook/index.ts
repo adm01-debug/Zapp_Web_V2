@@ -2,16 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import type { SupabaseClient } from "../_shared/deno-types.ts";
-
-// Tipos mínimos de payload da Gmail API usados neste webhook
-interface GmailMessagePart {
-  mimeType?: string;
-  filename?: string;
-  body?: { data?: string; attachmentId?: string };
-  parts?: GmailMessagePart[];
-}
-
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -24,13 +14,15 @@ const PubSubSchema = z.object({
   subscription: z.string().optional(),
 });
 
-async function getTokens(supabase: SupabaseClient, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
+// deno-lint-ignore no-explicit-any
+async function getTokens(supabase: any, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
   const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
   if (error || !data?.length) throw new Error("Failed to retrieve tokens");
   return data[0];
 }
 
-async function storeTokens(supabase: SupabaseClient, accountId: string, accessToken: string, refreshToken?: string | null) {
+// deno-lint-ignore no-explicit-any
+async function storeTokens(supabase: any, accountId: string, accessToken: string, refreshToken?: string | null) {
   await supabase.rpc("store_gmail_tokens", {
     p_account_id: accountId,
     p_access_token: accessToken,
@@ -38,7 +30,8 @@ async function storeTokens(supabase: SupabaseClient, accountId: string, accessTo
   });
 }
 
-async function refreshToken(supabase: SupabaseClient, account: { id: string; email?: string; [key: string]: unknown }, log: Logger): Promise<string> {
+// deno-lint-ignore no-explicit-any
+async function refreshToken(supabase: any, account: any, log: Logger): Promise<string> {
   const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
   const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
 
@@ -82,11 +75,13 @@ function getHeader(headers: { name: string; value: string }[], name: string): st
   return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 }
 
-function extractBody(payload: GmailMessagePart): { text: string; html: string } {
+// deno-lint-ignore no-explicit-any
+function extractBody(payload: any): { text: string; html: string } {
   let text = "";
   let html = "";
 
-  function processPart(part: GmailMessagePart) {
+  // deno-lint-ignore no-explicit-any
+  function processPart(part: any) {
     if (part.mimeType === "text/plain" && part.body?.data) {
       text = decodeBase64Url(part.body.data);
     } else if (part.mimeType === "text/html" && part.body?.data) {
@@ -134,7 +129,7 @@ serve(async (req) => {
     // Find the gmail account (without token columns)
     const { data: account, error: accountError } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, token_expires_at, history_id, profile_id")
+      .select("id, email_address, is_active, token_expires_at, history_id, user_id")
       .eq("email_address", emailAddress)
       .eq("is_active", true)
       .single();
@@ -245,7 +240,7 @@ serve(async (req) => {
           snippet: msg.snippet,
           label_ids: msg.labelIds || [],
           is_read: !(msg.labelIds || []).includes("UNREAD"),
-          has_attachments: ((msg.payload.parts || []) as GmailMessagePart[]).some((p) => p.filename && p.body?.attachmentId),
+          has_attachments: (msg.payload.parts || []).some((p: any) => p.filename && p.body?.attachmentId),
           in_reply_to: getHeader(headers, "In-Reply-To") || null,
           references_header: getHeader(headers, "References") || null,
           internal_date: new Date(parseInt(msg.internalDate)).toISOString(),

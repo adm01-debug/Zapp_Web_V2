@@ -11,7 +11,6 @@ export function AbandonmentRate() {
   const [period, setPeriod] = useState('7');
   const [loading, setLoading] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   useEffect(() => { loadData(); }, [period]);
 
   const loadData = async () => {
@@ -103,7 +102,7 @@ export function AbandonmentRate() {
                         <Cell key={idx} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => [value, 'Conversas']} />
+                    <Tooltip formatter={(value: any) => [value, 'Conversas']} />
                   </PieChart>
                 </ResponsiveContainer>
               )}

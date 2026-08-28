@@ -68,10 +68,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
   useEffect(() => {
     if (s.isNearBottomRef.current && s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
-  }, [s.filteredMessages.length, s.isNearBottomRef, s.scrollRef]);
+  }, [s.filteredMessages.length]);
 
-  useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id, s.scrollRef]);
-  useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch, s.searchInputRef]);
+  useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id]);
+  useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch]);
 
   const dateFirstIndexes = useMemo(() => {
     const seen = new Set<string>();

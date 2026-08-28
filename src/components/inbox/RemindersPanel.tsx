@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { createRunGuard } from '@/lib/runGuard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,27 +34,13 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
   const [newTitle, setNewTitle] = useState('');
   const [when, setWhen] = useState('1h');
   const [loading, setLoading] = useState(true);
-  // Troca rápida de contato: respostas atrasadas não podem sobrescrever a atual
-  const guard = useRef(createRunGuard()).current;
-  // Chave ativa: um handler criado num render antigo não pode, após seu await,
-  // recarregar a lista do contato anterior (o reload re-legitimaria o run velho)
-  const activeKeyRef = useRef(`${contactId}|${profileId}`);
 
   useEffect(() => {
-    activeKeyRef.current = `${contactId}|${profileId}`;
     loadReminders();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [contactId, profileId]);
 
   const loadReminders = async () => {
-    if (!profileId) {
-      // Sem perfil: cancela buscas em voo e não deixa skeleton/lembretes órfãos
-      guard.invalidate();
-      setReminders([]);
-      setLoading(false);
-      return;
-    }
-    const runId = guard.start();
+    if (!profileId) return;
     setLoading(true);
     const { data } = await supabase
       .from('reminders')
@@ -64,7 +49,6 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
       .eq('profile_id', profileId)
       .eq('is_dismissed', false)
       .order('remind_at', { ascending: true });
-    if (!guard.isCurrent(runId)) return;
     if (data) setReminders(data);
     setLoading(false);
   };
@@ -93,19 +77,19 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
     if (!error) {
       setNewTitle('');
       toast.success('Lembrete criado');
-      if (activeKeyRef.current === `${contactId}|${profileId}`) loadReminders();
+      loadReminders();
     }
   };
 
   const dismissReminder = async (id: string) => {
     await supabase.from('reminders').update({ is_dismissed: true }).eq('id', id);
     toast.success('Lembrete dispensado');
-    if (activeKeyRef.current === `${contactId}|${profileId}`) loadReminders();
+    loadReminders();
   };
 
   const deleteReminder = async (id: string) => {
     await supabase.from('reminders').delete().eq('id', id);
-    if (activeKeyRef.current === `${contactId}|${profileId}`) loadReminders();
+    loadReminders();
   };
 
   const isPast = (dateStr: string) => new Date(dateStr) <= new Date();

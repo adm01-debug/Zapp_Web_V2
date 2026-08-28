@@ -6,7 +6,7 @@ import { Mail, RefreshCw, CheckCircle, AlertCircle, Clock, Wifi, WifiOff } from 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 
 interface GmailAccount {
   id: string;
@@ -179,7 +179,7 @@ export function GmailWebhookMonitor() {
           <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs space-y-2 border">
             <p className="text-muted-foreground">Endpoint:</p>
             <p className="pl-4 text-foreground/80 break-all">
-              {import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-webhook
+              {SUPABASE_URL}/functions/v1/gmail-webhook
             </p>
             <p className="text-muted-foreground mt-2">Tipo: Google Cloud Pub/Sub Push</p>
             <p className="text-muted-foreground">Eventos: messages.insert (INBOX)</p>

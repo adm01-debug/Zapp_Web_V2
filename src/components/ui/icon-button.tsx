@@ -16,7 +16,7 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_15px_hsl(var(--primary)/0.4)]',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-glow-primary-sm',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',

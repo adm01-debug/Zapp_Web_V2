@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { createRunGuard } from '@/lib/runGuard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -47,29 +46,21 @@ export function ConversationTasksPanel({ contactId, profileId }: ConversationTas
   const [newPriority, setNewPriority] = useState('medium');
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  // Troca rápida de contato: respostas atrasadas não podem sobrescrever a atual
-  const guard = useRef(createRunGuard()).current;
-  // Chave ativa: um handler criado num render antigo não pode, após seu await,
-  // recarregar tarefas do contato anterior (o reload re-legitimaria o run velho)
-  const activeContactRef = useRef(contactId);
 
-  const loadTasks = useCallback(async () => {
-    const runId = guard.start();
+  useEffect(() => {
+    loadTasks();
+  }, [contactId]);
+
+  const loadTasks = async () => {
     setLoading(true);
     const { data } = await supabase
       .from('conversation_tasks')
       .select('*')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
-    if (!guard.isCurrent(runId)) return;
     if (data) setTasks(data);
     setLoading(false);
-  }, [contactId, guard]);
-
-  useEffect(() => {
-    activeContactRef.current = contactId;
-    loadTasks();
-  }, [contactId, loadTasks]);
+  };
 
   const addTask = async () => {
     if (!newTitle.trim()) return;
@@ -86,7 +77,7 @@ export function ConversationTasksPanel({ contactId, profileId }: ConversationTas
     if (!error) {
       setNewTitle('');
       toast.success('Tarefa criada');
-      if (activeContactRef.current === contactId) loadTasks();
+      loadTasks();
     } else {
       toast.error('Erro ao criar tarefa');
     }
@@ -102,13 +93,13 @@ export function ConversationTasksPanel({ contactId, profileId }: ConversationTas
         completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
       })
       .eq('id', task.id);
-    if (activeContactRef.current === contactId) loadTasks();
+    loadTasks();
   };
 
   const deleteTask = async (taskId: string) => {
     await supabase.from('conversation_tasks').delete().eq('id', taskId);
     toast.success('Tarefa removida');
-    if (activeContactRef.current === contactId) loadTasks();
+    loadTasks();
   };
 
   const pendingTasks = tasks.filter(t => t.status !== 'completed');

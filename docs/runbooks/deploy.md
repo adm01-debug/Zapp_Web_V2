@@ -26,7 +26,7 @@ As Edge Functions são deployadas **automaticamente** pelo Lovable Cloud. Não �
 
 Para testar uma Edge Function:
 ```bash
-curl -X POST https://allrjhkpuscmgbsnmjlv.supabase.co/functions/v1/<function-name> \
+curl -X POST https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/<function-name> \
   -H "Authorization: Bearer <anon-key>" \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'

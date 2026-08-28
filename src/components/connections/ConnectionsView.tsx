@@ -95,7 +95,7 @@ export function ConnectionsView() {
             {qrCodeDialog.status === 'loading' && <div className="w-64 h-64 mx-auto bg-muted rounded-xl flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-muted-foreground" /></div>}
             {qrCodeDialog.status === 'pending' && qrCodeDialog.qrCode && (
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-64 h-64 mx-auto bg-background rounded-xl p-2 flex items-center justify-center">
-                <img src={qrCodeDialog.qrCode.startsWith('data:') ? qrCodeDialog.qrCode : `data:image/png;base64,${qrCodeDialog.qrCode}`} alt="QR Code" className="w-full h-full object-contain" />
+                <img src={qrCodeDialog.qrCode.startsWith('data:') ? qrCodeDialog.qrCode : `data:image/png;base64,${qrCodeDialog.qrCode}`} alt="QR Code" className="w-full h-full object-contain"  loading="lazy" decoding="async"/>
               </motion.div>
             )}
             {qrCodeDialog.status === 'connected' && (

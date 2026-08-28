@@ -1,21 +1,43 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature } from "../_shared/validation.ts";
 import { ChatbotL1Schema, parseBody } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("chatbot-l1");
-  const userId = extractUserIdFromRequest(req);
+
+  // Read body once; support either JWT auth or HMAC webhook auth
+  const rawBody = await req.text();
+  const webhookSecret = Deno.env.get("CHATBOT_L1_WEBHOOK_SECRET");
+  const sigHeader =
+    req.headers.get("x-webhook-signature") ||
+    req.headers.get("x-signature") ||
+    "";
+  let userId: string | null = null;
+  let isWebhook = false;
+
+  if (webhookSecret && sigHeader && await verifyHmacSignature(rawBody, sigHeader, webhookSecret)) {
+    isWebhook = true;
+  } else {
+    const authCheck = await requireAuth(req);
+    if (authCheck instanceof Response) return authCheck;
+    userId = extractUserIdFromRequest(req);
+    const guard = await enforceAiGuards({ functionName: "chatbot-l1", userId, req, perUserPerMinute: 30, dailyQuota: 1000 });
+    if (guard) return guard;
+  }
 
   try {
     const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`chatbot:${ip}`, 30, 60_000);
+    const { allowed } = checkRateLimit(`chatbot:${ip}`, isWebhook ? 120 : 30, 60_000);
     if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
 
-    const parsed = parseBody(ChatbotL1Schema, await req.json());
+    let bodyJson: unknown;
+    try { bodyJson = JSON.parse(rawBody); } catch { return errorResponse("Invalid JSON body", 400, req); }
+    const parsed = parseBody(ChatbotL1Schema, bodyJson);
     if (!parsed.success) return errorResponse(parsed.error, 400, req);
 
     const { contactId, message, connectionId } = parsed.data;

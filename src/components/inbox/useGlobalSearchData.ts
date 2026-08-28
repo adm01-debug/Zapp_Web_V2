@@ -218,7 +218,6 @@ export function useGlobalSearchData(open: boolean) {
     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
       performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reexecuta só quando FILTROS mudam; digitação passa pelo fluxo debounced próprio
   }, [activeTypes, dateFilter, selectedTags, mediaTypeFilter]);
 
   const handleTagSelect = useCallback((tag: TagSuggestion) => {

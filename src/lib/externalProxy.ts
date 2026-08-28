@@ -40,6 +40,33 @@ export async function queryExternalProxy<T = unknown>(params: ProxyParams): Prom
   });
 
   if (error) {
+    // external-db-proxy is an optional VPS integration. Any invocation error
+    // (403 Forbidden, 404 Not Found, relay error, network failure) means the
+    // proxy is simply not configured for this deployment. Signal callers to
+    // disable polling silently rather than throwing and spamming warnings.
+    //
+    // FunctionsHttpError.context is a Response whose .status is the HTTP code.
+    // FunctionsHttpError.message is the status text (e.g. "Forbidden" for 403).
+    // FunctionsFetchError occurs when the function isn't deployed at all.
+    const msg = (error.message || '').toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = (error as any).context;
+    const status: number | undefined = ctx?.status;
+    const isProxyUnavailable =
+      status === 400 || status === 401 || status === 403 || status === 404 ||
+      msg.includes('not found') ||
+      msg.includes('non-2xx') ||
+      msg.includes('forbidden') ||
+      msg.includes('unauthorized') ||
+      msg.includes('failed to fetch') ||
+      // Supabase JS error classes for all function failures
+      (error as any).name === 'FunctionsHttpError' ||
+      (error as any).name === 'FunctionsFetchError' ||
+      (error as any).name === 'FunctionsRelayError';
+
+    if (isProxyUnavailable) {
+      return { data: [], count: 0, notConfigured: true } as unknown as ProxyResponse<T>;
+    }
     throw new Error(error.message || 'External DB proxy error');
   }
 

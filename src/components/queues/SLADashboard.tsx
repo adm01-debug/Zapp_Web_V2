@@ -24,8 +24,6 @@ const getRateColor = (rate: number) => {
   return 'text-destructive';
 };
 
-const periodKeys: PeriodFilter[] = ['today', 'week', 'month', 'all'];
-
 export const SLADashboard = () => {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<PeriodFilter>('today');
@@ -39,6 +37,7 @@ export const SLADashboard = () => {
   const sparkConversations = historyData?.dailyData.map(d => d.totalConversations) || [];
 
   // Keyboard shortcuts: 1=Hoje, 2=Semana, 3=Mês, 4=Todos, H=Histórico
+  const periodKeys: PeriodFilter[] = ['today', 'week', 'month', 'all'];
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key >= '1' && e.key <= '4') {
@@ -49,7 +48,7 @@ export const SLADashboard = () => {
       e.preventDefault();
       navigate('/sla/history');
     }
-  }, [navigate, setPeriod]);
+  }, [navigate]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

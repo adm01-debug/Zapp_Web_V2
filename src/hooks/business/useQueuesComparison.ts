@@ -24,13 +24,9 @@ export function useQueuesComparison(dateRange: DateRange) {
   const [queuesPerformance, setQueuesPerformance] = useState<QueuePerformance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const rangeFromIso = dateRange.from.toISOString();
-  const rangeToIso = dateRange.to.toISOString();
-
   useEffect(() => {
     fetchComparison();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch apenas quando o período muda; fetchComparison lê sempre o range corrente
-  }, [rangeFromIso, rangeToIso]);
+  }, [dateRange.from.toISOString(), dateRange.to.toISOString()]);
 
   const fetchComparison = async () => {
     try {

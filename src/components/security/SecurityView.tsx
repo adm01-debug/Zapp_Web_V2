@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Key, Lock, Activity, Users, Bell, Smartphone, LayoutDashboard, Fingerprint, Globe, FileText, Gauge } from 'lucide-react';
+import { Shield, Key, Lock, Activity, Users, Bell, Smartphone, LayoutDashboard, Fingerprint, Globe, FileText, Gauge, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +16,7 @@ import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
 import { RateLimitRealtimeAlerts } from './RateLimitRealtimeAlerts';
 import { RateLimitConfigPanel } from './RateLimitConfigPanel';
 import { AuditLogDashboard } from './AuditLogDashboard';
+import { QuarantinePanel } from './QuarantinePanel';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNotifications';
 
@@ -52,7 +53,7 @@ export function SecurityView() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 md:grid-cols-10">
+          <TabsList className="grid w-full grid-cols-5 md:grid-cols-11">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Visão Geral</span>
@@ -90,6 +91,10 @@ export function SecurityView() {
                 <TabsTrigger value="audit" className="gap-2">
                   <FileText className="w-4 h-4" />
                   <span className="hidden sm:inline">Auditoria</span>
+                </TabsTrigger>
+                <TabsTrigger value="quarantine" className="gap-2">
+                  <ShieldAlert className="w-4 h-4" />
+                  <span className="hidden sm:inline">Quarentena</span>
                 </TabsTrigger>
                 <TabsTrigger value="admin" className="gap-2">
                   <Users className="w-4 h-4" />
@@ -138,6 +143,10 @@ export function SecurityView() {
 
               <TabsContent value="audit">
                 <AuditLogDashboard />
+              </TabsContent>
+
+              <TabsContent value="quarantine">
+                <QuarantinePanel />
               </TabsContent>
 
               <TabsContent value="admin">

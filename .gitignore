@@ -6,15 +6,14 @@
 # SECRETS E AMBIENTE (CRÍTICO!)
 # ====================
 .env
-.env.*
 .env.local
 .env.development
 .env.development.local
 .env.test
 .env.test.local
-.env.production
 .env.production.local
 .env.staging
+# .env.production PERMITIDO — só vars VITE_* públicas (embutidas no bundle)
 *.pem
 *.key
 *.crt
@@ -24,8 +23,6 @@ secrets/
 credentials.json
 service-account.json
 firebase-adminsdk*.json
-
-# Credenciais em texto plano (PT-BR e EN)
 *credencia*.txt
 *credential*.txt
 *cred*.txt
@@ -36,10 +33,6 @@ firebase-adminsdk*.json
 *password*.txt
 *secret*.txt
 *chave*.txt
-
-# ====================
-# LOGS
-# ====================
 logs/
 *.log
 npm-debug.log*
@@ -48,28 +41,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .pnpm-debug.log*
-
-# ====================
-# DEPENDÊNCIAS
-# ====================
 node_modules/
 .pnp
 .pnp.js
 .yarn/install-state.gz
-
-# ====================
-# BUILD E PRODUÇÃO
-# ====================
 dist/
 dist-ssr/
 build/
 .next/
 out/
 *.local
-
-# ====================
-# CACHE
-# ====================
 .cache/
 .parcel-cache/
 .turbo/
@@ -77,19 +58,11 @@ out/
 .netlify/
 .vite/
 *.tsbuildinfo
-
-# ====================
-# TESTES
-# ====================
 coverage/
 .nyc_output/
 test-results/
 playwright-report/
 playwright/.cache/
-
-# ====================
-# EDITOR E IDE
-# ====================
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json.example
@@ -99,10 +72,6 @@ playwright/.cache/
 .project
 .classpath
 .settings/
-
-# ====================
-# SISTEMA OPERACIONAL
-# ====================
 .DS_Store
 .DS_Store?
 ._*
@@ -113,34 +82,18 @@ Thumbs.db
 *.swp
 *.swo
 *~
-
-# ====================
-# SUPABASE LOCAL
-# ====================
 supabase/.branches/
 supabase/.temp/
 .supabase/
-
-# ====================
-# ARQUIVOS GRANDES
-# ====================
 *.zip
 *.tar.gz
 *.rar
 *.7z
-
-# ====================
-# BACKUPS
-# ====================
 *.bak
 *.backup
 *_backup*
 *_old*
 *.orig
-
-# ====================
-# OUTROS
-# ====================
 *.suo
 *.ntvs*
 *.njsproj
@@ -150,3 +103,6 @@ supabase/.temp/
 .stylelintcache
 *.tgz
 .yarn-integrity
+
+# Deno (tooling local de deno check nas edge functions; o repo usa bun.lock)
+deno.lock

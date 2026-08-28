@@ -57,7 +57,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         <>
           <div
             className={cn(
-              'absolute inset-0 bg-secondary/20 border border-secondary/30 shadow-[0_0_12px_hsl(var(--secondary)/0.3)] transition-all duration-300 ease-out',
+              'absolute inset-0 bg-secondary/20 border border-secondary/30 shadow-glow-secondary-sm transition-all duration-300 ease-out',
               collapsed ? 'rounded-full' : 'rounded-xl'
             )}
           />

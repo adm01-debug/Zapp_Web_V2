@@ -38,7 +38,7 @@ export function TranscriptionsHistoryView() {
         .not('transcription', 'is', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setTranscriptions((data || []).map((item) => ({
+      setTranscriptions((data || []).map((item: any) => ({
         id: item.id, content: item.content, transcription: item.transcription, media_url: item.media_url,
         created_at: item.created_at, contact_id: item.contact_id,
         contact_name: item.contacts?.name || 'Desconhecido', contact_phone: item.contacts?.phone || '', contact_avatar: item.contacts?.avatar_url || null,
@@ -76,11 +76,7 @@ export function TranscriptionsHistoryView() {
     return grouped;
   }, [filteredTranscriptions]);
 
-  const toggleContact = (id: string) => setExpandedContacts(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
+  const toggleContact = (id: string) => setExpandedContacts(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const expandAll = () => setExpandedContacts(new Set(Object.keys(groupedByContact)));
   const collapseAll = () => setExpandedContacts(new Set());
 

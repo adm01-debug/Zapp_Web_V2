@@ -1,54 +1,49 @@
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
 /**
- * External Supabase Client — supabase.atomicabr.com.br (CRM 360)
+ * externalClient — cliente Supabase para o CRM externo (pgxfvjmuubtbowutlide)
+ * 57.728 empresas | 48.623 clientes | 4.747 contatos | 10.460 interações
  *
- * Connects to the secondary Supabase instance used by CRM 360 and external
- * integrations. Returns null gracefully when env vars are not set (e.g. in CI).
+ * RPCs: get_companies_by_phones_batch, search_contacts_advanced,
+ *       get_contact_360_by_phone, sync_interaction_from_zapp,
+ *       get_contact_intelligence_by_phone
  *
- * Required env vars:
- *   VITE_EXTERNAL_SUPABASE_URL
- *   VITE_EXTERNAL_SUPABASE_ANON_KEY
- *
- * FIX: unique storageKey prevents "Multiple GoTrueClient instances" browser warning
- * (main branch commit 5e96809 — incorporated here with the env-vars approach)
+ * storageKey único evita Multiple GoTrueClient warning
+ * Realtime desabilitado — apenas REST queries contra o CRM
  */
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const EXTERNAL_SUPABASE_URL = import.meta.env.VITE_EXTERNAL_SUPABASE_URL || '';
-const EXTERNAL_SUPABASE_ANON_KEY = import.meta.env.VITE_EXTERNAL_SUPABASE_ANON_KEY || '';
+const EXTERNAL_URL =
+  import.meta.env.VITE_CLIENTES_SUPABASE_URL ||
+  'https://pgxfvjmuubtbowutlide.supabase.co';
 
-export const isExternalConfigured = Boolean(
-  EXTERNAL_SUPABASE_URL && EXTERNAL_SUPABASE_ANON_KEY
+const EXTERNAL_KEY =
+  import.meta.env.VITE_CLIENTES_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneGZ2am11dWJ0Ym93dXRsaWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjcwMTIsImV4cCI6MjA4NTcwMzAxMn0.sW9N_LChqwVNUvMmQWXx87Vhs3eoTI2OKg2TT_Cg4V0';
+
+export const isExternalConfigured = true;
+
+export const externalSupabase: SupabaseClient = createClient(
+  EXTERNAL_URL,
+  EXTERNAL_KEY,
+  {
+    auth: {
+      storageKey: 'external-sb-auth-token',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
+    realtime: {
+      params: { eventsPerSecond: -1 },
+    },
+    global: {
+      headers: {
+        'x-client-info': 'zapp-web-external-crm',
+      },
+    },
+  },
 );
 
-export const externalSupabase: SupabaseClient | null = isExternalConfigured
-  ? createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY, {
-      auth: {
-        // Unique key isolates this client from the main one (sb-supabase-auth-token)
-        // and from the clientes client (clientes-sb-auth-token).
-        storageKey: 'external-sb-auth-token',
-        storage:
-          typeof window !== 'undefined' ? window.localStorage : undefined,
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-      global: {
-        headers: {
-          'x-client-info': 'zapp-web-external-360',
-        },
-      },
-    })
-  : null;
-
-/**
- * Returns the external client, throwing if not configured.
- * Always check `isExternalConfigured` before calling this.
- */
 export function getExternalSupabase(): SupabaseClient {
-  if (!externalSupabase) {
-    throw new Error(
-      'External Supabase is not configured. ' +
-        'Set VITE_EXTERNAL_SUPABASE_URL and VITE_EXTERNAL_SUPABASE_ANON_KEY.'
-    );
-  }
   return externalSupabase;
 }

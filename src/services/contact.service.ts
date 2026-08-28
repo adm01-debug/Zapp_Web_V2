@@ -53,13 +53,18 @@ export class ContactService {
 
     if (error) throw error;
 
-    const authorIds = [...new Set(data?.map(n => n.author_id) || [])];
-    const { data: authors } = await supabase
-      .from('profiles')
-      .select('id, name, avatar_url')
-      .in('id', authorIds);
+    const authorIds = [...new Set(data?.map(n => n.author_id).filter(Boolean) || [])];
+    let authors: { id: string, name: string | null, avatar_url: string | null }[] = [];
+    
+    if (authorIds.length > 0) {
+      const { data: authorsData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', authorIds);
+      authors = authorsData || [];
+    }
 
-    const authorsMap = new Map(authors?.map(a => [a.id, a]) || []);
+    const authorsMap = new Map(authors.map(a => [a.id, a]));
     return (data || []).map(note => ({
       ...note,
       author: authorsMap.get(note.author_id),

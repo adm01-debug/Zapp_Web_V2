@@ -15,7 +15,12 @@ const LocationPicker = lazy(() => import('../LocationPicker').then(m => ({ defau
 const CloseConversationDialog = lazy(() => import('../CloseConversationDialog').then(m => ({ default: m.CloseConversationDialog })));
 const RealtimeTranscription = lazy(() => import('../RealtimeTranscription').then(m => ({ default: m.RealtimeTranscription })));
 
-import type { DialogKey, DialogState } from './dialogKeys';
+type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' |
+  'callDialog' | 'globalSearch' | 'chatSearch' | 'interactiveBuilder' | 'forwardDialog' |
+  'locationPicker' | 'aiAssistant' | 'catalogDirect' | 'whisper' | 'templatesWithVars' |
+  'realtimeTranscription' | 'closeDialog';
+
+type DialogState = Record<DialogKey, boolean>;
 
 interface ChatDialogsProps {
   dialogs: DialogState;

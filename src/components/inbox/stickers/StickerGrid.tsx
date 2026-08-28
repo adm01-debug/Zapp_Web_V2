@@ -210,7 +210,7 @@ export function StickerGrid({
             <AlertDialogDescription>
               {deleteTarget && (
                 <span className="flex items-center gap-3 mt-2">
-                  <img src={deleteTarget.image_url} alt="" className="w-12 h-12 object-contain rounded bg-muted p-1" />
+                  <img src={deleteTarget.image_url} alt="" className="w-12 h-12 object-contain rounded bg-muted p-1"  loading="lazy" decoding="async"/>
                   <span>
                     "{deleteTarget.name || 'Figurinha'}" será removida permanentemente. 
                     Esta ação não pode ser desfeita.

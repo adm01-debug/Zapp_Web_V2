@@ -4,7 +4,7 @@
 
 ```
 zapp-web (Lovable)                    bancodadosclientes (CRM)
-allrjhkpuscmgbsnmjlv                 pgxfvjmuubtbowutlide
+tnnnlkbymytvtqngbbqh                 pgxfvjmuubtbowutlide
 ├── contacts (local)                  ├── contacts (4.753)
 ├── messages                          ├── companies (57.727)
 ├── conversations                     ├── customers (52.235)

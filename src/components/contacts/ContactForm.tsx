@@ -110,14 +110,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             <Label htmlFor="job_title" className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> Cargo</Label>
             <Select value={values.job_title || '__none__'} onValueChange={(val) => v.handleChange('job_title', val === '__none__' ? '' : val)}>
               <SelectTrigger id="job_title"><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Selecione o cargo</SelectItem>
-                {/* Mantém o cargo atual visível mesmo quando ausente da lista externa */}
-                {values.job_title && !externalCargos.includes(values.job_title) && (
-                  <SelectItem value={values.job_title}>{values.job_title}</SelectItem>
-                )}
-                {externalCargos.map((cargo) => <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>)}
-              </SelectContent>
+              <SelectContent><SelectItem value="__none__">Selecione o cargo</SelectItem>{externalCargos.map((cargo) => <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">

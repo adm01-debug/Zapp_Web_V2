@@ -16,11 +16,11 @@ interface AnimatedBadgeProps {
 }
 
 const variantConfig = {
-  xp: { icon: Zap, gradient: 'from-xp to-primary', glow: 'shadow-[0_0_20px_hsl(var(--xp)/0.4)]', pulse: true },
-  coins: { icon: Star, gradient: 'from-coins to-warning', glow: 'shadow-[0_0_20px_hsl(var(--coins)/0.4)]', pulse: true },
-  streak: { icon: Flame, gradient: 'from-streak to-warning', glow: 'shadow-[0_0_20px_hsl(var(--streak)/0.4)]', pulse: true },
-  achievement: { icon: Trophy, gradient: 'from-primary to-primary-glow', glow: 'shadow-[0_0_20px_hsl(var(--primary)/0.4)]', pulse: false },
-  rank: { icon: Crown, gradient: 'from-rank-gold to-warning', glow: 'shadow-[0_0_20px_hsl(var(--rank-gold)/0.4)]', pulse: false },
+  xp: { icon: Zap, gradient: 'from-xp to-primary', glow: 'shadow-glow-xp-md', pulse: true },
+  coins: { icon: Star, gradient: 'from-coins to-warning', glow: 'shadow-glow-coins-md', pulse: true },
+  streak: { icon: Flame, gradient: 'from-streak to-warning', glow: 'shadow-glow-streak-md', pulse: true },
+  achievement: { icon: Trophy, gradient: 'from-primary to-primary-glow', glow: 'shadow-glow-primary-md', pulse: false },
+  rank: { icon: Crown, gradient: 'from-rank-gold to-warning', glow: 'shadow-glow-rank-gold-md', pulse: false },
 };
 
 const sizeConfig = {
@@ -67,7 +67,7 @@ export function StatCardWithGamification({ title, value, change, changeType, inv
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.1 }} whileHover={{ y: -4, scale: 1.02 }} className="group relative">
-      <div className="card-glow-purple relative overflow-hidden border border-secondary/30 hover:border-secondary/60 h-full rounded-2xl bg-card p-5 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.2)]">
+      <div className="card-glow-purple relative overflow-hidden border border-secondary/30 hover:border-secondary/60 h-full rounded-2xl bg-card p-5 transition-all duration-300 hover:shadow-glow-primary-md">
         <motion.div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" style={{ background: `radial-gradient(350px circle at 80% 20%, hsl(var(--secondary) / 0.15), hsl(var(--primary) / 0.05) 60%, transparent 80%)` }} />
         <div className="relative flex items-start justify-between">
           <motion.div className={cn("w-12 h-12 rounded-xl flex items-center justify-center relative", iconBg || 'bg-primary/10')} whileHover={{ scale: 1.1 }} transition={{ type: 'spring', stiffness: 400 }}>

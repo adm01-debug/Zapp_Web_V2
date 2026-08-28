@@ -37,6 +37,16 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessa
     transcription: null,
     transcription_status: null,
     is_deleted: evo.deleted_at != null,
+    audio_meme_id: null,
+    caption: evo.caption ?? null,
+    link_preview: null,
+    media_filename: null,
+    media_mimetype: null,
+    media_size: null,
+    media_type: null,
+    media_meta: null,
+    ptt: null,
+    reply_to_id: null,
   };
 }
 

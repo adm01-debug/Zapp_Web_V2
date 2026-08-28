@@ -33,7 +33,9 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
   const fetchQr = useCallback(async (id: string) => {
     setLoadingQr(p => ({ ...p, [id]: true }));
     try {
-      const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'get-qrcode', instanceName: id } });
+      // 'get-qrcode' nunca existiu na edge (404 garantido) — 'connect' é a
+      // action real do fluxo de QR e responde {qrcode:{base64}}.
+      const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'connect', instanceName: id } });
       if (error) throw error;
       const b64 = data?.qrcode?.base64 || data?.base64;
       if (b64) setQrCodes(p => ({ ...p, [id]: b64 }));
@@ -111,7 +113,7 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                 {qrCodes[conn.instance_id] && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-4 flex justify-center">
                     <div className="p-4 bg-white rounded-xl border shadow-sm">
-                      <img src={qrCodes[conn.instance_id]} alt={`QR ${conn.instance_id}`} className="w-48 h-48 object-contain" />
+                      <img src={qrCodes[conn.instance_id]} alt={`QR ${conn.instance_id}`} className="w-48 h-48 object-contain"  loading="lazy" decoding="async"/>
                       <p className="text-[10px] text-center text-muted-foreground mt-2">Escaneie com WhatsApp</p>
                     </div>
                   </motion.div>

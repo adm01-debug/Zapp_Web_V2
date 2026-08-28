@@ -27,17 +27,36 @@ function readCache(): ConversationWithMessages[] | null {
 }
 
 function writeCache(data: ConversationWithMessages[]) {
-  try {
-    // Only cache last 50 conversations with last 20 messages each
-    const trimmed = data.slice(0, 50).map(c => ({
-      ...c,
-      messages: c.messages.slice(-20),
-    }));
-    const entry: CacheEntry = { data: trimmed, timestamp: Date.now() };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
-  } catch (e) {
-    log.warn('Failed to write offline cache', e);
+  // Progressive degradation on quota errors: shrink conversation count and
+  // per-conversation message window until it fits, then give up silently.
+  const tiers: Array<{ convs: number; msgs: number }> = [
+    { convs: 50, msgs: 20 },
+    { convs: 30, msgs: 10 },
+    { convs: 15, msgs: 5 },
+    { convs: 10, msgs: 3 },
+  ];
+  for (const { convs, msgs } of tiers) {
+    try {
+      const trimmed = data.slice(0, convs).map(c => ({
+        ...c,
+        messages: c.messages.slice(-msgs),
+      }));
+      const entry: CacheEntry = { data: trimmed, timestamp: Date.now() };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+      return;
+    } catch (e) {
+      const isQuota = e instanceof DOMException && (
+        e.name === 'QuotaExceededError' || e.code === 22
+      );
+      if (!isQuota) {
+        log.warn('Failed to write offline cache', e);
+        return;
+      }
+      // Free space and try a smaller tier
+      try { localStorage.removeItem(CACHE_KEY); } catch { /* noop */ }
+    }
   }
+  // All tiers failed — drop cache silently to avoid log spam
 }
 
 export function useOfflineCache(conversations: ConversationWithMessages[], loading: boolean) {

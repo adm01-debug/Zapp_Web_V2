@@ -21,6 +21,27 @@ Deno.serve(async (req) => {
   const log = new Logger("bitrix-api");
 
   try {
+    // SECURITY: require an authenticated user JWT before touching the
+    // external CRM. Without this check any unauthenticated caller could
+    // list/create/update/delete leads, contacts, deals and trigger a
+    // contact sync into the app database.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return errorResponse("Unauthorized", 401, req);
+    }
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return errorResponse("Server misconfigured", 500, req);
+    }
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await authClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return errorResponse("Unauthorized", 401, req);
+    }
+
     const BITRIX_WEBHOOK_URL = Deno.env.get('BITRIX_WEBHOOK_URL');
     if (!BITRIX_WEBHOOK_URL) {
       return errorResponse('Bitrix não configurado. Configure BITRIX_WEBHOOK_URL nas configurações', 400, req);

@@ -1,11 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+  const authCheck = await requireAuth(req);
+  if (authCheck instanceof Response) return authCheck;
+  const __uid = (authCheck as { userId: string }).userId;
+  const __guard = await enforceAiGuards({ functionName: "ai-suggest-reply", userId: __uid, req });
+  if (__guard) return __guard;
+
 
   const log = new Logger("ai-suggest-reply");
   const userId = extractUserIdFromRequest(req);
@@ -134,7 +141,7 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       throw new Error(`AI gateway error [${response.status}]`);
     }
 
-    const content = (data as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content;
+    const content = (data as any).choices?.[0]?.message?.content;
 
     let suggestions;
     try {

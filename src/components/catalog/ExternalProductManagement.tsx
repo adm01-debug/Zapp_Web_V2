@@ -73,7 +73,6 @@ export const ExternalProductManagement: React.FC = () => {
     fetchCategories();
     fetchSuppliers();
     fetchProducts(buildFilters());
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- carga intencional apenas no mount; a função de fetch lê os filtros correntes
   }, []);
 
   // Filter changes - debounced
@@ -83,13 +82,11 @@ export const ExternalProductManagement: React.FC = () => {
       fetchProducts(buildFilters(0));
     }, 300);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [search, categoryId, supplierId, onlyInStock]);
 
   // Page changes
   useEffect(() => {
     if (page > 0) fetchProducts(buildFilters());
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);

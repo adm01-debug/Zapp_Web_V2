@@ -7,13 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { usePerformanceSnapshots } from '@/hooks/analytics/usePerformanceSnapshots';
 import { formatRelativeTime } from '@/lib/formatters';
-import { rateThreshold, rateNetwork, computeOverallScore, type MetricStatus } from './metricThresholds';
 
 interface PerformanceMetric {
   name: string;
   value: number;
   unit: string;
-  status: MetricStatus;
+  status: 'good' | 'warning' | 'critical';
 }
 
 export function PerformanceMonitor() {
@@ -46,14 +45,14 @@ export function PerformanceMonitor() {
     const ttfb = nav ? Math.round(nav.responseStart - nav.requestStart) : 0;
 
     const newMetrics: PerformanceMetric[] = [
-      { name: 'FCP', value: fcpValue, unit: 'ms', status: rateThreshold(fcpValue, 1800, 3000) },
-      { name: 'Page Load', value: pageLoadTime, unit: 'ms', status: rateThreshold(pageLoadTime, 3000, 5000) },
-      { name: 'DOM Ready', value: domReady, unit: 'ms', status: rateThreshold(domReady, 2000, 4000) },
-      { name: 'TTFB', value: ttfb, unit: 'ms', status: rateThreshold(ttfb, 200, 500) },
-      { name: 'Memória JS', value: memoryUsed, unit: `MB / ${memoryTotal}MB`, status: rateThreshold(memoryPercent, 60, 80) },
-      { name: 'DOM Nodes', value: domNodes, unit: 'nós', status: rateThreshold(domNodes, 1500, 3000) },
-      { name: 'RTT', value: rtt, unit: 'ms', status: rateThreshold(rtt, 100, 300) },
-      { name: 'Conexão', value: networkType === '4g' ? 100 : networkType === '3g' ? 60 : 30, unit: networkType, status: rateNetwork(networkType) },
+      { name: 'FCP', value: fcpValue, unit: 'ms', status: fcpValue < 1800 ? 'good' : fcpValue < 3000 ? 'warning' : 'critical' },
+      { name: 'Page Load', value: pageLoadTime, unit: 'ms', status: pageLoadTime < 3000 ? 'good' : pageLoadTime < 5000 ? 'warning' : 'critical' },
+      { name: 'DOM Ready', value: domReady, unit: 'ms', status: domReady < 2000 ? 'good' : domReady < 4000 ? 'warning' : 'critical' },
+      { name: 'TTFB', value: ttfb, unit: 'ms', status: ttfb < 200 ? 'good' : ttfb < 500 ? 'warning' : 'critical' },
+      { name: 'Memória JS', value: memoryUsed, unit: `MB / ${memoryTotal}MB`, status: memoryPercent < 60 ? 'good' : memoryPercent < 80 ? 'warning' : 'critical' },
+      { name: 'DOM Nodes', value: domNodes, unit: 'nós', status: domNodes < 1500 ? 'good' : domNodes < 3000 ? 'warning' : 'critical' },
+      { name: 'RTT', value: rtt, unit: 'ms', status: rtt < 100 ? 'good' : rtt < 300 ? 'warning' : 'critical' },
+      { name: 'Conexão', value: networkType === '4g' ? 100 : networkType === '3g' ? 60 : 30, unit: networkType, status: networkType === '4g' ? 'good' : networkType === '3g' ? 'warning' : 'critical' },
     ];
 
     setMetrics(newMetrics);
@@ -69,7 +68,7 @@ export function PerformanceMonitor() {
     });
 
     // Persist to Supabase
-    const overallScore = computeOverallScore(newMetrics);
+    const overallScore = Math.round((newMetrics.filter(m => m.status === 'good').length / Math.max(newMetrics.length, 1)) * 100);
     await saveSnapshot({
       fcp: fcpValue,
       page_load: pageLoadTime,
@@ -97,7 +96,7 @@ export function PerformanceMonitor() {
     loadHistory(parseInt(period));
   }, [loadHistory, period]);
 
-  const overallScore = computeOverallScore(metrics);
+  const overallScore = Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

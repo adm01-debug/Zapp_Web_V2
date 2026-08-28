@@ -232,8 +232,8 @@ export function WhatsAppFlowsBuilder() {
             </div>
           )}
           <div className="flex-1 flex items-start justify-center">
-            <div className="w-[320px] bg-card border border-border/30 rounded-[2rem] p-2 shadow-xl">
-              <div className="bg-background rounded-[1.5rem] overflow-hidden">
+            <div className="w-[320px] bg-card border border-border/30 rounded-token-2xl p-2 shadow-xl">
+              <div className="bg-background rounded-token-2xl overflow-hidden">
                 <div className="h-8 bg-primary/10 flex items-center justify-center">
                   <span className="text-[10px] text-muted-foreground font-medium">{currentScreen?.title}</span>
                 </div>

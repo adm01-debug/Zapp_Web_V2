@@ -40,7 +40,7 @@ export function SLARateChart({ dailyData }: { dailyData: DailyData[] }) {
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} />
               <YAxis domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={(value: number) => [`${value.toFixed(1)}%`, 'Taxa SLA']} />
+              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={(value: any) => [`${value.toFixed(1)}%`, 'Taxa SLA']} />
               <Area type="monotone" dataKey="slaRate" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#slaGradient)" />
               <Line type="monotone" dataKey={() => 90} stroke="hsl(var(--destructive))" strokeDasharray="5 5" strokeWidth={1} dot={false} />
             </AreaChart>

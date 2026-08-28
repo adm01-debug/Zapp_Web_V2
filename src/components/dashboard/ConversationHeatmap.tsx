@@ -1,3 +1,27 @@
+/**
+ * ConversationHeatmap — dashboard/ version
+ *
+ * PURPOSE: Configurable, composable heatmap widget designed for embedding
+ * inside the Dashboard page. Accepts external data via props so the parent
+ * can inject any HeatmapData[] without coupling this component to a specific
+ * fetch strategy.
+ *
+ * KEY DIFFERENCES from reports/ConversationHeatmap:
+ *  - Default export (consumed by DashboardPage as a named import alias)
+ *  - Props: data?, metric?, className?, onCellClick?   ← fully injectable
+ *  - Multi-metric tabs: volume | response_time | satisfaction
+ *  - Framer-motion cell hover animation (whileHover scale 1.2)
+ *  - Hotspot detection: top-5 busiest cells marked with warning ring + dot
+ *  - Stats summary row: Pico Semanal / Horário Nobre / Melhor Dia
+ *  - Hex-value color scale (configurable per metric, supports invert)
+ *  - useQuery (TanStack) with staleTime 5 min — auto-refreshes without prop
+ *  - Contains a private StatCard sub-component
+ *  - overflow-x-auto + min-w-[600px] for safe mobile rendering
+ *
+ * DO NOT merge with reports/ConversationHeatmap — that file is a
+ * self-contained widget with a period-selector (7/30/90d), no props,
+ * no multi-metric and no animations. Both serve distinct UI contexts.
+ */
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, TrendingUp, Flame, Info } from 'lucide-react';
@@ -91,7 +115,7 @@ export default function ConversationHeatmap({
   onCellClick,
 }: ConversationHeatmapProps) {
   const { data: realData } = useHeatmapData();
-  const data = useMemo(() => externalData || realData || [], [externalData, realData]);
+  const data = externalData || realData || [];
   const [selectedMetric, setSelectedMetric] = useState(metric);
   const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number } | null>(null);
 

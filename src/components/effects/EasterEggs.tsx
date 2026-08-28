@@ -34,6 +34,81 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
   const { celebrate, celebrating } = useCelebration();
 
   // Konami Code Detection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.code;
+      const newProgress = [...konamiProgress, key].slice(-KONAMI_CODE.length);
+      setKonamiProgress(newProgress);
+
+      if (newProgress.join(',') === KONAMI_CODE.join(',')) {
+        triggerKonamiEasterEgg();
+        setKonamiProgress([]);
+      }
+
+      // Detect typed secret codes
+      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
+        const newTyped = (typedText + e.key.toLowerCase()).slice(-10);
+        setTypedText(newTyped);
+        
+        Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
+          if (newTyped.endsWith(code)) {
+            triggerSecretCode(name, action);
+            setTypedText('');
+          }
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [konamiProgress, typedText]);
+
+  // Shake Detection (for mobile)
+  useEffect(() => {
+    let lastX = 0, lastY = 0, lastZ = 0;
+    let shakeThreshold = 15;
+
+    const handleMotion = (e: DeviceMotionEvent) => {
+      const { x, y, z } = e.accelerationIncludingGravity || {};
+      if (x === null || y === null || z === null) return;
+
+      const deltaX = Math.abs((x || 0) - lastX);
+      const deltaY = Math.abs((y || 0) - lastY);
+      const deltaZ = Math.abs((z || 0) - lastZ);
+
+      if (deltaX + deltaY + deltaZ > shakeThreshold) {
+        setShakeCount(prev => {
+          const newCount = prev + 1;
+          if (newCount >= 5) {
+            triggerShakeEasterEgg();
+            return 0;
+          }
+          return newCount;
+        });
+      }
+
+      lastX = x || 0;
+      lastY = y || 0;
+      lastZ = z || 0;
+    };
+
+    if ('DeviceMotionEvent' in window) {
+      window.addEventListener('devicemotion', handleMotion);
+    }
+
+    return () => {
+      window.removeEventListener('devicemotion', handleMotion);
+    };
+  }, []);
+
+  // Reset shake count after inactivity
+  useEffect(() => {
+    if (shakeCount > 0) {
+      const timer = setTimeout(() => setShakeCount(0), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [shakeCount]);
+
   const triggerKonamiEasterEgg = useCallback(() => {
     celebrate({
       title: '🎮 KONAMI CODE!',
@@ -112,86 +187,6 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
         break;
     }
   }, [celebrate]);
-
-  useEffect(() => {
-    // Updates funcionais: o listener é registrado uma única vez em vez de
-    // ser removido/recriado a cada tecla digitada
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.code;
-      setKonamiProgress(prev => {
-        const newProgress = [...prev, key].slice(-KONAMI_CODE.length);
-        if (newProgress.join(',') === KONAMI_CODE.join(',')) {
-          triggerKonamiEasterEgg();
-          return [];
-        }
-        return newProgress;
-      });
-
-      // Detect typed secret codes
-      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
-        setTypedText(prev => {
-          const newTyped = (prev + e.key.toLowerCase()).slice(-10);
-          const matched = Object.entries(SECRET_CODES).find(([code]) => newTyped.endsWith(code));
-          if (matched) {
-            const [, { name, action }] = matched;
-            triggerSecretCode(name, action);
-            return '';
-          }
-          return newTyped;
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerKonamiEasterEgg, triggerSecretCode]);
-
-  // Shake Detection (for mobile)
-  useEffect(() => {
-    let lastX = 0, lastY = 0, lastZ = 0;
-    const shakeThreshold = 15;
-
-    const handleMotion = (e: DeviceMotionEvent) => {
-      const { x, y, z } = e.accelerationIncludingGravity || {};
-      if (x === null || y === null || z === null) return;
-
-      const deltaX = Math.abs((x || 0) - lastX);
-      const deltaY = Math.abs((y || 0) - lastY);
-      const deltaZ = Math.abs((z || 0) - lastZ);
-
-      if (deltaX + deltaY + deltaZ > shakeThreshold) {
-        setShakeCount(prev => {
-          const newCount = prev + 1;
-          if (newCount >= 5) {
-            triggerShakeEasterEgg();
-            return 0;
-          }
-          return newCount;
-        });
-      }
-
-      lastX = x || 0;
-      lastY = y || 0;
-      lastZ = z || 0;
-    };
-
-    if ('DeviceMotionEvent' in window) {
-      window.addEventListener('devicemotion', handleMotion);
-    }
-
-    return () => {
-      window.removeEventListener('devicemotion', handleMotion);
-    };
-  }, [triggerShakeEasterEgg]);
-
-  // Reset shake count after inactivity
-  useEffect(() => {
-    if (shakeCount > 0) {
-      const timer = setTimeout(() => setShakeCount(0), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [shakeCount]);
-
 
   return (
     <>

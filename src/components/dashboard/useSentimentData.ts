@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { log } from '@/lib/logger';
-import { createRunGuard } from '@/lib/runGuard';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay, isWithinInterval, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,16 +48,12 @@ export function useSentimentData(period: string) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  // Troca rápida de período: respostas atrasadas não podem sobrescrever a atual
-  const guard = useRef(createRunGuard()).current;
 
   useEffect(() => {
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recarrega quando a chave da consulta muda; a função de fetch lê os filtros correntes
   }, [period]);
 
   const fetchData = async () => {
-    const runId = guard.start();
     setLoading(true);
     const daysAgo = parseInt(period);
     const startDate = startOfDay(subDays(new Date(), daysAgo)).toISOString();
@@ -72,7 +67,6 @@ export function useSentimentData(period: string) {
         .order('created_at', { ascending: false });
 
       if (alertError) throw alertError;
-      if (!guard.isCurrent(runId)) return;
 
       const formattedAlerts = (alertData || []).map(entry => ({
         id: entry.id,
@@ -90,7 +84,6 @@ export function useSentimentData(period: string) {
         .order('created_at', { ascending: false });
 
       if (analysisError) throw analysisError;
-      if (!guard.isCurrent(runId)) return;
       setAnalyses((analysisData || []) as ConversationAnalysis[]);
 
       const { data: agentsData, error: agentsError } = await supabase
@@ -99,13 +92,11 @@ export function useSentimentData(period: string) {
         .eq('is_active', true);
 
       if (agentsError) throw agentsError;
-      if (!guard.isCurrent(runId)) return;
       setAgents((agentsData || []) as AgentProfile[]);
     } catch (error) {
       log.error('Error fetching sentiment data:', error);
     } finally {
-      // Um run obsoleto não pode apagar o spinner do run mais novo em andamento
-      if (guard.isCurrent(runId)) setLoading(false);
+      setLoading(false);
     }
   };
 

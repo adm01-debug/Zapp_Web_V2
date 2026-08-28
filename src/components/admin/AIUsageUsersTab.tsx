@@ -27,7 +27,7 @@ export function AIUsageUsersTab({ userUsage, profileMap }: AIUsageUsersTabProps)
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis type="number" fontSize={11} className="fill-muted-foreground" />
             <YAxis type="category" dataKey="name" width={120} fontSize={11} className="fill-muted-foreground" />
-            <Tooltip formatter={(v: number) => v.toLocaleString() + ' tokens'} contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--popover-foreground))' }} />
+            <Tooltip formatter={(v: any) => v.toLocaleString() + ' tokens'} contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--popover-foreground))' }} />
             <Bar dataKey="tokens" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Tokens" />
           </BarChart>
         </ResponsiveContainer>

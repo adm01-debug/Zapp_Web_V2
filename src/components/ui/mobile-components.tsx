@@ -191,7 +191,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const pullY = useMotionValue(0);
   const pullProgress = useTransform(pullY, [0, 80], [0, 1]);
-  const pullRotation = useTransform(pullProgress, [0, 1], [0, 180]);
+  const pullRotate = useTransform(pullProgress, [0, 1], [0, 180]);
 
   const handleDragEnd = async () => {
     if (pullY.get() > 80) {
@@ -227,7 +227,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
               />
             ) : (
               <motion.div
-                style={{ rotate: pullRotation }}
+                style={{ rotate: pullRotate }}
                 className="w-6 h-6"
               >
                 ↓
