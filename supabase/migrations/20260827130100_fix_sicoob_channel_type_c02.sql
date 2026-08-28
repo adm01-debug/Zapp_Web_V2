@@ -3,6 +3,11 @@
 -- Condição removida. Bridge dispara para sender='agent' + contact_type='sicoob_gifts'.
 -- Vault: lê 'sicoob_service_role_key' com guard de NULL.
 -- TODO: configurar vault secret 'sicoob_service_role_key' para ativar envio HTTP.
+-- [2026-08-28] Auditoria de refs de banco: a URL default desta funcao apontava
+-- para um banco antigo do projeto e foi corrigida retroativamente para o banco
+-- oficial (tnnnlkbymytvtqngbbqh). Historico no header de 20260827140000; estado
+-- vigente da funcao: 20260827150000.
+-- Ver docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md.
 CREATE OR REPLACE FUNCTION public.notify_sicoob_on_reply()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -11,7 +16,7 @@ SET search_path TO 'public'
 AS $$
 DECLARE
   v_contact_type text;
-  v_supabase_url text := 'https://allrjhkpuscmgbsnmjlv.supabase.co';
+  v_supabase_url text := 'https://tnnnlkbymytvtqngbbqh.supabase.co';
   v_service_key  text;
 BEGIN
   -- Somente mensagens de agentes disparam a bridge

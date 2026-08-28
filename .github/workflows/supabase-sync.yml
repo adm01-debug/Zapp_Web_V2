@@ -1,12 +1,12 @@
 name: Supabase Sync & Validate
 
+# [2026-08-28] Somente execucao MANUAL. Antes, qualquer push/PR tocando
+# supabase-export/** aplicava automaticamente o export no banco apontado por
+# DESTINO_URL — e o export e um snapshot LEGADO, anterior a migracao para o
+# banco oficial tnnnlkbymytvtqngbbqh e defasado do schema real (ver
+# supabase-export/README.md e docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md).
+# Regerar o export a partir do banco oficial antes de reativar qualquer gatilho.
 on:
-  push:
-    paths:
-      - 'supabase-export/**'
-  pull_request:
-    paths:
-      - 'supabase-export/**'
   workflow_dispatch:
 
 jobs:
