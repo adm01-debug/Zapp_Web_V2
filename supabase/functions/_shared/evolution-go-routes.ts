@@ -23,6 +23,14 @@ export interface GoRoute {
 const jidWithoutDevice = (jid?: string): string | undefined =>
   typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '') : undefined;
 
+
+// /user/avatar e /user/info do GO PENDURAM (sem resposta ate o timeout do caller)
+// quando number vem sem dominio; com JID completo respondem em ~1s. Validado ao
+// vivo em 28/08/2026 na instancia evolution-go-rxj2 (0.7.2). Numero puro ganha
+// @s.whatsapp.net; quem ja tem dominio (@lid, @g.us) passa intacto.
+const toUserJid = (n?: unknown): string | undefined =>
+  typeof n === 'string' && n ? (n.includes('@') ? n : `${n}@s.whatsapp.net`) : undefined;
+
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
   state: presence === 'recording' ? 'composing' : (presence ?? 'composing'),
@@ -149,14 +157,14 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/chat\/updateBlockStatus\/[^/]+$/))
     return { path: b.status === 'unblock' ? '/user/unblock' : '/user/block', method: 'POST', auth: 'instance', body: { number: b.number } };
   if (m(/^\/chat\/fetchProfilePictureUrl\/[^/]+$/))
-    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: b.number, preview: false } };
+    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: toUserJid(b.number), preview: false } };
   if (m(/^\/(chat|message)\/archiveChat\/[^/]+$/))
     return { path: b.archive === false ? '/chat/unarchive' : '/chat/archive', method: 'POST', auth: 'instance', body: { chat: b.chat ?? b.lastMessage?.key?.remoteJid } };
   if (m(/^\/chat\/findContacts\/[^/]+$/))
     return { path: '/user/contacts', method: 'GET', auth: 'instance' };
   if (m(/^\/chat\/fetchProfile\/[^/]+$/))
     return { path: '/user/info', method: 'POST', auth: 'instance', body: {
-      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
     }};
 
   // ── Instância ──
@@ -236,11 +244,11 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     return { path: '/user/profileStatus', method: 'POST', auth: 'instance', body: { status: b.status } };
   if (m(/^\/profile\/fetchProfilePicture\/[^/]+/))
     return { path: '/user/avatar', method: 'POST', auth: 'instance', body: {
-      number: b.number ?? q.get('number'), preview: false,
+      number: toUserJid(b.number ?? q.get('number')), preview: false,
     }};
   if (m(/^\/profile\/fetchBusinessProfile\/[^/]+$/))
     return { path: '/user/info', method: 'POST', auth: 'instance', body: {
-      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
     }};
   if (m(/^\/profile\/updatePrivacySettings\/[^/]+$/))
     // v2 lowercase → GO camelCase (valores PrivacySetting são os mesmos: all/contacts/none/…)
