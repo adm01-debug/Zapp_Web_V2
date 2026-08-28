@@ -3186,6 +3186,7 @@ export type Database = {
           access_token_encrypted: string | null
           created_at: string
           email_address: string
+          history_id: string | null
           id: string
           is_active: boolean
           last_error: string | null
@@ -3195,11 +3196,13 @@ export type Database = {
           token_expires_at: string | null
           updated_at: string
           user_id: string
+          watch_expiration: string | null
         }
         Insert: {
           access_token_encrypted?: string | null
           created_at?: string
           email_address: string
+          history_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
@@ -3209,11 +3212,13 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id: string
+          watch_expiration?: string | null
         }
         Update: {
           access_token_encrypted?: string | null
           created_at?: string
           email_address?: string
+          history_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
@@ -3223,6 +3228,7 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
+          watch_expiration?: string | null
         }
         Relationships: []
       }

@@ -212,14 +212,14 @@ export async function syncMessages(
         references_header: getHeader(headers, "References") || null,
         internal_date: new Date(parseInt(msg.internalDate)).toISOString(),
         direction: isOutbound ? "outbound" : "inbound",
-      }, { onConflict: "gmail_message_id" }).select().single();
+      }, { onConflict: "gmail_account_id,gmail_message_id" }).select().single();
 
       if (emailMsg && attachments.length > 0) {
         for (const att of attachments) {
           await supabase.from("email_attachments").upsert({
             email_message_id: emailMsg.id, gmail_attachment_id: att.attachmentId,
             filename: att.filename, mime_type: att.mimeType, size_bytes: att.size,
-          }, { onConflict: "email_message_id" }).select();
+          }, { onConflict: "email_message_id,gmail_attachment_id" }).select();
         }
       }
 

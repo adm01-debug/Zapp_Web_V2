@@ -245,7 +245,7 @@ serve(async (req) => {
           references_header: getHeader(headers, "References") || null,
           internal_date: new Date(parseInt(msg.internalDate)).toISOString(),
           direction: isOutbound ? "outbound" : "inbound",
-        }, { onConflict: "gmail_message_id" });
+        }, { onConflict: "gmail_account_id,gmail_message_id" });
 
         // Link to contact if possible
         if (thread && !thread.contact_id) {
