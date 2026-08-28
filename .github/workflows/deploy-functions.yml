@@ -1,0 +1,77 @@
+# =================================================
+# Deploy de Edge Functions - MANUAL (workflow_dispatch)
+# =================================================
+# Por que existe: ate 28/08/2026 as edge functions eram deployadas na mao.
+# Isso causou drift silencioso entre repo e producao: tres funcoes
+# (evolution-sync, migrate-media-storage, recover-corrupted-audios) ficaram
+# com verify_jwt=false em producao sem estarem no config.toml, expostas na
+# internet executando com service_role.
+#
+# Por que MANUAL e nao em push: deploy automatico em main levaria commit
+# ruim direto para producao sem intervencao. Aqui voce escolhe a hora.
+#
+# O config.toml e a fonte da verdade do verify_jwt: qualquer funcao fora da
+# lista de excecoes volta a verify_jwt=true ao ser deployada.
+# =================================================
+
+name: Deploy Edge Functions
+
+on:
+  workflow_dispatch:
+    inputs:
+      function_name:
+        description: 'Nome da funcao (ex: gmail-oauth). Vazio = TODAS.'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy Edge Functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          if [ -z "$PROJECT_REF" ]; then
+            echo "SUPABASE_PROJECT_REF ausente."
+            exit 1
+          fi
+          if [ -n "$FN" ]; then
+            echo "Deploy da funcao: $FN"
+            supabase functions deploy "$FN" --project-ref "$PROJECT_REF"
+          else
+            echo "Deploy de TODAS as funcoes"
+            supabase functions deploy --project-ref "$PROJECT_REF"
+          fi
+
+      - name: Conferir verify_jwt pos-deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          ESPERADAS="elevenlabs-webhook evolution-webhook gmail-webhook migrate-helper public-api webhook-diagnostic whatsapp-webhook"
+          ABERTAS=$(curl -s "https://api.supabase.com/v1/projects/$PROJECT_REF/functions" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).filter(f=>f.verify_jwt===false).map(f=>f.slug).sort().join(' '))})")
+          echo "verify_jwt=false em producao: $ABERTAS"
+          FALHOU=0
+          for F in $ABERTAS; do
+            case " $ESPERADAS " in
+              *" $F "*) ;;
+              *) echo "FALHA: $F esta SEM verify_jwt e nao e excecao declarada"; FALHOU=1 ;;
+            esac
+          done
+          if [ "$FALHOU" = "1" ]; then exit 1; fi
+          echo "OK: nenhuma funcao exposta fora da lista de excecoes."

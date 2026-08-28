@@ -163,6 +163,10 @@ jobs:
     name: 🛡️ Generate Audit Report
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.event.head_commit.message, 'audit')
+    # O job comita o PDF de volta no repo; o GITHUB_TOKEN sai com contents:read
+    # por padrao e o push falhava com 403 (run 33167726095, 28/08).
+    permissions:
+      contents: write
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4

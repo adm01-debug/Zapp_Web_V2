@@ -12,6 +12,20 @@ serve(async (req) => {
   try {
     const supabaseUrl = requireEnv('SUPABASE_URL');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+    // Ferramenta administrativa: exige admin, nao apenas usuario logado.
+    // verify_jwt=true so garante que ha um JWT valido; sem este guard,
+    // qualquer atendente dispararia migracao de midia em lote.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return errorResponse('Authorization header required', 401, req);
+    const supabaseUser = createClient(supabaseUrl, requireEnv('SUPABASE_ANON_KEY'), {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) return errorResponse('Unauthorized', 401, req);
+    const { data: isAdmin } = await supabaseUser.rpc('is_admin_or_supervisor', { _user_id: user.id });
+    if (!isAdmin) return errorResponse('Only admins can run media migration', 403, req);
+
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
