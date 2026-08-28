@@ -1,5 +1,7 @@
 # 🚀 ZAPP-WEB (Pronto Talk Suite)
 
+> ⚠️ **Agentes (Claude & afins): leiam [`CLAUDE.md`](./CLAUDE.md) antes de qualquer ação** — define o banco oficial do projeto e a Evolution GO (Hostinger).
+
 ![CI](https://github.com/adm01-debug/zapp-web/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)
@@ -124,7 +126,7 @@ bun run dev
     ┌──────────┼──────────┐
     │          │          │
 ┌───┴───┐ ┌───┴───┐ ┌────┴────┐
-│Evolut.│ │Bitrix │ │Eleven   │
+│Evolut.│ │Bitrix r│ │Eleven   │
 │ API   │ │  24   │ │ Labs    │
 └───────┘ └───────┘ └─────────┘
 ```
