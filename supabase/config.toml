@@ -1,5 +1,10 @@
 project_id = "tnnnlkbymytvtqngbbqh"
 
+# Excecoes de verify_jwt. Regra: so entra aqui quem NAO tem como enviar um JWT
+# do Supabase — servicos externos (webhooks) ou APIs com autenticacao propria.
+# Ferramenta administrativa NUNCA entra: o front chama via
+# supabase.functions.invoke, que ja manda o JWT da sessao.
+
 [functions.evolution-webhook]
 verify_jwt = false
 
@@ -12,11 +17,6 @@ verify_jwt = false
 [functions.elevenlabs-webhook]
 verify_jwt = false
 
+# Autenticacao propria via header x-api-key (retorna 401 sem ele).
 [functions.public-api]
-verify_jwt = false
-
-[functions.webhook-diagnostic]
-verify_jwt = false
-
-[functions.migrate-helper]
 verify_jwt = false
