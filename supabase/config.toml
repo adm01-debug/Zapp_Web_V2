@@ -21,5 +21,3 @@ verify_jwt = false
 [functions.public-api]
 verify_jwt = false
 
-[functions.migrate-helper]
-verify_jwt = false
