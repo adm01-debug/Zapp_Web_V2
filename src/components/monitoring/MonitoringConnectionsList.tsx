@@ -33,7 +33,9 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
   const fetchQr = useCallback(async (id: string) => {
     setLoadingQr(p => ({ ...p, [id]: true }));
     try {
-      const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'get-qrcode', instanceName: id } });
+      // 'get-qrcode' nunca existiu na edge (404 garantido) — 'connect' é a
+      // action real do fluxo de QR e responde {qrcode:{base64}}.
+      const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'connect', instanceName: id } });
       if (error) throw error;
       const b64 = data?.qrcode?.base64 || data?.base64;
       if (b64) setQrCodes(p => ({ ...p, [id]: b64 }));

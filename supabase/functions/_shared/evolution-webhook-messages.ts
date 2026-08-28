@@ -6,7 +6,29 @@ import {
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
   generatePhoneVariants,
 } from "./evolution-helpers.ts";
-import { persistMediaToStorage, persistMediaViaApi, parseMessageContent } from "./evolution-media.ts";
+import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+
+// Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
+// com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
+// download via API. Retorna a URL permanente no Storage ou null.
+// deno-lint-ignore no-explicit-any
+async function persistIncomingMedia(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  messageType: string, msgId: string, parsedUrl: string | null,
+): Promise<string | null> {
+  const message = data.message as Record<string, unknown> | undefined;
+  const webhookB64 = (data.base64 as string) || (message?.base64 as string);
+  if (typeof webhookB64 === 'string' && webhookB64) {
+    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId);
+    if (fromB64) return fromB64;
+  }
+  const directUrl = parsedUrl || (data.mediaUrl as string) || (message?.mediaUrl as string) || null;
+  if (directUrl && directUrl.startsWith('http')) {
+    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId);
+    if (fromUrl) return fromUrl;
+  }
+  return await persistMediaViaApi(supabase, instance, data, messageType, msgId);
+}
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 
@@ -68,11 +90,10 @@ export async function handleOutgoingWhatsAppMessage(
   if (!parsed.content && parsed.messageType === 'text') return;
 
   let { mediaUrl } = parsed;
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
     const msgId = key.id.replace(/[^a-zA-Z0-9]/g, '');
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, parsed.messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else { const apiUrl = await persistMediaViaApi(supabase, instance, data, parsed.messageType, msgId); if (apiUrl) mediaUrl = apiUrl; }
   }
 
   const messageCreatedAt = (data.messageTimestamp as number)
@@ -119,18 +140,21 @@ export async function handleIncomingMessage(
   let { mediaUrl } = parsed;
   const { content, messageType } = parsed;
 
+  // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
+  // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
+  if (!content && messageType === 'text' && !mediaUrl) {
+    console.log(`[INCOMING] Ignored empty message ${key.id}`);
+    return;
+  }
+
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
   }
 
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(messageType)) {
     const msgId = key.id || `${Date.now()}`;
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else {
-      const apiUrl = await persistMediaViaApi(supabase, instance, data, messageType, msgId);
-      if (apiUrl) mediaUrl = apiUrl;
-    }
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
@@ -225,7 +249,8 @@ export async function handleStickerMedia(
     } catch { return null; }
   };
 
-  const b64Direct = (data.base64 as string) || ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
+  const b64Direct = (data.base64 as string) || (message?.base64 as string) ||
+    ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
   if (b64Direct) mediaUrl = await uploadBase64Sticker(b64Direct);
 
   if (!mediaUrl) {

@@ -21,8 +21,15 @@ export async function handleConnectionUpdate(supabase: any, instance: string, ba
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
 
+  // Evolution GO envia jid/pushName no Connected — aproveita para preencher
+  // o número quando ainda não temos (paridade com o que o v2 preenchia).
+  const connectedPhone = status === 'connected' && typeof baseData.jid === 'string'
+    ? normalizePhone(baseData.jid) : null;
   await supabase.from('whatsapp_connections')
-    .update({ status, qr_code: null, updated_at: new Date().toISOString() })
+    .update({
+      status, qr_code: null, updated_at: new Date().toISOString(),
+      ...(connectedPhone && !prevConn?.phone_number ? { phone_number: connectedPhone } : {}),
+    })
     .eq('instance_id', instance);
 
   // Invalidate cache so next message processing fetches fresh connection data.
@@ -161,7 +168,8 @@ export async function handleLabelsEdit(supabase: any, instance: string, data: un
   if (!connection) return;
 
   if (deleted) {
-    await supabase.from('tags').delete().eq('name', `wa:${labelId}:${labelName}`);
+    // GO pode mandar delete sem name; casa pelo prefixo estável wa:{id}:
+    await supabase.from('tags').delete().ilike('name', `wa:${labelId}:%`);
   } else {
     const tagName = labelName || `Label ${labelId}`;
     const { data: existingTag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
@@ -232,10 +240,18 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
   }
   if (!contact) return;
 
+  // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed);
+  // o v2 emite nomes fora da lista (offer/reject/timeout…) — mapeia antes.
+  const CALL_STATUS_MAP: Record<string, string> = {
+    offer: 'ringing', ringing: 'ringing', answered: 'answered', accept: 'answered',
+    ended: 'ended', terminate: 'ended', reject: 'missed', timeout: 'missed',
+    missed: 'missed', busy: 'busy', failed: 'failed',
+  };
   const agentId = contact.assigned_to || null;
   await supabase.from('calls').insert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, agent_id: agentId,
-    direction: 'inbound', status: callStatus || 'ringing', started_at: new Date().toISOString(),
+    direction: 'inbound', status: CALL_STATUS_MAP[(callStatus || '').toLowerCase()] ?? 'ringing',
+    started_at: new Date().toISOString(),
     notes: isVideo ? 'Chamada de vídeo' : 'Chamada de voz',
   });
 

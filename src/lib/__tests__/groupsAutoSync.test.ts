@@ -14,14 +14,21 @@ interface EvolutionGroup {
   description?: string;
   announce?: boolean;
   iAmAdmin?: boolean;
+  // Evolution GO (whatsmeow types.GroupInfo — campos PascalCase)
+  JID?: string;
+  Name?: string;
+  Topic?: string;
+  Participants?: unknown[];
+  IsAnnounce?: boolean;
 }
 
+// Espelha a lógica de src/hooks/groups/actions.ts (handleAutoSync)
 function extractGroupData(g: EvolutionGroup) {
-  const groupJid = g.id || g.jid || g.groupJid || null;
-  const groupName = g.subject || g.name || 'Grupo sem nome';
-  const participantCount = g.size || g.participants?.length || 0;
-  const groupDesc = g.desc || g.description || null;
-  const isAdmin = g.announce === true || g.iAmAdmin === true;
+  const groupJid = g.id || g.jid || g.groupJid || g.JID || null;
+  const groupName = g.subject || g.name || g.Name || 'Grupo sem nome';
+  const participantCount = g.size || g.participants?.length || g.Participants?.length || 0;
+  const groupDesc = g.desc || g.description || g.Topic || null;
+  const isAdmin = g.announce === true || g.iAmAdmin === true || g.IsAnnounce === true;
   return { groupJid, groupName, participantCount, groupDesc, isAdmin };
 }
 
@@ -51,6 +58,24 @@ describe('Group Data Extraction', () => {
 
     it('returns null when no JID field', () => {
       expect(extractGroupData({}).groupJid).toBeNull();
+    });
+
+    it('falls back to Evolution GO JID (whatsmeow)', () => {
+      expect(extractGroupData({ JID: '4@g.us' }).groupJid).toBe('4@g.us');
+    });
+  });
+
+  describe('Evolution GO shape (whatsmeow GroupInfo)', () => {
+    it('extracts all fields from GO group', () => {
+      const result = extractGroupData({
+        JID: '120363@g.us', Name: 'Grupo GO', Topic: 'descrição',
+        Participants: [{ JID: 'a' }, { JID: 'b' }], IsAnnounce: true,
+      });
+      expect(result.groupJid).toBe('120363@g.us');
+      expect(result.groupName).toBe('Grupo GO');
+      expect(result.groupDesc).toBe('descrição');
+      expect(result.participantCount).toBe(2);
+      expect(result.isAdmin).toBe(true);
     });
   });
 

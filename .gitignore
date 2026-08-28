@@ -103,3 +103,6 @@ supabase/.temp/
 .stylelintcache
 *.tgz
 .yarn-integrity
+
+# Deno (tooling local de deno check nas edge functions; o repo usa bun.lock)
+deno.lock

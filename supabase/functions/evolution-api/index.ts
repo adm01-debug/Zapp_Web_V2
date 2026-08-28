@@ -50,15 +50,25 @@ serve(async (req) => {
 
   try {
     const body = await json();
-    const instance = body.instanceName || body.instance;
+    const instance = String(body.instanceName || body.instance || '');
 
     // ─── 1. Instance Management ───
-    if (action === 'create-instance') return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token, number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
+    // Evolution GO exige token na criação (v2 auto-gerava) — gera um default;
+    // ele volta na resposta para o operador guardar (EVOLUTION_INSTANCE_TOKEN).
+    if (action === 'create-instance') return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token ?? crypto.randomUUID(), number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
-      const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: '{}' });
+      // NUNCA body vazio: o GO persiste webhook/subscribe do body — {} apagaria
+      // o webhook da instância e derrubaria a entrega de eventos (o guard
+      // instance.Webhook != "" bloqueia até o WEBHOOK_URL global). Reafirmar a
+      // configuração a cada connect torna o fluxo de QR auto-reparador.
+      const connectBody = JSON.stringify({
+        subscribe: ['ALL'], immediate: true,
+        webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
+      });
+      const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: connectBody });
       const data = await response.json();
       const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
       const qrData = await qrRes.json();
@@ -77,7 +87,27 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (action === 'instance-info') return await proxy(`/instance/info/${instance}`, 'GET');
+    // Endpoints admin do GO usam instanceId (UUID) no path; o app guarda o NOME
+    // da instância. Resolve nome→id via /instance/all antes de chamar.
+    const resolveGoInstanceId = async (name: string): Promise<string | null> => {
+      const res = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey } });
+      if (!res.ok) return null;
+      const json = await res.json();
+      const records = Array.isArray(json?.data) ? json.data : [];
+      // deno-lint-ignore no-explicit-any
+      const found = records.find((r: any) => r?.name === name || r?.instanceId === name || r?.id === name);
+      return found?.instanceId ?? found?.id ?? null;
+    };
+    const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    if (action === 'instance-info') {
+      if (isGoFlavor) {
+        const goId = await resolveGoInstanceId(instance);
+        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return await proxy(`/instance/info/${goId}`, 'GET');
+      }
+      return await proxy(`/instance/info/${instance}`, 'GET');
+    }
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
     if (action === 'disconnect') {
@@ -87,7 +117,14 @@ serve(async (req) => {
       return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (action === 'delete-instance') return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+    if (action === 'delete-instance') {
+      if (isGoFlavor) {
+        const goId = await resolveGoInstanceId(instance);
+        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return await proxy(`/instance/delete/${goId}`, 'DELETE');
+      }
+      return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+    }
     if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
     // ─── 2. Settings ───
@@ -100,22 +137,24 @@ serve(async (req) => {
 
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
-    if (action === 'send-media') return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: body.mediaUrl || body.media, fileName: body.fileName, delay: body.delay });
+    if (action === 'send-media') return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: body.mediaUrl || body.media, fileName: body.fileName, delay: body.delay, quoted: body.quoted });
 
     if (action === 'send-audio') {
-      let audioSource = typeof (body.audio || body.audioUrl || body.mediaUrl) === 'string'
-        ? (body.audio || body.audioUrl || body.mediaUrl).trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
-        : (body.audio || body.audioUrl || body.mediaUrl);
+      const rawAudio = body.audio || body.audioUrl || body.mediaUrl;
+      let audioSource = typeof rawAudio === 'string'
+        ? rawAudio.trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
+        : rawAudio;
       if (typeof audioSource === 'string') audioSource = await resolvePrivateBucketUrl(supabase, audioSource);
       const audioPayload: Record<string, unknown> = { number: body.number, audio: audioSource };
       if (body.delay) audioPayload.delay = body.delay;
+      if (body.quoted) audioPayload.quoted = body.quoted;
       return await proxy(`/message/sendWhatsAppAudio/${instance}`, 'POST', audioPayload);
     }
 
     if (action === 'send-sticker') {
       let finalStickerUrl = body.sticker || body.mediaUrl;
       if (typeof finalStickerUrl === 'string') finalStickerUrl = await resolvePrivateBucketUrl(supabase, finalStickerUrl, ['whatsapp-media']);
-      return await proxy(`/message/sendSticker/${instance}`, 'POST', { number: body.number, sticker: finalStickerUrl });
+      return await proxy(`/message/sendSticker/${instance}`, 'POST', { number: body.number, sticker: finalStickerUrl, quoted: body.quoted });
     }
 
     if (action === 'send-location') return await proxy(`/message/sendLocation/${instance}`, 'POST', { number: body.number, name: body.locationName || body.name, address: body.locationAddress || body.address, latitude: body.latitude, longitude: body.longitude });
@@ -168,14 +207,41 @@ serve(async (req) => {
     if (action === 'toggle-ephemeral') return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
 
     // ─── 7. Profile ───
-    if (action === 'fetch-profile') return await proxy(`/profile/fetchProfile/${instance}`, 'GET');
+    // Com number → /chat/fetchProfile (traduzido p/ GO /user/info); sem number, própria conta.
+    if (action === 'fetch-profile') {
+      if (body.number) return await proxy(`/chat/fetchProfile/${instance}`, 'POST', { number: body.number });
+      return await proxy(`/profile/fetchProfile/${instance}`, 'GET');
+    }
     if (action === 'update-profile-name') return await proxy(`/profile/updateProfileName/${instance}`, 'PUT', { name: body.name });
     if (action === 'update-profile-status') return await proxy(`/profile/updateProfileStatus/${instance}`, 'PUT', { status: body.status });
     if (action === 'update-profile-picture') return await proxy(`/profile/updateProfilePicture/${instance}`, 'PUT', { picture: body.picture });
     if (action === 'remove-profile-picture') return await proxy(`/profile/removeProfilePicture/${instance}`, 'DELETE');
     if (action === 'fetch-profile-picture') return await proxy(`/profile/fetchProfilePicture/${instance}?number=${body.number}`, 'GET');
     if (action === 'fetch-business-profile') return await proxy(`/profile/fetchBusinessProfile/${instance}`, 'POST', { number: body.number });
-    if (action === 'update-privacy') return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', { readreceipts: body.readreceipts, profile: body.profile, status: body.status, online: body.online, last: body.last, groupadd: body.groupadd });
+    if (action === 'update-privacy') {
+      // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
+      // + merge para atualizar só o que veio, sem resetar o resto para 'all'.
+      if (isGoFlavor) {
+        const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+        let current: Record<string, unknown> = {};
+        try {
+          const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, { headers: { 'apikey': instToken } });
+          if (curRes.ok) { const curJson = await curRes.json(); if (curJson?.data && typeof curJson.data === 'object') current = curJson.data; }
+        } catch { /* merge best-effort; defaults abaixo seguram */ }
+        const pick = (v2Val: unknown, goCurrent: unknown) =>
+          (typeof v2Val === 'string' && v2Val) ? v2Val : ((typeof goCurrent === 'string' && goCurrent) ? goCurrent : 'all');
+        return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', {
+          readreceipts: pick(body.readreceipts, current.ReadReceipts),
+          profile: pick(body.profile, current.Profile),
+          status: pick(body.status, current.Status),
+          online: pick(body.online, current.Online),
+          last: pick(body.last, current.LastSeen),
+          groupadd: pick(body.groupadd, current.GroupAdd),
+          calladd: pick(body.calladd, current.CallAdd),
+        });
+      }
+      return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', { readreceipts: body.readreceipts, profile: body.profile, status: body.status, online: body.online, last: body.last, groupadd: body.groupadd });
+    }
 
     // ─── 8. Labels ───
     if (action === 'find-labels') return await proxy(`/label/findLabels/${instance}`, 'GET');
