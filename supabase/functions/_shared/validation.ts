@@ -1,102 +1,108 @@
-/**
- * Shared validation, security, and logging utilities for Edge Functions.
- * Provides input sanitization, rate limiting, structured logging, and standard error responses.
- */
+// deno-lint-ignore-file no-explicit-any
+// Shared validation, rate limiting and security utilities for Edge Functions
+// SECURITY: centralizes input validation and rate limiting to prevent abuse
 
-// Re-export HMAC validation utilities
-export { 
-  verifyHmacSignature, 
-  extractSignatureFromHeaders, 
-  WebhookSecurityService, 
-  createWebhookValidator 
-} from './hmac-validation.ts';
+/** Simple in-memory rate limiter (per isolate). For distributed limiting use rate_limit_log table. */
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
 
-// ─── Structured Logger ───────────────────────────────────────────────────────
-
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
-interface LogContext {
-  fn?: string;
-  requestId?: string;
-  [key: string]: unknown;
+export interface RateLimitOptions {
+  /** unique key, e.g. `send-text:${ip}` */
+  key: string;
+  /** max requests per window */
+  limit: number;
+  /** window size in ms */
+  windowMs: number;
 }
 
-/** Structured logger for edge functions with context and timing */
+export function checkRateLimit({ key, limit, windowMs }: RateLimitOptions): { allowed: boolean; remaining: number; retryAfterMs: number } {
+  const now = Date.now();
+  const bucket = rateBuckets.get(key);
+  if (!bucket || now >= bucket.resetAt) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: limit - 1, retryAfterMs: 0 };
+  }
+  if (bucket.count >= limit) {
+    return { allowed: false, remaining: 0, retryAfterMs: bucket.resetAt - now };
+  }
+  bucket.count++;
+  return { allowed: true, remaining: limit - bucket.count, retryAfterMs: 0 };
+}
+
+/** Periodic cleanup to avoid unbounded memory growth */
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of rateBuckets) {
+    if (now >= v.resetAt) rateBuckets.delete(k);
+  }
+}, 60_000);
+
+/** Extract best-effort client IP from request headers */
+export function getClientIP(req: Request): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    req.headers.get('cf-connecting-ip') ||
+    'unknown'
+  );
+}
+
+/** Structured logger with levels; avoids leaking secrets */
 export class Logger {
-  private fn: string;
-  private requestId: string;
-  private startTime: number;
-
-  constructor(functionName: string) {
-    this.fn = functionName;
-    this.requestId = crypto.randomUUID().slice(0, 8);
-    this.startTime = Date.now();
+  constructor(private context: string) {}
+  private fmt(level: string, msg: string, extra?: unknown) {
+    const base = `[${new Date().toISOString()}] [${level}] [${this.context}] ${msg}`;
+    return extra !== undefined ? `${base} ${JSON.stringify(extra)}` : base;
   }
-
-  private log(level: LogLevel, message: string, ctx?: Record<string, unknown>) {
-    const entry = {
-      level,
-      fn: this.fn,
-      rid: this.requestId,
-      ms: Date.now() - this.startTime,
-      msg: message,
-      ...ctx,
-    };
-    const serialized = JSON.stringify(entry);
-    if (level === 'error') console.error(serialized);
-    else if (level === 'warn') console.warn(serialized);
-    else console.log(serialized);
-  }
-
-  debug(msg: string, ctx?: Record<string, unknown>) { this.log('debug', msg, ctx); }
-  info(msg: string, ctx?: Record<string, unknown>) { this.log('info', msg, ctx); }
-  warn(msg: string, ctx?: Record<string, unknown>) { this.log('warn', msg, ctx); }
-  error(msg: string, ctx?: Record<string, unknown>) { this.log('error', msg, ctx); }
-
-  /** Log final response with duration */
-  done(status: number, ctx?: Record<string, unknown>) {
-    this.log(status >= 400 ? 'error' : 'info', `completed ${status}`, {
-      status,
-      durationMs: Date.now() - this.startTime,
-      ...ctx,
-    });
-  }
+  info(msg: string, extra?: unknown) { console.log(this.fmt('INFO', msg, extra)); }
+  warn(msg: string, extra?: unknown) { console.warn(this.fmt('WARN', msg, extra)); }
+  error(msg: string, extra?: unknown) { console.error(this.fmt('ERROR', msg, extra)); }
 }
 
-// Dominios exatos permitidos no CORS.
-// IMPORTANTE: ao adicionar um dominio de producao novo, adicionar aqui tambem
-// e redeployar todas as edges (supabase functions deploy --project-ref <ref>).
-const EXACT_ALLOWED_ORIGINS = new Set([
-  // Producao Vercel
-  'https://zapp-web-v2.vercel.app',
-  'https://zapp-web-v2-juca1.vercel.app',
-  'https://zapp-web-v2-git-main-juca1.vercel.app',
-  // Dominios Lovable legados (manter durante transicao)
-  'https://pronto-talk-suite.lovable.app',
-  'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
-  'https://1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovableproject.com',
-]);
+/** Validate string field: required, max length, optional pattern */
+export function validateString(value: unknown, field: string, opts: { required?: boolean; maxLen?: number; pattern?: RegExp } = {}): string | null {
+  const { required = true, maxLen = 10_000, pattern } = opts;
+  if (value === undefined || value === null || value === '') {
+    if (required) throw new Error(`Campo obrigatorio: ${field}`);
+    return null;
+  }
+  if (typeof value !== 'string') throw new Error(`Campo ${field} deve ser string`);
+  if (value.length > maxLen) throw new Error(`Campo ${field} excede ${maxLen} caracteres`);
+  if (pattern && !pattern.test(value)) throw new Error(`Campo ${field} com formato invalido`);
+  return value;
+}
 
-const ORIGIN_PATTERNS = [
-  // Previews de PR na Vercel: zapp-web-v2-<hash>-juca1.vercel.app
-  /^https:\/\/zapp-web-v2-[a-z0-9]+-juca1\.vercel\.app$/,
-  // Localhost para desenvolvimento
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
+/** Validate phone number in E.164-ish / WhatsApp JID formats */
+export function validatePhone(value: unknown, field = 'phone'): string {
+  const v = validateString(value, field, { maxLen: 64 });
+  if (!v) throw new Error(`Campo obrigatorio: ${field}`);
+  if (!/^[0-9@.\-+_:a-zA-Z]+$/.test(v)) throw new Error(`Campo ${field} com formato invalido`);
+  return v;
+}
+
+/** Allowed origins for browser calls (production + previews + local dev) */
+const ALLOWED_ORIGINS = [
+  'https://zapp-web-v2.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:3000',
+];
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/zapp-web-v2-[a-z0-9-]+-adm01s-projects\.vercel\.app$/,
+  /^https:\/\/[a-z0-9-]+\.lovableproject\.com$/,
+  /^https:\/\/[a-z0-9-]+\.lovable\.app$/,
 ];
 
-function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
+export function isAllowedOrigin(origin: string): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin));
 }
 
-/** Security headers applied to all responses */
+/** Security headers applied to every response */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Cache-Control': 'no-store',
 };
@@ -110,7 +116,7 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-app-name, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature',
+      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
@@ -128,110 +134,10 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   );
 }
 
-/** Standard JSON success response (with origin-validated CORS) */
-export function jsonResponse(data: unknown, status = 200, req?: Request) {
-  const headers = req ? getCorsHeaders(req) : corsHeaders;
-  return new Response(
-    JSON.stringify(data),
-    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
-  );
-}
-
-/** Handle CORS preflight with origin validation */
+/** Handle CORS preflight; returns Response for OPTIONS, null otherwise */
 export function handleCors(req: Request): Response | null {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response('ok', { headers: getCorsHeaders(req) });
   }
   return null;
-}
-
-/** Sanitize string input — strip control chars, trim, enforce max length */
-export function sanitizeString(input: unknown, maxLength = 10000): string | null {
-  if (typeof input !== 'string') return null;
-  // Remove control characters except newlines/tabs
-  const cleaned = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
-  return cleaned.length > 0 ? cleaned.slice(0, maxLength) : null;
-}
-
-/** Validate UUID format */
-export function isValidUUID(value: unknown): boolean {
-  if (typeof value !== 'string') return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-}
-
-/** In-memory rate limiter (per-isolate, resets on cold start) with auto-cleanup */
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-let lastCleanup = Date.now();
-
-function cleanupRateLimitMap() {
-  const now = Date.now();
-  if (now - lastCleanup < 60_000) return; // Cleanup at most once per minute
-  lastCleanup = now;
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(key);
-  }
-}
-
-export function checkRateLimit(
-  key: string,
-  maxRequests = 30,
-  windowMs = 60_000
-): { allowed: boolean; remaining: number } {
-  cleanupRateLimitMap();
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: maxRequests - 1 };
-  }
-
-  entry.count++;
-  const remaining = Math.max(0, maxRequests - entry.count);
-  return { allowed: entry.count <= maxRequests, remaining };
-}
-
-/** Extract client IP from request for rate limiting */
-export function getClientIP(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  );
-}
-
-/** Get required env var or throw */
-export function requireEnv(name: string): string {
-  const value = Deno.env.get(name);
-  if (!value) {
-    throw new Error(`${name} is not configured`);
-  }
-  return value;
-}
-
-/**
- * Require a valid Supabase JWT in the Authorization header.
- * Returns the authenticated user id, or a Response (401) to short-circuit.
- */
-export async function requireAuth(req: Request): Promise<{ userId: string } | Response> {
-  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
-  if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
-    return errorResponse("Missing Authorization bearer token", 401, req);
-  }
-  try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-    const client = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data, error } = await client.auth.getUser();
-    if (error || !data?.user) {
-      return errorResponse("Invalid or expired token", 401, req);
-    }
-    return { userId: data.user.id };
-  } catch (_err) {
-    return errorResponse("Authentication failed", 401, req);
-  }
 }
