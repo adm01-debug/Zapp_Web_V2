@@ -119,7 +119,7 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 gap-0 bg-background/95 border-border/20 overflow-hidden [&>button]:hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl w-[95vw] p-0 gap-0 bg-background/95 border-border/20 overflow-hidden [&>button]:hidden">
         <DialogTitle className="sr-only">Visualizador de status</DialogTitle>
         <div className="flex gap-0.5 px-3 pt-3">
           {messages.map((_, i) => (

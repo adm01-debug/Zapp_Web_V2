@@ -91,7 +91,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden">
         <DialogTitle className="sr-only">Busca de mensagens</DialogTitle>
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">

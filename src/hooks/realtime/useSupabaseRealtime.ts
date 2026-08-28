@@ -45,6 +45,14 @@
 
     const subscribe = () => {
       try {
+        // Remove any previous channel with this topic before re-subscribing.
+        // supabase.channel(name) returns the EXISTING channel if the topic is
+        // still registered, so retrying without removal accumulates duplicate
+        // postgres_changes bindings -> "mismatch between server and client
+        // bindings" on every retry after the first CHANNEL_ERROR.
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
         channel = supabase
           .channel(channelName)
           .on(
