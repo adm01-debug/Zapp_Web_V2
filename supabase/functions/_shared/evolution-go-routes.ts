@@ -26,10 +26,17 @@ const jidWithoutDevice = (jid?: string): string | undefined =>
 
 // /user/avatar e /user/info do GO PENDURAM (sem resposta ate o timeout do caller)
 // quando number vem sem dominio; com JID completo respondem em ~1s. Validado ao
-// vivo em 28/08/2026 na instancia evolution-go-rxj2 (0.7.2). Numero puro ganha
-// @s.whatsapp.net; quem ja tem dominio (@lid, @g.us) passa intacto.
-const toUserJid = (n?: unknown): string | undefined =>
-  typeof n === 'string' && n ? (n.includes('@') ? n : `${n}@s.whatsapp.net`) : undefined;
+// vivo em 28/08/2026 na instancia evolution-go-rxj2 (0.7.2).
+// LID (identificador interno do WhatsApp) tem >= 14 digitos e so resolve com @lid;
+// com @s.whatsapp.net a GO devolve 500 "no profile picture" e a foto se perde.
+// Telefone real (BR: 12-13 digitos) usa @s.whatsapp.net. Quem ja tem dominio
+// (@lid, @g.us) passa intacto. Confirmado ao vivo em 28/08: mesmo LID => 500 com
+// @s.whatsapp.net, 200 com @lid.
+const toUserJid = (n?: unknown): string | undefined => {
+  if (typeof n !== 'string' || !n) return undefined;
+  if (n.includes('@')) return n;
+  return /^\d{14,}$/.test(n) ? `${n}@lid` : `${n}@s.whatsapp.net`;
+};
 
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
