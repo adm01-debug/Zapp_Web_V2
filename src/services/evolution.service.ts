@@ -51,10 +51,12 @@ export interface EvolutionMessagePayload {
  * Returns instances ordered by display name ascending.
  */
 export async function getEvolutionInstances(): Promise<EvolutionInstance[]> {
+  // A view whatsapp_connections_safe não tem instance_display_name — ordena
+  // pela coluna real `name`.
   const { data, error } = await supabase
     .from('whatsapp_connections_safe' as any)
     .select('*')
-    .order('instance_display_name' as any, { ascending: true });
+    .order('name' as any, { ascending: true });
 
   if (error) throw error;
   return (data ?? []).map((item: any) => ({
@@ -139,10 +141,12 @@ export async function updateEvolutionInstanceStatus(
     qr_code?: string | null;
   },
 ): Promise<void> {
+  // A coluna que carrega o nome da instância Evolution é instance_id
+  // (instance_name não existe em whatsapp_connections).
   const { error } = await supabase
     .from('whatsapp_connections' as any)
     .update({ ...update, updated_at: new Date().toISOString() } as any)
-    .eq('instance_name', instanceName);
+    .eq('instance_id', instanceName);
 
   if (error) throw error;
 }

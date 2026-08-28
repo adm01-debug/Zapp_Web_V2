@@ -12,10 +12,16 @@ export interface GoRoute {
   method: string;
   body?: unknown;
   auth: 'instance' | 'admin';
+  // Content-Type alternativo (workaround do jid_validation_middleware do GO,
+  // que corrompe arrays em application/json; o handler faz o bind normalmente).
+  contentType?: string;
 }
 
-const jidToNumber = (jid?: string): string | undefined =>
-  typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '').replace(/@.*$/, '') : undefined;
+// Remove só o sufixo de device (:NN@) preservando o domínio: o ParseJID do GO
+// aceita JID completo, e é o único jeito de @g.us/@lid/@broadcast chegarem
+// corretos (número puro perde o domínio e corrompe grupos e chats LID).
+const jidWithoutDevice = (jid?: string): string | undefined =>
+  typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '') : undefined;
 
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
@@ -61,8 +67,9 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     }};
   }
   if (m(/^\/message\/sendPtv\/[^/]+$/))
+    // GO tem PTV nativo (nota redonda de vídeo) via type 'ptv' no /send/media
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
-      number: b.number, url: b.video, type: 'video',
+      number: b.number, url: b.video, type: 'ptv',
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   if (m(/^\/message\/sendSticker\/[^/]+$/))
@@ -86,15 +93,18 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       number: b.number, question: b.name, maxAnswer: b.selectableCount ?? 1, options: b.values,
     }};
   if (m(/^\/message\/sendList\/[^/]+$/))
-    // shapes iguais exceto v2 footer → GO footerText; rows {title, description, rowId} batem
+    // v2 footer → GO footerText; rows {title, description, rowId} batem.
+    // O GO rejeita footer vazio ("footer is required") — v2 tratava como opcional.
     return { path: '/send/list', method: 'POST', auth: 'instance', body: {
       number: b.number, title: b.title, description: b.description,
       buttonText: b.buttonText, sections: b.sections,
-      ...(b.footer ? { footerText: b.footer } : {}),
+      footerText: b.footer || ' ',
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   if (m(/^\/message\/sendButtons\/[^/]+$/))
-    return { path: '/send/button', method: 'POST', auth: 'instance', body: b };
+    return { path: '/send/button', method: 'POST', auth: 'instance', body: {
+      ...b, footer: b.footer || ' ',
+    }};
   if (m(/^\/message\/sendStatus\/[^/]+$/)) {
     const type = b.type ?? (b.content && !/^https?:\/\//.test(String(b.content)) ? 'text' : 'media');
     if (type === 'text')
@@ -103,7 +113,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   }
   if (m(/^\/message\/sendReaction\/[^/]+$/))
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
-      number: jidToNumber(b.key?.remoteJid), reaction: b.reaction, id: b.key?.id,
+      number: jidWithoutDevice(b.key?.remoteJid), reaction: b.reaction, id: b.key?.id,
       fromMe: b.key?.fromMe === true,
       ...(b.key?.participant ? { participant: b.key.participant } : {}),
     }};
@@ -123,7 +133,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     const msgs = Array.isArray(b.readMessages) ? b.readMessages : [];
     return { path: '/message/markread', method: 'POST', auth: 'instance', body: {
       id: msgs.map((x: any) => x?.id).filter(Boolean),
-      number: jidToNumber(msgs[0]?.remoteJid),
+      number: jidWithoutDevice(msgs[0]?.remoteJid),
     }};
   }
   // GO exige o waE2E.Message com os nós de mídia (URL/mediaKey/directPath).
@@ -155,14 +165,24 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/instance\/fetchInstances/))
     return { path: '/instance/all', method: 'GET', auth: 'admin' };
   if (m(/^\/instance\/create$/))
-    // v2 {instanceName, integration, qrcode,…} → GO {name, token?, instanceId?}
+    // v2 {instanceName, integration, qrcode,…} → GO {name, token, instanceId?}.
+    // O GO exige token; a edge gera um default (tradutor fica determinístico).
     return { path: '/instance/create', method: 'POST', auth: 'admin', body: {
       name: b.instanceName ?? b.name,
       ...(b.token ? { token: b.token } : {}),
       ...(b.instanceId ? { instanceId: b.instanceId } : {}),
     }};
-  if (m(/^\/instance\/connect\/[^/]+$/))
-    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {} };
+  if (m(/^\/instance\/connect\/[^/]+$/)) {
+    // NUNCA conectar com body vazio: o GO PERSISTE webhook/subscribe do body —
+    // {} apaga o webhook da instância e derruba a entrega de eventos (o guard
+    // instance.Webhook != "" também bloqueia o WEBHOOK_URL global). Reafirma
+    // a configuração a cada connect (auto-reparo).
+    const supabaseUrl = (Deno.env.get('SUPABASE_URL') ?? '').replace(/\/+$/, '');
+    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {
+      subscribe: ['ALL'], immediate: true,
+      ...(supabaseUrl ? { webhookUrl: `${supabaseUrl}/functions/v1/evolution-webhook` } : {}),
+    }};
+  }
   if (m(/^\/instance\/restart\/[^/]+$/))
     return { path: '/instance/reconnect', method: 'POST', auth: 'instance', body: {} };
   if (m(/^\/instance\/logout\/[^/]+$/))
@@ -178,7 +198,9 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/group\/create\/[^/]+$/))
     return { path: '/group/create', method: 'POST', auth: 'instance', body: { groupName: b.subject, participants: b.participants } };
   if (m(/^\/group\/fetchAllGroups\/[^/]+$/))
-    return { path: '/group/myall', method: 'GET', auth: 'instance' };
+    // /group/list = GetJoinedGroups (todos os grupos). /group/myall filtra por
+    // dono com JID mutilado e está "TODO: not working" no fonte — retornava vazio.
+    return { path: '/group/list', method: 'GET', auth: 'instance' };
   if (m(/^\/group\/findGroupInfos\/[^/]+$/) || m(/^\/group\/participants\/[^/]+$/))
     return { path: '/group/info', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid ?? q.get('groupJid') } };
   if (m(/^\/group\/updateGroupSubject\/[^/]+$/))
@@ -186,7 +208,10 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/group\/updateGroupDescription\/[^/]+$/))
     return { path: '/group/description', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, description: b.description } };
   if (m(/^\/group\/updateParticipant\/[^/]+$/))
-    return { path: '/group/participant', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, action: b.action, participants: b.participants } };
+    // contentType text/json contorna o jid_validation_middleware do GO, que em
+    // application/json zera arrays (participants) e aborta 400; o handler faz
+    // ShouldBindBodyWithJSON e aceita normalmente.
+    return { path: '/group/participant', method: 'POST', auth: 'instance', contentType: 'text/json', body: { groupJid: b.groupJid, action: b.action, participants: b.participants } };
   if (m(/^\/group\/updateSetting\/[^/]+$/))
     return { path: '/group/settings', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, action: b.action } };
   if (m(/^\/group\/inviteCode\/[^/]+$/))

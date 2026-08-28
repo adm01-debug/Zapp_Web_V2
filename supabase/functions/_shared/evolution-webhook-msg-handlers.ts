@@ -75,7 +75,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
-    const key = keySource as { id?: string } | null;
+    const key = keySource as { id?: string; fromMe?: boolean } | null;
     const rawStatus = (entry.status as string) || (baseData.status as string) || '';
     const newStatus = statusMap[rawStatus] || rawStatus.toLowerCase();
 
@@ -89,6 +89,11 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.log(`Message ${key.id} status: ${currentMessage.status} → ${newStatus}`);
         }
+      } else if (key.fromMe === true) {
+        // Recibo de mensagem NOSSA que o frontend ainda não estampou com
+        // external_id (corrida envio×webhook): criar stub aqui duplicaria a
+        // mensagem — o eco send.message / o frontend resolvem em seguida.
+        console.log(`Receipt for own message ${key.id} before external_id landed — skipping stub`);
       } else {
         let contactId: string | null = null;
         if (connection?.id) {

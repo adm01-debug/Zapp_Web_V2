@@ -313,6 +313,9 @@ export async function handleReactionEvent(supabase: any, reactionMessage: Record
   const { data: targetMessage } = await supabase
     .from('messages').select('id, contact_id').eq('external_id', targetExternalId).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
+  // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
+  // reaction_author_check exige autor — reagir aqui só geraria 23514.
+  if (!targetMessage.contact_id) { console.log(`Reaction target ${targetExternalId} has no contact — skipping`); return; }
 
   if (emoji === '') {
     if (!actorFromMe) {

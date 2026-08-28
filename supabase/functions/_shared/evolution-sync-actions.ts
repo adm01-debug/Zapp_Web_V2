@@ -59,15 +59,20 @@ export async function syncContacts(
     if (!phone || phone.length < 6) { skipped++; continue; }
     const name = rawName || phone;
 
-    const { error: upsertError } = await supabase.from('contacts').upsert(
-      { phone, name, avatar_url: avatarUrl, whatsapp_connection_id: connection.id },
-      { onConflict: 'phone,whatsapp_connection_id', ignoreDuplicates: false }
+    // contacts só tem UNIQUE(phone) — upsert por (phone, connection) dava 42P10
+    // e nunca inseria. Padrão insert + fallback 23505 (mesmo do fullSync).
+    const { error: insErr } = await supabase.from('contacts').insert(
+      { phone, name, avatar_url: avatarUrl, whatsapp_connection_id: connection.id }
     );
-    if (upsertError) {
-      await supabase.from('contacts').update({ name, avatar_url: avatarUrl })
-        .eq('phone', phone).eq('whatsapp_connection_id', connection.id);
+    if (!insErr) { synced++; continue; }
+    if (insErr.code === '23505') {
+      const { error: updErr } = await supabase.from('contacts')
+        .update({ name, avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+        .eq('phone', phone);
+      if (!updErr) synced++; else skipped++;
+    } else {
+      skipped++;
     }
-    synced++;
   }
 
   return jsonRes({ success: true, synced, skipped, page, totalFetched: contacts.length, hasMore: contacts.length >= offset }, corsHeaders);

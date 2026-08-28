@@ -47,8 +47,16 @@ serve(async (req) => {
     if (event === 'qrcode.updated') {
       const qrCode = (baseData.qrcode as Record<string, string>)?.base64;
       if (qrCode) {
+        // 'qr_pending' é o valor do CHECK de whatsapp_connections.status
+        // ('pending' violava o constraint e o update inteiro era rejeitado)
         await supabase.from('whatsapp_connections')
-          .update({ qr_code: qrCode, status: 'pending', updated_at: new Date().toISOString() })
+          .update({ qr_code: qrCode, status: 'qr_pending', updated_at: new Date().toISOString() })
+          .eq('instance_id', instance);
+      } else if (!isRecord(baseData.qrcode)) {
+        // QRTimeout (GO manda data vazio): janela de pareamento venceu —
+        // limpa o QR vencido. v2 sempre traz o objeto qrcode; fica intacto.
+        await supabase.from('whatsapp_connections')
+          .update({ qr_code: null, status: 'disconnected', updated_at: new Date().toISOString() })
           .eq('instance_id', instance);
       }
     }

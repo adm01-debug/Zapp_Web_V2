@@ -77,7 +77,7 @@ export function useSendToContact(onSuccess: () => void) {
     try {
       const { data: connections } = await supabase
         .from('whatsapp_connections')
-        .select('id, name')
+        .select('id, name, instance_id')
         .eq('status', 'connected')
         .limit(1);
 
@@ -94,7 +94,7 @@ export function useSendToContact(onSuccess: () => void) {
           whatsapp_connection_id: connection?.id || null,
         }).select('id').single();
 
-        const { data: apiResult } = await supabase.functions.invoke('evolution-api', {
+        const { data: apiResult, error: apiError } = await supabase.functions.invoke('evolution-api', {
           body: {
             action: 'send-media',
             instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
@@ -106,10 +106,15 @@ export function useSendToContact(onSuccess: () => void) {
         });
 
         const externalId = apiResult?.key?.id || null;
-        if (dbResult?.id && externalId) {
-          await supabase.from('messages')
-            .update({ external_id: externalId, status: 'sent' })
-            .eq('id', dbResult.id);
+        if (dbResult?.id) {
+          // Falha da API não pode deixar a mensagem em 'sending' para sempre
+          if (apiError || apiResult?.error) {
+            await supabase.from('messages').update({ status: 'failed' }).eq('id', dbResult.id);
+          } else {
+            await supabase.from('messages')
+              .update({ external_id: externalId, status: 'sent' })
+              .eq('id', dbResult.id);
+          }
         }
       }
 
@@ -123,7 +128,7 @@ export function useSendToContact(onSuccess: () => void) {
         whatsapp_connection_id: connection?.id || null,
       }).select('id').single();
 
-      const { data: textApiResult } = await supabase.functions.invoke('evolution-api', {
+      const { data: textApiResult, error: textApiError } = await supabase.functions.invoke('evolution-api', {
         body: {
           action: 'send-text',
           instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
@@ -133,10 +138,14 @@ export function useSendToContact(onSuccess: () => void) {
       });
 
       const textExternalId = textApiResult?.key?.id || null;
-      if (textDbResult?.id && textExternalId) {
-        await supabase.from('messages')
-          .update({ external_id: textExternalId, status: 'sent' })
-          .eq('id', textDbResult.id);
+      if (textDbResult?.id) {
+        if (textApiError || textApiResult?.error) {
+          await supabase.from('messages').update({ status: 'failed' }).eq('id', textDbResult.id);
+        } else {
+          await supabase.from('messages')
+            .update({ external_id: textExternalId, status: 'sent' })
+            .eq('id', textDbResult.id);
+        }
       }
 
       toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });

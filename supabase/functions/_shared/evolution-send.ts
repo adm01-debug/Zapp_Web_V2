@@ -16,18 +16,24 @@ export function evoFetch(
   let method = v2Method;
   let finalBody = body;
   let apikey = evolutionKey;
+  let contentType = "application/json";
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const go = translateV2ToGo(v2Path, method, body);
     if (go) {
       path = go.path;
       method = go.method;
       finalBody = go.body;
-      if (go.auth === "instance") apikey = Deno.env.get("EVOLUTION_INSTANCE_TOKEN") ?? evolutionKey;
+      if (go.contentType) contentType = go.contentType;
+      if (go.auth === "instance") {
+        const instToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+        if (!instToken) console.error(`[Evolution GO] EVOLUTION_INSTANCE_TOKEN ausente — usando a key global em rota de instância (${go.path}); o GO responderá 401.`);
+        apikey = instToken ?? evolutionKey;
+      }
     }
   }
   return fetcher(`${evolutionUrl}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", apikey },
+    headers: { "Content-Type": contentType, apikey },
     ...(method !== "GET" && finalBody ? { body: JSON.stringify(finalBody) } : {}),
   });
 }
