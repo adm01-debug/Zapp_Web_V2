@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MFABackupCodes } from '../MFABackupCodes';
 
 // Mock clipboard
@@ -99,15 +99,25 @@ describe('MFABackupCodes', () => {
 
     it('reverts copy icon after timeout', async () => {
       vi.useFakeTimers();
-      const { unmount } = render(<MFABackupCodes />);
-      await vi.runAllTimersAsync();
-      fireEvent.click(screen.getByText('Copiar'));
-      await vi.advanceTimersByTimeAsync(2500);
-      // After timeout, icon should revert
-      const btn = screen.getByText('Copiar').closest('button');
-      expect(btn?.querySelector('.lucide-copy')).toBeInTheDocument();
-      unmount();
-      vi.useRealTimers();
+      try {
+        const { unmount } = render(<MFABackupCodes />);
+        await act(async () => {
+          await vi.runAllTimersAsync();
+        });
+        fireEvent.click(screen.getByText('Copiar'));
+        // setCopied(false) roda dentro de setTimeout — fora de act() o React agenda
+        // o re-render no scheduler (MessageChannel), que os fake timers não avançam,
+        // e a asserção lia o DOM antes do flush. act() garante o flush determinístico.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2500);
+        });
+        // After timeout, icon should revert
+        const btn = screen.getByText('Copiar').closest('button');
+        expect(btn?.querySelector('.lucide-copy')).toBeInTheDocument();
+        unmount();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
