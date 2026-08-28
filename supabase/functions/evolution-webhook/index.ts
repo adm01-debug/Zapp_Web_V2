@@ -34,7 +34,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let payload: WebhookPayload = await req.json();
-    if (isGoPayload(payload)) payload = translateGoPayload(payload) as WebhookPayload;
+    if (isGoPayload(payload)) payload = translateGoPayload(payload) as unknown as WebhookPayload;
     const event = normalizeEventName(payload.event);
     const instance = payload.instance;
     const data = payload.data ?? {};

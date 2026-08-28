@@ -50,7 +50,7 @@ serve(async (req) => {
 
   try {
     const body = await json();
-    const instance = body.instanceName || body.instance;
+    const instance = String(body.instanceName || body.instance || '');
 
     // ─── 1. Instance Management ───
     if (action === 'create-instance') return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token, number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
@@ -77,7 +77,27 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (action === 'instance-info') return await proxy(`/instance/info/${instance}`, 'GET');
+    // Endpoints admin do GO usam instanceId (UUID) no path; o app guarda o NOME
+    // da instância. Resolve nome→id via /instance/all antes de chamar.
+    const resolveGoInstanceId = async (name: string): Promise<string | null> => {
+      const res = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey } });
+      if (!res.ok) return null;
+      const json = await res.json();
+      const records = Array.isArray(json?.data) ? json.data : [];
+      // deno-lint-ignore no-explicit-any
+      const found = records.find((r: any) => r?.name === name || r?.instanceId === name || r?.id === name);
+      return found?.instanceId ?? found?.id ?? null;
+    };
+    const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    if (action === 'instance-info') {
+      if (isGoFlavor) {
+        const goId = await resolveGoInstanceId(instance);
+        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return await proxy(`/instance/info/${goId}`, 'GET');
+      }
+      return await proxy(`/instance/info/${instance}`, 'GET');
+    }
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
     if (action === 'disconnect') {
@@ -87,7 +107,14 @@ serve(async (req) => {
       return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (action === 'delete-instance') return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+    if (action === 'delete-instance') {
+      if (isGoFlavor) {
+        const goId = await resolveGoInstanceId(instance);
+        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return await proxy(`/instance/delete/${goId}`, 'DELETE');
+      }
+      return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+    }
     if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
     // ─── 2. Settings ───
@@ -103,9 +130,10 @@ serve(async (req) => {
     if (action === 'send-media') return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: body.mediaUrl || body.media, fileName: body.fileName, delay: body.delay });
 
     if (action === 'send-audio') {
-      let audioSource = typeof (body.audio || body.audioUrl || body.mediaUrl) === 'string'
-        ? (body.audio || body.audioUrl || body.mediaUrl).trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
-        : (body.audio || body.audioUrl || body.mediaUrl);
+      const rawAudio = body.audio || body.audioUrl || body.mediaUrl;
+      let audioSource = typeof rawAudio === 'string'
+        ? rawAudio.trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
+        : rawAudio;
       if (typeof audioSource === 'string') audioSource = await resolvePrivateBucketUrl(supabase, audioSource);
       const audioPayload: Record<string, unknown> = { number: body.number, audio: audioSource };
       if (body.delay) audioPayload.delay = body.delay;
@@ -168,7 +196,11 @@ serve(async (req) => {
     if (action === 'toggle-ephemeral') return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
 
     // ─── 7. Profile ───
-    if (action === 'fetch-profile') return await proxy(`/profile/fetchProfile/${instance}`, 'GET');
+    // Com number → /chat/fetchProfile (traduzido p/ GO /user/info); sem number, própria conta.
+    if (action === 'fetch-profile') {
+      if (body.number) return await proxy(`/chat/fetchProfile/${instance}`, 'POST', { number: body.number });
+      return await proxy(`/profile/fetchProfile/${instance}`, 'GET');
+    }
     if (action === 'update-profile-name') return await proxy(`/profile/updateProfileName/${instance}`, 'PUT', { name: body.name });
     if (action === 'update-profile-status') return await proxy(`/profile/updateProfileStatus/${instance}`, 'PUT', { status: body.status });
     if (action === 'update-profile-picture') return await proxy(`/profile/updateProfilePicture/${instance}`, 'PUT', { picture: body.picture });

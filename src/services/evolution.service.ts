@@ -60,7 +60,7 @@ export async function getEvolutionInstances(): Promise<EvolutionInstance[]> {
   return (data ?? []).map((item: any) => ({
     ...item,
     instance_name: item.name,
-    is_connected: item.status === 'open'
+    is_connected: item.status === 'connected' || item.status === 'open'
   })) as EvolutionInstance[];
 }
 
@@ -81,7 +81,7 @@ export async function getEvolutionInstanceById(
   return {
     ...item,
     instance_name: item.name,
-    is_connected: item.status === 'open'
+    is_connected: item.status === 'connected' || item.status === 'open'
   } as EvolutionInstance;
 }
 
@@ -102,24 +102,25 @@ export async function getEvolutionInstanceByName(
   return {
     ...item,
     instance_name: item.name,
-    is_connected: item.status === 'open'
+    is_connected: item.status === 'connected' || item.status === 'open'
   } as EvolutionInstance;
 }
 
 /**
- * Fetch only connected instances (status = 'open' or is_connected = true).
+ * Fetch only connected instances.
+ * O webhook grava status 'connected' (v2 usava 'open' — mantido por compat).
  */
 export async function getConnectedEvolutionInstances(): Promise<EvolutionInstance[]> {
   const { data, error } = await supabase
     .from('whatsapp_connections_safe' as any)
     .select('*')
-    .eq('status', 'open');
+    .in('status', ['connected', 'open']);
 
   if (error) throw error;
   return (data ?? []).map((item: any) => ({
     ...item,
     instance_name: item.name,
-    is_connected: item.status === 'open'
+    is_connected: item.status === 'connected' || item.status === 'open'
   })) as EvolutionInstance[];
 }
 
@@ -149,82 +150,48 @@ export async function updateEvolutionInstanceStatus(
 // ─── Messaging ──────────────────────────────────────────────────────────────
 
 /**
- * Send a text message via Evolution API.
+ * Send a text message via the evolution-api edge function.
+ *
+ * Sempre roteia pela edge function: é ela que fala com a Evolution GO
+ * (tradução v2→GO, credenciais nos secrets do servidor). Nunca chamar a
+ * Evolution direto do browser com URL/chave do banco — isso era um resquício
+ * da instalação Evolution API v2 antiga.
  */
 export async function sendEvolutionMessage(
   payload: EvolutionMessagePayload,
 ): Promise<void> {
-  const { data } = await supabase
-    .from('whatsapp_connections_safe' as any)
-    .select('evolution_api_url, evolution_api_key')
-    .eq('name', payload.instanceName)
-    .single();
-
-  const config = data as any;
-
-  if (!config?.evolution_api_url) {
-    throw new Error(`Instance ${payload.instanceName} not configured or not found.`);
-  }
-
-  const response = await fetch(
-    `${config.evolution_api_url}/message/sendText/${payload.instanceName}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: config.evolution_api_key as string,
-      },
-      body: JSON.stringify({
-        number: payload.number,
-        text: payload.text,
-      }),
+  const { data, error } = await supabase.functions.invoke('evolution-api/send-text', {
+    body: {
+      instanceName: payload.instanceName,
+      number: payload.number,
+      text: payload.text,
     },
-  );
+  });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to send message via Evolution API');
+  if (error || (data as any)?.error) {
+    throw new Error((data as any)?.message || 'Failed to send message via Evolution API');
   }
 }
 
 /**
- * Send media (image/video/audio/document) via Evolution API.
+ * Send media (image/video/audio/document) via the evolution-api edge function.
  */
 export async function sendEvolutionMedia(
   payload: EvolutionMessagePayload,
 ): Promise<void> {
-  const { data } = await supabase
-    .from('whatsapp_connections_safe' as any)
-    .select('evolution_api_url, evolution_api_key')
-    .eq('name', payload.instanceName)
-    .single();
-
-  const config = data as any;
-
-  if (!config?.evolution_api_url) {
-    throw new Error(`Instance ${payload.instanceName} not configured or not found.`);
-  }
-
-  const response = await fetch(
-    `${config.evolution_api_url}/message/sendMedia/${payload.instanceName}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: config.evolution_api_key as string,
-      },
-      body: JSON.stringify({
-        number: payload.number,
-        mediaUrl: payload.mediaUrl,
-        mediaType: payload.mediaType,
-        caption: payload.caption,
-        fileName: payload.fileName,
-      }),
+  const action = payload.mediaType === 'audio' ? 'send-audio' : 'send-media';
+  const { data, error } = await supabase.functions.invoke(`evolution-api/${action}`, {
+    body: {
+      instanceName: payload.instanceName,
+      number: payload.number,
+      mediaUrl: payload.mediaUrl,
+      mediaType: payload.mediaType,
+      caption: payload.caption,
+      fileName: payload.fileName,
     },
-  );
+  });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to send media via Evolution API');
+  if (error || (data as any)?.error) {
+    throw new Error((data as any)?.message || 'Failed to send media via Evolution API');
   }
 }

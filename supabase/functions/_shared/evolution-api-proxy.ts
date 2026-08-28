@@ -1,6 +1,23 @@
 // Shared proxy logic for Evolution API edge function
 import { translateV2ToGo } from "./evolution-go-routes.ts";
 
+// GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
+// O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
+// Injeta os campos v2 no topo sem remover o payload GO — normalização única para todos os consumidores.
+// deno-lint-ignore no-explicit-any
+export function normalizeGoSendResponse(data: any): unknown {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  if (data.key?.id) return data; // já é shape v2
+  const info = data.data?.Info;
+  const id = info?.ID;
+  if (typeof id !== 'string' || !id) return data;
+  return {
+    ...data,
+    key: { id, remoteJid: info?.Chat, fromMe: info?.IsFromMe ?? true },
+    messageId: id,
+  };
+}
+
 const TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
@@ -95,7 +112,7 @@ export async function proxyToEvolution(
         });
       }
 
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify(normalizeGoSendResponse(data)), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (err) {

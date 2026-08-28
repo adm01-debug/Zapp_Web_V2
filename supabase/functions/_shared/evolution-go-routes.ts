@@ -30,12 +30,16 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   const b = (body ?? {}) as Record<string, any>;
   const m = (re: RegExp) => re.test(path);
 
+  // quoted v2 {key:{id, participant}} → GO {messageId, participant}
+  const quotedToGo = (quoted: any) =>
+    quoted?.key?.id ? { quoted: { messageId: quoted.key.id, participant: quoted.key.participant ?? '' } } : {};
+
   // ── Mensagens ──
   if (m(/^\/message\/sendText\/[^/]+$/)) {
     return { path: '/send/text', method: 'POST', auth: 'instance', body: {
       number: b.number, text: b.text,
       ...(b.delay ? { delay: b.delay } : {}),
-      ...(b.quoted?.key?.id ? { quoted: { messageId: b.quoted.key.id, participant: b.quoted.key.participant ?? '' } } : {}),
+      ...quotedToGo(b.quoted),
       ...(b.mentionsEveryOne ? { mentionAll: true } : {}),
       ...(Array.isArray(b.mentioned) && b.mentioned.length ? { mentionedJid: b.mentioned } : {}),
     }};
@@ -46,12 +50,14 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       ...(b.caption ? { caption: b.caption } : {}),
       ...(b.fileName ? { filename: b.fileName } : {}),
       ...(b.delay ? { delay: b.delay } : {}),
+      ...quotedToGo(b.quoted),
     }};
   }
   if (m(/^\/message\/sendWhatsAppAudio\/[^/]+$/)) {
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
       number: b.number, url: b.audio ?? b.media, type: 'audio',
       ...(b.delay ? { delay: b.delay } : {}),
+      ...quotedToGo(b.quoted),
     }};
   }
   if (m(/^\/message\/sendPtv\/[^/]+$/))
@@ -60,17 +66,33 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   if (m(/^\/message\/sendSticker\/[^/]+$/))
-    return { path: '/send/sticker', method: 'POST', auth: 'instance', body: { number: b.number, sticker: b.sticker } };
+    return { path: '/send/sticker', method: 'POST', auth: 'instance', body: { number: b.number, sticker: b.sticker, ...quotedToGo(b.quoted) } };
   if (m(/^\/message\/sendLocation\/[^/]+$/))
     return { path: '/send/location', method: 'POST', auth: 'instance', body: { number: b.number, name: b.name, address: b.address, latitude: b.latitude, longitude: b.longitude } };
-  if (m(/^\/message\/sendContact\/[^/]+$/))
-    return { path: '/send/contact', method: 'POST', auth: 'instance', body: b };
+  if (m(/^\/message\/sendContact\/[^/]+$/)) {
+    // v2 {contact:[{fullName, organization, phoneNumber|wuid}]} → GO {vcard:{fullName, organization, phone}}
+    const c = Array.isArray(b.contact) ? b.contact[0] : b.contact;
+    return { path: '/send/contact', method: 'POST', auth: 'instance', body: {
+      number: b.number,
+      vcard: {
+        fullName: c?.fullName ?? c?.name ?? '',
+        ...(c?.organization ? { organization: c.organization } : {}),
+        phone: c?.phoneNumber ?? c?.wuid ?? c?.phone ?? '',
+      },
+    }};
+  }
   if (m(/^\/message\/sendPoll\/[^/]+$/))
     return { path: '/send/poll', method: 'POST', auth: 'instance', body: {
       number: b.number, question: b.name, maxAnswer: b.selectableCount ?? 1, options: b.values,
     }};
   if (m(/^\/message\/sendList\/[^/]+$/))
-    return { path: '/send/list', method: 'POST', auth: 'instance', body: b };
+    // shapes iguais exceto v2 footer → GO footerText; rows {title, description, rowId} batem
+    return { path: '/send/list', method: 'POST', auth: 'instance', body: {
+      number: b.number, title: b.title, description: b.description,
+      buttonText: b.buttonText, sections: b.sections,
+      ...(b.footer ? { footerText: b.footer } : {}),
+      ...(b.delay ? { delay: b.delay } : {}),
+    }};
   if (m(/^\/message\/sendButtons\/[^/]+$/))
     return { path: '/send/button', method: 'POST', auth: 'instance', body: b };
   if (m(/^\/message\/sendStatus\/[^/]+$/)) {
@@ -118,12 +140,27 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     return { path: b.status === 'unblock' ? '/user/unblock' : '/user/block', method: 'POST', auth: 'instance', body: { number: b.number } };
   if (m(/^\/chat\/fetchProfilePictureUrl\/[^/]+$/))
     return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: b.number, preview: false } };
+  if (m(/^\/(chat|message)\/archiveChat\/[^/]+$/))
+    return { path: b.archive === false ? '/chat/unarchive' : '/chat/archive', method: 'POST', auth: 'instance', body: { chat: b.chat ?? b.lastMessage?.key?.remoteJid } };
+  if (m(/^\/chat\/findContacts\/[^/]+$/))
+    return { path: '/user/contacts', method: 'GET', auth: 'instance' };
+  if (m(/^\/chat\/fetchProfile\/[^/]+$/))
+    return { path: '/user/info', method: 'POST', auth: 'instance', body: {
+      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+    }};
 
   // ── Instância ──
   if (m(/^\/instance\/connectionState\/[^/]+$/))
     return { path: '/instance/status', method: 'GET', auth: 'instance' };
   if (m(/^\/instance\/fetchInstances/))
     return { path: '/instance/all', method: 'GET', auth: 'admin' };
+  if (m(/^\/instance\/create$/))
+    // v2 {instanceName, integration, qrcode,…} → GO {name, token?, instanceId?}
+    return { path: '/instance/create', method: 'POST', auth: 'admin', body: {
+      name: b.instanceName ?? b.name,
+      ...(b.token ? { token: b.token } : {}),
+      ...(b.instanceId ? { instanceId: b.instanceId } : {}),
+    }};
   if (m(/^\/instance\/connect\/[^/]+$/))
     return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {} };
   if (m(/^\/instance\/restart\/[^/]+$/))
@@ -166,10 +203,54 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   // ── Perfil ──
   if (m(/^\/profile\/updateProfilePicture\/[^/]+$/))
     return { path: '/user/profilePicture', method: 'POST', auth: 'instance', body: { image: b.picture } };
+  if (m(/^\/profile\/removeProfilePicture\/[^/]+$/))
+    return { path: '/user/profilePicture', method: 'POST', auth: 'instance', body: { image: '' } };
+  if (m(/^\/profile\/updateProfileName\/[^/]+$/))
+    return { path: '/user/profileName', method: 'POST', auth: 'instance', body: { name: b.name } };
+  if (m(/^\/profile\/updateProfileStatus\/[^/]+$/))
+    return { path: '/user/profileStatus', method: 'POST', auth: 'instance', body: { status: b.status } };
+  if (m(/^\/profile\/fetchProfilePicture\/[^/]+/))
+    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: {
+      number: b.number ?? q.get('number'), preview: false,
+    }};
+  if (m(/^\/profile\/fetchBusinessProfile\/[^/]+$/))
+    return { path: '/user/info', method: 'POST', auth: 'instance', body: {
+      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+    }};
+  if (m(/^\/profile\/updatePrivacySettings\/[^/]+$/))
+    // v2 lowercase → GO camelCase (valores PrivacySetting são os mesmos: all/contacts/none/…)
+    return { path: '/user/privacy', method: 'POST', auth: 'instance', body: {
+      ...(b.readreceipts ? { readReceipts: b.readreceipts } : {}),
+      ...(b.profile ? { profile: b.profile } : {}),
+      ...(b.status ? { status: b.status } : {}),
+      ...(b.online ? { online: b.online } : {}),
+      ...(b.last ? { lastSeen: b.last } : {}),
+      ...(b.groupadd ? { groupAdd: b.groupadd } : {}),
+      ...(b.calladd ? { callAdd: b.calladd } : {}),
+    }};
 
-  // Não mapeado: passa intacto (paths GO nativos ou endpoints sem equivalente:
-  // findChats/findMessages/findContacts, webhook/find|set, markMessageAsUnread,
-  // inviteInfo, toggleEphemeral, rabbitmq/sqs/template/business/proxy/evoai/n8n/
-  // kafka/nats/pusher, profile/fetchProfile — GO responde 404).
+  // ── Labels ──
+  if (m(/^\/label\/findLabels\/[^/]+$/))
+    return { path: '/label/list', method: 'GET', auth: 'instance' };
+  if (m(/^\/label\/handleLabel\/[^/]+$/))
+    return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
+      jid: b.number, labelId: b.labelId,
+    }};
+
+  // ── Webhook por instância (D1 do GO_GAPS: reconecta com webhookUrl) ──
+  if (m(/^\/webhook\/set\/[^/]+$/)) {
+    const url = b.webhook?.url ?? b.url;
+    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {
+      ...(url ? { webhookUrl: url } : {}),
+      subscribe: ['ALL'],
+      immediate: true,
+    }};
+  }
+
+  // Não mapeado: passa intacto (paths GO nativos ou endpoints v2 sem equivalente:
+  // findChats/findMessages, webhook/find, markMessageAsUnread, sendTemplate,
+  // instance/setPresence, settings/set|find, inviteInfo, toggleEphemeral, call/offerCall,
+  // chatwoot/typebot/openai/dify/flowise/evolutionBot/rabbitmq/sqs/kafka/nats/pusher/
+  // template/business/proxy/evoai/n8n — GO responde 404, falha explícita).
   return null;
 }

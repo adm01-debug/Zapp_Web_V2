@@ -15,6 +15,8 @@ const GO_EVENT_MAP: Record<string, string> = {
   qrsuccess: 'connection.update',
   loggedout: 'connection.update',
   disconnected: 'connection.update',
+  connectfailure: 'connection.update',
+  temporaryban: 'connection.update',
   // QR
   qrcode: 'qrcode.updated',
   qrtimeout: 'qrcode.updated',
@@ -39,6 +41,7 @@ const GO_EVENT_MAP: Record<string, string> = {
   labelassociationmessage: 'labels.association', // B5
   // Chamadas
   calloffer: 'call',
+  calloffernotice: 'call',
   callterminate: 'call',
   callrelaylatency: 'call',
 };
@@ -49,6 +52,8 @@ const GO_STATE_MAP: Record<string, string> = {
   qrsuccess: 'open',
   loggedout: 'close',
   disconnected: 'close',
+  connectfailure: 'close',
+  temporaryban: 'close',
 };
 
 export function isGoPayload(payload: unknown): payload is Record<string, unknown> {
@@ -121,6 +126,71 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     const qr = str(data.qrCodeBase64) ?? str(data.code) ??
       (Array.isArray(data.Codes) ? str(data.Codes[0]) : undefined);
     if (qr) out.data = { qrcode: { base64: qr } };
+  }
+
+  // ── Shapes whatsmeow → v2 (o GO serializa o evento inteiro em `data`) ──
+
+  // ChatPresence {Chat, Sender, State: composing|paused} → presence.update {id, status}
+  if (rawEvent === 'chatpresence') {
+    const state = str(data.State) ?? 'paused';
+    const chat = str(data.Chat);
+    const sender = str(data.Sender);
+    out.data = {
+      id: chat,
+      status: state,
+      ...(sender ? { presences: { [sender]: { lastKnownPresence: state } } } : {}),
+    };
+  }
+
+  // Presence {From, state top-level online|offline} → presence.update {id, status}
+  if (rawEvent === 'presence') {
+    out.data = { id: str(data.From), status: str(payload.state as unknown) ?? 'offline' };
+  }
+
+  // PushName {JID, NewPushName} → contacts.update {id, pushName}
+  if (rawEvent === 'pushname') {
+    out.data = { id: str(data.JID), pushName: str(data.NewPushName) };
+  }
+
+  // Contact {JID, Action:{fullName|firstName}} → contacts.upsert {id, pushName}
+  if (rawEvent === 'contact') {
+    const action = isRecord(data.Action) ? data.Action : {};
+    out.data = { id: str(data.JID), pushName: str(action.fullName) ?? str(action.firstName) };
+  }
+
+  // LabelEdit {LabelID, Action:{name,color,deleted}} → labels.edit {id, name, color, deleted}
+  if (rawEvent === 'labeledit') {
+    const action = isRecord(data.Action) ? data.Action : {};
+    out.data = {
+      id: str(data.LabelID),
+      name: str(action.name),
+      color: action.color,
+      deleted: action.deleted === true,
+    };
+  }
+
+  // LabelAssociationChat/Message {JID, LabelID, Action:{labeled}} →
+  // labels.association {labelId, chatId, type}
+  if (rawEvent === 'labelassociationchat' || rawEvent === 'labelassociationmessage') {
+    const action = isRecord(data.Action) ? data.Action : {};
+    out.data = {
+      labelId: str(data.LabelID),
+      chatId: str(data.JID),
+      type: action.labeled === false ? 'remove' : 'add',
+      ...(rawEvent === 'labelassociationmessage' ? { messageId: str(data.MessageID) } : {}),
+    };
+  }
+
+  // CallOffer/CallOfferNotice {From|CallCreator, CallID} → call {from, id, status}.
+  // Accept/Terminate/RelayLatency mantêm o data cru (sem `from` v2) — o handler
+  // registra chamada/notificação só na oferta, evitando linhas duplicadas.
+  if (rawEvent === 'calloffer' || rawEvent === 'calloffernotice') {
+    out.data = {
+      from: str(data.From) ?? str(data.CallCreator),
+      id: str(data.CallID),
+      isVideo: false,
+      status: 'ringing',
+    };
   }
 
   return out;

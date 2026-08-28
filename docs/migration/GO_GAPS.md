@@ -93,5 +93,32 @@ kafka · nats · pusher · template · business · evoai · n8n · proxy(set) ·
 forcereconnect,advanced-settings · /polls/{id}/results
 
 ## Auth GO
-Header `apikey`: admin = GLOBAL_API_KEY · instância = token da instância.
-Header `instanceId` (UUID) em endpoints de instância.
+Header `apikey`: admin = GLOBAL_API_KEY · instância = token da instância
+(`GetInstanceByToken` — a instância é resolvida pelo próprio token, sem header extra).
+Endpoints admin com `{instanceId}` no PATH (info/delete/logs/forcereconnect/proxy)
+exigem o UUID da instância, não o nome — a edge `evolution-api` resolve nome→id
+via `GET /instance/all` antes de chamar.
+
+## Estado do adapter — auditoria exaustiva 2026-08-28 (swagger da instância + fonte oficial)
+Rotas adicionadas ao `evolution-go-routes.ts` (antes passavam intactas → 404):
+findContacts→GET /user/contacts · archiveChat→/chat/archive|/chat/unarchive ·
+fetchProfile/fetchBusinessProfile→/user/info {number:[…]} ·
+fetchProfilePicture→/user/avatar · updateProfileName→/user/profileName {name} ·
+updateProfileStatus→/user/profileStatus {status} · removeProfilePicture→/user/profilePicture {image:''} ·
+updatePrivacySettings→/user/privacy (lowercase v2→camelCase GO; last→lastSeen) ·
+findLabels→GET /label/list · handleLabel→/label/chat|/unlabel/chat {jid,labelId} ·
+webhook/set→/instance/connect {webhookUrl, subscribe:["ALL"], immediate} ·
+instance/create→{name,token} (v2 mandava instanceName) · sendContact→{vcard:{fullName,organization,phone}} ·
+sendList footer→footerText · quoted propagado em media/áudio/sticker.
+Correções fora do tradutor:
+- Proxy: resposta de envio GO `{data:{Info:{ID…}}}` ganha `key:{id,remoteJid,fromMe}`+`messageId`
+  v2-compat (external_id volta a ser gravado pelo frontend).
+- evolution-sync: findContacts/webhook-set via tradutor; sync-messages → `notSupported`
+  explícito na GO (histórico chega por webhook, D4/D6).
+- recover-corrupted-audios / migrate-media-storage: via `evoFetch`+`extractBase64Media`
+  (na GO, lookup só por key.id degrada com log honesto — sem waE2E.Message completo não há download).
+- Webhook adapter: shapes whatsmeow traduzidos para ChatPresence (typing), Presence,
+  PushName, Contact, LabelEdit, LabelAssociationChat/Message, CallOffer/Notice;
+  ConnectFailure/TemporaryBan → connection.update close.
+- Nota swagger: annotation de /user/profileName|profileStatus aponta SetProfilePictureStruct
+  ({image}) por engano; o handler real usa {name}/{status} (confirmado no fonte).
