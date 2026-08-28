@@ -72,7 +72,13 @@ Deno.serve(async (req) => {
 
     if (filters && Array.isArray(filters)) {
       for (const f of filters) {
-        query = query.filter(f.column, f.operator, f.value)
+        // PostgREST 'in' requires the value wrapped in parentheses:
+        // .filter(col, 'in', '(a,b)'). A raw array serializes to 'a,b' and the
+        // upstream DB rejects it with 400 "failed to parse filter (in.a,b)".
+        const value = f.operator === 'in' && Array.isArray(f.value)
+          ? `(${f.value.join(',')})`
+          : f.value
+        query = query.filter(f.column, f.operator, value)
       }
     }
 
