@@ -24,7 +24,8 @@ export function useGmail(accountId?: string) {
         if (error) throw error;
         return (data || []).map((a: Record<string, unknown>) => ({
           id: a.id, email_address: a.email_address, is_active: a.is_active,
-          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at, created_at: a.created_at,
+          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at,
+          last_error: a.last_error ?? null, created_at: a.created_at,
         })) as GmailAccount[];
       }
     },
