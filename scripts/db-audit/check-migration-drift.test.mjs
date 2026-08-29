@@ -332,19 +332,135 @@ test('falha quando ledger fornece nome divergente', () => {
   assert.match(result.stderr, /nome divergente/);
 });
 
-test('falha quando banco possui versao extra sem arquivo', () => {
+test('nome malformado com arquivo local permanece escapado em todo diagnostico', () => {
+  const maliciousName = 'create_demo\nforged-log-line\u001b[31m';
+  const result = runGuard({ ledger: [ledgerRecord({ name: maliciousName })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${VERSION}`));
+  assert.match(result.stderr, /ledger="create_demo\\nforged-log-line\\u001b\[31m"/);
+  assert.doesNotMatch(result.stderr, /create_demo\nforged-log-line/);
+  assert.doesNotMatch(result.stderr, /\u001b/);
+});
+
+test('registro extra informa hashes seguros e nome normalizado sem vazar statements', () => {
+  const extraVersion = '20260829050100';
+  const secret = 'literal-sensivel-do-ledger';
+  const extraStatements = [
+    `SELECT '${secret}'`,
+    `-- comentario ${secret} que tambem nao pode aparecer`,
+  ];
   const result = runGuard({
     ledger: [
       ledgerRecord(),
       {
-        version: '20260829050100',
-        name: 'db_only',
-        statements: ['SELECT 1'],
+        version: extraVersion,
+        name: `${extraVersion}_db_only.sql`,
+        statements: extraStatements,
       },
     ],
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Registro no banco sem arquivo no repo/);
+  assert.match(result.stderr, new RegExp(`version=${extraVersion}`));
+  assert.match(result.stderr, new RegExp(`ledger_name="${extraVersion}_db_only\\.sql"`));
+  assert.match(result.stderr, /normalized_name="db_only"/);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash(extraStatements)}`),
+  );
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_sql_sha256=${sha256(`select '${secret}'`)}`),
+  );
+  assert.doesNotMatch(result.stdout + result.stderr, new RegExp(secret));
+  assert.doesNotMatch(result.stdout + result.stderr, /SELECT '/);
+});
+
+test('registro extra sem name/statements ainda informa hashes deterministas', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: null, statements: null },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    new RegExp(`version=${extraVersion} ledger_name=null normalized_name=null`),
+  );
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash([])}`),
+  );
+  assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${sha256('')}`));
+});
+
+test('registro extra escapa controles do nome sem injetar linha ou ANSI no log', () => {
+  const extraVersion = '20260829050100';
+  const controlName = 'db\nonly\u001b[31m';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: controlName, statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
+  assert.match(result.stderr, /ledger_name="db\\nonly\\u001b\[31m"/);
+  assert.match(result.stderr, /normalized_name="db\\nonly\\u001b\[31m"/);
+  assert.doesNotMatch(result.stderr, /db\nonly/);
+  assert.doesNotMatch(result.stderr, /\u001b/);
+});
+
+test('registro extra preserva whitespace do ledger e normaliza em campo separado', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: `  ${extraVersion}_db_only.sql  `, statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_name="  ${extraVersion}_db_only\\.sql  "`),
+  );
+  assert.match(result.stderr, /normalized_name="db_only"/);
+});
+
+test('registro extra distingue nome whitespace-only de null', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: '   ', statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
+  assert.match(result.stderr, /ledger_name="   " normalized_name=""/);
+  assert.doesNotMatch(result.stderr, /ledger_name=null/);
+});
+
+test('registro extra comments-only distingue statements mesmo com SQL canonico vazio', () => {
+  const extraVersion = '20260829050100';
+  const secret = 'comentario-sensivel-do-ledger';
+  const extraStatements = [`-- ${secret}`];
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: 'comments_only', statements: extraStatements },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash(extraStatements)}`),
+  );
+  assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${sha256('')}`));
+  assert.doesNotMatch(result.stdout + result.stderr, new RegExp(secret));
 });
 
 test('falha fechado para saida malformada do psql fake', () => {
@@ -396,6 +512,19 @@ test('rejeita manifesto fora de ordem estrita e hashes que nao sejam lowercase',
   assert.equal(result.status, 1);
   assert.match(result.stderr, /ordem estritamente crescente/);
   assert.match(result.stderr, /file_sha256 invalido/);
+});
+
+test('manifesto nao pode pinar ledger_name com whitespace; exige reconciliacao', () => {
+  const statements = [OTHER_SQL.trim()];
+  const result = runGuard({
+    destino: false,
+    evidence: [pinnedEvidence({
+      statements,
+      overrides: { ledger_name: ' create_demo ' },
+    })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /ledger_name invalido/);
 });
 
 test('comment-only fixa o array integral do ledger e rejeita SQL canonico', () => {
@@ -468,6 +597,13 @@ test('pinned-replay falha para adulteracao independente de statements, SQL e nom
   });
   assert.equal(changedName.status, 1);
   assert.match(changedName.stderr, /ledger_name divergente do manifesto/);
+
+  const whitespaceName = runGuard({
+    ledger: [ledgerRecord({ name: ' create_demo ', statements })],
+    evidence: [pinnedEvidence({ statements })],
+  });
+  assert.equal(whitespaceName.status, 1);
+  assert.match(whitespaceName.stderr, /ledger_name divergente do manifesto/);
 });
 
 test('pinned-replay rejeita reason desconhecido, related fora de colisao e nome generico divergente', () => {

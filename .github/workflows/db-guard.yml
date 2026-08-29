@@ -72,3 +72,8 @@ jobs:
         env:
           ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
+
+      - name: Simular reconciliação segura do ledger
+        env:
+          LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
