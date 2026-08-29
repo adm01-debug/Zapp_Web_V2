@@ -282,6 +282,8 @@ function loadEvidence(filePath) {
         || !SHA256_RE.test(item.ledger_statements_sha256)) {
       fail('possui ledger_statements_sha256 invalido');
     }
+    // Nomes malformados sao diagnosticados exatamente, mas nunca pinados:
+    // whitespace/controles no ledger exigem reconciliacao por migration versionada.
     if (typeof item.ledger_name !== 'string'
         || item.ledger_name !== item.ledger_name.trim()
         || item.ledger_name.length === 0
@@ -548,7 +550,7 @@ function parseLedger(raw) {
     }
     records.push({
       version: record.version,
-      name: record.name?.trim() || null,
+      name: record.name ?? null,
       statements: record.statements || [],
     });
   }
@@ -571,13 +573,31 @@ function compare(migrations, records, exceptionsByVersion) {
   const withoutFile = records.filter(({ version }) => !byFileVersion.has(version));
   let verifiedEvidence = 0;
 
+  for (const record of records) {
+    if (typeof record.name === 'string'
+        && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
+      errors.push(`name malformado no ledger para ${record.version}`);
+    }
+  }
+
   if (withoutRecord.length) {
     errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
     errors.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
-    errors.push(...withoutFile.map(({ version, name }) => `  ${version}${name ? `  ${name}` : ''}`));
+    errors.push(...withoutFile.map((record) => {
+      const normalizedName = record.name
+        ? normalizeLedgerName(record.version, record.name)
+        : null;
+      return [
+        `  version=${record.version}`,
+        `ledger_name=${JSON.stringify(record.name)}`,
+        `normalized_name=${JSON.stringify(normalizedName)}`,
+        `ledger_statements_sha256=${ledgerStatementsSha256(record.statements)}`,
+        `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
+      ].join(' ');
+    }));
   }
 
   for (const migration of migrations) {
@@ -615,7 +635,8 @@ function compare(migrations, records, exceptionsByVersion) {
       } else if (record.name !== exception.ledger_name) {
         errors.push(
           `ledger_name divergente do manifesto em ${migration.version}: `
-          + `esperado=${exception.ledger_name}; ledger=${record.name}`,
+          + `esperado=${JSON.stringify(exception.ledger_name)}; `
+          + `ledger=${JSON.stringify(record.name)}`,
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
@@ -645,7 +666,8 @@ function compare(migrations, records, exceptionsByVersion) {
       } else if (record.name !== exception.ledger_name) {
         errors.push(
           `ledger_name divergente do manifesto em ${migration.version}: `
-          + `esperado=${exception.ledger_name}; ledger=${record.name}`,
+          + `esperado=${JSON.stringify(exception.ledger_name)}; `
+          + `ledger=${JSON.stringify(record.name)}`,
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
@@ -670,7 +692,8 @@ function compare(migrations, records, exceptionsByVersion) {
     const namesMatch = ledgerName !== null && ledgerName === migration.name;
     if (record.name && !namesMatch) {
       errors.push(
-        `nome divergente em ${migration.version}: arquivo=${migration.name}; ledger=${record.name}`,
+        `nome divergente em ${migration.version}: arquivo=${JSON.stringify(migration.name)}; `
+        + `ledger=${JSON.stringify(record.name)}`,
       );
     }
 
