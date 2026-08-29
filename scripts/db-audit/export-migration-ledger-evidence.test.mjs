@@ -71,6 +71,12 @@ test('envelope cifra e autentica o SQL sem deixa-lo em texto claro', () => {
 
   const tampered = { ...envelope, auth_tag_base64: Buffer.alloc(16).toString('base64') };
   assert.throws(() => decryptEvidence(tampered, pair.privateKey));
+
+  const shortTag = { ...envelope, auth_tag_base64: Buffer.alloc(15).toString('base64') };
+  assert.throws(
+    () => decryptEvidence(shortTag, pair.privateKey),
+    /tag de autenticacao GCM invalida/,
+  );
 });
 
 test('CLI consulta psql fake, grava modo 0600 e nao vaza URL ou SQL', () => {

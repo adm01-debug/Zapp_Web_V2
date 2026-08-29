@@ -153,6 +153,10 @@ export function decryptEvidence(envelope, privateKeyPem) {
       || envelope?.algorithms?.key_wrap !== 'rsa-oaep-sha256') {
     throw new Error('envelope de evidencia invalido');
   }
+  const authTag = Buffer.from(envelope.auth_tag_base64 || '', 'base64');
+  if (authTag.length !== 16) {
+    throw new Error('tag de autenticacao GCM invalida');
+  }
   const contentKey = crypto.privateDecrypt({
     key: privateKeyPem,
     oaepHash: 'sha256',
@@ -163,7 +167,7 @@ export function decryptEvidence(envelope, privateKeyPem) {
     contentKey,
     Buffer.from(envelope.iv_base64, 'base64'),
   );
-  decipher.setAuthTag(Buffer.from(envelope.auth_tag_base64, 'base64'));
+  decipher.setAuthTag(authTag);
   const plaintext = Buffer.concat([
     decipher.update(Buffer.from(envelope.ciphertext_base64, 'base64')),
     decipher.final(),
