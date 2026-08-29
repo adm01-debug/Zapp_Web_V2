@@ -670,11 +670,20 @@ function compare(migrations, records, exceptionsByVersion) {
       );
     }
 
-    // SQL canonico e nome exatos sao prova mais forte que uma referencia textual
-    // stale em comments do ledger. Se o SQL divergir, a referencia continua sendo
-    // fail-closed e so uma excecao pinned integral pode autoriza-la.
-    const exactSqlAndName = namesMatch && Boolean(ledgerSql) && ledgerSql === fileSql;
-    if (!exactSqlAndName) {
+    // Nome exato + uma prova de conteudo validada sao mais fortes que uma
+    // referencia textual stale em comments do ledger. A mera presenca de um
+    // marker nunca basta: ele precisa ser unico, bem-formado e corresponder ao
+    // arquivo atual. Erros de marker continuam registrados e fail-closed acima.
+    const exactFileHash = !fileHashMarkers.invalid
+      && fileHashes.length === 1
+      && fileHashes[0] === migration.rawHash;
+    const exactSqlHash = !sqlHashMarkers.invalid
+      && sqlHashes.length === 1
+      && sqlHashes[0] === migration.sqlHash;
+    const exactCanonicalSql = Boolean(ledgerSql) && ledgerSql === fileSql;
+    const strongEvidenceAndName = namesMatch
+      && (exactCanonicalSql || exactFileHash || exactSqlHash);
+    if (!strongEvidenceAndName) {
       for (const source of sourceReferences) {
         if (source !== migration.fileName) {
           errors.push(`fonte divergente em ${migration.version}: arquivo=${migration.fileName}; ledger=${source}`);
