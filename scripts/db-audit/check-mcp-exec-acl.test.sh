@@ -35,7 +35,9 @@ psql_file() {
 wait_for_postgres() {
   local attempt
   for attempt in $(seq 1 30); do
-    if docker exec "$container_name" pg_isready -U postgres >/dev/null 2>&1; then
+    if docker exec "$container_name" pg_isready -U postgres >/dev/null 2>&1 \
+      && docker exec "$container_name" \
+        psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -c 'SELECT 1' >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
