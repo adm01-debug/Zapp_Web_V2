@@ -24,3 +24,7 @@ verify_jwt = false
 [functions.public-api]
 verify_jwt = false
 
+# Catálogo de produtos — edge-only; secrets via Supabase Secrets (PROMOGIFTS_SUPABASE_URL/ANON_KEY).
+# verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
+[functions.promogifts-catalog]
+verify_jwt = true
