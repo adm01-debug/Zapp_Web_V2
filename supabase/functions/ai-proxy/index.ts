@@ -1,6 +1,6 @@
 /**
  * AI Proxy Edge Function
- * Routes AI calls through admin-configured provider with automatic fallback to Lovable AI.
+ * Routes AI calls through admin-configured provider with automatic fallback to OpenRouter.
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody } from "../_shared/schemas.ts";
@@ -32,6 +32,20 @@ interface AiProvider {
   system_prompt: string | null;
   config: Record<string, unknown>;
   is_active: boolean;
+}
+
+const OR_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
+const OR_CONFIG = { extra_headers: { "HTTP-Referer": "https://zappweb.com.br", "X-Title": "ZappWeb" } };
+
+function callOpenRouter(
+  messages: Array<{ role: string; content: string }>,
+  tools: unknown,
+  toolChoice: unknown,
+  stream: boolean,
+): () => Promise<Response> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY nao configurado para fallback.");
+  return () => callOpenAICompatible({ endpoint: OR_ENDPOINT, apiKey, messages, tools, toolChoice, stream, config: OR_CONFIG });
 }
 
 async function getProvider(supabase: ReturnType<typeof createClient>, useFor: string, providerId?: string): Promise<AiProvider | null> {
@@ -72,10 +86,10 @@ function dispatchProvider(
     }
     case 'openai_compatible':
     case 'google_gemini': {
-      if (!provider?.api_endpoint) throw new Error("Endpoint da API não configurado para este provedor.");
+      if (!provider?.api_endpoint) throw new Error("Endpoint da API nao configurado para este provedor.");
       const secretName = provider.api_key_secret_name;
       const apiKey = secretName ? Deno.env.get(secretName) : null;
-      if (!apiKey) throw new Error(`Chave de API '${secretName}' não encontrada nos secrets.`);
+      if (!apiKey) throw new Error("Chave de API '" + secretName + "' nao encontrada nos secrets.");
       return () => callOpenAICompatible({
         endpoint: provider.api_endpoint!, apiKey, messages: finalMessages,
         model: provider.model || undefined, tools, toolChoice, stream, config: provider.config || {},
@@ -83,7 +97,7 @@ function dispatchProvider(
     }
     case 'custom_webhook':
     case 'custom_agent': {
-      if (!provider?.api_endpoint) throw new Error("Endpoint não configurado para este agente/webhook.");
+      if (!provider?.api_endpoint) throw new Error("Endpoint nao configurado para este agente/webhook.");
       const secretName2 = provider.api_key_secret_name;
       const apiKey2 = secretName2 ? Deno.env.get(secretName2) : undefined;
       return () => callCustomWebhook({
@@ -91,8 +105,7 @@ function dispatchProvider(
       });
     }
     default: {
-      const apiKey = requireEnv("LOVABLE_API_KEY");
-      return () => callLovableAI({ messages: finalMessages, apiKey, tools, toolChoice, stream });
+      return callOpenRouter(finalMessages, tools, toolChoice, stream);
     }
   }
 }
@@ -106,14 +119,13 @@ Deno.serve(async (req) => {
   const __guard = await enforceAiGuards({ functionName: "ai-proxy", userId: __uid, req });
   if (__guard) return __guard;
 
-
   const log = new Logger("ai-proxy");
   const userId = extractUserIdFromRequest(req);
 
   try {
     const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`proxy:${ip}`, 30, 60_000);
-    if (!allowed) return errorResponse("Limite de requisições excedido. Tente novamente em 1 minuto.", 429, req);
+    const { allowed } = checkRateLimit("proxy:" + ip, 30, 60_000);
+    if (!allowed) return errorResponse("Limite de requisicoes excedido. Tente novamente em 1 minuto.", 429, req);
 
     const parsed = parseBody(AiProxySchema, await req.json());
     if (!parsed.success) return errorResponse(parsed.error, 400, req);
@@ -125,8 +137,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const provider = await getProvider(supabase as any, use_for as string, provider_id);
-    const providerType = provider?.provider_type || 'lovable_ai';
-    const providerName = provider?.name || 'Lovable AI';
+    const providerType = provider?.provider_type || 'openai_compatible';
+    const providerName = provider?.name || 'OpenRouter';
 
     log.info("Routing AI call", { provider: providerName, type: providerType, use_for });
 
@@ -142,14 +154,13 @@ Deno.serve(async (req) => {
       const callFn = dispatchProvider(providerType, provider, finalMessages, tools, tool_choice, stream ?? false, clientModel);
       response = await withRetry(callFn, 2, 500);
     } catch (dispatchErr) {
-      // If the configured provider fails entirely, fallback to Lovable AI
-      if (providerType !== 'lovable_ai') {
-        log.warn("Provider dispatch failed, falling back to Lovable AI", {
+      const isOpenRouter = provider?.api_key_secret_name === 'OPENROUTER_API_KEY';
+      if (!isOpenRouter) {
+        log.warn("Provider dispatch failed, falling back to OpenRouter", {
           provider: providerName,
           error: dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr),
         });
-        const fallbackKey = requireEnv("LOVABLE_API_KEY");
-        response = await callLovableAI({ messages: finalMessages, apiKey: fallbackKey, tools, toolChoice: tool_choice, stream });
+        response = await callOpenRouter(finalMessages, tools, tool_choice, stream ?? false)();
         usedFallback = true;
       } else {
         throw dispatchErr;
@@ -158,24 +169,22 @@ Deno.serve(async (req) => {
 
     const durationMs = Date.now() - startTime;
 
-    // Fallback on non-OK response from external provider
-    if (!response.ok && providerType !== 'lovable_ai' && !usedFallback) {
+    if (!response.ok && !usedFallback) {
       const errText = await response.text();
-      log.warn("Provider returned error, falling back to Lovable AI", {
+      log.warn("Provider returned error, falling back to OpenRouter", {
         status: response.status, provider: providerName, error: errText.slice(0, 200),
       });
 
-      if (response.status === 429) return errorResponse("Limite de requisições excedido. Tente novamente.", 429, req);
-      if (response.status === 402) return errorResponse("Créditos insuficientes. Adicione créditos.", 402, req);
+      if (response.status === 429) return errorResponse("Limite de requisicoes excedido. Tente novamente.", 429, req);
+      if (response.status === 402) return errorResponse("Creditos insuficientes. Adicione creditos.", 402, req);
 
-      const fallbackKey = requireEnv("LOVABLE_API_KEY");
-      response = await callLovableAI({ messages: finalMessages, apiKey: fallbackKey, tools, toolChoice: tool_choice, stream });
+      response = await callOpenRouter(finalMessages, tools, tool_choice, stream ?? false)();
       usedFallback = true;
 
       logAiUsage({
         functionName: 'ai-proxy', userId, model: provider?.model || null,
         durationMs, status: 'fallback',
-        errorMessage: `${providerName}: HTTP error → fallback Lovable AI`,
+        errorMessage: providerName + ": HTTP error -> fallback OpenRouter",
         metadata: { provider_id: provider?.id, provider_type: providerType, fallback: true },
       });
     }
@@ -186,14 +195,14 @@ Deno.serve(async (req) => {
       logAiUsage({
         functionName: 'ai-proxy', userId, model: provider?.model || null,
         durationMs, status: 'error',
-        errorMessage: `HTTP ${response.status}`,
+        errorMessage: "HTTP " + response.status,
         metadata: { provider_id: provider?.id, provider_type: providerType },
       });
-      return errorResponse(`Erro do provedor: ${response.status}`, 502, req);
+      return errorResponse("Erro do provedor: " + response.status, 502, req);
     }
 
     if (stream) {
-      log.done(200, { provider: usedFallback ? 'Lovable AI (fallback)' : providerName, streaming: true });
+      log.done(200, { provider: usedFallback ? 'OpenRouter (fallback)' : providerName, streaming: true });
       return new Response(response.body, {
         headers: { ...Object.fromEntries(response.headers), 'Content-Type': 'text/event-stream' },
       });
@@ -210,7 +219,7 @@ Deno.serve(async (req) => {
       metadata: { provider_id: provider?.id, provider_type: providerType, use_for, fallback: usedFallback },
     });
 
-    log.done(200, { provider: usedFallback ? 'Lovable AI (fallback)' : providerName, tokens: inputTokens + outputTokens });
+    log.done(200, { provider: usedFallback ? 'OpenRouter (fallback)' : providerName, tokens: inputTokens + outputTokens });
     return jsonResponse(data, 200, req);
 
   } catch (error) {
