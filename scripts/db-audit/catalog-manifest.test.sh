@@ -26,8 +26,8 @@ ready=false
 for _attempt in $(seq 1 60); do
   # A imagem oficial aceita conexoes em um servidor temporario durante initdb.
   # Aguarde o marcador que separa esse processo do servidor PostgreSQL final.
-  if docker logs "$CONTAINER" 2>&1 |
-      grep -Fq 'PostgreSQL init process complete; ready for start up.' &&
+  container_logs="$(docker logs "$CONTAINER" 2>&1 || true)"
+  if [[ "$container_logs" == *'PostgreSQL init process complete; ready for start up.'* ]] &&
     docker exec "$CONTAINER" \
       psql -X -At -v ON_ERROR_STOP=1 -U postgres -d postgres -c 'SELECT 1' \
         >/dev/null 2>&1; then

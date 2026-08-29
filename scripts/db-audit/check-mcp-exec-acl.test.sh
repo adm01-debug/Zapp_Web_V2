@@ -34,13 +34,14 @@ psql_file() {
 
 wait_for_postgres() {
   local attempt
+  local container_logs
   for attempt in $(seq 1 60); do
     # A imagem oficial sobe um servidor temporario durante initdb e o encerra
     # antes do processo final. pg_isready sozinho pode capturar essa janela e
     # causar falha intermitente no primeiro psql. O marcador abaixo so aparece
     # depois que a inicializacao temporaria terminou.
-    if docker logs "$container_name" 2>&1 |
-        grep -Fq 'PostgreSQL init process complete; ready for start up.' &&
+    container_logs="$(docker logs "$container_name" 2>&1 || true)"
+    if [[ "$container_logs" == *'PostgreSQL init process complete; ready for start up.'* ]] &&
       docker exec "$container_name" \
         psql -X -At -v ON_ERROR_STOP=1 -U postgres -d postgres -c 'SELECT 1' \
           >/dev/null 2>&1; then
