@@ -23,15 +23,21 @@ docker run --rm -d --name "$CONTAINER" \
   -e POSTGRES_PASSWORD=test-only "$POSTGRES_IMAGE" >/dev/null
 
 ready=false
-for _attempt in $(seq 1 30); do
-  if docker exec "$CONTAINER" pg_isready -U postgres >/dev/null 2>&1; then
+for _attempt in $(seq 1 60); do
+  # A imagem oficial aceita conexoes em um servidor temporario durante initdb.
+  # Aguarde o marcador que separa esse processo do servidor PostgreSQL final.
+  if docker logs "$CONTAINER" 2>&1 |
+      grep -Fq 'PostgreSQL init process complete; ready for start up.' &&
+    docker exec "$CONTAINER" \
+      psql -X -At -v ON_ERROR_STOP=1 -U postgres -d postgres -c 'SELECT 1' \
+        >/dev/null 2>&1; then
     ready=true
     break
   fi
   sleep 1
 done
 if [ "$ready" != true ]; then
-  echo "PostgreSQL de teste nao ficou pronto em 30 segundos." >&2
+  echo "PostgreSQL de teste nao ficou pronto em 60 segundos." >&2
   exit 1
 fi
 
