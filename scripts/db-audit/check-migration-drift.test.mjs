@@ -402,6 +402,35 @@ test('registro extra escapa controles do nome sem injetar linha ou ANSI no log',
   assert.doesNotMatch(result.stderr, /\u001b/);
 });
 
+test('registro extra preserva whitespace do ledger e normaliza em campo separado', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: `  ${extraVersion}_db_only.sql  `, statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_name="  ${extraVersion}_db_only\\.sql  "`),
+  );
+  assert.match(result.stderr, /normalized_name="db_only"/);
+});
+
+test('registro extra distingue nome whitespace-only de null', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: '   ', statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /ledger_name="   " normalized_name=""/);
+  assert.doesNotMatch(result.stderr, /ledger_name=null/);
+});
+
 test('registro extra comments-only distingue statements mesmo com SQL canonico vazio', () => {
   const extraVersion = '20260829050100';
   const secret = 'comentario-sensivel-do-ledger';
@@ -542,6 +571,13 @@ test('pinned-replay falha para adulteracao independente de statements, SQL e nom
   });
   assert.equal(changedName.status, 1);
   assert.match(changedName.stderr, /ledger_name divergente do manifesto/);
+
+  const whitespaceName = runGuard({
+    ledger: [ledgerRecord({ name: ' create_demo ', statements })],
+    evidence: [pinnedEvidence({ statements })],
+  });
+  assert.equal(whitespaceName.status, 1);
+  assert.match(whitespaceName.stderr, /ledger_name divergente do manifesto/);
 });
 
 test('pinned-replay rejeita reason desconhecido, related fora de colisao e nome generico divergente', () => {

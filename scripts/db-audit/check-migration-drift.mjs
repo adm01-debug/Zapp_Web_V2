@@ -548,7 +548,7 @@ function parseLedger(raw) {
     }
     records.push({
       version: record.version,
-      name: record.name?.trim() || null,
+      name: record.name ?? null,
       statements: record.statements || [],
     });
   }
