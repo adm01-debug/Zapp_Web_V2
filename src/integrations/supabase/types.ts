@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       agent_achievements: {
@@ -1763,6 +1758,7 @@ export type Database = {
           ai_priority: string | null
           ai_sentiment: string | null
           assigned_to: string | null
+          avatar_fetch_attempted_at: string | null
           avatar_url: string | null
           channel_connection_id: string | null
           channel_type: string | null
@@ -1791,6 +1787,7 @@ export type Database = {
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
+          avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
@@ -1819,6 +1816,7 @@ export type Database = {
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
+          avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
@@ -2661,6 +2659,44 @@ export type Database = {
           },
         ]
       }
+      email_attachments: {
+        Row: {
+          created_at: string
+          email_message_id: string
+          filename: string | null
+          gmail_attachment_id: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          email_message_id: string
+          filename?: string | null
+          gmail_attachment_id: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          email_message_id?: string
+          filename?: string | null
+          gmail_attachment_id?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_email_message_id_fkey"
+            columns: ["email_message_id"]
+            isOneToOne: false
+            referencedRelation: "email_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_labels: {
         Row: {
           color: string | null
@@ -2731,6 +2767,7 @@ export type Database = {
           is_read: boolean
           is_starred: boolean
           label_ids: string[]
+          message_id_header: string | null
           references_header: string | null
           reply_to_address: string | null
           snippet: string
@@ -2756,6 +2793,7 @@ export type Database = {
           is_read?: boolean
           is_starred?: boolean
           label_ids?: string[]
+          message_id_header?: string | null
           references_header?: string | null
           reply_to_address?: string | null
           snippet?: string
@@ -2781,6 +2819,7 @@ export type Database = {
           is_read?: boolean
           is_starred?: boolean
           label_ids?: string[]
+          message_id_header?: string | null
           references_header?: string | null
           reply_to_address?: string | null
           snippet?: string
@@ -7296,6 +7335,13 @@ export type Database = {
         Args: { _connection_id: string }
         Returns: string
       }
+      get_gmail_tokens: {
+        Args: { p_account_id: string }
+        Returns: {
+          access_token: string
+          refresh_token: string
+        }[]
+      }
       get_own_gmail_accounts: {
         Args: never
         Returns: {
@@ -7436,6 +7482,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
+      mcp_exec_many: {
+        Args: { max_rows?: number; statements: string[] }
+        Returns: Json
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
@@ -7492,6 +7543,14 @@ export type Database = {
         }[]
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
+      store_gmail_tokens: {
+        Args: {
+          p_access_token: string
+          p_account_id: string
+          p_refresh_token?: string
+        }
+        Returns: undefined
+      }
       update_own_profile: {
         Args: {
           p_avatar_url?: string
@@ -7507,7 +7566,6 @@ export type Database = {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
-      validate_reset_token: { Args: { p_token: string }; Returns: string }
     }
     Enums: {
       ai_provider_type:
@@ -7683,3 +7741,4 @@ export const Constants = {
     },
   },
 } as const
+
