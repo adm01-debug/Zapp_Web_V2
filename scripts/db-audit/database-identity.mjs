@@ -1,0 +1,137 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const PROJECT_REF = /^[a-z0-9]{20}$/;
+const SHA256 = /^[a-f0-9]{64}$/;
+
+export function sha256(valor) {
+  return crypto.createHash('sha256').update(valor, 'utf8').digest('hex');
+}
+
+/**
+ * Extrai o project-ref sem registrar URL, usuario ou senha.
+ *
+ * Supabase Cloud usa duas formas comuns de conexao:
+ *   - host direto: db.<project-ref>.supabase.co
+ *   - pooler: usuario postgres.<project-ref>@*.pooler.supabase.com
+ */
+export function extrairProjectRef(connectionString) {
+  if (!connectionString) return null;
+
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return null;
+  }
+
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) return null;
+
+  const hostDireto = url.hostname.match(/^db\.([a-z0-9]{20})\.supabase\.co$/i);
+  if (hostDireto && PROJECT_REF.test(hostDireto[1].toLowerCase())) {
+    return hostDireto[1].toLowerCase();
+  }
+
+  let usuario = '';
+  try {
+    usuario = decodeURIComponent(url.username);
+  } catch {
+    return null;
+  }
+  const usuarioPooler = usuario.match(/^postgres\.([a-z0-9]{20})$/i);
+  if (
+    usuarioPooler &&
+    PROJECT_REF.test(usuarioPooler[1].toLowerCase()) &&
+    /(^|\.)pooler\.supabase\.com$/i.test(url.hostname)
+  ) {
+    return usuarioPooler[1].toLowerCase();
+  }
+
+  return null;
+}
+
+export function carregarIdentidadeEsperada(arquivo) {
+  let identidade;
+  try {
+    identidade = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+  } catch (error) {
+    throw new Error('identidade versionada invalida (' + arquivo + '): ' + error.message);
+  }
+
+  const erros = [];
+  if (!identidade || typeof identidade !== 'object' || Array.isArray(identidade)) {
+    erros.push('a raiz precisa ser um objeto JSON');
+  } else {
+    if (identidade.format_version !== 1) erros.push('format_version precisa ser 1');
+    if (identidade.connection_provider !== 'supabase-cloud') {
+      erros.push('connection_provider precisa ser supabase-cloud');
+    }
+    if (!SHA256.test(identidade.project_ref_sha256 || '')) {
+      erros.push('project_ref_sha256 precisa ser um SHA-256 hexadecimal');
+    }
+    if (typeof identidade.database !== 'string' || !identidade.database) {
+      erros.push('database precisa ser string nao vazia');
+    }
+    if (typeof identidade.schema !== 'string' || !identidade.schema) {
+      erros.push('schema precisa ser string nao vazia');
+    }
+    if (!Number.isInteger(identidade.server_major) || identidade.server_major < 12) {
+      erros.push('server_major precisa ser inteiro PostgreSQL suportado');
+    }
+  }
+
+  if (erros.length) {
+    throw new Error('identidade versionada invalida (' + arquivo + '): ' + erros.join('; '));
+  }
+  return identidade;
+}
+
+export function validarIdentidadeDoArtefato(identidade, esperada, rotulo) {
+  const erros = [];
+  if (!identidade || typeof identidade !== 'object' || Array.isArray(identidade)) {
+    return ['identidade ausente ou invalida no ' + rotulo];
+  }
+
+  for (const campo of ['database', 'schema', 'server_major']) {
+    if (identidade[campo] !== esperada[campo]) {
+      erros.push(
+        'identidade ' + rotulo + ': ' + campo + ' esperado=' +
+        JSON.stringify(esperada[campo]) + ' obtido=' + JSON.stringify(identidade[campo]),
+      );
+    }
+  }
+  return erros;
+}
+
+export function validarDestino(connectionString, esperada) {
+  if (!connectionString) {
+    return ['DESTINO_URL ausente; nao foi possivel provar a identidade do banco'];
+  }
+
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return ['DESTINO_URL invalida; credencial nao exibida'];
+  }
+
+  const erros = [];
+  const projectRef = extrairProjectRef(connectionString);
+  if (!projectRef) {
+    erros.push('DESTINO_URL nao identifica um projeto Supabase Cloud suportado');
+  } else if (sha256(projectRef) !== esperada.project_ref_sha256) {
+    erros.push('DESTINO_URL aponta para outro projeto (fingerprint divergente)');
+  }
+
+  let database = '';
+  try {
+    database = decodeURIComponent(url.pathname.replace(/^\//, ''));
+  } catch {
+    erros.push('nome do database na DESTINO_URL e invalido');
+  }
+  if (database !== esperada.database) {
+    erros.push('database da DESTINO_URL diverge da identidade versionada');
+  }
+
+  return erros;
+}

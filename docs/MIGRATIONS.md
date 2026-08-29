@@ -22,13 +22,15 @@ psql "$DESTINO_URL" -At -c \
   "SELECT md5(string_agg(version,'' ORDER BY version)) FROM supabase_migrations.schema_migrations"
 ```
 
-O job `migration-drift` do workflow `db-guard.yml` faz essa comparacao a cada push.
+O `db-guard.yml` valida nomes, conteudo local e versoes unicas sem credencial. A
+comparacao com o ledger real ocorre no `db-live-guard.yml`, somente em eventos
+confiaveis da `main`.
 
 ---
 
 ## 2. `supabase_apply_migration` esta bugado neste ambiente
 
-O MCP do Supabase self-hosted falha ao aplicar migration — referencia uma coluna
+O MCP do banco oficial falha ao aplicar migration — referencia uma coluna
 `executed_at` que nao existe em `supabase_migrations.schema_migrations`. O schema real e:
 
 ```
@@ -56,6 +58,34 @@ VALUES ('20260827120100', 'nome_da_migration', ARRAY[
 `statements` a partir do catalogo do banco sem filtrar: na primeira tentativa desta
 reconciliacao o gerador capturou 126 statements em vez de 108, porque 18 indices
 preexistentes seguiam a mesma convencao de nome — um `db reset` quebraria neles.
+
+### Evidencia usada pelo guard
+
+`check-migration-drift.mjs` consulta `version`, `name` e `statements` e aplica as
+evidencias que o ledger realmente possui:
+
+- `name`, quando preenchido, deve corresponder ao nome depois do prefixo de 14 digitos;
+- SQL executavel preservado em `statements` e comparado ao arquivo com comentarios,
+  espacos e case de tokens nao quoted normalizados;
+- `-- file-sha256: <64 hex>` em `statements` valida os bytes exatos do arquivo;
+- `-- sql-sha256: <64 hex>` valida a forma SQL canonica calculada pelo guard.
+
+Registros historicos sem SQL/hash continuam aceitos para compatibilidade, com aviso
+explicito de evidencia limitada. **Nunca preencha hash, `name` ou `statements`
+retroativamente sem recuperar a fonte original**: calcular um hash do estado atual
+e chama-lo de historico apenas certificaria um possivel drift.
+
+Independentemente do banco, o guard falha para nome fora de
+`14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
+ou entrada nao regular. Arquivo vazio nunca e aceito. A unica excecao para um
+arquivo somente de comentarios e um stub historico descrito exatamente em
+`scripts/db-audit/migration-evidence.json`: versao, filename, SHA-256 dos bytes,
+`ledger_name`, `kind=ledger-only/comment-only` e justificativa factual. Uma mudanca
+de byte, nome ou ledger invalida a excecao; entradas orfas ou duplicadas tambem
+falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
+nesse modo apenas a consulta ao ledger e pulada.
 
 ---
 
@@ -124,6 +154,7 @@ registradas em `cron.job_run_details` (18:03 e 18:04 de 27/08/2026), saiu com
 
 ```sh
 node scripts/db-audit/check-migration-drift.mjs        # DESTINO_URL setado
+node --test scripts/db-audit/check-migration-drift.test.mjs  # fixtures + psql fake
 node scripts/db-audit/supabase-usage-guard.mjs         # offline
 ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d   # versao duplicada
 ```
@@ -135,20 +166,21 @@ arquivos diferentes com o prefixo `20260827130500`.
 
 ## 7. Artefatos gerados automaticamente
 
-`src/integrations/supabase/types.ts` e `supabase/schema-catalog.json` sao
-regenerados pelo workflow `types-sync` (`.github/workflows/types-sync.yml`).
+`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json` e
+`supabase/schema-manifest.json` sao regenerados pelo workflow `types-sync`
+(`.github/workflows/types-sync.yml`).
 
-**Nunca editar esses dois arquivos manualmente.** Qualquer edicao sera sobrescrita
+**Nunca editar esses tres arquivos manualmente.** Qualquer edicao sera sobrescrita
 no proximo push de migration ou no cron semanal (segunda, 06:00 UTC).
 
 A regra de fechamento tripla foi simplificada:
 
-- ~~migration + registro no banco + catalog + types~~ (anterior — manual, sujeita a drift)
-- **migration + registro no banco** (atual — maquina cuida do catalog e do types)
+- ~~migration + registro no banco + catalog + manifesto + types~~ (anterior — manual, sujeita a drift)
+- **migration + registro no banco** (atual — maquina propoe catalogo, manifesto e types em PR)
 
 ### Para sessoes Claude
 
-Nao incluir `types.ts` nem `schema-catalog.json` em commits de migration.
+Nao incluir `types.ts`, `schema-catalog.json` nem `schema-manifest.json` em commits de migration.
 Ao adicionar uma tabela nova, o types sera atualizado automaticamente pelo bot.
 
 ### Para diagnosticar drift manual
@@ -156,6 +188,6 @@ Ao adicionar uma tabela nova, o types sera atualizado automaticamente pelo bot.
 Se o `types.ts` estiver desatualizado, dispare manualmente:
 `GitHub Actions > types-sync > Run workflow`
 
-O `db-guard.yml` (job `catalog-fresh`, semanal) tambem verifica o frescor do
-`types.ts` contra o banco e falha se houver divergencia — os dois mecanismos
-sao independentes.
+O `db-live-guard.yml` tambem verifica o frescor dos tres artefatos contra o banco
+e falha se houver divergencia. Ele nao executa codigo de pull request nem expoe
+`DESTINO_URL` a eventos nao confiaveis.
