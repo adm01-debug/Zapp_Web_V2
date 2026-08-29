@@ -1,6 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts'
 
+// PostgREST/Postgres error codes that signal "external DB not properly wired"
+// rather than a real query problem. When these appear, callers should stop
+// polling silently instead of showing a red network error in DevTools.
+function isInfraError(err: { code?: string; message?: string }) {
+  const code = err.code ?? ''
+  const msg = (err.message ?? '').toLowerCase()
+  return (
+    code === 'PGRST116' ||       // PostgREST: relation not found in schema cache
+    code === '42P01' ||          // PostgreSQL: undefined table
+    code === '42501' ||          // PostgreSQL: permission denied (misconfigured key)
+    msg.includes('schema cache') ||
+    msg.includes('does not exist') ||
+    msg.includes('permission denied')
+  )
+}
+
 Deno.serve(async (req) => {
   const cors = handleCors(req)
   if (cors) return cors
@@ -93,6 +109,14 @@ Deno.serve(async (req) => {
     const { data: queryData, error: queryError, count } = await query
 
     if (queryError) {
+      // Infra-level errors (table/schema missing, permission denied on key) →
+      // treat as "not configured" so the browser DevTools stay clean and callers
+      // disable polling silently.
+      if (isInfraError(queryError)) {
+        return new Response(JSON.stringify({ data: [], count: 0, notConfigured: true }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
       return new Response(JSON.stringify({ error: queryError.message }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
