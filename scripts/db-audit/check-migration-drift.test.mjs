@@ -332,6 +332,16 @@ test('falha quando ledger fornece nome divergente', () => {
   assert.match(result.stderr, /nome divergente/);
 });
 
+test('nome malformado com arquivo local permanece escapado em todo diagnostico', () => {
+  const maliciousName = 'create_demo\nforged-log-line\u001b[31m';
+  const result = runGuard({ ledger: [ledgerRecord({ name: maliciousName })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${VERSION}`));
+  assert.match(result.stderr, /ledger="create_demo\\nforged-log-line\\u001b\[31m"/);
+  assert.doesNotMatch(result.stderr, /create_demo\nforged-log-line/);
+  assert.doesNotMatch(result.stderr, /\u001b/);
+});
+
 test('registro extra informa hashes seguros e nome normalizado sem vazar statements', () => {
   const extraVersion = '20260829050100';
   const secret = 'literal-sensivel-do-ledger';

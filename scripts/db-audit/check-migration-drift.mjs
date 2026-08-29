@@ -635,7 +635,8 @@ function compare(migrations, records, exceptionsByVersion) {
       } else if (record.name !== exception.ledger_name) {
         errors.push(
           `ledger_name divergente do manifesto em ${migration.version}: `
-          + `esperado=${exception.ledger_name}; ledger=${record.name}`,
+          + `esperado=${JSON.stringify(exception.ledger_name)}; `
+          + `ledger=${JSON.stringify(record.name)}`,
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
@@ -665,7 +666,8 @@ function compare(migrations, records, exceptionsByVersion) {
       } else if (record.name !== exception.ledger_name) {
         errors.push(
           `ledger_name divergente do manifesto em ${migration.version}: `
-          + `esperado=${exception.ledger_name}; ledger=${record.name}`,
+          + `esperado=${JSON.stringify(exception.ledger_name)}; `
+          + `ledger=${JSON.stringify(record.name)}`,
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
@@ -690,7 +692,8 @@ function compare(migrations, records, exceptionsByVersion) {
     const namesMatch = ledgerName !== null && ledgerName === migration.name;
     if (record.name && !namesMatch) {
       errors.push(
-        `nome divergente em ${migration.version}: arquivo=${migration.name}; ledger=${record.name}`,
+        `nome divergente em ${migration.version}: arquivo=${JSON.stringify(migration.name)}; `
+        + `ledger=${JSON.stringify(record.name)}`,
       );
     }
 
