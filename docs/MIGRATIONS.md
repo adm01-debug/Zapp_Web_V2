@@ -137,7 +137,11 @@ nome historico `fix_reassign_absent_agents_last_seen_at`, corrigiu a referencia 
 de `20260827130000` e registrou a propria operacao no ledger. O run `33257354121`
 confirmou esse estado com 293 registros. Por isso a excecao de colisao permanece
 fixada pelos hashes originais; o novo arquivo versionado espelha a operacao ja
-aplicada, sem uma segunda escrita no banco por este fluxo.
+aplicada, sem uma segunda escrita no banco por este fluxo. O `UPDATE` de nome exige
+a assinatura estrutural e o SHA-256 domain-separated exato do array historico de
+`statements`; assim um replay limpo de `mcp_exec`, `statements` nulos, conteudo
+hibrido ou um corpo divergente permanecem intocados. Esse comportamento e a
+idempotencia sao simulados em PostgreSQL 17 pelo guard offline.
 
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.
