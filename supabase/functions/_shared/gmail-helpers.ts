@@ -36,11 +36,9 @@ export async function syncMessages(supabase: any, accountId: string, accessToken
  // G3: reconciliar is_unread das threads afetadas pelo sync
   const affectedThreadIds = [...new Set(results.map(r => r.threadId).filter(Boolean))];
   if (affectedThreadIds.length > 0) {
-    const { data: unreadMsgs } = await supabase.from("email_messages").select("thread_id").in("thread_id", affectedThreadIds.map(gid => gid)).eq("is_read", false);
     // Buscar UUIDs das threads pelo gmail_thread_id
     const { data: threadRows } = await supabase.from("email_threads").select("id,gmail_thread_id").in("gmail_thread_id", affectedThreadIds);
     if (threadRows?.length) {
-      const unreadGmailIds = new Set((unreadMsgs||[]).map((m: { thread_id: string }) => m.thread_id));
       for (const tr of threadRows) {
         const { count: unreadCount } = await supabase.from("email_messages").select("id",{count:'exact',head:true}).eq("thread_id",tr.id).eq("is_read",false);
         await supabase.from("email_threads").update({ is_unread: (unreadCount ?? 0) > 0 }).eq("id", tr.id);
