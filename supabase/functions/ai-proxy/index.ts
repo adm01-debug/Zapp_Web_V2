@@ -35,7 +35,7 @@ interface AiProvider {
 }
 
 const OR_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
-const OR_CONFIG = { extra_headers: { "HTTP-Referer": "https://zappweb.com.br", "X-Title": "ZappWeb" } };
+const OR_CONFIG = { headers: { "HTTP-Referer": "https://zappweb.com.br", "X-Title": "ZappWeb" } };
 
 function callOpenRouter(
   messages: Array<{ role: string; content: string }>,
