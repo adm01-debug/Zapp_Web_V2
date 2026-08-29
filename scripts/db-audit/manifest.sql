@@ -144,7 +144,12 @@ WITH columns_manifest AS (
                AND NOT attribute.attisdropped
            ), ''),
            coalesce(pg_catalog.format_type(range_def.rngsubtype, NULL), ''),
-           coalesce(range_def.rngsubopc::regclass::text, ''),
+           CASE WHEN range_sub_opclass.oid IS NULL THEN ''
+                ELSE format(
+                  '%I.%I',
+                  range_sub_opclass_namespace.nspname,
+                  range_sub_opclass.opcname
+                ) END,
            CASE WHEN range_def.rngcollation = 0 THEN ''
                 ELSE range_def.rngcollation::regcollation::text END,
            CASE WHEN range_def.rngcanonical = 0 THEN ''
@@ -160,6 +165,10 @@ WITH columns_manifest AS (
   LEFT JOIN pg_namespace coll_n ON coll_n.oid = coll.collnamespace
   LEFT JOIN pg_range range_def
     ON range_def.rngtypid = t.oid OR range_def.rngmultitypid = t.oid
+  LEFT JOIN pg_opclass range_sub_opclass
+    ON range_sub_opclass.oid = range_def.rngsubopc
+  LEFT JOIN pg_namespace range_sub_opclass_namespace
+    ON range_sub_opclass_namespace.oid = range_sub_opclass.opcnamespace
   WHERE n.nspname = 'public'
     AND (
       t.typtype IN ('d', 'e', 'r', 'm')
@@ -306,6 +315,17 @@ WITH columns_manifest AS (
       OR (t.typtype = 'b' AND t.typelem = 0 AND t.typisdefined)
     )
 ), default_grants_manifest AS (
+  SELECT format(
+           'row:%s|owner=%s|object=%s',
+           CASE WHEN defaults.defaclnamespace = 0 THEN '<global>' ELSE namespace.nspname END,
+           pg_get_userbyid(defaults.defaclrole),
+           defaults.defaclobjtype
+         ) AS k,
+         md5('present') AS h
+  FROM pg_default_acl defaults
+  LEFT JOIN pg_namespace namespace ON namespace.oid = defaults.defaclnamespace
+  WHERE defaults.defaclnamespace = 0 OR namespace.nspname = 'public'
+  UNION ALL
   SELECT format(
            '%s|%s|%s|%s|%s|grantor=%s',
            CASE WHEN defaults.defaclnamespace = 0 THEN '<global>' ELSE namespace.nspname END,

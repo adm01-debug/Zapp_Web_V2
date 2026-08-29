@@ -68,6 +68,19 @@ CREATE DOMAIN public.nonempty_text AS text
   CONSTRAINT nonempty_text_check CHECK (VALUE <> '');
 CREATE TYPE public.contact_state AS ENUM ('active', 'inactive');
 CREATE TYPE public.contact_label AS (name text, priority integer);
+CREATE OPERATOR CLASS public.text_custom_ops
+FOR TYPE text USING btree AS
+  OPERATOR 1 < (text, text),
+  OPERATOR 2 <= (text, text),
+  OPERATOR 3 = (text, text),
+  OPERATOR 4 >= (text, text),
+  OPERATOR 5 > (text, text),
+  FUNCTION 1 pg_catalog.bttextcmp(text, text);
+CREATE TYPE public.text_range AS RANGE (
+  subtype = text,
+  subtype_opclass = public.text_custom_ops,
+  collation = "C"
+);
 CREATE INDEX contacts_created_at_idx ON public.contacts (created_at DESC);
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY contacts_select ON public.contacts FOR SELECT TO authenticated USING (true);
@@ -76,6 +89,7 @@ GRANT SELECT (email) ON public.contacts TO authenticated;
 REVOKE ALL ON TYPE public.contact_state FROM PUBLIC;
 GRANT USAGE ON TYPE public.contact_state TO authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 CREATE VIEW public.active_contacts WITH (security_barrier = true) AS
 SELECT id, email FROM public.contacts WHERE email <> '';
@@ -146,6 +160,10 @@ for (const manifest of [A, B]) {
     Object.hasOwn(manifest.defaults, 'active_contacts.email'),
     'default de coluna de view public ausente',
   );
+  assert.ok(
+    Object.hasOwn(manifest.default_grants, 'row:<global>|owner=postgres|object=f'),
+    'linha de default ACL vazia para funcoes public ausente',
+  );
 }
 
 delete A.generated_at;
@@ -173,6 +191,7 @@ GRANT UPDATE (email) ON public.contacts TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.get_contact(bigint) FROM authenticated;
 REVOKE USAGE ON TYPE public.contact_state FROM authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM authenticated;
+ALTER DEFAULT PRIVILEGES GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 CREATE OR REPLACE VIEW public.active_contacts WITH (security_barrier = true) AS
 SELECT id, email FROM public.contacts WHERE email <> 'blocked@example.test';
 ALTER VIEW public.active_contacts ALTER COLUMN email
@@ -225,6 +244,11 @@ assert.notEqual(
   manifestBefore.defaults['active_contacts.email'],
   manifestAfter.defaults['active_contacts.email'],
   'alteracao de default de view nao foi detectada',
+);
+assert.equal(
+  Object.hasOwn(manifestAfter.default_grants, 'row:<global>|owner=postgres|object=f'),
+  false,
+  'restauracao do default de EXECUTE deveria remover a linha de override',
 );
 NODE
 
