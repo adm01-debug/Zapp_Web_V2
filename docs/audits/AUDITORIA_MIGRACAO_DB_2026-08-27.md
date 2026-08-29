@@ -343,7 +343,7 @@ Nenhuma etapa remove tabela, coluna ou função sem aprovação individual.
 6. ~~Registrar `20260412230000` (fix_rls_policies_security)~~ — **CANCELADO.** Idem. Patch de RLS para o schema antigo; as policies atuais do destino já são mais estritas. Movido para `_superseded/`.
 7. Criar `supabase/migrations/20260826210100_cron_cleanup_link_preview_cache.sql` a partir do `statements` gravado no banco.
 8. Criar `supabase/migrations/20260826210200_realtime_publication_d5.sql` idem.
-9. Criar `supabase/migrations/20260827000100_security_revoke_mcp_exec.sql` idem.
+9. Criar `supabase/migrations/20260827000100_security_revoke_mcp_exec_from_authenticated.sql` idem.
 10. Rodar `supabase db diff` contra o destino e confirmar diff vazio após 1–9.
 11. Adicionar step no CI que falha se `count(schema_migrations)` divergir do número de arquivos em `supabase/migrations/`.
 12. Documentar em `docs/` o workaround do `supabase_apply_migration` bugado no self-hosted e o procedimento manual correto.
