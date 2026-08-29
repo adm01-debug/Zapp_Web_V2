@@ -123,6 +123,11 @@ jobs:
                JOIN pg_namespace n ON n.oid=p.pronamespace \
                WHERE n.nspname='public' AND p.proname='${func}'")
             echo "${func} ACL: ${acl}"
+            if [ -z "${acl}" ]; then
+              echo "FALHA: ${func} proacl IS NULL - herda ACL do schema (inseguro)"
+              FALHA=1
+              continue
+            fi
             case "${acl}" in
               *authenticated=X*|*anon=X*)
                 echo "FALHA: ${func} executavel por authenticated ou anon!"
