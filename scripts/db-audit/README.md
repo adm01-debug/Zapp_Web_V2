@@ -17,6 +17,7 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `check-mcp-exec-acl.sql` | sim | Falha se as funcoes MCP sairem do contrato `postgres` + `service_role` |
 | `check-migration-drift.mjs` | parcial | Valida migrations locais e compara versao, nome e evidencia com `schema_migrations` |
 | `check-migration-drift.test.mjs` | nao | Simula duplicata, vazio, conteudo alterado e drift do ledger com `psql` fake |
+| `check-reconcile-ledger-drift.test.sh` | Docker local | Prova replay limpo, colisao historica, fail-closed e idempotencia da reconciliacao de 29/08 |
 | `migration-evidence.json` | nao | Excecoes exatas, versionadas e com hash para stubs historicos comment-only |
 | `manifest.sql` | sim | Manifesto deterministico: views, tipos/enums, defaults, constraints, indices, RLS, policies, triggers, funcoes e grants (relacao/coluna/rotina/tipo/default/schema) |
 | `check-manifest-fresh.mjs` | nao | Compara `supabase/schema-manifest.json` com o banco oficial, provando identidade |
@@ -37,6 +38,9 @@ node --test scripts/db-audit/check-migration-drift.test.mjs
 
 # integracao descartavel do catalogo/manifesto (nao acessa banco oficial)
 bash scripts/db-audit/catalog-manifest.test.sh
+
+# integracao descartavel da reconciliacao do ledger (nao acessa banco oficial)
+bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
 
 # comparar dois bancos estruturalmente
 psql "$ORIGEM_URL"  -X -v ON_ERROR_STOP=1 -At -f scripts/db-audit/manifest.sql > /tmp/src.json
