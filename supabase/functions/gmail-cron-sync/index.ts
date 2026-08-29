@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, syncMessages, Logger } from "../_shared/gmail-helpers.ts";
+import { Logger } from "../_shared/validation.ts";
+import { ensureValidToken, syncMessages } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
