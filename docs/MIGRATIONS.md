@@ -32,9 +32,9 @@ O MCP do Supabase self-hosted falha ao aplicar migration — referencia uma colu
 `executed_at` que nao existe em `supabase_migrations.schema_migrations`. O schema real e:
 
 ```
-version     text      NOT NULL
-statements  text[]    NULL
-name        text      NULL
+version      text      NOT NULL
+statements   text[]    NULL
+name         text      NULL
 ```
 
 ### Procedimento manual correto
@@ -64,7 +64,7 @@ preexistentes seguiam a mesma convencao de nome — um `db reset` quebraria nele
 Erro `25001: CREATE INDEX CONCURRENTLY cannot run inside a transaction block`. O gateway
 envolve cada chamada numa transacao.
 
-- Tabela pequena: use `CREATE INDEX` simples. As 108 FKs de 27/08 rodaram em 278 ms
+- Tabela pequena: use `CREATE INDEX` simples. As 108 FKs de 27/08 rodaram em 278ms
   (maior tabela: 584 kB / 41 linhas).
 - Tabela grande: rode por `psql` direto, fora de transacao.
 
@@ -130,3 +130,32 @@ ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d   # v
 
 A ultima linha existe porque isso ja aconteceu: em 27/08/2026 duas sessoes criaram
 arquivos diferentes com o prefixo `20260827130500`.
+
+---
+
+## 7. Artefatos gerados automaticamente
+
+`src/integrations/supabase/types.ts` e `supabase/schema-catalog.json` sao
+regenerados pelo workflow `types-sync` (`.github/workflows/types-sync.yml`).
+
+**Nunca editar esses dois arquivos manualmente.** Qualquer edicao sera sobrescrita
+no proximo push de migration ou no cron semanal (segunda, 06:00 UTC).
+
+A regra de fechamento tripla foi simplificada:
+
+- ~~migration + registro no banco + catalog + types~~ (anterior — manual, sujeita a drift)
+- **migration + registro no banco** (atual — maquina cuida do catalog e do types)
+
+### Para sessoes Claude
+
+Nao incluir `types.ts` nem `schema-catalog.json` em commits de migration.
+Ao adicionar uma tabela nova, o types sera atualizado automaticamente pelo bot.
+
+### Para diagnosticar drift manual
+
+Se o `types.ts` estiver desatualizado, dispare manualmente:
+`GitHub Actions > types-sync > Run workflow`
+
+O `db-guard.yml` (job `catalog-fresh`, semanal) tambem verifica o frescor do
+`types.ts` contra o banco e falha se houver divergencia — os dois mecanismos
+sao independentes.
