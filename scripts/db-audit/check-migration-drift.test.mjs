@@ -396,6 +396,7 @@ test('registro extra escapa controles do nome sem injetar linha ou ANSI no log',
     ],
   });
   assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
   assert.match(result.stderr, /ledger_name="db\\nonly\\u001b\[31m"/);
   assert.match(result.stderr, /normalized_name="db\\nonly\\u001b\[31m"/);
   assert.doesNotMatch(result.stderr, /db\nonly/);
@@ -411,6 +412,7 @@ test('registro extra preserva whitespace do ledger e normaliza em campo separado
     ],
   });
   assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
   assert.match(
     result.stderr,
     new RegExp(`ledger_name="  ${extraVersion}_db_only\\.sql  "`),
@@ -427,6 +429,7 @@ test('registro extra distingue nome whitespace-only de null', () => {
     ],
   });
   assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
   assert.match(result.stderr, /ledger_name="   " normalized_name=""/);
   assert.doesNotMatch(result.stderr, /ledger_name=null/);
 });
@@ -499,6 +502,19 @@ test('rejeita manifesto fora de ordem estrita e hashes que nao sejam lowercase',
   assert.equal(result.status, 1);
   assert.match(result.stderr, /ordem estritamente crescente/);
   assert.match(result.stderr, /file_sha256 invalido/);
+});
+
+test('manifesto nao pode pinar ledger_name com whitespace; exige reconciliacao', () => {
+  const statements = [OTHER_SQL.trim()];
+  const result = runGuard({
+    destino: false,
+    evidence: [pinnedEvidence({
+      statements,
+      overrides: { ledger_name: ' create_demo ' },
+    })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /ledger_name invalido/);
 });
 
 test('comment-only fixa o array integral do ledger e rejeita SQL canonico', () => {

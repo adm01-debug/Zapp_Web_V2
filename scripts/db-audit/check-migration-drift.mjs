@@ -282,6 +282,8 @@ function loadEvidence(filePath) {
         || !SHA256_RE.test(item.ledger_statements_sha256)) {
       fail('possui ledger_statements_sha256 invalido');
     }
+    // Nomes malformados sao diagnosticados exatamente, mas nunca pinados:
+    // whitespace/controles no ledger exigem reconciliacao por migration versionada.
     if (typeof item.ledger_name !== 'string'
         || item.ledger_name !== item.ledger_name.trim()
         || item.ledger_name.length === 0
@@ -570,6 +572,13 @@ function compare(migrations, records, exceptionsByVersion) {
   const withoutRecord = migrations.filter(({ version }) => !byLedgerVersion.has(version));
   const withoutFile = records.filter(({ version }) => !byFileVersion.has(version));
   let verifiedEvidence = 0;
+
+  for (const record of records) {
+    if (typeof record.name === 'string'
+        && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
+      errors.push(`name malformado no ledger para ${record.version}`);
+    }
+  }
 
   if (withoutRecord.length) {
     errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
