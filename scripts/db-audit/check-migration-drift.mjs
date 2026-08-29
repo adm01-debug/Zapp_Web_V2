@@ -38,6 +38,17 @@ const raw = execFileSync(
 const registro = raw.split('\n').map((s) => s.trim()).filter(Boolean).sort();
 
 const setArq = new Set(arquivos);
+
+// Detectar arquivos com mesmo prefixo de versao (14 digitos) duplicado.
+// Dois arquivos com o mesmo prefixo fazem supabase db push aplicar apenas o
+// primeiro em ordem alfabetica: o segundo e silenciado, causando drift nao
+// detectado. O check de conjunto abaixo nao pega duplicatas (usa Set).
+if (arquivos.length !== setArq.size) {
+  const dups = [...new Set(arquivos.filter((v, i) => arquivos.indexOf(v) !== i))];
+  console.error("ERRO: versoes com mais de um arquivo no repo (uniq-d): " + dups.join(", "));
+  console.error("O segundo arquivo seria silenciado pelo supabase db push. Remova o extra.");
+  process.exit(1);
+}
 const setReg = new Set(registro);
 const semRegistro = arquivos.filter((v) => !setReg.has(v));
 const semArquivo = registro.filter((v) => !setArq.has(v));
