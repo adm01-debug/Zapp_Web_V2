@@ -27,12 +27,17 @@ const base = {
   defaults: { 'contacts.created_at': H1 },
   constraints: { 'relation:contacts.contacts_pkey': H1 },
   indexes: { 'contacts.contacts_pkey': H1 },
+  views: { 'v:active_contacts': H1 },
+  types: { 'e:contact_state': H1 },
   rls: { contacts: H1 },
   policies: { 'contacts.contacts_select': H1 },
   triggers: { 'contacts.set_updated_at': H1 },
   functions: { 'f:get_contact(uuid)': H1 },
   relation_grants: { 'r:public.contacts|authenticated|SELECT|grantor=postgres': H1 },
+  column_grants: { 'r:public.contacts.email|authenticated|SELECT|grantor=postgres': H1 },
   routine_grants: { 'f:get_contact(uuid)|authenticated|EXECUTE|grantor=postgres': H1 },
+  type_grants: { 'e:public.contact_state|authenticated|USAGE|grantor=postgres': H1 },
+  default_grants: { 'public|postgres|r|authenticated|SELECT|grantor=postgres': H1 },
   schema_grants: { 'public|authenticated|USAGE|grantor=postgres': H1 },
 };
 

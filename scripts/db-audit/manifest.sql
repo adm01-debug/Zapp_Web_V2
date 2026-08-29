@@ -38,7 +38,7 @@ WITH columns_manifest AS (
   JOIN pg_class c ON c.oid = ad.adrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'
-    AND c.relkind IN ('r', 'p', 'f')
+    AND c.relkind IN ('r', 'p', 'v', 'f')
 ), constraints_manifest AS (
   SELECT 'relation:' || format('%I.%I', c.relname, co.conname) AS k,
          md5(concat_ws('|',
@@ -84,6 +84,97 @@ WITH columns_manifest AS (
   JOIN pg_class tbl ON tbl.oid = i.indrelid
   JOIN pg_namespace n ON n.oid = tbl.relnamespace
   WHERE n.nspname = 'public'
+), views_manifest AS (
+  SELECT format('%s:%I', c.relkind, c.relname) AS k,
+         md5(concat_ws('|',
+           pg_get_userbyid(c.relowner),
+           c.relkind::text,
+           c.relpersistence::text,
+           c.relispopulated::text,
+           coalesce((
+             SELECT string_agg(option, ',' ORDER BY option)
+             FROM unnest(c.reloptions) AS option
+           ), ''),
+           pg_get_viewdef(c.oid, false)
+         )) AS h
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('v', 'm')
+), types_manifest AS (
+  SELECT format('%s:%I', t.typtype, t.typname) AS k,
+         md5(concat_ws('|',
+           pg_get_userbyid(t.typowner),
+           t.typtype::text,
+           t.typcategory::text,
+           t.typispreferred::text,
+           t.typisdefined::text,
+           t.typdelim::text,
+           t.typnotnull::text,
+           t.typlen::text,
+           t.typbyval::text,
+           t.typalign::text,
+           t.typstorage::text,
+           CASE WHEN t.typbasetype = 0 THEN ''
+                ELSE pg_catalog.format_type(t.typbasetype, t.typtypmod) END,
+           coalesce(pg_get_expr(t.typdefaultbin, 0, false), t.typdefault, ''),
+           CASE WHEN coll.oid IS NULL THEN ''
+                ELSE format('%I.%I', coll_n.nspname, coll.collname) END,
+           coalesce((
+             SELECT string_agg(
+               enum.enumsortorder::text || ':' || enum.enumlabel,
+               ',' ORDER BY enum.enumsortorder
+             )
+             FROM pg_enum enum
+             WHERE enum.enumtypid = t.oid
+           ), ''),
+           coalesce((
+             SELECT string_agg(
+               format(
+                 '%I:%s:%s',
+                 attribute.attname,
+                 pg_catalog.format_type(attribute.atttypid, attribute.atttypmod),
+                 attribute.attnotnull
+               ),
+               ',' ORDER BY attribute.attnum
+             )
+             FROM pg_attribute attribute
+             WHERE attribute.attrelid = t.typrelid
+               AND attribute.attnum > 0
+               AND NOT attribute.attisdropped
+           ), ''),
+           coalesce(pg_catalog.format_type(range_def.rngsubtype, NULL), ''),
+           CASE WHEN range_sub_opclass.oid IS NULL THEN ''
+                ELSE format(
+                  '%I.%I',
+                  range_sub_opclass_namespace.nspname,
+                  range_sub_opclass.opcname
+                ) END,
+           CASE WHEN range_def.rngcollation = 0 THEN ''
+                ELSE range_def.rngcollation::regcollation::text END,
+           CASE WHEN range_def.rngcanonical = 0 THEN ''
+                ELSE range_def.rngcanonical::regprocedure::text END,
+           CASE WHEN range_def.rngsubdiff = 0 THEN ''
+                ELSE range_def.rngsubdiff::regprocedure::text END,
+           coalesce(pg_catalog.format_type(range_def.rngmultitypid, NULL), '')
+         )) AS h
+  FROM pg_type t
+  JOIN pg_namespace n ON n.oid = t.typnamespace
+  LEFT JOIN pg_class composite ON composite.oid = t.typrelid
+  LEFT JOIN pg_collation coll ON coll.oid = t.typcollation AND t.typcollation <> 0
+  LEFT JOIN pg_namespace coll_n ON coll_n.oid = coll.collnamespace
+  LEFT JOIN pg_range range_def
+    ON range_def.rngtypid = t.oid OR range_def.rngmultitypid = t.oid
+  LEFT JOIN pg_opclass range_sub_opclass
+    ON range_sub_opclass.oid = range_def.rngsubopc
+  LEFT JOIN pg_namespace range_sub_opclass_namespace
+    ON range_sub_opclass_namespace.oid = range_sub_opclass.opcnamespace
+  WHERE n.nspname = 'public'
+    AND (
+      t.typtype IN ('d', 'e', 'r', 'm')
+      OR (t.typtype = 'c' AND composite.relkind = 'c')
+      OR (t.typtype = 'b' AND t.typelem = 0 AND t.typisdefined)
+    )
 ), rls_manifest AS (
   SELECT format('%I', c.relname) AS k,
          md5(concat_ws('|', c.relrowsecurity::text, c.relforcerowsecurity::text)) AS h
@@ -165,6 +256,27 @@ WITH columns_manifest AS (
   )) AS acl
   WHERE n.nspname = 'public'
     AND c.relkind IN ('r', 'p', 'v', 'm', 'f', 'S')
+), column_grants_manifest AS (
+  SELECT format(
+           '%s:%I.%I.%I|%s|%s|grantor=%s',
+           c.relkind,
+           n.nspname,
+           c.relname,
+           a.attname,
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_attribute a
+  JOIN pg_class c ON c.oid = a.attrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  CROSS JOIN LATERAL aclexplode(a.attacl) AS acl
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+    AND a.attnum > 0
+    AND NOT a.attisdropped
+    AND a.attacl IS NOT NULL
 ), routine_grants_manifest AS (
   SELECT format(
            '%s:%I(%s)|%s|%s|grantor=%s',
@@ -181,6 +293,53 @@ WITH columns_manifest AS (
   CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f'::"char", p.proowner))) AS acl
   WHERE n.nspname = 'public'
     AND p.prokind IN ('f', 'p')
+), type_grants_manifest AS (
+  SELECT format(
+           '%s:%I.%I|%s|%s|grantor=%s',
+           t.typtype,
+           n.nspname,
+           t.typname,
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_type t
+  JOIN pg_namespace n ON n.oid = t.typnamespace
+  LEFT JOIN pg_class composite ON composite.oid = t.typrelid
+  CROSS JOIN LATERAL aclexplode(coalesce(t.typacl, acldefault('T'::"char", t.typowner))) AS acl
+  WHERE n.nspname = 'public'
+    AND (
+      t.typtype IN ('d', 'e', 'r', 'm')
+      OR (t.typtype = 'c' AND composite.relkind = 'c')
+      OR (t.typtype = 'b' AND t.typelem = 0 AND t.typisdefined)
+    )
+), default_grants_manifest AS (
+  SELECT format(
+           'row:%s|owner=%s|object=%s',
+           CASE WHEN defaults.defaclnamespace = 0 THEN '<global>' ELSE namespace.nspname END,
+           pg_get_userbyid(defaults.defaclrole),
+           defaults.defaclobjtype
+         ) AS k,
+         md5('present') AS h
+  FROM pg_default_acl defaults
+  LEFT JOIN pg_namespace namespace ON namespace.oid = defaults.defaclnamespace
+  WHERE defaults.defaclnamespace = 0 OR namespace.nspname = 'public'
+  UNION ALL
+  SELECT format(
+           '%s|%s|%s|%s|%s|grantor=%s',
+           CASE WHEN defaults.defaclnamespace = 0 THEN '<global>' ELSE namespace.nspname END,
+           pg_get_userbyid(defaults.defaclrole),
+           defaults.defaclobjtype,
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_default_acl defaults
+  LEFT JOIN pg_namespace namespace ON namespace.oid = defaults.defaclnamespace
+  CROSS JOIN LATERAL aclexplode(defaults.defaclacl) AS acl
+  WHERE defaults.defaclnamespace = 0 OR namespace.nspname = 'public'
 ), schema_grants_manifest AS (
   SELECT format(
            '%I|%s|%s|grantor=%s',
@@ -207,11 +366,16 @@ SELECT jsonb_pretty(jsonb_build_object(
   'defaults',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM defaults_manifest),
   'constraints',     (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM constraints_manifest),
   'indexes',         (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM indexes_manifest),
+  'views',           (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM views_manifest),
+  'types',           (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM types_manifest),
   'rls',             (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM rls_manifest),
   'policies',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM policies_manifest),
   'triggers',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM triggers_manifest),
   'functions',       (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM functions_manifest),
   'relation_grants', (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM relation_grants_manifest),
+  'column_grants',   (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM column_grants_manifest),
   'routine_grants',  (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM routine_grants_manifest),
+  'type_grants',     (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM type_grants_manifest),
+  'default_grants',  (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM default_grants_manifest),
   'schema_grants',   (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM schema_grants_manifest)
 ));
