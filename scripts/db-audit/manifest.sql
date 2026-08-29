@@ -38,7 +38,7 @@ WITH columns_manifest AS (
   JOIN pg_class c ON c.oid = ad.adrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'
-    AND c.relkind IN ('r', 'p', 'f')
+    AND c.relkind IN ('r', 'p', 'v', 'f')
 ), constraints_manifest AS (
   SELECT 'relation:' || format('%I.%I', c.relname, co.conname) AS k,
          md5(concat_ws('|',

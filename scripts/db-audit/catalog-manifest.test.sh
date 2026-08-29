@@ -73,6 +73,8 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO authenticate
 
 CREATE VIEW public.active_contacts WITH (security_barrier = true) AS
 SELECT id, email FROM public.contacts WHERE email <> '';
+ALTER VIEW public.active_contacts ALTER COLUMN email
+  SET DEFAULT 'generated@example.test';
 
 CREATE FUNCTION public.get_contact(p_id bigint) RETURNS text
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -134,6 +136,10 @@ for (const manifest of [A, B]) {
     Object.hasOwn(manifest.constraints, 'domain:nonempty_text.nonempty_text_check'),
     'constraint de domain public ausente',
   );
+  assert.ok(
+    Object.hasOwn(manifest.defaults, 'active_contacts.email'),
+    'default de coluna de view public ausente',
+  );
 }
 
 delete A.generated_at;
@@ -163,6 +169,8 @@ REVOKE USAGE ON TYPE public.contact_state FROM authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM authenticated;
 CREATE OR REPLACE VIEW public.active_contacts WITH (security_barrier = true) AS
 SELECT id, email FROM public.contacts WHERE email <> 'blocked@example.test';
+ALTER VIEW public.active_contacts ALTER COLUMN email
+  SET DEFAULT 'mutated@example.test';
 CREATE FUNCTION public.get_contact(p_id bigint, p_verbose boolean) RETURNS text
 LANGUAGE sql STABLE SET search_path = public
 AS $$ SELECT p_id::text || ':' || p_verbose::text $$;
@@ -206,6 +214,11 @@ assert.notEqual(
   manifestBefore.constraints['domain:nonempty_text.nonempty_text_check'],
   manifestAfter.constraints['domain:nonempty_text.nonempty_text_check'],
   'alteracao de constraint de domain nao foi detectada',
+);
+assert.notEqual(
+  manifestBefore.defaults['active_contacts.email'],
+  manifestAfter.defaults['active_contacts.email'],
+  'alteracao de default de view nao foi detectada',
 );
 NODE
 
