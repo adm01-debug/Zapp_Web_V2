@@ -18,7 +18,7 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `check-migration-drift.mjs` | parcial | Valida migrations locais e compara versao, nome e evidencia com `schema_migrations` |
 | `check-migration-drift.test.mjs` | nao | Simula duplicata, vazio, conteudo alterado e drift do ledger com `psql` fake |
 | `migration-evidence.json` | nao | Excecoes exatas, versionadas e com hash para stubs historicos comment-only |
-| `manifest.sql` | sim | Manifesto deterministico por objeto: defaults, constraints, indices, RLS, policies, triggers, funcoes e grants |
+| `manifest.sql` | sim | Manifesto deterministico: views, tipos/enums, defaults, constraints, indices, RLS, policies, triggers, funcoes e grants (relacao/coluna/rotina/tipo/default/schema) |
 | `check-manifest-fresh.mjs` | nao | Compara `supabase/schema-manifest.json` com o banco oficial, provando identidade |
 | `diff.mjs` | nao | Diffa dois manifestos v2, inclusive entre bancos distintos |
 | `catalog-manifest.test.sh` | Docker local | Executa os dois SQLs no PostgreSQL 17, desloca OIDs e simula mutacoes estruturais |

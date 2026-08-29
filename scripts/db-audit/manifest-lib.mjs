@@ -5,12 +5,17 @@ export const MANIFEST_SECTIONS = [
   'defaults',
   'constraints',
   'indexes',
+  'views',
+  'types',
   'rls',
   'policies',
   'triggers',
   'functions',
   'relation_grants',
+  'column_grants',
   'routine_grants',
+  'type_grants',
+  'default_grants',
   'schema_grants',
 ];
 

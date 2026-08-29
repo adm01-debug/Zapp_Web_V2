@@ -60,10 +60,19 @@ CREATE TABLE public.contacts (
 );
 CREATE DOMAIN public.nonempty_text AS text
   CONSTRAINT nonempty_text_check CHECK (VALUE <> '');
+CREATE TYPE public.contact_state AS ENUM ('active', 'inactive');
+CREATE TYPE public.contact_label AS (name text, priority integer);
 CREATE INDEX contacts_created_at_idx ON public.contacts (created_at DESC);
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY contacts_select ON public.contacts FOR SELECT TO authenticated USING (true);
 GRANT SELECT ON public.contacts TO authenticated;
+GRANT SELECT (email) ON public.contacts TO authenticated;
+REVOKE ALL ON TYPE public.contact_state FROM PUBLIC;
+GRANT USAGE ON TYPE public.contact_state TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO authenticated;
+
+CREATE VIEW public.active_contacts WITH (security_barrier = true) AS
+SELECT id, email FROM public.contacts WHERE email <> '';
 
 CREATE FUNCTION public.get_contact(p_id bigint) RETURNS text
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -99,8 +108,9 @@ const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
 const A = JSON.parse(fs.readFileSync(manifestAPath, 'utf8'));
 const B = JSON.parse(fs.readFileSync(manifestBPath, 'utf8'));
 const sections = [
-  'columns', 'defaults', 'constraints', 'indexes', 'rls', 'policies',
-  'triggers', 'functions', 'relation_grants', 'routine_grants', 'schema_grants',
+  'columns', 'defaults', 'constraints', 'indexes', 'views', 'types', 'rls', 'policies',
+  'triggers', 'functions', 'relation_grants', 'column_grants', 'routine_grants',
+  'type_grants', 'default_grants', 'schema_grants',
 ];
 
 assert.equal(catalog.format_version, 2);
@@ -138,6 +148,7 @@ ALTER TABLE public.contacts ALTER COLUMN created_at SET DEFAULT statement_timest
 ALTER TABLE public.contacts ADD CONSTRAINT contacts_email_nonempty CHECK (email <> '');
 ALTER DOMAIN public.nonempty_text DROP CONSTRAINT nonempty_text_check;
 ALTER DOMAIN public.nonempty_text ADD CONSTRAINT nonempty_text_check CHECK (length(VALUE) > 1);
+ALTER TYPE public.contact_state ADD VALUE 'archived';
 CREATE INDEX contacts_email_lower_idx ON public.contacts ((lower(email)));
 ALTER TABLE public.contacts FORCE ROW LEVEL SECURITY;
 ALTER POLICY contacts_select ON public.contacts USING (email <> 'blocked@example.test');
@@ -146,7 +157,12 @@ CREATE OR REPLACE FUNCTION public.get_contact(p_id bigint) RETURNS text
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$ SELECT 'contact:' || p_id::text $$;
 REVOKE SELECT ON public.contacts FROM authenticated;
+GRANT UPDATE (email) ON public.contacts TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.get_contact(bigint) FROM authenticated;
+REVOKE USAGE ON TYPE public.contact_state FROM authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM authenticated;
+CREATE OR REPLACE VIEW public.active_contacts WITH (security_barrier = true) AS
+SELECT id, email FROM public.contacts WHERE email <> 'blocked@example.test';
 CREATE FUNCTION public.get_contact(p_id bigint, p_verbose boolean) RETURNS text
 LANGUAGE sql STABLE SET search_path = public
 AS $$ SELECT p_id::text || ':' || p_verbose::text $$;
@@ -176,8 +192,9 @@ assert.equal(
 );
 
 for (const section of [
-  'defaults', 'constraints', 'indexes', 'rls', 'policies', 'triggers',
-  'functions', 'relation_grants', 'routine_grants',
+  'defaults', 'constraints', 'indexes', 'views', 'types', 'rls', 'policies', 'triggers',
+  'functions', 'relation_grants', 'column_grants', 'routine_grants',
+  'type_grants', 'default_grants',
 ]) {
   assert.notDeepEqual(
     manifestBefore[section],

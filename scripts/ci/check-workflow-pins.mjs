@@ -11,10 +11,31 @@ export function findMutableActionRefs(source, file = "workflow.yml") {
   const lines = source.replace(/\r\n?/gu, "\n").split("\n");
 
   for (const [index, line] of lines.entries()) {
-    const match = line.match(/^\s*(?:-\s*)?uses:\s*([^\s#]+)(?:\s+#.*)?$/u);
+    const match = line.match(/^\s*(?:-\s*)?(?:uses|["']uses["'])\s*:\s*(.*)$/u);
     if (!match) continue;
 
-    const reference = match[1].replace(/^['"]|['"]$/gu, "");
+    const rawValue = match[1].trim();
+    const blockScalar = /^[>|][+-]?(?:\s+#.*)?$/u.test(rawValue);
+    if (blockScalar) {
+      violations.push({
+        file,
+        line: index + 1,
+        reference: "<unsupported-or-multiline-value>",
+      });
+      continue;
+    }
+
+    const scalar = rawValue.match(/^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u);
+    if (!scalar) {
+      violations.push({
+        file,
+        line: index + 1,
+        reference: rawValue ? "<unsupported-or-multiline-value>" : "<missing-or-multiline-value>",
+      });
+      continue;
+    }
+
+    const reference = scalar[1] ?? scalar[2] ?? scalar[3];
     if (reference.startsWith("./") || reference.startsWith("docker://")) continue;
     if (!FULL_SHA.test(reference)) {
       violations.push({ file, line: index + 1, reference });
