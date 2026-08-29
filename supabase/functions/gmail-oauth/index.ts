@@ -169,9 +169,12 @@ Deno.serve(async (req) => {
               method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
             }).catch(() => {});
           } catch { /* tokens may not exist */ }
-          // Clear encrypted tokens and deactivate
-          await storeTokens(supabase, account.id, "", "");
-          await supabase.from("gmail_accounts").update({ is_active: false }).eq("id", account_id);
+          // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
+          await supabase.from("gmail_accounts").update({
+            is_active: false,
+            access_token_encrypted: null,
+            refresh_token_encrypted: null,
+          }).eq("id", account_id);
         }
 
         log.done(200, { action });
