@@ -150,7 +150,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nova Variante A/B</DialogTitle>
           </DialogHeader>

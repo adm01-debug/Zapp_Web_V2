@@ -64,7 +64,7 @@ export function ConnectionsView() {
         actions={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild><Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Conexão</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
@@ -83,7 +83,7 @@ export function ConnectionsView() {
 
       {/* QR Code Dialog */}
       <Dialog open={qrCodeDialog.open} onOpenChange={(open) => !open && closeQrDialog()}>
-        <DialogContent className="sm:max-w-md text-center">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md text-center">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-center gap-2">
               {qrCodeDialog.status === 'connected' ? <><CheckCircle2 className="w-5 h-5 text-status-online" />Conectado!</> :

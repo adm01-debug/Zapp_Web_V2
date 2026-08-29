@@ -41,7 +41,7 @@ export function BlockIPDialog({ open, onClose, onSuccess }: BlockIPDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Bloquear IP</DialogTitle>
           <DialogDescription>Adicione um endereço IP à lista de bloqueio</DialogDescription>

@@ -14,7 +14,7 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center justify-between">
             <span className="truncate">{item.filename}</span>

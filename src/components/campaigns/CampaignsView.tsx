@@ -192,7 +192,7 @@ export function CampaignsView() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedCampaign} onOpenChange={() => setSelectedCampaign(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-lg">
           {selectedCampaign && (
             <>
               <DialogHeader>

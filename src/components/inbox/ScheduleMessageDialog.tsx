@@ -66,7 +66,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-whatsapp" />

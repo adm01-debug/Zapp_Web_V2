@@ -220,7 +220,7 @@ export function MetaCAPIView() {
 
       {/* Config Dialog */}
       <Dialog open={showConfig} onOpenChange={setShowConfig}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader><DialogTitle>Configurar Meta CAPI</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>

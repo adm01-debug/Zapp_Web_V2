@@ -62,7 +62,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] p-0">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh] p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-lg leading-tight">{dp.name}</DialogTitle>
         </DialogHeader>

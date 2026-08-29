@@ -35,7 +35,7 @@ export function PasskeyDialogs({
   return (
     <>
       <Dialog open={showRegisterDialog} onOpenChange={setShowRegisterDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Fingerprint className="h-5 w-5" />Adicionar Passkey</DialogTitle>
             <DialogDescription>Dê um nome para identificar esta passkey (ex: "MacBook Pro", "iPhone 15")</DialogDescription>
@@ -53,7 +53,7 @@ export function PasskeyDialogs({
       </Dialog>
 
       <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Renomear Passkey</DialogTitle>
             <DialogDescription>Digite um novo nome para identificar esta passkey</DialogDescription>

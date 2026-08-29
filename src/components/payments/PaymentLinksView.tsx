@@ -209,7 +209,7 @@ export function PaymentLinksView() {
 
       {/* Create Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Novo Link de Pagamento</DialogTitle>
           </DialogHeader>

@@ -231,7 +231,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
 
       {/* Selected date detail dialog */}
       <Dialog open={!!selectedDate && selectedDateMessages.length > 0} onOpenChange={() => setSelectedDate(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />

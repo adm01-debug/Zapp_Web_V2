@@ -94,7 +94,7 @@ export function GeoBlockingPanel() {
             <div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Globe className="w-5 h-5 text-primary" /></div><div><CardTitle>Listas de Países</CardTitle><CardDescription>Gerencie whitelist e blacklist de países</CardDescription></div></div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild><Button size="sm" className="gap-2"><Plus className="w-4 h-4" />Adicionar País</Button></DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby={undefined}>
                 <DialogHeader><DialogTitle>Adicionar à {activeTab === 'whitelist' ? 'Whitelist' : 'Blacklist'}</DialogTitle><DialogDescription>{activeTab === 'whitelist' ? 'Países na whitelist terão acesso permitido.' : 'Países na blacklist terão acesso bloqueado.'}</DialogDescription></DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2"><Label>País</Label>

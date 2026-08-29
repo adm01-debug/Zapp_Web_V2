@@ -107,7 +107,7 @@ export function SLAConfigurationManager() {
       </motion.div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Editar SLA' : 'Nova Configuração de SLA'}</DialogTitle>
             <DialogDescription>{editingId ? 'Atualize os prazos e nível de prioridade desta configuração.' : 'Defina metas de tempo de resposta e resolução para um nível de prioridade.'}</DialogDescription>

@@ -149,7 +149,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh] overflow-hidden">
         <DialogHeader className="pb-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">

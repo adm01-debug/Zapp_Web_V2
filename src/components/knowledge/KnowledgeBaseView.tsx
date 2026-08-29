@@ -115,7 +115,7 @@ export function KnowledgeBaseView() {
       </Tabs>
 
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
-        <DialogContent size="xl">
+        <DialogContent aria-describedby={undefined} size="xl">
           <DialogHeader><DialogTitle>{editingId ? 'Editar Artigo' : 'Novo Artigo'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Título *</Label><Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Título do artigo" /></div>

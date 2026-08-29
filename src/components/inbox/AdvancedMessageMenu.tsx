@@ -171,7 +171,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
 
       {/* Sticker Dialog */}
       <Dialog open={stickerDialog} onOpenChange={setStickerDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sticker className="w-5 h-5 text-primary" />
@@ -201,7 +201,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
 
       {/* Poll Dialog */}
       <Dialog open={pollDialog} onOpenChange={setPollDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
@@ -263,7 +263,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
 
       {/* Contact Card Dialog */}
       <Dialog open={contactDialog} onOpenChange={setContactDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Contact2 className="w-5 h-5 text-primary" />
@@ -296,7 +296,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
 
       {/* Status Dialog */}
       <Dialog open={statusDialog} onOpenChange={setStatusDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Radio className="w-5 h-5 text-primary" />
