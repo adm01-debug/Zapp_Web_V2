@@ -158,8 +158,8 @@ VALUES (
   '20260827130000',
   'fix_gmail_crypto_search_path_and_missing_key',
   ARRAY[
-    '-- CREATE OR REPLACE public.encrypt_gmail_token(text): search_path public -> public, extensions',
-    '-- CREATE OR REPLACE public.decrypt_gmail_token(bytea): idem + RAISE quando app.encryption_key ausente',
+    'historical-evidence-a-must-be-preserved',
+    'historical-evidence-b-must-be-preserved',
     '-- Fonte de verdade: supabase/migrations/20260827130000_fix_gmail_crypto_search_path.sql'
   ]
 );
@@ -170,6 +170,11 @@ gmail_source="$(psql_sql -At -c "SELECT statements[3] FROM supabase_migrations.s
   fail 'a primeira aplicacao nao corrigiu a referencia Gmail'
 ((passed += 1))
 printf '[PASS] referencia Gmail stale e reconciliada\n'
+gmail_untouched="$(psql_sql -At -F '|' -c "SELECT statements[1], statements[2] FROM supabase_migrations.schema_migrations WHERE version = '20260827130000'")"
+[[ "$gmail_untouched" == 'historical-evidence-a-must-be-preserved|historical-evidence-b-must-be-preserved' ]] ||
+  fail 'a reconciliacao sobrescreveu evidencias Gmail fora de statements[3]'
+((passed += 1))
+printf '[PASS] evidencias Gmail fora do marcador stale sao preservadas\n'
 first_snapshot="$(psql_sql -At -c "SELECT md5(row_to_json(m)::text) FROM supabase_migrations.schema_migrations AS m WHERE version = '20260827130000'")"
 apply_migration
 second_snapshot="$(psql_sql -At -c "SELECT md5(row_to_json(m)::text) FROM supabase_migrations.schema_migrations AS m WHERE version = '20260827130000'")"

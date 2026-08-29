@@ -142,6 +142,8 @@ a assinatura estrutural e o SHA-256 domain-separated exato do array historico de
 `statements`; assim um replay limpo de `mcp_exec`, `statements` nulos, conteudo
 hibrido ou um corpo divergente permanecem intocados. Esse comportamento e a
 idempotencia sao simulados em PostgreSQL 17 pelo guard offline.
+Na referencia Gmail, a reconciliacao altera somente `statements[3]`; os demais
+elementos de evidencia permanecem intactos mesmo se divergirem do resumo esperado.
 
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.
