@@ -332,19 +332,54 @@ test('falha quando ledger fornece nome divergente', () => {
   assert.match(result.stderr, /nome divergente/);
 });
 
-test('falha quando banco possui versao extra sem arquivo', () => {
+test('registro extra informa hashes seguros e nome normalizado sem vazar statements', () => {
+  const extraVersion = '20260829050100';
+  const secret = 'literal-sensivel-do-ledger';
+  const extraStatements = [
+    `SELECT '${secret}'`,
+    `-- comentario ${secret} que tambem nao pode aparecer`,
+  ];
   const result = runGuard({
     ledger: [
       ledgerRecord(),
       {
-        version: '20260829050100',
-        name: 'db_only',
-        statements: ['SELECT 1'],
+        version: extraVersion,
+        name: `${extraVersion}_db_only.sql`,
+        statements: extraStatements,
       },
     ],
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Registro no banco sem arquivo no repo/);
+  assert.match(result.stderr, new RegExp(`version=${extraVersion}`));
+  assert.match(result.stderr, /name="db_only"/);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash(extraStatements)}`),
+  );
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_sql_sha256=${sha256(`select '${secret}'`)}`),
+  );
+  assert.doesNotMatch(result.stdout + result.stderr, new RegExp(secret));
+  assert.doesNotMatch(result.stdout + result.stderr, /SELECT '/);
+});
+
+test('registro extra sem name/statements ainda informa hashes deterministas', () => {
+  const extraVersion = '20260829050100';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: null, statements: null },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, new RegExp(`version=${extraVersion} name=null`));
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash([])}`),
+  );
+  assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${sha256('')}`));
 });
 
 test('falha fechado para saida malformada do psql fake', () => {

@@ -577,7 +577,17 @@ function compare(migrations, records, exceptionsByVersion) {
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
-    errors.push(...withoutFile.map(({ version, name }) => `  ${version}${name ? `  ${name}` : ''}`));
+    errors.push(...withoutFile.map((record) => {
+      const normalizedName = record.name
+        ? normalizeLedgerName(record.version, record.name)
+        : null;
+      return [
+        `  version=${record.version}`,
+        `name=${JSON.stringify(normalizedName)}`,
+        `ledger_statements_sha256=${ledgerStatementsSha256(record.statements)}`,
+        `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
+      ].join(' ');
+    }));
   }
 
   for (const migration of migrations) {
