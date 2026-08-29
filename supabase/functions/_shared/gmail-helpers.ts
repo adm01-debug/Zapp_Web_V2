@@ -33,5 +33,17 @@ export async function syncMessages(supabase: any, accountId: string, accessToken
  results.push({ id: msg.id, threadId: msg.threadId, subject: getHeader(headers, "Subject") }); } catch (err: unknown) { const errMsg = err instanceof Error ? err.message : String(err); log.error(`Error syncing message ${msgId}`, { error: errMsg }); failed.push({ id: msgId, error: errMsg }); } }
  // FIX Etapa 18: gravar last_error se houver falhas
  if (failed.length > 0) { await supabase.from("gmail_accounts").update({ last_error: `${failed.length} msgs falharam: ${failed[0].error}` }).eq("id", accountId); }
- return { synced: results.length, failed: failed.length, messages: results, nextPageToken: listData.nextPageToken };
+ // G3: reconciliar is_unread das threads afetadas pelo sync
+  const affectedThreadIds = [...new Set(results.map(r => r.threadId).filter(Boolean))];
+  if (affectedThreadIds.length > 0) {
+    // Buscar UUIDs das threads pelo gmail_thread_id
+    const { data: threadRows } = await supabase.from("email_threads").select("id,gmail_thread_id").in("gmail_thread_id", affectedThreadIds);
+    if (threadRows?.length) {
+      for (const tr of threadRows) {
+        const { count: unreadCount } = await supabase.from("email_messages").select("id",{count:'exact',head:true}).eq("thread_id",tr.id).eq("is_read",false);
+        await supabase.from("email_threads").update({ is_unread: (unreadCount ?? 0) > 0 }).eq("id", tr.id);
+      }
+    }
+  }
+  return { synced: results.length, failed: failed.length, messages: results, nextPageToken: listData.nextPageToken };
 }
