@@ -130,10 +130,14 @@ artefato; nomes e hashes foram revisados sem publicar os `statements`. O coletor
 workflow eram de uso unico e foram removidos depois da verificacao. Nenhum registro
 do ledger ou objeto do banco foi alterado por essa reconciliacao.
 
-O run vivo `33256666088`, posterior a essa fotografia, comprovou que o registro
-`20260829020000` passou a usar o nome `mcp_exec_functions_harden`. A excecao de
-colisao derivada da fotografia anterior foi entao retirada; o guard voltou a exigir
-as provas normais do ledger atual e o contrato ACL continua validado em etapa propria.
+O run vivo `33256666088`, posterior a essa fotografia, observou temporariamente o
+registro `20260829020000` com nome `mcp_exec_functions_harden`. Durante a execucao
+concorrente de outro agente, a reconciliacao versionada `20260829060000` restaurou o
+nome historico `fix_reassign_absent_agents_last_seen_at`, corrigiu a referencia stale
+de `20260827130000` e registrou a propria operacao no ledger. O run `33257354121`
+confirmou esse estado com 293 registros. Por isso a excecao de colisao permanece
+fixada pelos hashes originais; o novo arquivo versionado espelha a operacao ja
+aplicada, sem uma segunda escrita no banco por este fluxo.
 
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.

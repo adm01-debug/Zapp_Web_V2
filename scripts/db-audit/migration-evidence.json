@@ -158,6 +158,24 @@
       "justification": "O ledger e o replay preservam a mesma correção com representações textuais diferentes; bytes e formas canônicas observadas ficam fixados separadamente."
     },
     {
+      "version": "20260829020000",
+      "filename": "20260829020000_mcp_exec_functions_harden.sql",
+      "file_sha256": "9c0471b1d72ae4636e3b059030397d831fe0860524c53d497048c6ec7a9474b5",
+      "file_sql_sha256": "018f8ff60ec100ec34aa7caa35d4d1f4d95100cddbf681407a2ff54ef17f8aaf",
+      "ledger_name": "fix_reassign_absent_agents_last_seen_at",
+      "ledger_statements_sha256": "153653d2bc3d08f05e04145162e92bd8afb9d181deb033a8fb931f942ccb726a",
+      "ledger_sql_sha256": "f6c69d1415f35fa6126c520e37d11b9626e16fa8e5b522d6d652470adb024952",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "version-collision",
+      "related_migration": {
+        "version": "20260829040000",
+        "filename": "20260829040000_fix_reassign_absent_agents_last_seen_at.sql",
+        "file_sha256": "19f38bc1f5a4d7a4d649fe4b04c8af0cbe3d0a9085e73827e6e2e4c7a129609f",
+        "file_sql_sha256": "5fed5405c17cb533e57654cee85f8874b82b222a0681ec12f8b1541575cd0796"
+      },
+      "justification": "A versão do ledger foi ocupada pela correção de reatribuição enquanto o replay usa o mesmo prefixo para o hardening mcp_exec; a correção histórica é preservada na versão posterior relacionada."
+    },
+    {
       "version": "20260829020100",
       "filename": "20260829020100_mcp_exec_functions_harden_stub.sql",
       "file_sha256": "e54f58763c95abe37be3843b7a34c7d9500be7caef6fef39dff32388a4efdb38",
