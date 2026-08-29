@@ -52,6 +52,9 @@ jobs:
       - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
+      - name: Simular drift do catalogo
+        run: node --test scripts/db-audit/check-catalog-fresh.test.mjs
+
   # ==================================================================
   # JOB 2: drift entre arquivos e schema_migrations
   # ==================================================================
@@ -98,16 +101,32 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
 
-      - name: Regenerar catalogo e comparar com o commitado
+      - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           if [ -z "$DESTINO_URL" ]; then
-            echo "DESTINO_URL ausente - checagem de frescura pulada."
-            exit 0
+            echo "::error::DESTINO_URL ausente - catalogo e ACL nao podem ser validados."
+            exit 1
           fi
-          psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > /tmp/fresh.json
+
+      - name: Regenerar catalogo e comparar com o commitado
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/catalog.sql > /tmp/fresh.json
+          test -s /tmp/fresh.json
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
+
+      - name: Publicar catalogo fresco para revisao
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-catalog-${{ github.run_id }}
+          path: /tmp/fresh.json
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Verificar ACL de mcp_exec e mcp_exec_many
         # mcp_exec e mcp_exec_many sao funcoes SECURITY DEFINER que executam SQL
@@ -115,34 +134,9 @@ jobs:
         # logado teria SQL arbitrario como superusuario. Ver docs/DB-SECURITY.md s1.
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: |
-          if [ -z "$DESTINO_URL" ]; then
-            echo "DESTINO_URL ausente - verificacao de ACL pulada."
-            exit 0
-          fi
-          FALHA=0
-          for func in mcp_exec mcp_exec_many; do
-            acl=$(psql "$DESTINO_URL" -At -c \
-              "SELECT proacl::text FROM pg_proc p \
-               JOIN pg_namespace n ON n.oid=p.pronamespace \
-               WHERE n.nspname='public' AND p.proname='${func}'")
-            echo "${func} ACL: ${acl}"
-            if [ -z "${acl}" ]; then
-              echo "FALHA: ${func} proacl IS NULL - herda ACL do schema (inseguro)"
-              FALHA=1
-              continue
-            fi
-            case "${acl}" in
-              *authenticated=X*|*anon=X*)
-                echo "FALHA: ${func} executavel por authenticated ou anon!"
-                FALHA=1
-                ;;
-              *)
-                echo "OK: ${func} restrito a postgres e service_role"
-                ;;
-            esac
-          done
-          exit $FALHA
+        run: >-
+          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-mcp-exec-acl.sql
 
       # Etapa 19 do plano types-sync (2026-08-29):
       # Verificar frescor do types.ts contra o banco real.
