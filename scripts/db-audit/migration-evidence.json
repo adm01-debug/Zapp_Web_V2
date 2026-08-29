@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "version": "20260829020100",
+      "filename": "20260829020100_mcp_exec_functions_harden_stub.sql",
+      "sha256": "e54f58763c95abe37be3843b7a34c7d9500be7caef6fef39dff32388a4efdb38",
+      "ledger_name": "mcp_exec_functions_harden_stub",
+      "kind": "ledger-only/comment-only",
+      "justification": "Registro versionado já existia no ledger; o commit 49e07ba8 adicionou somente o stub de reconciliação e documentou o SQL relacionado na migration 20260829020000. Nenhum statement histórico foi reconstruído."
+    }
+  ]
+}

@@ -1,21 +1,12 @@
 # ==================================================================
-# ZAPP-WEB · Guardas de banco de dados
+# ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================
-# Origem: plano da auditoria de 27/08/2026, etapas 11, 98 e 99.
-# Ver docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md
-#
-# Tres jobs, de proposito separados por dependencia de credencial:
-#
-#   usage-guard      OFFLINE. Roda sempre, inclusive em PR de fork.
-#   migration-drift  precisa de DESTINO_URL. Pula com aviso se ausente.
-#   catalog-fresh    precisa de DESTINO_URL. So no agendamento semanal / manual.
-#
-# 2026-08-29: adicionado step de verificacao de frescor do types.ts ao
-#             catalog-fresh (Etapa 19 do plano types-sync).
-#             Garante que qualquer PR com types desatualizado falha no CI.
+# Este workflow nunca recebe DESTINO_URL e pode executar codigo de PRs.
+# Consultas ao banco oficial ficam isoladas em db-live-guard.yml, que nao
+# possui gatilho pull_request e so aceita refs/heads/main.
 # ==================================================================
 
-name: DB Guard
+name: DB Guard (offline)
 
 on:
   push:
@@ -25,146 +16,59 @@ on:
       - 'supabase/**'
       - 'scripts/db-audit/**'
       - '.github/workflows/db-guard.yml'
+      - '.github/workflows/db-live-guard.yml'
+      - '.github/workflows/types-sync.yml'
   pull_request:
     branches: [main, develop]
-  schedule:
-    # segunda-feira 06:00 UTC (03:00 em Curitiba)
-    - cron: '0 6 * * 1'
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'scripts/db-audit/**'
+      - '.github/workflows/db-guard.yml'
+      - '.github/workflows/db-live-guard.yml'
+      - '.github/workflows/types-sync.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: db-guard-offline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ==================================================================
-  # JOB 1: acoplamento codigo <-> banco (offline)
-  # ==================================================================
-  usage-guard:
-    name: Acoplamento codigo/banco
+  offline-contract:
+    name: Contrato DB offline
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '24'
 
-      # Sem `install`: o script nao tem dependencia, e node puro.
       - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
-      - name: Simular drift do catalogo
-        run: node --test scripts/db-audit/check-catalog-fresh.test.mjs
+      - name: Testar comparadores de catalogo, manifesto e migrations
+        run: node --test scripts/db-audit/*.test.mjs
 
-  # ==================================================================
-  # JOB 2: drift entre arquivos e schema_migrations
-  # ==================================================================
-  migration-drift:
-    name: Drift de migrations
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
+        run: bash scripts/db-audit/catalog-manifest.test.sh
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
-
-      - name: Comparar arquivos com schema_migrations
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+      # Sem DESTINO_URL: valida nomes, duplicatas e conteudo local das
+      # migrations, mas nao consulta schema_migrations.
+      - name: Validar migrations localmente
         run: node scripts/db-audit/check-migration-drift.mjs
 
-  # ==================================================================
-  # JOB 3: frescura do catalogo + seguranca + types.ts (semanal)
-  # ==================================================================
-  catalog-fresh:
-    name: Frescura do catalogo
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
-
-      - name: Exigir credencial do banco oficial
+      # Harness descartavel na mesma major do banco oficial. Exercita o SQL real e
+      # prova que cada regressao de ACL/contrato encerra com codigo nao zero.
+      - name: Simular regressões do contrato mcp_exec
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: |
-          if [ -z "$DESTINO_URL" ]; then
-            echo "::error::DESTINO_URL ausente - catalogo e ACL nao podem ser validados."
-            exit 1
-          fi
-
-      - name: Verificar ACL de mcp_exec e mcp_exec_many
-        # Funcoes SECURITY DEFINER que executam SQL arbitrario: ver
-        # docs/DB-SECURITY.md s1. Executa antes do diff do catalogo para que um
-        # catalogo desatualizado nunca mascare uma regressao critica de permissao.
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: >-
-          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1
-          -f scripts/db-audit/check-mcp-exec-acl.sql
-
-      - name: Regenerar catalogo e comparar com o commitado
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: |
-          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1 -At \
-            -f scripts/db-audit/catalog.sql > /tmp/fresh.json
-          test -s /tmp/fresh.json
-          node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
-
-      - name: Publicar catalogo fresco para revisao
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: schema-catalog-${{ github.run_id }}
-          path: /tmp/fresh.json
-          if-no-files-found: ignore
-          retention-days: 3
-
-      # Etapa 19 do plano types-sync (2026-08-29):
-      # Verificar frescor do types.ts contra o banco real.
-      # Falha se types.ts commitado divergir — garante que qualquer PR com
-      # types desatualizado e detectado antes de chegar em review.
-      # Independente do workflow types-sync: se um falhar, o outro ainda acusa.
-      - name: Setup Supabase CLI (para verificar frescor do types.ts)
-        uses: supabase/setup-cli@v1
-        with:
-          version: '2.116.0'
-
-      - name: Verificar frescor do types.ts
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: |
-          if [ -z "$DESTINO_URL" ]; then
-            echo "DESTINO_URL ausente - verificacao de frescor do types.ts pulada."
-            exit 0
-          fi
-          bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts
-          # Fix R4: grep -v remove qualquer linha de comentario —
-          # o numero de linhas do header da CLI varia com a versao
-          grep -v '^// ' /tmp/types.fresh.ts                  > /tmp/types.fresh.stripped
-          grep -v '^// ' src/integrations/supabase/types.ts   > /tmp/types.repo.stripped
-          if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
-            echo "FAIL: types.ts desatualizado."
-            echo "Para corrigir: Actions > types-sync > Run workflow"
-            diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30
-            exit 1
-          fi
-          echo "OK: types.ts em sincronia com o banco."
+          ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
