@@ -79,10 +79,57 @@ Independentemente do banco, o guard falha para nome fora de
 `14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
 ou entrada nao regular. Arquivo vazio nunca e aceito. A unica excecao para um
 arquivo somente de comentarios e um stub historico descrito exatamente em
-`scripts/db-audit/migration-evidence.json`: versao, filename, SHA-256 dos bytes,
-`ledger_name`, `kind=ledger-only/comment-only` e justificativa factual. Uma mudanca
-de byte, nome ou ledger invalida a excecao; entradas orfas ou duplicadas tambem
+`scripts/db-audit/migration-evidence.json`. O manifesto usa `schema_version=2`,
+campos estritos, hashes lowercase e entradas em ordem crescente de `version`.
+
+O tipo `ledger-only/comment-only` fixa `version`, `filename`, SHA-256 dos bytes,
+`ledger_name`, o hash do array integral de `statements` e a justificativa factual.
+Ele exige arquivo somente de comentarios e ledger sem SQL canonico. Uma mudanca de
+byte, nome ou statement invalida a excecao; entradas orfas ou duplicadas tambem
 falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+O tipo `ledger-divergence/pinned-replay` existe somente para divergencias historicas
+revisadas. Ele fixa, ao mesmo tempo:
+
+- bytes e SQL canonico do arquivo (`file_sha256` e `file_sql_sha256`);
+- nome exato do ledger;
+- array integral de `statements` e sua forma SQL canonica
+  (`ledger_statements_sha256` e `ledger_sql_sha256`);
+- motivo fechado: `endpoint-literal-update`, `ledger-summary`, `safer-replay`,
+  `format-only` ou `version-collision`;
+- migration relacionada, obrigatoria apenas para colisao de versao;
+- justificativa factual com pelo menos 40 caracteres.
+
+O hash integral usa exatamente
+`sha256("zapp-migration-ledger-statements-v1\0" + JSON.stringify(statements))`.
+`ledger_sql_sha256` e apenas o hash de `canonicalStatements(statements)`: um texto
+que comeca como SQL pode ser somente um resumo historico, portanto esse hash **nao
+prova que o resumo seja SQL executavel**. Ainda assim, pinned replay exige forma
+canonica nao vazia, arquivo local executavel e correspondencia exata de todos os
+hashes. Nunca publique os `statements` brutos.
+
+Uma excecao pinned fica obsoleta e falha quando nome e SQL voltam a coincidir. Nome
+do ledger diferente do filename so e permitido para `version-collision`. Nesse
+caso, a migration relacionada deve ser posterior, executavel, ter nome correspondente
+ao ledger e hashes exatos; reuso, ciclos e cadeias sao rejeitados.
+
+Referencias textuais `source`/`arquivo` em comentarios do ledger tem menor forca que
+nome e SQL canonico exatos: se ambos coincidem, uma referencia stale nao causa drift.
+Se o SQL diverge, a referencia continua fail-closed e somente uma excecao pinned que
+valide integralmente o ledger pode autorizar o replay. Markers malformados ou
+conflitantes sempre falham.
+
+### Proveniencia da reconciliacao de 29/08/2026
+
+Os hashes do manifesto v2 foram derivados dos registros exatos recuperados em modo
+somente leitura pelo run `33255655034` (`Migration Ledger Evidence`), no commit
+`650705780f8b91c017ffa4bce0fc8f24ba2f4962`. O envelope foi cifrado antes de virar
+artefato; nomes e hashes foram revisados sem publicar os `statements`. O coletor e o
+workflow eram de uso unico e foram removidos depois da verificacao. Nenhum registro
+do ledger ou objeto do banco foi alterado por essa reconciliacao.
+
+Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
+precisa de evidencia propria e hashes exatos, revisados em PR.
 
 Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
 nesse modo apenas a consulta ao ledger e pulada.
@@ -140,7 +187,7 @@ WHERE array_to_string(statements,' ') ILIKE '%CREATE TABLE%minha_tabela%';
 `VACUUM`, limpeza de bloat, backfill de uma vez — nada disso deve virar migration
 replicavel. Se precisar registrar, o arquivo deve conter **so** o que e seguro reaplicar.
 
-Exemplo real: `20260827130500_vacuum_maintenance_m05.sql`. O que foi executado incluia
+Exemplo real: `20260827130500_vacuum_autovacuum_threshold_reset_m05.sql`. O que foi executado incluia
 `ALTER TABLE ... SET (autovacuum_vacuum_threshold=0, autovacuum_vacuum_scale_factor=0)` e
 um `cron.schedule('one-time-vacuum-bloated-tables', '* * * * *', ...)`. O arquivo commitado
 emite apenas os `RESET` idempotentes. Reaplicar o original faria o autovacuum disparar a
