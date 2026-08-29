@@ -57,6 +57,34 @@ VALUES ('20260827120100', 'nome_da_migration', ARRAY[
 reconciliacao o gerador capturou 126 statements em vez de 108, porque 18 indices
 preexistentes seguiam a mesma convencao de nome — um `db reset` quebraria neles.
 
+### Evidencia usada pelo guard
+
+`check-migration-drift.mjs` consulta `version`, `name` e `statements` e aplica as
+evidencias que o ledger realmente possui:
+
+- `name`, quando preenchido, deve corresponder ao nome depois do prefixo de 14 digitos;
+- SQL executavel preservado em `statements` e comparado ao arquivo com comentarios,
+  espacos e case de tokens nao quoted normalizados;
+- `-- file-sha256: <64 hex>` em `statements` valida os bytes exatos do arquivo;
+- `-- sql-sha256: <64 hex>` valida a forma SQL canonica calculada pelo guard.
+
+Registros historicos sem SQL/hash continuam aceitos para compatibilidade, com aviso
+explicito de evidencia limitada. **Nunca preencha hash, `name` ou `statements`
+retroativamente sem recuperar a fonte original**: calcular um hash do estado atual
+e chama-lo de historico apenas certificaria um possivel drift.
+
+Independentemente do banco, o guard falha para nome fora de
+`14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
+ou entrada nao regular. Arquivo vazio nunca e aceito. A unica excecao para um
+arquivo somente de comentarios e um stub historico descrito exatamente em
+`scripts/db-audit/migration-evidence.json`: versao, filename, SHA-256 dos bytes,
+`ledger_name`, `kind=ledger-only/comment-only` e justificativa factual. Uma mudanca
+de byte, nome ou ledger invalida a excecao; entradas orfas ou duplicadas tambem
+falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
+nesse modo apenas a consulta ao ledger e pulada.
+
 ---
 
 ## 3. `CREATE INDEX CONCURRENTLY` nao roda pelo gateway MCP
@@ -124,6 +152,7 @@ registradas em `cron.job_run_details` (18:03 e 18:04 de 27/08/2026), saiu com
 
 ```sh
 node scripts/db-audit/check-migration-drift.mjs        # DESTINO_URL setado
+node --test scripts/db-audit/check-migration-drift.test.mjs  # fixtures + psql fake
 node scripts/db-audit/supabase-usage-guard.mjs         # offline
 ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d   # versao duplicada
 ```

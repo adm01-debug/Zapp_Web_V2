@@ -1,56 +1,217 @@
--- Assinatura estrutural do schema public, por objeto, via MD5.
--- Rode nos DOIS bancos e passe as saidas para diff.mjs.
+-- Manifesto estrutural deterministico do schema public.
 --
---   psql "$ORIGEM_URL"  -At -f scripts/db-audit/manifest.sql > /tmp/src.json
---   psql "$DESTINO_URL" -At -f scripts/db-audit/manifest.sql > /tmp/dst.json
---   node scripts/db-audit/diff.mjs /tmp/src.json /tmp/dst.json
+-- Snapshot versionado:
+--   psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+--     -f scripts/db-audit/manifest.sql > supabase/schema-manifest.json
 --
--- Por que hash por objeto e nao contagem: contagens iguais escondem objetos
--- trocados. Na auditoria de 27/08/2026 as constraints batiam em numero mas 34
--- tabelas divergiam - todas por FK apontando para a mesma tabela.
+-- Comparacao offline/contra banco vivo:
+--   node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
+--   node scripts/db-audit/diff.mjs /tmp/origem.json /tmp/destino.json
+--
+-- Chaves sao nomes logicos qualificados; valores sao hashes das definicoes.
+-- OID, timestamp de geracao e ordem fisica dos catalogos nao entram nos hashes.
 
-WITH cons AS (
-  SELECT c.relname AS t,
-         md5(string_agg(co.conname || '~' || pg_get_constraintdef(co.oid), ',' ORDER BY co.conname)) AS h
+WITH columns_manifest AS (
+  SELECT format('%I.%I', c.relname, a.attname) AS k,
+         md5(concat_ws('|',
+           pg_catalog.format_type(a.atttypid, a.atttypmod),
+           a.attnotnull::text,
+           a.attidentity,
+           a.attgenerated,
+           CASE WHEN coll.oid IS NULL THEN ''
+                ELSE format('%I.%I', coll_n.nspname, coll.collname) END
+         )) AS h
+  FROM pg_attribute a
+  JOIN pg_class c ON c.oid = a.attrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  LEFT JOIN pg_collation coll ON coll.oid = a.attcollation AND a.attcollation <> 0
+  LEFT JOIN pg_namespace coll_n ON coll_n.oid = coll.collnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+    AND a.attnum > 0
+    AND NOT a.attisdropped
+), defaults_manifest AS (
+  SELECT format('%I.%I', c.relname, a.attname) AS k,
+         md5(pg_get_expr(ad.adbin, ad.adrelid, false)) AS h
+  FROM pg_attrdef ad
+  JOIN pg_attribute a ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+  JOIN pg_class c ON c.oid = ad.adrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'f')
+), constraints_manifest AS (
+  SELECT 'relation:' || format('%I.%I', c.relname, co.conname) AS k,
+         md5(concat_ws('|',
+           co.contype::text,
+           co.condeferrable::text,
+           co.condeferred::text,
+           co.convalidated::text,
+           pg_get_constraintdef(co.oid, false)
+         )) AS h
   FROM pg_constraint co
   JOIN pg_class c ON c.oid = co.conrelid
-  JOIN pg_namespace n ON n.oid = co.connamespace
-  WHERE n.nspname = 'public' GROUP BY 1
-), idx AS (
-  SELECT tablename AS t, md5(string_agg(indexname || '~' || indexdef, ',' ORDER BY indexname)) AS h
-  FROM pg_indexes WHERE schemaname = 'public' GROUP BY 1
-), pol AS (
-  SELECT tablename AS t,
-         md5(string_agg(policyname || '~' || cmd || '~' || coalesce(qual,'-') || '~' ||
-             coalesce(with_check,'-') || '~' || array_to_string(roles,'+'), ',' ORDER BY policyname)) AS h
-  FROM pg_policies WHERE schemaname = 'public' GROUP BY 1
-), trg AS (
-  SELECT c.relname AS t, md5(string_agg(tg.tgname || '~' || pg_get_triggerdef(tg.oid), ',' ORDER BY tg.tgname)) AS h
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+  UNION ALL
+  SELECT 'domain:' || format('%I.%I', t.typname, co.conname) AS k,
+         md5(concat_ws('|',
+           co.contype::text,
+           co.condeferrable::text,
+           co.condeferred::text,
+           co.convalidated::text,
+           pg_get_constraintdef(co.oid, false)
+         )) AS h
+  FROM pg_constraint co
+  JOIN pg_type t ON t.oid = co.contypid
+  JOIN pg_namespace n ON n.oid = t.typnamespace
+  WHERE n.nspname = 'public'
+    AND co.contypid <> 0
+), indexes_manifest AS (
+  SELECT format('%I.%I', tbl.relname, idx.relname) AS k,
+         md5(concat_ws('|',
+           i.indisunique::text,
+           i.indisprimary::text,
+           i.indisexclusion::text,
+           i.indimmediate::text,
+           i.indisclustered::text,
+           i.indisvalid::text,
+           i.indisready::text,
+           i.indislive::text,
+           pg_get_indexdef(i.indexrelid, 0, false)
+         )) AS h
+  FROM pg_index i
+  JOIN pg_class idx ON idx.oid = i.indexrelid
+  JOIN pg_class tbl ON tbl.oid = i.indrelid
+  JOIN pg_namespace n ON n.oid = tbl.relnamespace
+  WHERE n.nspname = 'public'
+), rls_manifest AS (
+  SELECT format('%I', c.relname) AS k,
+         md5(concat_ws('|', c.relrowsecurity::text, c.relforcerowsecurity::text)) AS h
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p')
+), policies_manifest AS (
+  SELECT format('%I.%I', c.relname, p.polname) AS k,
+         md5(concat_ws('|',
+           p.polcmd::text,
+           p.polpermissive::text,
+           coalesce((
+             SELECT string_agg(
+               CASE WHEN role_oid = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(role_oid) END,
+               ',' ORDER BY CASE WHEN role_oid = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(role_oid) END
+             )
+             FROM unnest(p.polroles) AS role_oid
+           ), ''),
+           coalesce(pg_get_expr(p.polqual, p.polrelid, false), ''),
+           coalesce(pg_get_expr(p.polwithcheck, p.polrelid, false), '')
+         )) AS h
+  FROM pg_policy p
+  JOIN pg_class c ON c.oid = p.polrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+), triggers_manifest AS (
+  SELECT format('%I.%I', c.relname, tg.tgname) AS k,
+         md5(concat_ws('|', tg.tgenabled::text, pg_get_triggerdef(tg.oid, false))) AS h
   FROM pg_trigger tg
   JOIN pg_class c ON c.oid = tg.tgrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname = 'public' AND NOT tg.tgisinternal GROUP BY 1
-), col AS (
-  SELECT table_name AS t,
-         md5(string_agg(column_name || '|' || data_type || '|' || is_nullable || '|' ||
-             coalesce(column_default,'-'), ',' ORDER BY column_name)) AS h
-  FROM information_schema.columns WHERE table_schema = 'public' GROUP BY 1
-), fn AS (
-  SELECT p.proname AS t, md5(string_agg(pg_get_functiondef(p.oid), ',' ORDER BY p.oid)) AS h
-  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname = 'public' GROUP BY 1
+  WHERE n.nspname = 'public'
+    AND NOT tg.tgisinternal
+), functions_manifest AS (
+  SELECT format(
+           '%s:%I(%s)',
+           p.prokind,
+           p.proname,
+           pg_get_function_identity_arguments(p.oid)
+         ) AS k,
+         md5(concat_ws('|',
+           pg_get_userbyid(p.proowner),
+           p.prokind::text,
+           coalesce(pg_get_function_result(p.oid), ''),
+           l.lanname,
+           p.provolatile::text,
+           p.proparallel::text,
+           p.prosecdef::text,
+           p.proleakproof::text,
+           p.proisstrict::text,
+           coalesce(array_to_string(p.proconfig, ','), ''),
+           pg_get_functiondef(p.oid)
+         )) AS h
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  JOIN pg_language l ON l.oid = p.prolang
+  WHERE n.nspname = 'public'
+    AND p.prokind IN ('f', 'p')
+), relation_grants_manifest AS (
+  SELECT format(
+           '%s:%I.%I|%s|%s|grantor=%s',
+           c.relkind,
+           n.nspname,
+           c.relname,
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  CROSS JOIN LATERAL aclexplode(coalesce(
+    c.relacl,
+    acldefault(
+      CASE WHEN c.relkind = 'S' THEN 'S'::"char" ELSE 'r'::"char" END,
+      c.relowner
+    )
+  )) AS acl
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'v', 'm', 'f', 'S')
+), routine_grants_manifest AS (
+  SELECT format(
+           '%s:%I(%s)|%s|%s|grantor=%s',
+           p.prokind,
+           p.proname,
+           pg_get_function_identity_arguments(p.oid),
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f'::"char", p.proowner))) AS acl
+  WHERE n.nspname = 'public'
+    AND p.prokind IN ('f', 'p')
+), schema_grants_manifest AS (
+  SELECT format(
+           '%I|%s|%s|grantor=%s',
+           n.nspname,
+           CASE WHEN acl.grantee = 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END,
+           acl.privilege_type,
+           pg_get_userbyid(acl.grantor)
+         ) AS k,
+         md5(acl.is_grantable::text) AS h
+  FROM pg_namespace n
+  CROSS JOIN LATERAL aclexplode(coalesce(n.nspacl, acldefault('n'::"char", n.nspowner))) AS acl
+  WHERE n.nspname = 'public'
 )
-SELECT jsonb_build_object(
-  'db',    current_database(),
-  'when',  now(),
-  'col',  (SELECT jsonb_object_agg(t,h) FROM col),
-  'cons', (SELECT jsonb_object_agg(t,h) FROM cons),
-  'idx',  (SELECT jsonb_object_agg(t,h) FROM idx),
-  'pol',  (SELECT jsonb_object_agg(t,h) FROM pol),
-  'trg',  (SELECT jsonb_object_agg(t,h) FROM trg),
-  'fn',   (SELECT jsonb_object_agg(t,h) FROM fn),
-  'grants_hash', (SELECT md5(string_agg(grantee || '|' || table_name || '|' || privilege_type, ','
-                     ORDER BY grantee, table_name, privilege_type))
-                  FROM information_schema.role_table_grants
-                  WHERE table_schema = 'public' AND grantee <> 'sandbox_exec')
-)::text;
+SELECT jsonb_pretty(jsonb_build_object(
+  'format_version', 2,
+  'generated_at', to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+  'database_identity', jsonb_build_object(
+    'database', current_database(),
+    'schema', 'public',
+    'server_major', current_setting('server_version_num')::integer / 10000
+  ),
+  'how_to_regenerate', 'scripts/db-audit/manifest.sql',
+  'columns',         (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM columns_manifest),
+  'defaults',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM defaults_manifest),
+  'constraints',     (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM constraints_manifest),
+  'indexes',         (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM indexes_manifest),
+  'rls',             (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM rls_manifest),
+  'policies',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM policies_manifest),
+  'triggers',        (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM triggers_manifest),
+  'functions',       (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM functions_manifest),
+  'relation_grants', (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM relation_grants_manifest),
+  'routine_grants',  (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM routine_grants_manifest),
+  'schema_grants',   (SELECT coalesce(jsonb_object_agg(k, h ORDER BY k), '{}'::jsonb) FROM schema_grants_manifest)
+));

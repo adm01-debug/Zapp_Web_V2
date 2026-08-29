@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 /**
- * Diffa duas saidas de manifest.sql.
+ * Diffa duas saidas v2 de manifest.sql.
  *   node scripts/db-audit/diff.mjs /tmp/src.json /tmp/dst.json
  *
- * Sai com 1 se houver qualquer divergencia estrutural.
+ * Identidade e timestamp sao informativos: este comando pode comparar dois
+ * bancos distintos. O check-manifest-fresh e quem prova o banco oficial.
  */
 import fs from 'node:fs';
+
+import {
+  compararManifestos,
+  imprimirComparacao,
+  validarManifesto,
+} from './manifest-lib.mjs';
 
 const [a, b] = process.argv.slice(2);
 if (!a || !b) {
@@ -13,35 +20,33 @@ if (!a || !b) {
   process.exit(2);
 }
 
-const A = JSON.parse(fs.readFileSync(a, 'utf8'));
-const B = JSON.parse(fs.readFileSync(b, 'utf8'));
-
-console.log('A = ' + A.db + '  (' + A.when + ')');
-console.log('B = ' + B.db + '  (' + B.when + ')');
-
-let problemas = 0;
-
-for (const secao of ['col', 'cons', 'idx', 'pol', 'trg', 'fn']) {
-  const SA = A[secao] || {};
-  const SB = B[secao] || {};
-  const todos = [...new Set([...Object.keys(SA), ...Object.keys(SB)])].sort();
-  const soEmA = todos.filter((t) => !(t in SB));
-  const soEmB = todos.filter((t) => !(t in SA));
-  const diverge = todos.filter((t) => t in SA && t in SB && SA[t] !== SB[t]);
-  problemas += soEmA.length + soEmB.length + diverge.length;
-  console.log(
-    '\n[' + secao + '] so em A: ' + soEmA.length +
-    ' | so em B: ' + soEmB.length +
-    ' | divergente: ' + diverge.length,
-  );
-  if (soEmA.length) console.log('  so em A: ' + soEmA.join(', '));
-  if (soEmB.length) console.log('  so em B: ' + soEmB.join(', '));
-  if (diverge.length) console.log('  divergente: ' + diverge.join(', '));
+function ler(arquivo, rotulo) {
+  try {
+    return JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+  } catch (error) {
+    console.error('ERRO: manifesto ' + rotulo + ' invalido (' + arquivo + '): ' + error.message);
+    process.exit(2);
+  }
 }
 
-console.log('\n[grants] A=' + A.grants_hash + ' B=' + B.grants_hash +
-            (A.grants_hash === B.grants_hash ? '  IDENTICO' : '  DIVERGENTE'));
-if (A.grants_hash !== B.grants_hash) problemas++;
+const A = ler(a, 'A');
+const B = ler(b, 'B');
+const erros = [...validarManifesto(A, 'A'), ...validarManifesto(B, 'B')];
+if (erros.length) {
+  for (const erro of erros) console.error('ERRO: ' + erro);
+  process.exit(2);
+}
 
-console.log('\nTotal de divergencias: ' + problemas);
-process.exit(problemas ? 1 : 0);
+function rotuloIdentidade(manifesto) {
+  const identidade = manifesto.database_identity;
+  return identidade.database + ' schema ' + identidade.schema + ' pg' + identidade.server_major;
+}
+
+console.log('A = ' + rotuloIdentidade(A) + '  (' + (A.generated_at || 'sem data') + ')');
+console.log('B = ' + rotuloIdentidade(B) + '  (' + (B.generated_at || 'sem data') + ')');
+
+const resultado = compararManifestos(A, B);
+imprimirComparacao(resultado, 'A', 'B');
+
+console.log('\nTotal de divergencias: ' + resultado.total);
+process.exit(resultado.total ? 1 : 0);

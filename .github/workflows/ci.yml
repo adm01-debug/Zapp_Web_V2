@@ -39,9 +39,13 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🔍 Run ESLint
-        run: bun run lint
-        continue-on-error: true
+      - name: 🧪 Test ESLint ratchet
+        run: node --test scripts/ci/lint-ratchet.unit.mjs
+
+      # O legado possui divida de lint conhecida. O ratchet compara ocorrencias
+      # individualmente e falha se uma nova for introduzida, sem mascarar a CI.
+      - name: 🔍 Run ESLint debt ratchet
+        run: node scripts/ci/lint-ratchet.mjs
 
       - name: 🔎 Run TypeScript check
         run: bun run typecheck
