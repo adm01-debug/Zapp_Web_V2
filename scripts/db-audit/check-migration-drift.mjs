@@ -193,7 +193,11 @@ function collectHashMarkers(statements, label) {
       validCount += 1;
     }
   }
-  return { values: [...values], invalid: markerCount !== validCount };
+  return {
+    values: [...values],
+    invalid: markerCount !== validCount,
+    occurrences: markerCount,
+  };
 }
 
 function normalizeLedgerName(version, name) {
@@ -675,9 +679,11 @@ function compare(migrations, records, exceptionsByVersion) {
     // marker nunca basta: ele precisa ser unico, bem-formado e corresponder ao
     // arquivo atual. Erros de marker continuam registrados e fail-closed acima.
     const exactFileHash = !fileHashMarkers.invalid
+      && fileHashMarkers.occurrences === 1
       && fileHashes.length === 1
       && fileHashes[0] === migration.rawHash;
     const exactSqlHash = !sqlHashMarkers.invalid
+      && sqlHashMarkers.occurrences === 1
       && sqlHashes.length === 1
       && sqlHashes[0] === migration.sqlHash;
     const exactCanonicalSql = Boolean(ledgerSql) && ledgerSql === fileSql;
