@@ -108,10 +108,7 @@ A protecao real e a policy RLS `"Admins full access to channels"`
 (`has_role(auth.uid(),'admin')`) mais a view `channel_connections_safe`, que omite a coluna.
 
 `mask_channel_credentials()` **nao** protege nada: o corpo e `RETURN NEW` e ela nao esta
-anexada a nenhuma trigger. Uma trigger `BEFORE` nao consegue mascarar coluna em `SELECT` —
-o proprio comentario no corpo admite isso. A etapa 67 do plano mandava anexa-la; isso foi
-deliberadamente **nao** executado, porque criaria aparencia de controle sem controle.
-Decidir entre implementar mascaramento real ou remover a funcao.
+anexada a nenhuma trigger. Decidir entre implementar mascaramento real ou remover a funcao.
 
 ---
 
@@ -120,40 +117,26 @@ Decidir entre implementar mascaramento real ou remover a funcao.
 28 policies usam `USING(true)` ou `WITH CHECK(true)`:
 
 - **4 em `service_role`** — irrelevante, `service_role` bypassa RLS de qualquer forma.
-- **24 SELECT para `authenticated`** em tabelas de catalogo e configuracao
-  (`queues`, `tags`, `products`, `stickers`, `permissions`, `business_hours`,
-  `sla_configurations`, `whatsapp_templates`, etc).
+- **24 SELECT para `authenticated`** em tabelas de catalogo e configuracao.
 
 O sistema e single-tenant, entao visibilidade de catalogo para qualquer usuario logado e
-decisao de design, nao bug. **Nao mude sem decisao de negocio.** Levantamento:
-
-```sql
-SELECT tablename, policyname, cmd, array_to_string(roles,'+') AS roles
-FROM pg_policies
-WHERE schemaname='public' AND (qual = 'true' OR with_check = 'true')
-ORDER BY tablename, policyname;
-```
+decisao de design, nao bug. **Nao mude sem decisao de negocio.**
 
 ---
 
 ## 6. Teste de regressao (etapas 76 e 96)
 
 O ACL de `mcp_exec` e verificado automaticamente no job `catalog-fresh` do
-`db-guard.yml`, que roda em todo `workflow_dispatch` e no cron semanal (segunda 06h UTC).
-
-O job falha se `authenticated` ou `anon` tiver `EXECUTE` em qualquer uma das duas funcoes.
-Query de verificacao na secao 1. Ultimo resultado verde: run #89 (dispatch 2026-08-29).
+`db-guard.yml`, que roda em todo `workflow_dispatch` e no cron semanal.
 
 ---
 
 ## 7. `reassign_absent_agents` — proxy de presenca via `user_sessions`
 
 **Contexto:** a funcao tinha bug de runtime — referenciava `profiles.last_seen_at`
-(coluna inexistente). Corrigida pela migration `20260829020000_fix_reassign_absent_agents_last_seen_at`.
+(coluna inexistente). Corrigida pela migration `20260829020000`.
 
 ### Logica atual
-
-Agente e considerado "ausente" se nao tiver sessao ativa com `last_activity_at` recente:
 
 ```sql
 NOT EXISTS (
@@ -164,40 +147,75 @@ NOT EXISTS (
 )
 ```
 
-Agente substituto deve ter sessao ativa recente (criterio inverso).
-
 ### Risco: sessoes stale
 
-`user_sessions.is_active = true` pode persistir para sessoes que expiraram na pratica
-(logout sem invalidacao, crash de browser). Nesse cenario, o agente parece "ativo"
-mesmo offline — `reassign_absent_agents` nao o reatribuiria.
-
-**Mitigacao recomendada:** adicionar `pg_cron` para expirar sessoes automaticamente:
-
-```sql
--- Desativar sessoes expiradas (adicionar ao pg_cron como job diario)
-UPDATE user_sessions
-SET is_active = false
-WHERE is_active = true AND expires_at < now();
-```
+`user_sessions.is_active = true` pode persistir para sessoes que expiraram. Mitigacao
+recomendada: `pg_cron` diario que desativa `WHERE expires_at < now()`.
 
 ### Guard de autorizacao
 
-A funcao exige perfil `admin` ou `supervisor` (implementado em `20260828000000`).
-`authenticated` sem esse perfil recebe `RAISE EXCEPTION` antes de acessar dados.
+A funcao exige perfil `admin` ou `supervisor` (migration `20260828000000`).
+
+---
+
+## 8. `gmail-incremental-sync` — autenticacao via vault
+
+O cron `*/5 * * * *` chama a edge `gmail-cron-sync` com header `x-cron-secret`.
+O secret e lido de `vault.decrypted_secrets WHERE name='gmail_cron_secret'` em runtime.
+
+**Nao existe secret hardcodado em `cron.job.command`.**
+
+### Dependencias de reset
+
+Em `supabase db reset`, recriar manualmente no vault:
+```sql
+SELECT vault.create_secret('<uuid-do-secret>', 'gmail_cron_secret');
+```
+E configurar o mesmo UUID no secret `CRON_SECRET` da edge function.
 
 ### Verificacao
 
 ```sql
--- Sessoes ativas com last_activity_at recente (ultimas 30 min)
-SELECT p.id, p.is_active, us.last_activity_at, us.expires_at, us.is_active AS sess_ativa
-FROM profiles p
-LEFT JOIN user_sessions us ON us.user_id = p.user_id AND us.is_active = true
-WHERE p.is_active = true
-ORDER BY us.last_activity_at DESC NULLS LAST;
-
--- Sessoes com is_active=true mas expires_at vencido (stale)
-SELECT count(*) AS sessoes_stale
-FROM user_sessions
-WHERE is_active = true AND expires_at < now();
+SELECT command ILIKE '%vault%' AS usa_vault FROM cron.job WHERE jobname='gmail-incremental-sync';
 ```
+
+---
+
+## 9. `clear_login_attempts` — historico de bugs e versoes
+
+A funcao passou por 2 reescritas:
+
+1. **Pre-auditoria:** sem guard. Qualquer usuario limpava tentativas de qualquer email.
+2. **20260829090000:** guard com `IS DISTINCT FROM coalesce(auth.jwt()->>'email', '')`. Valido.
+3. **20260829100000 (atual):** `NOT (auth.role()='authenticated' AND LOWER(auth.jwt()->>'email') = LOWER(p_email))`. Mais legivel.
+
+As versoes 090000 e 100000 sao funcionalmente equivalentes. 100000 e a canonicamente correta.
+
+### Verificacao
+
+```sql
+SELECT prosrc ILIKE '%auth.jwt()->>%email%' AND prosrc ILIKE '%RAISE EXCEPTION%' AS guard_ok
+FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+WHERE n.nspname='public' AND p.proname='clear_login_attempts';
+```
+
+---
+
+## 10. `email_messages` — ausencia de DELETE policy (intencional)
+
+**Decisao:** `email_messages` nao tem policy DELETE para `authenticated`.
+
+**Racional:**
+- Deletar uma `email_thread` elimina por CASCADE todas as mensagens. Thread delete = message delete.
+- Deletar mensagem individual sem deletar thread criaria inconsistencia (`message_count`, `snippet`).
+- O fluxo de email padrao arquiva/move threads, nunca deleta mensagens individuais.
+- Adicionando DELETE exigiria trigger de manutencao de `message_count` — complexidade desnecessaria.
+
+**Estado das policies:**
+
+| CMD | Roles | Observacao |
+|---|---|---|
+| SELECT | authenticated | Via FK com gmail_accounts |
+| UPDATE | authenticated | Marcar lida, estrelar |
+| DELETE | **ausente** | Intencional — ver acima |
+| INSERT | **ausente** | So via service_role/edges |
