@@ -1,6 +1,6 @@
-# =================================================
+# ==================================================================
 # ZAPP-WEB · Guardas de banco de dados
-# =================================================
+# ==================================================================
 # Origem: plano da auditoria de 27/08/2026, etapas 11, 98 e 99.
 # Ver docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md
 #
@@ -9,7 +9,11 @@
 #   usage-guard      OFFLINE. Roda sempre, inclusive em PR de fork.
 #   migration-drift  precisa de DESTINO_URL. Pula com aviso se ausente.
 #   catalog-fresh    precisa de DESTINO_URL. So no agendamento semanal / manual.
-# =================================================
+#
+# 2026-08-29: adicionado step de verificacao de frescor do types.ts ao
+#             catalog-fresh (Etapa 19 do plano types-sync).
+#             Garante que qualquer PR com types desatualizado falha no CI.
+# ==================================================================
 
 name: DB Guard
 
@@ -29,72 +33,72 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ===========================================
+  # ==================================================================
   # JOB 1: acoplamento codigo <-> banco (offline)
-  # ===========================================
+  # ==================================================================
   usage-guard:
-    name: 🔗 Acoplamento codigo/banco
+    name: Acoplamento codigo/banco
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       # Sem `install`: o script nao tem dependencia, e node puro.
-      - name: 🔗 Validar .from() e .rpc() contra o catalogo
+      - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
-  # ===========================================
+  # ==================================================================
   # JOB 2: drift entre arquivos e schema_migrations
-  # ===========================================
+  # ==================================================================
   migration-drift:
-    name: 🧭 Drift de migrations
+    name: Drift de migrations
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 🐘 Instalar cliente PostgreSQL
+      - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
 
-      - name: 🧭 Comparar arquivos com schema_migrations
+      - name: Comparar arquivos com schema_migrations
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
 
-  # ===========================================
-  # JOB 3: frescura do catalogo + seguranca (semanal)
-  # ===========================================
+  # ==================================================================
+  # JOB 3: frescura do catalogo + seguranca + types.ts (semanal)
+  # ==================================================================
   catalog-fresh:
-    name: 🗂️ Frescura do catalogo
+    name: Frescura do catalogo
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 🐘 Instalar cliente PostgreSQL
+      - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
 
-      - name: 🗂️ Regerar catalogo e comparar com o commitado
+      - name: Regenerar catalogo e comparar com o commitado
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -105,7 +109,7 @@ jobs:
           psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > /tmp/fresh.json
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
 
-      - name: 🔒 Verificar ACL de mcp_exec e mcp_exec_many
+      - name: Verificar ACL de mcp_exec e mcp_exec_many
         # mcp_exec e mcp_exec_many sao funcoes SECURITY DEFINER que executam SQL
         # arbitrario. Se authenticated ou anon ganharem EXECUTE, qualquer usuario
         # logado teria SQL arbitrario como superusuario. Ver docs/DB-SECURITY.md s1.
@@ -139,3 +143,34 @@ jobs:
             esac
           done
           exit $FALHA
+
+      # Etapa 19 do plano types-sync (2026-08-29):
+      # Verificar frescor do types.ts contra o banco real.
+      # Falha se types.ts commitado divergir — garante que qualquer PR com
+      # types desatualizado e detectado antes de chegar em review.
+      # Independente do workflow types-sync: se um falhar, o outro ainda acusa.
+      - name: Setup Supabase CLI (para verificar frescor do types.ts)
+        uses: supabase/setup-cli@v1
+        with:
+          version: '2.116.0'
+
+      - name: Verificar frescor do types.ts
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "DESTINO_URL ausente - verificacao de frescor do types.ts pulada."
+            exit 0
+          fi
+          bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts
+          # Fix R4: grep -v remove qualquer linha de comentario —
+          # o numero de linhas do header da CLI varia com a versao
+          grep -v '^// ' /tmp/types.fresh.ts                  > /tmp/types.fresh.stripped
+          grep -v '^// ' src/integrations/supabase/types.ts   > /tmp/types.repo.stripped
+          if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
+            echo "FAIL: types.ts desatualizado."
+            echo "Para corrigir: Actions > types-sync > Run workflow"
+            diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30
+            exit 1
+          fi
+          echo "OK: types.ts em sincronia com o banco."
