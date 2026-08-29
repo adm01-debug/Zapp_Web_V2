@@ -1,0 +1,84 @@
+# Coleta unica e somente-leitura para reconciliar drift historico. O SQL do
+# ledger e cifrado em memoria antes de qualquer artifact e nunca vai aos logs.
+# Remover este workflow depois que a evidencia for validada e versionada.
+name: Migration Ledger Evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/migration-ledger-evidence.yml'
+      - 'scripts/db-audit/export-migration-ledger-evidence.mjs'
+      - 'scripts/db-audit/database-identity.mjs'
+      - 'scripts/db-audit/database-identity.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-ledger-evidence-main
+  cancel-in-progress: false
+
+jobs:
+  export-encrypted-evidence:
+    name: Exportar ledger cifrado
+    if: github.ref == 'refs/heads/main'
+    environment: db-ledger-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout confiavel do commit disparador
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Exigir banco oficial
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            validarDestino,
+          } from './scripts/db-audit/database-identity.mjs';
+          const esperada = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, esperada);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log('OK: banco oficial comprovado por fingerprint.');
+          NODE
+
+      - name: Consultar em read-only e cifrar antes de persistir
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          PGOPTIONS: -c default_transaction_read_only=on -c statement_timeout=15000
+          LEDGER_EVIDENCE_OUTPUT: /tmp/migration-ledger-evidence.json
+          LEDGER_EVIDENCE_PUBLIC_KEY_BASE64: >-
+            LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQm9qQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FZOEFNSUlCaWdLQ0FZRUExcXRjQ0NVemtGZksweW11ZEVadgpPdUI4NkE3cU9xNXpIcVNWSEQzS2s2S0NWVitPemx6clhnQ3orbDRobjhZR1dHUjIxY1dKd1FGMVpvb0hVQ2RkCjlpUHd2K3ZmOXRaSUZySUIwTEdOSXhQQ2NwQnl1RmsyNk5xcHJhbUFkdEF4NjkrOGFXS2ovVXBwVFRndnVJQW0KNWFhWlBTVVFCdmszSjdjZU9vSlVjOVFvcCtDdWlBekJwZFMyWW1uVk1IUzh0a0ZFVFZMc0kycU9CTnZkZG1zVQp2VkNzdGRadXNJWTJsdnkwSnpzYWhBVWtrNWVOMnl2ZG0zcWZhT2laZ044N1BYMy9PZ2Q5Qld0eGdlNmVZWjhUCkV3UXdBbHFTZGZqeHhZYmc4YzlVaWovOXp1Q1p2OEdxbkI4Kzh2dFBBYk5hMjV2eW53dUNRUFowOGVDTTg2NE4KWitjZkt5TjNyZUt1bEtiaEVRRzNDN29zQnZmRGhpeEVUNDZUZnp5MjlPU1MrUTJJakt6dlhxY0lGeWhMQnYrYgpadDJvNW5EbE5tTDF0czFDVlJCN0xTckRZZkxiL1UrNmZpbnN1QUVNNzRkYXJIT01QYnJ6ZVR0dTR2YzArSGM5CjRsYWNuVmxFcVprQlRaRTBIVTF3NzFoRWkxdTBPWjdwTDNybGEyQ0tMNkxMQWdNQkFBRT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+        run: |
+          umask 077
+          node scripts/db-audit/export-migration-ledger-evidence.mjs
+          test -s /tmp/migration-ledger-evidence.json
+
+      - name: Publicar somente envelope cifrado
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: migration-ledger-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/migration-ledger-evidence.json
+          if-no-files-found: error
+          retention-days: 1
