@@ -1,0 +1,53 @@
+# .graphifyignore — AtomicaBR / Promo Brindes
+# Mesma sintaxe do .gitignore
+
+# === SECRETS E CREDENCIAIS ===
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p8
+*.p12
+tokens.css
+.npmrc
+.netrc
+
+# === BASELINES JSON (zero-node, ruido no grafo) ===
+*-baseline.json
+*.baseline.json
+.any-type-baseline.json
+.audit-credentials-baseline.json
+.tsc-baseline.json
+.toast-leaks-baseline.json
+.security-definer-acl-baseline.json
+.outline-none-baseline.json
+bundle-size-baseline.json
+.invoke-direct-baseline.json
+.migration-refs-baseline.json
+coverage-baseline.json
+performance-baseline.json
+.a11y/clickable-baseline.json
+
+# === CONFIGURACOES JSON SEM SEMANTICA UTIL ===
+extensions.json
+settings.json
+components.json
+identity.json
+cameras.json
+lighthouse-budgets.json
+ecc-tools.json
+
+# === ARTEFATOS DE BUILD ===
+dist/
+coverage/
+.coverage/
+build/
+
+# === GRAFOS PROPRIOS ===
+graphify-out/graph.json
+graphify-out/graph.html
+scripts/ci/eslint-baseline.json
+performance-budget.json
+version.json
