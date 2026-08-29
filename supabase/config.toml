@@ -14,6 +14,9 @@ verify_jwt = false
 [functions.gmail-webhook]
 verify_jwt = false
 
+[functions.gmail-cron-sync]
+verify_jwt = false
+
 [functions.elevenlabs-webhook]
 verify_jwt = false
 

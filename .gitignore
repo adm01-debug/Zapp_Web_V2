@@ -106,3 +106,4 @@ supabase/.temp/
 
 # Deno (tooling local de deno check nas edge functions; o repo usa bun.lock)
 deno.lock
+graphify-out/

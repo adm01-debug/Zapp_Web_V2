@@ -139,6 +139,14 @@ export function useGmail(accountId?: string) {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Email movido para lixeira'); },
   });
 
+  const trashThread = useMutation({
+    mutationFn: async (gmailThreadId: string) => {
+      if (!activeAccount) throw new Error('No active Gmail account');
+      return callGmailFunction('gmail-send', { action: 'trash-thread', account_id: activeAccount.id, thread_id: gmailThreadId });
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Thread movida para lixeira'); },
+  });
+
   const modifyLabels = useMutation({
     mutationFn: async (params: { message_id: string; add_labels?: string[]; remove_labels?: string[] }) => {
       if (!activeAccount) throw new Error('No active Gmail account');
@@ -160,7 +168,7 @@ export function useGmail(accountId?: string) {
     accounts, activeAccount, accountsLoading, connectGmail, exchangeCode, disconnectGmail,
     threads, threadsLoading, selectedThreadId, setSelectedThreadId, refetchThreads,
     threadMessages, messagesLoading, labels,
-    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, modifyLabels,
+    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels,
     subscribeToThreads,
     unreadCount: threads.filter(t => t.is_unread).length,
     starredCount: threads.filter(t => t.is_starred).length,
