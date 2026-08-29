@@ -65,45 +65,39 @@ Registre a data nesta tabela no mesmo PR da rotacao.
 
 ---
 
-## 3. `app.encryption_key` — NAO esta configurada
+## 3. Criptografia de tokens Gmail — VAULT (implementado em 27/08/2026)
 
-`encrypt_gmail_token` e `decrypt_gmail_token` dependem de
-`current_setting('app.encryption_key', true)`. Em 27/08/2026 essa GUC **nao existe em
-nenhum escopo**: nem na sessao, nem em `pg_db_role_setting` (0 de 11 entradas mencionam
-`app.*`).
+`encrypt_gmail_token` e `decrypt_gmail_token` foram refatoradas pela migration
+`20260827210000_gmail_crypto_vault` para usar o vault do Supabase em vez de uma GUC.
 
-### Por que isso era pior do que parecia
+**Estado atual:** chave `gmail_encryption_key` presente em `vault.decrypted_secrets`.
+As funcoes leem a chave via `SELECT decrypted_secret FROM vault.decrypted_secrets WHERE
+name='gmail_encryption_key'` e levantam `RAISE EXCEPTION` se estiver ausente.
 
-1. As duas funcoes tinham `SET search_path TO 'public'`, mas `pgcrypto` esta instalada no
-   schema `extensions`. `pgp_sym_encrypt` nunca era resolvivel — a funcao falhava **sempre**,
-   nao "quando faltasse a chave".
-2. `pgp_sym_encrypt` e `STRICT`. Com chave `NULL` ele retorna `NULL` **em silencio**.
-   Corrigir apenas o `search_path` faria o fluxo Gmail gravar
-   `access_token_encrypted = NULL` sem erro nenhum.
+A GUC `app.encryption_key` **nao e mais usada**. Nao reintroduza
+`current_setting('app.encryption_key')` — o mecanismo mudou.
 
-A migration `20260827130000` corrigiu os dois pontos: schema-qualificou
-`extensions.pgp_sym_encrypt` e adicionou `RAISE EXCEPTION` explicito quando a chave falta.
+### Por que o vault foi escolhido sobre a GUC
 
-### Antes de ligar o fluxo Gmail
-
-Configure a chave num escopo persistente e **nao** no codigo da aplicacao:
-
-```sql
--- escopo de banco, sobrevive a reconexao
-ALTER DATABASE postgres SET app.encryption_key = '<chave>';
-```
-
-Alternativa preferivel: guardar a chave no `vault` do Supabase e ler por
-`vault.decrypted_secrets` dentro das proprias funcoes, eliminando a GUC. Isso muda a
-assinatura do par de funcoes — decida antes de popular `gmail_accounts`, que hoje tem
-0 linhas.
+1. A GUC exigia `ALTER DATABASE postgres SET app.encryption_key = '<chave>'` — visivel
+   em `pg_db_role_setting` para qualquer `superuser`.
+2. O vault do Supabase usa `pgsodium` para cifrar o valor em repouso. So funcoes com
+   `SECURITY DEFINER` que chamam `vault.decrypted_secrets` conseguem ler o plaintext.
+3. Zero config extra: a chave e gerada em-banco e nunca transita pelo codigo da aplicacao.
 
 ### Verificacao
 
 ```sql
-SELECT current_setting('app.encryption_key', true) IS NOT NULL AS configurada;
-SELECT count(*) FROM pg_db_role_setting
-WHERE array_to_string(setconfig,',') ILIKE '%app.encryption_key%';
+-- Chave presente (sem expor o valor)
+SELECT id, name, created_at FROM vault.secrets WHERE name = 'gmail_encryption_key';
+
+-- Roundtrip criptografico funcionando
+SELECT public.decrypt_gmail_token(
+  public.encrypt_gmail_token('TOKEN_TESTE')
+) = 'TOKEN_TESTE' AS roundtrip_ok;
+
+-- NULL-safe: deve retornar NULL sem RAISE
+SELECT public.decrypt_gmail_token(NULL) IS NULL AS null_safe;
 ```
 
 ---
@@ -142,8 +136,68 @@ ORDER BY tablename, policyname;
 
 ---
 
-## 6. Teste de regressao (etapa 76)
+## 6. Teste de regressao (etapas 76 e 96)
 
-O ACL de `mcp_exec` ainda **nao** tem teste automatizado. O job `catalog-fresh` do
-`db-guard.yml` roda semanalmente com `DESTINO_URL` e e o lugar natural para adicionar a
-assercao. Query pronta na secao 1.
+O ACL de `mcp_exec` e verificado automaticamente no job `catalog-fresh` do
+`db-guard.yml`, que roda em todo `workflow_dispatch` e no cron semanal (segunda 06h UTC).
+
+O job falha se `authenticated` ou `anon` tiver `EXECUTE` em qualquer uma das duas funcoes.
+Query de verificacao na secao 1. Ultimo resultado verde: run #89 (dispatch 2026-08-29).
+
+---
+
+## 7. `reassign_absent_agents` — proxy de presenca via `user_sessions`
+
+**Contexto:** a funcao tinha bug de runtime — referenciava `profiles.last_seen_at`
+(coluna inexistente). Corrigida pela migration `20260829020000_fix_reassign_absent_agents_last_seen_at`.
+
+### Logica atual
+
+Agente e considerado "ausente" se nao tiver sessao ativa com `last_activity_at` recente:
+
+```sql
+NOT EXISTS (
+  SELECT 1 FROM user_sessions us
+  WHERE us.user_id = p.user_id
+    AND us.is_active = true
+    AND us.last_activity_at > now() - (inactive_minutes || ' minutes')::interval
+)
+```
+
+Agente substituto deve ter sessao ativa recente (criterio inverso).
+
+### Risco: sessoes stale
+
+`user_sessions.is_active = true` pode persistir para sessoes que expiraram na pratica
+(logout sem invalidacao, crash de browser). Nesse cenario, o agente parece "ativo"
+mesmo offline — `reassign_absent_agents` nao o reatribuiria.
+
+**Mitigacao recomendada:** adicionar `pg_cron` para expirar sessoes automaticamente:
+
+```sql
+-- Desativar sessoes expiradas (adicionar ao pg_cron como job diario)
+UPDATE user_sessions
+SET is_active = false
+WHERE is_active = true AND expires_at < now();
+```
+
+### Guard de autorizacao
+
+A funcao exige perfil `admin` ou `supervisor` (implementado em `20260828000000`).
+`authenticated` sem esse perfil recebe `RAISE EXCEPTION` antes de acessar dados.
+
+### Verificacao
+
+```sql
+-- Sessoes ativas com last_activity_at recente (ultimas 30 min)
+SELECT p.id, p.is_active, us.last_activity_at, us.expires_at, us.is_active AS sess_ativa
+FROM profiles p
+LEFT JOIN user_sessions us ON us.user_id = p.user_id AND us.is_active = true
+WHERE p.is_active = true
+ORDER BY us.last_activity_at DESC NULLS LAST;
+
+-- Sessoes com is_active=true mas expires_at vencido (stale)
+SELECT count(*) AS sessoes_stale
+FROM user_sessions
+WHERE is_active = true AND expires_at < now();
+```
