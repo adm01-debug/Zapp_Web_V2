@@ -583,7 +583,8 @@ function compare(migrations, records, exceptionsByVersion) {
         : null;
       return [
         `  version=${record.version}`,
-        `name=${JSON.stringify(normalizedName)}`,
+        `ledger_name=${JSON.stringify(record.name)}`,
+        `normalized_name=${JSON.stringify(normalizedName)}`,
         `ledger_statements_sha256=${ledgerStatementsSha256(record.statements)}`,
         `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
       ].join(' ');

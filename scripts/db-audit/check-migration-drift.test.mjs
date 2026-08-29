@@ -352,7 +352,8 @@ test('registro extra informa hashes seguros e nome normalizado sem vazar stateme
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Registro no banco sem arquivo no repo/);
   assert.match(result.stderr, new RegExp(`version=${extraVersion}`));
-  assert.match(result.stderr, /name="db_only"/);
+  assert.match(result.stderr, new RegExp(`ledger_name="${extraVersion}_db_only\\.sql"`));
+  assert.match(result.stderr, /normalized_name="db_only"/);
   assert.match(
     result.stderr,
     new RegExp(`ledger_statements_sha256=${statementsHash(extraStatements)}`),
@@ -374,12 +375,50 @@ test('registro extra sem name/statements ainda informa hashes deterministas', ()
     ],
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, new RegExp(`version=${extraVersion} name=null`));
+  assert.match(
+    result.stderr,
+    new RegExp(`version=${extraVersion} ledger_name=null normalized_name=null`),
+  );
   assert.match(
     result.stderr,
     new RegExp(`ledger_statements_sha256=${statementsHash([])}`),
   );
   assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${sha256('')}`));
+});
+
+test('registro extra escapa controles do nome sem injetar linha ou ANSI no log', () => {
+  const extraVersion = '20260829050100';
+  const controlName = 'db\nonly\u001b[31m';
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: controlName, statements: [] },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /ledger_name="db\\nonly\\u001b\[31m"/);
+  assert.match(result.stderr, /normalized_name="db\\nonly\\u001b\[31m"/);
+  assert.doesNotMatch(result.stderr, /db\nonly/);
+  assert.doesNotMatch(result.stderr, /\u001b/);
+});
+
+test('registro extra comments-only distingue statements mesmo com SQL canonico vazio', () => {
+  const extraVersion = '20260829050100';
+  const secret = 'comentario-sensivel-do-ledger';
+  const extraStatements = [`-- ${secret}`];
+  const result = runGuard({
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: 'comments_only', statements: extraStatements },
+    ],
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash(extraStatements)}`),
+  );
+  assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${sha256('')}`));
+  assert.doesNotMatch(result.stdout + result.stderr, new RegExp(secret));
 });
 
 test('falha fechado para saida malformada do psql fake', () => {
