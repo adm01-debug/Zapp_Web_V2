@@ -110,6 +110,16 @@ jobs:
             exit 1
           fi
 
+      - name: Verificar ACL de mcp_exec e mcp_exec_many
+        # Funcoes SECURITY DEFINER que executam SQL arbitrario: ver
+        # docs/DB-SECURITY.md s1. Executa antes do diff do catalogo para que um
+        # catalogo desatualizado nunca mascare uma regressao critica de permissao.
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: >-
+          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-mcp-exec-acl.sql
+
       - name: Regenerar catalogo e comparar com o commitado
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
@@ -127,16 +137,6 @@ jobs:
           path: /tmp/fresh.json
           if-no-files-found: ignore
           retention-days: 3
-
-      - name: Verificar ACL de mcp_exec e mcp_exec_many
-        # mcp_exec e mcp_exec_many sao funcoes SECURITY DEFINER que executam SQL
-        # arbitrario. Se authenticated ou anon ganharem EXECUTE, qualquer usuario
-        # logado teria SQL arbitrario como superusuario. Ver docs/DB-SECURITY.md s1.
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: >-
-          psql "$DESTINO_URL" --no-psqlrc -v ON_ERROR_STOP=1
-          -f scripts/db-audit/check-mcp-exec-acl.sql
 
       # Etapa 19 do plano types-sync (2026-08-29):
       # Verificar frescor do types.ts contra o banco real.
