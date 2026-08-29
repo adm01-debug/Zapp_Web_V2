@@ -58,3 +58,15 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 ---
 
 *Atualizado em 2026-08-28. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+
+## graphify
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+- For codebase questions: `graphify query "<question>"` when graph.json exists.
+- After modifying code: `graphify update .` to keep graph current.
+
+## Frescura do Grafo
+```sh
+git rev-parse --short HEAD
+grep "Built from commit" graphify-out/GRAPH_REPORT.md
+```
+Se divergirem, auto-sync N8N corrige em ate 15min.
