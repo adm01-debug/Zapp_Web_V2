@@ -3040,7 +3040,7 @@
         "f:is_ip_whitelisted(check_ip text)": "a8b1bb9aa2962eb121348faf07edb89e",
         "f:encrypt_gmail_token(p_token text)": "eddf848dca9dc03b8cf9ce1363deb712",
         "f:calculate_level(xp_amount integer)": "39b830ef971250751c4faf10f8f14621",
-        "f:clear_login_attempts(p_email text)": "e3c66de136d5585eb00b647ca4e23044",
+        "f:clear_login_attempts(p_email text)": "0e1ee96a5acbf3bf60d80c6d3debd313",
         "f:fn_send_audio_meme(p_meme_id uuid)": "ee87b0a9cd9b267ae08815f148d35aaf",
         "f:ensure_single_default_ai_provider()": "6541fb3b5cf5d0a67ef19a1db1b46511",
         "f:get_gmail_tokens(p_account_id uuid)": "88e71fa179ff82666807a1265e2dde53",
@@ -3457,7 +3457,7 @@
         "e:public.service_account_type|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.service_account_type|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-08-29T13:18:40Z",
+    "generated_at": "2026-08-29T15:12:06Z",
     "column_grants": {
     },
     "schema_grants": {
@@ -3667,8 +3667,6 @@
         "f:rate_limit_reset_requests()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:reassign_overloaded_agents()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:auto_assign_to_queue_agent()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:cleanup_expired_challenges()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:cleanup_link_preview_cache()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:encrypt_gmail_token(p_token text)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:is_account_locked(check_email text)|PUBLIC|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:is_ip_blocked(check_ip text)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
