@@ -186,7 +186,10 @@ Deno.serve(async (req) => {
           .select("id").maybeSingle();
         let resolvedThreadId = threadRow?.id ?? null;
         if (!resolvedThreadId) { const { data: ex } = await supabase.from("email_threads").select("id").eq("gmail_account_id", account.id).eq("gmail_thread_id", sentMessage.threadId).single(); resolvedThreadId = ex?.id ?? null; }
-        if (!resolvedThreadId) throw new Error('Thread not found after send — run sync-inbox first');
+        if (!resolvedThreadId) {
+          log.done(200, { action });
+          return jsonResponse({ success: true, message_id: sentMessage.id, thread_id: sentMessage.threadId, warning: 'local_persistence_failed_no_thread' }, 200, req);
+        }
         await supabase.from("email_messages").insert({ gmail_message_id: sentMessage.id, gmail_account_id: account.id, thread_id: resolvedThreadId, from_address: account.email_address, to_addresses: Array.isArray(to) ? to : [to], cc_addresses: cc || [], bcc_addresses: bcc || [], subject, body_text: text_body || "", body_html: html_body || "", direction: "outbound", is_read: true, internal_date: new Date().toISOString() });
         log.done(200, { action });
         return jsonResponse({ success: true, message_id: sentMessage.id, thread_id: sentMessage.threadId }, 200, req);
@@ -219,7 +222,10 @@ Deno.serve(async (req) => {
         const sentMessage = await response.json();
         // FIX E22: persistir reply no banco local
         const { data: tRow } = await supabase.from("email_threads").select("id").eq("gmail_thread_id", thread_id).eq("gmail_account_id", account.id).single();
-        if (!tRow?.id) throw new Error('Thread not found for reply — run sync-inbox first');
+        if (!tRow?.id) {
+          log.done(400, { action });
+          return jsonResponse({ success: false, error: 'Thread not found locally — run sync-inbox first' }, 400, req);
+        }
         await supabase.from("email_messages").insert({ gmail_message_id: sentMessage.id, gmail_account_id: account.id, thread_id: tRow.id, from_address: account.email_address, to_addresses: Array.isArray(to) ? to : [to], cc_addresses: cc || [], bcc_addresses: bcc || [], subject: replySubject, body_text: text_body || "", body_html: html_body || "", direction: "outbound", is_read: true, internal_date: new Date().toISOString(), in_reply_to: inReplyToValue });
         log.done(200, { action });
         return jsonResponse({ success: true, message_id: sentMessage.id, thread_id: sentMessage.threadId }, 200, req);

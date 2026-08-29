@@ -3,7 +3,7 @@
 --
 -- F1: clear_login_attempts -- guard quebrava em contexto sem JWT (pg_cron).
 --     coalesce(auth.role(),'') retornava '' em pg_cron, causando RAISE para
---     qualquer email. Fix: coalesce(auth.role(), current_user) resolve para
+--     qualquer email. Fix: coalesce(auth.role(), session_user) resolve para
 --     'postgres' em pg_cron, permitindo execucao correta.
 --     5 cenarios simulados e validados antes da execucao.
 --
@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION public.clear_login_attempts(p_email text)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NOT (coalesce(auth.role(), current_user) IN ('service_role', 'postgres', 'supabase_admin'))
+  IF NOT (coalesce(auth.role(), session_user) IN ('service_role', 'postgres', 'supabase_admin'))
      AND LOWER(p_email) IS DISTINCT FROM LOWER(coalesce(auth.jwt()->>'email', ''))
   THEN
     RAISE EXCEPTION 'clear_login_attempts: so e permitido limpar o proprio email';

@@ -42,8 +42,8 @@ export async function syncMessages(supabase: any, accountId: string, accessToken
     if (threadRows?.length) {
       const unreadGmailIds = new Set((unreadMsgs||[]).map((m: { thread_id: string }) => m.thread_id));
       for (const tr of threadRows) {
-        const { data: unread } = await supabase.from("email_messages").select("id",{count:'exact',head:true}).eq("thread_id",tr.id).eq("is_read",false);
-        await supabase.from("email_threads").update({ is_unread: (unread as unknown as number ?? 0) > 0 }).eq("id", tr.id);
+        const { count: unreadCount } = await supabase.from("email_messages").select("id",{count:'exact',head:true}).eq("thread_id",tr.id).eq("is_read",false);
+        await supabase.from("email_threads").update({ is_unread: (unreadCount ?? 0) > 0 }).eq("id", tr.id);
       }
     }
   }
