@@ -1,0 +1,319 @@
+# ==================================================================
+# ZAPP-WEB · Auto-sync de types.ts e schema-catalog.json
+# ==================================================================
+# Dispara em:
+#   push na main com mudanca em supabase/migrations/** (nova DDL)
+#   cron semanal segunda 06:00 UTC (captura DDL aplicada fora de migration)
+#   workflow_dispatch (execucao manual)
+#
+# Nao cria loop: o commit do bot toca types.ts e schema-catalog.json,
+# nao supabase/migrations/** — logo nao re-dispara este workflow.
+#
+# Fixes aplicados apos simulacao de 2026-08-29:
+#   B1: bun install antes do tsc
+#   B2: psql inline (update-catalog.mjs nao existe — nao criar arquivo novo)
+#   B3: label types-sync criada de forma idempotente antes do primeiro uso
+#   B4: c.tables.length em vez de c.migration_count (campo inexistente)
+#   R1: tsc -p tsconfig.app.json (root tsconfig.json tem files:[] — seria vacuous)
+#   R3: fetch-depth: 0 para git rebase funcionar em push concorrente
+#   R4: grep -v '^// ' em vez de tail -n +3 (header da CLI tem N linhas variaveis)
+#   R5: CLI pinada em 2.116.0 (versao verificada em 2026-08-29)
+# ==================================================================
+
+name: types-sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: types-sync
+  cancel-in-progress: false  # cada run pode ter diff diferente — nao cancelar
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+
+jobs:
+  sync:
+    name: Sync types.ts + catalogo
+    runs-on: ubuntu-latest
+    steps:
+      # Fix R3: fetch-depth 0 — rebase falha com clone raso em push concorrente
+      - name: Checkout (historico completo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Fix B3: criar label antes de usa-la — 422 = ja existe, ignorar
+      - name: Garantir label types-sync
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'types-sync',
+                color: '0075ca',
+                description: 'Falha no workflow de sync automatico de types'
+              });
+            } catch (e) {
+              if (e.status !== 422) throw e;
+            }
+
+      # Fix R5: pinada — 'latest' muda formato de output e gera commit de ruido
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Validar DESTINO_URL
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL nao configurado. Adicione o secret no repositorio."
+            exit 1
+          fi
+
+      - name: Gerar types.ts em temp
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
+          SIZE=$(wc -c < /tmp/types.new.ts)
+          echo "Gerado: ${SIZE} bytes"
+          if [ "$SIZE" -lt 102400 ]; then
+            echo "::error::types gerado menor que 100KB. DESTINO_URL aponta para banco errado?"
+            exit 1
+          fi
+
+      # Fix R4: header da CLI tem N linhas de comentario — remover por padrao, nao por posicao
+      - name: Diff semantico (ignorar comentarios de header)
+        id: diff
+        run: |
+          grep -v '^// ' /tmp/types.new.ts                    > /tmp/types.new.stripped
+          grep -v '^// ' src/integrations/supabase/types.ts   > /tmp/types.old.stripped
+          if diff -q /tmp/types.new.stripped /tmp/types.old.stripped > /dev/null 2>&1; then
+            echo "types_changed=false" >> "$GITHUB_OUTPUT"
+            echo "Schema nao mudou — nenhuma acao necessaria."
+          else
+            echo "types_changed=true" >> "$GITHUB_OUTPUT"
+            ADDED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^>' || echo 0)
+            REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^<' || echo 0)
+            echo "Schema mudou: +${ADDED} / -${REMOVED} linhas"
+          fi
+
+      # Termina aqui para ~95% das execucoes do cron (schema nao mudou)
+      - name: Finalizar se schema nao mudou
+        if: steps.diff.outputs.types_changed != 'true'
+        run: echo "Workflow encerrado — sem mudanca no schema."
+
+      # Fix B2: psql inline — update-catalog.mjs nao existe; padrao ja usado em db-guard.yml
+      - name: Regenerar schema-catalog.json
+        if: steps.diff.outputs.types_changed == 'true'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > supabase/schema-catalog.json
+          echo "Catalogo regenerado."
+
+      - name: Aplicar novo types.ts (para os gates validarem)
+        if: steps.diff.outputs.types_changed == 'true'
+        run: cp /tmp/types.new.ts src/integrations/supabase/types.ts
+
+      # Fix B1: bun install obrigatorio antes de qualquer tsc
+      - name: Setup Bun
+        if: steps.diff.outputs.types_changed == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependencias (para Gate 1 — tsc)
+        if: steps.diff.outputs.types_changed == 'true'
+        run: bun install --frozen-lockfile
+
+      # Fix R1: -p tsconfig.app.json tem include:[src] — root tsconfig tem files:[] (vacuous)
+      - name: Gate 1 — tsc compila
+        id: gate1
+        if: steps.diff.outputs.types_changed == 'true'
+        run: |
+          if bunx tsc --noEmit -p tsconfig.app.json 2>&1 | tee /tmp/tsc.log; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "Gate 1 OK: tsc"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gate 1 FALHOU: tsc encontrou erros de tipo"
+          fi
+
+      - name: Gate 2 — usage-guard
+        id: gate2
+        if: steps.diff.outputs.types_changed == 'true' && steps.gate1.outputs.passed == 'true'
+        run: |
+          if node scripts/db-audit/supabase-usage-guard.mjs 2>&1 | tee /tmp/guard.log; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "Gate 2 OK: usage-guard"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gate 2 FALHOU: violacoes no usage-guard"
+          fi
+
+      - name: Gate 3 — deteccao de remocoes destrutivas
+        id: gate3
+        if: >
+          steps.diff.outputs.types_changed == 'true' &&
+          steps.gate1.outputs.passed == 'true' &&
+          steps.gate2.outputs.passed == 'true'
+        run: |
+          REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^<' || echo 0)
+          echo "Linhas removidas do types: ${REMOVED}"
+          if [ "$REMOVED" -gt 10 ]; then
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gate 3: ${REMOVED} linhas removidas — requer revisao humana"
+          else
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "Gate 3 OK: remocao dentro do limite (${REMOVED} <= 10)"
+          fi
+
+      # Abre issue se qualquer gate falhou — dedupe por titulo para nao spam
+      - name: Issue de falha (gate falhou)
+        if: >
+          steps.diff.outputs.types_changed == 'true' &&
+          (steps.gate1.outputs.passed == 'false' ||
+           steps.gate2.outputs.passed == 'false' ||
+           steps.gate3.outputs.passed == 'false')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const gate1 = '${{ steps.gate1.outputs.passed }}';
+            const gate2 = '${{ steps.gate2.outputs.passed }}';
+            const gate3 = '${{ steps.gate3.outputs.passed }}';
+            const which =
+              gate1 === 'false' ? 'Gate 1 — tsc (tipos quebrados)' :
+              gate2 === 'false' ? 'Gate 2 — usage-guard (violacoes)' :
+              'Gate 3 — remocao destrutiva (> 10 linhas)';
+
+            const fs = require('fs');
+            const tscLog  = gate1 === 'false' && fs.existsSync('/tmp/tsc.log')
+              ? fs.readFileSync('/tmp/tsc.log',   'utf8').slice(0, 2000) : '';
+            const guardLog = gate2 === 'false' && fs.existsSync('/tmp/guard.log')
+              ? fs.readFileSync('/tmp/guard.log', 'utf8').slice(0, 2000) : '';
+
+            const title = '[types-sync] Falha na regeneracao automatica';
+            const body = [
+              `**Gate que falhou:** ${which}`,
+              `**Disparado por commit:** ${{ github.sha }}`,
+              `**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              '',
+              tscLog  ? `**Erros do tsc:**\n\`\`\`\n${tscLog}\n\`\`\`` : '',
+              guardLog ? `**Log do guard:**\n\`\`\`\n${guardLog}\n\`\`\`` : '',
+            ].filter(Boolean).join('\n');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'types-sync'
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Nova falha em ${new Date().toISOString()}\n\n${body}`
+              });
+              console.log('Comentado na issue existente #' + existing.number);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                labels: ['types-sync'],
+                body
+              });
+              console.log('Issue criada: #' + issue.number);
+            }
+
+      # Commit so se todos os 3 gates passaram
+      - name: Commit types.ts + schema-catalog.json
+        if: >
+          steps.diff.outputs.types_changed == 'true' &&
+          steps.gate1.outputs.passed == 'true' &&
+          steps.gate2.outputs.passed == 'true' &&
+          steps.gate3.outputs.passed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/integrations/supabase/types.ts supabase/schema-catalog.json
+          # Fix B4: schema-catalog.json nao tem migration_count — usar tables.length
+          CATALOG_INFO=$(node -e "
+            const fs = require('fs');
+            const c = JSON.parse(fs.readFileSync('supabase/schema-catalog.json','utf8'));
+            process.stdout.write(c.tables.length + ' tabelas, ' + c.functions.length + ' funcoes');
+          " 2>/dev/null || echo "n/a")
+          git commit -m "chore(types): sync com schema do banco [auto]
+
+          Disparado por: ${{ github.sha }}
+          Schema: ${CATALOG_INFO}
+          CLI: Supabase ${{ env.SUPABASE_CLI_VERSION }}
+          "
+
+      # Fix R3: retry com rebase — funciona com fetch-depth:0 (sem clone raso)
+      - name: Push (com retry em push concorrente)
+        if: >
+          steps.diff.outputs.types_changed == 'true' &&
+          steps.gate1.outputs.passed == 'true' &&
+          steps.gate2.outputs.passed == 'true' &&
+          steps.gate3.outputs.passed == 'true'
+        run: |
+          for i in 1 2 3; do
+            git push && echo "Push OK (tentativa ${i})" && break
+            echo "Tentativa ${i} falhou — buscando e rebaseando..."
+            git fetch origin main
+            git rebase origin/main || {
+              git rebase --abort
+              echo "::error::Conflito de rebase — intervencao manual necessaria"
+              exit 1
+            }
+          done
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.diff.outputs.types_changed }}" = "true" ]; then
+            ADDED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped 2>/dev/null | grep -c '^>' || echo 0)
+            REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped 2>/dev/null | grep -c '^<' || echo 0)
+            echo "| Item | Detalhe |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Schema mudou | sim |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Linhas adicionadas | +${ADDED} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Linhas removidas | -${REMOVED} |" >> "$GITHUB_STEP_SUMMARY"
+            [ "${{ steps.gate1.outputs.passed }}" = "true" ] \
+              && echo "| Gate 1 tsc | OK |" >> "$GITHUB_STEP_SUMMARY" \
+              || echo "| Gate 1 tsc | FALHOU |" >> "$GITHUB_STEP_SUMMARY"
+            [ "${{ steps.gate2.outputs.passed }}" = "true" ] \
+              && echo "| Gate 2 guard | OK |" >> "$GITHUB_STEP_SUMMARY" \
+              || echo "| Gate 2 guard | FALHOU |" >> "$GITHUB_STEP_SUMMARY"
+            [ "${{ steps.gate3.outputs.passed }}" = "true" ] \
+              && echo "| Gate 3 destrutivo | OK |" >> "$GITHUB_STEP_SUMMARY" \
+              || echo "| Gate 3 destrutivo | FALHOU |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Schema nao mudou — nenhuma acao necessaria." >> "$GITHUB_STEP_SUMMARY"
+          fi
