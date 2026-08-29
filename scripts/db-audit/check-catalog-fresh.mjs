@@ -11,7 +11,8 @@
  *   node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
  *
  * Compara CONJUNTOS, nao bytes - a formatacao do jsonb_pretty nao bate com a do
- * arquivo commitado e isso nao importa.
+ * arquivo commitado e isso nao importa. Colunas incluem tipo e nulabilidade para
+ * que alteracoes de contrato tambem invalidem o catalogo.
  */
 import fs from 'node:fs';
 
@@ -21,20 +22,53 @@ if (!fresco) {
   process.exit(2);
 }
 
-const A = JSON.parse(fs.readFileSync('supabase/schema-catalog.json', 'utf8'));
-const B = JSON.parse(fs.readFileSync(fresco, 'utf8'));
+const catalogoCommitado = process.env.CATALOG_PATH || 'supabase/schema-catalog.json';
+
+function lerCatalogo(arquivo, rotulo) {
+  try {
+    const catalogo = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    if (!catalogo || typeof catalogo !== 'object' || Array.isArray(catalogo)) {
+      throw new Error('a raiz precisa ser um objeto JSON');
+    }
+    return catalogo;
+  } catch (error) {
+    console.error('ERRO: catalogo ' + rotulo + ' invalido (' + arquivo + '): ' + error.message);
+    process.exit(2);
+  }
+}
+
+const A = lerCatalogo(catalogoCommitado, 'commitado');
+const B = lerCatalogo(fresco, 'fresco');
+const SECOES = ['tables', 'views', 'columns', 'functions'];
 
 let problemas = 0;
-for (const secao of ['tables', 'views', 'functions']) {
-  const setA = new Set(A[secao] || []);
-  const setB = new Set(B[secao] || []);
+for (const secao of SECOES) {
+  const arrayA = A[secao];
+  const arrayB = B[secao];
+  if (!Array.isArray(arrayA) || !arrayA.every((item) => typeof item === 'string')) {
+    console.error('[' + secao + '] secao ausente ou invalida no catalogo commitado');
+    problemas++;
+    continue;
+  }
+  if (!Array.isArray(arrayB) || !arrayB.every((item) => typeof item === 'string')) {
+    console.error('[' + secao + '] secao ausente ou invalida no catalogo fresco');
+    problemas++;
+    continue;
+  }
+
+  const setA = new Set(arrayA);
+  const setB = new Set(arrayB);
+  const duplicadosA = arrayA.length - setA.size;
+  const duplicadosB = arrayB.length - setB.size;
   const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort();
   const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort();
-  problemas += soNoArquivo.length + soNoBanco.length;
+  problemas += soNoArquivo.length + soNoBanco.length + duplicadosA + duplicadosB;
   console.log(
     '[' + secao + '] arquivo: ' + setA.size + ' | banco: ' + setB.size +
     ' | so no arquivo: ' + soNoArquivo.length + ' | so no banco: ' + soNoBanco.length,
   );
+  if (duplicadosA) console.error('  entradas duplicadas no catalogo commitado: ' + duplicadosA);
+  if (duplicadosB) console.error('  entradas duplicadas no catalogo fresco: ' + duplicadosB);
   if (soNoArquivo.length) console.error('  removidos do banco mas ainda no catalogo: ' + soNoArquivo.join(', '));
   if (soNoBanco.length) console.error('  criados no banco e ausentes do catalogo: ' + soNoBanco.join(', '));
 }

@@ -11,7 +11,9 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 |---|---|---|
 | `supabase-usage-guard.mjs` | nao | Valida `.from()` / `.rpc()` do cliente principal contra `supabase/schema-catalog.json` |
 | `known-violations.json` | nao | Baseline (ratchet) das violacoes ja conhecidas |
-| `catalog.sql` | sim | Regenera `supabase/schema-catalog.json` |
+| `catalog.sql` | sim | Regenera `supabase/schema-catalog.json` (relacoes, colunas/tipos/nulabilidade e funcoes) |
+| `check-catalog-fresh.mjs` | nao | Compara por conjuntos o catalogo commitado com uma geracao fresca |
+| `check-mcp-exec-acl.sql` | sim | Falha se as funcoes MCP sairem do contrato `postgres` + `service_role` |
 | `check-migration-drift.mjs` | sim | Compara `supabase/migrations/*.sql` com `schema_migrations` |
 | `manifest.sql` | sim | Assinatura MD5 por objeto do schema `public` |
 | `diff.mjs` | nao | Diffa dois manifestos |
@@ -30,7 +32,7 @@ psql "$ORIGEM_URL"  -At -f scripts/db-audit/manifest.sql > /tmp/src.json
 psql "$DESTINO_URL" -At -f scripts/db-audit/manifest.sql > /tmp/dst.json
 node scripts/db-audit/diff.mjs /tmp/src.json /tmp/dst.json
 
-# regenerar o catalogo apos criar/remover tabela ou funcao
+# regenerar o catalogo apos criar/remover tabela, coluna ou funcao
 psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > supabase/schema-catalog.json
 ```
 
@@ -39,7 +41,8 @@ psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > supabase/schema-catalo
 Porque assim ele roda em PR de fork, sem secret, e nao vira aquele check que fica
 amarelo pra sempre porque a credencial expirou. O preco e que
 `supabase/schema-catalog.json` precisa ser regenerado quando o schema muda - o job
-`catalog-fresh` do workflow `db-guard.yml` avisa quando ele fica velho.
+`catalog-fresh` do workflow `db-guard.yml` avisa quando ele fica velho e publica a
+geracao fresca como artifact de curta retencao para revisao/rebuild.
 
 ## Armadilhas conhecidas
 
