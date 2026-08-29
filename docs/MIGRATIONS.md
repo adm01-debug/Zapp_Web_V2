@@ -114,8 +114,10 @@ caso, a migration relacionada deve ser posterior, executavel, ter nome correspon
 ao ledger e hashes exatos; reuso, ciclos e cadeias sao rejeitados.
 
 Referencias textuais `source`/`arquivo` em comentarios do ledger tem menor forca que
-nome e SQL canonico exatos: se ambos coincidem, uma referencia stale nao causa drift.
-Se o SQL diverge, a referencia continua fail-closed e somente uma excecao pinned que
+nome exato acompanhado por pelo menos uma prova de conteudo exata: SQL canonico,
+`file-sha256` ou `sql-sha256`. O marker precisa ser unico, bem-formado e corresponder
+ao arquivo atual; mera presenca nunca autoriza o replay. Sem essa prova, ou quando o
+nome diverge, a referencia continua fail-closed e somente uma excecao pinned que
 valide integralmente o ledger pode autorizar o replay. Markers malformados ou
 conflitantes sempre falham.
 
@@ -127,6 +129,11 @@ somente leitura pelo run `33255655034` (`Migration Ledger Evidence`), no commit
 artefato; nomes e hashes foram revisados sem publicar os `statements`. O coletor e o
 workflow eram de uso unico e foram removidos depois da verificacao. Nenhum registro
 do ledger ou objeto do banco foi alterado por essa reconciliacao.
+
+O run vivo `33256666088`, posterior a essa fotografia, comprovou que o registro
+`20260829020000` passou a usar o nome `mcp_exec_functions_harden`. A excecao de
+colisao derivada da fotografia anterior foi entao retirada; o guard voltou a exigir
+as provas normais do ledger atual e o contrato ACL continua validado em etapa propria.
 
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.

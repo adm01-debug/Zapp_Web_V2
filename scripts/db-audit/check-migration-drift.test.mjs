@@ -564,6 +564,70 @@ test('referencia source stale nao vence nome e SQL exatos', () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+test('referencia source stale nao vence nome e file-sha256 exatos', () => {
+  const statements = [
+    '-- source: 20260829050000_nome_antigo.sql',
+    `-- file-sha256: ${sha256(SQL)}`,
+  ];
+  const result = runGuard({ ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+});
+
+test('referencia source stale nao vence nome e sql-sha256 exatos', () => {
+  const statements = [
+    '-- source: 20260829050000_nome_antigo.sql',
+    `-- sql-sha256: ${fixtureSqlHash()}`,
+  ];
+  const result = runGuard({ ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+});
+
+test('referencia source stale exige nome exato mesmo com hash exato', () => {
+  const statements = [
+    '-- source: 20260829050000_nome_antigo.sql',
+    `-- file-sha256: ${sha256(SQL)}`,
+  ];
+  const result = runGuard({
+    ledger: [ledgerRecord({ name: 'outro_nome', statements })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /nome divergente/);
+  assert.match(result.stderr, /fonte divergente/);
+});
+
+test('referencia source stale sem prova forte continua fail-closed', () => {
+  const statements = ['-- source: 20260829050000_nome_antigo.sql'];
+  const result = runGuard({ ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /fonte divergente/);
+});
+
+test('referencia source stale nao mascara file-sha256 conflitante', () => {
+  const statements = [
+    '-- source: 20260829050000_nome_antigo.sql',
+    `-- file-sha256: ${sha256(SQL)}`,
+    `-- file-sha256: ${'0'.repeat(64)}`,
+  ];
+  const result = runGuard({ ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /hashes de arquivo conflitantes/);
+  assert.match(result.stderr, /fonte divergente/);
+});
+
+test('referencia source stale exige uma unica ocorrencia do mesmo hash', () => {
+  const marker = `-- file-sha256: ${sha256(SQL)}`;
+  const statements = [
+    '-- source: 20260829050000_nome_antigo.sql',
+    marker,
+    marker,
+  ];
+  const result = runGuard({ ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /fonte divergente/);
+});
+
 test('referencia source divergente falha com SQL divergente sem excecao pinned', () => {
   const statements = [OTHER_SQL.trim(), '-- source: 20260829050000_nome_antigo.sql'];
   const result = runGuard({ ledger: [ledgerRecord({ statements })] });
