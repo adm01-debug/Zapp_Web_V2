@@ -3,7 +3,8 @@ import * as S from '../../supabase/functions/_shared/schemas.ts';
 
 const UUID = 'a3bb189e-8bf9-4888-9912-ace4e6543002';
 type Case = { payload: unknown; hint: string };
-type Suite = { schema: { safeParse: (d: unknown) => { success: boolean } }; valid: unknown[]; invalid: Case[] };
+type SafeParseResult = { success: true } | { success: false; error: Record<string, unknown> };
+type Suite = { schema: { safeParse: (d: unknown) => SafeParseResult }; valid: unknown[]; invalid: Case[] };
 
 // Tabela de contrato: TODO schema exportado tem casos de payload válido,
 // campo ausente, tipo incorreto e valor vazio (quando aplicável ao shape).
@@ -111,7 +112,7 @@ describe('cobertura de contrato por schema', () => {
       }
       for (const c of suite.invalid) {
         it(`inválido: ${c.hint} → resposta 422 consistente`, async () => {
-          const r = (suite.schema as any).safeParse(c.payload);
+          const r = suite.schema.safeParse(c.payload);
           expect(r.success).toBe(false);
           const res = S.validationErrorResponse(r.error);
           expect(res.status).toBe(422);
