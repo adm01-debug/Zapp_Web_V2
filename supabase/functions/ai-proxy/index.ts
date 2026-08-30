@@ -3,7 +3,7 @@
  * Routes AI calls through admin-configured provider with automatic fallback to OpenRouter.
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { z, parseBody } from "../_shared/schemas.ts";
+import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsage, extractTokenUsage, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Limite de requisicoes excedido. Tente novamente em 1 minuto.", 429, req);
 
     const parsed = parseBody(AiProxySchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, model: clientModel, use_for, provider_id, tools, tool_choice, stream } = parsed.data;
 

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { SicoobBridgeNewMessageSchema, SicoobBridgeMarkReadSchema, parseBody } from "../_shared/schemas.ts";
+import { SicoobBridgeNewMessageSchema, SicoobBridgeMarkReadSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     if (action === 'new_message') {
       const parsed = parseBody(SicoobBridgeNewMessageSchema, body);
-      if (!parsed.success) return errorResponse(parsed.error, 400, req);
+      if (!parsed.success) return validationErrorResponse(parsed, req);
 
       const { message_id, sender_name, sender_email, sender_phone, singular_name, singular_id, content, vendedor_user_id, created_at } = parsed.data;
 
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
     } else if (action === 'mark_read') {
       const parsed = parseBody(SicoobBridgeMarkReadSchema, body);
-      if (!parsed.success) return errorResponse(parsed.error, 400, req);
+      if (!parsed.success) return validationErrorResponse(parsed, req);
 
       const { external_ids } = parsed.data;
       const { error } = await supabase.from('messages').update({ is_read: true }).in('external_id', external_ids);

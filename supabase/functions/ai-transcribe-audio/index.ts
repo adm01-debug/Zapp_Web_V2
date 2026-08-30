@@ -1,6 +1,6 @@
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth } from "../_shared/validation.ts";
-import { TranscribeAudioSchema, parseBody } from "../_shared/schemas.ts";
+import { TranscribeAudioSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Limite de transcrições excedido. Tente novamente em 1 minuto.", 429, req);
 
     const parsed = parseBody(TranscribeAudioSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { audioUrl, messageId, languageCode, enableDiarization, tagAudioEvents } = parsed.data;
 

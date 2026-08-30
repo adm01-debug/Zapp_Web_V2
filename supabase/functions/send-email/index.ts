@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { SendEmailSchema, parseBody } from "../_shared/schemas.ts";
+import { SendEmailSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const RESEND_API_KEY = requireEnv("RESEND_API_KEY");
 
     const parsed = parseBody(SendEmailSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const body = parsed.data;
 
