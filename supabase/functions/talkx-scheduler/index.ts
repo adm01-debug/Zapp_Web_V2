@@ -2,7 +2,7 @@
  * Talk X Scheduler — Checks for scheduled campaigns that are ready to start
  * Called by pg_cron every minute
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
