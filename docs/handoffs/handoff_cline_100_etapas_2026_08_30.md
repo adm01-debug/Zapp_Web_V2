@@ -6,6 +6,13 @@
 > **Base remota verificada na elaboração:** `origin/main` em `19b0f6448910bcb29ccd9ddd964f99a303a823b0`.
 > **Natureza deste documento:** plano operacional. Ele não autoriza, por si só, escrita no banco, rotação de credenciais, push, merge ou deploy.
 
+> **Revisão Codex 2026-08-30:** a auditoria independente em
+> `docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md` é parte
+> obrigatória deste handoff. Ela encontrou P0 de webhook/autorização, drift de
+> migrations e funcionalidades de fachada. Em caso de conflito factual, vale a
+> evidência primária mais recente e o critério mais seguro. Produção, banco,
+> deploy e rotação de secrets continuam Classe D.
+
 ---
 
 ## 0. Prompt de início para entregar ao Cline
@@ -20,12 +27,13 @@ Você é o executor responsável pelo programa de correção e melhoria do Zapp 
    - .codex/AGENTS.md
    - .agents/skills/zapp-web-v2/SKILL.md
    - docs/handoffs/handoff_cline_100_etapas_2026_08_30.md
+   - docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md
 2. Trate este handoff como checklist operacional, mas trate o código, a CI e os serviços consultados ao vivo como fonte de verdade. Não aplique uma correção apenas porque ela aparece no plano: primeiro reproduza ou prove o problema.
-3. Comece pela etapa 001 e respeite dependências, gates e critérios de aceite. Não pule etapas silenciosamente.
-4. Para cada etapa, registre estado, evidência, arquivos alterados, comandos e resultados no diário definido na etapa 004.
+3. Comece pela etapa 001 e respeite dependências, gates e critérios de aceite. Não pule etapas silenciosamente. A auditoria Codex introduz um override de prioridade para os P0, sem renumerar nem apagar etapas.
+4. Para cada etapa, registre separadamente `ESTADO_DA_EXECUCAO` e `ESTADO_DA_IMPLEMENTACAO`, além de evidência, arquivos alterados, comandos e resultados no diário definido na etapa 004.
 5. Pode executar autonomamente leituras, testes e alterações reversíveis em uma branch local. Pare e solicite aprovação antes de: revelar/rotacionar credenciais; escrever SQL no banco oficial; registrar migrations ao vivo; alterar serviços externos; disparar workflows; fazer push/merge; publicar Vercel/Supabase; reiniciar ou modificar a VPS/Evolution GO; apagar dados ou arquivos materiais.
 6. Nunca use outro projeto Supabase. O projeto oficial é tnnnlkbymytvtqngbbqh. Verifique a identidade novamente imediatamente antes de qualquer operação externa.
-7. Nunca copie para arquivos, logs, commits, terminal compartilhado ou respostas o URL autenticado do MCP fornecido em conversa, tokens, chaves, cookies ou conteúdo de .env.
+7. Nunca copie para arquivos, logs, commits, terminal compartilhado ou respostas o URL autenticado do MCP, a credencial Vercel fornecida em conversa, tokens, chaves, cookies ou conteúdo de .env.
 8. Preserve mudanças preexistentes do usuário. Não use git reset --hard, git clean -fd, checkout destrutivo ou force push.
 9. Uma etapa só pode ficar VERIFIED quando todas as verificações e o critério de aceite tiverem evidência. Se já estiver resolvida, use SKIPPED_WITH_EVIDENCE e anexe a prova.
 10. Ao fechar cada onda de 10 etapas, execute o gate da onda, apresente um resumo de riscos e aguarde aprovação apenas se o próximo trabalho exigir mutação externa.
@@ -255,7 +263,7 @@ Para comandos demorados, registrar resumo e caminho do artefato, não milhares d
 ### 004 — Criar o diário de execução e a matriz de decisões
 
 - **Prioridade / risco / dependências:** P0; depende de 002.
-- **Executar:** criar o diário no formato da seção 5, pré-popular as 100 etapas como `NOT_STARTED` e uma seção `Decisões pendentes` com proprietário e prazo.
+- **Executar:** criar o diário no formato da seção 5, pré-popular as 100 etapas como `NOT_STARTED` e uma seção `Decisões pendentes` com proprietário e prazo. Manter duas dimensões: `ESTADO_DA_EXECUCAO` (trabalho do Cline) e `ESTADO_DA_IMPLEMENTACAO` (`CONFIRMED`, `PARTIAL`, `FAILED`, `ABSENT` ou `BLOCKED`).
 - **Verificar:** um script simples ou inspeção deve provar que existem exatamente 100 IDs únicos de `001` a `100`.
 - **Aceite:** toda ação posterior consegue apontar para uma linha de evidência; nenhum segredo no arquivo.
 - **Rollback/registro:** a própria mudança é documental e reversível.
@@ -271,9 +279,9 @@ Para comandos demorados, registrar resumo e caminho do artefato, não milhares d
 ### 006 — Tratar o URL autenticado do MCP como credencial exposta
 
 - **Prioridade / risco / dependências:** P0 de segurança; depende de 005.
-- **Executar:** não copiar o URL informado na conversa. Verificar apenas se ele foi acidentalmente persistido no Git e nos arquivos locais com busca pelo domínio e por fragmentos não secretos. Preparar procedimento de rotação/revogação no provedor responsável.
+- **Executar:** não copiar o URL nem a credencial Vercel informados na conversa. Tratar ambos como expostos. Verificar apenas se foram acidentalmente persistidos no Git e nos arquivos locais com busca pelo domínio/identificador público e por fragmentos não secretos. Preparar procedimento independente de rotação/revogação em cada provedor responsável.
 - **Verificar:** `git grep` e busca em arquivos versionáveis não devem retornar o token; revisar histórico recente sem imprimir a credencial inteira.
-- **Aceite:** ausência comprovada no repositório e decisão registrada: `ROTATE_APPROVED`, `ROTATED` ou `ACCEPTED_TEMPORARY_RISK` com proprietário/prazo.
+- **Aceite:** ausência comprovada no repositório e decisão registrada para **cada** credencial: `ROTATE_APPROVED`, `ROTATED` ou `ACCEPTED_TEMPORARY_RISK` com proprietário/prazo. A etapa não fecha apenas porque o Git está limpo.
 - **Rollback/registro:** rotação é Classe D; o Cline deve parar antes de executá-la. Nunca registrar o valor antigo ou novo.
 
 ### 007 — Inventariar superfícies de segredo e dados sensíveis
@@ -287,9 +295,9 @@ Para comandos demorados, registrar resumo e caminho do artefato, não milhares d
 ### 008 — Capturar o baseline completo da revisão atual
 
 - **Prioridade / risco / dependências:** P0; depende de 002–003.
-- **Executar:** rodar instalação congelada, testes de scripts CI, lint ratchet, lint completo capturado, typecheck, strict dry-run, testes unitários, contratos, coverage, build, audit e guard DB. Medir duração e exit code de cada comando.
-- **Verificar:** diferenciar falha esperada de dívida histórica de regressão real; confirmar que a correção de `19b0f644` removeu lockfile drift e o novo erro de lint observado no commit anterior.
-- **Aceite:** relatório com comando, duração, exit code, contagens e artefatos; nenhum resultado descrito como verde se o processo retornou erro.
+- **Executar:** rodar instalação congelada, testes de scripts CI, lint ratchet, lint completo capturado, typecheck, strict dry-run, testes unitários, contratos, coverage, build, audit e guard DB. Medir duração e exit code de cada comando. Criar também uma matriz de autenticidade funcional: `real-e2e`, `real-partial`, `local-only`, `mock/demo`, `blocked` ou `absent`.
+- **Verificar:** diferenciar falha esperada de dívida histórica de regressão real; confirmar que a correção de `19b0f644` removeu lockfile drift e o novo erro de lint observado no commit anterior. Procurar especificamente módulos que usam `useState`, timers, números aleatórios, URLs sintéticas, mocks ou toasts no lugar de integração/persistência real.
+- **Aceite:** relatório com comando, duração, exit code, contagens, artefatos e classificação funcional; nenhum resultado descrito como verde se o processo retornou erro, e nenhuma funcionalidade descrita como implementada somente porque possui componente, tabela ou menu.
 - **Rollback/registro:** remover apenas artefatos ignorados criados por esta medição, sem `git clean` e sem apagar arquivos desconhecidos.
 
 ### 009 — Capturar baseline de UX, bundle e rede
@@ -681,9 +689,9 @@ Budgets precisam estar automatizados, bibliotecas pesadas não podem contaminar 
 ### 051 — Inventariar APIs, consumidores e trust boundaries
 
 - **Prioridade / risco / dependências:** P0; depende de 027 e 040.
-- **Executar:** catalogar Edge Functions, RPCs, webhooks, chamadas Evolution GO, APIs externas e endpoints públicos. Para cada um: caller, auth, payload/schema, dados, idempotência, timeout, retries e owner.
+- **Executar:** catalogar Edge Functions, RPCs, webhooks, chamadas Evolution GO, APIs externas e endpoints públicos. Para cada um: caller, auth, autorização por ação/role/tenant, payload/schema, dados, service role, idempotência, timeout, redirects, retries e owner. Incluir funções com JWT válido mas privilégio excessivo; `verify_jwt=true` não prova autorização de negócio.
 - **Verificar:** cruzar 61 `index.ts`, `supabase/config.toml`, `supabase.functions.invoke`, cron e documentação; localizar funções órfãs.
-- **Aceite:** 100% das entradas têm classificação `internal-user`, `server-to-server`, `webhook`, `cron` ou `public`; lacuna de auth vira P0.
+- **Aceite:** 100% das entradas têm classificação `internal-user`, `server-to-server`, `webhook`, `cron` ou `public`, além de matriz `ação → papel → tenant → efeito`; lacuna de autenticação ou autorização vira P0.
 - **Rollback/registro:** inventário não deve conter keys ou payloads reais.
 
 ### 052 — Auditar toda exceção `verify_jwt = false`
@@ -737,7 +745,7 @@ Budgets precisam estar automatizados, bibliotecas pesadas não podem contaminar 
 ### 058 — Fechar SSRF, redirects e processamento de URLs
 
 - **Prioridade / risco / dependências:** P0; depende de 051 e 056.
-- **Executar:** localizar fetches dirigidos por usuário/webhook, bloquear schemes não HTTP(S), credentials embutidas, localhost, link-local, metadata cloud e IPs privados após resolução DNS; limitar redirects, tempo e bytes.
+- **Executar:** localizar fetches dirigidos por usuário/webhook, incluindo `fetch-link-preview`, `ai-transcribe-audio` e downloads de avatar/mídia. Bloquear schemes não HTTP(S), credentials embutidas, localhost, link-local, metadata cloud e IPs privados após resolução DNS; desabilitar redirects automáticos e revalidar cada hop; limitar tempo e bytes durante streaming.
 - **Verificar:** IPv4/IPv6, decimal/hex, DNS rebinding dentro do possível, redirect para privado, URL encurtada e resposta gigante.
 - **Aceite:** nenhum URL não confiável alcança rede interna/metadata; allowlists de provedores preferidas.
 - **Rollback/registro:** preservar integrações legítimas com casos de teste explícitos.
@@ -745,7 +753,7 @@ Budgets precisam estar automatizados, bibliotecas pesadas não podem contaminar 
 ### 059 — Reduzir privilégios e sanitizar logs
 
 - **Prioridade / risco / dependências:** P0; depende de 007, 051 e 063–064 para fechamento.
-- **Executar:** mapear usos de service role, tokens Evolution e banco externo. Manter secrets apenas server-side, escopo mínimo e redaction central de Authorization, cookies, telefone, email, tokens e payloads.
+- **Executar:** mapear usos de service role, tokens Evolution e banco externo. Para toda função service-role, provar autenticação, role, tenant e autorização por ação antes do primeiro efeito. Revisar especialmente `evolution-api`, `webhook-diagnostic`, `connection-health-check`, `batch-fetch-avatars`, reparos/migrations e dashboards administrativos. Manter secrets apenas server-side, escopo mínimo e redaction central de Authorization, cookies, telefone, email, tokens e payloads.
 - **Verificar:** testes unitários de redaction em objetos aninhados/errors/URLs; buscar service role no bundle e logs de fixtures.
 - **Aceite:** browser nunca recebe segredo elevado; log operacional conserva correlation id e tipo de evento sem conteúdo sensível.
 - **Rollback/registro:** mudanças de grants/secrets são Classe D; código preparatório pode ser local.
@@ -1007,7 +1015,7 @@ Um erro sintético e um webhook de teste devem poder ser rastreados ponta a pont
 ### 088 — Reconciliar documentação técnica com o sistema atual
 
 - **Prioridade / risco / dependências:** P1; depende de 040 e resultados anteriores.
-- **Executar:** atualizar README/technical/deployment/migrations/features: React 19, Vite 8, quantidade dinâmica de Edge/migrations, PWA real, observabilidade, comandos e ambientes. Marcar snapshots históricos com data.
+- **Executar:** atualizar README/technical/deployment/migrations/features: React 19, Vite 8, quantidade dinâmica de Edge/migrations, PWA real, observabilidade, comandos e ambientes. Remover toda alegação “100% implementado” sem prova. Reclassificar explicitamente Sentry, n8n, Google Calendar, satisfação mockada, pagamentos, Meta CAPI, LGPD, exportação automática, PWA/push, automações, campanhas, chatbot e WhatsApp Flows conforme a matriz Codex. Marcar snapshots históricos com data.
 - **Verificar:** executar comandos copiados em checkout limpo; scanner de links e números conflitantes; não afirmar “100% completo” com KPIs pendentes.
 - **Aceite:** onboarding e operação usam documentação atual, e contagens são geradas ou claramente datadas.
 - **Rollback/registro:** preservar histórico em Git; não apagar auditorias úteis.
@@ -1089,9 +1097,9 @@ Ambientes e alvos devem ser inequívocos; previews não podem tocar produção; 
 ### 097 — Fechar P0/P1 e consolidar o registro de dívida
 
 - **Prioridade / risco / dependências:** P0; depende de 096.
-- **Executar:** revisar 100 etapas, issues, audit, post-mortems e exceções. Para todo item aberto, definir severidade, impacto, evidência, owner, prazo e gatilho de escalonamento.
-- **Verificar:** procurar marcadores TODO/HACK, disables, baselines e `continue-on-error`; confirmar que não escondem P0/P1.
-- **Aceite:** zero P0; P1 somente com aceitação explícita e data próxima; dívida técnica mensurável, não lista esquecida.
+- **Executar:** revisar 100 etapas, issues, audit, post-mortems, exceções e a matriz de autenticidade funcional da auditoria Codex. Para todo item aberto, definir severidade, impacto, evidência, owner, prazo e gatilho de escalonamento. Cada fachada precisa de decisão explícita: implementar, ocultar/remover ou rotular `DEMO`.
+- **Verificar:** procurar marcadores TODO/HACK, disables, baselines, `continue-on-error`, mocks, números aleatórios, timers simuladores, URLs sintéticas e estados “connected/success” exclusivamente locais; confirmar que não escondem P0/P1 nem funcionalidades parciais.
+- **Aceite:** zero P0; P1 somente com aceitação explícita e data próxima; zero módulo de fachada anunciado como disponível; dívida técnica e funcional mensurável, não lista esquecida.
 - **Rollback/registro:** não baixar severidade para fechar a onda.
 
 ### 098 — Congelar o candidato e obter aprovação de release
