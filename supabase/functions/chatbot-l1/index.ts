@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature } from "../_shared/validation.ts";
-import { ChatbotL1Schema, parseBody } from "../_shared/schemas.ts";
+import { ChatbotL1Schema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     let bodyJson: unknown;
     try { bodyJson = JSON.parse(rawBody); } catch { return errorResponse("Invalid JSON body", 400, req); }
     const parsed = parseBody(ChatbotL1Schema, bodyJson);
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, message, connectionId } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");

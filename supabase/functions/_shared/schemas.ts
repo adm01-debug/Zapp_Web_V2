@@ -263,16 +263,98 @@ export const ExternalDbBridgeSchema = z.object({
   countMode: z.string().max(20).optional(),
 });
 
+// ─── Contract error format (422) ─────────────────────────────
+// Formato único de falha de validação — ver docs/contracts.md
+export interface FieldError { path: string; message: string; code: string }
+
+export function toFieldErrors(error: z.ZodError): FieldError[] {
+  return error.issues.map((i) => ({
+    path: i.path.length ? i.path.join('.') : '(root)',
+    message: i.message,
+    code: i.code,
+  }));
+}
+
 // ─── Helper: parse body with schema ──────────────────────────
-export function parseBody<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
+// Retrocompat: consumidores antigos leem só .error (string). .issues é aditivo.
+export function parseBody<T>(schema: z.ZodSchema<T>, data: unknown):
+  | { success: true; data: T }
+  | { success: false; error: string; issues: FieldError[] } {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const errors = result.error.flatten();
-    const fieldErrors = Object.entries(errors.fieldErrors)
-      .map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`)
-      .join('; ');
-    const formErrors = errors.formErrors.join('; ');
-    return { success: false, error: [formErrors, fieldErrors].filter(Boolean).join('; ') };
+    const issues = toFieldErrors(result.error);
+    const error = issues.map((i) => `${i.path}: ${i.message}`).join('; ');
+    return { success: false, error, issues };
   }
   return { success: true, data: result.data };
 }
+
+/**
+ * Resposta canônica de falha de validação — 422 Unprocessable Entity.
+ * Corpo: { error: { code: 'VALIDATION_ERROR', message, fields: FieldError[] } }
+ * Sem import de validation.ts (mantém o módulo importável em Node p/ testes).
+ */
+export function validationErrorResponse(
+  source: { issues?: FieldError[]; error?: string } | z.ZodError | FieldError[],
+  _req?: Request,
+  contractVersion: 1 | 2 = 1,
+): Response {
+  let fields: FieldError[];
+  if (Array.isArray(source)) fields = source;
+  else if (source instanceof z.ZodError) fields = toFieldErrors(source);
+  else fields = source.issues ?? (source.error ? [{ path: '(root)', message: source.error, code: 'custom' }] : []);
+  return new Response(JSON.stringify({
+    error: {
+      code: 'VALIDATION_ERROR',
+      message: 'Payload inválido: um ou mais campos falharam na validação.',
+      fields,
+    },
+  }), {
+    status: 422,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': 'https://zapp-web-v2.vercel.app',
+      'x-contract-version': String(contractVersion),
+      'Cache-Control': 'no-store',
+      Vary: 'Origin',
+    },
+  });
+}
+
+// ─── Evolution Webhook (envelope) ────────────────────────────
+// v1 (default): leniente — só exige event+instance; eventos desconhecidos são
+// ACKados com 200 pelo handler (evita retry storm da Evolution GO).
+export const EvolutionWebhookEnvelopeV1Schema = z.object({
+  event: z.string().min(1, 'event is required').max(200),
+  instance: z.string().min(1, 'instance is required').max(200),
+  data: z.unknown().optional(),
+}).passthrough();
+
+// v2 (x-contract-version: 2): exige data como objeto.
+export const EvolutionWebhookEnvelopeV2Schema = z.object({
+  event: z.string().min(1, 'event is required').max(200),
+  instance: z.string().min(1, 'instance is required').max(200),
+  data: z.record(z.unknown()),
+  date_time: z.string().max(100).optional(),
+  sender: z.string().max(500).optional(),
+  server_url: z.string().max(500).optional(),
+  apikey: z.string().max(500).optional(),
+}).passthrough();
+
+// ─── ElevenLabs Webhook ──────────────────────────────────────
+export const ElevenLabsWebhookV1Schema = z.object({
+  type: z.string().max(100).optional(),
+  event_type: z.string().max(100).optional(),
+  id: z.union([z.string().max(200), z.number()]).optional(),
+  request_id: z.union([z.string().max(200), z.number()]).optional(),
+}).passthrough();
+
+export const ElevenLabsWebhookV2Schema = ElevenLabsWebhookV1Schema.refine(
+  (b) => Boolean(b.type || b.event_type),
+  { message: 'type or event_type is required', path: ['type'] },
+);
+
+// ─── Gmail Cron Sync (contrato de headers; função não lê body) ──
+export const GmailCronSyncHeadersSchema = z.object({
+  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+});

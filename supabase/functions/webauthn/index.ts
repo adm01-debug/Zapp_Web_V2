@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
-import { WebAuthnActionSchema, parseBody } from "../_shared/schemas.ts";
+import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 function base64URLEncode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const rawBody = await req.json();
     const parsed = parseBody(WebAuthnActionSchema, rawBody);
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { action, userId, userEmail, userName, credential, friendlyName } = parsed.data;
     const origin = req.headers.get('origin') || 'https://localhost';

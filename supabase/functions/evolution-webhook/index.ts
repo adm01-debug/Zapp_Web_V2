@@ -7,6 +7,8 @@ import {
   type WebhookPayload,
 } from "../_shared/evolution-helpers.ts";
 import { parseMessageContent } from "../_shared/evolution-media.ts";
+import { EvolutionWebhookEnvelopeV1Schema, EvolutionWebhookEnvelopeV2Schema, validationErrorResponse } from "../_shared/schemas.ts";
+import { parseVersioned } from "../_shared/contracts.ts";
 import { isGoPayload, translateGoPayload } from "../_shared/evolution-go-adapter.ts";
 import {
   handleConnectionUpdate, handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
@@ -33,8 +35,18 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    let payload: WebhookPayload = await req.json();
+    const rawBody: unknown = await req.json().catch(() => null);
+    if (rawBody === null || typeof rawBody !== 'object') {
+      return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
+    }
+    let payload: WebhookPayload = rawBody as WebhookPayload;
     if (isGoPayload(payload)) payload = translateGoPayload(payload) as unknown as WebhookPayload;
+    const contract = parseVersioned(req, payload, {
+      v1: EvolutionWebhookEnvelopeV1Schema,
+      v2: EvolutionWebhookEnvelopeV2Schema,
+    });
+    if (!contract.ok) return contract.response;
+    payload = contract.data as WebhookPayload;
     const event = normalizeEventName(payload.event);
     const instance = payload.instance;
     const data = payload.data ?? {};
