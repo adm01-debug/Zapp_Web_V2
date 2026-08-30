@@ -29,15 +29,16 @@ Instalação congelada: `bun install --frozen-lockfile` → exit 0, "Checked 903
 | Alvo | Esperado | Observado | Status |
 |---|---|---|---|
 | GitHub repo | `adm01-debug/zapp-web-v2`, default `main` | `adm01-debug/Zapp_Web_V2` (match case-insensitive), `default_branch=main`, permissões admin/push, `pushed_at` 2026-08-30T16:05:54Z | **MATCH** |
-| Supabase oficial | project `tnnnlkbymytvtqngbbqh`, PostgreSQL 17.6, Supabase Cloud | O MCP usado pelo Cline apontou para self-hosted PG 15.8; a tentativa read-only do MCP disponível ao Codex retornou `401 Unauthorized` antes da query | **MISMATCH/BLOCKED** — nenhum MCP disponível provou a identidade oficial; nenhum deles pode ser usado para SQL |
+| Supabase oficial | project `tnnnlkbymytvtqngbbqh`, PostgreSQL 17.6, Supabase Cloud | (a) MCP self-hosted da sessão Cline → PG 15.8 (MISMATCH, proibido); (b) tentativa do MCP do Codex → `401 Unauthorized`; (c) MCP HTTP dedicado `supabase-zapp-web-v2-mcp` v1.1.2 (Cloudflare Workers; conector documentado em `docs/migration/HANDOFF.md`), fornecido pelo usuário em 2026-08-30 → PG **17.6**, db `postgres`, migrations conferem com o repo (§5.5.1) | **MATCH via (c)** — leituras liberadas; mutações = Classe B+ (aprovação explícita) |
 | Vercel | conta/projeto `juca1/zapp-web-v2`, project id `prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp` | GET público retornou 200 e o repo contém SPA rewrite; conta e project id não foram consultados na API | **PARTIAL** — superfície disponível, identidade do projeto não comprovada |
 | Evolution GO | host público, VPS Hostinger e projeto `evolution-go-rxj2` documentados no handoff | GET `/` retornou 404; não havia MCP Hostinger para confirmar VPS, projeto, containers ou portas | **PARTIAL** — host respondeu, identidade interna não comprovada |
 
-Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `server_major=17` e `connection_provider=supabase-cloud` — o MCP da sessão (15.8, IP privado) falha nos dois critérios.
+Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `server_major=17` e `connection_provider=supabase-cloud` — o MCP self-hosted da sessão (15.8, IP privado) falha nos dois critérios; o MCP dedicado da §5.5.1 (PG 17.6, perfil Cloud) satisfaz ambos.
 
 ## 3. Decisões pendentes
 
-- **[BLOQUEIO]** Nenhum MCP Supabase disponível provou acesso ao projeto oficial `tnnnlkbymytvtqngbbqh` (PG 17.6, Cloud). O endpoint usado pelo Cline apontou para self-hosted PG 15.8; o endpoint disponível ao Codex retornou `401 Unauthorized`. Toda porção remota das etapas 010, 061–070, 084 e 095–099 permanece bloqueada até a identidade oficial ser comprovada. Nenhum SQL deve ser executado pelos MCPs atuais.
+- **[RESOLVIDO 2026-08-30]** Identidade oficial do Supabase comprovada via MCP HTTP dedicado `supabase-zapp-web-v2-mcp` (PG 17.6; migrations conferem com o repo; §5.5.1). Regras: leituras por esse caminho = Classe A; **mutações (DDL/DML, `db_apply_migration`, escritas em auth/storage/functions) = Classe B ou superior → exigem aprovação explícita**. O URL (com token) é segredo e não foi registrado neste repo (etapa 006). O MCP self-hosted da sessão (PG 15.8) e o endpoint que retornou `401` ao Codex permanecem proibidos. Porções remotas das etapas 010, 061–070, 084 e 095–099: **leitura liberada; escrita ainda bloqueada sem aprovação**.
+- **[DRIFT PRELIMINAR]** `db_migrations` remoto lista 17 versões `20260830010000`–`20260830161547`; o repo tem arquivo local apenas para `20260830153000` → **16 versões remotas sem arquivo local** (`_superseded/` e `_foreign/` não as contêm). Classificação formal (PARITY / EXPECTED_DIFFERENCE / DRIFT_BLOCKING) pertence à etapa 010 — nenhuma ação tomada.
 - **[BLOQUEIO PARCIAL]** MCP Hostinger ausente na sessão: verificação interna da Evolution GO (containers, portas) pendente; somente verificação de superfície (HTTP) foi feita.
 - **[BLOQUEIO PARCIAL]** Vercel respondeu publicamente, mas conta e project id não foram provados por API/CLI autenticada; nenhuma ação externa Vercel está autorizada.
 - **[DIVERGÊNCIA]** `.nvmrc` declara Node 20 enquanto a CI fixa Node 24 e a máquina local roda 24.19.0 — alinhar na etapa 014, depois de reproduzir e revisar o impacto.
@@ -53,12 +54,12 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 | 002 | Sincronizar a base de trabalho sem destruir alterações | VERIFIED | log §5.2 + Git | 1a47bb44 | HEAD-base == origin/main 19b0f644; nenhuma mudança descartada |
 | 003 | Fixar e registrar o ambiente de ferramentas | VERIFIED | log §5.3 | 1a47bb44 | install frozen OK; bun.lock intacto; `.nvmrc` pendente na 014 |
 | 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |
-| 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + auditoria Codex | 1a47bb44 + correção Codex | Supabase bloqueado; Vercel/Evolution apenas parciais |
-| 006 | Tratar o URL autenticado do MCP como credencial exposta | NOT_STARTED | — | — |  |
+| 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 | 1a47bb44 + correção Codex | Supabase MATCH via MCP dedicado (§5.5.1); Vercel/Evolution ainda parciais (aguardam credenciais) |
+| 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 | (commit desta atualização) | Ausência do token comprovada; aguarda decisão do proprietário: ROTATE_APPROVED / ACCEPTED_TEMPORARY_RISK |
 | 007 | Inventariar superfícies de segredo e dados sensíveis | NOT_STARTED | — | — |  |
 | 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |
 | 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |
-| 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | porção remota bloqueada até MCP oficial |
+| 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); drift preliminar: 16 versões remotas sem arquivo local |
 | 011 | Transformar o audit de dependências em backlog verificável | NOT_STARTED | — | — |  |
 | 012 | Corrigir vulnerabilidades diretas em lotes pequenos | NOT_STARTED | — | — |  |
 | 013 | Isolar ou substituir a cadeia de planilhas vulnerável | NOT_STARTED | — | — |  |
@@ -109,11 +110,11 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 | 058 | Fechar SSRF, redirects e processamento de URLs | NOT_STARTED | — | — |  |
 | 059 | Reduzir privilégios e sanitizar logs | NOT_STARTED | — | — |  |
 | 060 | Aplicar headers de segurança e CSP por etapas | NOT_STARTED | — | — |  |
-| 061 | Resolver qualquer drift de migrations | NOT_STARTED | — | — | porção remota bloqueada até MCP oficial |
+| 061 | Resolver qualquer drift de migrations | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); escrita exige aprovação |
 | 062 | Automatizar paridade de schema, catálogo e tipos | NOT_STARTED | — | — |  |
 | 063 | Construir matriz RLS multi-tenant com testes negativos | NOT_STARTED | — | — |  |
 | 064 | Auditar `SECURITY DEFINER`, grants e `search_path` | NOT_STARTED | — | — |  |
-| 065 | Medir queries reais com `pg_stat_statements` | NOT_STARTED | — | — | porção remota bloqueada até MCP oficial |
+| 065 | Medir queries reais com `pg_stat_statements` | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); escrita exige aprovação |
 | 066 | Corrigir a tempestade em `whatsapp_connections` | NOT_STARTED | — | — |  |
 | 067 | Otimizar queries e índices com planos comprovados | NOT_STARTED | — | — |  |
 | 068 | Auditar Realtime, replica identity e lifecycle de subscriptions | NOT_STARTED | — | — |  |
@@ -211,4 +212,28 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
 - **Supabase — auditoria Codex:** a tentativa read-only pelo MCP disponível terminou em `401 Unauthorized` antes da query; ela não comprova o projeto oficial e não autoriza fallback para outro banco.
 - **Critério de aceite:** **não cumprido integralmente**. GitHub está confirmado; Supabase está bloqueado; Vercel e Evolution têm apenas evidência superficial. Toda ação externa relacionada continua proibida.
 
-<!-- Próxima etapa canônica: 006 — tratar o URL autenticado do MCP como credencial exposta. Não alterar workflows nesta etapa. -->
+### 5.5.1 — Re-verificação Supabase via MCP dedicado (2026-08-30, Cline)
+
+- **Fonte:** o usuário forneceu o URL do MCP HTTP dedicado `supabase-zapp-web-v2-mcp` **v1.1.2** (Cloudflare Workers; protocolo MCP 2024-11-05, JSON-RPC stateless). O URL contém token e **não é reproduzido neste repositório** (tratado na etapa 006). É o mesmo conector documentado em `docs/migration/HANDOFF.md` ("Worker MCP do destino", 77 tools).
+- **Handshake:** `initialize` OK (capabilities: `tools`); `tools/list` → **77 ferramentas** (`db_*`, `storage_*`, `auth_*`, `functions_*`).
+- **Identidade (somente leitura):** `db_health` → `PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit`, user `postgres`; `db_connection_info` → version `17.6`, db `postgres`, `max_connections=60` (perfil Supabase Cloud). Satisfaz `scripts/db-audit/database-identity.json` (`server_major=17`, `connection_provider=supabase-cloud`).
+- **Cross-check de migrations:** `db_migrations` lista `20260830153000 webhook_failures_dead_letter`, `20260829120000 revoke_anon_ai_providers`, `20260829110000 gmail_incremental_sync_cron` etc., conferindo com `supabase/migrations/` do repo → **confirmado: é o banco do projeto oficial `tnnnlkbymytvtqngbbqh`**.
+- **Drift preliminar:** 17 versões remotas `20260830010000`–`20260830161547`; arquivo local existe apenas para `20260830153000` → **16 versões remotas sem arquivo local**. Classificação formal = etapa 010.
+- **Estado:** **MATCH** para Supabase. A etapa 005 permanece BLOCKED apenas por Vercel (conta/project id sem prova autenticada) e Evolution GO (sem MCP Hostinger). Leituras remotas liberadas; mutações continuam Classe B+ com aprovação explícita.
+
+### 5.6 — Etapa 006: Tratar o URL autenticado do MCP como credencial exposta
+
+- **Estado:** IN_PROGRESS (aguardando decisão do proprietário).
+- **Executar (concluído):** o URL não foi copiado para nenhum artefato. Busca de persistência por fragmento não secreto (8 chars) e pelo domínio:
+  - Working tree (exceto `.git`/`node_modules`): fragmento do token **ausente**; `workers.dev` ocorre apenas em `docs/migration/HANDOFF.md` (placeholder `<MCP_TOKEN>`), `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` e `tmp/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` (host `evolution-mcp`, sem token) — nenhum segredo real.
+  - Histórico Git (todos os refs, 6.980 commits): `git log -S<fragmento> --all` → **0 ocorrências**; pickaxe do domínio mostra apenas commits documentais com placeholder.
+- **Verificar (concluído):** ausência comprovada no repositório e nos arquivos locais versionáveis, sem imprimir a credencial.
+- **Procedimento de rotação (preparado, NÃO executado — rotação é Classe D):**
+  1. Gerar novo token aleatório (≥ 32 hex) fora deste chat.
+  2. Atualizar o segredo/rota do Worker `supabase-zapp-web-v2-mcp` na Cloudflare e redeploy conforme `docs/migration/HANDOFF.md` (`cf_worker_deploy`).
+  3. Atualizar os conectores clientes (conector Claude "SUPABASE - ZAPP WEB V2 - MCP"; sessões Cline/Codex) com o novo URL.
+  4. Confirmar que o path antigo retorna 401/404 e revogá-lo.
+  5. Registrar aqui apenas data/executor — jamais valores antigo/novo.
+- **Decisão pendente (o aceite exige uma das três):** `ROTATE_APPROVED` / `ROTATED` / `ACCEPTED_TEMPORARY_RISK` com proprietário e prazo. Proprietário: usuário (adm01). **Recomendação do executor:** `ROTATE_APPROVED` — o URL circulou em chats e o token concede acesso total (77 ferramentas, incluindo escrita). Prazo proposto: antes de qualquer etapa com escrita em banco. O Cline **para antes de executar** a rotação.
+
+<!-- Próxima etapa canônica: 007 — inventariar superfícies de segredo e dados sensíveis. A etapa 006 aguarda apenas a decisão do proprietário sobre rotação. -->
