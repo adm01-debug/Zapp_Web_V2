@@ -116,3 +116,61 @@ Scans executados em 2026-08-30 ~17:36 (dir = working tree incl. não-rastreados;
 ---
 
 *Relatório gerado na sessão de validação de 2026-08-30 (tarde). Artefatos brutos (gitleaks JSON, logs de teste/lint/build) em `/tmp` desta máquina — não versionados por higiene. Nenhum valor de segredo consta neste documento.*
+
+---
+
+## 8. Rodada 2 — Validação profunda do sistema (2026-08-30, ~17:50–18:10)
+
+**Escopo:** o sistema real que as sessões implementaram — guards de banco, bateria db-audit, CI viva (runs reais) e classificação formal do drift com o snapshot do ledger remoto (salvo às 15:11, 316 versões). Continuação da Rodada 1 (§1–§7).
+
+### 8.1 Gate local mínimo (handoff §4.6) — agora 100% executado
+
+| Comando | Resultado |
+|---|---|
+| `node --test scripts/ci/*.unit.mjs` | ✅ **23/23** |
+| `node scripts/ci/check-workflow-pins.mjs` | ✅ 6 workflows, todas as Actions fixadas por SHA |
+| `node scripts/db-audit/supabase-usage-guard.mjs` | ✅ catálogo 124 tabelas / 7 views / 46 funções (2026-08-29), **0 violações, 0 novas** |
+| `git diff --check` | ✅ OK |
+| `node --test scripts/db-audit/*.test.mjs` | ✅ **110/110** |
+| `bash check-mcp-exec-acl.test.sh` | ✅ **21 cenários** (postgres:16-alpine) |
+| `bash catalog-manifest.test.sh` | ✅ OK |
+| `bash check-reconcile-ledger-drift.test.sh` | ❌ **exit 1** — "[FAIL] replay limpo de mcp_exec não é renomeado: esperado 'mcp_exec_functions_harden', obtido 'fix_reassign_absent_agents_last_seen_at'" (**G-11**) |
+| `node scripts/db-audit/check-migration-drift.mjs` | ❌ **exit 1** — "versao duplicada 20260829100000" (**G-03**; o exit 0 visto antes era artefato do pipe com `tail`) |
+| `check-catalog-fresh` / `check-manifest-fresh` | ⚪ exigem JSON fresco do banco (sem acesso) — limitação mantida |
+
+### 8.2 G-03 escalado para CRÍTICO — cadeia completa de efeitos provada
+
+1. **CI vermelha na main AGORA:** `db-guard` run **#198** (push do PR #66, 30/08 15:28) = **FAILURE**, step 7 "Validar migrations localmente" (é o `check-migration-drift.mjs` falhando pela duplicata). O workflow tem path-filter (`supabase/**`, `src/**`…), então commits docs-only não o disparam — mas qualquer toque nesses paths herda o vermelho.
+2. **db-guard NÃO é required check:** a proteção da main exige apenas "🔍 Lint & TypeCheck", "🧪 Unit Tests", "🏗️ Build" → **merges continuam com o guard de banco quebrado** (**G-10**, ALTO).
+3. **Fix de segurança não aplicado ao banco (G-09, CRÍTICO):** o ledger remoto registrou `20260829100000 = fix_clear_login_operator_triple_arrow`; o arquivo irmão `20260829100000_get_team_profiles_active_filter.sql` (PR #59) **não consta no ledger** (grep = 0). Conteúdo: `get_team_profiles()` é `SECURITY DEFINER` e o fix adiciona `WHERE p.is_active = true` porque a versão sem filtro **expõe perfis de ex-agentes a qualquer usuário autenticado** (bypass do RLS de `profiles`). Conclusão: **a vulnerabilidade provavelmente segue ativa no banco oficial** (validação em runtime pendente — sem acesso DB nesta sessão).
+4. **T2 falho (G-11):** o cenário "replay limpo" do `check-reconcile-ledger-drift.test.sh` recebe nome deslocado — bug de lógica no reconcile (`diff.mjs`/helpers) ou efeito indireto da duplicata; na CI o run morre antes no step 7 (db-guard roda este teste na L79).
+
+### 8.3 Drift repo↔banco classificado (formaliza a etapa 010, modo leitura)
+
+Snapshot do ledger (15:11) × arquivos locais: **REMOTO=316 · LOCAL(raiz)=301 · REMOTE_ONLY=16 · LOCAL_ONLY(≥2026-08)=0 · `_superseded`=4 / `_foreign`=7 sem colisão · 1 duplicata local**.
+
+REMOTE_ONLY (16): `20260830010000 fix_audit_role_changes_add_update_case`, `020000 backfill_role_audit_baseline`, `030000 audit_role_permissions_trigger`, `040000 idx_audit_logs_action_created_composite`, `050000 fn_get_identity_matrix`, `060000 fix_profiles_role_check_add_special_agent`, `070000 fn_effective_role_and_sync_trigger`, `080000 fn_is_admin_and_fix_permissions_rls`, `090000 seed_special_agent_role_permissions`, `100000 fix_contacts_select_for_special_agent`, `110000 extend_special_agent_visibility_to_related_tables`, `120000 fix_agent_visibility_grants_constraints_and_policy`, `130000 fix_handle_new_user_role_with_audit`, `140000 deprecate_profiles_access_level_permissions_columns`, `150000 gate16_admin_only_write_policies`, `161547 fix_prevent_privilege_escalation_allow_internal_sync`.
+
+**Conclusão formal: `DRIFT_BLOCKING`** — 16 remote-only (aplicadas fora do repo) + 1 correção local disfarçada por duplicata (G-09) + guard vermelho. Toda mutação de banco (Classe C/D) permanece bloqueada até reconciliação; **nenhum SQL foi executado** nesta validação.
+
+### 8.4 Simulações da Rodada 2
+
+| # | Simulação | Resultado |
+|---|---|---|
+| S-6 | Replay dos guards locais com exit codes verdadeiros (sem pipe) | drift=1, T2=1, ACL=0, catálogo=0 — confirma falhas reais, não artefatos de terminal |
+| S-7 | PR #68 (`automation/audit-report`) | `action_required` — **prova viva em produção** do fallback S-1: PR de bot aguarda aprovação manual |
+| S-8 | Cruzamento snapshot×arquivos (script local) | classificação §8.3 reproduzível; nenhum LOCAL_ONLY além do disfarçado |
+| S-9 | Leitura das 2 migrations da duplicata | conteúdo inofensivo (sem segredos); ambas `CREATE OR REPLACE` idempotentes — corrigir G-03 = renomear + reaplicar a órfã, sem risco de schema |
+
+### 8.5 Ações recomendadas — Rodada 2 (reordenadas)
+
+| # | Ação | Classe | Prioridade |
+|---|---|---|---|
+| R1 | **HOTFIX G-09:** aplicar no banco oficial `get_team_profiles()` com `WHERE is_active = true` (conteúdo já pronto no arquivo do PR #59) e registrar no ledger com **versão única nova**; renomear o arquivo local colidido | **C/D** (aprovação) | 🔴 CRÍTICA |
+| R2 | Corrigir T2/G-11 (lógica do reconcile) e revalidar `db-guard` verde na main | B | 🔴 CRÍTICA |
+| R3 | Tornar `DB Guard (offline)` required check da main (hoje só 3 checks de CI) | C (config GitHub) | 🟡 ALTA |
+| R4 | Reconciliar as 16 remote-only (gerar arquivos a partir do banco, hash-conferidos) — etapa 010 | C/D | 🟡 ALTA |
+| R5 | Pendências da Rodada 1: F-01..F-04, G-01, G-05 | humano | 🔴/🟡 mantém |
+
+*Fim da Rodada 2 — validação exaustiva completa (R1+R2). Nenhum valor de segredo neste documento.*
+

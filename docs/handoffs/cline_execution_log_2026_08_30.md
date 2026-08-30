@@ -49,6 +49,9 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 - **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-03]** Credenciais Lalamove versionadas entre 2026-03-23 e 2026-04-12 (histórico, fora do HEAD). Decisão: rotacionar/encerrar a conta se ainda ativa; rewrite de histórico não planejado (risco aceito documental, a confirmar).
 - **[VERIFICAÇÃO PENDENTE — SEGURANÇA · etapa 007, F-04]** `supabase/functions/migrate-helper/` foi removido em 2026-08-28 (`1f2e9120`) por expor `SERVICE_ROLE_KEY` via endpoint público. Confirmar se a `SUPABASE_SERVICE_ROLE_KEY` do projeto oficial foi rotacionada após essa data.
 - **[RESOLVIDO — etapa 007, F-06]** `secrets.TYPES_SYNC_PR_TOKEN` ausente dos 8 repo secrets, porém `types-sync.yml` degrada graciosamente para `GITHUB_TOKEN` (L74–76 e L306 `${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}`) e o repo permite PRs por Actions (`can_approve_pull_request_reviews=true`) → **não-bloqueante**; criar o token dedicado virou hardening opcional. Evidência: `docs/security/validation-report-2026-08-30.md` §2 e §4 (S-1).
+- **[CRÍTICO — validação R2, G-09]** `20260829100000_get_team_profiles_active_filter.sql` (PR #59, fix de exposição de ex-agentes via `get_team_profiles()` SECURITY DEFINER) **não consta no ledger remoto** (colisão de versão com `fix_clear_login_operator_triple_arrow`, que é a registrada) → correção **nunca aplicada ao banco oficial**; vulnerabilidade provavelmente ativa. HOTFIX = Classe C/D: aplicar a função com `WHERE is_active=true` + registrar versão única nova + renomear arquivo local. Ver `validation-report-2026-08-30.md` §8.2.
+- **[ALTO — validação R2, G-10]** `db-guard` run #198 **FAILURE na main** (30/08 15:28, step "Validar migrations localmente", causa G-03) e **não é required check** (proteção exige só Lint/Unit/Build) → merges prosseguem com guard de banco quebrado.
+- **[MÉDIO — validação R2, G-11]** `check-reconcile-ledger-drift.test.sh` exit 1 ("replay limpo" renomeado indevidamente) — bug de lógica no reconcile ou efeito da duplicata; também executado pela CI (db-guard L79).
 - Nenhuma ação Classe C ou D foi executada. As mudanças documentais locais são Classe B.
 
 ## 4. Tabela de estados das 100 etapas
@@ -267,4 +270,13 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
 - **Não executado (aguarda aprovação humana):** `git rm --cached tmp/` + `.gitignore` (Classe B de gap), rotações F-01..F-04 (Classe D), ativação de Dependabot (config GitHub), criação opcional de `TYPES_SYNC_PR_TOKEN`.
 
 
-<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. Validação pós-onda concluída em 2026-08-30 (tarde): §5.8 + docs/security/validation-report-2026-08-30.md; F-06 resolvido; gaps novos G-01..G-08 aguardam triagem. -->
+### 5.8.1 — Rodada 2 da validação (sistema real; completa a §5.8)
+
+- **Estado:** ✅ CONCLUÍDO — detalhe em `docs/security/validation-report-2026-08-30.md` §8.
+- **Gate local mínimo agora 100% executado:** CI unit tests 23/23 ✅ · pins por SHA (6 workflows) ✅ · usage-guard (124 tabelas/7 views/46 funções, 0 violações) ✅ · `git diff --check` ✅ · db-audit 110/110 ✅ · ACL guard 21 cenários ✅ · catalog-manifest ✅ · **check-migration-drift exit 1 (G-03)** e **reconcile-ledger-drift exit 1 (G-11)** ❌.
+- **Achado crítico G-09:** o fix de segurança do PR #59 (`get_team_profiles` filtrando `is_active=true`) **não foi aplicado ao banco oficial** — a versão `20260829100000` colidiu e o ledger registrou apenas o `fix_clear_login`; a exposição de ex-agentes provavelmente persiste em produção. HOTFIX preparado, aguarda Classe C/D.
+- **G-10:** `db-guard` **run #198 FAILURE na main** (30/08 15:28; step "Validar migrations localmente") e não é required check — merges seguem com guard quebrado.
+- **Drift formal (etapa 010 antecipada em modo leitura):** `DRIFT_BLOCKING` — REMOTO=316 vs LOCAL=301; 16 remote-only nomeadas; 0 local-only legítimas; 1 duplicata; nenhum SQL executado.
+- **Simulações S-6..S-9** (exit codes verdadeiros, PR #68 `action_required` provando o fallback vivo, cruzamento snapshot×arquivos, leitura das migrations colididas) — ver relatório §8.4.
+
+<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. Validação pós-onda: R1 concluída (§5.8 + validation-report §1–7; F-06 resolvido) e **R2 concluída (validation-report §8)**: gate local 100% verde exceto G-03/G-11; drift formal = DRIFT_BLOCKING (16 remote-only + 1 fix de segurança não-aplicado G-09); db-guard #198 FAILURE na main (G-10). HOTFIX G-09 aguarda aprovação Classe C/D. -->
