@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { GmailOAuthActionSchema, parseBody } from "../_shared/schemas.ts";
+import { GmailOAuthActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     if (authError || !user) return errorResponse("Unauthorized", 401, req);
 
     const parsed = parseBody(GmailOAuthActionSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { action, code, account_id, state } = parsed.data;
 

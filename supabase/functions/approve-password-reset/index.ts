@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { ApprovePasswordResetSchema, parseBody } from "../_shared/schemas.ts";
+import { ApprovePasswordResetSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (!isAdmin) return errorResponse("Only admins can approve password resets", 403, req);
 
     const parsed = parseBody(ApprovePasswordResetSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { requestId, action, rejectionReason } = parsed.data;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

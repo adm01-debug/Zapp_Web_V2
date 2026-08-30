@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ExternalDbBridgeSchema, parseBody } from "../_shared/schemas.ts";
+import { ExternalDbBridgeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // ─── Allowlist of tables and operations ───────────────────────────────────
 // Service-role bypasses RLS, so we MUST whitelist what this bridge can touch.
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
     // Parse & validate body
     const parsed = parseBody(ExternalDbBridgeSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { action, table, rpc, params, limit, offset, countMode } = parsed.data;
 

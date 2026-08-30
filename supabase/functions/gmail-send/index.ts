@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { GmailSendActionSchema, parseBody } from "../_shared/schemas.ts";
+import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     if (!user) return errorResponse("Unauthorized", 401, req);
 
     const parsed = parseBody(GmailSendActionSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const body = parsed.data;
     const { action, account_id } = body;
