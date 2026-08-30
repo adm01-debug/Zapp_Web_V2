@@ -48,7 +48,7 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 - **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-01/F-02]** Valores com formato de segredo real da Evolution API (`apikey` em `docs/TROUBLESHOOTING.md` L72/L89; `x-webhook-secret` em `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` L75 e `tmp/`) estão versionados no HEAD. Aguardam: (1) rotação no painel Evolution/Hostinger (Classe D) e (2) sanitização dos docs (Classe B, executável após rotação aprovada). Valores não copiados para artefatos do handoff.
 - **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-03]** Credenciais Lalamove versionadas entre 2026-03-23 e 2026-04-12 (histórico, fora do HEAD). Decisão: rotacionar/encerrar a conta se ainda ativa; rewrite de histórico não planejado (risco aceito documental, a confirmar).
 - **[VERIFICAÇÃO PENDENTE — SEGURANÇA · etapa 007, F-04]** `supabase/functions/migrate-helper/` foi removido em 2026-08-28 (`1f2e9120`) por expor `SERVICE_ROLE_KEY` via endpoint público. Confirmar se a `SUPABASE_SERVICE_ROLE_KEY` do projeto oficial foi rotacionada após essa data.
-- **[VERIFICAÇÃO PENDENTE — etapa 007, F-06]** `secrets.TYPES_SYNC_PR_TOKEN` é referenciado em workflow mas não consta nos 8 repo secrets; confirmar existência em nível de organização ou criar.
+- **[RESOLVIDO — etapa 007, F-06]** `secrets.TYPES_SYNC_PR_TOKEN` ausente dos 8 repo secrets, porém `types-sync.yml` degrada graciosamente para `GITHUB_TOKEN` (L74–76 e L306 `${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}`) e o repo permite PRs por Actions (`can_approve_pull_request_reviews=true`) → **não-bloqueante**; criar o token dedicado virou hardening opcional. Evidência: `docs/security/validation-report-2026-08-30.md` §2 e §4 (S-1).
 - Nenhuma ação Classe C ou D foi executada. As mudanças documentais locais são Classe B.
 
 ## 4. Tabela de estados das 100 etapas
@@ -61,7 +61,7 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 | 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |
 | 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 + auditoria Codex | 1a47bb44 + correção Codex | Supabase MATCH relatado pelo Cline, mas não reproduzido pelo Codex; Vercel/Evolution ainda parciais |
 | 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | 6cab178a | MCP: ACCEPTED_TEMPORARY_RISK (adm01, até 2026-09-06); credencial Vercel: decisão independente pendente |
-| 007 | Inventariar superfícies de segredo e dados sensíveis | IN_PROGRESS | log §5.7 + `docs/security/secret-surface-inventory.md` | este commit | gitleaks 8.30.1 (dir + histórico); 8 GitHub secrets + 23 envs edge + VITE_* mapeados; F-01/F-02 (Evolution) e F-03/F-04/F-06 aguardam decisão do proprietário |
+| 007 | Inventariar superfícies de segredo e dados sensíveis | IN_PROGRESS | log §5.7 + `docs/security/secret-surface-inventory.md` | este commit | gitleaks 8.30.1 (dir + histórico); 8 GitHub secrets + 23 envs edge + VITE_* mapeados; F-01/F-02 (Evolution) e F-03/F-04 aguardam decisão do proprietário; F-06 resolvido na validação (§5.8) |
 | 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |
 | 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |
 | 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); drift preliminar: 16 versões remotas sem arquivo local |
@@ -253,4 +253,18 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
 - **Verificar (concluído):** artefato sanitizado sem valores; aceite parcial — 100% dos nomes com owner/escopo/rotação (exceto F-06 e `PROMOGIFTS_*`), mas "zero segredo real versionado" **não** atendido até resolver F-01/F-02.
 - **Decisões pendentes:** ver §3 (blocos F-01/F-02, F-03, F-04, F-06). Nenhuma rotação executada (Classe D); nenhum workflow alterado.
 
-<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. -->
+### 5.8 — Validação exaustiva pós-onda (sessão da tarde; atividade de QA fora da tabela de 100 etapas)
+
+- **Estado:** ✅ CONCLUÍDO — relatório consolidado em `docs/security/validation-report-2026-08-30.md`.
+- **Escopo medido:** branch = 8 commits / +3.628 linhas, **100% docs, zero código** vs `origin/main` → a validação mirou os entregáveis da auditoria + baseline de saúde do repo (não havia código novo a testar).
+- **Frentes (ordem A5 → A2 → A1 → A4 → A3):**
+  - **A5 integridade:** 11/11 hashes citados existem; tabela com exatas 100 linhas de etapas; 5/5 docs de handoff presentes; linhas F-01/F-02 intactas (comprimentos conferidos). Re-contagem: **6.994 commits** (o "6.980" de §5.7 era exato às 13:12; diferença por merges posteriores — nota de precisão, sem correção retroativa).
+  - **A2 reprodução de segurança:** gitleaks 8.30.1, `--redact=100`, dir=515 / git=565 findings (5.504 commits alcançáveis do HEAD); **F-01..F-11 todos reproduzidos, 0 incidentes novos**; os 21 hits da regra `stripe-access-token` são os artefatos Lalamove (falso positivo de regra — mesmo incidente F-03).
+  - **A1 DBA estático:** 301 migrations íntegras; **1 versão duplicada (G-03: `20260829100000` ×2)**; 12 arquivos `SECURITY DEFINER` sem `search_path` literal (G-04 — verificação fina na etapa 010); RLS estático sem órfãs evidentes (126 tabelas criadas / 127 `ENABLE RLS`).
+  - **A4 CI/CD:** 9 secrets referenciados vs 8 presentes → **F-06 reclassificado: não-bloqueante**; branch protection `main` saudável (3 checks obrigatórios, strict, enforce_admins, conversation resolution); **Dependabot alerts desabilitado (G-01)** e **code scanning ausente (G-02)**; CI usa `lint-ratchet` (não lint cru).
+  - **A3 build/testes:** typecheck ✅ 0 erros; vitest **152 arquivos / 2.493 passed / 32 skipped / 0 falhas**; contratos 160/160 ✅; lint-ratchet ✅ (baseline=1123, novas=0); build ✅ 6,12s / dist 34 MB; bundle fresco sem `service_role`/segredos (simulação S-2).
+- **Gaps novos:** G-01..G-08 classificados no relatório (nenhum bloqueante); `tmp/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` rastreado (G-05) entra no pacote de sanitização F-02.
+- **Não executado (aguarda aprovação humana):** `git rm --cached tmp/` + `.gitignore` (Classe B de gap), rotações F-01..F-04 (Classe D), ativação de Dependabot (config GitHub), criação opcional de `TYPES_SYNC_PR_TOKEN`.
+
+
+<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. Validação pós-onda concluída em 2026-08-30 (tarde): §5.8 + docs/security/validation-report-2026-08-30.md; F-06 resolvido; gaps novos G-01..G-08 aguardam triagem. -->
