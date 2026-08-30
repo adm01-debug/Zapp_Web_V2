@@ -41,6 +41,7 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 - **[DRIFT PRELIMINAR]** `db_migrations` remoto lista 17 versões `20260830010000`–`20260830161547`; o repo tem arquivo local apenas para `20260830153000` → **16 versões remotas sem arquivo local** (`_superseded/` e `_foreign/` não as contêm). Classificação formal (PARITY / EXPECTED_DIFFERENCE / DRIFT_BLOCKING) pertence à etapa 010 — nenhuma ação tomada.
 - **[BLOQUEIO PARCIAL]** MCP Hostinger ausente na sessão: verificação interna da Evolution GO (containers, portas) pendente; somente verificação de superfície (HTTP) foi feita.
 - **[BLOQUEIO PARCIAL]** Vercel respondeu publicamente, mas conta e project id não foram provados por API/CLI autenticada; nenhuma ação externa Vercel está autorizada.
+- **[DECISÃO PENDENTE — SEGURANÇA]** Uma credencial Vercel foi publicada em chat (flagrada pela auditoria Codex) e aguarda decisão independente do proprietário: rotação/revogação (Classe D) ou aceite formal de risco com prazo. Não foi copiada para este repositório. Enquanto pendente, a etapa 006 permanece IN_PROGRESS.
 - **[DIVERGÊNCIA]** `.nvmrc` declara Node 20 enquanto a CI fixa Node 24 e a máquina local roda 24.19.0 — alinhar na etapa 014, depois de reproduzir e revisar o impacto.
 - **[DOC]** `AGENTS.md` raiz não existe (apenas `.codex/AGENTS.md`, que o referencia como baseline); `graphify-out/` ausente apesar da seção graphify em `CLAUDE.md` — ambos previstos para tratamento nas etapas 039/040/094.
 - **[SEGURANÇA]** A etapa 006 canônica trata o URL autenticado do MCP como credencial exposta; ela não autoriza alteração de workflows nem rotação sem aprovação Classe D.
@@ -55,7 +56,7 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 | 003 | Fixar e registrar o ambiente de ferramentas | VERIFIED | log §5.3 | 1a47bb44 | install frozen OK; bun.lock intacto; `.nvmrc` pendente na 014 |
 | 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |
 | 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 + auditoria Codex | 1a47bb44 + correção Codex | Supabase MATCH relatado pelo Cline, mas não reproduzido pelo Codex; Vercel/Evolution ainda parciais |
-| 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | (commit desta atualização) | Ausência no Git comprovada; MCP e credencial Vercel aguardam decisões independentes de rotação/revogação |
+| 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | 6cab178a | MCP: ACCEPTED_TEMPORARY_RISK (adm01, até 2026-09-06); credencial Vercel: decisão independente pendente |
 | 007 | Inventariar superfícies de segredo e dados sensíveis | NOT_STARTED | — | — |  |
 | 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |
 | 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |
@@ -223,7 +224,7 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
 
 ### 5.6 — Etapa 006: Tratar o URL autenticado do MCP como credencial exposta
 
-- **Estado:** IN_PROGRESS (aguardando decisão do proprietário). A auditoria Codex ampliou o escopo: uma credencial Vercel também foi publicada na conversa e deve receber decisão de rotação/revogação independente, sem ser copiada para este arquivo.
+- **Estado:** IN_PROGRESS. URL do MCP: ausência comprovada e decisão **`ACCEPTED_TEMPORARY_RISK`** registrada abaixo (proprietário adm01, prazo 2026-09-06). Escopo ampliado pela auditoria Codex: uma credencial Vercel também foi publicada em conversa e **permanece pendente** de decisão independente (rotação/revogação ou aceite formal), sem ser copiada para este arquivo.
 - **Executar (concluído):** o URL não foi copiado para nenhum artefato. Busca de persistência por fragmento não secreto (8 chars) e pelo domínio:
   - Working tree (exceto `.git`/`node_modules`): fragmento do token **ausente**; `workers.dev` ocorre apenas em `docs/migration/HANDOFF.md` (placeholder `<MCP_TOKEN>`), `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` e `tmp/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` (host `evolution-mcp`, sem token) — nenhum segredo real.
   - Histórico Git (todos os refs, 6.980 commits): `git log -S<fragmento> --all` → **0 ocorrências**; pickaxe do domínio mostra apenas commits documentais com placeholder.
@@ -234,6 +235,6 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
   3. Atualizar os conectores clientes (conector Claude "SUPABASE - ZAPP WEB V2 - MCP"; sessões Cline/Codex) com o novo URL.
   4. Confirmar que o path antigo retorna 401/404 e revogá-lo.
   5. Registrar aqui apenas data/executor — jamais valores antigo/novo.
-- **Decisão pendente (o aceite exige uma das três):** `ROTATE_APPROVED` / `ROTATED` / `ACCEPTED_TEMPORARY_RISK` com proprietário e prazo. Proprietário: usuário (adm01). **Recomendação do executor:** `ROTATE_APPROVED` — o URL circulou em chats e o token concede acesso total (77 ferramentas, incluindo escrita). Prazo proposto: antes de qualquer etapa com escrita em banco. O Cline **para antes de executar** a rotação.
+- **Decisão registrada:** **`ACCEPTED_TEMPORARY_RISK`** — proprietário: usuário (adm01), 2026-08-30. **Prazo:** até **2026-09-06** ou imediatamente antes de qualquer ação Classe C/D em banco — o que ocorrer primeiro. O procedimento de rotação acima permanece preparado; ao expirar o prazo ou antes de escrita em banco, a rotação (Classe D) será requisitada ao proprietário. O Cline **para antes de executar** qualquer rotação.
 
-<!-- Próxima etapa canônica: 007 — inventariar superfícies de segredo e dados sensíveis. A etapa 006 aguarda apenas a decisão do proprietário sobre rotação. -->
+<!-- Próxima etapa canônica: 007 — inventariar superfícies de segredo e dados sensíveis. Etapa 006: URL do MCP decidido (ACCEPTED_TEMPORARY_RISK, prazo 2026-09-06); credencial Vercel ainda pendente. -->
