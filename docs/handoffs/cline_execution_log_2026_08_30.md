@@ -46,11 +46,11 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 
 | ID | Título | Estado | Evidência | Commit | Notas |
 |---|---|---|---|---|---|
-| 001 | Ler regras e declarar entendimento | VERIFIED | log §5.1 | — | 4 fontes lidas integralmente |
-| 002 | Sincronizar base de trabalho sem destruir mudanças | VERIFIED | log §5.2 | — | HEAD == origin/main 19b0f644 |
-| 003 | Corrigir e registrar ambiente de ferramentas | VERIFIED | log §5.3 | — | install frozen OK; bun.lock intacto |
-| 004 | Criar diário de execução e rastreabilidade | VERIFIED | log §5.4.1 | — | 100 linhas, IDs 001–100 únicos em ordem |
-| 005 | Verificar identidades de todos os alvos sem mutação | VERIFIED | log §5.5 | — | Supabase MCP da sessão = MISMATCH |
+| 001 | Ler regras e declarar entendimento | VERIFIED | log §5.1 | 1a47bb44 | 4 fontes lidas integralmente |
+| 002 | Sincronizar base de trabalho sem destruir mudanças | VERIFIED | log §5.2 | 1a47bb44 | HEAD == origin/main 19b0f644 |
+| 003 | Corrigir e registrar ambiente de ferramentas | VERIFIED | log §5.3 | 1a47bb44 | install frozen OK; bun.lock intacto |
+| 004 | Criar diário de execução e rastreabilidade | VERIFIED | log §5.4.1 | 1a47bb44 | 100 linhas, IDs 001–100 únicos em ordem |
+| 005 | Verificar identidades de todos os alvos sem mutação | VERIFIED | log §5.5 | 1a47bb44 | Supabase MCP da sessão = MISMATCH |
 | 006 | Corrigir gatilhos da CI para todo PR e pushes na main | NOT_STARTED | — | — |  |
 | 007 | Fixar Node 24 e Bun 1.4.0 em todos os workflows | NOT_STARTED | — | — |  |
 | 008 | Tornar o gate de segurança estrito | NOT_STARTED | — | — |  |
