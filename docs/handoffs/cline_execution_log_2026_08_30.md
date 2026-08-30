@@ -45,6 +45,10 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 - **[DIVERGÊNCIA]** `.nvmrc` declara Node 20 enquanto a CI fixa Node 24 e a máquina local roda 24.19.0 — alinhar na etapa 014, depois de reproduzir e revisar o impacto.
 - **[DOC]** `AGENTS.md` raiz não existe (apenas `.codex/AGENTS.md`, que o referencia como baseline); `graphify-out/` ausente apesar da seção graphify em `CLAUDE.md` — ambos previstos para tratamento nas etapas 039/040/094.
 - **[SEGURANÇA]** A etapa 006 canônica trata o URL autenticado do MCP como credencial exposta; ela não autoriza alteração de workflows nem rotação sem aprovação Classe D.
+- **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-01/F-02]** Valores com formato de segredo real da Evolution API (`apikey` em `docs/TROUBLESHOOTING.md` L72/L89; `x-webhook-secret` em `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` L75 e `tmp/`) estão versionados no HEAD. Aguardam: (1) rotação no painel Evolution/Hostinger (Classe D) e (2) sanitização dos docs (Classe B, executável após rotação aprovada). Valores não copiados para artefatos do handoff.
+- **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-03]** Credenciais Lalamove versionadas entre 2026-03-23 e 2026-04-12 (histórico, fora do HEAD). Decisão: rotacionar/encerrar a conta se ainda ativa; rewrite de histórico não planejado (risco aceito documental, a confirmar).
+- **[VERIFICAÇÃO PENDENTE — SEGURANÇA · etapa 007, F-04]** `supabase/functions/migrate-helper/` foi removido em 2026-08-28 (`1f2e9120`) por expor `SERVICE_ROLE_KEY` via endpoint público. Confirmar se a `SUPABASE_SERVICE_ROLE_KEY` do projeto oficial foi rotacionada após essa data.
+- **[VERIFICAÇÃO PENDENTE — etapa 007, F-06]** `secrets.TYPES_SYNC_PR_TOKEN` é referenciado em workflow mas não consta nos 8 repo secrets; confirmar existência em nível de organização ou criar.
 - Nenhuma ação Classe C ou D foi executada. As mudanças documentais locais são Classe B.
 
 ## 4. Tabela de estados das 100 etapas
@@ -57,7 +61,7 @@ Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `
 | 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |
 | 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 + auditoria Codex | 1a47bb44 + correção Codex | Supabase MATCH relatado pelo Cline, mas não reproduzido pelo Codex; Vercel/Evolution ainda parciais |
 | 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | 6cab178a | MCP: ACCEPTED_TEMPORARY_RISK (adm01, até 2026-09-06); credencial Vercel: decisão independente pendente |
-| 007 | Inventariar superfícies de segredo e dados sensíveis | NOT_STARTED | — | — |  |
+| 007 | Inventariar superfícies de segredo e dados sensíveis | IN_PROGRESS | log §5.7 + `docs/security/secret-surface-inventory.md` | este commit | gitleaks 8.30.1 (dir + histórico); 8 GitHub secrets + 23 envs edge + VITE_* mapeados; F-01/F-02 (Evolution) e F-03/F-04/F-06 aguardam decisão do proprietário |
 | 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |
 | 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |
 | 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); drift preliminar: 16 versões remotas sem arquivo local |
@@ -237,4 +241,16 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
   5. Registrar aqui apenas data/executor — jamais valores antigo/novo.
 - **Decisão registrada:** **`ACCEPTED_TEMPORARY_RISK`** — proprietário: usuário (adm01), 2026-08-30. **Prazo:** até **2026-09-06** ou imediatamente antes de qualquer ação Classe C/D em banco — o que ocorrer primeiro. O procedimento de rotação acima permanece preparado; ao expirar o prazo ou antes de escrita em banco, a rotação (Classe D) será requisitada ao proprietário. O Cline **para antes de executar** qualquer rotação.
 
-<!-- Próxima etapa canônica: 007 — inventariar superfícies de segredo e dados sensíveis. Etapa 006: URL do MCP decidido (ACCEPTED_TEMPORARY_RISK, prazo 2026-09-06); credencial Vercel ainda pendente. -->
+### 5.7 — Etapa 007: Inventariar superfícies de segredo e dados sensíveis
+
+- **Estado:** IN_PROGRESS — inventário completo e política publicados em `docs/security/secret-surface-inventory.md`; critério "zero segredo real versionado no HEAD" falha por F-01/F-02 (aguardam rotação + sanitização, Classe D).
+- **Executar (concluído):**
+  - Enumeração por nomes: `.env.example`/`.env.production` (chaves apenas), `import.meta.env.*` em `src/`, `process.env.*` em `scripts/`+`supabase/`, 23× `Deno.env.get` nas edge functions, `secrets.*` nos workflows, `supabase/config.toml`, `.gitignore`, `lib/env.ts`.
+  - GitHub via API (nomes e datas apenas): **8 Actions secrets** (`CRON_SECRET`, `DESTINO_URL`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `VITE_CLIENTES_SUPABASE_ANON_KEY`, `VITE_CLIENTES_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`), **0 variables**, 4 environments (`copilot`, `db-ledger-evidence`, `Preview`, `Production`) **todos com 0 environment secrets**, secret scanning com **0 alertas**.
+  - Scanner: gitleaks 8.30.1 em modo `dir` (working tree) e `git` (histórico completo, 6.980 commits), primeira passada com `--redact=100`; classificação posterior por prefixo/comprimento/claims JWT (`role`/`iss`/`ref`) via script local — nenhum valor integral lido ou registrado.
+  - Histórico dos arquivos sinalizados: `.env` (removido 2026-04-10, só anon públicas), credenciais Lalamove (2026-03-23 → 2026-04-12), `migrate-helper` (removido 2026-08-28, exposição de `SERVICE_ROLE_KEY`).
+- **Achados (detalhe em `secret-surface-inventory.md` §4):** F-01/F-02 **segredos Evolution suspeitos reais versionados no HEAD** (docs); F-03 Lalamove histórico; F-04 confirmar rotação da service_role pós-2026-08-28; F-06 `TYPES_SYNC_PR_TOKEN` ausente; F-05/F-07/F-11 públicas por design (anon); F-08/F-09/F-10 falsos positivos/mocks.
+- **Verificar (concluído):** artefato sanitizado sem valores; aceite parcial — 100% dos nomes com owner/escopo/rotação (exceto F-06 e `PROMOGIFTS_*`), mas "zero segredo real versionado" **não** atendido até resolver F-01/F-02.
+- **Decisões pendentes:** ver §3 (blocos F-01/F-02, F-03, F-04, F-06). Nenhuma rotação executada (Classe D); nenhum workflow alterado.
+
+<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. -->
