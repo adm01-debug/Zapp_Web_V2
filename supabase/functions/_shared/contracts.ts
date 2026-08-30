@@ -1,7 +1,7 @@
 /**
  * Negociação de versão de contrato (webhooks / Edge Functions).
  * v1 (default): envelope leniente — retrocompatibilidade total.
- * v2 (header \`x-contract-version: 2\`): schema estrito.
+ * v2 (header 'x-contract-version: 2'): schema estrito.
  * Depreciação: definir V1_SUNSET (ISO) → respostas v1 passam a emitir
  * headers Deprecation/Sunset sem quebrar consumidores. Ver docs/contracts.md.
  */
