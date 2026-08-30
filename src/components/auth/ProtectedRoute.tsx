@@ -9,7 +9,8 @@
 
  interface ProtectedRouteProps {
    children: ReactNode;
-   requiredRoles?: ('admin' | 'supervisor' | 'agent')[];
+   // STEP 27: special_agent adicionado ao tipo — agora pode ser exigido em rotas
+  requiredRoles?: ('admin' | 'supervisor' | 'agent' | 'special_agent')[];
    requiredPermission?: string;
    fallback?: ReactNode;
  }
@@ -21,23 +22,29 @@
    fallback
  }: ProtectedRouteProps) {
    const { user, loading: authLoading } = useAuth();
-   const { loading: rolesLoading, hasRole } = useUserRole();
+   const { loading: rolesLoading, hasRole, refetch: refetchRoles } = useUserRole();
    const location = useLocation();
    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-    const [safetyForced, setSafetyForced] = useState(false);
-    const loading = (authLoading || rolesLoading) && !safetyForced;
+// STEP 42: safetyForced removido — retry-first ao invés de fail-open-with-empty-roles (F12)
+    // Timeout dispara refetch; só força render após segunda falha.
+    const [retryDone, setRetryDone] = useState(false);
+    const loading = authLoading || rolesLoading;
 
-    // Safety timeout: forces render after 7 s even if hooks haven't resolved.
     useEffect(() => {
+      if (!authLoading && !rolesLoading) return; // resolveu normalmente
       const timer = setTimeout(() => {
-        if (authLoading || rolesLoading) {
-          log.warn('[ProtectedRoute] Safety timeout reached, forcing render');
-          setSafetyForced(true);
+        if (rolesLoading && !retryDone) {
+          log.warn('[ProtectedRoute] Roles timeout — retrying fetch');
+          setRetryDone(true);
+          void refetchRoles?.();
+        } else if (rolesLoading && retryDone) {
+          log.warn('[ProtectedRoute] Second timeout reached — giving up gracefully');
+          // Não força render com roles=[]; usuário verá o spinner + botão de reload
         }
-      }, 7000);
+      }, 8000);
       return () => clearTimeout(timer);
-    }, [authLoading, rolesLoading]);
+    }, [authLoading, rolesLoading, retryDone, refetchRoles]);
 
    /**
     * BUG-8 FIX: reset hasPermission whenever the user identity or the required
@@ -126,7 +133,7 @@
         <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">
           <div className="space-y-4">
             <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-            <p className="text-muted-foreground">Você não tem permissão para acessar esta área.</p>
+            <p className="text-muted-foreground">Vocà não tem permissão para acessar esta área.</p>
             <button
               onClick={() => window.location.href = '/auth'}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md"

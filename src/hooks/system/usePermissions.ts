@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import type { AppRole } from '@/services/role.service';
 
 interface Permission {
   id: string;
@@ -10,7 +11,7 @@ interface Permission {
 }
 
 interface RolePermission {
-  role: 'admin' | 'supervisor' | 'agent' | 'special_agent';
+  role: AppRole;
   permission_id: string;
   permission?: Permission;
 }
@@ -50,7 +51,7 @@ export function usePermissions() {
 
     if (!error && data) {
       const mapped = data.map(rp => ({
-        role: rp.role as 'admin' | 'supervisor' | 'agent' | 'special_agent',
+        role: rp.role as AppRole,
         permission_id: rp.permission_id,
         permission: rp.permissions as unknown as Permission
       }));
@@ -62,96 +63,70 @@ export function usePermissions() {
   const fetchUserPermissions = useCallback(async () => {
     if (!user) return [];
 
-    // Get user's roles first
-    const { data: userRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
+    const permissionNames = [
+      'view_dashboard',
+      'view_contacts',
+      'view_inbox',
+      'manage_contacts',
+      'manage_agents',
+      'view_agents',
+      'view_queues',
+      'manage_queues',
+      'view_reports',
+      'send_messages',
+      'export_reports',
+      'view_settings',
+    ];
 
-    if (!userRoles || userRoles.length === 0) {
-      setUserPermissions([]);
-      return [];
-    }
+    const permissionResults = await Promise.all(
+      permissionNames.map(async (perm) => {
+        const { data, error } = await supabase.rpc('user_has_permission', {
+          _user_id: user.id,
+          _permission_name: perm
+        });
+        return !error && data === true ? perm : null;
+      })
+    );
 
-    const roles = userRoles.map(r => r.role);
-
-    // Get permissions for those roles
-    const { data: perms } = await supabase
-      .from('role_permissions')
-      .select('permissions(name)')
-      .in('role', roles);
-
-    if (perms) {
-      const permNames = perms
-        .map(p => (p.permissions as unknown as { name: string } | null)?.name)
-        .filter(Boolean) as string[];
-      const uniquePerms = [...new Set(permNames)];
-      setUserPermissions(uniquePerms);
-      return uniquePerms;
-    }
-
-    return [];
+    const enabledPermissions = permissionResults.filter(Boolean) as string[];
+    setUserPermissions(enabledPermissions);
+    return enabledPermissions;
   }, [user]);
 
-  /** Server-side permission check via SECURITY DEFINER RPC */
-  const checkPermissionServer = useCallback(async (permissionName: string): Promise<boolean> => {
-    if (!user) return false;
-    const { data, error } = await supabase.rpc('user_has_permission', {
-      _user_id: user.id,
-      _permission_name: permissionName,
-    });
-    if (error) return false;
-    return !!data;
-  }, [user]);
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchPermissions(), fetchRolePermissions(), fetchUserPermissions()]);
+      setLoading(false);
+    };
+    load();
+  }, [fetchPermissions, fetchRolePermissions, fetchUserPermissions]);
 
-  const hasPermission = useCallback((permissionName: string): boolean => {
-    return userPermissions.includes(permissionName);
-  }, [userPermissions]);
+  const hasPermission = (name: string): boolean => {
+    return userPermissions.includes(name);
+  };
 
-  const hasAnyPermission = useCallback((permissionNames: string[]): boolean => {
-    return permissionNames.some(p => userPermissions.includes(p));
-  }, [userPermissions]);
-
-  const hasAllPermissions = useCallback((permissionNames: string[]): boolean => {
-    return permissionNames.every(p => userPermissions.includes(p));
-  }, [userPermissions]);
-
-  const addPermissionToRole = useCallback(async (role: 'admin' | 'supervisor' | 'agent' | 'special_agent', permissionId: string) => {
+  const addPermissionToRole = useCallback(async (role: AppRole, permissionId: string) => {
     const { error } = await supabase
       .from('role_permissions')
       .insert({ role, permission_id: permissionId });
-
     if (!error) {
       await fetchRolePermissions();
     }
     return !error;
   }, [fetchRolePermissions]);
 
-  const removePermissionFromRole = useCallback(async (role: 'admin' | 'supervisor' | 'agent' | 'special_agent', permissionId: string) => {
+  const removePermissionFromRole = useCallback(async (role: AppRole, permissionId: string) => {
     const { error } = await supabase
       .from('role_permissions')
       .delete()
       .eq('role', role)
       .eq('permission_id', permissionId);
-
     if (!error) {
       await fetchRolePermissions();
     }
     return !error;
   }, [fetchRolePermissions]);
-
-  useEffect(() => {
-    const loadAll = async () => {
-      setLoading(true);
-      await Promise.all([
-        fetchPermissions(),
-        fetchRolePermissions(),
-        fetchUserPermissions()
-      ]);
-      setLoading(false);
-    };
-    loadAll();
-  }, [fetchPermissions, fetchRolePermissions, fetchUserPermissions]);
 
   return {
     permissions,
@@ -159,11 +134,7 @@ export function usePermissions() {
     userPermissions,
     loading,
     hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
-    checkPermissionServer,
     addPermissionToRole,
     removePermissionFromRole,
-    refetch: () => Promise.all([fetchPermissions(), fetchRolePermissions(), fetchUserPermissions()])
   };
 }

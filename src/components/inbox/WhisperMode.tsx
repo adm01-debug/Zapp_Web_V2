@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EyeOff, Send, X } from 'lucide-react';
@@ -30,7 +31,8 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
   const [message, setMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const isSupervisor = profile?.role === 'admin' || profile?.role === 'supervisor';
+  // STEP 12: useUserRole() é a fonte de verdade — profiles.role é cache sem garantia (F05)
+  const { isSupervisor } = useUserRole();
 
   // Fetch whisper messages for this contact
   const { data: whispers = [] } = useQuery({
