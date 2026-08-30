@@ -232,6 +232,8 @@ REMOTE_ONLY (16): `20260830010000 fix_audit_role_changes_add_update_case`, `0200
 
 **Plano por versão (etapa 010/061, mediante autorização):** recuperar statements exatos do ledger quando disponíveis; complementar com `pg_get_functiondef`/`pg_get_triggerdef`/`pg_get_expr`/`pg_get_indexdef`/`pg_policies`/constraints; gerar DDL forward/replay-safe; testar em PostgreSQL 17 vazio; comparar catálogo e manifesto resultantes com produção; **proibir merge de placeholders que apenas mascaram paridade numérica**.
 
+**FASE 1 EXECUTADA (2026-08-30, mesma sessão do veredito):** os statements exatos das 16 versões foram recuperados do ledger oficial em modo read-only (identidade provada: PG 17.6 + fingerprint + sem 401) e gravados como 16 arquivos em `supabase/migrations/` com version+name idênticos aos do ledger — **DDL real que rodou em produção** (234–4.359 chars; nada de placeholder). Sanitização: sem segredos/PII nos padrões verificados. `check-migration-drift.mjs` → **exit 0, 317 arquivos válidos** (diferença vs 316 do ledger = `20260830170000`, forward-only do G-03, documentada). **Fase 2 pendente (local):** replay em PG 17 + comparação de catálogo/manifesto com produção.
+
 ### 9.5 Bateria de gates obrigatórios (item 8 do veredito) — 13/13 exit 0
 
 | Gate | Exit | Gate | Exit |

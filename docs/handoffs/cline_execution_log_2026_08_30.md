@@ -290,4 +290,8 @@ Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e
 - **Gates do veredito (item 8): 13/13 exit 0** (ci_units, pins, usage_guard, db_audit_units, catalog_manifest, mcp_exec_acl, ledger_reconcile, migration_drift, typecheck, test, build, git diff --check, git show --check HEAD).
 - **Nenhuma mutação externa** (banco/branch protection/Vercel); **nenhum push**; `.claude/settings.local.json` untracked registrado e intocado.
 
+### 5.8.3 — G-12 fase 1: recuperação das 16 remote-only (pós-veredito, "CONTINUE")
+
+- 16 arquivos gerados em `supabase/migrations/` a partir dos **statements exatos do ledger** (read-only, identidade provada) — DDL real (funções/triggers/policies/backfill/índice), substituindo os placeholders não-reproduzíveis; sanitizado; `check-migration-drift` **exit 0 (317 válidos)**. Fase 2 (replay PG17 + comparação catálogo/manifesto) pendente.
+
 <!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. Validação pós-onda: R1 concluída (§5.8 + validation-report §1–7; F-06 resolvido) e **R2 concluída (validation-report §8)**: gate local 100% verde exceto G-03/G-11; drift formal = DRIFT_BLOCKING (16 remote-only + 1 fix de segurança não-aplicado G-09); db-guard #198 FAILURE na main (G-10). HOTFIX G-09 aguarda aprovação Classe C/D. -->
