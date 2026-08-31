@@ -91,8 +91,9 @@ injetam fixtures e um executavel fake sem usar shell. Essas variaveis nao sao
 necessarias no uso normal.
 
 Migrations executaveis revisadas cujo ledger antigo preserva apenas nome/versao usam
-`ledger-only/name-and-file-pinned`. Essa categoria fixa o arquivo local e a ausencia
-de evidencia no ledger, mas nunca declara que os bytes locais sao o SQL historico. O
+`ledger-only/name-and-file-pinned`. Essa categoria fixa o arquivo local, nome/versao e
+a ausencia de SQL/hash no ledger, mas nunca declara que os bytes locais sao o SQL
+historico nem transforma metadados textuais em prova. O
 guard reporta esse total separadamente; o DB Live Guard prova o estado estrutural
 atual comparando o manifesto integral do banco canonico com o snapshot versionado.
 

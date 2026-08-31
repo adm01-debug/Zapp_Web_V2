@@ -243,12 +243,17 @@ function loadEvidence(filePath) {
       previousVersion = item.version;
     }
 
-    const expectedKeys = item.kind === COMMENT_ONLY_KIND || item.kind === NAME_ONLY_KIND
+    const expectedKeys = item.kind === COMMENT_ONLY_KIND
       ? [
         'file_sha256', 'filename', 'justification', 'kind', 'ledger_name',
         'ledger_statements_sha256', 'version',
       ]
-      : item.kind === PINNED_REPLAY_KIND
+      : item.kind === NAME_ONLY_KIND
+        ? [
+          'file_sha256', 'filename', 'justification', 'kind', 'ledger_name',
+          'version',
+        ]
+        : item.kind === PINNED_REPLAY_KIND
         ? [
           'file_sha256', 'file_sql_sha256', 'filename', 'justification', 'kind',
           'ledger_name', 'ledger_sql_sha256', 'ledger_statements_sha256',
@@ -279,8 +284,9 @@ function loadEvidence(filePath) {
     if (typeof item.file_sha256 !== 'string' || !SHA256_RE.test(item.file_sha256)) {
       fail('possui file_sha256 invalido');
     }
-    if (typeof item.ledger_statements_sha256 !== 'string'
-        || !SHA256_RE.test(item.ledger_statements_sha256)) {
+    if (item.kind !== NAME_ONLY_KIND
+        && (typeof item.ledger_statements_sha256 !== 'string'
+          || !SHA256_RE.test(item.ledger_statements_sha256))) {
       fail('possui ledger_statements_sha256 invalido');
     }
     // Nomes malformados sao diagnosticados exatamente, mas nunca pinados:
@@ -675,9 +681,6 @@ function compare(migrations, records, exceptionsByVersion) {
           + `esperado=${JSON.stringify(exception.ledger_name)}; `
           + `ledger=${JSON.stringify(record.name)}`,
         );
-      }
-      if (statementsHash !== exception.ledger_statements_sha256) {
-        errors.push(`ledger_statements_sha256 divergente do manifesto em ${migration.version}`);
       }
       if (ledgerSql || fileHashes.length || sqlHashes.length) {
         errors.push(

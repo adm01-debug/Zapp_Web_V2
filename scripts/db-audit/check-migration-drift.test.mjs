@@ -50,13 +50,12 @@ function commentOnlyEvidence(content, statements = [], overrides = {}) {
   };
 }
 
-function nameOnlyEvidence(content = SQL, statements = [], overrides = {}) {
+function nameOnlyEvidence(content = SQL, overrides = {}) {
   return {
     version: VERSION,
     filename: FILE,
     file_sha256: sha256(content),
     ledger_name: 'create_demo',
-    ledger_statements_sha256: statementsHash(statements),
     kind: 'ledger-only/name-and-file-pinned',
     justification: 'O ledger legado preserva nome e versao, mas nao possui SQL ou hash historico recuperavel.',
     ...overrides,
@@ -189,7 +188,7 @@ test('fixa arquivo legado por hash sem chamar seus bytes de conteudo historico',
   assert.doesNotMatch(result.stderr, /ATENCAO/);
 });
 
-test('name-and-file-pinned falha fechado para arquivo, nome ou statements adulterados', () => {
+test('name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger', () => {
   const changedFile = runGuard({
     files: { [FILE]: `${SQL}-- alterado\n` },
     ledger: [ledgerRecord({ statements: null })],
@@ -210,8 +209,13 @@ test('name-and-file-pinned falha fechado para arquivo, nome ou statements adulte
     evidence: [nameOnlyEvidence()],
   });
   assert.equal(recoveredSql.status, 1);
-  assert.match(recoveredSql.stderr, /ledger_statements_sha256 divergente/);
   assert.match(recoveredSql.stderr, /exige ledger sem SQL\/hash historico/);
+
+  const nonSqlMetadata = runGuard({
+    ledger: [ledgerRecord({ statements: ['metadado legado sem SQL executavel'] })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(nonSqlMetadata.status, 0, nonSqlMetadata.stderr);
 });
 
 test('name-and-file-pinned exige SQL local e rejeita campos desconhecidos', () => {
@@ -226,7 +230,7 @@ test('name-and-file-pinned exige SQL local e rejeita campos desconhecidos', () =
 
   const unknownField = runGuard({
     destino: false,
-    evidence: [nameOnlyEvidence(SQL, [], { historical_sql_sha256: '0'.repeat(64) })],
+    evidence: [nameOnlyEvidence(SQL, { historical_sql_sha256: '0'.repeat(64) })],
   });
   assert.equal(unknownField.status, 1);
   assert.match(unknownField.stderr, /campos ausentes ou desconhecidos/);
