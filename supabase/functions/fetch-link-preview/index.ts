@@ -1,5 +1,5 @@
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
 
 interface PreviewData {
   url: string;
@@ -220,9 +220,9 @@ async function fetchPreview(rawUrl: string): Promise<PreviewData | null> {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const body = await req.json().catch(() => ({}));
