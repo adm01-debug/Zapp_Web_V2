@@ -67,10 +67,12 @@ jobs:
             carregarIdentidadeEsperada,
             endurecerDestinoTls,
             validarDestino,
+            validarSupabaseCa,
           } from './scripts/db-audit/database-identity.mjs';
           import { appendFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
           const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
           const tls = endurecerDestinoTls(process.env.DESTINO_URL);
           erros.push(...tls.erros);
           for (const erro of erros) console.error('ERRO: ' + erro);
@@ -79,7 +81,7 @@ jobs:
           console.log(`::add-mask::${destinoSeguro}`);
           appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
-          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA do sistema fixados.');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
           NODE
 
       - name: Comparar migrations com schema_migrations
