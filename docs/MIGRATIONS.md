@@ -70,10 +70,11 @@ evidencias que o ledger realmente possui:
 - `-- file-sha256: <64 hex>` em `statements` valida os bytes exatos do arquivo;
 - `-- sql-sha256: <64 hex>` valida a forma SQL canonica calculada pelo guard.
 
-Registros historicos sem SQL/hash continuam aceitos para compatibilidade, com aviso
-explicito de evidencia limitada. **Nunca preencha hash, `name` ou `statements`
-retroativamente sem recuperar a fonte original**: calcular um hash do estado atual
-e chama-lo de historico apenas certificaria um possivel drift.
+Registros historicos sem SQL/hash somente sao aceitos sem manifesto quando ainda nao
+foram revisados, com aviso explicito de evidencia limitada. Depois da revisao, use a
+categoria `ledger-only/name-and-file-pinned` descrita abaixo. **Nunca preencha hash,
+`name` ou `statements` retroativamente sem recuperar a fonte original**: calcular um
+hash do estado atual e chama-lo de historico apenas certificaria um possivel drift.
 
 Independentemente do banco, o guard falha para nome fora de
 `14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
@@ -87,6 +88,20 @@ O tipo `ledger-only/comment-only` fixa `version`, `filename`, SHA-256 dos bytes,
 Ele exige arquivo somente de comentarios e ledger sem SQL canonico. Uma mudanca de
 byte, nome ou statement invalida a excecao; entradas orfas ou duplicadas tambem
 falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+O tipo `ledger-only/name-and-file-pinned` cobre exclusivamente uma migration com SQL
+local cujo registro legado preserva nome/versao, mas nenhum SQL ou marker de hash. Ele
+fixa os bytes locais, o nome exato e o hash domain-separated do array vazio de
+`statements`; exige SQL executavel no arquivo e ausencia total de SQL/hash no ledger.
+O total aparece separadamente no resultado do guard e **nao** incrementa a contagem de
+conteudo historico verificado. O estado atual continua sendo provado de forma
+independente pelo manifesto estrutural completo no DB Live Guard.
+
+As seis entradas revisadas nessa categoria sao `20260827120000`, `20260827130000`,
+`20260827140000`, `20260827150000`, `20260827160000` e `20260828000000`. Qualquer
+mudanca de byte, nome, statements ou marker falha fechado; se SQL historico autentico
+for recuperado, a entrada precisa ser substituida por evidencia apropriada, nunca
+silenciosamente reinterpretada.
 
 O tipo `ledger-divergence/pinned-replay` existe somente para divergencias historicas
 revisadas. Ele fixa, ao mesmo tempo:

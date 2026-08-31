@@ -18,7 +18,7 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `check-migration-drift.mjs` | parcial | Valida migrations locais e compara versao, nome e evidencia com `schema_migrations` |
 | `check-migration-drift.test.mjs` | nao | Simula duplicata, vazio, conteudo alterado e drift do ledger com `psql` fake |
 | `check-reconcile-ledger-drift.test.sh` | Docker local | Prova replay limpo, colisao historica, fail-closed e idempotencia da reconciliacao de 29/08 |
-| `migration-evidence.json` | nao | Excecoes exatas, versionadas e com hash para stubs historicos comment-only |
+| `migration-evidence.json` | nao | Excecoes exatas para stubs, replay divergente e legados sem SQL/hash no ledger |
 | `manifest.sql` | sim | Manifesto deterministico: views, tipos/enums, defaults, constraints, indices, RLS, policies, triggers, funcoes e grants (relacao/coluna/rotina/tipo/default/schema) |
 | `check-manifest-fresh.mjs` | nao | Compara `supabase/schema-manifest.json` com o banco oficial, provando identidade |
 | `diff.mjs` | nao | Diffa dois manifestos v2, inclusive entre bancos distintos |
@@ -89,6 +89,12 @@ Um arquivo somente de comentarios so e aceito quando uma entrada exata em
 justificativa. Nos testes, `MIGRATIONS_DIR`, `MIGRATION_EVIDENCE_PATH` e `PSQL_BIN`
 injetam fixtures e um executavel fake sem usar shell. Essas variaveis nao sao
 necessarias no uso normal.
+
+Migrations executaveis revisadas cujo ledger antigo preserva apenas nome/versao usam
+`ledger-only/name-and-file-pinned`. Essa categoria fixa o arquivo local e a ausencia
+de evidencia no ledger, mas nunca declara que os bytes locais sao o SQL historico. O
+guard reporta esse total separadamente; o DB Live Guard prova o estado estrutural
+atual comparando o manifesto integral do banco canonico com o snapshot versionado.
 
 ## Por que o guard e offline
 
