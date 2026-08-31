@@ -20,7 +20,7 @@ export function RealtimeTranscription({
   className 
 }: RealtimeTranscriptionProps) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
-  const tokenRef = useRef<string | null>(null);
+  const tokenRef = useRef<string | null>(null); const connectingRef = useRef(false);
 
   const scribe = useScribe({
     modelId: 'scribe_v2_realtime',
@@ -47,6 +47,8 @@ export function RealtimeTranscription({
   }, [scribe.isConnected, onStatusChange]);
 
   const handleStart = useCallback(async () => {
+    if (connectingRef.current || scribe.isConnected) return;
+    connectingRef.current = true;
     setStatus('connecting');
     onStatusChange?.('connecting');
 
@@ -85,6 +87,8 @@ export function RealtimeTranscription({
       setStatus('error');
       onStatusChange?.('error');
       toast.error('Erro ao iniciar transcrição em tempo real');
+    } finally {
+      connectingRef.current = false;
     }
   }, [scribe, onStatusChange]);
 

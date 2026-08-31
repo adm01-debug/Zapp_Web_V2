@@ -79,10 +79,34 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PROMOGIFTS_SUPABASE_URL: ${{ secrets.PROMOGIFTS_SUPABASE_URL }}
+          PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY }}
+          FN: ${{ inputs.function_name }}
         run: |
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+          fi
+          if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
+            if [ -z "$PROMOGIFTS_SUPABASE_URL" ] || [ -z "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "::error::Credenciais server-side do catalogo ausentes."
+              exit 1
+            fi
+            echo "Validando acesso server-side minimo ao catalogo"
+            STATUS=$(curl --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+              "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
+              -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")
+            if [ "$STATUS" != "200" ]; then
+              echo "::error::Preflight do catalogo falhou (HTTP $STATUS)."
+              exit 1
+            fi
+            node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
+            echo "Setando endpoint e credencial server-side do catalogo nas edges"
+            supabase secrets set \
+              PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
+              PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+              --project-ref "$PROJECT_REF"
           fi
 
       - name: Deploy

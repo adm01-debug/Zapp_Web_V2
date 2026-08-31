@@ -196,7 +196,7 @@ export const MessageBubble = memo(function MessageBubble({
 
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">
-                    <img src={message.mediaUrl} alt="Sticker" className="max-w-[160px] max-h-[160px] object-contain drop-shadow-lg" loading="lazy" />
+                    <MessageImage src={message.mediaUrl} alt="Sticker" />
                     <QuarantineBadge messageId={message.id} className="absolute top-1 left-1" />
                     {!isSent && (
                       <button

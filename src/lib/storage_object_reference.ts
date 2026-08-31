@@ -3,6 +3,12 @@ export interface StorageObjectReference {
   path: string;
 }
 
+export const PRIVATE_MEDIA_BUCKETS = [
+  'audio-messages',
+  'team-chat-files',
+  'whatsapp-media',
+] as const;
+
 const STORAGE_OBJECT_PATH_PREFIXES = [
   '/storage/v1/object/sign/',
   '/storage/v1/object/public/',
@@ -66,6 +72,34 @@ export function parseSupabaseStorageObjectUrl(
     if (allowedBuckets.length > 0 && !allowedBuckets.includes(bucket)) return null;
 
     return { bucket, path };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Converts an expiring Supabase Storage URL into a durable object locator.
+ *
+ * The `/public/` route is intentionally used only as a URL-shaped identifier;
+ * it does not make a private bucket public. Consumers must still exchange this
+ * locator for a fresh signed URL before loading the object.
+ */
+export function toSupabaseStorageObjectLocator(
+  value: string,
+  allowedBuckets: readonly string[] = [],
+  allowedOrigins: readonly string[] = []
+): string | null {
+  const reference = parseSupabaseStorageObjectUrl(value, allowedBuckets, allowedOrigins);
+  if (!reference) return null;
+
+  try {
+    const origin = new URL(value).origin;
+    const bucket = encodeURIComponent(reference.bucket);
+    const path = reference.path
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `${origin}/storage/v1/object/public/${bucket}/${path}`;
   } catch {
     return null;
   }
