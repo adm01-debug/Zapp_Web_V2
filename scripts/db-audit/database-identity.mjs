@@ -3,9 +3,30 @@ import fs from 'node:fs';
 
 const PROJECT_REF = /^[a-z0-9]{20}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
+export const SUPABASE_CA_PATH = 'scripts/db-audit/certs/supabase-prod-ca-2021.crt';
+export const SUPABASE_CA_FILE_SHA256 =
+  '700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7';
+export const SUPABASE_CA_FINGERPRINT256 =
+  '80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA';
 
 export function sha256(valor) {
   return crypto.createHash('sha256').update(valor, 'utf8').digest('hex');
+}
+
+export function validarSupabaseCa(arquivo = SUPABASE_CA_PATH) {
+  try {
+    const pem = fs.readFileSync(arquivo);
+    const hash = crypto.createHash('sha256').update(pem).digest('hex');
+    const certificado = new crypto.X509Certificate(pem);
+    const valida = hash === SUPABASE_CA_FILE_SHA256
+      && certificado.fingerprint256 === SUPABASE_CA_FINGERPRINT256
+      && certificado.ca
+      && certificado.subject === certificado.issuer
+      && /CN=Supabase Root 2021 CA/.test(certificado.subject);
+    return valida ? [] : ['CA Supabase versionada diverge do fingerprint pinado'];
+  } catch {
+    return ['CA Supabase versionada ausente ou invalida'];
+  }
 }
 
 /**
@@ -167,14 +188,14 @@ export function endurecerDestinoTls(connectionString) {
   }
 
   const sslrootcert = url.searchParams.get('sslrootcert');
-  if (sslrootcert !== null && sslrootcert !== 'system') {
+  if (sslrootcert !== null && sslrootcert !== SUPABASE_CA_PATH) {
     return {
       connectionString: null,
-      erros: ['DESTINO_URL tenta substituir a CA do sistema; apenas sslrootcert=system e permitido'],
+      erros: ['DESTINO_URL tenta substituir a CA Supabase pinada; sslrootcert divergente'],
     };
   }
 
   url.searchParams.set('sslmode', 'verify-full');
-  url.searchParams.set('sslrootcert', 'system');
+  url.searchParams.set('sslrootcert', SUPABASE_CA_PATH);
   return { connectionString: url.toString(), erros: [] };
 }

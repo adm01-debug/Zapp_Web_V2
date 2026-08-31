@@ -269,5 +269,10 @@ RLS desligado, privilegios excessivos e tabela ausente.
 
 O DB Live Guard valida a identidade canônica antes da primeira consulta,
 rejeita qualquer `sslmode` configurado abaixo de `verify-full` e fixa
-`sslmode=verify-full` com `sslrootcert=system` na URL mascarada usada por todos
-os passos seguintes. Uma CA customizada na URL tambem e rejeitada.
+`sslmode=verify-full` com a CA oficial `Supabase Root 2021 CA` versionada em
+`scripts/db-audit/certs/` na URL mascarada usada por todos os passos seguintes.
+A CA tem SHA-256 de arquivo
+`700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`,
+fingerprint X.509
+`80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`
+e expira em 26/04/2031. Qualquer CA divergente na URL e rejeitada.
