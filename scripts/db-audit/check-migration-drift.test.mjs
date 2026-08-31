@@ -290,9 +290,19 @@ test('falha para manifesto com versao duplicada', () => {
 });
 
 test('falha para conteudo arbitrario quando o ledger conserva SQL aplicado', () => {
-  const result = runGuard({ files: { [FILE]: 'DROP TABLE public.demo;' } });
+  const statements = ['CREATE TABLE public.demo (id integer)'];
+  const result = runGuard({
+    files: { [FILE]: 'DROP TABLE public.demo;' },
+    ledger: [ledgerRecord({ statements })],
+  });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /conteudo SQL divergente/);
+  assert.match(result.stderr, /ledger_name="create_demo"/);
+  assert.match(
+    result.stderr,
+    new RegExp(`ledger_statements_sha256=${statementsHash(statements)}`),
+  );
+  assert.match(result.stderr, new RegExp(`ledger_sql_sha256=${fixtureSqlHash()}`));
 });
 
 test('aceita file-sha256 explicito sem fabricar hash retroativo', () => {

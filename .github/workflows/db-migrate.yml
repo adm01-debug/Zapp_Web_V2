@@ -1,0 +1,233 @@
+# ==================================================================
+# ZAPP-WEB · Migration controlada do banco oficial
+# ==================================================================
+# Executa somente por workflow_dispatch na main. O dry-run e obrigatorio
+# antes de uma aplicacao: ele comprova o destino, exige que exista exatamente
+# uma migration local ausente e publica apenas hashes estruturais seguros.
+# Para aplicar, o operador precisa confirmar o hash integral observado da
+# funcao-alvo; o workflow o consulta novamente para fechar a janela TOCTOU.
+# ==================================================================
+
+name: DB Migrate (production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_version:
+        description: 'Versao exata, com 14 digitos (ex: 20260830170000).'
+        required: true
+        type: string
+      confirm_project_ref:
+        description: 'Digite o project-ref oficial para confirmar o destino.'
+        required: true
+        type: string
+      apply:
+        description: 'Desmarcado = dry-run; marcado = aplicar a unica migration ausente.'
+        required: true
+        default: false
+        type: boolean
+      confirm_runtime_sha256:
+        description: 'Para apply: SHA-256 completo exibido pelo dry-run anterior.'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-migrate-production
+  cancel-in-progress: false
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+  OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'
+
+jobs:
+  migrate:
+    name: Migration oficial com preflight
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Provar identidade e validar confirmacoes
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          if [ "$CONFIRM_PROJECT_REF" != "$OFFICIAL_PROJECT_REF" ]; then
+            echo "::error::Project-ref de confirmacao incorreto."
+            exit 1
+          fi
+          if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
+            echo "::error::migration_version precisa ter exatamente 14 digitos."
+            exit 1
+          fi
+          if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+            echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            validarDestino,
+          } from './scripts/db-audit/database-identity.mjs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log('OK: destino oficial comprovado por fingerprint.');
+          NODE
+
+      - name: Exigir exatamente uma migration ausente
+        id: preflight
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+        run: |
+          umask 077
+          find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
+            -printf '%f\n' | cut -c1-14 | sort -u > /tmp/local-versions
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
+            > /tmp/remote-versions
+          comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
+          MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
+          MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
+          if [ "$MISSING_COUNT" != "1" ] || [ "$MISSING_VERSION" != "$TARGET_VERSION" ]; then
+            echo "::error::O conjunto de versions ausentes nao corresponde exatamente ao alvo informado."
+            echo "missing_count=$MISSING_COUNT"
+            exit 1
+          fi
+          FILE_COUNT=$(find supabase/migrations -maxdepth 1 -type f \
+            -name "${TARGET_VERSION}_*.sql" | wc -l | tr -d ' ')
+          if [ "$FILE_COUNT" != "1" ]; then
+            echo "::error::A versao alvo precisa mapear para exatamente um arquivo local."
+            exit 1
+          fi
+          echo "OK: unica migration ausente confirmada: $TARGET_VERSION"
+
+      - name: Provar estado runtime antes do push
+        id: runtime
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+            WITH fn AS (
+              SELECT p.oid, p.prosecdef, p.provolatile, p.proconfig,
+                     pg_get_functiondef(p.oid) AS body
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname='public' AND p.proname='get_team_profiles'
+                AND pg_get_function_identity_arguments(p.oid)=''
+            )
+            SELECT json_build_object(
+              'server_major', current_setting('server_version_num')::int / 10000,
+              'database', current_database(),
+              'function_count', count(*),
+              'security_definer', bool_and(prosecdef),
+              'stable', bool_and(provolatile='s'),
+              'search_path_fixed', bool_and('search_path=public' = ANY(proconfig)),
+              'filters_active', bool_and(position('where p.is_active = true' in lower(body)) > 0),
+              'runtime_sha256', min(encode(sha256(convert_to(body, 'UTF8')), 'hex'))
+            )::text
+            FROM fn;")
+          printf '%s\n' "$RUNTIME"
+          RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RUNTIME_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && proof.function_count === 1
+            && proof.security_definer === true
+            && proof.stable === true
+            && proof.search_path_fixed === true
+            && proof.filters_active === true
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '');
+          if (!ok) {
+            console.error('Estado runtime inesperado; migration cancelada.');
+            process.exit(1);
+          }
+          if (process.env.APPLY === 'true'
+              && proof.runtime_sha256 !== process.env.CONFIRM_RUNTIME_SHA256) {
+            console.error('SHA-256 runtime mudou desde o dry-run; migration cancelada.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Dry-run oficial do Supabase CLI
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: >-
+          supabase db push --db-url "$DESTINO_URL" --include-all
+          --skip-vault --dry-run --yes
+
+      - name: Aplicar unica migration ausente
+        if: inputs.apply == true
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: >-
+          supabase db push --db-url "$DESTINO_URL" --include-all
+          --skip-vault --yes
+
+      - name: Validar ledger e comportamento pos-aplicacao
+        if: inputs.apply == true
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -v target_version="$TARGET_VERSION" -c "
+              SELECT json_build_object(
+                'ledger_count', (
+                  SELECT count(*) FROM supabase_migrations.schema_migrations
+                  WHERE version = :'target_version'
+                    AND name = 'get_team_profiles_active_filter'
+                ),
+                'returned_inactive', (
+                  SELECT count(*) FROM public.get_team_profiles()
+                  WHERE is_active IS DISTINCT FROM true
+                ),
+                'filters_active', position(
+                  'where p.is_active = true' in lower(
+                    pg_get_functiondef('public.get_team_profiles()'::regprocedure)
+                  )
+                ) > 0
+              )::text;")
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          if (proof.ledger_count !== 1 || proof.returned_inactive !== 0 || proof.filters_active !== true) {
+            console.error('Validacao pos-aplicacao falhou.');
+            process.exit(1);
+          }
+          NODE
