@@ -145,6 +145,12 @@ jobs:
           echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
+      - name: Provar paridade integral quando a versao ja existe
+        if: steps.preflight.outputs.needs_apply == 'false'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: node scripts/db-audit/check-migration-drift.mjs
+
       - name: Provar estado runtime antes do push
         id: runtime
         env:
@@ -242,3 +248,9 @@ jobs:
             process.exit(1);
           }
           NODE
+
+      - name: Provar paridade integral apos aplicacao
+        if: inputs.apply == true
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: node scripts/db-audit/check-migration-drift.mjs
