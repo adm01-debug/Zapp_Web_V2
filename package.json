@@ -57,7 +57,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/dompurify": "^3.2.0",
-    "@vitejs/plugin-react": "^4.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "baseline-browser-mapping": "^2.10.8",
     "caniuse-lite": "^1.0.30001780",
     "class-variance-authority": "^0.7.1",
