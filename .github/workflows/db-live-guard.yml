@@ -114,8 +114,27 @@ jobs:
             JOIN pg_roles member_role ON member_role.oid = reach.member_oid
             ORDER BY member_role.rolname, cardinality(reach.membership_path), reach.membership_path::text
           " > /tmp/service-role-paths.jsonl
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+            SELECT jsonb_build_object(
+              'granted_role', granted_role.rolname,
+              'member_role', member_role.rolname,
+              'inherit_option', membership.inherit_option,
+              'set_option', membership.set_option,
+              'admin_option', membership.admin_option
+            )::text
+            FROM pg_auth_members membership
+            JOIN pg_roles granted_role ON granted_role.oid = membership.roleid
+            JOIN pg_roles member_role ON member_role.oid = membership.member
+            WHERE granted_role.rolname IN ('service_role', 'authenticator')
+              AND member_role.rolname IN (
+                'authenticator', 'postgres', 'supabase_realtime_admin',
+                'supabase_storage_admin'
+              )
+            ORDER BY granted_role.rolname, member_role.rolname
+          " > /tmp/service-role-edges.jsonl
           test -s /tmp/mcp-exec-many-function.sql
           test -s /tmp/service-role-paths.jsonl
+          test -s /tmp/service-role-edges.jsonl
 
       - name: Verificar ACL e contrato de mcp_exec
         env:
@@ -169,6 +188,7 @@ jobs:
             /tmp/fresh-catalog.json
             /tmp/fresh-manifest.json
             /tmp/mcp-exec-many-function.sql
+            /tmp/service-role-edges.jsonl
             /tmp/service-role-paths.jsonl
           if-no-files-found: ignore
           retention-days: 3
