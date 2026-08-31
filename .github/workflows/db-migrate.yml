@@ -4,8 +4,9 @@
 # Executa somente por workflow_dispatch na main. O dry-run e obrigatorio
 # antes de uma aplicacao: ele comprova o destino, exige que exista exatamente
 # uma migration local ausente e publica apenas hashes estruturais seguros.
-# Para aplicar, o operador precisa confirmar o hash integral observado da
-# funcao-alvo; o workflow o consulta novamente para fechar a janela TOCTOU.
+# Somente alvos com contrato runtime explicito neste arquivo sao aceitos. Para
+# aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
+# o runtime novamente para fechar a janela TOCTOU.
 # ==================================================================
 
 name: DB Migrate (production)
@@ -138,11 +139,16 @@ jobs:
             echo "::error::A versao alvo precisa mapear para exatamente um arquivo local."
             exit 1
           fi
+          TARGET_FILE=$(find supabase/migrations -maxdepth 1 -type f \
+            -name "${TARGET_VERSION}_*.sql" -printf '%f\n')
+          TARGET_NAME=${TARGET_FILE#${TARGET_VERSION}_}
+          TARGET_NAME=${TARGET_NAME%.sql}
           if [ "$APPLY" = "true" ] && [ "$NEEDS_APPLY" != "true" ]; then
             echo "::error::A migration alvo ja esta registrada; apply repetido foi bloqueado."
             exit 1
           fi
           echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
+          echo "target_name=$TARGET_NAME" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
       - name: Provar paridade integral quando a versao ja existe
@@ -157,38 +163,118 @@ jobs:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
         run: |
-          RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
-            WITH fn AS (
-              SELECT p.oid, p.prosecdef, p.provolatile, p.proconfig,
-                     pg_get_functiondef(p.oid) AS body
-              FROM pg_proc p
-              JOIN pg_namespace n ON n.oid = p.pronamespace
-              WHERE n.nspname='public' AND p.proname='get_team_profiles'
-                AND pg_get_function_identity_arguments(p.oid)=''
-            )
-            SELECT json_build_object(
-              'server_major', current_setting('server_version_num')::int / 10000,
-              'database', current_database(),
-              'function_count', count(*),
-              'security_definer', bool_and(prosecdef),
-              'stable', bool_and(provolatile='s'),
-              'search_path_fixed', bool_and('search_path=public' = ANY(proconfig)),
-              'filters_active', bool_and(position('where p.is_active = true' in lower(body)) > 0),
-              'runtime_sha256', min(encode(sha256(convert_to(body, 'UTF8')), 'hex'))
-            )::text
-            FROM fn;")
+          case "$TARGET_VERSION" in
+            20260830170000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH fn AS (
+                  SELECT p.oid, p.prosecdef, p.provolatile, p.proconfig,
+                         pg_get_functiondef(p.oid) AS body
+                  FROM pg_proc p
+                  JOIN pg_namespace n ON n.oid = p.pronamespace
+                  WHERE n.nspname='public' AND p.proname='get_team_profiles'
+                    AND pg_get_function_identity_arguments(p.oid)=''
+                )
+                SELECT json_build_object(
+                  'server_major', current_setting('server_version_num')::int / 10000,
+                  'database', current_database(),
+                  'function_count', count(*),
+                  'security_definer', bool_and(prosecdef),
+                  'stable', bool_and(provolatile='s'),
+                  'search_path_fixed', bool_and('search_path=public' = ANY(proconfig)),
+                  'filters_active', bool_and(position('where p.is_active = true' in lower(body)) > 0),
+                  'runtime_sha256', min(encode(sha256(convert_to(body, 'UTF8')), 'hex'))
+                )::text
+                FROM fn;")
+              ;;
+            20260831120000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH relation AS (
+                  SELECT c.oid, c.relrowsecurity
+                  FROM pg_class c
+                  JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'public'
+                    AND c.relname = 'webhook_failures'
+                    AND c.relkind IN ('r', 'p')
+                ), policy_state AS (
+                  SELECT
+                    count(*) AS policy_count,
+                    count(*) FILTER (WHERE 0 = ANY(pol.polroles)) AS public_policy_count,
+                    count(*) FILTER (
+                      WHERE pol.polname = 'service_role_full'
+                        AND pol.polroles = ARRAY['service_role'::regrole::oid]
+                        AND pol.polcmd = '*'
+                        AND pg_get_expr(pol.polqual, pol.polrelid) = 'true'
+                        AND pg_get_expr(pol.polwithcheck, pol.polrelid) = 'true'
+                    ) AS service_role_policy_count
+                  FROM pg_policy pol
+                  JOIN relation r ON r.oid = pol.polrelid
+                ), payload AS (
+                  SELECT jsonb_build_object(
+                    'server_major', current_setting('server_version_num')::int / 10000,
+                    'database', current_database(),
+                    'table_count', (SELECT count(*) FROM relation),
+                    'rls_enabled', COALESCE((SELECT bool_and(relrowsecurity) FROM relation), false),
+                    'policy_count', (SELECT policy_count FROM policy_state),
+                    'public_policy_count', (SELECT public_policy_count FROM policy_state),
+                    'service_role_policy_count', (SELECT service_role_policy_count FROM policy_state),
+                    'anon_acl', COALESCE((SELECT has_table_privilege('anon', oid, 'SELECT, INSERT, UPDATE, DELETE') FROM relation), false),
+                    'authenticated_acl', COALESCE((SELECT has_table_privilege('authenticated', oid, 'SELECT, INSERT, UPDATE, DELETE') FROM relation), false),
+                    'service_role_crud', COALESCE((SELECT
+                      has_table_privilege('service_role', oid, 'SELECT')
+                      AND has_table_privilege('service_role', oid, 'INSERT')
+                      AND has_table_privilege('service_role', oid, 'UPDATE')
+                      AND has_table_privilege('service_role', oid, 'DELETE')
+                    FROM relation), false),
+                    'service_role_extra', COALESCE((SELECT has_table_privilege(
+                      'service_role', oid, 'TRUNCATE, REFERENCES, TRIGGER, MAINTAIN'
+                    ) FROM relation), false)
+                  ) AS value
+                )
+                SELECT (value || jsonb_build_object(
+                  'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
+                ))::text
+                FROM payload;")
+              ;;
+            *)
+              echo "::error::Migration sem contrato runtime permitido neste workflow."
+              exit 1
+              ;;
+          esac
           printf '%s\n' "$RUNTIME"
           RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RUNTIME_JSON);
-          const ok = proof.server_major === 17
+          const common = proof.server_major === 17
             && proof.database === 'postgres'
-            && proof.function_count === 1
-            && proof.security_definer === true
-            && proof.stable === true
-            && proof.search_path_fixed === true
-            && proof.filters_active === true
             && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '');
+          let targetOk = false;
+          if (process.env.TARGET_VERSION === '20260830170000') {
+            targetOk = proof.function_count === 1
+              && proof.security_definer === true
+              && proof.stable === true
+              && proof.search_path_fixed === true
+              && proof.filters_active === true;
+          } else if (process.env.TARGET_VERSION === '20260831120000') {
+            const base = proof.table_count === 1
+              && proof.rls_enabled === true
+              && proof.policy_count === 1
+              && proof.service_role_crud === true;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? base
+                && proof.public_policy_count === 1
+                && proof.service_role_policy_count === 0
+                && proof.anon_acl === true
+                && proof.authenticated_acl === true
+              : base
+                && proof.public_policy_count === 0
+                && proof.service_role_policy_count === 1
+                && proof.anon_acl === false
+                && proof.authenticated_acl === false
+                && proof.service_role_extra === false;
+          }
+          const ok = common && targetOk;
           if (!ok) {
             console.error('Estado runtime inesperado; migration cancelada.');
             process.exit(1);
@@ -216,40 +302,58 @@ jobs:
           supabase db push --db-url "$DESTINO_URL" --include-all
           --skip-vault --yes
 
-      - name: Validar ledger e comportamento pos-aplicacao
+      - name: Validar registro no ledger
         if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
+          TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 \
-            -v target_version="$TARGET_VERSION" -At <<'SQL'
-              SELECT json_build_object(
-                'ledger_count', (
-                  SELECT count(*) FROM supabase_migrations.schema_migrations
-                  WHERE version = :'target_version'
-                    AND name = 'get_team_profiles_active_filter'
-                ),
-                'returned_inactive', (
-                  SELECT count(*) FROM public.get_team_profiles()
-                  WHERE is_active IS DISTINCT FROM true
-                ),
-                'filters_active', position(
-                  'where p.is_active = true' in lower(
-                    pg_get_functiondef('public.get_team_profiles()'::regprocedure)
-                  )
-                ) > 0
-              )::text;
+          LEDGER_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 \
+            -v target_version="$TARGET_VERSION" -v target_name="$TARGET_NAME" -At <<'SQL'
+              SELECT count(*)
+              FROM supabase_migrations.schema_migrations
+              WHERE version = :'target_version'
+                AND name = :'target_name';
           SQL
           )
+          test "$LEDGER_COUNT" = "1"
+          echo "OK: ledger possui exatamente version=$TARGET_VERSION name=$TARGET_NAME."
+
+      - name: Validar comportamento de get_team_profiles
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260830170000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+            SELECT json_build_object(
+              'returned_inactive', (
+                SELECT count(*) FROM public.get_team_profiles()
+                WHERE is_active IS DISTINCT FROM true
+              ),
+              'filters_active', position(
+                'where p.is_active = true' in lower(
+                  pg_get_functiondef('public.get_team_profiles()'::regprocedure)
+                )
+              ) > 0
+            )::text;")
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RESULT_JSON);
-          if (proof.ledger_count !== 1 || proof.returned_inactive !== 0 || proof.filters_active !== true) {
-            console.error('Validacao pos-aplicacao falhou.');
-            process.exit(1);
-          }
+          if (proof.returned_inactive !== 0 || proof.filters_active !== true) process.exit(1);
           NODE
+
+      - name: Validar ACL de webhook_failures
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260831120000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
 
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true

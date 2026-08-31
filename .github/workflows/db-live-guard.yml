@@ -65,30 +65,37 @@ jobs:
           node --input-type=module <<'NODE'
           import {
             carregarIdentidadeEsperada,
+            endurecerDestinoTls,
             validarDestino,
           } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
           const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
-          console.log('OK: endpoint do banco oficial comprovado por fingerprint.');
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial comprovado e TLS verify-full fixado.');
           NODE
 
       - name: Comparar migrations com schema_migrations
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Verificar ACL e contrato de mcp_exec
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-mcp-exec-acl.sql
 
+      - name: Verificar ACL da dead-letter queue de webhooks
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
+
       - name: Regenerar catalogo e comparar com o commitado
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
@@ -97,8 +104,6 @@ jobs:
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
 
       - name: Regenerar manifesto e comparar com o commitado
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
@@ -107,8 +112,6 @@ jobs:
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
 
       - name: Verificar frescor do types.ts
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts

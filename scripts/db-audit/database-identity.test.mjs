@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   carregarIdentidadeEsperada,
+  endurecerDestinoTls,
   extrairProjectRef,
   sha256,
   validarDestino,
@@ -55,6 +56,31 @@ test('valida destino oficial sem retornar credencial', () => {
     ESPERADA,
   );
   assert.deepEqual(erros, []);
+});
+
+test('fixa sslmode verify-full quando o parametro esta ausente', () => {
+  const resultado = endurecerDestinoTls(
+    'postgresql://postgres.' + REF + ':senha@aws-0.pooler.supabase.com:6543/postgres',
+  );
+  assert.deepEqual(resultado.erros, []);
+  assert.equal(new URL(resultado.connectionString).searchParams.get('sslmode'), 'verify-full');
+});
+
+test('preserva destino que ja exige sslmode verify-full', () => {
+  const resultado = endurecerDestinoTls(
+    'postgresql://postgres.' + REF + ':senha@aws-0.pooler.supabase.com:6543/postgres?sslmode=verify-full',
+  );
+  assert.deepEqual(resultado.erros, []);
+  assert.equal(new URL(resultado.connectionString).searchParams.get('sslmode'), 'verify-full');
+});
+
+test('rejeita tentativa de downgrade TLS sem vazar credencial', () => {
+  const resultado = endurecerDestinoTls(
+    'postgresql://postgres.' + REF + ':senha-super-secreta@aws-0.pooler.supabase.com:6543/postgres?sslmode=require',
+  );
+  assert.equal(resultado.connectionString, null);
+  assert.match(resultado.erros.join('\n'), /apenas verify-full/);
+  assert.doesNotMatch(resultado.erros.join('\n'), /senha-super-secreta/);
 });
 
 test('falha para outro projeto usando apenas fingerprint na mensagem', () => {

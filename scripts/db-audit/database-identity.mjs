@@ -135,3 +135,37 @@ export function validarDestino(connectionString, esperada) {
 
   return erros;
 }
+
+/**
+ * Produz uma URL de conexao que nao pode degradar a verificacao TLS.
+ * A credencial nunca e incluida em mensagens de erro.
+ */
+export function endurecerDestinoTls(connectionString) {
+  if (!connectionString) {
+    return {
+      connectionString: null,
+      erros: ['DESTINO_URL ausente; TLS nao pode ser fixado'],
+    };
+  }
+
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return {
+      connectionString: null,
+      erros: ['DESTINO_URL invalida; TLS nao pode ser fixado e a credencial nao foi exibida'],
+    };
+  }
+
+  const sslmode = url.searchParams.get('sslmode');
+  if (sslmode !== null && sslmode !== 'verify-full') {
+    return {
+      connectionString: null,
+      erros: ['DESTINO_URL tenta reduzir sslmode; apenas verify-full e permitido'],
+    };
+  }
+
+  url.searchParams.set('sslmode', 'verify-full');
+  return { connectionString: url.toString(), erros: [] };
+}
