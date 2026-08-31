@@ -3,8 +3,8 @@
 
 version: 2
 updates:
-  # npm/yarn/bun dependencies
-  - package-ecosystem: "npm"
+  # Bun dependencies: keep bun.lock synchronized with package.json.
+  - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -22,11 +22,18 @@ updates:
     groups:
       # Group minor and patch updates together
       minor-and-patch:
+        applies-to: "version-updates"
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
+    # Major upgrades require a dedicated compatibility plan and full gates.
+    # This restriction applies only to version updates; security updates remain eligible.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

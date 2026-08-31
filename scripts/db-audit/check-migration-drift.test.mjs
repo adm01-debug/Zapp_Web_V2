@@ -50,6 +50,19 @@ function commentOnlyEvidence(content, statements = [], overrides = {}) {
   };
 }
 
+function nameOnlyEvidence(content = SQL, statements = [], overrides = {}) {
+  return {
+    version: VERSION,
+    filename: FILE,
+    file_sha256: sha256(content),
+    ledger_name: 'create_demo',
+    ledger_statements_sha256: statementsHash(statements),
+    kind: 'ledger-only/name-and-file-pinned',
+    justification: 'O ledger legado preserva nome e versao, mas nao possui SQL ou hash historico recuperavel.',
+    ...overrides,
+  };
+}
+
 function pinnedEvidence({
   content = SQL,
   statements = [OTHER_SQL.trim()],
@@ -156,13 +169,67 @@ function runGuard({
 test('aceita migration com nome e SQL equivalentes no ledger', () => {
   const result = runGuard();
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('aceita registro legado sem name/statements, sem inventar evidencia', () => {
   const result = runGuard({ ledger: [ledgerRecord({ name: null, statements: null })] });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stderr, /legada\(s\) sem hash\/SQL verificavel/);
+});
+
+test('fixa arquivo legado por hash sem chamar seus bytes de conteudo historico', () => {
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements: null })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /0 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
+  assert.match(result.stdout, /1 arquivo\(s\) legado\(s\) fixado\(s\) sem prova de conteudo historico/);
+  assert.doesNotMatch(result.stderr, /ATENCAO/);
+});
+
+test('name-and-file-pinned falha fechado para arquivo, nome ou statements adulterados', () => {
+  const changedFile = runGuard({
+    files: { [FILE]: `${SQL}-- alterado\n` },
+    ledger: [ledgerRecord({ statements: null })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(changedFile.status, 1);
+  assert.match(changedFile.stderr, /file_sha256 divergente do manifesto/);
+
+  const changedName = runGuard({
+    ledger: [ledgerRecord({ name: 'outro_nome', statements: null })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(changedName.status, 1);
+  assert.match(changedName.stderr, /ledger_name divergente do manifesto/);
+
+  const recoveredSql = runGuard({
+    ledger: [ledgerRecord({ statements: [SQL.trim()] })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(recoveredSql.status, 1);
+  assert.match(recoveredSql.stderr, /ledger_statements_sha256 divergente/);
+  assert.match(recoveredSql.stderr, /exige ledger sem SQL\/hash historico/);
+});
+
+test('name-and-file-pinned exige SQL local e rejeita campos desconhecidos', () => {
+  const commentOnly = '-- sem SQL historico\n';
+  const noSql = runGuard({
+    destino: false,
+    files: { [FILE]: commentOnly },
+    evidence: [nameOnlyEvidence(commentOnly)],
+  });
+  assert.equal(noSql.status, 1);
+  assert.match(noSql.stderr, /name-and-file-pinned exige SQL executavel/);
+
+  const unknownField = runGuard({
+    destino: false,
+    evidence: [nameOnlyEvidence(SQL, [], { historical_sql_sha256: '0'.repeat(64) })],
+  });
+  assert.equal(unknownField.status, 1);
+  assert.match(unknownField.stderr, /campos ausentes ou desconhecidos/);
 });
 
 test('valida estrutura local mesmo sem DESTINO_URL', () => {
@@ -221,7 +288,7 @@ test('aceita comment-only somente com excecao versionada exata e ledger_name', (
     evidence: [commentOnlyEvidence(commentOnly)],
   });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('falha se file_sha256 da excecao comment-only nao corresponde ao arquivo', () => {
@@ -311,7 +378,7 @@ test('aceita file-sha256 explicito sem fabricar hash retroativo', () => {
     ledger: [ledgerRecord({ statements: [`-- file-sha256: ${hash}`] })],
   });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('falha para file-sha256 divergente', () => {
@@ -564,7 +631,7 @@ test('aceita pinned-replay somente quando todas as dimensoes estao fixadas', () 
     evidence: [pinnedEvidence({ statements })],
   });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('pinned-replay falha para adulteracao independente de arquivo e SQL local', () => {
@@ -717,7 +784,7 @@ test('referencia source stale nao vence nome e file-sha256 exatos', () => {
   ];
   const result = runGuard({ ledger: [ledgerRecord({ statements })] });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('referencia source stale nao vence nome e sql-sha256 exatos', () => {
@@ -727,7 +794,7 @@ test('referencia source stale nao vence nome e sql-sha256 exatos', () => {
   ];
   const result = runGuard({ ledger: [ledgerRecord({ statements })] });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
 test('referencia source stale exige nome exato mesmo com hash exato', () => {
@@ -805,7 +872,7 @@ test('aceita version-collision completa e ainda valida o registro proprio do rel
   const fixture = collisionFixture();
   const result = runGuard(fixture);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /2 conteudo\(s\)\/hash\(es\) verificado\(s\)/);
+  assert.match(result.stdout, /2 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 
   const driftedRelatedLedger = runGuard({
     ...fixture,
