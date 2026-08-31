@@ -91,8 +91,9 @@ falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL origin
 
 O tipo `ledger-only/name-and-file-pinned` cobre exclusivamente uma migration com SQL
 local cujo registro legado preserva nome/versao, mas nenhum SQL ou marker de hash. Ele
-fixa os bytes locais, o nome exato e o hash domain-separated do array vazio de
-`statements`; exige SQL executavel no arquivo e ausencia total de SQL/hash no ledger.
+fixa os bytes locais e o nome exato; exige SQL executavel no arquivo e ausencia total
+de SQL executavel ou marker de hash no ledger. Metadados textuais nao executaveis do
+ledger nao sao promovidos a evidencia e, portanto, nao recebem hash retrospectivo.
 O total aparece separadamente no resultado do guard e **nao** incrementa a contagem de
 conteudo historico verificado. O estado atual continua sendo provado de forma
 independente pelo manifesto estrutural completo no DB Live Guard.

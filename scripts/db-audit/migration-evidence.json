@@ -32,7 +32,6 @@
       "filename": "20260827120000_fk_indexes_backfill.sql",
       "file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
       "ledger_name": "fk_indexes_backfill",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
@@ -54,7 +53,6 @@
       "filename": "20260827130000_fix_gmail_crypto_search_path_and_missing_key.sql",
       "file_sha256": "ec32ba1d60244e69fe10e3604214d37d08d57f9c807f5c2aed64ea01012907f1",
       "ledger_name": "fix_gmail_crypto_search_path_and_missing_key",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
@@ -102,7 +100,6 @@
       "filename": "20260827140000_fix_sicoob_bridge_url_official_db.sql",
       "file_sha256": "9305d082d21ebd62e4f1543ca271e129fff04750fd010bd953434426cb575159",
       "ledger_name": "fix_sicoob_bridge_url_official_db",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
@@ -111,7 +108,6 @@
       "filename": "20260827150000_sicoob_bridge_use_pg_net.sql",
       "file_sha256": "3784a7816b8ba3f162f7bea835a5b458b3a026257174d0a21ff4aa5573377b92",
       "ledger_name": "sicoob_bridge_use_pg_net",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
@@ -120,7 +116,6 @@
       "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
       "file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
       "ledger_name": "scope_search_contacts_to_rls_m01",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
@@ -180,8 +175,7 @@
       "version": "20260828000000",
       "filename": "20260828000000_guard_secdef_batch.sql",
       "file_sha256": "a347b928203d40639ff2340487cb068cfaa34bee56e5adfaa8b8f5364f20ecff",
-      "ledger_name": "guard_secdef_batch",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "ledger_name": "20260828000000_guard_secdef_batch",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
     },
