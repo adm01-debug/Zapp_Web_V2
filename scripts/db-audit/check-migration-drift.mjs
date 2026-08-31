@@ -738,7 +738,10 @@ function compare(migrations, records, exceptionsByVersion) {
       if (ledgerSql !== fileSql) {
         errors.push(
           `conteudo SQL divergente em ${migration.version} `
-          + `(arquivo=${sha256(fileSql)}, ledger=${ledgerSqlHash})`,
+          + `(arquivo=${sha256(fileSql)}, ledger=${ledgerSqlHash}) `
+          + `ledger_name=${JSON.stringify(record.name)} `
+          + `ledger_statements_sha256=${statementsHash} `
+          + `ledger_sql_sha256=${ledgerSqlHash}`,
         );
       }
     }
