@@ -30,7 +30,9 @@ env:
 jobs:
   live-contract:
     name: Contrato DB vivo
-    if: github.ref == 'refs/heads/main'
+    # A excecao de workflow_dispatch fora da main existe somente na branch
+    # temporaria diagnose/db-live-runtime e nao deve ser integrada.
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -78,6 +80,42 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Coletar diagnostico estrutural temporario
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          umask 077
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+            SELECT pg_get_functiondef('public.mcp_exec_many(text[],integer)'::regprocedure)
+          " > /tmp/mcp-exec-many-function.sql
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+            WITH RECURSIVE reach(member_oid, membership_path) AS (
+              SELECT m.member, ARRAY[m.roleid, m.member]::oid[]
+              FROM pg_auth_members m
+              WHERE m.roleid = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+              UNION ALL
+              SELECT m.member, reach.membership_path || m.member
+              FROM reach
+              JOIN pg_auth_members m ON m.roleid = reach.member_oid
+              WHERE NOT m.member = ANY(reach.membership_path)
+            )
+            SELECT jsonb_build_object(
+              'member', member_role.rolname,
+              'member_inherit', member_role.rolinherit,
+              'path', ARRAY(
+                SELECT path_role.rolname
+                FROM unnest(reach.membership_path) WITH ORDINALITY path(oid, ord)
+                JOIN pg_roles path_role ON path_role.oid = path.oid
+                ORDER BY path.ord
+              )
+            )::text
+            FROM reach
+            JOIN pg_roles member_role ON member_role.oid = reach.member_oid
+            ORDER BY member_role.rolname, cardinality(reach.membership_path), reach.membership_path::text
+          " > /tmp/service-role-paths.jsonl
+          test -s /tmp/mcp-exec-many-function.sql
+          test -s /tmp/service-role-paths.jsonl
 
       - name: Verificar ACL e contrato de mcp_exec
         env:
@@ -130,5 +168,7 @@ jobs:
           path: |
             /tmp/fresh-catalog.json
             /tmp/fresh-manifest.json
+            /tmp/mcp-exec-many-function.sql
+            /tmp/service-role-paths.jsonl
           if-no-files-found: ignore
           retention-days: 3
