@@ -148,6 +148,23 @@ elementos de evidencia permanecem intactos mesmo se divergirem do resumo esperad
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.
 
+Em 31/08/2026, o run vivo `33383636827`, já na `main` e após validar o
+fingerprint do projeto oficial, confirmou paridade de versões `317/317` e
+detectou seis diferenças entre o replay local e a representação histórica do
+ledger (`20260829060000` a `20260829110000`). O guard reforçado publicou somente
+`ledger_name` e os hashes domain-separated/canônicos; nenhum elemento bruto de
+`statements` foi registrado. As seis evidências foram fixadas individualmente no
+manifesto: a `060000` como `safer-replay`, pois restaura os predicados do G-11,
+e as demais como `format-only`, sustentadas pelo histórico Git e pelos nomes
+idênticos do ledger.
+
+O mesmo run observou a versão `20260830170000` já registrada. Dez minutos antes,
+o run `33382898512` ainda media 316 registros e a apontava como única ausente.
+O dry-run controlado `33383664637` não foi a origem da escrita: ele encontrou
+`missing_count=0` e encerrou antes dos passos de runtime, dry-run do CLI e apply.
+Essa concorrência é preservada como evidência operacional; nenhum registro do
+ledger foi reescrito para mascará-la.
+
 Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
 nesse modo apenas a consulta ao ledger e pulada.
 
