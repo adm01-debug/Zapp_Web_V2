@@ -166,6 +166,15 @@ export function endurecerDestinoTls(connectionString) {
     };
   }
 
+  const sslrootcert = url.searchParams.get('sslrootcert');
+  if (sslrootcert !== null && sslrootcert !== 'system') {
+    return {
+      connectionString: null,
+      erros: ['DESTINO_URL tenta substituir a CA do sistema; apenas sslrootcert=system e permitido'],
+    };
+  }
+
   url.searchParams.set('sslmode', 'verify-full');
+  url.searchParams.set('sslrootcert', 'system');
   return { connectionString: url.toString(), erros: [] };
 }

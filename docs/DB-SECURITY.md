@@ -269,4 +269,5 @@ RLS desligado, privilegios excessivos e tabela ausente.
 
 O DB Live Guard valida a identidade canônica antes da primeira consulta,
 rejeita qualquer `sslmode` configurado abaixo de `verify-full` e fixa
-`sslmode=verify-full` na URL mascarada usada por todos os passos seguintes.
+`sslmode=verify-full` com `sslrootcert=system` na URL mascarada usada por todos
+os passos seguintes. Uma CA customizada na URL tambem e rejeitada.

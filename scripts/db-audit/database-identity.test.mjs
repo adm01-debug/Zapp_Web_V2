@@ -63,15 +63,20 @@ test('fixa sslmode verify-full quando o parametro esta ausente', () => {
     'postgresql://postgres.' + REF + ':senha@aws-0.pooler.supabase.com:6543/postgres',
   );
   assert.deepEqual(resultado.erros, []);
-  assert.equal(new URL(resultado.connectionString).searchParams.get('sslmode'), 'verify-full');
+  const url = new URL(resultado.connectionString);
+  assert.equal(url.searchParams.get('sslmode'), 'verify-full');
+  assert.equal(url.searchParams.get('sslrootcert'), 'system');
 });
 
-test('preserva destino que ja exige sslmode verify-full', () => {
+test('preserva destino que ja exige TLS e CA do sistema', () => {
   const resultado = endurecerDestinoTls(
-    'postgresql://postgres.' + REF + ':senha@aws-0.pooler.supabase.com:6543/postgres?sslmode=verify-full',
+    'postgresql://postgres.' + REF + ':senha@aws-0.pooler.supabase.com:6543/postgres' +
+    '?sslmode=verify-full&sslrootcert=system',
   );
   assert.deepEqual(resultado.erros, []);
-  assert.equal(new URL(resultado.connectionString).searchParams.get('sslmode'), 'verify-full');
+  const url = new URL(resultado.connectionString);
+  assert.equal(url.searchParams.get('sslmode'), 'verify-full');
+  assert.equal(url.searchParams.get('sslrootcert'), 'system');
 });
 
 test('rejeita tentativa de downgrade TLS sem vazar credencial', () => {
@@ -81,6 +86,16 @@ test('rejeita tentativa de downgrade TLS sem vazar credencial', () => {
   assert.equal(resultado.connectionString, null);
   assert.match(resultado.erros.join('\n'), /apenas verify-full/);
   assert.doesNotMatch(resultado.erros.join('\n'), /senha-super-secreta/);
+});
+
+test('rejeita CA customizada sem vazar credencial', () => {
+  const resultado = endurecerDestinoTls(
+    'postgresql://postgres.' + REF + ':outra-senha@aws-0.pooler.supabase.com:6543/postgres' +
+    '?sslmode=verify-full&sslrootcert=%2Ftmp%2Fca-injetada.pem',
+  );
+  assert.equal(resultado.connectionString, null);
+  assert.match(resultado.erros.join('\n'), /apenas sslrootcert=system/);
+  assert.doesNotMatch(resultado.erros.join('\n'), /outra-senha|ca-injetada/);
 });
 
 test('falha para outro projeto usando apenas fingerprint na mensagem', () => {

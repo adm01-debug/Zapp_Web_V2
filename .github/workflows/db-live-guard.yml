@@ -79,7 +79,7 @@ jobs:
           console.log(`::add-mask::${destinoSeguro}`);
           appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
-          console.log('OK: endpoint oficial comprovado e TLS verify-full fixado.');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA do sistema fixados.');
           NODE
 
       - name: Comparar migrations com schema_migrations
