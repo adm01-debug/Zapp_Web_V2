@@ -149,8 +149,8 @@ decisao de design, nao bug. **Nao mude sem decisao de negocio.**
 
 ## 6. Teste de regressao (etapas 76 e 96)
 
-O ACL de `mcp_exec` e verificado automaticamente no job `catalog-fresh` do
-`db-guard.yml`, que roda em todo `workflow_dispatch` e no cron semanal.
+Os contratos de `mcp_exec` e `webhook_failures` sao verificados pelo DB Guard
+offline em todo PR/push relevante e pelo DB Live Guard na `main` e no cron.
 
 ---
 
@@ -242,3 +242,24 @@ WHERE n.nspname='public' AND p.proname='clear_login_attempts';
 | UPDATE | authenticated | Marcar lida, estrelar |
 | DELETE | **ausente** | Intencional — ver acima |
 | INSERT | **ausente** | So via service_role/edges |
+
+---
+
+## 11. `webhook_failures` — dead-letter queue restrita
+
+A migration original `20260830153000` criou a policy `service_role_full` sem
+clausula `TO`. No PostgreSQL, a omissao equivale a `TO PUBLIC`; combinada aos
+default grants do schema, a policy permitia acesso efetivo de `anon` e
+`authenticated` a payloads truncados e mensagens de erro.
+
+A migration forward-only `20260831120000_harden_webhook_failures_acl`:
+
+- recria a unica policy como `FOR ALL TO service_role`;
+- revoga todos os privilegios de `PUBLIC`, `anon` e `authenticated`;
+- reduz `service_role` a `SELECT`, `INSERT`, `UPDATE` e `DELETE`;
+- preserva RLS habilitado.
+
+O guard `check-webhook-failures-acl.sql` compara policy, owner, RLS, ACL
+explicito e privilegios efetivos. A suite descartavel prova que a migration
+original e bloqueada e cobre grants indevidos, policy publica/adicional, RLS
+desligado, privilegios excessivos e tabela ausente.

@@ -86,6 +86,13 @@ jobs:
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-mcp-exec-acl.sql
 
+      - name: Verificar ACL da dead-letter queue de webhooks
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
+
       - name: Regenerar catalogo e comparar com o commitado
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
