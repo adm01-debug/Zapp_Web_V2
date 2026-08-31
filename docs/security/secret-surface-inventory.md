@@ -38,7 +38,7 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
 |---|---|---|---|---|
 | `VITE_CLIENTES_SUPABASE_URL` / `VITE_CLIENTES_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | `.env.production`, GitHub Secrets, fallback em `externalClient.ts` | público | Dashboard do projeto |
 | `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | Edge env | público/limitado | Dashboard do projeto |
-| `PROMOGIFTS_SUPABASE_URL` / `PROMOGIFTS_SUPABASE_ANON_KEY` | a confirmar | Edge env + `.env.example` | público/limitado | Dashboard do projeto (owner a confirmar) |
+| `PROMOGIFTS_SUPABASE_URL` / `PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY` | a confirmar | Edge env + GitHub Actions | servidor privilegiado; nunca frontend | Dashboard do projeto PromoGifts (owner a confirmar) |
 | (histórico) chaves `anon` do projeto `allrjhkpuscmgbsnmjlv` | legado | `.env` removido do HEAD (F-05) | público | n/a |
 
 ### 2.3 GitHub Actions (repo `adm01-debug/zapp-web-v2`) — enumerado via API em 2026-08-30
@@ -161,5 +161,4 @@ Legenda: **FP** = falso positivo · **PUB** = público por design · **SUSP** = 
 3. **Histórico:** `git log -S`/`-G` e `git log --follow` nos arquivos sinalizados; datas de inclusão/remoção registradas acima.
 4. **Não executado (fora de escopo/limitação):** enumeração de secrets do Supabase (CLI), Vercel e Hostinger; validação ativa de qualquer credencial contra serviços; rewrite de histórico Git; rotações (Classe D).
 5. **Risco residual conhecido:** valores SUSP permanecem no histórico e (para F-01/F-02) no HEAD até a aprovação das correções; credencial MCP e credencial Vercel seguem os trâmites da etapa 006.
-
 

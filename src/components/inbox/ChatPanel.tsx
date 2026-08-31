@@ -173,11 +173,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       if (attachment) {
         const fileName = `scheduled_${Date.now()}_${attachment.name}`;
         const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, attachment);
-        if (!uploadError) {
-          const { data: signedData } = await supabase.storage.from('whatsapp-media').createSignedUrl(fileName, 3600);
-          mediaUrl = signedData?.signedUrl;
-          messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
-        }
+        if (uploadError) throw uploadError;
+        const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+        if (!locatorData?.publicUrl) throw new Error('Não foi possível criar a referência durável do anexo');
+        mediaUrl = locatorData.publicUrl;
+        messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
       }
       await scheduleMessage({ contactId: conversation.contact.id, content: message, scheduledAt, messageType, mediaUrl });
       closeDialog('scheduleDialog');
