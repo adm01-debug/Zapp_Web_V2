@@ -58,6 +58,20 @@ reset_fixture() {
     DROP FUNCTION IF EXISTS public.mcp_exec(text, integer);
     DROP ROLE IF EXISTS acl_owner, acl_direct, acl_inheritor, acl_reachable, acl_alt_grantor;
     ALTER ROLE authenticator NOINHERIT;
+    ALTER ROLE postgres INHERIT;
+    ALTER ROLE supabase_realtime_admin NOINHERIT;
+    ALTER ROLE supabase_storage_admin NOINHERIT;
+    REVOKE authenticator FROM supabase_storage_admin;
+    REVOKE authenticator FROM postgres;
+    REVOKE service_role FROM authenticator;
+    REVOKE service_role FROM supabase_realtime_admin;
+    REVOKE service_role FROM supabase_storage_admin;
+    REVOKE service_role FROM postgres;
+    GRANT service_role TO authenticator;
+    GRANT service_role TO postgres WITH ADMIN OPTION;
+    GRANT service_role TO supabase_realtime_admin;
+    GRANT authenticator TO postgres WITH ADMIN OPTION;
+    GRANT authenticator TO supabase_storage_admin;
   " >/dev/null
 
   psql_file "$contract_migration" >/dev/null
@@ -87,6 +101,7 @@ run_guard() {
 
 assert_guard_passes() {
   local label="$1"
+  local expected_many_hash="${2:-509fb7baea9d4a7c77b36d381a1527cd}"
   local output
   local status
 
@@ -97,7 +112,7 @@ assert_guard_passes() {
     fail "$label deveria passar, mas saiu com status $status"
   fi
   if [[ "$output" != *'"body_md5": "8f8356d5fbeb51bcb5f6ab4e5a4fc1c8"'* ]] ||
-    [[ "$output" != *'"body_md5": "509fb7baea9d4a7c77b36d381a1527cd"'* ]]; then
+    [[ "$output" != *"\"body_md5\": \"$expected_many_hash\""* ]]; then
     printf '%s\n' "$output" >&2
     fail "$label nao publicou os fingerprints seguros dos corpos"
   fi
@@ -155,14 +170,31 @@ psql_sql "
   CREATE ROLE authenticator NOLOGIN NOINHERIT;
   CREATE ROLE supabase_realtime_admin NOLOGIN NOINHERIT;
   CREATE ROLE supabase_storage_admin NOLOGIN NOINHERIT;
-  GRANT service_role TO authenticator;
-  GRANT service_role TO postgres;
-  GRANT service_role TO supabase_realtime_admin;
-  GRANT service_role TO supabase_storage_admin;
 " >/dev/null
 
 reset_fixture
-assert_guard_passes 'baseline seguro com authenticator NOINHERIT'
+assert_guard_passes 'baseline seguro com topologia Supabase Cloud PG 17.6'
+
+reset_fixture
+docker exec -i "$container_name" \
+  psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres >/dev/null <<'SQL'
+CREATE OR REPLACE FUNCTION public.mcp_exec_many(statements text[], max_rows integer DEFAULT 100)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare i int; n int := coalesce(array_length(statements, 1), 0); res jsonb := '[]'::jsonb; t0 timestamptz := clock_timestamp();
+begin
+  for i in 1 .. n loop
+    res := res || jsonb_build_object('i', i, 'sql', left(statements[i], 200), 'result', public.mcp_exec(statements[i], max_rows));
+  end loop;
+  return jsonb_build_object('ok', true, 'count', n, 'results', res, 'ms', round(extract(epoch from clock_timestamp()-t0)*1000));
+end $function$;
+SQL
+assert_guard_passes \
+  'representacao compacta e semanticamente equivalente do runtime' \
+  '61948e225a30ce3f73e13c833716e74c'
+[[ "$(psql_sql "SELECT public.mcp_exec_many(ARRAY['SELECT 1 AS value'], 10)->'results'->0->'result'->'rows'->0->>'value'")" == *'1'* ]] ||
+  fail 'mcp_exec_many compacto nao preservou o comportamento esperado'
 
 reset_fixture
 # Simula uma ACL restaurada de dump com grantor superuser diferente. A alteracao
@@ -282,5 +314,25 @@ assert_guard_fails 'corpo/contrato de mcp_exec_many adulterado'
 run_negative_sql_case \
   'role interna do Supabase deixou de ser NOINHERIT' \
   'ALTER ROLE supabase_realtime_admin INHERIT'
+
+run_negative_sql_case \
+  'caminho direto inesperado para Storage' \
+  'GRANT service_role TO supabase_storage_admin'
+
+run_negative_sql_case \
+  'aresta obrigatoria da plataforma ausente' \
+  'REVOKE service_role FROM supabase_realtime_admin'
+
+run_negative_sql_case \
+  'membership do authenticator passou a herdar service_role' \
+  'GRANT service_role TO authenticator WITH INHERIT TRUE'
+
+run_negative_sql_case \
+  'SET OPTION interno removido' \
+  'REVOKE SET OPTION FOR service_role FROM supabase_realtime_admin'
+
+run_negative_sql_case \
+  'ADMIN OPTION interno inesperado' \
+  'GRANT service_role TO supabase_realtime_admin WITH ADMIN OPTION'
 
 printf 'ACL guard (%s): %s cenarios aprovados.\n' "$postgres_image" "$passed"

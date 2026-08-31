@@ -5,18 +5,18 @@
 -- grant direto ou herdado para qualquer role nao-superuser inesperada, grant para
 -- PUBLIC, WITH GRANT OPTION, search_path e corpo endurecido.
 --
--- As roles de plataforma listadas abaixo sao as unicas autorizadas a alcancar
--- service_role. Todas precisam de membership direto; authenticator e as roles
--- de Realtime/Storage precisam ser NOINHERIT, de modo que possam fazer SET ROLE
--- no fluxo interno sem herdar EXECUTE na sessao. postgres e tratado nominalmente
--- porque no Supabase Cloud ele e uma pseudo-superuser (rolsuper=false).
--- Qualquer outro caminho de membership ate service_role falha, inclusive para
--- roles custom NOINHERIT. Superusers reais ficam fora deste perimetro porque
--- sempre ignoram ACL.
+-- As arestas de membership abaixo reproduzem exatamente a topologia observada
+-- no Supabase Cloud PG 17.6. authenticator, Realtime e Storage nao herdam o
+-- EXECUTE na sessao, mas conservam SET OPTION para os fluxos internos da
+-- plataforma. postgres e tratado nominalmente porque no Cloud ele e uma
+-- pseudo-superuser (rolsuper=false). Qualquer aresta, atributo ou caminho novo
+-- ate service_role falha, inclusive para roles custom NOINHERIT. Superusers
+-- reais ficam fora deste perimetro porque sempre ignoram ACL.
 --
--- Os fingerprints abaixo usam prosrc com whitespace normalizado. Assim, uma
--- reformatacao nao quebra o guard, mas qualquer mudanca real no corpo exige uma
--- revisao explicita deste contrato junto da migration correspondente.
+-- Os fingerprints abaixo usam prosrc com whitespace colapsado. mcp_exec_many
+-- possui duas representacoes revisadas e semanticamente equivalentes: o fonte
+-- formatado do repo e o corpo compactado recuperado do runtime. Qualquer outro
+-- corpo exige revisao explicita deste contrato.
 
 \set ON_ERROR_STOP on
 \pset tuples_only on
@@ -27,7 +27,7 @@ WITH RECURSIVE expected(
   signature,
   expected_arg_names,
   expected_default_expression,
-  expected_body_md5,
+  expected_body_md5s,
   function_oid
 ) AS (
   VALUES
@@ -35,23 +35,34 @@ WITH RECURSIVE expected(
       'public.mcp_exec(text,integer)',
       ARRAY['sql', 'max_rows']::text[],
       '200',
-      '8f8356d5fbeb51bcb5f6ab4e5a4fc1c8',
+      ARRAY['8f8356d5fbeb51bcb5f6ab4e5a4fc1c8']::text[],
       to_regprocedure('public.mcp_exec(text,integer)')
     ),
     (
       'public.mcp_exec_many(text[],integer)',
       ARRAY['statements', 'max_rows']::text[],
       '100',
-      '509fb7baea9d4a7c77b36d381a1527cd',
+      ARRAY[
+        '509fb7baea9d4a7c77b36d381a1527cd',
+        '61948e225a30ce3f73e13c833716e74c'
+      ]::text[],
       to_regprocedure('public.mcp_exec_many(text[],integer)')
     )
 ),
-allowed_service_role_members(role_name, must_be_noinherit, must_be_direct) AS (
+expected_service_role_edges(
+  granted_role_name,
+  member_role_name,
+  member_rolinherit,
+  inherit_option,
+  set_option,
+  admin_option
+) AS (
   VALUES
-    ('authenticator', true, true),
-    ('postgres', false, true),
-    ('supabase_realtime_admin', true, true),
-    ('supabase_storage_admin', true, true)
+    ('authenticator', 'postgres', true, true, true, true),
+    ('authenticator', 'supabase_storage_admin', false, false, true, false),
+    ('service_role', 'authenticator', false, false, true, false),
+    ('service_role', 'postgres', true, true, true, true),
+    ('service_role', 'supabase_realtime_admin', false, false, true, false)
 ),
 service_role_reachability(member_oid, membership_path) AS (
   SELECT
@@ -70,18 +81,33 @@ service_role_reachability(member_oid, membership_path) AS (
   JOIN pg_auth_members membership ON membership.roleid = reach.member_oid
   WHERE NOT membership.member = ANY(reach.membership_path)
 ),
-unexpected_service_role_members AS (
-  SELECT DISTINCT member_role.rolname
-  FROM service_role_reachability reach
-  JOIN pg_roles member_role ON member_role.oid = reach.member_oid
-  LEFT JOIN allowed_service_role_members allowed
-    ON allowed.role_name = member_role.rolname
-  WHERE NOT member_role.rolsuper
-    AND (
-      allowed.role_name IS NULL
-      OR (allowed.must_be_noinherit AND member_role.rolinherit)
-      OR (allowed.must_be_direct AND cardinality(reach.membership_path) <> 2)
-    )
+reachable_role_oids(role_oid) AS (
+  SELECT oid FROM pg_roles WHERE rolname = 'service_role'
+  UNION
+  SELECT member_oid FROM service_role_reachability
+),
+actual_service_role_edges AS (
+  SELECT
+    granted_role.rolname AS granted_role_name,
+    member_role.rolname AS member_role_name,
+    member_role.rolinherit AS member_rolinherit,
+    membership.inherit_option,
+    membership.set_option,
+    membership.admin_option
+  FROM pg_auth_members membership
+  JOIN reachable_role_oids reachable ON reachable.role_oid = membership.roleid
+  JOIN pg_roles granted_role ON granted_role.oid = membership.roleid
+  JOIN pg_roles member_role ON member_role.oid = membership.member
+),
+unexpected_service_role_edges AS (
+  SELECT * FROM actual_service_role_edges
+  EXCEPT
+  SELECT * FROM expected_service_role_edges
+),
+missing_service_role_edges AS (
+  SELECT * FROM expected_service_role_edges
+  EXCEPT
+  SELECT * FROM actual_service_role_edges
 ),
 explicit_execute_acl AS (
   SELECT
@@ -142,7 +168,7 @@ checks AS (
       false
     ) AS search_path_is_safe,
     COALESCE(
-      md5(regexp_replace(btrim(p.prosrc), '[[:space:]]+', ' ', 'g')) = e.expected_body_md5,
+      md5(regexp_replace(btrim(p.prosrc), '[[:space:]]+', ' ', 'g')) = ANY(e.expected_body_md5s),
       false
     ) AS body_contract_matches,
     COALESCE(
@@ -218,7 +244,8 @@ result AS (
       AND NOT unexpected_grant_option
     ), false)
     AND NOT EXISTS (SELECT 1 FROM unexpected_overloads)
-    AND NOT EXISTS (SELECT 1 FROM unexpected_service_role_members) AS acl_segura,
+    AND NOT EXISTS (SELECT 1 FROM unexpected_service_role_edges)
+    AND NOT EXISTS (SELECT 1 FROM missing_service_role_edges) AS acl_segura,
     string_agg(
       format(
         '%s %s',
@@ -257,9 +284,36 @@ result AS (
       ''
     ) || COALESCE(
       (
-        SELECT E'\nunexpected_service_role_member=' ||
-          string_agg(rolname, ', ' ORDER BY rolname)
-        FROM unexpected_service_role_members
+        SELECT E'\nunexpected_service_role_edge=' || string_agg(
+          format(
+            '%s->%s(inherit_role=%s,inherit_edge=%s,set=%s,admin=%s)',
+            granted_role_name,
+            member_role_name,
+            member_rolinherit,
+            inherit_option,
+            set_option,
+            admin_option
+          ),
+          ', ' ORDER BY granted_role_name, member_role_name
+        )
+        FROM unexpected_service_role_edges
+      ),
+      ''
+    ) || COALESCE(
+      (
+        SELECT E'\nmissing_service_role_edge=' || string_agg(
+          format(
+            '%s->%s(inherit_role=%s,inherit_edge=%s,set=%s,admin=%s)',
+            granted_role_name,
+            member_role_name,
+            member_rolinherit,
+            inherit_option,
+            set_option,
+            admin_option
+          ),
+          ', ' ORDER BY granted_role_name, member_role_name
+        )
+        FROM missing_service_role_edges
       ),
       ''
     ) || COALESCE(
