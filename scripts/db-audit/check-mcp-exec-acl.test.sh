@@ -96,6 +96,11 @@ assert_guard_passes() {
     printf '%s\n' "$output" >&2
     fail "$label deveria passar, mas saiu com status $status"
   fi
+  if [[ "$output" != *'"body_md5": "8f8356d5fbeb51bcb5f6ab4e5a4fc1c8"'* ]] ||
+    [[ "$output" != *'"body_md5": "509fb7baea9d4a7c77b36d381a1527cd"'* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "$label nao publicou os fingerprints seguros dos corpos"
+  fi
 
   ((passed += 1))
   printf '[PASS] %s\n' "$label"
@@ -148,7 +153,12 @@ psql_sql "
   CREATE ROLE authenticated NOLOGIN;
   CREATE ROLE anon NOLOGIN;
   CREATE ROLE authenticator NOLOGIN NOINHERIT;
+  CREATE ROLE supabase_realtime_admin NOLOGIN NOINHERIT;
+  CREATE ROLE supabase_storage_admin NOLOGIN NOINHERIT;
   GRANT service_role TO authenticator;
+  GRANT service_role TO postgres;
+  GRANT service_role TO supabase_realtime_admin;
+  GRANT service_role TO supabase_storage_admin;
 " >/dev/null
 
 reset_fixture
@@ -268,5 +278,9 @@ END
 $function$;
 SQL
 assert_guard_fails 'corpo/contrato de mcp_exec_many adulterado'
+
+run_negative_sql_case \
+  'role interna do Supabase deixou de ser NOINHERIT' \
+  'ALTER ROLE supabase_realtime_admin INHERIT'
 
 printf 'ACL guard (%s): %s cenarios aprovados.\n' "$postgres_image" "$passed"

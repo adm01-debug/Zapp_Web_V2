@@ -5,11 +5,14 @@
 -- grant direto ou herdado para qualquer role nao-superuser inesperada, grant para
 -- PUBLIC, WITH GRANT OPTION, search_path e corpo endurecido.
 --
--- A unica role de plataforma autorizada a ser membro de service_role e
--- authenticator, obrigatoriamente NOINHERIT. Esse e o padrao do PostgREST: ela
--- pode fazer SET ROLE apos autenticar o JWT, mas nao herda EXECUTE na sessao.
+-- As roles de plataforma listadas abaixo sao as unicas autorizadas a alcancar
+-- service_role. Todas precisam de membership direto; authenticator e as roles
+-- de Realtime/Storage precisam ser NOINHERIT, de modo que possam fazer SET ROLE
+-- no fluxo interno sem herdar EXECUTE na sessao. postgres e tratado nominalmente
+-- porque no Supabase Cloud ele e uma pseudo-superuser (rolsuper=false).
 -- Qualquer outro caminho de membership ate service_role falha, inclusive para
--- roles NOINHERIT. Superusers ficam fora deste perimetro porque sempre ignoram ACL.
+-- roles custom NOINHERIT. Superusers reais ficam fora deste perimetro porque
+-- sempre ignoram ACL.
 --
 -- Os fingerprints abaixo usam prosrc com whitespace normalizado. Assim, uma
 -- reformatacao nao quebra o guard, mas qualquer mudanca real no corpo exige uma
@@ -43,8 +46,12 @@ WITH RECURSIVE expected(
       to_regprocedure('public.mcp_exec_many(text[],integer)')
     )
 ),
-allowed_service_role_members(role_name, must_be_noinherit) AS (
-  VALUES ('authenticator', true)
+allowed_service_role_members(role_name, must_be_noinherit, must_be_direct) AS (
+  VALUES
+    ('authenticator', true, true),
+    ('postgres', false, true),
+    ('supabase_realtime_admin', true, true),
+    ('supabase_storage_admin', true, true)
 ),
 service_role_reachability(member_oid, membership_path) AS (
   SELECT
@@ -73,6 +80,7 @@ unexpected_service_role_members AS (
     AND (
       allowed.role_name IS NULL
       OR (allowed.must_be_noinherit AND member_role.rolinherit)
+      OR (allowed.must_be_direct AND cardinality(reach.membership_path) <> 2)
     )
 ),
 explicit_execute_acl AS (
@@ -137,6 +145,10 @@ checks AS (
       md5(regexp_replace(btrim(p.prosrc), '[[:space:]]+', ' ', 'g')) = e.expected_body_md5,
       false
     ) AS body_contract_matches,
+    COALESCE(
+      md5(regexp_replace(btrim(p.prosrc), '[[:space:]]+', ' ', 'g')),
+      ''
+    ) AS body_md5,
     COALESCE(has_function_privilege('postgres', e.function_oid, 'EXECUTE'), false) AS postgres_execute,
     COALESCE(has_function_privilege('service_role', e.function_oid, 'EXECUTE'), false) AS service_role_execute,
     (
@@ -225,6 +237,7 @@ result AS (
           'default_contract', default_contract_matches,
           'search_path', search_path_is_safe,
           'body_contract', body_contract_matches,
+          'body_md5', body_md5,
           'postgres', postgres_execute,
           'service_role', service_role_execute,
           'service_role_direct', service_role_direct_execute,

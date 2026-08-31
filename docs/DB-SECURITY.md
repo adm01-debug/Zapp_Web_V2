@@ -28,6 +28,15 @@ mcp_exec_many  -> {postgres=X/postgres, service_role=X/postgres}
 **Se `EXECUTE` voltar para `authenticated` ou `anon`, qualquer usuario logado tem SQL
 arbitrario como superusuario.**
 
+No Supabase Cloud, `postgres` e uma pseudo-superuser com `rolsuper=false`, e as
+roles internas `authenticator`, `supabase_realtime_admin` e
+`supabase_storage_admin` possuem membership direto em `service_role`. O guard
+aceita somente esses nomes de plataforma: Realtime, Storage e authenticator
+precisam continuar `NOINHERIT`, e todos os quatro caminhos precisam ser diretos.
+Qualquer role custom, caminho transitivo ou mudanca para `INHERIT` permanece
+fail-closed. Revogar memberships internos sem coordenacao com a plataforma pode
+interromper Auth, Realtime ou Storage e nao e uma correcao segura.
+
 ### Verificacao
 
 ```sql
