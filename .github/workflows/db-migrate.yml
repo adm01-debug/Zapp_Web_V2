@@ -222,12 +222,12 @@ jobs:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
-            -v target_version="$TARGET_VERSION" -c "
+          RESULT=$(PGOPTIONS="-c app.target_version=$TARGET_VERSION" \
+            psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
               SELECT json_build_object(
                 'ledger_count', (
                   SELECT count(*) FROM supabase_migrations.schema_migrations
-                  WHERE version = :'target_version'
+                  WHERE version = current_setting('app.target_version')
                     AND name = 'get_team_profiles_active_filter'
                 ),
                 'returned_inactive', (
