@@ -222,12 +222,12 @@ jobs:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
         run: |
-          RESULT=$(PGOPTIONS="-c app.target_version=$TARGET_VERSION" \
-            psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 \
+            -v target_version="$TARGET_VERSION" -At <<'SQL'
               SELECT json_build_object(
                 'ledger_count', (
                   SELECT count(*) FROM supabase_migrations.schema_migrations
-                  WHERE version = current_setting('app.target_version')
+                  WHERE version = :'target_version'
                     AND name = 'get_team_profiles_active_filter'
                 ),
                 'returned_inactive', (
@@ -239,7 +239,9 @@ jobs:
                     pg_get_functiondef('public.get_team_profiles()'::regprocedure)
                   )
                 ) > 0
-              )::text;")
+              )::text;
+          SQL
+          )
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RESULT_JSON);

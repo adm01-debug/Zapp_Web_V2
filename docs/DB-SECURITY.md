@@ -28,14 +28,28 @@ mcp_exec_many  -> {postgres=X/postgres, service_role=X/postgres}
 **Se `EXECUTE` voltar para `authenticated` ou `anon`, qualquer usuario logado tem SQL
 arbitrario como superusuario.**
 
-No Supabase Cloud, `postgres` e uma pseudo-superuser com `rolsuper=false`, e as
-roles internas `authenticator`, `supabase_realtime_admin` e
-`supabase_storage_admin` possuem membership direto em `service_role`. O guard
-aceita somente esses nomes de plataforma: Realtime, Storage e authenticator
-precisam continuar `NOINHERIT`, e todos os quatro caminhos precisam ser diretos.
-Qualquer role custom, caminho transitivo ou mudanca para `INHERIT` permanece
-fail-closed. Revogar memberships internos sem coordenacao com a plataforma pode
-interromper Auth, Realtime ou Storage e nao e uma correcao segura.
+No Supabase Cloud, `postgres` e uma pseudo-superuser com `rolsuper=false`. A
+topologia canônica observada no PostgreSQL 17.6 em 31/08/2026 e:
+
+| Role concedida | Membro | INHERIT da aresta | SET | ADMIN |
+|---|---|---:|---:|---:|
+| `service_role` | `authenticator` | false | true | false |
+| `service_role` | `postgres` | true | true | true |
+| `service_role` | `supabase_realtime_admin` | false | true | false |
+| `authenticator` | `postgres` | true | true | true |
+| `authenticator` | `supabase_storage_admin` | false | true | false |
+
+Assim, Storage alcanca `service_role` por `authenticator`; nao existe grant
+direto de `service_role` para `supabase_storage_admin`. O guard compara o
+conjunto completo de arestas e seus atributos, alem de testar o privilegio
+efetivo com `has_function_privilege`. Qualquer role custom, aresta adicional,
+aresta ausente ou mudanca de `INHERIT`/`SET`/`ADMIN` permanece fail-closed.
+Revogar memberships internos sem coordenacao com a plataforma pode interromper
+Auth, Realtime ou Storage e nao e uma correcao segura.
+
+O corpo compacto de `mcp_exec_many` recuperado do runtime e semanticamente
+identico ao fonte formatado da migration `20260829020000`. O guard aceita apenas
+os dois fingerprints revisados; um terceiro corpo continua bloqueado.
 
 ### Verificacao
 
