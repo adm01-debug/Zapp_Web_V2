@@ -42,6 +42,20 @@ unexpected_acl AS (
      OR (grantee = 'service_role' AND privilege_type NOT IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE'))
      OR (grantee = 'service_role' AND is_grantable)
 ),
+column_acl AS (
+  SELECT
+    attribute.attname AS column_name,
+    COALESCE(grantee.rolname, 'PUBLIC') AS grantee,
+    acl.privilege_type,
+    acl.is_grantable
+  FROM target t
+  JOIN pg_attribute attribute
+    ON attribute.attrelid = t.oid
+   AND attribute.attnum > 0
+   AND NOT attribute.attisdropped
+  CROSS JOIN LATERAL aclexplode(attribute.attacl) acl
+  LEFT JOIN pg_roles grantee ON grantee.oid = acl.grantee
+),
 checks AS (
   SELECT
     count(*) = 1 AS table_exists,
@@ -65,7 +79,8 @@ checks AS (
       bool_and(NOT has_table_privilege('authenticated', t.oid, 'SELECT, INSERT, UPDATE, DELETE')),
       false
     ) AS authenticated_blocked,
-    NOT EXISTS (SELECT 1 FROM unexpected_acl) AS explicit_acl_exact
+    NOT EXISTS (SELECT 1 FROM unexpected_acl) AS explicit_acl_exact,
+    NOT EXISTS (SELECT 1 FROM column_acl) AS column_acl_empty
   FROM target t
   JOIN pg_roles owner_role ON owner_role.oid = t.relowner
 ),
@@ -78,7 +93,8 @@ result AS (
       AND service_role_crud
       AND anon_blocked
       AND authenticated_blocked
-      AND explicit_acl_exact AS acl_segura,
+      AND explicit_acl_exact
+      AND column_acl_empty AS acl_segura,
     jsonb_build_object(
       'table_exists', table_exists,
       'rls_enabled', rls_enabled,
@@ -87,7 +103,8 @@ result AS (
       'service_role_crud', service_role_crud,
       'anon_blocked', anon_blocked,
       'authenticated_blocked', authenticated_blocked,
-      'explicit_acl_exact', explicit_acl_exact
+      'explicit_acl_exact', explicit_acl_exact,
+      'column_acl_empty', column_acl_empty
     )::text || COALESCE(
       (
         SELECT E'\nunexpected_acl=' || string_agg(
@@ -95,6 +112,15 @@ result AS (
           ', ' ORDER BY grantee, privilege_type
         )
         FROM unexpected_acl
+      ),
+      ''
+    ) || COALESCE(
+      (
+        SELECT E'\ncolumn_acl=' || string_agg(
+          format('%s.%s:%s:grantable=%s', grantee, column_name, privilege_type, is_grantable),
+          ', ' ORDER BY grantee, column_name, privilege_type
+        )
+        FROM column_acl
       ),
       ''
     ) AS resumo
@@ -113,4 +139,3 @@ SELECT acl_segura, resumo FROM result \gset
   END
   $webhook_failures_acl_guard$;
 \endif
-

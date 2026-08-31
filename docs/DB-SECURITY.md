@@ -255,11 +255,18 @@ default grants do schema, a policy permitia acesso efetivo de `anon` e
 A migration forward-only `20260831120000_harden_webhook_failures_acl`:
 
 - recria a unica policy como `FOR ALL TO service_role`;
+- remove ACLs residuais atribuidas diretamente a colunas, inclusive de roles
+  adicionais, usando `REVOKE ... CASCADE` para nao deixar grants derivados;
 - revoga todos os privilegios de `PUBLIC`, `anon` e `authenticated`;
 - reduz `service_role` a `SELECT`, `INSERT`, `UPDATE` e `DELETE`;
 - preserva RLS habilitado.
 
-O guard `check-webhook-failures-acl.sql` compara policy, owner, RLS, ACL
-explicito e privilegios efetivos. A suite descartavel prova que a migration
-original e bloqueada e cobre grants indevidos, policy publica/adicional, RLS
-desligado, privilegios excessivos e tabela ausente.
+O guard `check-webhook-failures-acl.sql` compara policy, owner, RLS, ACL de
+tabela, ausencia total de ACL de coluna e privilegios efetivos. A suite
+descartavel prova que a migration original e bloqueada, que o hardening remove
+grants legados por coluna e cobre grants indevidos, policy publica/adicional,
+RLS desligado, privilegios excessivos e tabela ausente.
+
+O DB Live Guard valida a identidade canônica antes da primeira consulta,
+rejeita qualquer `sslmode` configurado abaixo de `verify-full` e fixa
+`sslmode=verify-full` na URL mascarada usada por todos os passos seguintes.

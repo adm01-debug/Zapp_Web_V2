@@ -108,10 +108,23 @@ printf '[PASS] migration original insegura foi bloqueada\n'
 reset_fixture
 assert_passes 'baseline endurecido'
 
+psql_sql 'DROP TABLE IF EXISTS public.webhook_failures CASCADE;' >/dev/null
+psql_file "$original_migration" >/dev/null
+psql_sql '
+  GRANT SELECT (payload_truncated) ON public.webhook_failures TO anon;
+  GRANT UPDATE (error_message) ON public.webhook_failures TO authenticated;
+' >/dev/null
+psql_file "$harden_migration" >/dev/null
+assert_passes 'migration remove grants legados por coluna'
+
 assert_fails 'grant SELECT para anon' \
   'GRANT SELECT ON public.webhook_failures TO anon'
 assert_fails 'grant UPDATE para authenticated' \
   'GRANT UPDATE ON public.webhook_failures TO authenticated'
+assert_fails 'grant SELECT de coluna para anon' \
+  'GRANT SELECT (payload_truncated) ON public.webhook_failures TO anon'
+assert_fails 'grant UPDATE de coluna para service_role' \
+  'GRANT UPDATE (resolved) ON public.webhook_failures TO service_role'
 assert_fails 'policy voltou a PUBLIC' \
   'DROP POLICY service_role_full ON public.webhook_failures; CREATE POLICY service_role_full ON public.webhook_failures USING (true) WITH CHECK (true)'
 assert_fails 'policy adicional inesperada' \
