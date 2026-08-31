@@ -19,15 +19,8 @@ updates:
       - "automated"
     commit-message:
       prefix: "⬆️ deps:"
-    groups:
-      # Group minor and patch updates together
-      minor-and-patch:
-        applies-to: "version-updates"
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+    # Keep updates independent so failures map to one dependency/changelog.
+    # The open PR limit bounds review load without hiding regressions in a batch.
     # Major upgrades require a dedicated compatibility plan and full gates.
     # This restriction applies only to version updates; security updates remain eligible.
     ignore:
