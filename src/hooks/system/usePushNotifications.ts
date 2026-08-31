@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
+import { PUSH_NOTIFICATIONS_ENABLED } from '@/config/service_worker';
 
 interface PushNotificationState {
   isSupported: boolean;
@@ -44,7 +45,8 @@ export function usePushNotifications() {
 
   useEffect(() => {
     const checkSupport = async () => {
-      const isSupported = 'Notification' in window && 
+      const isSupported = PUSH_NOTIFICATIONS_ENABLED &&
+                          'Notification' in window &&
                           'serviceWorker' in navigator && 
                           'PushManager' in window;
 
@@ -54,21 +56,14 @@ export function usePushNotifications() {
       }
 
       const permission = Notification.permission;
-      
+
       let isSubscribed = false;
       try {
-        // Add timeout so we don't hang forever if SW never registers
-        const swReady = Promise.race([
-          navigator.serviceWorker.ready,
-          new Promise<null>((_, reject) => 
-            setTimeout(() => reject(new Error('SW ready timeout')), 5000)
-          ),
-        ]);
-        const registration = await swReady as ServiceWorkerRegistration;
+        const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
         isSubscribed = !!subscription;
       } catch (error) {
-        log.error('Error checking push subscription (SW may not be registered):', error);
+        log.error('Error checking push subscription:', error);
       }
 
       setState({
@@ -84,7 +79,7 @@ export function usePushNotifications() {
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!state.isSupported) {
-      toast.error('Notificações push não são suportadas neste navegador');
+      toast.error('Notificações push estão desativadas nesta versão');
       return false;
     }
 
@@ -137,6 +132,8 @@ export function usePushNotifications() {
   }, [state.isSupported, state.permission, requestPermission]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
+    if (!state.isSupported) return false;
+
     try {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
@@ -153,10 +150,10 @@ export function usePushNotifications() {
       toast.error('Erro ao desativar notificações');
       return false;
     }
-  }, []);
+  }, [state.isSupported]);
 
   const showNotification = useCallback(async (payload: NotificationPayload): Promise<boolean> => {
-    if (state.permission !== 'granted') {
+    if (!state.isSupported || state.permission !== 'granted') {
       log.warn('Notification permission not granted');
       return false;
     }
@@ -181,7 +178,7 @@ export function usePushNotifications() {
       log.error('Error showing notification:', error);
       return false;
     }
-  }, [state.permission]);
+  }, [state.isSupported, state.permission]);
 
   const toggleSubscription = useCallback(async () => {
     if (state.isSubscribed) {
@@ -194,6 +191,7 @@ export function usePushNotifications() {
 
   return {
     ...state,
+    isEnabled: PUSH_NOTIFICATIONS_ENABLED,
     requestPermission,
     subscribe,
     unsubscribe,

@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { SUPABASE_URL } from '@/config/supabase';
+
+export { SUPABASE_URL } from '@/config/supabase';
 
 // Banco oficial: Supabase Cloud, projeto tnnnlkbymytvtqngbbqh.
 // IMPORTANTE: NÃO ler VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY — essas
@@ -7,8 +10,6 @@ import type { Database } from './types';
 // (vpkmqeumtxhrwgawxdrl) e levariam o app para o banco errado. Secrets do tipo
 // EXTERNAL_* só existem em edge functions, não no bundle, então usamos valores
 // fixos aqui (a ANON KEY é pública por design).
-export const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
-
 export const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
