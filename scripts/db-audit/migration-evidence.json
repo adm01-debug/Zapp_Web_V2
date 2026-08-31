@@ -183,6 +183,84 @@
       "ledger_statements_sha256": "518c4893b6483c5c8a2ca3fc66c1a82f351a744559f9c4f1d8a2667ce031f5c2",
       "kind": "ledger-only/comment-only",
       "justification": "O registro versionado já existia sem SQL histórico recuperado; o arquivo mantém somente o stub factual e seus bytes são fixados pelo manifesto."
+    },
+    {
+      "version": "20260829060000",
+      "filename": "20260829060000_reconcile_ledger_drift.sql",
+      "file_sha256": "8de59bfb7df3561ec50cead7f7265799c85ab3eb04d78524184869ad62221b2b",
+      "file_sql_sha256": "e91e63ccb261f458f4b9a482ee8979c3b85dd9f68defab41709bdfa393c30bbe",
+      "ledger_name": "reconcile_ledger_drift",
+      "ledger_statements_sha256": "c08528fd1657c3535e3f2aea2a186457ddcf866049e1e987c3f4ecf699d97569",
+      "ledger_sql_sha256": "2733dbdedeae85eee10970f267c4e58257ca0e81b09481f199dc0a711af66533",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O ledger preserva a reconciliação executada; o replay local restaurou os predicados criptográficos do G-11 para impedir rename incondicional, com as duas representações fixadas por hashes independentes."
+    },
+    {
+      "version": "20260829070000",
+      "filename": "20260829070000_fix_guard_clear_login_and_revoke_cleanup.sql",
+      "file_sha256": "a5b1f2e521160e7bd37673c3603ecb57be1cfed72302c8e7b169ef193e506339",
+      "file_sql_sha256": "6654dfc107c0a28fcda4a06f2f5943158c4ad78ba5ca8073b4b0b75d23292555",
+      "ledger_name": "fix_guard_clear_login_and_revoke_cleanup",
+      "ledger_statements_sha256": "74e850426165d06552c5f9048117bb22b7e930fcb0e4ab9780d9d08ac62139cf",
+      "ledger_sql_sha256": "af348ae258543369d3e139640c97598d2469979c376b877af9d48ed1f671ae73",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo não mudou desde o commit que o introduziu e o ledger mantém o mesmo nome; a representação gravada pelo executor difere dentro dos corpos SQL e ambas ficam fixadas por hash."
+    },
+    {
+      "version": "20260829080000",
+      "filename": "20260829080000_fix_guard_session_user.sql",
+      "file_sha256": "3063b2ee5121f883d2056ad5bb80cb9962dfe07651e4a158b56c1a408d77c8e5",
+      "file_sql_sha256": "21e45c0fe09d05b6b1956afa41d744491340f8fbe262e524b2cbd86a7f92fdc6",
+      "ledger_name": "fix_guard_session_user",
+      "ledger_statements_sha256": "5a0d472e81e8151a7a072fe763b1e8fbe4c2d06b31ace21cbe1c56a9708510e3",
+      "ledger_sql_sha256": "6b21cf28d7dff6efb9c3fa3849e6cb221f8c62f051a5fce25322053f5251149e",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo não mudou desde o commit que o introduziu e o ledger mantém o mesmo nome; a representação gravada pelo executor difere dentro do corpo SQL e ambas ficam fixadas por hash."
+    },
+    {
+      "version": "20260829090000",
+      "filename": "20260829090000_fix_clear_login_attempts_guard.sql",
+      "file_sha256": "cfc469c137b04062b73ff297f52e656bbf5de968fa799dd7978162037662357b",
+      "file_sql_sha256": "529c02e02cb6dbe6a31498b506c381b50607e76ded406cd0c934137467c01828",
+      "ledger_name": "fix_clear_login_attempts_guard",
+      "ledger_statements_sha256": "1ee077d87129b1965bcdeb52dc20115b66b5ea434c55a5873e82c4c61969affc",
+      "ledger_sql_sha256": "94fdfb396439261c2033af0937d4afc618db07a72ad3f5780b21e3550e1caff9",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "A revisão posterior reorganizou comentários e formatação do mesmo guard intermediário, sem alterar sua lógica; os bytes locais e a representação histórica do ledger ficam fixados separadamente."
+    },
+    {
+      "version": "20260829100000",
+      "filename": "20260829100000_fix_clear_login_operator_triple_arrow.sql",
+      "file_sha256": "beda27c6773c5a4f4e34417f3fcba49852117364e2d13aedf49102a7e656ff86",
+      "file_sql_sha256": "dcc56a224912bdd625b080b94e8efd411a0f8a8c8eccff08baed094a87ef1207",
+      "ledger_name": "fix_clear_login_operator_triple_arrow",
+      "ledger_statements_sha256": "2d255474af1080c55c48637f7cf7a602d19a7361369f934b9857d2759e616ee0",
+      "ledger_sql_sha256": "c93368a48d0a93c5cf7dd28ce9f7dffd23fc79dbc13754317c6b8c1466155ec3",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo preservado no Git e o registro de mesmo nome representam a correção do operador JSON com serializações distintas do corpo PL/pgSQL; ambos são fixados por hashes independentes."
+    },
+    {
+      "version": "20260829110000",
+      "filename": "20260829110000_gmail_incremental_sync_cron.sql",
+      "file_sha256": "85fe5481b2360dd49c47cfa772f0077a1638cb1faa0e3fc2feca766bf2434ddd",
+      "file_sql_sha256": "2f0120e3812afe985d8ca8d88447033afb8656533050fd275a000ee8b68e3468",
+      "ledger_name": "gmail_incremental_sync_cron",
+      "ledger_statements_sha256": "c1e6216e1398047135fded3ecefc368566134dca47180fb91eb1af1988dc242c",
+      "ledger_sql_sha256": "62a52f7a6480bd993fda3bb17270b6c8d919c84ce1990c5a71071cf302c9af7d",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
     }
   ]
 }

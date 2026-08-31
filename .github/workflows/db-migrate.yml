@@ -112,6 +112,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
+          APPLY: ${{ inputs.apply }}
         run: |
           umask 077
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
@@ -122,7 +123,11 @@ jobs:
           comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
-          if [ "$MISSING_COUNT" != "1" ] || [ "$MISSING_VERSION" != "$TARGET_VERSION" ]; then
+          if [ "$MISSING_COUNT" = "1" ] && [ "$MISSING_VERSION" = "$TARGET_VERSION" ]; then
+            NEEDS_APPLY=true
+          elif [ "$MISSING_COUNT" = "0" ] && grep -Fxq "$TARGET_VERSION" /tmp/remote-versions; then
+            NEEDS_APPLY=false
+          else
             echo "::error::O conjunto de versions ausentes nao corresponde exatamente ao alvo informado."
             echo "missing_count=$MISSING_COUNT"
             exit 1
@@ -133,7 +138,12 @@ jobs:
             echo "::error::A versao alvo precisa mapear para exatamente um arquivo local."
             exit 1
           fi
-          echo "OK: unica migration ausente confirmada: $TARGET_VERSION"
+          if [ "$APPLY" = "true" ] && [ "$NEEDS_APPLY" != "true" ]; then
+            echo "::error::A migration alvo ja esta registrada; apply repetido foi bloqueado."
+            exit 1
+          fi
+          echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
+          echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
       - name: Provar estado runtime antes do push
         id: runtime
@@ -185,6 +195,7 @@ jobs:
           NODE
 
       - name: Dry-run oficial do Supabase CLI
+        if: steps.preflight.outputs.needs_apply == 'true'
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
@@ -192,7 +203,7 @@ jobs:
           --skip-vault --dry-run --yes
 
       - name: Aplicar unica migration ausente
-        if: inputs.apply == true
+        if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
@@ -200,7 +211,7 @@ jobs:
           --skip-vault --yes
 
       - name: Validar ledger e comportamento pos-aplicacao
-        if: inputs.apply == true
+        if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
