@@ -74,11 +74,14 @@ export class ChatService {
 
     if (uploadError) throw uploadError;
 
-    const { data: signedData, error: signError } = await supabase.storage
+    // Persist a stable object locator, never a short-lived signed URL. The
+    // player and the Evolution proxy exchange it for a fresh signed URL only
+    // when they need to read the private object.
+    const { data: publicUrlData } = supabase.storage
       .from('audio-messages')
-      .createSignedUrl(fileName, 3600);
+      .getPublicUrl(fileName);
 
-    if (signError) throw signError;
-    return signedData.signedUrl;
+    if (!publicUrlData?.publicUrl) throw new Error('Failed to create audio object reference');
+    return publicUrlData.publicUrl;
   }
 }
