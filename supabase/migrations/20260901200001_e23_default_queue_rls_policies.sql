@@ -22,7 +22,7 @@ INSERT INTO queue_members (id, queue_id, profile_id, is_active)
 SELECT gen_random_uuid(), '4daa900c-ea89-47d5-8c04-5a188cae296e', p.id, true
 FROM profiles p
 WHERE p.is_active = true
-ON CONFLICT DO NOTHING;
+ON CONFLICT (queue_id, profile_id) DO UPDATE SET is_active = true;
 
 -- 3. Associa todos os contatos sem fila à Fila Geral
 UPDATE contacts
