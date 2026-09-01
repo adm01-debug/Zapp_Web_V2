@@ -113,12 +113,17 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  // E08: upsert com ignoreDuplicates protege contra race condition de webhooks paralelos.
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel.
   const { error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
     message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
     status: 'sent', created_at: messageCreatedAt, agent_id: contact.assigned_to || null,
-  }, { ignoreDuplicates: true });
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true });
 
   if (msgError) { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
   await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contact.id);
@@ -215,13 +220,18 @@ export async function handleIncomingMessage(
     return;
   }
 
-  // E08: upsert com ignoreDuplicates protege contra race condition de webhooks paralelos.
-  // .maybeSingle() retorna null (sem erro) se DO NOTHING silenciou uma duplicata.
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel. .maybeSingle() retorna null (sem erro) se
+  // DO NOTHING silenciou uma duplicata.
   const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content,
     message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
     status: 'received', created_at: messageCreatedAt,
-  }, { ignoreDuplicates: true }).select('id').maybeSingle();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true }).select('id').maybeSingle();
 
   if (msgError) {
     console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });

@@ -51,10 +51,12 @@ export function normalizePhone(rawJid?: string): string | null {
 
   const digitsOnly = sanitized.replace(/\D/g, '');
 
-  // Fallback: LIDs que chegam sem sufixo @lid tem >= 14 digitos sem DDI E.164 valido.
+  // Fallback: LIDs que chegam sem sufixo @lid tem >= 14 digitos. Heuristica de
+  // tamanho + prefixo, nao validacao real de E.164/DDI — numeros internacionais
+  // legitimos de 14-15 digitos (E.164 permite ate 15) tambem caem aqui.
   // Grupos WhatsApp (prefixo 120363/120392/120415/120496) sao excecoes validas.
   if (digitsOnly.length >= 14 && !/^12(0363|0392|0415|0496)/.test(digitsOnly)) {
-    console.warn(`[normalizePhone] ${digitsOnly.length} digitos sem DDI valido rejeitado como possivel LID: ${digitsOnly.substring(0, 6)}***`);
+    console.warn(`[normalizePhone] ${digitsOnly.length} digitos rejeitados como possivel LID: ${digitsOnly.substring(0, 6)}***`);
     return null;
   }
 
