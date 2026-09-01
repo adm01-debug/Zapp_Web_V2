@@ -104,14 +104,22 @@ export function resolveEventJid(...sources: unknown[]): string | null {
       pushCandidate(source);
       return;
     }
+
     if (!isRecord(source)) return;
+
     collectFields(source);
+
     const nestedRecords = [
-      source.key, source.contextInfo, source.messageContextInfo, source.message,
+      source.key,
+      source.contextInfo,
+      source.messageContextInfo,
+      source.message,
     ];
+
     for (const nested of nestedRecords) {
       if (!isRecord(nested)) continue;
       collectFields(nested);
+
       for (const value of Object.values(nested)) {
         if (!isRecord(value)) continue;
         collectFields(value);
@@ -123,6 +131,7 @@ export function resolveEventJid(...sources: unknown[]): string | null {
   };
 
   for (const source of sources) collectSource(source);
+
   return resolveBestJid(...candidates);
 }
 
@@ -139,45 +148,92 @@ export function shouldUpdateStatus(currentStatus: string | null, newStatus: stri
   return newPriority > currentPriority;
 }
 
-const CONNECTION_CACHE_TTL_MS = 5 * 60 * 1_000;
+// ─────────────────────────────────────────────────────────────────────────────
+// CONNECTION CACHE
+//
+// whatsapp_connections has exactly 2 rows but was receiving 37.9M seq scans
+// because getConnectionByInstance() queried it on every single message.
+//
+// Deno isolates are stateful between warm invocations (module-level state
+// persists). A module-level Map acts as an L1 cache: lookup is O(1) vs a
+// network round-trip to Postgres.
+//
+// TTL: 5 minutes. Low enough that connection changes propagate in reasonable
+// time; high enough to absorb thousands of webhook bursts per minute.
+//
+// Invalidation: call invalidateConnectionCache(instance) whenever a
+// connection.update or disconnect event is received (done in
+// evolution-webhook-handlers.ts → handleConnectionUpdate).
+// ─────────────────────────────────────────────────────────────────────────────
+const CONNECTION_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 
 interface CachedConnection {
   data: { id: string } | null;
   expiresAt: number;
 }
 
+// Shared across warm invocations within the same isolate.
 const connectionCache = new Map<string, CachedConnection>();
 
 export function invalidateConnectionCache(instance?: string): void {
-  if (instance) { connectionCache.delete(instance); } else { connectionCache.clear(); }
+  if (instance) {
+    connectionCache.delete(instance);
+  } else {
+    connectionCache.clear();
+  }
 }
 
 // deno-lint-ignore no-explicit-any
 export async function getConnectionByInstance(
-  supabase: any, instance: string,
+  supabase: any,
+  instance: string,
 ): Promise<{ id: string } | null> {
   const now = Date.now();
   const cached = connectionCache.get(instance);
-  if (cached && cached.expiresAt > now) return cached.data;
+
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
   const { data } = await supabase
-    .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
-  connectionCache.set(instance, { data, expiresAt: now + CONNECTION_CACHE_TTL_MS });
+    .from('whatsapp_connections')
+    .select('id')
+    .eq('instance_id', instance)
+    .maybeSingle();
+
+  connectionCache.set(instance, {
+    data,
+    expiresAt: now + CONNECTION_CACHE_TTL_MS,
+  });
+
   return data;
 }
 
 // deno-lint-ignore no-explicit-any
 export async function getContactByPhone(
-  supabase: any, phone: string, connectionId: string
+  supabase: any,
+  phone: string,
+  connectionId: string
 ): Promise<{ id: string; avatar_url: string | null; assigned_to: string | null; name: string | null } | null> {
   const phonesVariants = generatePhoneVariants(phone);
   const { data } = await supabase
-    .from('contacts').select('id, avatar_url, assigned_to, name')
-    .in('phone', phonesVariants).eq('whatsapp_connection_id', connectionId).limit(1).maybeSingle();
+    .from('contacts')
+    .select('id, avatar_url, assigned_to, name')
+    .in('phone', phonesVariants)
+    .eq('whatsapp_connection_id', connectionId)
+    .limit(1)
+    .maybeSingle();
+  
+  // If not found with connection filter, try without it (contact may belong to another connection)
   if (!data) {
     const { data: anyConnection } = await supabase
-      .from('contacts').select('id, avatar_url, assigned_to, name')
-      .in('phone', phonesVariants).limit(1).maybeSingle();
+      .from('contacts')
+      .select('id, avatar_url, assigned_to, name')
+      .in('phone', phonesVariants)
+      .limit(1)
+      .maybeSingle();
     if (anyConnection) {
+      // Update the contact's connection to the current one
       await supabase.from('contacts')
         .update({ whatsapp_connection_id: connectionId, updated_at: new Date().toISOString() })
         .eq('id', anyConnection.id);
@@ -185,18 +241,39 @@ export async function getContactByPhone(
       return anyConnection;
     }
   }
+  
   return data;
 }
 
+/**
+ * Generate phone number variants to handle Brazilian 9th digit discrepancy.
+ * WhatsApp/Evolution may use numbers with or without the 9th digit for mobile numbers.
+ * E.g., 5564984450900 (with 9) vs 556484450900 (without 9)
+ */
 export function generatePhoneVariants(phone: string): string[] {
   const clean = phone.replace(/\D/g, '').replace(/^\+/, '');
   const variants = new Set<string>([clean, `+${clean}`, phone]);
+  
+  // Brazilian number handling (country code 55)
   if (clean.startsWith('55') && clean.length >= 12) {
     const ddd = clean.substring(2, 4);
     const rest = clean.substring(4);
-    if (clean.length === 13 && rest.startsWith('9')) variants.add(`55${ddd}${rest.substring(1)}`);
-    if (clean.length === 12) variants.add(`55${ddd}9${rest}`);
+    
+    // If has 9th digit (9 digits after DDD = total 13 with country code)
+    if (clean.length === 13 && rest.startsWith('9')) {
+      // Add variant WITHOUT 9th digit
+      const without9 = `55${ddd}${rest.substring(1)}`;
+      variants.add(without9);
+    }
+    
+    // If missing 9th digit (8 digits after DDD = total 12 with country code)
+    if (clean.length === 12) {
+      // Add variant WITH 9th digit
+      const with9 = `55${ddd}9${rest}`;
+      variants.add(with9);
+    }
   }
+  
   return [...variants];
 }
 
@@ -210,7 +287,8 @@ export async function fetchProfilePicFromApi(instance: string, phone: string): P
       `/chat/fetchProfilePictureUrl/${instance}`, { number: phone },
       (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
     if (!resp.ok) return null;
-    return extractAvatarUrl(await resp.json());
+    const result = await resp.json();
+    return extractAvatarUrl(result);
   } catch { return null; }
 }
 
@@ -219,18 +297,25 @@ export async function persistProfilePicture(supabase: any, phone: string, profil
   try {
     const response = await fetch(profilePicUrl, { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return null;
-    const bytes = new Uint8Array(await response.arrayBuffer());
+    const blob = await response.arrayBuffer();
+    const bytes = new Uint8Array(blob);
     if (bytes.length < 100) return null;
-    const storagePath = `avatars/${phone}_${Date.now()}.jpg`;
+
+    const fileName = `${phone}_${Date.now()}.jpg`;
+    const storagePath = `avatars/${fileName}`;
+
     const { data: oldFiles } = await supabase.storage.from('avatars').list('avatars', { search: phone });
     if (oldFiles?.length) {
       await supabase.storage.from('avatars').remove(oldFiles.map((f: { name: string }) => `avatars/${f.name}`));
     }
+
     const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
       contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
     });
     if (error) { console.error('Avatar upload error:', error); return null; }
-    return supabase.storage.from('avatars').getPublicUrl(storagePath).data.publicUrl;
+
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+    return urlData.publicUrl;
   } catch (err) { console.error('Avatar persist error:', err); return null; }
 }
 
@@ -239,11 +324,15 @@ export async function handleReactionEvent(supabase: any, reactionMessage: Record
   const emoji = (reactionMessage.text as string) || '';
   const reactKey = reactionMessage.key as Record<string, unknown> | undefined;
   if (!reactKey?.id) return;
+
   const targetExternalId = reactKey.id as string;
   const { data: targetMessage } = await supabase
     .from('messages').select('id, contact_id').eq('external_id', targetExternalId).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
-  if (!targetMessage.contact_id) { console.log(`Reaction target ${targetExternalId} has no contact - skipping`); return; }
+  // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
+  // reaction_author_check exige autor — reagir aqui só geraria 23514.
+  if (!targetMessage.contact_id) { console.log(`Reaction target ${targetExternalId} has no contact — skipping`); return; }
+
   if (emoji === '') {
     if (!actorFromMe) {
       await supabase.from('message_reactions').delete()

@@ -8,6 +8,9 @@ import {
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 
+// Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
+// com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
+// download via API. Retorna a URL permanente no Storage ou null.
 // deno-lint-ignore no-explicit-any
 async function persistIncomingMedia(
   supabase: any, instance: string, data: Record<string, unknown>,
@@ -29,6 +32,7 @@ async function persistIncomingMedia(
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 
+// Fire-and-forget OG enrichment for received messages.
 // deno-lint-ignore no-explicit-any
 async function enrichIncomingLinkPreview(
   supabase: any, messageId: string, content: string | null | undefined,
@@ -41,7 +45,11 @@ async function enrichIncomingLinkPreview(
     const url = match[0].replace(/[).,;!?]+$/, '');
     const resp = await fetch(`${supabaseUrl}/functions/v1/fetch-link-preview`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${supabaseServiceKey}`, apikey: supabaseServiceKey },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseServiceKey}`,
+        apikey: supabaseServiceKey,
+      },
       body: JSON.stringify({ url }),
     });
     if (!resp.ok) { await resp.text().catch(() => ''); return; }
@@ -101,9 +109,7 @@ export async function handleOutgoingWhatsAppMessage(
     .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
   if (pendingMessage?.id) {
-    await supabase.from('messages').update({
-      status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString()
-    }).eq('id', pendingMessage.id);
+    await supabase.from('messages').update({ status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString() }).eq('id', pendingMessage.id);
     return;
   }
 
@@ -138,6 +144,8 @@ export async function handleIncomingMessage(
   let { mediaUrl } = parsed;
   const { content, messageType } = parsed;
 
+  // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
+  // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
   if (!content && messageType === 'text' && !mediaUrl) {
     console.log(`[INCOMING] Ignored empty message ${key.id}`);
     return;
@@ -166,6 +174,7 @@ export async function handleIncomingMessage(
       phone, name: (data.pushName as string) || phone, avatar_url: avatarUrl, whatsapp_connection_id: connection.id,
     }).select('id, avatar_url, assigned_to, name').single();
     if (insertErr && insertErr.code === '23505') {
+      // Duplicate phone — contact exists with another connection; fetch with 9th digit variants
       const phonesVariants = generatePhoneVariants(phone);
       const { data: existing } = await supabase.from('contacts').select('id, avatar_url, assigned_to, name')
         .in('phone', phonesVariants).limit(1).maybeSingle();
@@ -219,7 +228,7 @@ export async function handleIncomingMessage(
     return;
   }
   if (!insertedMessage) {
-    console.log(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
+    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
     return;
   }
   if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
@@ -245,7 +254,8 @@ export async function handleStickerMedia(
       const fileName = `sticker_${Date.now()}_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
       const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000' });
       if (!uploadErr) {
-        return supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`).data.publicUrl;
+        const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`);
+        return urlData.publicUrl;
       }
       return null;
     } catch { return null; }
@@ -261,11 +271,12 @@ export async function handleStickerMedia(
       try {
         const resp = await fetch(directMediaUrl, { signal: AbortSignal.timeout(10000) });
         if (resp.ok) {
-          const bytes = new Uint8Array(await resp.arrayBuffer());
+          const arrayBuf = await resp.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuf);
           if (bytes.length > 100) {
             const fileName = `sticker_${Date.now()}_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
             const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000' });
-            if (!uploadErr) mediaUrl = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`).data.publicUrl;
+            if (!uploadErr) { const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`); mediaUrl = urlData.publicUrl; }
           }
         }
       } catch (dlErr) { console.error('[STICKER] mediaUrl download error:', dlErr); }
@@ -282,7 +293,8 @@ export async function handleStickerMedia(
           { message: { key: data.key, message: data.message }, convertToMp4: false },
           (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
         if (resp.ok) {
-          const media = extractBase64Media(await resp.json());
+          const result = await resp.json();
+          const media = extractBase64Media(result);
           if (media) mediaUrl = await uploadBase64Sticker(media.base64);
         }
       }
@@ -296,16 +308,12 @@ export async function handleStickerMedia(
         let category = 'recebidas';
         try {
           const classifyResp = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/classify-sticker`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
             body: JSON.stringify({ image_url: mediaUrl }), signal: AbortSignal.timeout(20000),
           });
-          if (classifyResp.ok) category = (await classifyResp.json()).category || 'recebidas';
-        } catch { /* use default */ }
-        await supabase.from('stickers').insert({
-          name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: mediaUrl,
-          category, is_favorite: false, use_count: 0
-        });
+          if (classifyResp.ok) { const classifyResult = await classifyResp.json(); category = classifyResult.category || 'recebidas'; }
+        } catch { /* classification failed, use default */ }
+        await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: mediaUrl, category, is_favorite: false, use_count: 0 });
       }
     } catch { /* save error */ }
   }
@@ -318,12 +326,15 @@ export async function handleAudioTranscription(supabase: any, _contactId: string
   const { data: globalSetting } = await supabase.from('global_settings')
     .select('value').eq('key', 'auto_transcription_enabled').maybeSingle();
   if (globalSetting?.value === 'false') return;
+
   await supabase.from('messages').update({ transcription_status: 'processing' }).eq('id', messageId);
+
   try {
     const response = await fetch(`${supabaseUrl}/functions/v1/ai-transcribe-audio`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
       body: JSON.stringify({ audioUrl: mediaUrl, messageId }),
     });
+
     if (response.ok) {
       const result = await response.json();
       await supabase.from('messages').update({ transcription: result.text, transcription_status: 'completed' }).eq('id', messageId);
