@@ -309,6 +309,45 @@
       "reason": "format-only",
       "related_migration": null,
       "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
+    },
+    {
+      "version": "20260901100001",
+      "filename": "20260901100001_add_last_sender_to_email_threads.sql",
+      "file_sha256": "2040a949294f182a4ef8d3cb869bff1a097a2234d334773dba3d862b0b8bca43",
+      "file_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
+      "ledger_name": "add_last_sender_to_email_threads",
+      "ledger_statements_sha256": "32016f052b4a92fe8860ce7d71197d94d8d7ac55769cf986d93f5d0f55c6c2ae",
+      "ledger_sql_sha256": "5a09bfb4fe910fcbea02df506fc7a7dd3b091678fc3da2e25a5bf73f9c5d8ea9",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo foi reconstruído via pg_get_functiondef e pg_get_triggerdef, produzindo o corpo SQL completo da função sync_thread_last_sender e o evento correto AFTER INSERT OR UPDATE OF; o ledger histórico contém placeholder $$ ... $$ e cláusula AFTER INSERT OR UPDATE sem filtro de coluna; ambos fixados por hashes independentes."
+    },
+    {
+      "version": "20260901100003",
+      "filename": "20260901100003_create_contact_identity_map_e32.sql",
+      "file_sha256": "a6f023d4ea5711fe1d1094d9701d15dcc8910f5c4c222c835537c0d37ff86e2c",
+      "file_sql_sha256": "7943a9485263a3ca365e2d1025cb23171bb22cf8b9b51caca904480f52a25f98",
+      "ledger_name": "create_contact_identity_map_e32",
+      "ledger_statements_sha256": "efbc121cf4faf58e2d2c518f4a5c261e081140ee6dc47775d077fe3e4588d99b",
+      "ledger_sql_sha256": "48be4291095b211d515403877d70ae3f0ae08739d921b031fe91ce1157c6d24e",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo versionado reproduz o DDL completo da tabela contact_identity_map com COMMENT ON e GRANT explícitos; o ledger histórico preserva uma representação parcial sem os grants e comentários; ambas as formas refletem o mesmo schema vigente em produção e ficam fixadas por hashes independentes."
+    },
+    {
+      "version": "20260901200001",
+      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
+      "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+      "file_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
+      "ledger_name": "e23_default_queue_rls_policies",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "ledger_sql_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo documenta retroativamente o replay reprodutível; o ledger histórico tem SQL canônico vazio e o arquivo tem o SQL completo — ambos fixados por hashes independentes."
     }
   ]
 }
