@@ -35,17 +35,34 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
   const extension = getFileExtension(fileName).toUpperCase();
 
   const handleDownload = async () => {
-    log.warn('[SECURITY] File download blocked by data protection policy');
-    const { toast: toastFn } = await import('sonner');
-    toastFn.error('🔒 Download bloqueado por política de segurança', {
-      description: 'O download de arquivos está desabilitado para proteção de dados.',
-    });
+    if (isDownloading || !url) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(objectUrl);
+      log.debug('File downloaded successfully', { fileName });
+    } catch (err) {
+      log.error('File download failed', err);
+      const { toast: toastFn } = await import('sonner');
+      toastFn.error('Erro ao baixar arquivo', {
+        description: 'Não foi possível baixar o arquivo. Tente novamente.',
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleOpen = () => {
-    import('sonner').then(({ toast }) => {
-      toast.error('🔒 Abertura externa bloqueada por política de segurança');
-    });
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -69,7 +86,8 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       </div>
       <motion.button
         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-        onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+        onClick={(e) => { e.stopPropagation(); void handleDownload(); }}
+        disabled={isDownloading}
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
           isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary"

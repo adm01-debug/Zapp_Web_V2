@@ -93,4 +93,19 @@ export function useSupabaseRealtime<T extends { [key: string]: any }>(config: Re
       if (channel) void supabase.removeChannel(channel);
     };
   }, [enabled, channelName, schema, table, filter, handlePayload]);
+
+  // Quando o JWT é renovado pelo Supabase Auth, atualiza o auth do WebSocket
+  // do Realtime para que as subscrições não caiam na expiração do token (~1h).
+  // Sem isso, o socket fecha ao expirar e todos os canais caem juntos.
+  // Guard defensivo: supabase.auth.onAuthStateChange pode não existir em mocks de teste.
+  useEffect(() => {
+    if (typeof supabase.auth?.onAuthStateChange !== 'function') return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        supabase.realtime.setAuth(session?.access_token ?? null);
+        log.debug('Realtime auth updated after TOKEN_REFRESHED');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 }

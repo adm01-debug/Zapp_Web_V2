@@ -67,10 +67,16 @@ export const VirtualizedMessageList = forwardRef<VirtualizedMessageListRef, Virt
 
   const virtualizer = useVirtualizer({ count: listItems.length, getScrollElement: () => parentRef.current, estimateSize: getItemSize, overscan: 10 });
 
+  // Usa scrollTop = scrollHeight em vez de virtualizer.scrollToIndex.
+  // scrollToIndex falha quando o item alvo está fora do viewport virtualizado
+  // (não está no DOM ainda) e esgota as 10 tentativas internas do @tanstack/virtual,
+  // produzindo "Failed to scroll to index N after 10 attempts".
+  // scrollTop = scrollHeight é imediato e não depende de medição de itens individuais.
   const scrollToBottom = useCallback(() => {
-    if (listItems.length === 0 || !parentRef.current) return;
-    virtualizer.scrollToIndex(listItems.length - 1, { align: 'end' });
-  }, [listItems.length, virtualizer]);
+    const el = parentRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, []);
 
   const scrollToMessage = useCallback((messageId: string) => {
     const index = listItems.findIndex(item => item.type === 'message' && item.message.id === messageId);
@@ -79,9 +85,6 @@ export const VirtualizedMessageList = forwardRef<VirtualizedMessageListRef, Virt
 
   useImperativeHandle(ref, () => ({ scrollToBottom, scrollToMessage }), [scrollToBottom, scrollToMessage]);
 
-  // Adia o scroll para o proximo frame: no mesmo frame que o componente
-  // monta, parentRef.current ainda nao existe e o virtualizer lancaria
-  // "Failed to scroll to index X after 10 attempts".
   useEffect(() => {
     const id = requestAnimationFrame(scrollToBottom);
     return () => cancelAnimationFrame(id);
