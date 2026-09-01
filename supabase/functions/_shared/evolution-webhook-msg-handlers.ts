@@ -91,13 +91,13 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
       if (currentMessage?.id) {
         if (shouldUpdateStatus(currentMessage.status, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
-          console.log(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
+          console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a
         // mensagem -- o eco send.message / o frontend resolvem em seguida.
-        console.log(`Receipt for own message ${key.id} before external_id landed -- skipping stub`);
+        console.warn(`Receipt for own message ${key.id} before external_id landed -- skipping stub`);
       } else {
         // GAP-1 FIX (2026-09-01): so cria stub quando o contato eh resolvivel.
         // Antes: criava '[Mensagem recebida]' com contact_id=null para receipts
@@ -117,7 +117,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 
         if (!contactId) {
           // Sem contato resolvivel nao ha inbox onde mostrar -- skip silencioso.
-          console.log(`Receipt for unresolvable message ${key.id} (status=${newStatus}) -- no contact, skipping stub`);
+          console.warn(`Receipt for unresolvable message ${key.id} (status=${newStatus}) -- no contact, skipping stub`);
           continue;
         }
 
@@ -156,7 +156,7 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
       // GAP-1 FIX: so insere tombstone quando ha contato resolvivel.
       // Sem contato nao ha inbox onde exibir '[Mensagem apagada]'.
       if (!contactId) {
-        console.log(`Delete event for unresolvable message ${key.id} -- no contact, skipping tombstone`);
+        console.warn(`Delete event for unresolvable message ${key.id} -- no contact, skipping tombstone`);
         continue;
       }
 
