@@ -1469,7 +1469,9 @@
         "password_reset_requests_safe.token_expires_at": "5acc3145d7627a563843e137480b1cbf",
         "channel_connections_safe.whatsapp_connection_id": "56a86446063b2ee9feb224bd26659238",
         "user_settings.transcription_notification_enabled": "0b8a4c2dd7ae7c1d7a8d17095021caf6",
-        "whatsapp_connection_queues.whatsapp_connection_id": "9eb0988535c3822cb67934be7c6886ed"
+        "whatsapp_connection_queues.whatsapp_connection_id": "9eb0988535c3822cb67934be7c6886ed",
+        "email_threads.last_from_name": "8eeb25207bb7059414042458ce8a22b0",
+        "email_threads.last_from_address": "e1536abb79cd12064cfccfc67a7d4de8"
     },
     "indexes": {
         "tags.tags_pkey": "94bd1adcd4fadb427aebd4a80ba0a388",
@@ -3028,7 +3030,8 @@
         "contact_custom_fields.update_contact_custom_fields_updated_at": "e8661408ebbb26694222c45742aed7ab",
         "geo_blocking_settings.update_geo_blocking_settings_updated_at": "5642204c9debe1949b0652451fb49a21",
         "user_service_accounts.update_user_service_accounts_updated_at": "7562b78b10d9a1d2a371f33f1cb70cc8",
-        "scheduled_report_configs.update_scheduled_report_configs_updated_at": "a63286685d9d8f1091201a5af5b4533f"
+        "scheduled_report_configs.update_scheduled_report_configs_updated_at": "a63286685d9d8f1091201a5af5b4533f",
+        "email_messages.trg_sync_thread_last_sender": "480ab329842d1cc19d00dfbb52fce615"
     },
     "functions": {
         "f:handle_new_user()": "0cc13112844cee8252b4a808014a39a3",
@@ -3102,7 +3105,8 @@
         "f:fn_list_audio_memes_for_user(p_category text, p_only_favs boolean, p_search text)": "bb02c2adb3bc4ce9997612d503d423f3",
         "f:log_audit_event(p_action text, p_entity_type text, p_entity_id text, p_details jsonb, p_user_agent text)": "3b391fb62d2cf6de4c8382b1b2d944a1",
         "f:update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)": "3028a81d2c0a319c88f1314029781ece",
-        "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)": "6820e8da9158a00fafd4cc3aead93867"
+        "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)": "6820e8da9158a00fafd4cc3aead93867",
+        "public.sync_thread_last_sender()": "2d612e7391926476c9d55a205d61deb5"
     },
     "constraints": {
         "relation:tags.tags_pkey": "320872fb04c41e267f0bee9cce9b650e",
@@ -3486,7 +3490,7 @@
         "e:public.service_account_type|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.service_account_type|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-01T19:40:49Z",
+    "generated_at": "2026-09-01T20:33:29Z",
     "column_grants": {},
     "schema_grants": {
         "public|anon|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
@@ -3842,7 +3846,12 @@
         "f:update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
+        "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:sync_thread_last_sender()|PUBLIC|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:sync_thread_last_sender()|anon|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:sync_thread_last_sender()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:sync_thread_last_sender()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:sync_thread_last_sender()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
     "relation_grants": {
         "r:public.tags|anon|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
