@@ -67,7 +67,10 @@ export async function handleOutgoingWhatsAppMessage(
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
-  const { data: existingMessage } = await supabase.from('messages').select('id').eq('external_id', externalId).maybeSingle();
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id').eq('external_id', externalId)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
   if (existingMessage) return;
 
   const payloadKey = isRecord(data.key) ? data.key : null;
@@ -195,8 +198,10 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const { data: existingMessage } = await supabase.from('messages')
-    .select('id, status, content').eq('external_id', key.id).maybeSingle();
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id, status, content').eq('external_id', key.id)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
 
   if (existingMessage?.id) {
     const preservedStatus = existingMessage.status && existingMessage.status !== 'received' ? existingMessage.status : 'received';
