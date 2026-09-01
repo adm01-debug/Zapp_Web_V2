@@ -6,6 +6,8 @@
 @import './styles/sidebar.css';
 @import './styles/accessibility.css';
 
+@import './styles/email-content.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
