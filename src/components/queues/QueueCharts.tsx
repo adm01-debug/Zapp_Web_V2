@@ -42,7 +42,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title="Mensagens por Dia" icon={MessageSquare}>
           <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <AreaChart data={dailyData}>
                 <defs><linearGradient id="colorMensagens" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={queueColor} stopOpacity={0.3} /><stop offset="95%" stopColor={queueColor} stopOpacity={0} /></linearGradient></defs>
                 <CartesianGrid {...GRID_PROPS} /><XAxis dataKey="day" {...AXIS_PROPS} /><YAxis {...AXIS_PROPS} />
@@ -54,7 +54,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
 
         <ChartCard title="Resolvidos vs Novos" icon={TrendingUp}>
           <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={dailyData}>
                 <CartesianGrid {...GRID_PROPS} /><XAxis dataKey="day" {...AXIS_PROPS} /><YAxis {...AXIS_PROPS} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
@@ -69,7 +69,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard title="Atividade por Hora (Hoje)" icon={Clock} className="lg:col-span-2">
           <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <LineChart data={hourlyData}>
                 <CartesianGrid {...GRID_PROPS} /><XAxis dataKey="hora" {...AXIS_PROPS} /><YAxis {...AXIS_PROPS} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} /><Line type="monotone" dataKey="atendimentos" stroke={queueColor} strokeWidth={2} dot={{ fill: queueColor, strokeWidth: 2 }} name="Mensagens" />
@@ -82,7 +82,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
           <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2">Distribuição de Status</CardTitle></CardHeader>
           <CardContent>
             <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart><Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">{statusData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color} />)}</Pie><Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any) => [`${value}%`, '']} /></PieChart>
               </ResponsiveContainer>
             </div>
@@ -96,7 +96,7 @@ export function QueueCharts({ queueId, queueColor }: QueueChartsProps) {
       {agentPerformance.length > 0 && (
         <ChartCard title={`Performance por Atendente (${period === 'custom' ? 'período selecionado' : `últimos ${period.replace('d', ' dias')}`})`} icon={Users}>
           <div className="h-[180px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={agentPerformance} layout="vertical">
                 <CartesianGrid {...GRID_PROPS} horizontal={false} /><XAxis type="number" {...AXIS_PROPS} /><YAxis type="category" dataKey="name" {...AXIS_PROPS} width={80} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} /><Bar dataKey="atendimentos" fill={queueColor} radius={[0, 4, 4, 0]} name="Mensagens enviadas" />

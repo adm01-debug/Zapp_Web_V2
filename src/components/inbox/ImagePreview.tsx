@@ -4,6 +4,7 @@ import { X, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { toast } from 'sonner';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 interface ImagePreviewProps {
   src: string;
@@ -105,6 +106,7 @@ interface MessageImageProps {
 export function MessageImage({ src, alt = 'Image' }: MessageImageProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { url: resolvedUrl, isLoading, error, refresh } = useResolvedStorageUrl(src);
 
   return (
     <>
@@ -114,17 +116,24 @@ export function MessageImage({ src, alt = 'Image' }: MessageImageProps) {
         className="relative cursor-pointer overflow-hidden rounded-lg"
         onClick={() => setShowPreview(true)}
       >
-        {!isLoaded && (
+        {(!isLoaded || isLoading) && (
           <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />
         )}
-        <motion.img
-          src={src}
-          alt={alt}
-          onLoad={() => setIsLoaded(true)}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isLoaded ? 1 : 0 }}
-          className="max-w-[280px] max-h-[200px] object-cover rounded-lg"
-        />
+        {resolvedUrl && (
+          <motion.img
+            key={resolvedUrl}
+            src={resolvedUrl}
+            alt={alt}
+            onLoad={() => setIsLoaded(true)}
+            onError={() => { setIsLoaded(false); void refresh(); }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isLoaded ? 1 : 0 }}
+            className="max-w-[280px] max-h-[200px] object-cover rounded-lg"
+          />
+        )}
+        {error && !isLoading && (
+          <span className="block px-3 py-2 text-xs text-destructive">Mídia indisponível</span>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
           <span className="text-primary-foreground text-xs font-medium">Clique para expandir</span>
         </div>
@@ -132,7 +141,7 @@ export function MessageImage({ src, alt = 'Image' }: MessageImageProps) {
 
       <AnimatePresence>
         {showPreview && (
-          <ImagePreview src={src} alt={alt} onClose={() => setShowPreview(false)} />
+          <ImagePreview src={resolvedUrl || src} alt={alt} onClose={() => setShowPreview(false)} />
         )}
       </AnimatePresence>
     </>

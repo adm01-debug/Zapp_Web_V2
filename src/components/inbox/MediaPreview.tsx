@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
 import { VideoFullscreen } from './VideoFullscreen';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 function getFileIcon(fileName: string, mimeType?: string) {
   const extension = getFileExtension(fileName).toLowerCase();
@@ -89,22 +90,25 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     const [isMuted, setIsMuted] = useState(true);
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(url);
 
     return (
       <div ref={ref}>
         <div className="space-y-2">
           <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => setShowFullscreen(true)}>
-            {!isLoaded && (
+            {(!isLoaded || isLoading) && (
               <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            <video
-              src={url} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted} loop playsInline
+            {resolvedUrl && <video
+              key={resolvedUrl}
+              src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted} loop playsInline
               onLoadedData={() => setIsLoaded(true)}
+              onError={() => { setIsLoaded(false); void refresh(); }}
               onMouseEnter={(e) => { e.currentTarget.play(); setIsPlaying(true); }}
               onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; setIsPlaying(false); }}
-            />
+            />}
             <AnimatePresence>
               {!isPlaying && isLoaded && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/30 flex items-center justify-center">
@@ -121,7 +125,7 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
           {caption && <p className={cn("text-sm", isSent ? "text-primary-foreground" : "text-foreground")}>{caption}</p>}
         </div>
         <AnimatePresence>
-          {showFullscreen && <VideoFullscreen url={url} onClose={() => setShowFullscreen(false)} />}
+          {showFullscreen && resolvedUrl && <VideoFullscreen url={resolvedUrl} onClose={() => setShowFullscreen(false)} />}
         </AnimatePresence>
       </div>
     );

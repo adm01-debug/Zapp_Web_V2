@@ -18,6 +18,11 @@ interface FilePreview {
   preview?: string;
 }
 
+interface UploadedPrivateObject {
+  deliveryUrl: string;
+  locatorUrl: string;
+}
+
 interface QueuedFile extends FilePreview {
   id: string;
   status: 'pending' | 'uploading' | 'sending' | 'done' | 'error';
@@ -65,7 +70,7 @@ export function useFileUploadLogic(opts: {
     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
   }, []);
 
-  const uploadFileToStorage = useCallback(async (file: File): Promise<string> => {
+  const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
     let fileToUpload = file;
     if (file.type.startsWith('image/') && file.type !== 'image/gif') {
       try {
@@ -85,7 +90,9 @@ export function useFileUploadLogic(opts: {
 
     const { data: signedData, error: signError } = await supabase.storage.from('whatsapp-media').createSignedUrl(filePath, 3600);
     if (signError || !signedData?.signedUrl) throw new Error('Erro ao gerar URL do arquivo');
-    return signedData.signedUrl;
+    const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(filePath);
+    if (!locatorData?.publicUrl) throw new Error('Erro ao gerar referência durável do arquivo');
+    return { deliveryUrl: signedData.signedUrl, locatorUrl: locatorData.publicUrl };
   }, []);
 
   const handleClose = useCallback(() => {
@@ -101,15 +108,15 @@ export function useFileUploadLogic(opts: {
 
   const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
     if (!instanceName || !recipientNumber) return null;
-    const mediaUrl = await uploadFileToStorage(file);
+    const { deliveryUrl, locatorUrl } = await uploadFileToStorage(file);
     const messageContent = category === 'document' ? file.name : cap || `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : 'Arquivo'}]`;
 
     const apiPromise = category === 'audio'
-      ? sendAudioMessage(instanceName, recipientNumber, mediaUrl)
-      : sendMediaMessage({ instanceName, number: recipientNumber, mediaUrl, mediaType: category as 'image' | 'video' | 'audio' | 'document', caption: cap || undefined });
+      ? sendAudioMessage(instanceName, recipientNumber, deliveryUrl)
+      : sendMediaMessage({ instanceName, number: recipientNumber, mediaUrl: deliveryUrl, mediaType: category as 'image' | 'video' | 'audio' | 'document', caption: cap || undefined });
 
     const dbPromise = contactId
-      ? supabase.from('messages').insert({ contact_id: contactId, whatsapp_connection_id: connectionId || null, content: messageContent, message_type: category || 'document', media_url: mediaUrl, sender: 'agent', status: 'sending' }).select('id').single()
+      ? supabase.from('messages').insert({ contact_id: contactId, whatsapp_connection_id: connectionId || null, content: messageContent, message_type: category || 'document', media_url: locatorUrl, sender: 'agent', status: 'sending' }).select('id').single()
       : Promise.resolve(null);
 
     const [result, dbResult] = await Promise.all([apiPromise, dbPromise]);
@@ -117,7 +124,7 @@ export function useFileUploadLogic(opts: {
     if (dbResult?.data?.id && externalId) {
       supabase.from('messages').update({ external_id: externalId, status: 'sent' }).eq('id', dbResult.data.id).then(() => {});
     }
-    return { result, mediaUrl, category };
+    return { result, mediaUrl: locatorUrl, category };
   }, [instanceName, recipientNumber, contactId, connectionId, uploadFileToStorage, sendMediaMessage, sendAudioMessage]);
 
   const handleSendFile = useCallback(async () => {
@@ -167,7 +174,8 @@ export function useFileUploadLogic(opts: {
       setCurrentQueueIndex(i);
       if (fileQueue[i].validation.valid) {
         const success = await sendSingleQueueFile(fileQueue[i], i);
-        success ? successCount++ : errorCount++;
+        if (success) successCount++;
+        else errorCount++;
         if (i < fileQueue.length - 1) await new Promise(r => setTimeout(r, 500));
       } else { errorCount++; }
     }

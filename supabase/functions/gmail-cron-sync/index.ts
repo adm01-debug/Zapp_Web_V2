@@ -1,18 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { requireEnv } from "../_shared/validation.ts";
-import { Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
 import { ensureValidToken, syncMessages } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
 Deno.serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  const corsHeaders = getCorsHeaders(req);
   const secret = req.headers.get("x-cron-secret");
-  if (secret !== Deno.env.get("CRON_SECRET")) return new Response("Forbidden", { status: 403 });
+  if (secret !== Deno.env.get("CRON_SECRET")) {
+    return new Response("Forbidden", { status: 403, headers: corsHeaders });
+  }
   const log = new Logger("gmail-cron-sync");
   try {
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
     const { data: accounts, error } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at, history_id, is_active").eq("is_active", true);
-    if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200 }); }
+    if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     const results: Array<{ id: string; synced?: number; error?: string }> = [];
     for (let i = 0; i < accounts.length; i += BATCH) {
       const batch = accounts.slice(i, i + BATCH);
@@ -46,9 +50,9 @@ Deno.serve(async (req) => {
       }));
       for (const r of batchResults) results.push(r.status === "fulfilled" ? r.value : { id: "unknown", error: String(r.reason) });
     }
-    log.done(200, { accounts: accounts.length }); return new Response(JSON.stringify({ success: true, results }), { status: 200, headers: { "Content-Type": "application/json" } });
+    log.done(200, { accounts: accounts.length }); return new Response(JSON.stringify({ success: true, results }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error"; log.error("Cron failed", { error: msg });
-    return new Response(JSON.stringify({ success: false, error: msg }), { status: 500 });
+    return new Response(JSON.stringify({ success: false, error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

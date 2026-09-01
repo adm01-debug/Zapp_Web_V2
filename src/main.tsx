@@ -6,12 +6,14 @@ import "./i18n"; // Initialize i18n
 import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
 
 const log = getLogger('App');
 if (window.performance && window.performance.mark) {
   performance.mark('main-init');
 }
-log.info('Initialized at', new Date().toISOString());
+log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });
+startDeploymentUpdateMonitor();
 
 // Global unhandled error handlers for resilience
 window.addEventListener('unhandledrejection', (event) => {

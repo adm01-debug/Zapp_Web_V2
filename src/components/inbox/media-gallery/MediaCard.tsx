@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MediaItem } from './mediaUtils';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -17,6 +18,7 @@ interface MediaCardProps {
 export const MediaCard = memo(function MediaCard({ item, isSelected, onSelect, onPreview }: MediaCardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const { url: resolvedUrl, isLoading: isResolving, refresh } = useResolvedStorageUrl(item.url);
 
   return (
     <motion.div
@@ -43,9 +45,19 @@ export const MediaCard = memo(function MediaCard({ item, isSelected, onSelect, o
       <div className="aspect-square bg-muted relative">
         {item.type === 'image' && (
           <>
-            {isLoading && <div className="absolute inset-0 flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}
-            {!hasError ? (
-              <img src={item.url} alt={item.filename} className={cn('w-full h-full object-cover', isLoading && 'opacity-0')} onLoad={() => setIsLoading(false)} onError={() => { setIsLoading(false); setHasError(true); }} />
+            {(isLoading || isResolving) && <div className="absolute inset-0 flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}
+            {!hasError && resolvedUrl ? (
+              <img
+                key={resolvedUrl}
+                src={resolvedUrl}
+                alt={item.filename}
+                className={cn('w-full h-full object-cover', (isLoading || isResolving) && 'opacity-0')}
+                onLoad={() => { setIsLoading(false); setHasError(false); }}
+                onError={() => {
+                  setIsLoading(false);
+                  void refresh().then((freshUrl) => setHasError(!freshUrl));
+                }}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center"><Image className="w-8 h-8 text-muted-foreground" /></div>
             )}

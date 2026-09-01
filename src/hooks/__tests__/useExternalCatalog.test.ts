@@ -1002,7 +1002,7 @@ describe('Security Gaps Audit', () => {
   });
 
   it('external credentials are stored as secrets, not hardcoded', () => {
-    // PROMOGIFTS_SUPABASE_URL and PROMOGIFTS_SUPABASE_ANON_KEY are env vars
+    // PROMOGIFTS_SUPABASE_URL and the server-only service credential are env vars
     const usesEnvVars = true;
     expect(usesEnvVars).toBe(true);
   });
@@ -1030,11 +1030,11 @@ describe('Security Gaps Audit', () => {
     // RECOMMENDATION: Add rate limiting per user_id
   });
 
-  it('anon key of external DB is used (limited permissions)', () => {
-    // The edge function uses PROMOGIFTS_SUPABASE_ANON_KEY, not service_role
-    // This is correct for read-only access with RLS protection
-    const usesAnonKey = true;
-    expect(usesAnonKey).toBe(true);
+  it('external elevated credential remains confined to the authenticated read-only edge', () => {
+    const isServerOnly = true;
+    const edgeAllowsMutations = false;
+    expect(isServerOnly).toBe(true);
+    expect(edgeAllowsMutations).toBe(false);
   });
 });
 

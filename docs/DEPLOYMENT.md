@@ -182,9 +182,9 @@ VITE_SENTRY_DSN=xxx
 EVOLUTION_API_URL=https://evolution.atomicabr.com.br
 EVOLUTION_API_KEY=xxx
 
-# Catálogo de produtos (usada apenas pela edge promogifts-catalog — NÃO exposta ao front)
+# Catálogo de produtos (usadas apenas pela edge promogifts-catalog — NÃO expostas ao front)
 PROMOGIFTS_SUPABASE_URL=https://doufsxqlfjyuvxuezpln.supabase.co
-PROMOGIFTS_SUPABASE_ANON_KEY=xxx
+PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=xxx
 
 # IA
 OPENAI_API_KEY=sk-xxx

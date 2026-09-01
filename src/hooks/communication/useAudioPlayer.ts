@@ -3,14 +3,17 @@ import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL } from '@/config/supabase';
 import { toast } from '@/hooks/ui/use-toast';
-import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
+import {
+  parseSupabaseStorageObjectUrl,
+  PRIVATE_MEDIA_BUCKETS,
+} from '@/lib/storage_object_reference';
 
 interface UseAudioPlayerOptions {
   audioUrl: string;
   messageId: string;
 }
 
-const PRIVATE_AUDIO_BUCKETS = ['whatsapp-media', 'audio-messages'] as const;
+const PRIVATE_AUDIO_BUCKETS = PRIVATE_MEDIA_BUCKETS;
 const SUPABASE_STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
 const SIGNED_URL_TTL_SECONDS = 3600;
 const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;

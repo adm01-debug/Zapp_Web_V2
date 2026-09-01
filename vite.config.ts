@@ -6,6 +6,7 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
+  const buildId = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || `local-${Date.now()}`;
 
   return {
     server: {
@@ -15,8 +16,21 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" && componentTagger(),
+      {
+        name: "zapp-build-version",
+        generateBundle() {
+          this.emitFile({
+            type: "asset",
+            fileName: "version.json",
+            source: JSON.stringify({ buildId }),
+          });
+        },
+      },
       // PWA disabled to resolve preview issues
     ].filter(Boolean),
+    define: {
+      __ZAPP_BUILD_ID__: JSON.stringify(buildId),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

@@ -5,36 +5,67 @@ import { Profile } from '@/types';
 
 export class AuthService {
   private static sessionPromise: Promise<Session | null> | null = null;
+  private static refreshPromise: Promise<Session | null> | null = null;
 
   static async getSession() {
     if (this.sessionPromise) return this.sessionPromise;
-    
-    this.sessionPromise = supabase.auth.getSession().then(({ data, error }) => {
-      if (error) {
-        this.sessionPromise = null;
-        throw error;
-      }
-      return data.session;
-    }).catch(err => {
-      this.sessionPromise = null;
-      throw err;
-    });
 
-    return this.sessionPromise;
+    const pending = supabase.auth.getSession().then(({ data, error }) => {
+      if (error) throw error;
+      return data.session;
+    });
+    this.sessionPromise = pending;
+    try {
+      return await pending;
+    } finally {
+      // Deduplicate only concurrent reads. Keeping a resolved Session forever
+      // returns an expired token after a long-lived/suspended browser tab.
+      if (this.sessionPromise === pending) this.sessionPromise = null;
+    }
+  }
+
+  static async refreshSession() {
+    if (this.refreshPromise) return this.refreshPromise;
+    const pending = supabase.auth.refreshSession().then(({ data, error }) => {
+      if (error) throw error;
+      return data.session;
+    });
+    this.refreshPromise = pending;
+    try {
+      return await pending;
+    } finally {
+      if (this.refreshPromise === pending) this.refreshPromise = null;
+    }
   }
 
   static async fetchProfile(userId: string): Promise<Profile | null> {
-    try {
+    const fetchOnce = async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
-
       if (error) throw error;
-      return data as Profile;
+      return data as Profile | null;
+    };
+
+    try {
+      return await fetchOnce();
     } catch (err) {
-      log.warn('[AuthService] Failed to fetch profile:', userId, err);
+      const authFailure = typeof err === 'object' && err !== null && (
+        (err as { status?: number }).status === 401 ||
+        (err as { code?: string }).code === 'PGRST301' ||
+        /jwt|unauthorized|token.*expired/i.test((err as { message?: string }).message || '')
+      );
+      if (authFailure) {
+        try {
+          const session = await this.refreshSession();
+          if (session) return await fetchOnce();
+        } catch (refreshError) {
+          log.warn('[AuthService] Session recovery failed', refreshError);
+        }
+      }
+      log.warn('[AuthService] Failed to fetch profile', err);
       return null;
     }
   }

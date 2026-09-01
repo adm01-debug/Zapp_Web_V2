@@ -27,6 +27,10 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
+      # Alias fixado para contratos que ainda exercitam a API Zod v3.
+      # O updater Bun tenta resolver o nome do alias no registry e recebe 404;
+      # o pacote real `zod` continua elegivel para atualizacoes independentes.
+      - dependency-name: "zod3"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

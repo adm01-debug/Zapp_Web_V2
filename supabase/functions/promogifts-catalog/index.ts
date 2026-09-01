@@ -59,6 +59,25 @@ function checkRateLimit(userId: string): boolean {
   return entry.count <= RATE_LIMIT;
 }
 
+interface ExternalDatabaseError {
+  code?: string;
+  message?: string;
+}
+
+function externalDatabaseErrorResponse(error: ExternalDatabaseError, req: Request, log: Logger) {
+  log.error("External catalog query failed", {
+    code: error.code || "UNKNOWN",
+    message: error.message || "Unknown external database error",
+  });
+  const permissionFailure = error.code === "42501";
+  return jsonRes({
+    error: permissionFailure
+      ? "Catalog credentials are not authorized for the requested resource"
+      : "Catalog database is temporarily unavailable",
+    code: permissionFailure ? "CATALOG_CREDENTIALS_INVALID" : "CATALOG_UPSTREAM_ERROR",
+  }, 503, req);
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -87,11 +106,19 @@ Deno.serve(async (req) => {
     }
 
     const extUrl = Deno.env.get("PROMOGIFTS_SUPABASE_URL");
-    const extKey = Deno.env.get("PROMOGIFTS_SUPABASE_ANON_KEY");
+    // Catalog tables deliberately deny the external anon role. This function
+    // is already protected by the canonical user's JWT, rate-limited and
+    // read-only, so the cross-project credential belongs only in Edge secrets.
+    const extKey = Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY");
     if (!extUrl || !extKey) {
-      return jsonRes({ error: "External DB not configured" }, 500, req);
+      return jsonRes({
+        error: "External DB not configured",
+        code: "CATALOG_NOT_CONFIGURED",
+      }, 503, req);
     }
-    const extClient = createClient(extUrl, extKey);
+    const extClient = createClient(extUrl, extKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
     const rawBody = await req.json();
     const bodyParse = ActionSchema.safeParse(rawBody);
@@ -120,7 +147,7 @@ Deno.serve(async (req) => {
       query = query.order(order_by, { ascending }).range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
-      if (error) throw error;
+      if (error) return externalDatabaseErrorResponse(error, req, log);
       const duration = Math.round(performance.now() - startTime);
       return jsonRes({ data, meta: { total: count, duration_ms: duration } }, 200, req);
     }
@@ -133,12 +160,12 @@ Deno.serve(async (req) => {
       const { product_id } = paramsParse.data;
       const { data: product, error: productErr } = await extClient
         .from("products").select(PRODUCT_FIELDS).eq("id", product_id).maybeSingle();
-      if (productErr) throw productErr;
+      if (productErr) return externalDatabaseErrorResponse(productErr, req, log);
       if (!product) return jsonRes({ error: "Product not found" }, 404, req);
 
       const { data: variants, error: varErr } = await extClient
         .from("product_variants").select("*").eq("product_id", product_id).eq("is_active", true).order("color_name");
-      if (varErr) throw varErr;
+      if (varErr) return externalDatabaseErrorResponse(varErr, req, log);
 
       const duration = Math.round(performance.now() - startTime);
       return jsonRes({ data: { ...product, variants: variants || [] }, meta: { duration_ms: duration } }, 200, req);
@@ -146,13 +173,13 @@ Deno.serve(async (req) => {
 
     if (action === "list_categories") {
       const { data, error } = await extClient.from("categories").select("id, name, slug, parent_id").order("name");
-      if (error) throw error;
+      if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
     }
 
     if (action === "list_suppliers") {
       const { data, error } = await extClient.from("suppliers").select("id, name").order("name");
-      if (error) throw error;
+      if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
     }
 
@@ -160,6 +187,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error("Error", { error: msg });
-    return jsonRes({ error: msg }, 500, req);
+    return jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
   }
 });
