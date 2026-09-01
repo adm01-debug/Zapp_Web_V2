@@ -54,11 +54,14 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🧪 Test ESLint ratchet
-        run: node --test scripts/ci/*.unit.mjs
+      - name: 🧪 Test CI and Edge deployment guards
+        run: node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
+
+      - name: 🧾 Verify Edge deployment manifest freshness
+        run: node scripts/edge-deploy/generate-manifest.mjs --check
 
       # O legado possui divida de lint conhecida. O ratchet compara ocorrencias
       # individualmente e falha se uma nova for introduzida, sem mascarar a CI.

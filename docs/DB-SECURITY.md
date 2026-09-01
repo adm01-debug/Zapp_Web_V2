@@ -28,6 +28,29 @@ mcp_exec_many  -> {postgres=X/postgres, service_role=X/postgres}
 **Se `EXECUTE` voltar para `authenticated` ou `anon`, qualquer usuario logado tem SQL
 arbitrario como superusuario.**
 
+No Supabase Cloud, `postgres` e uma pseudo-superuser com `rolsuper=false`. A
+topologia canônica observada no PostgreSQL 17.6 em 31/08/2026 e:
+
+| Role concedida | Membro | INHERIT da aresta | SET | ADMIN |
+|---|---|---:|---:|---:|
+| `service_role` | `authenticator` | false | true | false |
+| `service_role` | `postgres` | true | true | true |
+| `service_role` | `supabase_realtime_admin` | false | true | false |
+| `authenticator` | `postgres` | true | true | true |
+| `authenticator` | `supabase_storage_admin` | false | true | false |
+
+Assim, Storage alcanca `service_role` por `authenticator`; nao existe grant
+direto de `service_role` para `supabase_storage_admin`. O guard compara o
+conjunto completo de arestas e seus atributos, alem de testar o privilegio
+efetivo com `has_function_privilege`. Qualquer role custom, aresta adicional,
+aresta ausente ou mudanca de `INHERIT`/`SET`/`ADMIN` permanece fail-closed.
+Revogar memberships internos sem coordenacao com a plataforma pode interromper
+Auth, Realtime ou Storage e nao e uma correcao segura.
+
+O corpo compacto de `mcp_exec_many` recuperado do runtime e semanticamente
+identico ao fonte formatado da migration `20260829020000`. O guard aceita apenas
+os dois fingerprints revisados; um terceiro corpo continua bloqueado.
+
 ### Verificacao
 
 ```sql
@@ -126,8 +149,8 @@ decisao de design, nao bug. **Nao mude sem decisao de negocio.**
 
 ## 6. Teste de regressao (etapas 76 e 96)
 
-O ACL de `mcp_exec` e verificado automaticamente no job `catalog-fresh` do
-`db-guard.yml`, que roda em todo `workflow_dispatch` e no cron semanal.
+Os contratos de `mcp_exec` e `webhook_failures` sao verificados pelo DB Guard
+offline em todo PR/push relevante e pelo DB Live Guard na `main` e no cron.
 
 ---
 
@@ -219,3 +242,37 @@ WHERE n.nspname='public' AND p.proname='clear_login_attempts';
 | UPDATE | authenticated | Marcar lida, estrelar |
 | DELETE | **ausente** | Intencional — ver acima |
 | INSERT | **ausente** | So via service_role/edges |
+
+---
+
+## 11. `webhook_failures` — dead-letter queue restrita
+
+A migration original `20260830153000` criou a policy `service_role_full` sem
+clausula `TO`. No PostgreSQL, a omissao equivale a `TO PUBLIC`; combinada aos
+default grants do schema, a policy permitia acesso efetivo de `anon` e
+`authenticated` a payloads truncados e mensagens de erro.
+
+A migration forward-only `20260831120000_harden_webhook_failures_acl`:
+
+- recria a unica policy como `FOR ALL TO service_role`;
+- remove ACLs residuais atribuidas diretamente a colunas, inclusive de roles
+  adicionais, usando `REVOKE ... CASCADE` para nao deixar grants derivados;
+- revoga todos os privilegios de `PUBLIC`, `anon` e `authenticated`;
+- reduz `service_role` a `SELECT`, `INSERT`, `UPDATE` e `DELETE`;
+- preserva RLS habilitado.
+
+O guard `check-webhook-failures-acl.sql` compara policy, owner, RLS, ACL de
+tabela, ausencia total de ACL de coluna e privilegios efetivos. A suite
+descartavel prova que a migration original e bloqueada, que o hardening remove
+grants legados por coluna e cobre grants indevidos, policy publica/adicional,
+RLS desligado, privilegios excessivos e tabela ausente.
+
+O DB Live Guard valida a identidade canônica antes da primeira consulta,
+rejeita qualquer `sslmode` configurado abaixo de `verify-full` e fixa
+`sslmode=verify-full` com a CA oficial `Supabase Root 2021 CA` versionada em
+`scripts/db-audit/certs/` na URL mascarada usada por todos os passos seguintes.
+A CA tem SHA-256 de arquivo
+`700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`,
+fingerprint X.509
+`80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`
+e expira em 26/04/2031. Qualquer CA divergente na URL e rejeitada.

@@ -264,12 +264,7 @@ export function ChatMessageBubble({
           {/* Sticker message */}
           {message.type === 'sticker' && message.mediaUrl && (
             <div className="mb-1">
-              <img
-                src={message.mediaUrl}
-                alt="Sticker"
-                className="max-w-[180px] max-h-[180px] object-contain"
-                loading="lazy"
-              />
+              <MessageImage src={message.mediaUrl} alt="Sticker" />
             </div>
           )}
 

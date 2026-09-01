@@ -152,8 +152,8 @@ export function useRealtimeInbox() {
    const handleSendAudio = useCallback(async (blob: Blob) => {
      if (!selectedContactId) { toast.error('Selecione uma conversa primeiro'); return; }
      try {
-       const signedUrl = await ChatService.uploadAudio(selectedContactId, blob);
-       await sendMessage(selectedContactId, '[Áudio]', 'audio', signedUrl);
+       const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
+       await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);
      } catch (err) {
        log.error('Error in handleSendAudio:', err);
        toast.error('Erro ao enviar áudio. Tente novamente.');

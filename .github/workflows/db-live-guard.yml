@@ -45,7 +45,7 @@ jobs:
           node-version: '24'
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
-        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
@@ -65,30 +65,39 @@ jobs:
           node --input-type=module <<'NODE'
           import {
             carregarIdentidadeEsperada,
+            endurecerDestinoTls,
             validarDestino,
+            validarSupabaseCa,
           } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
           const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
-          console.log('OK: endpoint do banco oficial comprovado por fingerprint.');
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
           NODE
 
       - name: Comparar migrations com schema_migrations
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Verificar ACL e contrato de mcp_exec
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-mcp-exec-acl.sql
 
+      - name: Verificar ACL da dead-letter queue de webhooks
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
+
       - name: Regenerar catalogo e comparar com o commitado
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
@@ -97,8 +106,6 @@ jobs:
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
 
       - name: Regenerar manifesto e comparar com o commitado
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
@@ -107,8 +114,6 @@ jobs:
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
 
       - name: Verificar frescor do types.ts
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts

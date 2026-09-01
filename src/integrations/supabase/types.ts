@@ -6449,6 +6449,48 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_failures: {
+        Row: {
+          endpoint: string
+          error_at: string
+          error_message: string
+          event_type: string | null
+          id: string
+          instance: string | null
+          payload_sha256: string | null
+          payload_truncated: Json | null
+          resolved: boolean
+          resolved_at: string | null
+          retry_count: number
+        }
+        Insert: {
+          endpoint: string
+          error_at?: string
+          error_message: string
+          event_type?: string | null
+          id?: string
+          instance?: string | null
+          payload_sha256?: string | null
+          payload_truncated?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          retry_count?: number
+        }
+        Update: {
+          endpoint?: string
+          error_at?: string
+          error_message?: string
+          event_type?: string | null
+          id?: string
+          instance?: string | null
+          payload_sha256?: string | null
+          payload_truncated?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          retry_count?: number
+        }
+        Relationships: []
+      }
       webhook_rate_limits: {
         Row: {
           created_at: string
@@ -7274,6 +7316,10 @@ export type Database = {
         }[]
       }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
+      effective_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
       fn_list_audio_meme_categories: {
         Args: never
@@ -7340,6 +7386,23 @@ export type Database = {
         Returns: {
           access_token: string
           refresh_token: string
+        }[]
+      }
+      get_identity_matrix: {
+        Args: never
+        Returns: {
+          access_level: string
+          auth_user_id: string
+          created_at: string
+          display_name: string
+          effective_permissions: string
+          email: string
+          is_active: boolean
+          is_banned: boolean
+          last_sign_in_at: string
+          profile_id: string
+          profile_role_cached: string
+          user_roles_list: string
         }[]
       }
       get_own_gmail_accounts: {
@@ -7449,6 +7512,7 @@ export type Database = {
           locked_until: string
         }[]
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_supervisor: { Args: { _user_id: string }; Returns: boolean }
       is_contact_visible_to_user: {
         Args: { _contact_id: string; _user_id: string }

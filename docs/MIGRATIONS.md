@@ -70,10 +70,11 @@ evidencias que o ledger realmente possui:
 - `-- file-sha256: <64 hex>` em `statements` valida os bytes exatos do arquivo;
 - `-- sql-sha256: <64 hex>` valida a forma SQL canonica calculada pelo guard.
 
-Registros historicos sem SQL/hash continuam aceitos para compatibilidade, com aviso
-explicito de evidencia limitada. **Nunca preencha hash, `name` ou `statements`
-retroativamente sem recuperar a fonte original**: calcular um hash do estado atual
-e chama-lo de historico apenas certificaria um possivel drift.
+Registros historicos sem SQL/hash somente sao aceitos sem manifesto quando ainda nao
+foram revisados, com aviso explicito de evidencia limitada. Depois da revisao, use a
+categoria `ledger-only/name-and-file-pinned` descrita abaixo. **Nunca preencha hash,
+`name` ou `statements` retroativamente sem recuperar a fonte original**: calcular um
+hash do estado atual e chama-lo de historico apenas certificaria um possivel drift.
 
 Independentemente do banco, o guard falha para nome fora de
 `14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
@@ -87,6 +88,21 @@ O tipo `ledger-only/comment-only` fixa `version`, `filename`, SHA-256 dos bytes,
 Ele exige arquivo somente de comentarios e ledger sem SQL canonico. Uma mudanca de
 byte, nome ou statement invalida a excecao; entradas orfas ou duplicadas tambem
 falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+O tipo `ledger-only/name-and-file-pinned` cobre exclusivamente uma migration com SQL
+local cujo registro legado preserva nome/versao, mas nenhum SQL ou marker de hash. Ele
+fixa os bytes locais e o nome exato; exige SQL executavel no arquivo e ausencia total
+de SQL executavel ou marker de hash no ledger. Metadados textuais nao executaveis do
+ledger nao sao promovidos a evidencia e, portanto, nao recebem hash retrospectivo.
+O total aparece separadamente no resultado do guard e **nao** incrementa a contagem de
+conteudo historico verificado. O estado atual continua sendo provado de forma
+independente pelo manifesto estrutural completo no DB Live Guard.
+
+As seis entradas revisadas nessa categoria sao `20260827120000`, `20260827130000`,
+`20260827140000`, `20260827150000`, `20260827160000` e `20260828000000`. Qualquer
+mudanca de byte, nome, statements ou marker falha fechado; se SQL historico autentico
+for recuperado, a entrada precisa ser substituida por evidencia apropriada, nunca
+silenciosamente reinterpretada.
 
 O tipo `ledger-divergence/pinned-replay` existe somente para divergencias historicas
 revisadas. Ele fixa, ao mesmo tempo:
@@ -147,6 +163,23 @@ elementos de evidencia permanecem intactos mesmo se divergirem do resumo esperad
 
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.
+
+Em 31/08/2026, o run vivo `33383636827`, já na `main` e após validar o
+fingerprint do projeto oficial, confirmou paridade de versões `317/317` e
+detectou seis diferenças entre o replay local e a representação histórica do
+ledger (`20260829060000` a `20260829110000`). O guard reforçado publicou somente
+`ledger_name` e os hashes domain-separated/canônicos; nenhum elemento bruto de
+`statements` foi registrado. As seis evidências foram fixadas individualmente no
+manifesto: a `060000` como `safer-replay`, pois restaura os predicados do G-11,
+e as demais como `format-only`, sustentadas pelo histórico Git e pelos nomes
+idênticos do ledger.
+
+O mesmo run observou a versão `20260830170000` já registrada. Dez minutos antes,
+o run `33382898512` ainda media 316 registros e a apontava como única ausente.
+O dry-run controlado `33383664637` não foi a origem da escrita: ele encontrou
+`missing_count=0` e encerrou antes dos passos de runtime, dry-run do CLI e apply.
+Essa concorrência é preservada como evidência operacional; nenhum registro do
+ledger foi reescrito para mascará-la.
 
 Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
 nesse modo apenas a consulta ao ledger e pulada.
