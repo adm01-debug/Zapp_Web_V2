@@ -137,6 +137,7 @@ function makeContactsQuery() {
 
 function makeMessagesQuery() {
   // Supports .select().not().order().limit() — realtime.service.ts uses .not() to exclude null contact_id
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = {
     not: vi.fn(() => chain),
     neq: vi.fn(() => chain),
