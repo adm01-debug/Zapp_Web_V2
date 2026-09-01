@@ -16,8 +16,10 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
     let updatedMessageId: string | null = null;
     const now = new Date().toISOString();
 
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
     const { data: existingMessage } = await supabase.from('messages')
-      .select('id, status').eq('external_id', externalId).maybeSingle();
+      .select('id, status').eq('external_id', externalId)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     if (existingMessage?.id) {
       if (shouldUpdateStatus(existingMessage.status, 'sent')) {
@@ -81,20 +83,26 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 
     if (newStatus && key?.id) {
       const now = new Date().toISOString();
+      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
       const { data: currentMessage } = await supabase.from('messages')
-        .select('id, status').eq('external_id', key.id).maybeSingle();
+        .select('id, status').eq('external_id', key.id)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (currentMessage?.id) {
         if (shouldUpdateStatus(currentMessage.status, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
-          console.log(`Message ${key.id} status: ${currentMessage.status} → ${newStatus}`);
+          console.log(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       } else if (key.fromMe === true) {
-        // Recibo de mensagem NOSSA que o frontend ainda não estampou com
-        // external_id (corrida envio×webhook): criar stub aqui duplicaria a
-        // mensagem — o eco send.message / o frontend resolvem em seguida.
-        console.log(`Receipt for own message ${key.id} before external_id landed — skipping stub`);
+        // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
+        // external_id (corrida envio x webhook): criar stub aqui duplicaria a
+        // mensagem -- o eco send.message / o frontend resolvem em seguida.
+        console.log(`Receipt for own message ${key.id} before external_id landed -- skipping stub`);
       } else {
+        // GAP-1 FIX (2026-09-01): so cria stub quando o contato eh resolvivel.
+        // Antes: criava '[Mensagem recebida]' com contact_id=null para receipts
+        // de mensagens LID nao resolvidas -- gerava ~500 orphans/hora (~12k/dia).
+        // Agora: resolve o contato; sem contato, loga e continua sem inserir.
         let contactId: string | null = null;
         if (connection?.id) {
           const remoteJid = resolveEventJid(entry, baseData);
@@ -105,6 +113,12 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
               contactId = contact?.id ?? null;
             }
           }
+        }
+
+        if (!contactId) {
+          // Sem contato resolvivel nao ha inbox onde mostrar -- skip silencioso.
+          console.log(`Receipt for unresolvable message ${key.id} (status=${newStatus}) -- no contact, skipping stub`);
+          continue;
         }
 
         await supabase.from('messages').insert({
@@ -139,6 +153,13 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
         if (phone) { const contact = await getContactByPhone(supabase, phone, connection.id); contactId = contact?.id ?? null; }
       }
 
+      // GAP-1 FIX: so insere tombstone quando ha contato resolvivel.
+      // Sem contato nao ha inbox onde exibir '[Mensagem apagada]'.
+      if (!contactId) {
+        console.log(`Delete event for unresolvable message ${key.id} -- no contact, skipping tombstone`);
+        continue;
+      }
+
       await supabase.from('messages').insert({
         content: '[Mensagem apagada]', message_type: 'text', sender: 'contact',
         external_id: key.id, status: 'deleted', is_deleted: true, status_updated_at: now,
@@ -164,7 +185,9 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     const bestJid = resolveEventJid(key, entry);
     if (!key?.id || !bestJid || bestJid.endsWith('@g.us')) { skipped++; continue; }
 
-    const { data: existing } = await supabase.from('messages').select('id').eq('external_id', key.id).maybeSingle();
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+    const { data: existing } = await supabase.from('messages').select('id')
+      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) { skipped++; continue; }
 
     const phone = normalizePhone(bestJid);
@@ -177,8 +200,8 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     if (msg?.conversation) content = msg.conversation as string;
     else if ((msg?.extendedTextMessage as Record<string, unknown>)?.text) content = (msg!.extendedTextMessage as Record<string, unknown>).text as string;
     else if (msg?.imageMessage) { messageType = 'image'; content = ((msg.imageMessage as Record<string, unknown>).caption as string) || '[Imagem]'; }
-    else if (msg?.videoMessage) { messageType = 'video'; content = ((msg.videoMessage as Record<string, unknown>).caption as string) || '[Vídeo]'; }
-    else if (msg?.audioMessage) { messageType = 'audio'; content = '[Áudio]'; }
+    else if (msg?.videoMessage) { messageType = 'video'; content = ((msg.videoMessage as Record<string, unknown>).caption as string) || '[Video]'; }
+    else if (msg?.audioMessage) { messageType = 'audio'; content = '[Audio]'; }
     else if (msg?.documentMessage) { messageType = 'document'; content = ((msg.documentMessage as Record<string, unknown>).fileName as string) || '[Documento]'; }
     else if (msg?.stickerMessage) { messageType = 'sticker'; content = '[Sticker]'; }
     else { skipped++; continue; }
@@ -209,7 +232,9 @@ export async function handleMessagesEdited(supabase: any, data: unknown, baseDat
 
     if (!editedContent) continue;
 
-    const { data: existing } = await supabase.from('messages').select('id').eq('external_id', key.id).maybeSingle();
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+    const { data: existing } = await supabase.from('messages').select('id')
+      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) {
       await supabase.from('messages').update({ content: editedContent, is_edited: true, updated_at: new Date().toISOString() }).eq('id', existing.id);
       console.log(`Message edited: ${key.id}`);
