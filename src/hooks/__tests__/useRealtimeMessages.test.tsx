@@ -136,13 +136,15 @@ function makeContactsQuery() {
 }
 
 function makeMessagesQuery() {
-  return {
-    select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data: recentMessages, error: null }),
-      })),
+  // Supports .select().not().order().limit() — realtime.service.ts uses .not() to exclude null contact_id
+  const chain: any = {
+    not: vi.fn(() => chain),
+    neq: vi.fn(() => chain),
+    order: vi.fn(() => ({
+      limit: vi.fn().mockResolvedValue({ data: recentMessages, error: null }),
     })),
   };
+  return { select: vi.fn(() => chain) };
 }
 
 describe('useRealtimeMessages', () => {

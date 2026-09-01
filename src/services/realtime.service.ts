@@ -20,7 +20,6 @@ const log = getLogger('RealtimeService');
 const SEEDED_CONTACT_LIMIT = 500;
 const RECENT_MESSAGES_LIMIT = 1000;
 const CONTACT_FETCH_CHUNK_SIZE = 200;
-const STUB_CONTENT = '[Mensagem recebida]';
 
 export class RealtimeService {
   static async fetchContactsByIds(contactIds: string[]): Promise<ConversationContact[]> {
@@ -59,7 +58,6 @@ export class RealtimeService {
       .from('messages')
       .select('*')
       .not('contact_id', 'is', null)
-      .neq('content', STUB_CONTENT)
       .order('created_at', { ascending: false })
       .limit(RECENT_MESSAGES_LIMIT);
       
