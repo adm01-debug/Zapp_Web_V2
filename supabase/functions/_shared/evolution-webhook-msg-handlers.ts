@@ -115,7 +115,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           }
         }
 
-        if (!contactId) {
+        if (contactId === null) {
           // Sem contato resolvivel nao ha inbox onde mostrar -- skip silencioso.
           console.warn(`Receipt for unresolvable message ${key.id} (status=${newStatus}) -- no contact, skipping stub`);
           continue;
@@ -155,7 +155,7 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
 
       // GAP-1 FIX: so insere tombstone quando ha contato resolvivel.
       // Sem contato nao ha inbox onde exibir '[Mensagem apagada]'.
-      if (!contactId) {
+      if (contactId === null) {
         console.warn(`Delete event for unresolvable message ${key.id} -- no contact, skipping tombstone`);
         continue;
       }
@@ -200,8 +200,8 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     if (msg?.conversation) content = msg.conversation as string;
     else if ((msg?.extendedTextMessage as Record<string, unknown>)?.text) content = (msg!.extendedTextMessage as Record<string, unknown>).text as string;
     else if (msg?.imageMessage) { messageType = 'image'; content = ((msg.imageMessage as Record<string, unknown>).caption as string) || '[Imagem]'; }
-    else if (msg?.videoMessage) { messageType = 'video'; content = ((msg.videoMessage as Record<string, unknown>).caption as string) || '[Video]'; }
-    else if (msg?.audioMessage) { messageType = 'audio'; content = '[Audio]'; }
+    else if (msg?.videoMessage) { messageType = 'video'; content = ((msg.videoMessage as Record<string, unknown>).caption as string) || '[Vídeo]'; }
+    else if (msg?.audioMessage) { messageType = 'audio'; content = '[Áudio]'; }
     else if (msg?.documentMessage) { messageType = 'document'; content = ((msg.documentMessage as Record<string, unknown>).fileName as string) || '[Documento]'; }
     else if (msg?.stickerMessage) { messageType = 'sticker'; content = '[Sticker]'; }
     else { skipped++; continue; }
