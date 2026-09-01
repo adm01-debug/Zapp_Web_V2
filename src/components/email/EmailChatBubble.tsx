@@ -1,11 +1,35 @@
-import DOMPurify from 'dompurify';
-import { useState, memo } from 'react';
+import { useState, memo, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Paperclip, ChevronDown, ChevronUp, Reply, ReplyAll, Forward, Star, Check, CheckCheck } from 'lucide-react';
 import type { EmailMessage } from '@/hooks/integrations/useGmail';
+import { sanitizeEmailHtml, extractTextFromHtml } from '@/lib/emailSanitize';
+
+// ── E12: Heurística para e-mail rico (tabelas / imagens volumosas) ────────────
+function isRichEmail(html: string): boolean {
+  if (!html) return false;
+  return /<table[\s>]/i.test(html) || (/<img[\s>]/i.test(html) && html.length > 600);
+}
+
+// ── E17: Cor determinística de avatar por endereço ───────────────────────────
+const AVATAR_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-green-100 text-green-700',
+  'bg-purple-100 text-purple-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-orange-100 text-orange-700',
+];
+
+function getAvatarColor(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
 interface EmailChatBubbleProps {
   message: EmailMessage;
@@ -21,8 +45,7 @@ function getInitials(name: string | null, email: string): string {
 }
 
 function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatFullDate(dateStr: string): string {
@@ -32,22 +55,118 @@ function formatFullDate(dateStr: string): string {
   });
 }
 
-export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, onReply, onReplyAll, onForward }: EmailChatBubbleProps) {
+export const EmailChatBubble = memo(function EmailChatBubble({
+  message, isLast, onReply, onReplyAll, onForward,
+}: EmailChatBubbleProps) {
   const [expanded, setExpanded] = useState(isLast);
+  const htmlBodyRef = useRef<HTMLDivElement>(null);
   const isSent = message.direction === 'outbound';
   const hasMultipleRecipients = (message.to_addresses?.length || 0) + (message.cc_addresses?.length || 0) > 1;
+  const avatarColor = getAvatarColor(message.from_address);
 
-  const bodyPreview = message.body_text?.slice(0, 300) || message.snippet || '';
-  const hasMore = (message.body_text?.length || 0) > 300;
-  // E37: sanitizar HTML para renderizacao segura
-  const sanitizedHtml = message.body_html && !message.body_text
-    ? DOMPurify.sanitize(message.body_html, {
-        ALLOWED_TAGS: ['p','br','strong','em','a','ul','ol','li','blockquote','span','div','table','tr','td','th','h1','h2','h3'],
-        ALLOWED_ATTR: ['href','target','style'],
-        FORCE_BODY: true,
-      })
-    : null;
+  // E01 (G2): usar HTML quando não vazio — presença de body_text não descarta
+  const useHtml = message.body_html !== '' && message.body_html != null;
 
+  // E06+E07: sanitização memoizada por ID de mensagem
+  const sanitizedHtml = useMemo(
+    () => useHtml ? sanitizeEmailHtml(message.body_html, message.id) : null,
+    [useHtml, message.body_html, message.id]
+  );
+
+  // E12: detectar e-mail rico para decidir o layout
+  const isRich = useMemo(() => isRichEmail(message.body_html), [message.body_html]);
+
+  // E08: preview e hasMore baseados no conteúdo efetivo
+  const effectiveText = useMemo(() => {
+    if (useHtml) return extractTextFromHtml(message.body_html);
+    return message.body_text || message.snippet || '';
+  }, [useHtml, message.body_html, message.body_text, message.snippet]);
+
+  const hasMore = effectiveText.length > 800;
+  const bodyPreview = effectiveText.slice(0, 800);
+
+  // ── Layout: cartão largo para e-mail rico ────────────────────────────────
+  if (isRich && sanitizedHtml) {
+    return (
+      <TooltipProvider>
+        <div className="w-full max-w-[860px] mx-auto mb-4 group">
+          {/* Cabeçalho do cartão */}
+          <div className="flex items-center gap-3 px-4 py-2.5 border border-border/20 border-b-0 bg-muted/30 rounded-t-xl">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarFallback className={cn('text-[10px] font-medium', avatarColor)}>
+                {getInitials(message.from_name, message.from_address)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{message.from_name || message.from_address}</p>
+              {message.from_name && (
+                <p className="text-[10px] text-muted-foreground truncate">{message.from_address}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="text-[10px] text-muted-foreground">{formatTime(message.internal_date)}</span>
+                </TooltipTrigger>
+                <TooltipContent>{formatFullDate(message.internal_date)}</TooltipContent>
+              </Tooltip>
+              {message.is_starred && <Star className="w-3 h-3 text-amber-500 fill-current" />}
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                {onReply && (
+                  <button onClick={() => onReply(message)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors" aria-label="Responder">
+                    <Reply className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {onForward && (
+                  <button onClick={() => onForward(message)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors" aria-label="Encaminhar">
+                    <Forward className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Corpo do cartão — E11: cor-scheme light, E02: .email-html-body */}
+          {/* E27: overflow-x-auto em vez de overflow-hidden */}
+          <div
+            className={cn(
+              'bg-white border border-border/20 border-t-0 overflow-x-auto',
+              !expanded ? ['email-html-body-collapsed', 'rounded-b-xl'].join(' ') : 'rounded-b-xl'
+            )}
+          >
+            {/* E03: sem whitespace-pre-wrap no caminho HTML */}
+            <div
+              ref={htmlBodyRef}
+              className="email-html-body p-4"
+              dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+            />
+          </div>
+
+          {/* Controle expandir/colapsar */}
+          {hasMore && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="w-full text-[10px] py-1.5 text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 transition-colors mt-0.5"
+              aria-label={expanded ? 'Ver menos' : 'Ver email completo'}
+            >
+              {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {expanded ? 'Menos' : 'Ver email completo'}
+            </button>
+          )}
+
+          {/* Anexos */}
+          {message.has_attachments && (
+            <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground">
+              <Paperclip className="w-3 h-3" />
+              <span>Possui anexos</span>
+            </div>
+          )}
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  // ── Layout: bolha de chat para e-mail simples ────────────────────────────
   return (
     <TooltipProvider>
       <div
@@ -55,16 +174,17 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
         role="article"
         aria-label={`Mensagem de ${message.from_name || message.from_address}`}
       >
-        {/* Avatar for inbound */}
+        {/* Avatar inbound */}
         {!isSent && (
           <Avatar className="h-8 w-8 shrink-0 mt-1">
-            <AvatarFallback className="text-[10px] bg-accent text-accent-foreground">
+            <AvatarFallback className={cn('text-[10px] font-medium', avatarColor)}>
               {getInitials(message.from_name, message.from_address)}
             </AvatarFallback>
           </Avatar>
         )}
 
-        <div className="max-w-[75%] space-y-0.5 relative">
+        {/* E28: max-w-[70ch] em vez de max-w-[75%] */}
+        <div className="max-w-[70ch] space-y-0.5 relative">
           {/* Hover actions */}
           <div className={cn(
             'absolute top-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10',
@@ -73,11 +193,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             {onReply && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onReply(message)}
-                    className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors"
-                    aria-label="Responder"
-                  >
+                  <button onClick={() => onReply(message)} className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors" aria-label="Responder">
                     <Reply className="w-3 h-3" />
                   </button>
                 </TooltipTrigger>
@@ -87,11 +203,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             {onReplyAll && hasMultipleRecipients && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onReplyAll(message)}
-                    className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors"
-                    aria-label="Responder a todos"
-                  >
+                  <button onClick={() => onReplyAll(message)} className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors" aria-label="Responder a todos">
                     <ReplyAll className="w-3 h-3" />
                   </button>
                 </TooltipTrigger>
@@ -101,11 +213,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             {onForward && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onForward(message)}
-                    className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors"
-                    aria-label="Encaminhar"
-                  >
+                  <button onClick={() => onForward(message)} className="p-1 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/10 shadow-sm transition-colors" aria-label="Encaminhar">
                     <Forward className="w-3 h-3" />
                   </button>
                 </TooltipTrigger>
@@ -114,7 +222,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             )}
           </div>
 
-          {/* Sender name for inbound */}
+          {/* Nome remetente */}
           {!isSent && (
             <p className="text-[10px] text-muted-foreground ml-1 truncate">
               {message.from_name || message.from_address}
@@ -124,19 +232,20 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             </p>
           )}
 
-          {/* Bubble */}
+          {/* Bolha */}
           <motion.div
             initial={{ opacity: 0, x: isSent ? 10 : -10, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className={cn(
-              'rounded-2xl px-3.5 py-2.5 shadow-sm relative overflow-hidden',
+              'rounded-2xl px-3.5 py-2.5 shadow-sm relative',
+              // E27: overflow-x-auto para não cortar conteúdo
+              'overflow-x-auto',
               isSent
                 ? 'rounded-br-md bg-primary text-primary-foreground'
                 : 'rounded-bl-md bg-card border border-border/30 text-foreground'
             )}
           >
-            {/* Subject line if present */}
             {message.subject && (
               <p className={cn(
                 'text-[11px] font-semibold mb-1.5 pb-1.5 border-b',
@@ -146,12 +255,21 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
               </p>
             )}
 
-            {/* Body */}
-            <div className="text-sm whitespace-pre-wrap leading-relaxed break-words">
-              {sanitizedHtml && expanded
-              ? <div className="email-html-body text-sm" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
-              : <span>{expanded ? (message.body_text || message.snippet) : bodyPreview}</span>}
-              {hasMore && !expanded && '…'}
+            {/* E03: separar caminhos HTML e texto — whitespace-pre-wrap só em texto */}
+            <div className={cn(
+              'text-sm leading-relaxed break-words',
+              !useHtml && 'whitespace-pre-wrap'
+            )}>
+              {useHtml && sanitizedHtml ? (
+                expanded
+                  ? <div className="email-html-body" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                  : <span>{bodyPreview}{hasMore && '…'}</span>
+              ) : (
+                <span>
+                  {expanded ? (message.body_text || message.snippet) : bodyPreview}
+                  {hasMore && !expanded && '…'}
+                </span>
+              )}
             </div>
 
             {hasMore && (
@@ -168,7 +286,6 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
               </button>
             )}
 
-            {/* Attachments */}
             {message.has_attachments && (
               <div className={cn(
                 'flex items-center gap-1 mt-1.5 pt-1.5 border-t text-[10px]',
@@ -179,7 +296,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
               </div>
             )}
 
-            {/* Time + status */}
+            {/* Hora + status */}
             <div className={cn(
               'flex items-center justify-end gap-1.5 mt-1',
               isSent ? 'text-primary-foreground/60' : 'text-muted-foreground'
@@ -200,12 +317,10 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
           </motion.div>
         </div>
 
-        {/* Avatar for outbound */}
+        {/* Avatar outbound */}
         {isSent && (
           <Avatar className="h-8 w-8 shrink-0 mt-1">
-            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-              Eu
-            </AvatarFallback>
+            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">Eu</AvatarFallback>
           </Avatar>
         )}
       </div>

@@ -21,6 +21,10 @@ export interface EmailThread {
   is_starred: boolean;
   is_important: boolean;
   last_message_at: string;
+  /** E14: nome do último remetente — populado pelo trigger trg_sync_thread_last_sender */
+  last_from_name: string | null;
+  /** E14: e-mail do último remetente — populado pelo trigger trg_sync_thread_last_sender */
+  last_from_address: string | null;
   assigned_to: string | null;
   status: 'open' | 'pending' | 'resolved' | 'archived';
   priority: 'high' | 'medium' | 'low';

@@ -1,12 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, Pencil } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
 import { EmailThreadList } from './EmailThreadList';
 import { EmailChatThread } from './EmailChatThread';
 import { EmailContactPanel } from './EmailContactPanel';
 import { EmailComposer } from '@/components/gmail/EmailComposer';
 import { cn } from '@/lib/utils';
+
+// E26: persistir preferência do painel em localStorage
+const PANEL_PREF_KEY = 'zapp:email:showDetails';
+
+function getInitialPanelState(): boolean {
+  try {
+    const v = localStorage.getItem(PANEL_PREF_KEY);
+    return v === null ? true : v === 'true';
+  } catch {
+    return true;
+  }
+}
 
 export function EmailChatInbox() {
   const {
@@ -16,7 +28,15 @@ export function EmailChatInbox() {
 
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
   const [showComposer, setShowComposer] = useState(false);
-  const [showDetails, setShowDetails] = useState(true);
+  const [showDetails, setShowDetails] = useState(getInitialPanelState);
+
+  const handleToggleDetails = () => {
+    setShowDetails(prev => {
+      const next = !prev;
+      try { localStorage.setItem(PANEL_PREF_KEY, String(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const unsub = subscribeToThreads();
@@ -24,9 +44,7 @@ export function EmailChatInbox() {
   }, [subscribeToThreads]);
 
   useEffect(() => {
-    if (activeAccount && labels.length === 0) {
-      syncLabels.mutate();
-    }
+    if (activeAccount && labels.length === 0) syncLabels.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAccount?.id]);
 
@@ -55,9 +73,10 @@ export function EmailChatInbox() {
 
   return (
     <div className="flex h-full w-full">
-      {/* Thread list */}
+      {/* E24: largura fluida clamp(280px,24vw,400px) */}
       <div className={cn(
-        'flex flex-col border-r border-border/30 w-full md:w-[320px] lg:w-[340px] shrink-0 bg-sidebar',
+        'flex flex-col border-r border-border/30 shrink-0 bg-sidebar',
+        'w-full md:w-[clamp(280px,24vw,400px)]',
         selectedThread ? 'hidden md:flex' : 'flex'
       )}>
         <EmailThreadList
@@ -74,7 +93,7 @@ export function EmailChatInbox() {
         />
       </div>
 
-      {/* Chat thread view */}
+      {/* Área central da thread */}
       <div className={cn(
         'flex-1 flex flex-col min-w-0',
         !selectedThread ? 'hidden md:flex' : 'flex'
@@ -83,23 +102,34 @@ export function EmailChatInbox() {
           <EmailChatThread
             thread={selectedThread}
             onBack={() => setSelectedThread(null)}
-            onToggleDetails={() => setShowDetails(prev => !prev)}
+            onToggleDetails={handleToggleDetails}
             showDetailsButton
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <Mail className="w-16 h-16 mb-4 opacity-10" />
-            <p className="text-sm">Selecione uma conversa para começar</p>
+          /* E41: estado vazio com ação */
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-4">
+            <Mail className="w-14 h-14 opacity-10" />
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground/60 mb-1">Selecione uma conversa</p>
+              <p className="text-xs">ou escreva um novo e-mail</p>
+            </div>
+            <button
+              onClick={() => setShowComposer(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Escrever e-mail
+            </button>
           </div>
         )}
       </div>
 
-      {/* Contact details panel */}
+      {/* E25: painel xl:block (antes era lg:block — muito cedo) */}
       {selectedThread && showDetails && (
-        <div className="hidden lg:block shrink-0">
+        <div className="hidden xl:block shrink-0">
           <EmailContactPanel
             thread={selectedThread}
-            onClose={() => setShowDetails(false)}
+            onClose={handleToggleDetails}
           />
         </div>
       )}

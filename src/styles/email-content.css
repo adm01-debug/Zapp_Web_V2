@@ -1,0 +1,115 @@
+/* ===== EMAIL CONTENT ISOLATION =====
+ * Escopo estrito sob .email-html-body
+ * Desfaz apenas as regras do Tailwind preflight que quebram HTML de e-mail.
+ * NÃO usa all:revert (não desfaz preflight, leva ao browser default pré-Tailwind).
+ * Usa :where() para especificidade mínima — regras inline do e-mail ganham.
+ */
+
+.email-html-body {
+  /* Isolamento de cor */
+  color-scheme: light;                    /* e-mails assumem fundo claro */
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Tipografia base neutra dentro do e-mail */
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Desfazer margin:0 do preflight em elementos de bloco ── */
+.email-html-body :where(p, h1, h2, h3, h4, h5, h6) {
+  margin: revert;
+}
+
+.email-html-body :where(h1) { font-size: revert; font-weight: revert; }
+.email-html-body :where(h2) { font-size: revert; font-weight: revert; }
+.email-html-body :where(h3) { font-size: revert; font-weight: revert; }
+.email-html-body :where(h4) { font-size: revert; font-weight: revert; }
+.email-html-body :where(h5) { font-size: revert; font-weight: revert; }
+.email-html-body :where(h6) { font-size: revert; font-weight: revert; }
+
+/* ── Listas: restaurar bullets e recuo ── */
+.email-html-body :where(ul, ol) {
+  list-style: revert;
+  margin: revert;
+  padding: revert;
+}
+
+/* ── Tabelas: desfazer border-collapse:collapse do preflight ── */
+.email-html-body :where(table) {
+  border-collapse: separate;              /* restaurar padrão de e-mail */
+  max-width: 100%;                       /* conter dentro do wrapper */
+  table-layout: auto;
+  width: auto;
+}
+
+.email-html-body :where(td, th) {
+  word-break: break-word;
+  vertical-align: top;
+}
+
+/* ── Desfazer border-width:0 do preflight ── */
+.email-html-body :where(td, th, table, hr) {
+  border-style: revert;
+  border-width: revert;
+}
+
+/* ── Imagens: desfazer display:block do preflight ── */
+.email-html-body :where(img) {
+  display: inline;                       /* e-mail usa inline-block em tabelas */
+  max-width: 100%;                       /* conter na coluna */
+  height: auto;                          /* proporção preservada */
+}
+
+/* ── Links: restaurar cores e sublinhado ── */
+.email-html-body :where(a) {
+  color: revert;
+  text-decoration: underline;
+}
+
+/* ── Blockquote ── */
+.email-html-body :where(blockquote) {
+  margin: 0.5em 0 0.5em 1em;
+  border-left: 3px solid currentColor;
+  padding-left: 0.75em;
+  opacity: 0.75;
+}
+
+/* ── Formatação inline ── */
+.email-html-body :where(b, strong) { font-weight: bold; }
+.email-html-body :where(i, em)     { font-style: italic; }
+.email-html-body :where(u)         { text-decoration: underline; }
+.email-html-body :where(s, strike, del) { text-decoration: line-through; }
+.email-html-body :where(small)     { font-size: 0.8em; }
+.email-html-body :where(sub)       { vertical-align: sub; font-size: smaller; }
+.email-html-body :where(sup)       { vertical-align: super; font-size: smaller; }
+.email-html-body :where(pre, code) { font-family: ui-monospace, monospace; }
+.email-html-body :where(pre)       { white-space: pre-wrap; overflow-x: auto; }
+.email-html-body :where(hr)        { border-top: 1px solid; opacity: 0.3; }
+
+/* ── Imagem bloqueada (E36) ── */
+.email-html-body img[data-blocked-src] {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+  border: 1px dashed #ccc;
+  opacity: 0.4;
+}
+
+/* ── Estado colapsado (E09): clip gradual com fade ── */
+.email-html-body-collapsed {
+  max-height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.email-html-body-collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(to bottom, transparent, hsl(var(--card, 0 0% 100%)));
+  pointer-events: none;
+}
