@@ -20,6 +20,7 @@ const log = getLogger('RealtimeService');
 const SEEDED_CONTACT_LIMIT = 500;
 const RECENT_MESSAGES_LIMIT = 1000;
 const CONTACT_FETCH_CHUNK_SIZE = 200;
+const STUB_CONTENT = '[Mensagem recebida]';
 
 export class RealtimeService {
   static async fetchContactsByIds(contactIds: string[]): Promise<ConversationContact[]> {
@@ -51,15 +52,34 @@ export class RealtimeService {
       
     if (contactsError) throw contactsError;
     
+    // Filtra stubs (contact_id NULL e placeholders sem conteudo real).
+    // Esses registros sao artefatos do race condition no webhook handler
+    // e nao devem aparecer na inbox nem inflar o indice do virtualizer.
     const { data: recentMessages, error: messagesError } = await supabase
       .from('messages')
       .select('*')
+      .not('contact_id', 'is', null)
+      .neq('content', STUB_CONTENT)
       .order('created_at', { ascending: false })
       .limit(RECENT_MESSAGES_LIMIT);
       
     if (messagesError) throw messagesError;
 
-    const normalizedMessages = ((recentMessages ?? []) as RealtimeMessage[]).map(normalizeMessage);
+    // Dedup por external_id: mantém a linha com mais conteúdo
+    const rawMessages = (recentMessages ?? []) as RealtimeMessage[];
+    const dedupedMessages = (() => {
+      const seen = new Map<string, RealtimeMessage>();
+      for (const m of rawMessages) {
+        const key = m.external_id ?? m.id;
+        const existing = seen.get(key);
+        if (!existing || (m.content?.length ?? 0) > (existing.content?.length ?? 0)) {
+          seen.set(key, m);
+        }
+      }
+      return Array.from(seen.values());
+    })();
+
+    const normalizedMessages = dedupedMessages.map(normalizeMessage);
     const seededContactRows = (seededContacts ?? []) as ConversationContact[];
     const seededContactIds = new Set(seededContactRows.map((c) => c.id));
     
