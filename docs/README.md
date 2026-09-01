@@ -48,6 +48,7 @@
 | [AUDITORIA_COMPLETA_ZAPP_WEB.md](./AUDITORIA_COMPLETA_ZAPP_WEB.md) | Auditoria completa (33KB) |
 | [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Relatório de auditoria |
 | [IMPROVEMENT_PLAN.md](./IMPROVEMENT_PLAN.md) | Plano de melhorias |
+| [plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md](./plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md) | Plano de 100 etapas — funcionalidades e ferramentas de V1/V3 ausentes no V2 (2026-09-01) |
 | [FORGOTTEN_FEATURES_REPORT.md](./FORGOTTEN_FEATURES_REPORT.md) | Features esquecidas |
 
 ### 📝 Procedimentos e Templates
