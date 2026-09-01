@@ -2659,6 +2659,42 @@ export type Database = {
           },
         ]
       }
+      dedup_baseline_20260901: {
+        Row: {
+          canonical_id: string | null
+          copies_with_contact: number | null
+          copies_without_contact: number | null
+          external_id: string | null
+          first_seen: string | null
+          last_seen: string | null
+          sender: string | null
+          total_copies: number | null
+          whatsapp_connection_id: string | null
+        }
+        Insert: {
+          canonical_id?: string | null
+          copies_with_contact?: number | null
+          copies_without_contact?: number | null
+          external_id?: string | null
+          first_seen?: string | null
+          last_seen?: string | null
+          sender?: string | null
+          total_copies?: number | null
+          whatsapp_connection_id?: string | null
+        }
+        Update: {
+          canonical_id?: string | null
+          copies_with_contact?: number | null
+          copies_without_contact?: number | null
+          external_id?: string | null
+          first_seen?: string | null
+          last_seen?: string | null
+          sender?: string | null
+          total_copies?: number | null
+          whatsapp_connection_id?: string | null
+        }
+        Relationships: []
+      }
       email_attachments: {
         Row: {
           created_at: string
