@@ -69,7 +69,7 @@
 ## 2.1 URL e Autenticação
 
 ```
-Webhook URL: https://allrjhkpuscmgbsnmjlv.supabase.co/functions/v1/evolution-webhook
+Webhook URL: https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-webhook
 
 Header de Autenticação:
   x-webhook-secret: promo-brindes-evolution-4d4565def0706d8ab270066754a2de95d11cf95cfd7da0b8e20221791bf08058
@@ -79,7 +79,7 @@ Header de Autenticação:
 
 ```json
 {
-  "url": "https://allrjhkpuscmgbsnmjlv.supabase.co/functions/v1/evolution-webhook",
+  "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-webhook",
   "enabled": true,
   "webhookByEvents": false,
   "webhookBase64": false,
@@ -154,7 +154,7 @@ interface WebhookPayload {
     "messageType": "conversation",
     "messageTimestamp": 1776092932
   },
-  "destination": "https://allrjhkpuscmgbsnmjlv.supabase.co/functions/v1/evolution-webhook",
+  "destination": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-webhook",
   "date_time": "2026-04-13T15:08:52.000Z",
   "sender": "5511999999999@s.whatsapp.net",
   "server_url": "https://evolution.atomicabr.com.br",
@@ -1752,7 +1752,7 @@ export type {
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  'https://allrjhkpuscmgbsnmjlv.supabase.co',
+  'https://tnnnlkbymytvtqngbbqh.supabase.co',
   'YOUR_ANON_KEY'
 );
 ```
@@ -1913,7 +1913,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  'https://allrjhkpuscmgbsnmjlv.supabase.co',
+  'https://tnnnlkbymytvtqngbbqh.supabase.co',
   'YOUR_ANON_KEY'
 );
 
@@ -2147,7 +2147,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  'https://allrjhkpuscmgbsnmjlv.supabase.co',
+  'https://tnnnlkbymytvtqngbbqh.supabase.co',
   'YOUR_ANON_KEY'
 );
 
@@ -2261,7 +2261,7 @@ import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  'https://allrjhkpuscmgbsnmjlv.supabase.co',
+  'https://tnnnlkbymytvtqngbbqh.supabase.co',
   'YOUR_ANON_KEY'
 );
 
@@ -2459,7 +2459,7 @@ export function AlertsPanel() {
 ## Credenciais
 
 ```
-Supabase URL: https://allrjhkpuscmgbsnmjlv.supabase.co
+Supabase URL: https://tnnnlkbymytvtqngbbqh.supabase.co
 Instance: wpp2
 Webhook Secret: promo-brindes-evolution-...
 ```
