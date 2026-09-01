@@ -1591,6 +1591,30 @@ export type Database = {
           },
         ]
       }
+      contact_identity_map: {
+        Row: {
+          first_seen: string
+          jid: string
+          last_seen: string
+          lid: string
+          source: string | null
+        }
+        Insert: {
+          first_seen?: string
+          jid: string
+          last_seen?: string
+          lid: string
+          source?: string | null
+        }
+        Update: {
+          first_seen?: string
+          jid?: string
+          last_seen?: string
+          lid?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       contact_notes: {
         Row: {
           author_id: string
@@ -2899,6 +2923,8 @@ export type Database = {
           is_starred: boolean
           is_unread: boolean
           label_ids: string[]
+          last_from_address: string | null
+          last_from_name: string | null
           last_message_at: string
           message_count: number
           priority: string
@@ -2919,6 +2945,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
@@ -2939,6 +2967,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
