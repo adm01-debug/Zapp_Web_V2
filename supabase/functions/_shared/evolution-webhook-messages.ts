@@ -102,7 +102,7 @@ export async function handleOutgoingWhatsAppMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const recentCutoff = new Date(Date.now() - 60_000).toISOString();
+  const recentCutoff = new Date(Date.now.) - 60_000).toISOString();
   const { data: pendingMessage } = await supabase.from('messages').select('id')
     .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
     .is('external_id', null).gte('created_at', recentCutoff)
@@ -113,13 +113,15 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  const { error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente — ignoreDuplicates protege contra race condition entre webhooks
+  const { error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
     message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
     status: 'sent', created_at: messageCreatedAt, agent_id: contact.assigned_to || null,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true });
 
-  if (msgError) { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
+  // E09: 23505 = conflito único (invocação concorrente do webhook) → mensagem já inserida → ok
+  if (msgError && msgError.code !== '23505') { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
   await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contact.id);
 }
 
@@ -214,13 +216,16 @@ export async function handleIncomingMessage(
     return;
   }
 
-  const { data: insertedMessage, error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente — ignoreDuplicates protege contra race condition entre webhooks
+  const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content,
     message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
     status: 'received', created_at: messageCreatedAt,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true })
+    .select('id').maybeSingle();
 
-  if (msgError) {
+  // E09: 23505 = conflito único (invocação concorrente do webhook) → mensagem já inserida → ok
+  if (msgError && msgError.code !== '23505') {
     console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });
     return;
   }
@@ -268,7 +273,7 @@ export async function handleStickerMedia(
           const bytes = new Uint8Array(arrayBuf);
           if (bytes.length > 100) {
             const fileName = `sticker_${Date.now()}_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
-            const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000' });
+            const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '315360000' });
             if (!uploadErr) { const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`); mediaUrl = urlData.publicUrl; }
           }
         }
