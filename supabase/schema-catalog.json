@@ -54,7 +54,6 @@
         "csat_surveys",
         "custom_emojis",
         "deal_activities",
-        "dedup_baseline_20260901",
         "email_attachments",
         "email_labels",
         "email_messages",
@@ -1527,7 +1526,7 @@
         "update_own_profile",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-01",
+    "generated_at": "2026-09-01T19:31:54Z",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
