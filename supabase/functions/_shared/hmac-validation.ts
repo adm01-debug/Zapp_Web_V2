@@ -301,7 +301,7 @@ export async function logWebhookAuthShadow(
     return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
   }
 
-  console.log(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura valida`);
+  console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura valida`);
   return { signaturePresent: true, signatureValid: true, reason: 'valid' };
 }
 
@@ -351,7 +351,7 @@ export async function logElevenLabsAuthShadow(
       return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
     }
 
-    console.log('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura valida');
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura valida');
     return { signaturePresent: true, signatureValid: true, reason: 'valid' };
   } catch (error) {
     console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: erro ao processar assinatura — modo sombra, requisicao processada mesmo assim', error);
@@ -388,7 +388,7 @@ export function logGmailOidcAuthShadow(headers: Headers): void {
 
   try {
     const claims = JSON.parse(decodeJwtSegment(segments[1])) as { aud?: string; iss?: string };
-    console.log(
+    console.warn(
       `[WEBHOOK_AUTH_SHADOW] gmail-webhook: token OIDC presente (assinatura NAO verificada nesta etapa — ver limitacao no PR) aud=${claims.aud ?? '(ausente)'} iss=${claims.iss ?? '(ausente)'}`
     );
   } catch (error) {

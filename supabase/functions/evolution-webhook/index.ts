@@ -52,7 +52,7 @@ serve(async (req) => {
     if (legacyWebhookSecretHeader) {
       const legacyValid = !!configuredEvolutionSecret && timingSafeEqual(legacyWebhookSecretHeader, configuredEvolutionSecret);
       if (legacyValid) {
-        console.log('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
+        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
       } else {
         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) ausente/invalido — modo sombra, requisicao processada mesmo assim');
       }
