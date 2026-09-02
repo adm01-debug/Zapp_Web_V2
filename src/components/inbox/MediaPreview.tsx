@@ -33,12 +33,14 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPreviewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const extension = getFileExtension(fileName).toUpperCase();
+  // Resolve signed URL so documents remain accessible when the bucket is private.
+  const { url: resolvedUrl, isLoading: isResolvingUrl } = useResolvedStorageUrl(url);
 
   const handleDownload = async () => {
-    if (isDownloading || !url) return;
+    if (isDownloading || !resolvedUrl) return;
     setIsDownloading(true);
     try {
-      const response = await fetch(url, { mode: 'cors' });
+      const response = await fetch(resolvedUrl, { mode: 'cors' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -62,7 +64,7 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
   };
 
   const handleOpen = () => {
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    if (resolvedUrl) window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -87,7 +89,7 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       <motion.button
         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
         onClick={(e) => { e.stopPropagation(); void handleDownload(); }}
-        disabled={isDownloading}
+        disabled={isDownloading || isResolvingUrl}
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
           isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary"
