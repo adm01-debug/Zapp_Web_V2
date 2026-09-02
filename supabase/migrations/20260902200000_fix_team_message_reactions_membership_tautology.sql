@@ -6,9 +6,10 @@
 -- quais nao participa — falha de autorizacao (nao IDOR classico, mas mesma
 -- familia: policy que aparenta checar posse/membership e nao checa).
 --
--- Fix: junta profiles para comparar tcm.profile_id contra o profile do
--- auth.uid() atual, mesmo padrao ja usado nas policies de SELECT/DELETE desta
--- tabela.
+-- Fix: reusa is_team_conversation_member (mesma funcao ja usada nas policies
+-- de team_messages), em vez de reimplementar o EXISTS com JOIN duplicado em
+-- profiles — sugestao do Copilot na revisao da PR, validada contra a funcao
+-- ja existente no banco.
 DROP POLICY IF EXISTS team_message_reactions_insert ON public.team_message_reactions;
 
 CREATE POLICY team_message_reactions_insert ON public.team_message_reactions
@@ -20,11 +21,8 @@ CREATE POLICY team_message_reactions_insert ON public.team_message_reactions
         AND p.user_id = auth.uid()
     )
     AND EXISTS (
-      SELECT 1
-      FROM public.team_messages tm
-      JOIN public.team_conversation_members tcm ON tcm.conversation_id = tm.conversation_id
-      JOIN public.profiles p2 ON p2.id = tcm.profile_id
+      SELECT 1 FROM public.team_messages tm
       WHERE tm.id = team_message_reactions.message_id
-        AND p2.user_id = auth.uid()
+        AND public.is_team_conversation_member(auth.uid(), tm.conversation_id)
     )
   );
