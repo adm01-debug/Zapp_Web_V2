@@ -41,6 +41,19 @@
       "justification": "Um replay do zero pode alcançar esta migration com queues/queue_members/messages já adicionadas à publicação supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
     },
     {
+      "version": "20260827000100",
+      "filename": "20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+      "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+      "file_sql_sha256": "42ad08022519f2f9ab3c1c21ca3db6c9c12940fb0539c22bddb757ab304a2e25",
+      "ledger_name": "security_revoke_mcp_exec_from_authenticated",
+      "ledger_statements_sha256": "133944ad0b0fe4c329235c58600a9b8ff6366e444df56e030ecaa812bd0e7e23",
+      "ledger_sql_sha256": "07ef0e86941911e08504df545397e495c3801392a03d83f2aa3a886bdaaf9d1c",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "mcp_exec/mcp_exec_many sao infraestrutura do gateway MCP provisionada fora do fluxo de migrations; um replay do zero nunca as tem, entao REVOKE/GRANT direto falha com SQLSTATE 42883. O arquivo versionado envolve cada instrucao em um bloco DO idempotente (WHEN undefined_function) sem alterar o efeito em producao."
+    },
+    {
       "version": "20260827120000",
       "filename": "20260827120000_fk_indexes_backfill.sql",
       "file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
