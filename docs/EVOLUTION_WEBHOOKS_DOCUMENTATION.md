@@ -72,7 +72,7 @@
 Webhook URL: https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/evolution-webhook
 
 Header de Autenticação:
-  x-webhook-secret: promo-brindes-evolution-4d4565def0706d8ab270066754a2de95d11cf95cfd7da0b8e20221791bf08058
+  x-webhook-secret: [REDACTED — ver Supabase secret EVOLUTION_WEBHOOK_SECRET; valor removido em 2026-09-02, era da infra antiga (wpp2/Evolution v2.3.7), não confirmado como ativo na Evolution GO atual]
 ```
 
 ## 2.2 Configuração Atual
@@ -2461,7 +2461,7 @@ export function AlertsPanel() {
 ```
 Supabase URL: https://tnnnlkbymytvtqngbbqh.supabase.co
 Instance: wpp2
-Webhook Secret: promo-brindes-evolution-...
+Webhook Secret: [REDACTED — infra antiga wpp2, ver nota em 2.1]
 ```
 
 ---

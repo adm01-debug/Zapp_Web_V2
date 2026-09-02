@@ -68,9 +68,11 @@ jobs:
       - name: 🔍 Run ESLint debt ratchet
         run: node scripts/ci/lint-ratchet.mjs
 
-      - name: 🔎 Run TypeScript check
-        run: bun run typecheck
-        continue-on-error: false
+      # "tsc --noEmit" sozinho e um no-op nesta config (tsconfig.json so tem
+      # "references", sem --build o tsc nao checa nada e sempre sai 0). O
+      # ratchet roda "tsc -b --force" de verdade e falha so se surgir erro novo.
+      - name: 🔎 Run TypeScript debt ratchet
+        run: node scripts/ci/typecheck-ratchet.mjs
 
   # ===========================================
   # JOB 2: Unit Tests

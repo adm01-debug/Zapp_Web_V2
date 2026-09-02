@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
         await supabase.from('messages').insert({
           contact_id: contact.id,
           content: config.close_message,
-          sender: 'system',
-          type: 'text',
+          sender: 'agent',
+          message_type: 'text',
         });
       }
 
