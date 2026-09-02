@@ -119,3 +119,4 @@ export async function logAsyncPerformance<T>(label: string, fn: () => Promise<T>
   console.debug(`[PERF] [sid:${sessionId.slice(0, 8)}] ${label}: ${(end - start).toFixed(2)}ms`);
   return result;
 }
+
