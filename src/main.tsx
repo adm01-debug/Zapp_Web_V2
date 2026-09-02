@@ -1,8 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
-import "./i18n"; // Initialize i18n 
+import "./i18n"; // Initialize i18n
 import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -34,6 +35,19 @@ if (!rootElement) {
 }
 
 (window as Window & { __ZAPP_MARK_APP_MOUNTED__?: () => void }).__ZAPP_MARK_APP_MOUNTED__?.();
+
+// No-op unless VITE_SENTRY_DSN is set (e.g. local dev without a Sentry
+// account configured yet). Safe to leave unset — nothing below depends on it.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0.1,
+    integrations: [Sentry.browserTracingIntegration()],
+  });
+  log.info('[Sentry] initialized', { environment: import.meta.env.MODE });
+}
 
 // ErrorBoundary wraps the entire app so any unhandled render error
 // shows a friendly UI instead of a blank screen.
