@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; import {
   Plus, DollarSign, Link2, Copy, Trash2, CheckCircle, Clock, XCircle,
-  CreditCard, QrCode, ExternalLink, Send
+  CreditCard, QrCode, ExternalLink, Send, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -119,6 +119,16 @@ export function PaymentLinksView() {
           </Button>
         }
       />
+
+      <div className="px-6 pt-4">
+        <Alert className="border-warning/30 bg-warning/10">
+          <FlaskConical className="h-4 w-4 !text-warning" />
+          <AlertTitle className="text-warning">Checkout ainda não está disponível</AlertTitle>
+          <AlertDescription>
+            A criação de links funciona normalmente e fica salva no sistema, mas a página de pagamento (/pay/&lt;id&gt;) ainda não está conectada a nenhum provedor — o link não processa cobranças reais. Em desenvolvimento.
+          </AlertDescription>
+        </Alert>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 pb-4">

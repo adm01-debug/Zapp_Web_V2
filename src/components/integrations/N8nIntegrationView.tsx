@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Zap, Plus, Trash2, Play, Pause, ExternalLink, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { Zap, Plus, Trash2, Play, Pause, ExternalLink, RefreshCw, CheckCircle2, XCircle, FlaskConical } from 'lucide-react';
 
 interface N8nWorkflow {
   id: string;
@@ -97,6 +99,14 @@ export function N8nIntegrationView() {
         </div>
       </motion.div>
 
+      <Alert className="border-warning/30 bg-warning/10">
+        <FlaskConical className="h-4 w-4 !text-warning" />
+        <AlertTitle className="text-warning">Funcionalidade em demonstração</AlertTitle>
+        <AlertDescription>
+          Esta tela simula a configuração de workflows n8n — a integração real com um servidor n8n ainda não foi implementada. Nenhum dado é salvo ou enviado para fora deste navegador.
+        </AlertDescription>
+      </Alert>
+
       {/* Connection Config */}
       <Card className="border-secondary/30">
         <CardHeader>
@@ -114,10 +124,17 @@ export function N8nIntegrationView() {
                 onChange={e => setWebhookBaseUrl(e.target.value)}
               />
             </div>
-            <Button onClick={handleConnect} className="mt-auto" style={{ background: 'var(--gradient-primary)' }}>
-              {isConnected ? <RefreshCw className="w-4 h-4 mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-              {isConnected ? 'Reconectar' : 'Conectar'}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="mt-auto inline-block" tabIndex={0}>
+                  <Button onClick={handleConnect} disabled style={{ background: 'var(--gradient-primary)' }}>
+                    {isConnected ? <RefreshCw className="w-4 h-4 mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                    {isConnected ? 'Reconectar' : 'Conectar'}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Integração real com n8n ainda não está disponível — em desenvolvimento.</TooltipContent>
+            </Tooltip>
           </div>
         </CardContent>
       </Card>

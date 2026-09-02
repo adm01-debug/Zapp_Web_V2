@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Calendar, Link2, CheckCircle2, Clock, Bell, ExternalLink, Settings } from 'lucide-react';
+import { Calendar, Link2, CheckCircle2, Clock, Bell, ExternalLink, Settings, FlaskConical } from 'lucide-react';
 
 export function GoogleCalendarIntegration() {
   const [connected, setConnected] = useState(false);
@@ -36,6 +38,14 @@ export function GoogleCalendarIntegration() {
           Sincronize agendamentos e follow-ups com seu calendário
         </p>
       </motion.div>
+
+      <Alert className="border-warning/30 bg-warning/10">
+        <FlaskConical className="h-4 w-4 !text-warning" />
+        <AlertTitle className="text-warning">Funcionalidade em demonstração</AlertTitle>
+        <AlertDescription>
+          Esta tela mostra como a sincronização com o Google Calendar vai funcionar, mas o fluxo de autenticação OAuth ainda não foi implementado — nenhuma conta é conectada de verdade.
+        </AlertDescription>
+      </Alert>
 
       {/* Connection Status */}
       <Card className="border-secondary/30">
@@ -65,10 +75,17 @@ export function GoogleCalendarIntegration() {
               <p className="text-sm text-muted-foreground">
                 Conecte sua conta Google para sincronizar eventos e agendamentos diretamente das conversas.
               </p>
-              <Button onClick={handleConnect}>
-                <Calendar className="w-4 h-4 mr-2" />
-                Conectar Google Calendar
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block" tabIndex={0}>
+                    <Button onClick={handleConnect} disabled>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Conectar Google Calendar
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Conexão com Google Calendar ainda não está disponível — requer configuração de OAuth (em desenvolvimento).</TooltipContent>
+              </Tooltip>
             </div>
           )}
         </CardContent>
