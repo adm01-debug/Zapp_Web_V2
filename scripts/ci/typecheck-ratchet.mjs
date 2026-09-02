@@ -39,12 +39,21 @@ function sha256(value) {
 // contextHashForLine abaixo. Se o arquivo nao existir (ex.: testes com root
 // sintetico), retorna null e o diagnostico cai no fallback por multiset puro.
 function createSourceLineReader(root) {
+  const absoluteRoot = path.resolve(root);
   const cache = new Map();
   return function readLines(file) {
     const absolute = path.resolve(root, file);
     if (cache.has(absolute)) return cache.get(absolute);
+
+    // O path de um diagnostico do tsc pode, em teoria, apontar pra fora do
+    // root (ex.: "../pacote-irmao/arquivo.ts" numa project reference). So
+    // lemos arquivos dentro do root; fora disso cai no fallback por
+    // multiset, igual a um arquivo que nao existe.
+    const relative = path.relative(absoluteRoot, absolute);
+    const insideRoot = relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== "..");
+
     let lines = null;
-    if (existsSync(absolute)) {
+    if (insideRoot && existsSync(absolute)) {
       try {
         lines = normalizeEol(readFileSync(absolute, "utf8")).split("\n");
       } catch {
@@ -71,7 +80,7 @@ function contextHashForLine(readLines, file, line) {
   for (let index = lineIndex + 1; index < lines.length && !next; index += 1) {
     next = normalizeWhitespace(lines[index]);
   }
-  if (!previous && !next) return null;
+  if (!previous && !current && !next) return null;
 
   return sha256([previous, current, next].join("\n"));
 }

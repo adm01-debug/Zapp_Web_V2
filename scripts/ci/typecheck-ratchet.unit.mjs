@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -162,6 +162,25 @@ test("compareBaseline nao acusa nada quando ocorrencias identicas permanecem int
     assert.equal(comparison.added.length, 0);
     assert.equal(comparison.removed.length, 0);
   } finally {
+    cleanup();
+  }
+});
+
+test("createBaseline nao le arquivo fora do root (path com '..' no output do tsc)", () => {
+  const { root, cleanup } = fixture();
+  const outsideFile = path.join(path.dirname(root), `outside-${path.basename(root)}.ts`);
+  try {
+    // Arquivo real, fora do root da fixture, com conteudo que seria
+    // facilmente hasheavel se lido — a leitura deve ser bloqueada antes
+    // disso pelo guard de boundary, nao por o arquivo nao existir.
+    writeFileSync(outsideFile, "const secret = 1;\nconst leak = secret;\nconst tail = leak;\n", "utf8");
+    const relativeFromRoot = path.relative(root, outsideFile).split(path.sep).join("/");
+    const output = `${relativeFromRoot}(2,7): error TS9999: 'leak' is possibly 'undefined'.`;
+    const baseline = createBaseline(output, root);
+    assert.equal(baseline.issues.length, 1);
+    assert.equal(baseline.issues[0].contextHash, null, "arquivo fora do root nao deveria ser lido");
+  } finally {
+    unlinkSync(outsideFile);
     cleanup();
   }
 });
