@@ -28,6 +28,19 @@
       "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conteúdos fixados por hashes independentes."
     },
     {
+      "version": "20260628110559",
+      "filename": "20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
+      "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
+      "file_sql_sha256": "827daadac1390de5c06ed6fcf21d5ec29303caef252935ff847da72a6ddbfb30",
+      "ledger_name": "51d49930-e6c0-4491-ad50-f3c8fff72537",
+      "ledger_statements_sha256": "b20a4ef5d5d30c85ab434b76092746ec9053a4cf11fcf6e02cbcfc63dd080871",
+      "ledger_sql_sha256": "e435a177ad6aad4f1633730492115b98821fbe3c1d1ba08bc54495597f96d34d",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Um replay do zero pode alcançar esta migration com queues/queue_members/messages já adicionadas à publicação supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
+    },
+    {
       "version": "20260827120000",
       "filename": "20260827120000_fk_indexes_backfill.sql",
       "file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
