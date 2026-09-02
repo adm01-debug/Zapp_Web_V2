@@ -64,15 +64,15 @@
     {
       "version": "20260827120100",
       "filename": "20260827120100_schema_hygiene_views_policy_comments.sql",
-      "file_sha256": "a98a1fc36d6ed59a680ac20f7f0eccb59b85593499b0ddac227e78a24d58bf44",
-      "file_sql_sha256": "cd61a494d85c405b0eae90d20361f5e96fcb3f2feabc71c6400ddc4c09f494cf",
+      "file_sha256": "d76b80dfdc36d7f03258f3eb66f2f1587bfc05c0c148be8fa4949d84a1b1567d",
+      "file_sql_sha256": "975b137ded1c0e8e301bc00da2be615900aec63dab41cd616c0bac3c55344bec",
       "ledger_name": "schema_hygiene_views_policy_comments",
       "ledger_statements_sha256": "cc046ac0c3ac5797f51c744b53f3ed036ec342050642dec74e8385cdcdbc71b5",
       "ledger_sql_sha256": "1a7b83b79c40356946dc5faa3eb54972f958d3328b9c68cd9b4a7b59d1863e62",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico (ex.: \"COMMENT ON FUNCTION ... x15 funcoes orfas (A-06);\"), enquanto o arquivo versionado preserva o replay completo, incluindo um guard idempotente (WHEN undefined_function) nos dois COMMENT ON FUNCTION de mcp_exec/mcp_exec_many — infra do gateway MCP ausente num replay do zero. Ambos os conteúdos ficam fixados por hash."
     },
     {
       "version": "20260827130000",
