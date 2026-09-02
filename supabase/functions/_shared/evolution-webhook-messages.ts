@@ -254,7 +254,8 @@ export async function handleStickerMedia(
   if (b64Direct) mediaUrl = await uploadBase64Sticker(b64Direct);
 
   if (!mediaUrl) {
-    const directMediaUrl = (data.mediaUrl as string) || ((message?.stickerMessage as Record<string, unknown>)?.mediaUrl as string);
+    const stickerNode = message?.stickerMessage as Record<string, unknown> | undefined;
+    const directMediaUrl = (data.mediaUrl as string) || stickerNode?.mediaUrl as string || stickerNode?.URL as string || stickerNode?.url as string;
     if (directMediaUrl && directMediaUrl.startsWith('http')) {
       try {
         const resp = await fetch(directMediaUrl, { signal: AbortSignal.timeout(10000) });

@@ -23,6 +23,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
   disconnected: { label: 'Desconectado', color: 'bg-status-offline', icon: WifiOff },
   connecting: { label: 'Conectando...', color: 'bg-status-away', icon: RefreshCw },
   pending: { label: 'Aguardando QR', color: 'bg-status-away', icon: QrCode },
+  qr_pending: { label: 'Aguardando QR', color: 'bg-status-away', icon: QrCode },
 };
 
 interface ConnectionCardProps {

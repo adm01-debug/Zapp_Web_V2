@@ -39,11 +39,16 @@ Deno.serve(async (req) => {
           const state = extractConnectionState(data);
           healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
 
-          const dbStatus = state === 'open' ? 'connected' : 'disconnected';
-          if (dbStatus !== conn.status) {
-            await supabase.from('whatsapp_connections').update({ status: dbStatus, updated_at: new Date().toISOString() }).eq('id', conn.id);
-            if (dbStatus === 'disconnected' && conn.status === 'connected') {
-              alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+          // Only update for definitive GO states; skip transient (connecting/qr_pending).
+          const dbStatus = state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : null;
+          if (dbStatus && dbStatus !== conn.status) {
+            // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
+            const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
+            if (dbStatus === 'connected' || !isTransient) {
+              await supabase.from('whatsapp_connections').update({ status: dbStatus, updated_at: new Date().toISOString() }).eq('id', conn.id);
+              if (dbStatus === 'disconnected' && conn.status === 'connected') {
+                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+              }
             }
           }
         } else {

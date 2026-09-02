@@ -15,8 +15,10 @@ export {
 
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
-  const status = (baseData.status as string) === 'open' ? 'connected' :
-    (baseData.status as string) === 'close' ? 'disconnected' : 'qr_pending';
+  const rawState = baseData.status as string;
+  const status = rawState === 'open' ? 'connected' :
+    rawState === 'close' ? 'disconnected' :
+    rawState === 'connecting' ? 'connecting' : 'qr_pending';
 
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
@@ -66,6 +68,7 @@ export async function handleContactsUpsert(supabase: any, instance: string, data
     const jid = (contactData.id || contactData.remoteJid) as string;
     if (!jid) continue;
 
+    if (jid.endsWith('@lid')) continue; // @lid JIDs have no real phone number
     const phone = jid.replace('@s.whatsapp.net', '').replace('@g.us', '');
     const pushName = contactData.pushName as string || contactData.name as string;
     const profilePicUrl = contactData.profilePictureUrl as string || contactData.imgUrl as string;
