@@ -8,4 +8,7 @@
 --   idx_scan = 0 (pg_stat_user_indexes, pos-reset em 20260901)
 --   ux_messages_dedup leading column = whatsapp_connection_id
 --   Seq Scan preferred for wc_id-only queries (2 connections ~5700 msgs cada)
-DROP INDEX public.idx_messages_whatsapp_connection_id;
+--
+-- IF EXISTS: idempotente (convencao do repo; indice pode ter sido removido
+-- manualmente em ambientes de dev/staging antes desta migration rodar).
+DROP INDEX IF EXISTS public.idx_messages_whatsapp_connection_id;
