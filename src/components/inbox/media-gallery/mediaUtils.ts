@@ -4,7 +4,7 @@ export interface MediaItem {
   type: 'image' | 'video' | 'audio' | 'document';
   filename: string;
   created_at: string;
-  message_content: string;
+  caption: string | null;
 }
 
 export const getMediaType = (url: string, messageType: string): MediaItem['type'] => {
