@@ -53,7 +53,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   const { data: externalEmpresas = [] } = useExternalEmpresas();
   const [empresaSearch, setEmpresaSearch] = useState('');
   const [showEmpresaDropdown, setShowEmpresaDropdown] = useState(false);
-  const empresaBlurTimer = useRef<ReturnType<typeof setTimeout>>();
+  const empresaBlurTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const v = useContactFormValidation(values, onChange, onSubmit);
 
