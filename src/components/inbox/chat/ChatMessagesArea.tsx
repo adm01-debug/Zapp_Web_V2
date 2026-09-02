@@ -67,6 +67,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 100,
     overscan: 10,
+    getItemKey: (index) => messages[index]?.id ?? index,
   });
 
   useImperativeHandle(ref, () => ({
@@ -137,7 +138,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
 
           return (
             <div
-              key={message.id}
+              key={virtualRow.key}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
