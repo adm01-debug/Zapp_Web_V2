@@ -63,6 +63,12 @@ export function normalizePhone(rawJid?: string): string | null {
   return digitsOnly || sanitized || null;
 }
 
+// LIDs sem sufixo @lid tem 14-15 digitos nus (mesma heuristica de normalizePhone).
+// A regex de "digito puro" abaixo aceita 10-15 digitos, entao sem essa distincao
+// um LID em remoteJid (primeiro no array de candidatos) vence um telefone real
+// em remoteJidAlt via .find() por ordem de posicao, nao por confiabilidade.
+const isLidLengthDigits = (jid: string) => /^\+?\d{14,15}$/.test(jid);
+
 export function resolveBestJid(...candidates: Array<string | null | undefined>): string | null {
   const valid = candidates
     .map((candidate) => candidate?.trim())
@@ -71,8 +77,9 @@ export function resolveBestJid(...candidates: Array<string | null | undefined>):
   if (valid.length === 0) return null;
 
   return valid.find((jid) => jid.includes('@s.whatsapp.net'))
-    ?? valid.find((jid) => /^\+?\d{10,15}$/.test(jid))
+    ?? valid.find((jid) => /^\+?\d{10,15}$/.test(jid) && !isLidLengthDigits(jid))
     ?? valid.find((jid) => jid.includes('@g.us'))
+    ?? valid.find((jid) => /^\+?\d{10,15}$/.test(jid))
     ?? valid.find((jid) => !jid.includes('@lid'))
     ?? valid[0]
     ?? null;
