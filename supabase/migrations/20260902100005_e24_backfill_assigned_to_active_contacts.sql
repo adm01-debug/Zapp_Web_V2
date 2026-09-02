@@ -37,4 +37,5 @@ UPDATE public.contacts c
 SET assigned_to = a.agent_id
 FROM ranked_contacts rc
 JOIN active_agents a ON a.agent_idx = (rc.rn % (SELECT n FROM agent_count))
-WHERE c.id = rc.id;
+WHERE c.id = rc.id
+  AND (SELECT n FROM agent_count) > 0;

@@ -68,7 +68,7 @@ BEGIN
     -- Alinhado à contacts_select_policy (E23): queue membership em vez de IS NULL
     AND (
       is_admin_or_supervisor(auth.uid())
-      OR c.assigned_to = get_profile_id_for_user(auth.uid())
+      OR c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid()))
       OR EXISTS (
         SELECT 1 FROM public.queue_members qm
         WHERE qm.queue_id = c.queue_id
@@ -81,6 +81,7 @@ BEGIN
     CASE WHEN sort_field='name'       AND sort_direction='desc' THEN c.name       END DESC NULLS LAST,
     CASE WHEN sort_field='created_at' AND sort_direction='asc'  THEN c.created_at END ASC  NULLS LAST,
     CASE WHEN sort_field='created_at' AND sort_direction='desc' THEN c.created_at END DESC NULLS LAST,
+    CASE WHEN sort_field='updated_at' AND sort_direction='asc'  THEN c.updated_at END ASC  NULLS LAST,
     CASE WHEN sort_field='updated_at' AND sort_direction='desc' THEN c.updated_at END DESC NULLS LAST,
     c.name ASC NULLS LAST
   LIMIT  page_size
