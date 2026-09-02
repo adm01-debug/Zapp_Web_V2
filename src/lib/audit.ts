@@ -28,8 +28,8 @@ export async function logAudit({ action, entityType, entityId, details }: AuditL
   try {
     const { error } = await supabase.rpc('log_audit_event', {
       p_action: action,
-      p_entity_type: entityType,
-      p_entity_id: entityId,
+      p_entity_type: entityType ?? null,
+      p_entity_id: entityId ?? null,
       p_details: details ? JSON.parse(JSON.stringify(details)) : null,
       p_user_agent: navigator.userAgent,
     });
