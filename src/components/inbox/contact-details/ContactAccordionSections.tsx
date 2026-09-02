@@ -16,7 +16,7 @@ import { EvolutionContactProfileSection } from './EvolutionContactProfileSection
 import { CustomFieldsSection } from '@/components/contacts/CustomFieldsSection';
 import { PrivateNotes } from '../PrivateNotes';
 import { ConversationHistory } from '../ConversationHistory';
-import { MediaGallery } from '../MediaGallery';
+import { MediaGalleryContent } from '../MediaGallery';
 import { ConversationTasksPanel } from '../ConversationTasksPanel';
 import { RemindersPanel } from '../RemindersPanel';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
@@ -134,7 +134,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
             <div className="flex items-center gap-2"><Image className="w-3.5 h-3.5" />Mídia Compartilhada</div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
-            <MediaGallery contactId={contact.id} inline />
+            <MediaGalleryContent contactId={contact.id} />
           </AccordionContent>
         </AccordionItem>
       </motion.div>
