@@ -264,8 +264,8 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "bytes": 11673,
-      "sha256": "b3ec6072e395b4482734545bebfb30c27c820894111e1e14318fc2bc237cae81"
+      "bytes": 11895,
+      "sha256": "52a4edcc3bfe84d3969e30bc9778be13c47e581d77f332325d91a63a7064d589"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -814,7 +814,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8204d14cb7a80c1a18733984b3009004a4f1d9f7d6bb6902207d78c569bc52aa",
+      "source_sha256": "5e8a7693982f4172b2eedd7497a0f0401a14162d0392c4bab79e5c075d8f0e8f",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "925acbdc4920172ec9234a8fc0b96f938ddcf2c59fed2775a88a89d8ed900f14"
+  "manifest_sha256": "aec4a85adfe06f114447548ff62fac4f1f36b6f30cea234c1ae4dcc243338a0a"
 }
