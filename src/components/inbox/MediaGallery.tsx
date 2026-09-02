@@ -132,10 +132,10 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
         <TabsList className="grid grid-cols-5">
           <TabsTrigger value="all" className="gap-1 text-xs">Todos <Badge variant="outline" className="ml-1">{counts.all}</Badge></TabsTrigger>
-          <TabsTrigger value="image" className="gap-1"><Image className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.image}</Badge></TabsTrigger>
-          <TabsTrigger value="video" className="gap-1"><FileVideo className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.video}</Badge></TabsTrigger>
-          <TabsTrigger value="audio" className="gap-1"><FileAudio className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.audio}</Badge></TabsTrigger>
-          <TabsTrigger value="document" className="gap-1"><File className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.document}</Badge></TabsTrigger>
+          <TabsTrigger value="image" className="gap-1" aria-label="Imagens"><Image className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.image}</Badge></TabsTrigger>
+          <TabsTrigger value="video" className="gap-1" aria-label="Vídeos"><FileVideo className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.video}</Badge></TabsTrigger>
+          <TabsTrigger value="audio" className="gap-1" aria-label="Áudios"><FileAudio className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.audio}</Badge></TabsTrigger>
+          <TabsTrigger value="document" className="gap-1" aria-label="Documentos"><File className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.document}</Badge></TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -179,7 +179,7 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{item.filename}</p>
-                  <p className="text-xs text-muted-foreground">{format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+                  <p className="text-xs text-muted-foreground">{item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—'}</p>
                 </div>
               </div>
             ))}
@@ -190,7 +190,7 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
       <MediaPreviewDialog
         item={previewItem}
         open={previewOpen}
-        onOpenChange={(open) => { if (!open) setPreviewOpen(false); }}
+        onOpenChange={setPreviewOpen}
       />
     </>
   );

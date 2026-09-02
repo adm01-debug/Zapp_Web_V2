@@ -29,14 +29,17 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'media', label: 'Mídia Compartilhada', icon: Image, customIndex: 8 },
 ];
 
-export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'custom-fields', 'notes', 'history', 'stats', 'media'];
+export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'notes', 'history', 'stats', 'media'];
 
 const ACCORDION_STORAGE_KEY = 'contact-details-accordion-state';
 
 export function getStoredAccordionState(): string[] {
   try {
     const stored = localStorage.getItem(ACCORDION_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) return parsed;
+    }
   } catch { /* storage unavailable */ }
   return DEFAULT_OPEN_SECTIONS;
 }

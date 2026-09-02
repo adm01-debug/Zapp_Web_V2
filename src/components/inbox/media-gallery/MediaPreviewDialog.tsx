@@ -46,7 +46,7 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
           {displayItem.type === 'document' && (
             <div className="text-center p-8">
               <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-primary-foreground mb-4">{displayItem.filename}</p>
+              <p className="text-foreground mb-4">{displayItem.filename}</p>
               <Button asChild><a href={resolvedUrl || undefined} download={displayItem.filename}><Download className="w-4 h-4 mr-2" />Download</a></Button>
             </div>
           )}
