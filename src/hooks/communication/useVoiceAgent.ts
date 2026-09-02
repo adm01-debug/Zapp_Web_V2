@@ -25,9 +25,9 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const onErrorRef = useRef(options?.onError);
   const ttsRef = useRef<TtsPlayback | null>(null);
   const phaseRef = useRef<VoiceAgentPhase>('idle');
-  const bootTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const autoRestartRef = useRef<ReturnType<typeof setTimeout>>();
-  const errorResetRef = useRef<ReturnType<typeof setTimeout>>();
+  const bootTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const autoRestartRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const errorResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
   const processingAbortRef = useRef<AbortController | null>(null);
   const connectingRef = useRef(false);
