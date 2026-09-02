@@ -139,13 +139,13 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
             )}
           </AnimatePresence>
 
-          <ScrollArea className="flex-1 min-h-[300px]">
+          <ScrollArea className="flex-1 max-h-[360px]">
             {isLoading ? (
-              <div className="grid grid-cols-4 gap-2 p-2">{[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}</div>
+              <div className="grid grid-cols-3 gap-2 p-2">{[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}</div>
             ) : filteredItems.length === 0 ? (
               <GenericEmptyState icon={Image} title="Sem mídias" description="Nenhuma mídia encontrada nesta conversa" className="py-8" />
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-4 gap-2 p-2">
+              <div className="grid grid-cols-3 gap-2 p-2">
                 {filteredItems.map((item) => (
                   <MediaCard key={item.id} item={item} isSelected={selectedItems.has(item.id)} onSelect={() => toggleSelect(item.id)} onPreview={() => setPreviewItem(item)} />
                 ))}

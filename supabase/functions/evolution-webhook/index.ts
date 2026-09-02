@@ -10,7 +10,6 @@ import { parseMessageContent } from "../_shared/evolution-media.ts";
 import { EvolutionWebhookEnvelopeV1Schema, EvolutionWebhookEnvelopeV2Schema, validationErrorResponse } from "../_shared/schemas.ts";
 import { parseVersioned } from "../_shared/contracts.ts";
 import { isGoPayload, translateGoPayload } from "../_shared/evolution-go-adapter.ts";
-import { logWebhookAuthShadow, timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
   handleConnectionUpdate, handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
   handleContactsUpsert, handlePresenceUpdate, handleChatsUpdate,
@@ -21,6 +20,28 @@ import {
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
+import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
+
+// ---------------------------------------------------------------------------
+// HMAC validation (D2 — security hardening)
+//
+// strictMode = false  → permite requests sem assinatura (rollout gradual).
+//   - Requests SEM header de assinatura: aceitos (backwards-compatible).
+//   - Requests COM header de assinatura INVÁLIDA: rejeitados com 401.
+//
+// Quando a Evolution GO estiver configurada para enviar HMAC e todos os
+// webhooks confirmados OK, altere para strictMode = true.
+//
+// EVOLUTION_WEBHOOK_SECRET é o nome usado em todo o resto do projeto (docs,
+// _shared/hmac-validation.ts em modo sombra, auditoria) — WEBHOOK_SECRET é
+// mantido como fallback só por compatibilidade com o nome genérico do exemplo
+// em hmac-validation.ts, para não silenciar a validação se só um dos dois
+// estiver configurado no Supabase Dashboard → Edge Functions → Secrets.
+// `||` (não `??`): uma env var configurada como string vazia precisa cair
+// pro fallback também, senão o guard `!webhookSecret` abaixo trataria ''
+// como "secret configurado" e nunca rejeitaria assinatura inválida.
+const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') || Deno.env.get('WEBHOOK_SECRET') || '';
+const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -32,38 +53,42 @@ serve(async (req) => {
   }
 
   try {
+    // -----------------------------------------------------------------------
+    // HMAC validation — MUST happen before any other body read.
+    // WebhookSecurityService.validateRequest() consumes req.text() internally;
+    // the parsed body is available in validation.payload (raw string).
+    // Using req.json() AFTER this point would throw because Deno body streams
+    // can only be consumed once.
+    // -----------------------------------------------------------------------
+    const validation = await hmacSecurity.validateRequest(req);
+    if (!validation.valid && webhookSecret) {
+      console.warn('[HMAC] Rejected request:', validation.error);
+      return new Response(JSON.stringify({ error: validation.error ?? 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (validation.signatureFound) {
+      console.warn('[HMAC] Signature validated:', validation.signatureValid ? 'OK' : 'INVALID');
+    }
+
+    // -----------------------------------------------------------------------
+    // Parse body from the already-read text (NOT req.json() — body consumed above).
+    // -----------------------------------------------------------------------
+    let rawBody: unknown;
+    try {
+      rawBody = validation.payload ? JSON.parse(validation.payload) : null;
+    } catch {
+      rawBody = null;
+    }
+    if (rawBody === null || typeof rawBody !== 'object') {
+      return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // [WEBHOOK_AUTH_SHADOW] Modo sombra: valida mas NUNCA bloqueia nesta etapa.
-    // Le o body via clone() para nao alterar o comportamento de req.json() abaixo.
-    // Objetivo: confirmar via logs de producao se a Evolution GO ja envia
-    // assinatura valida antes de um PR futuro ativar enforcement (401).
-    const rawBodyTextForAuthShadow = await req.clone().text();
-    await logWebhookAuthShadow('evolution-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('EVOLUTION_WEBHOOK_SECRET'), 'x-evolution-signature');
-    // A Evolution API (infra antiga wpp2/v2.3.7) documentava um header
-    // `x-webhook-secret` com o secret cru (nao um HMAC do body). Mecanismo
-    // nao confirmado como ativo na Evolution GO atual — ver docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md.
-    // Loga em paralelo para permitir observar qual (se algum) dos dois
-    // mecanismos documentados realmente chega em producao.
-    const legacyWebhookSecretHeader = req.headers.get('x-webhook-secret');
-    const configuredEvolutionSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET');
-    if (legacyWebhookSecretHeader) {
-      const legacyValid = !!configuredEvolutionSecret && timingSafeEqual(legacyWebhookSecretHeader, configuredEvolutionSecret);
-      if (legacyValid) {
-        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
-      } else {
-        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) ${configuredEvolutionSecret ? 'presente mas nao confere com o secret configurado' : 'presente mas secret nao configurado no ambiente'} — modo sombra, requisicao processada mesmo assim`);
-      }
-    } else {
-      console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado, infra wpp2/Evolution v2.3.7) nao enviado — mecanismo nao confirmado como ativo na Evolution GO atual, modo sombra, requisicao processada mesmo assim');
-    }
-
-    const rawBody: unknown = await req.json().catch(() => null);
-    if (rawBody === null || typeof rawBody !== 'object') {
-      return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
-    }
     let payload: WebhookPayload = rawBody as WebhookPayload;
     if (isGoPayload(payload)) payload = translateGoPayload(payload) as unknown as WebhookPayload;
     const contract = parseVersioned(req, payload, {
@@ -84,14 +109,10 @@ serve(async (req) => {
     if (event === 'qrcode.updated') {
       const qrCode = (baseData.qrcode as Record<string, string>)?.base64;
       if (qrCode) {
-        // 'qr_pending' é o valor do CHECK de whatsapp_connections.status
-        // ('pending' violava o constraint e o update inteiro era rejeitado)
         await supabase.from('whatsapp_connections')
           .update({ qr_code: qrCode, status: 'qr_pending', updated_at: new Date().toISOString() })
           .eq('instance_id', instance);
       } else if (!isRecord(baseData.qrcode)) {
-        // QRTimeout (GO manda data vazio): janela de pareamento venceu —
-        // limpa o QR vencido. v2 sempre traz o objeto qrcode; fica intacto.
         await supabase.from('whatsapp_connections')
           .update({ qr_code: null, status: 'disconnected', updated_at: new Date().toISOString() })
           .eq('instance_id', instance);

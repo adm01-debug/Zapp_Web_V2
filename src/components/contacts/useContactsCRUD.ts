@@ -128,8 +128,8 @@ export function useContactsCRUD() {
             surname: editingContact.surname,
             job_title: editingContact.job_title,
             company: editingContact.company,
-            phone: editingContact.phone,
-            email: editingContact.email,
+            phone: editingContact.phone.replace(/\D/g, ''),
+            email: editingContact.email?.trim() || null,
             contact_type: editingContact.contact_type,
           })
           .eq('id', editingContact.id);
