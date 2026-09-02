@@ -158,7 +158,7 @@ const ConversationRow = memo(({
 
         <div className="relative flex-shrink-0">
           <Avatar className="w-12 h-12">
-            <AvatarImage src={conversation.contact.avatar_url || undefined} />
+            <AvatarImage src={conversation.contact.avatar_url || undefined} alt={conversation.contact.name || 'Contato'} />
             <AvatarFallback className={cn(
               'text-xs font-semibold',
               getAvatarColor(conversation.contact.name || '?').bg,
@@ -170,7 +170,7 @@ const ConversationRow = memo(({
           {conversation.contact.ai_sentiment && (
             <span
               className={cn(
-                'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card',
+                'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
                 conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
                 conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
                 conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
