@@ -1,0 +1,52 @@
+# =================================================
+# ZAPP-WEB · CodeQL — análise estática de segurança
+# =================================================
+# Escaneia JavaScript/TypeScript em push/PR para main e semanalmente.
+# Cron da segunda-feira em horário distinto de db-live-guard.yml e
+# types-sync.yml (ambos 06:00 UTC) para não concorrer pelos mesmos runners.
+# =================================================
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # segunda-feira 07:00 UTC (04:00 em Curitiba)
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: 🔎 Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🔧 Initialize CodeQL
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - name: 🔎 Perform CodeQL analysis
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          category: '/language:javascript-typescript'
