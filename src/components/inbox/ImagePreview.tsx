@@ -1,4 +1,5 @@
 import { forwardRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,10 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
     }
   };
 
-  return (
+  // Portal para document.body: ancestrais com transform (framer-motion whileHover/scale
+  // nos bubbles) viram containing block de position:fixed e o lightbox renderiza
+  // gigante dentro da própria mensagem em vez de cobrir a tela.
+  return createPortal(
     <motion.div
       ref={ref}
       initial={{ opacity: 0 }}
@@ -94,7 +98,8 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
         className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-zoom-in"
         style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
       />
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 });
 
