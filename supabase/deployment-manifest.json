@@ -458,6 +458,7 @@
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-conversation-analysis/index.ts"
       ]
