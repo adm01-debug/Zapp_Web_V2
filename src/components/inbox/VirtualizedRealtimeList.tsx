@@ -184,7 +184,7 @@ const ConversationRow = memo(({
                 conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
                 conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
               )}
-              title={`Sentimento: ${conversation.contact.ai_sentiment}`}
+              title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
             />
           )}
         </div>
