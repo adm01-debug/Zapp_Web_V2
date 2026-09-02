@@ -340,14 +340,9 @@
       "version": "20260901200001",
       "filename": "20260901200001_e23_default_queue_rls_policies.sql",
       "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
-      "file_sql_sha256": "5387d6e5e52928f77898e857f1f053053f47f5165cc8efa2f2f21499afd4fb6f",
       "ledger_name": "e23_default_queue_rls_policies",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
-      "ledger_sql_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "kind": "ledger-divergence/pinned-replay",
-      "reason": "safer-replay",
-      "related_migration": null,
-      "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo documenta retroativamente o replay reprodutível; o ledger histórico tem SQL canônico vazio e o arquivo tem o SQL completo — ambos fixados por hashes independentes."
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o ledger histórico não tem SQL/hash algum para esta versão (nome apenas), então a exceção pina nome+arquivo em vez de pinned-replay — que exige ledgerSql canônico não vazio e falharia aqui."
     }
   ]
 }
