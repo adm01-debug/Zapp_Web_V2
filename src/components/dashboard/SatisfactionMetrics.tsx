@@ -30,7 +30,7 @@ export const SatisfactionMetrics = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const periodDays = PERIOD_DAYS[selectedPeriod];
-  const { data: breakdown, isLoading: isBreakdownLoading, isError: isBreakdownError } = useSatisfactionBreakdown(periodDays);
+  const { data: breakdown, isLoading: isBreakdownLoading, isError: isBreakdownError, refetch: refetchBreakdown } = useSatisfactionBreakdown(periodDays);
   const { surveys: npsSurveys, isLoading: isNpsLoading } = useNPSSurveys();
 
   const npsInPeriod = useMemo(() => {
@@ -64,8 +64,9 @@ export const SatisfactionMetrics = () => {
   if (isBreakdownError || !breakdown) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center h-64">
+        <CardContent className="flex flex-col items-center justify-center gap-3 h-64">
           <div className="text-muted-foreground">Não foi possível carregar as métricas de satisfação.</div>
+          <Button variant="outline" size="sm" onClick={() => refetchBreakdown()}>Tentar novamente</Button>
         </CardContent>
       </Card>
     );

@@ -144,6 +144,7 @@ export interface SatisfactionBreakdown {
 }
 
 interface CSATBreakdownRow {
+  id: string;
   agent_id: string | null;
   rating: number;
   created_at: string;
@@ -152,31 +153,54 @@ interface CSATBreakdownRow {
 }
 
 const CSAT_PAGE_SIZE = 1000;
+const CSAT_MAX_PAGES = 50;
 
 /**
- * PostgREST limita a resposta a um teto de linhas (1000 por padrao). Sem
+ * PostgREST corta a resposta no teto de linhas do projeto (db-max-rows). Sem
  * paginar, uma janela com mais surveys que o teto devolveria apenas as linhas
  * mais antigas e o dashboard perderia silenciosamente as respostas recentes.
+ *
+ * Paginacao keyset por (created_at, id): offset com .range() dependeria de o
+ * teto do servidor ser exatamente CSAT_PAGE_SIZE e, sem desempate estavel,
+ * repetiria ou pularia linhas quando varias surveys compartilham o mesmo
+ * created_at. O cursor avanca pela ultima linha lida e o loop para quando a
+ * pagina volta vazia, qualquer que seja o teto real.
  */
 async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
   const rows: CSATBreakdownRow[] = [];
+  let cursor: { createdAt: string; id: string } | null = null;
 
-  for (let page = 0; ; page++) {
-    const { data, error } = await supabase
+  for (let page = 0; page < CSAT_MAX_PAGES; page++) {
+    let query = supabase
       .from('csat_surveys')
       .select(
-        'agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
+        'id, agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
       )
       .gte('created_at', start.toISOString())
       .order('created_at', { ascending: true })
-      .range(page * CSAT_PAGE_SIZE, (page + 1) * CSAT_PAGE_SIZE - 1);
+      .order('id', { ascending: true })
+      .limit(CSAT_PAGE_SIZE);
 
+    if (cursor) {
+      // Aspas obrigatorias: o timestamptz serializado carrega ':' e '+', que o
+      // parser de filtro do PostgREST trataria como separadores.
+      const ts = `"${cursor.createdAt}"`;
+      query = query.or(`created_at.gt.${ts},and(created_at.eq.${ts},id.gt.${cursor.id})`);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
 
     const batch = (data || []) as unknown as CSATBreakdownRow[];
+    if (batch.length === 0) return rows;
+
     rows.push(...batch);
-    if (batch.length < CSAT_PAGE_SIZE) return rows;
+    const last = batch[batch.length - 1];
+    cursor = { createdAt: last.created_at, id: last.id };
   }
+
+  console.warn(`[useCSAT] paginacao interrompida em ${CSAT_MAX_PAGES} paginas (${rows.length} linhas)`);
+  return rows;
 }
 
 function csatPercentFromRatings(ratings: number[]): number {
