@@ -130,8 +130,18 @@ export const SatisfactionMetrics = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className={`bg-muted/50 rounded-lg p-4 text-center ${topAgent ? 'cursor-pointer hover:bg-muted transition-colors' : ''}`}
+              role={topAgent ? 'button' : undefined}
+              tabIndex={topAgent ? 0 : undefined}
+              aria-label={topAgent ? 'Abrir ranking de agentes por CSAT' : undefined}
+              className={`bg-muted/50 rounded-lg p-4 text-center ${topAgent ? 'cursor-pointer hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' : ''}`}
               onClick={() => topAgent && setDetailsOpen(true)}
+              onKeyDown={(e) => {
+                if (!topAgent) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setDetailsOpen(true);
+                }
+              }}
             >
               <div className="text-sm text-muted-foreground mb-1">Top Agente</div>
               {topAgent ? (

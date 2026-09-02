@@ -199,8 +199,9 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
     cursor = { createdAt: last.created_at, id: last.id };
   }
 
-  console.warn(`[useCSAT] paginacao interrompida em ${CSAT_MAX_PAGES} paginas (${rows.length} linhas)`);
-  return rows;
+  // Devolver o que deu tempo de ler seria a mesma perda silenciosa que esta
+  // funcao existe para evitar: o erro sobe e o card mostra estado de falha.
+  throw new Error(`[useCSAT] paginacao excedeu ${CSAT_MAX_PAGES} paginas (${rows.length} linhas)`);
 }
 
 function csatPercentFromRatings(ratings: number[]): number {
