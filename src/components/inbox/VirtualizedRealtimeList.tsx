@@ -169,6 +169,8 @@ const ConversationRow = memo(({
           </Avatar>
           {conversation.contact.ai_sentiment && (
             <span
+              role="img"
+              aria-label={`Sentimento: ${conversation.contact.ai_sentiment}`}
               className={cn(
                 'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
                 conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
@@ -195,7 +197,7 @@ const ConversationRow = memo(({
                 })()}
               </span>
               {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
-                <span className="text-xs flex-shrink-0" title={`Sentimento: ${conversation.contact.ai_sentiment}`}>
+                <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${conversation.contact.ai_sentiment}`}>
                   {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
                 </span>
               )}
