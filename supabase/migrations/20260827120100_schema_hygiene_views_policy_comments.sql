@@ -43,7 +43,27 @@ $do$;
 COMMENT ON FUNCTION public.mask_channel_credentials() IS
 'NO-OP verificado em 2026-08-27. Retorna NEW sem alterar nada e NAO esta anexada a nenhuma trigger. Trigger BEFORE nao consegue mascarar em SELECT - o proprio corpo admite isso. A protecao real de channel_connections.credentials e a policy RLS "Admins full access to channels" mais a view channel_connections_safe (que omite a coluna). Anexar esta funcao como trigger criaria falsa sensacao de seguranca. Decidir entre implementar mascaramento real ou remover. Ver A-06.';
 
-COMMENT ON FUNCTION public.mcp_exec(text, integer) IS
-'Infra do gateway MCP. Executa SQL arbitrario, SECURITY DEFINER. EXECUTE restrito a postgres e service_role desde a migration 20260827000100. Nao conceder a authenticated/anon/PUBLIC.';
-COMMENT ON FUNCTION public.mcp_exec_many(text[], integer) IS
-'Infra do gateway MCP. Executa SQL arbitrario em lote, SECURITY DEFINER. EXECUTE restrito a postgres e service_role desde a migration 20260827000100. Nao conceder a authenticated/anon/PUBLIC.';
+-- Guard idempotente: mcp_exec/mcp_exec_many sao infraestrutura do gateway
+-- MCP provisionada fora do fluxo de migrations (ver 20260827000100). Um
+-- replay do zero nunca as tem, entao COMMENT ON FUNCTION direto falha com
+-- SQLSTATE 42883 (undefined_function). COMMENT ON FUNCTION nao suporta
+-- IF EXISTS, entao o bloco DO tolera a ausencia.
+DO $$
+BEGIN
+  COMMENT ON FUNCTION public.mcp_exec(text, integer) IS
+  'Infra do gateway MCP. Executa SQL arbitrario, SECURITY DEFINER. EXECUTE restrito a postgres e service_role desde a migration 20260827000100. Nao conceder a authenticated/anon/PUBLIC.';
+EXCEPTION
+  WHEN undefined_function THEN
+    NULL;
+END
+$$;
+
+DO $$
+BEGIN
+  COMMENT ON FUNCTION public.mcp_exec_many(text[], integer) IS
+  'Infra do gateway MCP. Executa SQL arbitrario em lote, SECURITY DEFINER. EXECUTE restrito a postgres e service_role desde a migration 20260827000100. Nao conceder a authenticated/anon/PUBLIC.';
+EXCEPTION
+  WHEN undefined_function THEN
+    NULL;
+END
+$$;
