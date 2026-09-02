@@ -14,7 +14,17 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -b --force",
     "preview": "vite preview",
-    "test:contracts": "vitest run --config vitest.contracts.config.ts"
+    "test:contracts": "vitest run --config vitest.contracts.config.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,md,json}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@axe-core/react": "^4.11.1",
@@ -50,6 +60,7 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/react-visually-hidden": "^1.2.4",
+    "@sentry/react": "^10.73.0",
     "@supabase/supabase-js": "^2.87.1",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-virtual": "^3.13.13",
@@ -106,8 +117,12 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.4.1",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^3.4.19",
     "tsx": "^4.21.1",
     "typescript": "^5.8.3",
