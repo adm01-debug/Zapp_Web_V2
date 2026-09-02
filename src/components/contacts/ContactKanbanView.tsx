@@ -42,13 +42,14 @@ const KANBAN_COLUMNS = [
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
   const [localContacts, setLocalContacts] = useState<KanbanContact[]>(contacts);
-  const [syncedContacts, setSyncedContacts] = useState<KanbanContact[]>(contacts);
+  const [syncedFingerprint, setSyncedFingerprint] = useState(() => contacts.map(c => c.id).join(','));
 
-  // Sync when parent contacts change. O setState fica guardado por comparação
-  // (padrão "adjust state during render"): sem a guarda, o update em fase de
-  // render se repete a cada passe e o React aborta com "Too many re-renders".
-  if (syncedContacts !== contacts) {
-    setSyncedContacts(contacts);
+  // Sync when parent contacts actually change (by id set, not array reference).
+  // Comparar referência de array revertia drag-drop otimista quando o pai
+  // repassava um novo array com o mesmo conteúdo (ex.: filteredContacts re-memo).
+  const currentFingerprint = contacts.map(c => c.id).join(',');
+  if (syncedFingerprint !== currentFingerprint) {
+    setSyncedFingerprint(currentFingerprint);
     setLocalContacts(contacts);
   }
 

@@ -95,19 +95,21 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     },
   }), [messages, virtualizer]);
 
-  const firstMessageId = messages[0]?.id;
+  // contactJid é estável durante toda a vida da conversa; firstMessageId muda
+  // se mensagens são pré-carregadas (prepend) e causaria churn de subscription.
+  const subscriptionKey = contactJid ?? messages[0]?.id;
   const messageIdsSetRef = useRef<Set<string>>(new Set());
   messageIdsSetRef.current = useMemo(
     () => new Set(messages.map((message) => message.id).filter(Boolean)),
     [messages],
   );
 
-  // O canal é por conversa (ancorado na 1ª mensagem). O filtro de ids fica em
+  // O canal é por conversa (ancorado em contactJid). O filtro de ids fica em
   // ref para que cada mensagem nova não derrube e recrie a subscription.
   useEffect(() => {
-    if (!firstMessageId) return;
+    if (!subscriptionKey) return;
 
-    const channel = RealtimeService.subscribeToReactions(firstMessageId, (payload) => {
+    const channel = RealtimeService.subscribeToReactions(subscriptionKey, (payload) => {
       const nextMessageId = (payload.new as { message_id?: string } | null)?.message_id;
       const prevMessageId = (payload.old as { message_id?: string } | null)?.message_id;
       const reactionMessageId = nextMessageId ?? prevMessageId;
@@ -118,7 +120,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     });
 
     return () => { void RealtimeService.removeChannel(channel); };
-  }, [firstMessageId, queryClient]);
+  }, [subscriptionKey, queryClient]);
 
   return (
     <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-background/50 relative">
