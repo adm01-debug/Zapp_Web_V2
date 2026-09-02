@@ -21,11 +21,12 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
     const now = new Date().toISOString();
 
     // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
-    // Escopado por whatsapp_connection_id para bater com o indice unico real
-    // (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
-    // conexoes diferentes faria este pre-check achar a linha errada.
+    // Escopado por whatsapp_connection_id + sender para bater com o indice unico
+    // real (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
+    // conexoes (ou entre as duas direcoes da conversa) faria este pre-check achar
+    // a linha errada e marcar a mensagem do contato como 'sent'.
     let dupCheckQuery = supabase.from('messages')
-      .select('id, status').eq('external_id', externalId);
+      .select('id, status').eq('external_id', externalId).eq('sender', 'agent');
     if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
     const { data: existingMessage } = await dupCheckQuery
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
