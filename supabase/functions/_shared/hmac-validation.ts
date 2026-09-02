@@ -307,10 +307,10 @@ export async function logWebhookAuthShadow(
     return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
   }
 
-  // Sucesso e o caso comum: log, nao warn -- senao o nivel warn deixa de
-  // separar anomalia de trafego normal justamente no sinal que este modo existe
-  // para produzir.
-  console.log(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura valida`);
+  // Fica em warn porque o eslint do repo so permite console.warn/error em
+  // edge functions; o marcador ':' assinatura valida' ja separa este caso dos
+  // ramos de anomalia num grep.
+  console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura valida`);
   return { signaturePresent: true, signatureValid: true, reason: 'valid' };
 }
 
@@ -360,7 +360,7 @@ export async function logElevenLabsAuthShadow(
       return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
     }
 
-    console.log('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura valida');
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura valida');
     return { signaturePresent: true, signatureValid: true, reason: 'valid' };
   } catch (error) {
     console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: erro ao processar assinatura — modo sombra, requisicao processada mesmo assim', error);
@@ -387,7 +387,10 @@ export async function logElevenLabsAuthShadow(
  */
 function sanitizeClaimForLog(value: unknown): string {
   if (typeof value !== 'string') return value === undefined ? '(ausente)' : '(invalido)';
-  const flat = value.replace(/[\u0000-\u001f\u007f]/g, ' ');
+  const flat = Array.from(value, (ch) => {
+    const code = ch.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f ? ' ' : ch;
+  }).join('');
   return flat.length > 200 ? `${flat.slice(0, 200)}…(truncado)` : flat;
 }
 
