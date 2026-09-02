@@ -1,7 +1,7 @@
 -- GAP-05 auditoria 02/09/2026: dedup_baseline_20260901 nao existe.
 -- Criar snapshot do estado atual dos contatos-LID para audit trail.
 -- E35 (normalizePhone) foi deployado em PR #120 (merged 01/09 23:59);
--- este snapshot captura o estado pos-correc ao dos LIDs historicos
+-- este snapshot captura o estado pos-correcao dos LIDs historicos
 -- antes de qualquer backfill E33.
 CREATE TABLE public.lid_audit_snapshot_20260902 (
   phone            text        NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE public.lid_audit_snapshot_20260902 (
   phone_length     int         NOT NULL,
   first_message_at timestamptz,
   last_message_at  timestamptz,
-  message_count    int,
+  message_count    bigint,
   created_at       timestamptz NOT NULL,
   snapshot_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -22,7 +22,7 @@ SELECT
   length(c.phone) AS phone_length,
   MIN(m.created_at) AS first_message_at,
   MAX(m.created_at) AS last_message_at,
-  COUNT(m.id)::int AS message_count,
+  COUNT(m.id) AS message_count,
   c.created_at
 FROM contacts c
 LEFT JOIN messages m ON m.contact_id = c.id
@@ -32,6 +32,14 @@ GROUP BY c.id, c.phone, c.created_at;
 -- Indice para queries de analise posterior
 CREATE INDEX idx_lid_snapshot_phone ON public.lid_audit_snapshot_20260902 (phone);
 CREATE INDEX idx_lid_snapshot_contact ON public.lid_audit_snapshot_20260902 (contact_id);
+
+-- RLS: PII (telefones) — somente service_role e admin/supervisor podem acessar
+ALTER TABLE public.lid_audit_snapshot_20260902 ENABLE ROW LEVEL SECURITY;
+CREATE POLICY service_role_full_access ON public.lid_audit_snapshot_20260902
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY admin_read ON public.lid_audit_snapshot_20260902
+  FOR SELECT TO authenticated
+  USING (public.is_admin_or_supervisor(auth.uid()));
 
 COMMENT ON TABLE public.lid_audit_snapshot_20260902 IS
   'Audit snapshot de contatos-LID (phone >= 14 digitos) capturado em 02/09/2026
