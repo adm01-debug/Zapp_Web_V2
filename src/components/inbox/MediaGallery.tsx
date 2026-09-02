@@ -60,7 +60,8 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
         .select('id, media_url, message_type, media_filename, caption, created_at')
         .eq('contact_id', contactId)
         .not('media_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) throw error;
       return data || [];
     },
