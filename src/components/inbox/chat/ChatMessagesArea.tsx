@@ -138,6 +138,8 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
           return (
             <div
               key={message.id}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
               style={{
                 position: 'absolute',
                 top: 0,
