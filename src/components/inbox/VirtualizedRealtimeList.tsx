@@ -157,7 +157,7 @@ const ConversationRow = memo(({
         )}
 
         <div className="relative flex-shrink-0">
-          <Avatar className="w-10 h-10">
+          <Avatar className="w-12 h-12">
             <AvatarImage src={conversation.contact.avatar_url || undefined} />
             <AvatarFallback className={cn(
               'text-xs font-semibold',
