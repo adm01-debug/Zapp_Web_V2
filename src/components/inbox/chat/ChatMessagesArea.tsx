@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { Message, InteractiveButton } from '@/types/chat';
 import { motion } from '@/components/ui/motion';
 import { TypingIndicator } from '../TypingIndicator';
-import { format, isSameDay } from 'date-fns';
+import { isSameDay } from 'date-fns';
 import { formatDateSeparator } from './messageUtils';
 import { MessageBubble } from './MessageBubble';
 
@@ -62,12 +62,21 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     }
   }, []);
 
+  // Opções estáveis: `getItemKey` entra nas deps do memo interno do
+  // virtualizer (getMeasurementOptions) — uma função nova a cada render
+  // invalida o cache e recalcula todas as medições em cada passe.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const getScrollElement = useCallback(() => scrollContainerRef.current, []);
+  const estimateSize = useCallback(() => 100, []);
+  const getItemKey = useCallback((index: number) => messagesRef.current[index]?.id ?? index, []);
+
   const virtualizer = useVirtualizer({
     count: messages.length,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 100,
+    getScrollElement,
+    estimateSize,
     overscan: 10,
-    getItemKey: (index) => messages[index]?.id ?? index,
+    getItemKey,
   });
 
   useImperativeHandle(ref, () => ({
@@ -85,36 +94,32 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
         virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
-  }));
+  }), [messages, virtualizer]);
 
-  const messageIds = useMemo(() => messages.map((message) => message.id).filter(Boolean), [messages]);
-  const messageIdsSet = useMemo(() => new Set(messageIds), [messageIds]);
-  const messageIdsKey = useMemo(() => messageIds.join(','), [messageIds]);
+  const firstMessageId = messages[0]?.id;
+  const messageIdsSetRef = useRef<Set<string>>(new Set());
+  messageIdsSetRef.current = useMemo(
+    () => new Set(messages.map((message) => message.id).filter(Boolean)),
+    [messages],
+  );
 
+  // O canal é por conversa (ancorado na 1ª mensagem). O filtro de ids fica em
+  // ref para que cada mensagem nova não derrube e recrie a subscription.
   useEffect(() => {
-    if (messageIds.length === 0) return;
+    if (!firstMessageId) return;
 
-    const channel = RealtimeService.subscribeToReactions(messageIds[0] ?? 'empty', (payload) => {
+    const channel = RealtimeService.subscribeToReactions(firstMessageId, (payload) => {
       const nextMessageId = (payload.new as { message_id?: string } | null)?.message_id;
       const prevMessageId = (payload.old as { message_id?: string } | null)?.message_id;
       const reactionMessageId = nextMessageId ?? prevMessageId;
 
-      if (!reactionMessageId || !messageIdsSet.has(reactionMessageId)) return;
+      if (!reactionMessageId || !messageIdsSetRef.current.has(reactionMessageId)) return;
 
       queryClient.invalidateQueries({ queryKey: ['message-reactions', reactionMessageId] });
     });
 
     return () => { void RealtimeService.removeChannel(channel); };
-  }, [messageIds.length, messageIdsKey, messageIdsSet, queryClient]);
-
-  const groupedMessages = useMemo(() => {
-    return messages.reduce((groups, message) => {
-      const dateKey = format(message.timestamp, 'yyyy-MM-dd');
-      if (!groups[dateKey]) groups[dateKey] = [];
-      groups[dateKey].push(message);
-      return groups;
-    }, {} as Record<string, Message[]>);
-  }, [messages]);
+  }, [firstMessageId, queryClient]);
 
   return (
     <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-background/50 relative">

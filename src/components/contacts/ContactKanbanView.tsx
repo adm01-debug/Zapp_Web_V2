@@ -42,9 +42,15 @@ const KANBAN_COLUMNS = [
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
   const [localContacts, setLocalContacts] = useState<KanbanContact[]>(contacts);
+  const [syncedContacts, setSyncedContacts] = useState<KanbanContact[]>(contacts);
 
-  // Sync when parent contacts change
-  useMemo(() => { setLocalContacts(contacts); }, [contacts]);
+  // Sync when parent contacts change. O setState fica guardado por comparação
+  // (padrão "adjust state during render"): sem a guarda, o update em fase de
+  // render se repete a cada passe e o React aborta com "Too many re-renders".
+  if (syncedContacts !== contacts) {
+    setSyncedContacts(contacts);
+    setLocalContacts(contacts);
+  }
 
   const columns = useMemo(() => {
     const grouped: Record<string, KanbanContact[]> = {};
