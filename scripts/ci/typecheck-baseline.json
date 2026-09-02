@@ -107,14 +107,6 @@
       "message": "Type '(phone: string) => CRMBatchResult | null' is not assignable to type '(phone: string) => CRMBatchResult | undefined'. Type 'CRMBatchResult | null' is not assignable to type 'CRMBatchResult | undefined'. Type 'null' is not assignable to type 'CRMBatchResult | undefined'."
     },
     {
-      "file": "src/components/contacts/ContactForm.tsx",
-      "line": 56,
-      "column": 28,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
       "file": "src/components/contacts/ContactsView.tsx",
       "line": 211,
       "column": 9,
@@ -129,14 +121,6 @@
       "severity": "error",
       "code": "TS2322",
       "message": "Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLElement>'. Type 'HTMLDivElement | null' is not assignable to type 'HTMLElement'. Type 'null' is not assignable to type 'HTMLElement'."
-    },
-    {
-      "file": "src/components/contacts/useContactFormValidation.ts",
-      "line": 47,
-      "column": 25,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
     },
     {
       "file": "src/components/email/EmailChatReplyBar.tsx",
@@ -467,14 +451,6 @@
       "message": "Argument of type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }[]' is not assignable to parameter of type 'SetStateAction<CAPIEvent[]>'. Type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }[]' is not assignable to type 'CAPIEvent[]'. Type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }' is not assignable to type 'CAPIEvent'. Types of property 'event_time' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'."
     },
     {
-      "file": "src/components/mobile/MobileSlidePanel.tsx",
-      "line": 126,
-      "column": 20,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
       "file": "src/components/monitoring/hooks/useMonitoringData.ts",
       "line": 78,
       "column": 79,
@@ -673,14 +649,6 @@
       "severity": "error",
       "code": "TS2345",
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'. Type 'undefined' is not assignable to type 'SetStateAction<string>'."
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 100,
-      "column": 25,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
@@ -899,38 +867,6 @@
       "message": "Cannot find name 'SpeechRecognitionEvent'. Did you mean 'SpeechRecognitionCtor'?"
     },
     {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 28,
-      "column": 26,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 29,
-      "column": 26,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 30,
-      "column": 25,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/crm/useContactsSearch.ts",
-      "line": 38,
-      "column": 23,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
       "file": "src/hooks/crm/useTags.ts",
       "line": 59,
       "column": 24,
@@ -971,46 +907,6 @@
       "message": "Argument of type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }[]' is not assignable to parameter of type 'SetStateAction<Article[]>'. Type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }[]' is not assignable to type 'Article[]'. Type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }' is not assignable to type 'Article'. Types of property 'category' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'."
     },
     {
-      "file": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
-      "line": 22,
-      "column": 23,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/performance/useDataOptimization.ts",
-      "line": 51,
-      "column": 22,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/performance/useMonitoring.ts",
-      "line": 89,
-      "column": 21,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/performance/useTimingHooks.ts",
-      "line": 49,
-      "column": 22,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
-      "file": "src/hooks/performance/useTimingHooks.ts",
-      "line": 50,
-      "column": 27,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
-    },
-    {
       "file": "src/hooks/realtime/messageSender.ts",
       "line": 110,
       "column": 20,
@@ -1049,14 +945,6 @@
       "severity": "error",
       "code": "TS2345",
       "message": "Argument of type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }[]' is not assignable to parameter of type 'SetStateAction<RateLimitLog[]>'. Type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }[]' is not assignable to type 'RateLimitLog[]'. Type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }' is not assignable to type 'RateLimitLog'. Types of property 'blocked' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'."
-    },
-    {
-      "file": "src/hooks/system/useResourcePrefetch.ts",
-      "line": 41,
-      "column": 22,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 0."
     },
     {
       "file": "src/hooks/team-chat/useTeamConversations.ts",
