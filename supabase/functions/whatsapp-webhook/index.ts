@@ -77,7 +77,7 @@ serve(async (req) => {
       // WHATSAPP_APP_SECRET ainda precisa ser confirmado/criado nos Secrets do
       // Supabase (distinto de WHATSAPP_VERIFY_TOKEN, que so serve o handshake GET).
       const rawBodyTextForAuthShadow = await req.clone().text();
-      await logWebhookAuthShadow('whatsapp-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('WHATSAPP_APP_SECRET'));
+      await logWebhookAuthShadow('whatsapp-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('WHATSAPP_APP_SECRET'), 'x-hub-signature-256');
 
       const rawPayload = await req.json();
       const parsed = WhatsAppWebhookSchema.safeParse(rawPayload);

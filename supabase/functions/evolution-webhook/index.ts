@@ -54,7 +54,7 @@ serve(async (req) => {
       if (legacyValid) {
         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
       } else {
-        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) presente mas nao confere com o secret configurado — modo sombra, requisicao processada mesmo assim');
+        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) ${configuredEvolutionSecret ? 'presente mas nao confere com o secret configurado' : 'presente mas secret nao configurado no ambiente'} — modo sombra, requisicao processada mesmo assim`);
       }
     } else {
       console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado, infra wpp2/Evolution v2.3.7) nao enviado — mecanismo nao confirmado como ativo na Evolution GO atual, modo sombra, requisicao processada mesmo assim');

@@ -264,8 +264,8 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "bytes": 11441,
-      "sha256": "8f338a458f9f942a8a88adc1a636087686ab8fb3471c1bb4be9ab9ab6a954456"
+      "bytes": 11526,
+      "sha256": "5b985abfadb75a0852df42a4dac57a1756439b841cdf7bf2e96c9047ec0d56a9"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -404,8 +404,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 5128,
-      "sha256": "49dccb6ce1b12056c3990d43af210f9f64f70eb67dfabdf8f155ec44f545d9b3"
+      "bytes": 5151,
+      "sha256": "64737e4b5f20618e47c611976ba1e90031d86e8d1835cd4742d8b5ab803dd154"
     }
   ],
   "functions": [
@@ -814,7 +814,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "fb3510d16b9ccf206eae55657e25b95f764ab0bac39696dd7d070767d17a9e26",
+      "source_sha256": "e300de44863711031126ce013a1906989ac0dd3f432d386814204eb22e84305e",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1154,7 +1154,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "40de77583b780765761a3437c0e49a7e30fce9f35e102966ab4fd0e8758d385d",
+      "source_sha256": "3fbafff1492bc7284c37fa76dfae3c7ae3d72f339bbdecf3296f3319cfebfc0b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "87be8562171b744e56951142b732ae54093b3c3fcfd77d4f97ff20a721700905"
+  "manifest_sha256": "80bf5f6af118b438eb8b7d886cbc60c539c19eb93e594ea5e99d81c4a4c651d8"
 }
