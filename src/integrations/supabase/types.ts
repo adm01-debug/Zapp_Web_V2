@@ -1591,6 +1591,30 @@ export type Database = {
           },
         ]
       }
+      contact_identity_map: {
+        Row: {
+          first_seen: string
+          jid: string
+          last_seen: string
+          lid: string
+          source: string | null
+        }
+        Insert: {
+          first_seen?: string
+          jid: string
+          last_seen?: string
+          lid: string
+          source?: string | null
+        }
+        Update: {
+          first_seen?: string
+          jid?: string
+          last_seen?: string
+          lid?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       contact_notes: {
         Row: {
           author_id: string
@@ -2659,39 +2683,80 @@ export type Database = {
           },
         ]
       }
-      dedup_baseline_20260901: {
+      department_invitations: {
         Row: {
-          canonical_id: string | null
-          copies_with_contact: number | null
-          copies_without_contact: number | null
-          external_id: string | null
-          first_seen: string | null
-          last_seen: string | null
-          sender: string | null
-          total_copies: number | null
-          whatsapp_connection_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          department_id: string
+          email: string
+          expires_at: string
+          id: string
+          role: string
+          status: string
         }
         Insert: {
-          canonical_id?: string | null
-          copies_with_contact?: number | null
-          copies_without_contact?: number | null
-          external_id?: string | null
-          first_seen?: string | null
-          last_seen?: string | null
-          sender?: string | null
-          total_copies?: number | null
-          whatsapp_connection_id?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          email?: string
+          expires_at: string
+          id?: string
+          role?: string
+          status?: string
         }
         Update: {
-          canonical_id?: string | null
-          copies_with_contact?: number | null
-          copies_without_contact?: number | null
-          external_id?: string | null
-          first_seen?: string | null
-          last_seen?: string | null
-          sender?: string | null
-          total_copies?: number | null
-          whatsapp_connection_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          whatsapp_api_key: string | null
+          whatsapp_instance_id: string | null
+          whatsapp_mode: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_instance_id?: string | null
+          whatsapp_mode?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_instance_id?: string | null
+          whatsapp_mode?: string
         }
         Relationships: []
       }
@@ -2899,6 +2964,8 @@ export type Database = {
           is_starred: boolean
           is_unread: boolean
           label_ids: string[]
+          last_from_address: string | null
+          last_from_name: string | null
           last_message_at: string
           message_count: number
           priority: string
@@ -2919,6 +2986,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
@@ -2939,6 +3008,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
@@ -3492,6 +3563,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lid_audit_snapshot_20260902: {
+        Row: {
+          contact_id: string
+          created_at: string
+          first_message_at: string | null
+          last_message_at: string | null
+          message_count: number | null
+          phone: string
+          phone_length: number
+          snapshot_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at: string
+          first_message_at?: string | null
+          last_message_at?: string | null
+          message_count?: number | null
+          phone: string
+          phone_length: number
+          snapshot_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          first_message_at?: string | null
+          last_message_at?: string | null
+          message_count?: number | null
+          phone?: string
+          phone_length?: number
+          snapshot_at?: string
+        }
+        Relationships: []
       }
       link_preview_cache: {
         Row: {
@@ -4530,6 +4634,7 @@ export type Database = {
           can_download: boolean
           created_at: string
           department: string | null
+          department_id: string | null
           email: string | null
           id: string
           is_active: boolean | null
@@ -4552,6 +4657,7 @@ export type Database = {
           can_download?: boolean
           created_at?: string
           department?: string | null
+          department_id?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -4574,6 +4680,7 @@ export type Database = {
           can_download?: boolean
           created_at?: string
           department?: string | null
+          department_id?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -4589,7 +4696,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       query_telemetry: {
         Row: {
@@ -5949,7 +6064,9 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           created_by: string | null
+          department_id: string | null
           id: string
+          metadata: Json
           name: string | null
           type: string
           updated_at: string
@@ -5958,7 +6075,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           id?: string
+          metadata?: Json
           name?: string | null
           type?: string
           updated_at?: string
@@ -5967,7 +6086,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           id?: string
+          metadata?: Json
           name?: string | null
           type?: string
           updated_at?: string
@@ -5987,6 +6108,59 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "team_conversations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       team_messages: {
@@ -6001,6 +6175,7 @@ export type Database = {
           message_type: string
           reply_to_id: string | null
           sender_id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -6014,6 +6189,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           sender_id: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -6027,6 +6203,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           sender_id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -7417,6 +7594,13 @@ export type Database = {
         Args: { _connection_id: string }
         Returns: string
       }
+      get_department_whatsapp_credentials: {
+        Args: { _department_id: string }
+        Returns: {
+          whatsapp_api_key: string
+          whatsapp_instance_id: string
+        }[]
+      }
       get_gmail_tokens: {
         Args: { p_account_id: string }
         Returns: {
@@ -7463,30 +7647,6 @@ export type Database = {
           locked_until: string
         }[]
       }
-      get_own_reset_requests: {
-        Args: never
-        Returns: {
-          created_at: string
-          email: string
-          id: string
-          ip_address: string | null
-          reason: string | null
-          rejection_reason: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-          token_expires_at: string | null
-          updated_at: string
-          user_agent: string | null
-          user_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "password_reset_requests"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_profile_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_profile_role_for_check: {
         Args: { p_user_id: string }
@@ -7494,25 +7654,6 @@ export type Database = {
           access_level: string
           permissions: Json
           role: string
-        }[]
-      }
-      get_reset_requests_safe: {
-        Args: never
-        Returns: {
-          created_at: string
-          email: string
-          has_token: boolean
-          id: string
-          ip_address: string
-          reason: string
-          rejection_reason: string
-          reviewed_at: string
-          reviewed_by: string
-          status: string
-          token_expires_at: string
-          updated_at: string
-          user_agent: string
-          user_id: string
         }[]
       }
       get_team_profiles: {
@@ -7841,4 +7982,3 @@ export const Constants = {
     },
   },
 } as const
-
