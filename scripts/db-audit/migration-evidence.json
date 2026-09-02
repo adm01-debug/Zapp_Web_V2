@@ -28,6 +28,32 @@
       "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conteúdos fixados por hashes independentes."
     },
     {
+      "version": "20260628110559",
+      "filename": "20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
+      "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
+      "file_sql_sha256": "827daadac1390de5c06ed6fcf21d5ec29303caef252935ff847da72a6ddbfb30",
+      "ledger_name": "51d49930-e6c0-4491-ad50-f3c8fff72537",
+      "ledger_statements_sha256": "b20a4ef5d5d30c85ab434b76092746ec9053a4cf11fcf6e02cbcfc63dd080871",
+      "ledger_sql_sha256": "e435a177ad6aad4f1633730492115b98821fbe3c1d1ba08bc54495597f96d34d",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Um replay do zero pode alcançar esta migration com queues/queue_members/messages já adicionadas à publicação supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
+    },
+    {
+      "version": "20260827000100",
+      "filename": "20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+      "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+      "file_sql_sha256": "42ad08022519f2f9ab3c1c21ca3db6c9c12940fb0539c22bddb757ab304a2e25",
+      "ledger_name": "security_revoke_mcp_exec_from_authenticated",
+      "ledger_statements_sha256": "133944ad0b0fe4c329235c58600a9b8ff6366e444df56e030ecaa812bd0e7e23",
+      "ledger_sql_sha256": "07ef0e86941911e08504df545397e495c3801392a03d83f2aa3a886bdaaf9d1c",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "mcp_exec/mcp_exec_many sao infraestrutura do gateway MCP provisionada fora do fluxo de migrations; um replay do zero nunca as tem, entao REVOKE/GRANT direto falha com SQLSTATE 42883. O arquivo versionado envolve cada instrucao em um bloco DO idempotente (WHEN undefined_function) sem alterar o efeito em producao."
+    },
+    {
       "version": "20260827120000",
       "filename": "20260827120000_fk_indexes_backfill.sql",
       "file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
@@ -38,15 +64,15 @@
     {
       "version": "20260827120100",
       "filename": "20260827120100_schema_hygiene_views_policy_comments.sql",
-      "file_sha256": "a98a1fc36d6ed59a680ac20f7f0eccb59b85593499b0ddac227e78a24d58bf44",
-      "file_sql_sha256": "cd61a494d85c405b0eae90d20361f5e96fcb3f2feabc71c6400ddc4c09f494cf",
+      "file_sha256": "d76b80dfdc36d7f03258f3eb66f2f1587bfc05c0c148be8fa4949d84a1b1567d",
+      "file_sql_sha256": "975b137ded1c0e8e301bc00da2be615900aec63dab41cd616c0bac3c55344bec",
       "ledger_name": "schema_hygiene_views_policy_comments",
       "ledger_statements_sha256": "cc046ac0c3ac5797f51c744b53f3ed036ec342050642dec74e8385cdcdbc71b5",
       "ledger_sql_sha256": "1a7b83b79c40356946dc5faa3eb54972f958d3328b9c68cd9b4a7b59d1863e62",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
-      "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
+      "justification": "O array statements do ledger contém um resumo histórico (ex.: \"COMMENT ON FUNCTION ... x15 funcoes orfas (A-06);\"), enquanto o arquivo versionado preserva o replay completo, incluindo um guard idempotente (WHEN undefined_function) nos dois COMMENT ON FUNCTION de mcp_exec/mcp_exec_many — infra do gateway MCP ausente num replay do zero. Ambos os conteúdos ficam fixados por hash."
     },
     {
       "version": "20260827130000",
@@ -208,8 +234,8 @@
     {
       "version": "20260829020000",
       "filename": "20260829020000_mcp_exec_functions_harden.sql",
-      "file_sha256": "9c0471b1d72ae4636e3b059030397d831fe0860524c53d497048c6ec7a9474b5",
-      "file_sql_sha256": "018f8ff60ec100ec34aa7caa35d4d1f4d95100cddbf681407a2ff54ef17f8aaf",
+      "file_sha256": "09b47d51c3518cf9f8ac2910f3f29290cefc4324bbaf394fdc0072f7db820b0b",
+      "file_sql_sha256": "876399770e61c58eeab76161d96a74d7f55c9a923fecee05150089c3e9f1e61e",
       "ledger_name": "fix_reassign_absent_agents_last_seen_at",
       "ledger_statements_sha256": "153653d2bc3d08f05e04145162e92bd8afb9d181deb033a8fb931f942ccb726a",
       "ledger_sql_sha256": "f6c69d1415f35fa6126c520e37d11b9626e16fa8e5b522d6d652470adb024952",
@@ -221,7 +247,7 @@
         "file_sha256": "19f38bc1f5a4d7a4d649fe4b04c8af0cbe3d0a9085e73827e6e2e4c7a129609f",
         "file_sql_sha256": "5fed5405c17cb533e57654cee85f8874b82b222a0681ec12f8b1541575cd0796"
       },
-      "justification": "A versão do ledger foi ocupada pela correção de reatribuição enquanto o replay usa o mesmo prefixo para o hardening mcp_exec; a correção histórica é preservada na versão posterior relacionada."
+      "justification": "A versão do ledger foi ocupada pela correção de reatribuição enquanto o replay usa o mesmo prefixo para o hardening mcp_exec; a correção histórica é preservada na versão posterior relacionada. O arquivo também reaplica REVOKE/GRANT logo após o CREATE OR REPLACE: em produção é no-op (o CREATE OR REPLACE preserva a ACL de 20260827000100), mas num replay do zero as funções nascem aqui com EXECUTE default para PUBLIC."
     },
     {
       "version": "20260829020100",
