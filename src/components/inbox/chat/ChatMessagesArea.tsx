@@ -50,7 +50,6 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
 }, ref) => {
   const queryClient = useQueryClient();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -195,7 +194,6 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       <div className="flex justify-start pl-10 mt-4">
         <TypingIndicator isVisible={isContactTyping} userName={typingUserName} />
       </div>
-      <div ref={messagesEndRef} />
     </div>
   );
 }));
