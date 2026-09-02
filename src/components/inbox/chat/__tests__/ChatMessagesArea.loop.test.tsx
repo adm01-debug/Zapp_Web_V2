@@ -10,14 +10,38 @@
  * Com getItemKey estável (useCallback deps [messages]), o loop não ocorre.
  */
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea } from '../ChatMessagesArea';
 
-// jsdom não tem ResizeObserver — mock garante comportamento determinístico.
+// ResizeObserverMock que dispara o callback de forma assíncrona (setTimeout 0)
+// para evitar stack overflow: o virtual-core re-observa itens dentro do callback
+// de medição, o que causa recursão infinita se o disparo for síncrono.
 class ResizeObserverMock {
-  observe() {}
+  private cb: ResizeObserverCallback;
+  constructor(cb: ResizeObserverCallback) {
+    this.cb = cb;
+  }
+  observe(target: Element) {
+    setTimeout(() => {
+      this.cb(
+        [
+          {
+            target,
+            contentRect: {
+              height: 120, width: 800, top: 0, left: 0,
+              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),
+            } as DOMRectReadOnly,
+            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],
+            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],
+            devicePixelContentBoxSize: [],
+          },
+        ],
+        this,
+      );
+    }, 0);
+  }
   unobserve() {}
   disconnect() {}
 }
@@ -74,7 +98,7 @@ function makeProps(messages: Message[]) {
 }
 
 describe('ChatMessagesArea — loop de render (React #301)', () => {
-  it('não entra em loop de re-render ao renderizar mensagens (regressão f668828)', () => {
+  it('não entra em loop de re-render ao renderizar mensagens (regressão f668828)', async () => {
     const messages = [
       makeMessage('msg-1', 'Primeira mensagem com conteúdo razoável para altura'),
       makeMessage('msg-2', 'Segunda mensagem'),
@@ -83,20 +107,23 @@ describe('ChatMessagesArea — loop de render (React #301)', () => {
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    // Se o loop existir, o próprio React lança "Too many re-renders"
-    // durante o render — a asserção é a ausência do throw.
-    expect(() =>
-      render(
-        <QueryClientProvider client={queryClient}>
-          <div style={{ height: 600, overflowY: 'auto' }}>
-            <ChatMessagesArea {...makeProps(messages)} />
-          </div>
-        </QueryClientProvider>,
-      ),
-    ).not.toThrow();
+    // Se o loop existir, o próprio React lança "Too many re-renders".
+    render(
+      <QueryClientProvider client={queryClient}>
+        <div style={{ height: 600, overflowY: 'auto' }}>
+          <ChatMessagesArea {...makeProps(messages)} />
+        </div>
+      </QueryClientProvider>,
+    );
+
+    // Garante que o virtualizer realmente renderizou as mensagens,
+    // não apenas que o render não lançou.
+    await waitFor(() => {
+      expect(screen.getAllByTestId('bubble')).toHaveLength(messages.length);
+    }, { timeout: 10000 });
   }, 15000);
 
-  it('suporta troca da lista de mensagens (nova mensagem chega) sem loop', () => {
+  it('suporta troca da lista de mensagens (nova mensagem chega) sem loop', async () => {
     const initial = [makeMessage('msg-1', 'Oi'), makeMessage('msg-2', 'Tudo bem?')];
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -108,16 +135,22 @@ describe('ChatMessagesArea — loop de render (React #301)', () => {
       </QueryClientProvider>,
     );
 
+    await waitFor(() => {
+      expect(screen.getAllByTestId('bubble')).toHaveLength(initial.length);
+    }, { timeout: 10000 });
+
     const withNew = [...initial, makeMessage('msg-3', 'Nova mensagem chegando')];
-    expect(() =>
-      rerender(
-        <QueryClientProvider client={queryClient}>
-          <div style={{ height: 600, overflowY: 'auto' }}>
-            <ChatMessagesArea {...makeProps(withNew)} />
-          </div>
-        </QueryClientProvider>,
-      ),
-    ).not.toThrow();
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <div style={{ height: 600, overflowY: 'auto' }}>
+          <ChatMessagesArea {...makeProps(withNew)} />
+        </div>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('bubble')).toHaveLength(withNew.length);
+    }, { timeout: 10000 });
 
     unmount();
   }, 15000);
