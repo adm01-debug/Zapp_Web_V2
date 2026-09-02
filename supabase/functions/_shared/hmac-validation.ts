@@ -60,7 +60,7 @@ export async function verifyHmacSignature(
  * Timing-safe string comparison to prevent timing attacks.
  * Compares strings in constant time regardless of where they differ.
  */
-function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     // Still do a full comparison to maintain constant time
     let dummy = 0;
@@ -246,4 +246,183 @@ export class WebhookSecurityService {
 export function createWebhookValidator(secret: string, strictMode = false) {
   const service = new WebhookSecurityService(secret, strictMode);
   return (req: Request) => service.validateRequest(req);
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Webhook auth SHADOW MODE helpers
+ * ---------------------------------------------------------------------------
+ * Introduced to observe, via production logs, whether webhook-signature
+ * secrets are correctly configured on both sides (Supabase Secrets + the
+ * external provider) BEFORE a future PR flips these checks to enforcement
+ * (401 on invalid/missing signature).
+ *
+ * CONTRACT: none of these helpers ever throw, and their return value must
+ * NEVER be used to gate/short-circuit the HTTP response. They only validate
+ * + log with the `[WEBHOOK_AUTH_SHADOW]` marker so ops can grep logs later.
+ */
+
+export interface WebhookAuthShadowResult {
+  signaturePresent: boolean;
+  signatureValid: boolean;
+  reason: 'missing_signature' | 'missing_secret' | 'valid' | 'invalid_signature';
+}
+
+/**
+ * Shadow-validates a simple HMAC-SHA256-over-raw-body signature (formats
+ * `sha256=<hex>` or bare `<hex>`), found via `extractSignatureFromHeaders`.
+ * Suitable for providers that sign the whole payload directly (Evolution
+ * API's `x-evolution-signature`, Meta/WhatsApp Cloud's `x-hub-signature-256`).
+ *
+ * Never blocks — logs the outcome and returns it for callers that want to
+ * inspect it (e.g. tests), but the boolean MUST NOT gate the response.
+ */
+export async function logWebhookAuthShadow(
+  handlerName: string,
+  headers: Headers,
+  payload: string,
+  secret: string | undefined | null,
+  expectedHeader?: string,
+): Promise<WebhookAuthShadowResult> {
+  // Sem expectedHeader, extractSignatureFromHeaders escolhe pela ordem de
+  // precedencia generica e pode validar o header de outro provedor, produzindo
+  // resultado sombra falso. Handlers que sabem seu header passam ele aqui.
+  const signature = expectedHeader
+    ? headers.get(expectedHeader)
+    : extractSignatureFromHeaders(headers);
+
+  if (!signature) {
+    console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura ausente/invalida — modo sombra, requisicao processada mesmo assim`);
+    return { signaturePresent: false, signatureValid: false, reason: 'missing_signature' };
+  }
+
+  if (!secret) {
+    console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura presente mas secret nao configurado no ambiente — modo sombra, requisicao processada mesmo assim`);
+    return { signaturePresent: true, signatureValid: false, reason: 'missing_secret' };
+  }
+
+  const valid = await verifyHmacSignature(payload, signature, secret);
+  if (!valid) {
+    console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura presente mas invalida — modo sombra, requisicao processada mesmo assim`);
+    return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
+  }
+
+  // Fica em warn porque o eslint do repo so permite console.warn/error em
+  // edge functions; o marcador ':' assinatura valida' ja separa este caso dos
+  // ramos de anomalia num grep.
+  console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura valida`);
+  return { signaturePresent: true, signatureValid: true, reason: 'valid' };
+}
+
+/**
+ * Shadow-validates ElevenLabs' `ElevenLabs-Signature` header (format
+ * `t=<unix_seconds>,v0=<hmac_sha256_hex>`, HMAC computed over
+ * `${t}.${payload}` per ElevenLabs' documented HMAC scheme). Falls back to
+ * a legacy `xi-signature` header name in case older tooling/docs used it.
+ *
+ * Never blocks — shadow mode only.
+ */
+export async function logElevenLabsAuthShadow(
+  headers: Headers,
+  payload: string,
+  secret: string | undefined | null,
+): Promise<WebhookAuthShadowResult> {
+  const signatureHeader = headers.get('elevenlabs-signature') || headers.get('xi-signature');
+
+  if (!signatureHeader) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura ausente/invalida — modo sombra, requisicao processada mesmo assim');
+    return { signaturePresent: false, signatureValid: false, reason: 'missing_signature' };
+  }
+
+  if (!secret) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura presente mas secret nao configurado no ambiente — modo sombra, requisicao processada mesmo assim');
+    return { signaturePresent: true, signatureValid: false, reason: 'missing_secret' };
+  }
+
+  try {
+    const parts: Record<string, string> = {};
+    for (const part of signatureHeader.split(',')) {
+      const eqIndex = part.indexOf('=');
+      if (eqIndex === -1) continue;
+      parts[part.slice(0, eqIndex).trim()] = part.slice(eqIndex + 1).trim();
+    }
+    const timestamp = parts['t'];
+    const v0 = parts['v0'];
+
+    if (!timestamp || !v0) {
+      console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura ausente/invalida — formato inesperado (esperado t=...,v0=...), modo sombra, requisicao processada mesmo assim');
+      return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
+    }
+
+    const valid = await verifyHmacSignature(`${timestamp}.${payload}`, v0, secret);
+    if (!valid) {
+      console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura presente mas invalida — modo sombra, requisicao processada mesmo assim');
+      return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
+    }
+
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: assinatura valida');
+    return { signaturePresent: true, signatureValid: true, reason: 'valid' };
+  } catch (error) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] elevenlabs-webhook: erro ao processar assinatura — modo sombra, requisicao processada mesmo assim', error);
+    return { signaturePresent: true, signatureValid: false, reason: 'invalid_signature' };
+  }
+}
+
+/**
+ * Decodes (WITHOUT cryptographically verifying) a Google Pub/Sub OIDC bearer
+ * token from the `Authorization` header and logs presence + `aud`/`iss`
+ * claims for shadow observation.
+ *
+ * LIMITATION: this does NOT verify the JWT signature against Google's
+ * public keys (JWKS), nor does it validate audience/issuer against expected
+ * values. Full OIDC verification is a follow-up iteration — see the PR body
+ * for details. This is intentionally log-only for the shadow-mode rollout.
+ *
+ * Never blocks — shadow mode only.
+ */
+/**
+ * gmail-webhook e publico e este token nao passou por verificacao de
+ * assinatura: qualquer um pode escolher aud/iss. Sem sanitizar, um CR/LF no
+ * claim forja linhas `[WEBHOOK_AUTH_SHADOW]` inteiras no log.
+ */
+function sanitizeClaimForLog(value: unknown): string {
+  if (typeof value !== 'string') return value === undefined ? '(ausente)' : '(invalido)';
+  const flat = Array.from(value, (ch) => {
+    const code = ch.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f ? ' ' : ch;
+  }).join('');
+  return flat.length > 200 ? `${flat.slice(0, 200)}…(truncado)` : flat;
+}
+
+export function logGmailOidcAuthShadow(headers: Headers): void {
+  const authHeader = headers.get('authorization');
+
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] gmail-webhook: assinatura ausente/invalida — header Authorization Bearer (OIDC) ausente, modo sombra, requisicao processada mesmo assim');
+    return;
+  }
+
+  const token = authHeader.slice(authHeader.indexOf(' ') + 1).trim();
+  const segments = token.split('.');
+  if (segments.length !== 3) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] gmail-webhook: assinatura ausente/invalida — token OIDC malformado (nao e um JWT valido), modo sombra, requisicao processada mesmo assim');
+    return;
+  }
+
+  try {
+    const claims = JSON.parse(decodeJwtSegment(segments[1])) as { aud?: string; iss?: string };
+    console.warn(
+      `[WEBHOOK_AUTH_SHADOW] gmail-webhook: token OIDC presente (assinatura NAO verificada nesta etapa — ver limitacao no PR) aud=${sanitizeClaimForLog(claims.aud)} iss=${sanitizeClaimForLog(claims.iss)}`
+    );
+  } catch (error) {
+    console.warn('[WEBHOOK_AUTH_SHADOW] gmail-webhook: assinatura ausente/invalida — falha ao decodificar payload do JWT, modo sombra, requisicao processada mesmo assim', error);
+  }
+}
+
+function decodeJwtSegment(segment: string): string {
+  const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder('utf-8').decode(bytes);
 }
