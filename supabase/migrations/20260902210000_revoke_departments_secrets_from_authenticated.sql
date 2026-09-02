@@ -35,3 +35,11 @@ AS $function$
   WHERE d.id = _department_id
     AND public.is_admin_or_supervisor(auth.uid());
 $function$;
+
+-- Achado do cubic: funcao SECURITY DEFINER cria com EXECUTE aberto para
+-- PUBLIC por padrao do Postgres (o predicado de role no WHERE ja barrava
+-- anon/nao-admin na pratica, mas a ACL ficava permissiva demais). Mesmo
+-- padrao de get_connection_qr_code (PR #125): revoga de PUBLIC/anon, deixa
+-- so authenticated e service_role.
+REVOKE EXECUTE ON FUNCTION public.get_department_whatsapp_credentials(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_department_whatsapp_credentials(uuid) TO authenticated, service_role;
