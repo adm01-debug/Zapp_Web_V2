@@ -14,19 +14,20 @@ const _pendingFetch = new Map<string, Promise<AppRole[]>>();
        return _pendingFetch.get(userId)!;
      }
 
-     const promise = supabase
-       .from('user_roles')
-       .select('role')
-       .eq('user_id', userId)
-       .then(({ data, error }) => {
-         _pendingFetch.delete(userId);
-         if (error) throw error;
-         return (data?.map((r) => r.role) || []) as AppRole[];
-       })
-       .catch((err) => {
-         _pendingFetch.delete(userId);
-         throw err;
-       });
+     const promise = Promise.resolve<AppRole[]>(
+       supabase
+         .from('user_roles')
+         .select('role')
+         .eq('user_id', userId)
+         .then(({ data, error }) => {
+           _pendingFetch.delete(userId);
+           if (error) throw error;
+           return (data?.map((r) => r.role) || []) as AppRole[];
+         })
+     ).catch((err) => {
+       _pendingFetch.delete(userId);
+       throw err;
+     });
 
      _pendingFetch.set(userId, promise);
      return promise;

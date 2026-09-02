@@ -14,7 +14,7 @@ interface QueueContact {
   avatar_url: string | null;
   assigned_to: string | null;
   created_at: string;
-  assigned_agent?: { name: string; avatar_url: string | null };
+  assigned_agent?: { name: string | null; avatar_url: string | null } | null;
   messages_count: number;
   last_message_at: string | null;
 }
@@ -48,7 +48,7 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
                     <TableCell>
                       {contact.assigned_agent ? (
                         <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent.avatar_url || undefined} /><AvatarFallback className="text-xs">{contact.assigned_agent.name[0]}</AvatarFallback></Avatar>
+                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent.avatar_url || undefined} /><AvatarFallback className="text-xs">{(contact.assigned_agent.name ?? '?')[0]}</AvatarFallback></Avatar>
                           <span className="text-sm">{contact.assigned_agent.name}</span>
                         </div>
                       ) : <Badge variant="outline" className="text-warning border-warning/30">Aguardando</Badge>}

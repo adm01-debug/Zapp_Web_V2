@@ -7,7 +7,7 @@ interface RateLimitLog {
   endpoint: string;
   user_id: string | null;
   request_count: number;
-  blocked: boolean;
+  blocked: boolean | null;
   user_agent: string | null;
   country: string | null;
   city: string | null;
