@@ -373,7 +373,7 @@ Legenda de estado no V2: **A** = ausente · **P** = parcial · (evidência entre
 
 #### 008 — PR Size Gate + Notify CI Failure
 - **Prioridade:** P3 · **Esforço:** S · **Gate:** —
-- **Origem:** V3 `pr-size-gate.yml`, `notify-ci-failure.yml` (webhook para Abner TI).
+- **Origem:** V3 `pr-size-gate.yml`, `notify-ci-failure.yml` (webhook de falha de CI para o canal do time de TI).
 - **Estado no V2:** AUSENTE.
 - **Ação:** limite advisory de 800 linhas (label `size/XL`, sem bloquear); notificação de falha de `ci.yml`/`db-guard.yml` na `main` via Evolution GO (`/message/sendText` do `_shared/evolution-go-routes.ts`) para o grupo de TI — secret `CI_ALERT_WHATSAPP_JID`.
 - **Aceite:** falha simulada na `main` gera mensagem no WhatsApp em < 2 min.

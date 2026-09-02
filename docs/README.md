@@ -91,4 +91,4 @@
 
 ---
 
-**Última atualização:** 2026-04-12
+**Última atualização:** 2026-09-01
