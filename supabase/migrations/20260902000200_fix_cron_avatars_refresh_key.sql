@@ -4,7 +4,10 @@
 -- Fix: switch to zapp_anon_key (valid Supabase API key; function uses internal
 -- SUPABASE_SERVICE_ROLE_KEY env for data access, so anon key suffices for gateway auth).
 
-SELECT cron.unschedule('avatars-refresh');
+DO $$ BEGIN
+  PERFORM cron.unschedule('avatars-refresh');
+EXCEPTION WHEN undefined_object THEN NULL;
+END $$;
 
 SELECT cron.schedule(
   'avatars-refresh',

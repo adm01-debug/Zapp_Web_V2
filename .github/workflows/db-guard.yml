@@ -119,12 +119,12 @@ jobs:
           FALHA=0
           for func in mcp_exec mcp_exec_many; do
             acl=$(psql "$DESTINO_URL" -At -c \
-              "SELECT proacl::text FROM pg_proc p \
+              "SELECT COALESCE(proacl::text, '{=X/postgres}') FROM pg_proc p \
                JOIN pg_namespace n ON n.oid=p.pronamespace \
                WHERE n.nspname='public' AND p.proname='${func}'")
             echo "${func} ACL: ${acl}"
             case "${acl}" in
-              *authenticated=X*|*anon=X*|*,=X*|=X/*)
+              *authenticated=X*|*anon=X*|*{=X*|*,=X*|=X/*)
                 echo "FALHA: ${func} executavel por authenticated, anon ou PUBLIC!"
                 FALHA=1
                 ;;
