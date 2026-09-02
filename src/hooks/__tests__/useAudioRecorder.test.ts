@@ -63,6 +63,17 @@ describe('useAudioRecorder', () => {
     expect(typeof result.current.uploadAudio).toBe('function');
   });
 
+  it('returns a stable storage object URL after upload', async () => {
+    const { result } = renderHook(() => useAudioRecorder());
+
+    let objectUrl: string | undefined;
+    await act(async () => {
+      objectUrl = await result.current.uploadAudio(new Blob(['audio']), 'conversation-1');
+    });
+
+    expect(objectUrl).toBe('https://example.com/test.webm');
+  });
+
   it('exposes formatDuration function', () => {
     const { result } = renderHook(() => useAudioRecorder());
     expect(typeof result.current.formatDuration).toBe('function');

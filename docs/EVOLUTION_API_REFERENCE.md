@@ -1,5 +1,12 @@
 # ⚡ EVOLUTION API v2 — Análise Técnica Completa
 
+> ⚠️ **REFERÊNCIA HISTÓRICA (v2).** A instalação oficial em produção é a **Evolution GO**
+> (`evoapicloud/evolution-go` na VPS Hostinger — `evolution-go-rxj2.srv1481814.hstgr.cloud`).
+> O código continua falando o "dialeto" v2 internamente e o tradutor
+> `supabase/functions/_shared/evolution-go-routes.ts` converte cada chamada para o
+> contrato GO; o webhook GO é normalizado por `_shared/evolution-go-adapter.ts`.
+> Mapa completo de paridade/gaps: `docs/migration/GO_GAPS.md`.
+
 > **Guia de Referência Máxima** | Todos os Endpoints • Webhooks • Integrações • Automações  
 > Versão de Referência: Evolution API v2.x (2025) | `doc.evolution-api.com/v2`
 

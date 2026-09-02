@@ -12,10 +12,31 @@ export interface GoRoute {
   method: string;
   body?: unknown;
   auth: 'instance' | 'admin';
+  // Content-Type alternativo (workaround do jid_validation_middleware do GO,
+  // que corrompe arrays em application/json; o handler faz o bind normalmente).
+  contentType?: string;
 }
 
-const jidToNumber = (jid?: string): string | undefined =>
-  typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '').replace(/@.*$/, '') : undefined;
+// Remove só o sufixo de device (:NN@) preservando o domínio: o ParseJID do GO
+// aceita JID completo, e é o único jeito de @g.us/@lid/@broadcast chegarem
+// corretos (número puro perde o domínio e corrompe grupos e chats LID).
+const jidWithoutDevice = (jid?: string): string | undefined =>
+  typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '') : undefined;
+
+
+// /user/avatar e /user/info do GO PENDURAM (sem resposta ate o timeout do caller)
+// quando number vem sem dominio; com JID completo respondem em ~1s. Validado ao
+// vivo em 28/08/2026 na instancia evolution-go-rxj2 (0.7.2).
+// LID (identificador interno do WhatsApp) tem >= 14 digitos e so resolve com @lid;
+// com @s.whatsapp.net a GO devolve 500 "no profile picture" e a foto se perde.
+// Telefone real (BR: 12-13 digitos) usa @s.whatsapp.net. Quem ja tem dominio
+// (@lid, @g.us) passa intacto. Confirmado ao vivo em 28/08: mesmo LID => 500 com
+// @s.whatsapp.net, 200 com @lid.
+const toUserJid = (n?: unknown): string | undefined => {
+  if (typeof n !== 'string' || !n) return undefined;
+  if (n.includes('@')) return n;
+  return /^\d{14,}$/.test(n) ? `${n}@lid` : `${n}@s.whatsapp.net`;
+};
 
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
@@ -30,12 +51,16 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   const b = (body ?? {}) as Record<string, any>;
   const m = (re: RegExp) => re.test(path);
 
+  // quoted v2 {key:{id, participant}} → GO {messageId, participant}
+  const quotedToGo = (quoted: any) =>
+    quoted?.key?.id ? { quoted: { messageId: quoted.key.id, participant: quoted.key.participant ?? '' } } : {};
+
   // ── Mensagens ──
   if (m(/^\/message\/sendText\/[^/]+$/)) {
     return { path: '/send/text', method: 'POST', auth: 'instance', body: {
       number: b.number, text: b.text,
       ...(b.delay ? { delay: b.delay } : {}),
-      ...(b.quoted?.key?.id ? { quoted: { messageId: b.quoted.key.id, participant: b.quoted.key.participant ?? '' } } : {}),
+      ...quotedToGo(b.quoted),
       ...(b.mentionsEveryOne ? { mentionAll: true } : {}),
       ...(Array.isArray(b.mentioned) && b.mentioned.length ? { mentionedJid: b.mentioned } : {}),
     }};
@@ -46,33 +71,55 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       ...(b.caption ? { caption: b.caption } : {}),
       ...(b.fileName ? { filename: b.fileName } : {}),
       ...(b.delay ? { delay: b.delay } : {}),
+      ...quotedToGo(b.quoted),
     }};
   }
   if (m(/^\/message\/sendWhatsAppAudio\/[^/]+$/)) {
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
       number: b.number, url: b.audio ?? b.media, type: 'audio',
       ...(b.delay ? { delay: b.delay } : {}),
+      ...quotedToGo(b.quoted),
     }};
   }
   if (m(/^\/message\/sendPtv\/[^/]+$/))
+    // GO tem PTV nativo (nota redonda de vídeo) via type 'ptv' no /send/media
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
-      number: b.number, url: b.video, type: 'video',
+      number: b.number, url: b.video, type: 'ptv',
       ...(b.delay ? { delay: b.delay } : {}),
     }};
   if (m(/^\/message\/sendSticker\/[^/]+$/))
-    return { path: '/send/sticker', method: 'POST', auth: 'instance', body: { number: b.number, sticker: b.sticker } };
+    return { path: '/send/sticker', method: 'POST', auth: 'instance', body: { number: b.number, sticker: b.sticker, ...quotedToGo(b.quoted) } };
   if (m(/^\/message\/sendLocation\/[^/]+$/))
     return { path: '/send/location', method: 'POST', auth: 'instance', body: { number: b.number, name: b.name, address: b.address, latitude: b.latitude, longitude: b.longitude } };
-  if (m(/^\/message\/sendContact\/[^/]+$/))
-    return { path: '/send/contact', method: 'POST', auth: 'instance', body: b };
+  if (m(/^\/message\/sendContact\/[^/]+$/)) {
+    // v2 {contact:[{fullName, organization, phoneNumber|wuid}]} → GO {vcard:{fullName, organization, phone}}
+    const c = Array.isArray(b.contact) ? b.contact[0] : b.contact;
+    return { path: '/send/contact', method: 'POST', auth: 'instance', body: {
+      number: b.number,
+      vcard: {
+        fullName: c?.fullName ?? c?.name ?? '',
+        ...(c?.organization ? { organization: c.organization } : {}),
+        phone: c?.phoneNumber ?? c?.wuid ?? c?.phone ?? '',
+      },
+    }};
+  }
   if (m(/^\/message\/sendPoll\/[^/]+$/))
     return { path: '/send/poll', method: 'POST', auth: 'instance', body: {
       number: b.number, question: b.name, maxAnswer: b.selectableCount ?? 1, options: b.values,
     }};
   if (m(/^\/message\/sendList\/[^/]+$/))
-    return { path: '/send/list', method: 'POST', auth: 'instance', body: b };
+    // v2 footer → GO footerText; rows {title, description, rowId} batem.
+    // O GO rejeita footer vazio ("footer is required") — v2 tratava como opcional.
+    return { path: '/send/list', method: 'POST', auth: 'instance', body: {
+      number: b.number, title: b.title, description: b.description,
+      buttonText: b.buttonText, sections: b.sections,
+      footerText: b.footer || ' ',
+      ...(b.delay ? { delay: b.delay } : {}),
+    }};
   if (m(/^\/message\/sendButtons\/[^/]+$/))
-    return { path: '/send/button', method: 'POST', auth: 'instance', body: b };
+    return { path: '/send/button', method: 'POST', auth: 'instance', body: {
+      ...b, footer: b.footer || ' ',
+    }};
   if (m(/^\/message\/sendStatus\/[^/]+$/)) {
     const type = b.type ?? (b.content && !/^https?:\/\//.test(String(b.content)) ? 'text' : 'media');
     if (type === 'text')
@@ -81,7 +128,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   }
   if (m(/^\/message\/sendReaction\/[^/]+$/))
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
-      number: jidToNumber(b.key?.remoteJid), reaction: b.reaction, id: b.key?.id,
+      number: jidWithoutDevice(b.key?.remoteJid), reaction: b.reaction, id: b.key?.id,
       fromMe: b.key?.fromMe === true,
       ...(b.key?.participant ? { participant: b.key.participant } : {}),
     }};
@@ -101,7 +148,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     const msgs = Array.isArray(b.readMessages) ? b.readMessages : [];
     return { path: '/message/markread', method: 'POST', auth: 'instance', body: {
       id: msgs.map((x: any) => x?.id).filter(Boolean),
-      number: jidToNumber(msgs[0]?.remoteJid),
+      number: jidWithoutDevice(msgs[0]?.remoteJid),
     }};
   }
   // GO exige o waE2E.Message com os nós de mídia (URL/mediaKey/directPath).
@@ -117,15 +164,40 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/chat\/updateBlockStatus\/[^/]+$/))
     return { path: b.status === 'unblock' ? '/user/unblock' : '/user/block', method: 'POST', auth: 'instance', body: { number: b.number } };
   if (m(/^\/chat\/fetchProfilePictureUrl\/[^/]+$/))
-    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: b.number, preview: false } };
+    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: toUserJid(b.number), preview: false } };
+  if (m(/^\/(chat|message)\/archiveChat\/[^/]+$/))
+    return { path: b.archive === false ? '/chat/unarchive' : '/chat/archive', method: 'POST', auth: 'instance', body: { chat: b.chat ?? b.lastMessage?.key?.remoteJid } };
+  if (m(/^\/chat\/findContacts\/[^/]+$/))
+    return { path: '/user/contacts', method: 'GET', auth: 'instance' };
+  if (m(/^\/chat\/fetchProfile\/[^/]+$/))
+    return { path: '/user/info', method: 'POST', auth: 'instance', body: {
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
+    }};
 
   // ── Instância ──
   if (m(/^\/instance\/connectionState\/[^/]+$/))
     return { path: '/instance/status', method: 'GET', auth: 'instance' };
   if (m(/^\/instance\/fetchInstances/))
     return { path: '/instance/all', method: 'GET', auth: 'admin' };
-  if (m(/^\/instance\/connect\/[^/]+$/))
-    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {} };
+  if (m(/^\/instance\/create$/))
+    // v2 {instanceName, integration, qrcode,…} → GO {name, token, instanceId?}.
+    // O GO exige token; a edge gera um default (tradutor fica determinístico).
+    return { path: '/instance/create', method: 'POST', auth: 'admin', body: {
+      name: b.instanceName ?? b.name,
+      ...(b.token ? { token: b.token } : {}),
+      ...(b.instanceId ? { instanceId: b.instanceId } : {}),
+    }};
+  if (m(/^\/instance\/connect\/[^/]+$/)) {
+    // NUNCA conectar com body vazio: o GO PERSISTE webhook/subscribe do body —
+    // {} apaga o webhook da instância e derruba a entrega de eventos (o guard
+    // instance.Webhook != "" também bloqueia o WEBHOOK_URL global). Reafirma
+    // a configuração a cada connect (auto-reparo).
+    const supabaseUrl = (Deno.env.get('SUPABASE_URL') ?? '').replace(/\/+$/, '');
+    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {
+      subscribe: ['ALL'], immediate: true,
+      ...(supabaseUrl ? { webhookUrl: `${supabaseUrl}/functions/v1/evolution-webhook` } : {}),
+    }};
+  }
   if (m(/^\/instance\/restart\/[^/]+$/))
     return { path: '/instance/reconnect', method: 'POST', auth: 'instance', body: {} };
   if (m(/^\/instance\/logout\/[^/]+$/))
@@ -141,7 +213,9 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/group\/create\/[^/]+$/))
     return { path: '/group/create', method: 'POST', auth: 'instance', body: { groupName: b.subject, participants: b.participants } };
   if (m(/^\/group\/fetchAllGroups\/[^/]+$/))
-    return { path: '/group/myall', method: 'GET', auth: 'instance' };
+    // /group/list = GetJoinedGroups (todos os grupos). /group/myall filtra por
+    // dono com JID mutilado e está "TODO: not working" no fonte — retornava vazio.
+    return { path: '/group/list', method: 'GET', auth: 'instance' };
   if (m(/^\/group\/findGroupInfos\/[^/]+$/) || m(/^\/group\/participants\/[^/]+$/))
     return { path: '/group/info', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid ?? q.get('groupJid') } };
   if (m(/^\/group\/updateGroupSubject\/[^/]+$/))
@@ -149,7 +223,10 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/group\/updateGroupDescription\/[^/]+$/))
     return { path: '/group/description', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, description: b.description } };
   if (m(/^\/group\/updateParticipant\/[^/]+$/))
-    return { path: '/group/participant', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, action: b.action, participants: b.participants } };
+    // contentType text/json contorna o jid_validation_middleware do GO, que em
+    // application/json zera arrays (participants) e aborta 400; o handler faz
+    // ShouldBindBodyWithJSON e aceita normalmente.
+    return { path: '/group/participant', method: 'POST', auth: 'instance', contentType: 'text/json', body: { groupJid: b.groupJid, action: b.action, participants: b.participants } };
   if (m(/^\/group\/updateSetting\/[^/]+$/))
     return { path: '/group/settings', method: 'POST', auth: 'instance', body: { groupJid: b.groupJid, action: b.action } };
   if (m(/^\/group\/inviteCode\/[^/]+$/))
@@ -166,10 +243,54 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   // ── Perfil ──
   if (m(/^\/profile\/updateProfilePicture\/[^/]+$/))
     return { path: '/user/profilePicture', method: 'POST', auth: 'instance', body: { image: b.picture } };
+  if (m(/^\/profile\/removeProfilePicture\/[^/]+$/))
+    return { path: '/user/profilePicture', method: 'POST', auth: 'instance', body: { image: '' } };
+  if (m(/^\/profile\/updateProfileName\/[^/]+$/))
+    return { path: '/user/profileName', method: 'POST', auth: 'instance', body: { name: b.name } };
+  if (m(/^\/profile\/updateProfileStatus\/[^/]+$/))
+    return { path: '/user/profileStatus', method: 'POST', auth: 'instance', body: { status: b.status } };
+  if (m(/^\/profile\/fetchProfilePicture\/[^/]+/))
+    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: {
+      number: toUserJid(b.number ?? q.get('number')), preview: false,
+    }};
+  if (m(/^\/profile\/fetchBusinessProfile\/[^/]+$/))
+    return { path: '/user/info', method: 'POST', auth: 'instance', body: {
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
+    }};
+  if (m(/^\/profile\/updatePrivacySettings\/[^/]+$/))
+    // v2 lowercase → GO camelCase (valores PrivacySetting são os mesmos: all/contacts/none/…)
+    return { path: '/user/privacy', method: 'POST', auth: 'instance', body: {
+      ...(b.readreceipts ? { readReceipts: b.readreceipts } : {}),
+      ...(b.profile ? { profile: b.profile } : {}),
+      ...(b.status ? { status: b.status } : {}),
+      ...(b.online ? { online: b.online } : {}),
+      ...(b.last ? { lastSeen: b.last } : {}),
+      ...(b.groupadd ? { groupAdd: b.groupadd } : {}),
+      ...(b.calladd ? { callAdd: b.calladd } : {}),
+    }};
 
-  // Não mapeado: passa intacto (paths GO nativos ou endpoints sem equivalente:
-  // findChats/findMessages/findContacts, webhook/find|set, markMessageAsUnread,
-  // inviteInfo, toggleEphemeral, rabbitmq/sqs/template/business/proxy/evoai/n8n/
-  // kafka/nats/pusher, profile/fetchProfile — GO responde 404).
+  // ── Labels ──
+  if (m(/^\/label\/findLabels\/[^/]+$/))
+    return { path: '/label/list', method: 'GET', auth: 'instance' };
+  if (m(/^\/label\/handleLabel\/[^/]+$/))
+    return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
+      jid: b.number, labelId: b.labelId,
+    }};
+
+  // ── Webhook por instância (D1 do GO_GAPS: reconecta com webhookUrl) ──
+  if (m(/^\/webhook\/set\/[^/]+$/)) {
+    const url = b.webhook?.url ?? b.url;
+    return { path: '/instance/connect', method: 'POST', auth: 'instance', body: {
+      ...(url ? { webhookUrl: url } : {}),
+      subscribe: ['ALL'],
+      immediate: true,
+    }};
+  }
+
+  // Não mapeado: passa intacto (paths GO nativos ou endpoints v2 sem equivalente:
+  // findChats/findMessages, webhook/find, markMessageAsUnread, sendTemplate,
+  // instance/setPresence, settings/set|find, inviteInfo, toggleEphemeral, call/offerCall,
+  // chatwoot/typebot/openai/dify/flowise/evolutionBot/rabbitmq/sqs/kafka/nats/pusher/
+  // template/business/proxy/evoai/n8n — GO responde 404, falha explícita).
   return null;
 }

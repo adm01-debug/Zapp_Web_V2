@@ -69,11 +69,14 @@ Deno.serve(async (req) => {
     }
 
     for (const alert of alertsToCreate) {
+      // Schema real de warroom_alerts: alert_type/title/message/source
+      // (severity/description/metadata não existem — o insert antigo falhava
+      // com PGRST204 e o alerta crítico nunca era gravado).
       await supabase.from('warroom_alerts').insert({
-        alert_type: 'connection_down', severity: 'critical',
-        title: `Conexão ${alert.instance_id} desconectada`,
-        description: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp.`,
-        metadata: { connection_id: alert.connection_id, instance_id: alert.instance_id },
+        alert_type: 'critical',
+        title: `🔴 Conexão ${alert.instance_id} desconectada`,
+        message: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp. Reconecte para evitar perda de mensagens.`,
+        source: 'connection-health-check',
       }).then(({ error }) => { if (error) log.warn("Failed to create warroom alert", { error: error.message }); });
     }
 

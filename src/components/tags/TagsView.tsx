@@ -168,7 +168,7 @@ export function TagsView() {
                 Nova Etiqueta
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Criar Nova Etiqueta</DialogTitle>
               </DialogHeader>
@@ -185,7 +185,7 @@ export function TagsView() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTag} onOpenChange={() => setEditingTag(null)}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Editar Etiqueta</DialogTitle>
           </DialogHeader>

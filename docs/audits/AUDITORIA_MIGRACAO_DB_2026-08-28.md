@@ -316,7 +316,7 @@ Regras do plano: **nenhuma etapa executa DROP/ALTER destrutivo sem sua aprovaç�
 
 ### Bloco J — Performance e manutenção contínua (89–94)
 89. Após 30 dias de produção, revisar `pg_stat_user_indexes` e listar índices nunca usados dos 128 novos — **relatório apenas**; qualquer DROP é ⚠️APROVAÇÃO.
-90. Validar as métricas do tuning de autovacuum (`20260827130500_vacuum_maintenance_m05`) contra o crescimento real de `messages`/`contacts`.
+90. Validar as métricas do tuning de autovacuum (`20260827130500_vacuum_autovacuum_threshold_reset_m05`) contra o crescimento real de `messages`/`contacts`.
 91. Estabelecer revisão mensal de `pg_stat_statements` (top 10 por tempo total) com registro em `docs/audits/`.
 92. Definir gatilho de particionamento futuro de `messages` (ex.: > 5 milhões de linhas ou > 10 GB) e o plano de execução — só planejamento agora.
 93. Monitorar bloat (`db_table_bloat`) trimestralmente e agendar `VACUUM (FULL)`/`pg_repack` se exceder limiar definido.

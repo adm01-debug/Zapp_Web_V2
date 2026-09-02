@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ElevenLabsSFXSchema, parseBody } from "../_shared/schemas.ts";
+import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 Deno.serve(async (req) => {
@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ElevenLabsSFXSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { prompt, duration, mode } = parsed.data;
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");

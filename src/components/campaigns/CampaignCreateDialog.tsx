@@ -49,7 +49,7 @@ export function CampaignCreateDialog({ open, onOpenChange, createCampaign }: Cam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Megaphone className="w-5 h-5 text-primary" />

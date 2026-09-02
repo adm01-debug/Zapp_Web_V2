@@ -147,7 +147,7 @@ export function TalkXBlacklist() {
               Adicionar
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Adicionar à Lista Negra</DialogTitle>
             </DialogHeader>

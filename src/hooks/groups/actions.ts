@@ -37,14 +37,15 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
 
         const apiGroups = Array.isArray(data) ? data : (data?.data || data?.groups || []);
         for (const g of apiGroups) {
-          const groupJid = g.id || g.jid || g.groupJid;
+          // Shapes: Evolution v2 {id, subject, desc, size} · Evolution GO/whatsmeow {JID, Name, Topic, Participants}
+          const groupJid = g.id || g.jid || g.groupJid || g.JID;
           if (!groupJid) continue;
           const { error: upsertError } = await supabase.from('whatsapp_groups').upsert({
             group_id: groupJid,
-            name: g.subject || g.name || 'Grupo sem nome',
-            description: g.desc || g.description || null,
-            participant_count: g.size || g.participants?.length || 0,
-            is_admin: g.announce === true || g.iAmAdmin === true,
+            name: g.subject || g.name || g.Name || 'Grupo sem nome',
+            description: g.desc || g.description || g.Topic || null,
+            participant_count: g.size || g.participants?.length || g.Participants?.length || 0,
+            is_admin: g.announce === true || g.iAmAdmin === true || g.IsAnnounce === true,
             whatsapp_connection_id: conn.id,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'group_id' });

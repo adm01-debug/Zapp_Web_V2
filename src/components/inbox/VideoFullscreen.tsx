@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Download, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,10 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
     if (videoRef.current) videoRef.current.playbackRate = newRate;
   };
 
-  return (
+  // Portal para document.body: ancestrais com transform (framer-motion whileHover/scale
+  // nos bubbles) viram containing block de position:fixed e o fullscreen renderiza
+  // dentro da própria mensagem em vez de cobrir a tela.
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -67,6 +71,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         onLoadedMetadata={() => { if (videoRef.current) videoRef.current.playbackRate = playbackRate; }}
         className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"
       />
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }

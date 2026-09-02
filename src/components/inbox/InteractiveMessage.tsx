@@ -157,7 +157,7 @@ export function InteractiveMessageDisplay({
       {/* List Dialog */}
       {interactive.type === 'list' && interactive.sections && (
         <Dialog open={listOpen} onOpenChange={setListOpen}>
-          <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+          <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0 gap-0 overflow-hidden">
             <DialogHeader className="p-4 pb-2 border-b border-border">
               <DialogTitle className="flex items-center gap-2 text-base">
                 <List className="w-5 h-5 text-primary" />

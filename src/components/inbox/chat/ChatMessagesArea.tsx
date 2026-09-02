@@ -44,7 +44,7 @@ export interface ChatMessagesAreaRef {
   scrollToMessage: (messageId: string) => void;
 }
 
-export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({
+export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
@@ -62,19 +62,30 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     }
   }, []);
 
+  // getItemKey PRECISA ter identidade estável entre renders: em
+  // @tanstack/react-virtual 3.13.x, options.getItemKey é dependência do memo
+  // getMeasurementOptions do virtual-core; uma closure inline nova a cada
+  // render dispara notify() → onChange → dispatch do useReducer DURANTE a
+  // fase de render (getVirtualItems no JSX), causando loop infinito
+  // ("Too many re-renders" em dev / React #301 minificado em produção).
+  const getItemKey = useCallback(
+    (index: number) => messages[index]?.id ?? index,
+    [messages]
+  );
+
   const virtualizer = useVirtualizer({
     count: messages.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 100,
     overscan: 10,
+    getItemKey,
   });
 
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        virtualizer.scrollToIndex(messages.length - 1, { align: 'end', behavior: 'smooth' });
-      }
+      if (!scrollContainerRef.current || messages.length === 0) return;
+      // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
+      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
     },
     registerMessageRef: (messageId: string, el: HTMLDivElement | null) => {
       messageRefs.current[messageId] = el;
@@ -82,8 +93,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     scrollToMessage: (messageId: string) => {
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
-        virtualizer.scrollToIndex(index, { align: 'center', behavior: 'smooth' });
-        // Highlighting after scroll is handled via highlightedMessageIds prop
+        virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
   }));
@@ -139,7 +149,9 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
 
           return (
             <div
-              key={message.id}
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
               style={{
                 position: 'absolute',
                 top: 0,

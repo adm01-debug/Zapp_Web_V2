@@ -67,7 +67,7 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Merge className="w-5 h-5 text-primary" />Mesclar Contatos</DialogTitle>
           <DialogDescription>Escolha qual valor manter para cada campo.</DialogDescription>

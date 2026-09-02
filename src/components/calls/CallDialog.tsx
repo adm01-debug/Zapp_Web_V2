@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -142,7 +143,8 @@ export function CallDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-gradient-to-b from-card to-background border-0">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0 overflow-hidden bg-gradient-to-b from-card to-background border-0">
+        <DialogTitle className="sr-only">Chamada em andamento</DialogTitle>
         <div className="p-8 flex flex-col items-center">
           {/* Contact Avatar */}
           <motion.div

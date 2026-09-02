@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
+import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -11,6 +12,20 @@ serve(async (req) => {
   try {
     const supabaseUrl = requireEnv('SUPABASE_URL');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+    // Ferramenta administrativa: exige admin, nao apenas usuario logado.
+    // verify_jwt=true so garante que ha um JWT valido; sem este guard,
+    // qualquer atendente dispararia migracao de midia em lote.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return errorResponse('Authorization header required', 401, req);
+    const supabaseUser = createClient(supabaseUrl, requireEnv('SUPABASE_ANON_KEY'), {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) return errorResponse('Unauthorized', 401, req);
+    const { data: isAdmin } = await supabaseUser.rpc('is_admin_or_supervisor', { _user_id: user.id });
+    if (!isAdmin) return errorResponse('Only admins can run media migration', 403, req);
+
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -152,16 +167,13 @@ async function getBase64Fallback(
   log: Logger,
 ): Promise<string | null> {
   try {
+    // v2: lookup por key.id. Evolution GO exige o waE2E.Message completo —
+    // sem ele o GO recusa e a mídia é reportada como irrecuperável (GO_GAPS).
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
-    const resp = await fetch(`${baseUrl}/chat/getBase64FromMediaMessage/${instance}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': evolutionKey },
-      body: JSON.stringify({
-        message: { key: { id: externalId } },
-        convertToMp4: false,
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
+    const resp = await evoFetch(baseUrl, evolutionKey,
+      `/chat/getBase64FromMediaMessage/${instance}`,
+      { message: { key: { id: externalId } }, convertToMp4: false },
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
 
     if (!resp.ok) {
       log.warn(`getBase64 API error for ${messageId}`, { status: resp.status });
@@ -169,17 +181,17 @@ async function getBase64Fallback(
     }
 
     const result = await resp.json();
-    const b64 = (result.base64 as string) || (result.data as string) || (result.media as string);
-    if (!b64) return null;
+    const media = extractBase64Media(result);
+    if (!media) return null;
 
-    const raw = b64.includes(',') ? b64.split(',')[1] : b64;
+    const raw = media.base64.includes(',') ? media.base64.split(',')[1] : media.base64;
     const binaryStr = atob(raw);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
 
     if (bytes.length < 100) return null;
 
-    const mimeType = (result.mimetype as string) || 'application/octet-stream';
+    const mimeType = media.mimetype || 'application/octet-stream';
     const ext = detectExtension(mimeType, messageType);
     return await uploadToStorage(supabase, bytes, mimeType, messageType, messageId, ext);
   } catch (err) {

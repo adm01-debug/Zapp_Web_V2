@@ -7,6 +7,10 @@ import {
 
 // deno-lint-ignore no-explicit-any
 export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+  // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
+  // permite escopar o dup-check abaixo por whatsapp_connection_id.
+  const connection = await getConnectionByInstance(supabase, instance);
+
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
@@ -16,8 +20,16 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
     let updatedMessageId: string | null = null;
     const now = new Date().toISOString();
 
-    const { data: existingMessage } = await supabase.from('messages')
-      .select('id, status').eq('external_id', externalId).maybeSingle();
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+    // Escopado por whatsapp_connection_id + sender para bater com o indice unico
+    // real (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
+    // conexoes (ou entre as duas direcoes da conversa) faria este pre-check achar
+    // a linha errada e marcar a mensagem do contato como 'sent'.
+    let dupCheckQuery = supabase.from('messages')
+      .select('id, status').eq('external_id', externalId).eq('sender', 'agent');
+    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
+    const { data: existingMessage } = await dupCheckQuery
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     if (existingMessage?.id) {
       if (shouldUpdateStatus(existingMessage.status, 'sent')) {
@@ -30,7 +42,6 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
 
     if (!updatedMessageId) {
       const phone = normalizePhone(resolveEventJid(key, entry, baseData) ?? undefined);
-      const connection = await getConnectionByInstance(supabase, instance);
 
       if (connection?.id && phone) {
         const contact = await getContactByPhone(supabase, phone, connection.id);
@@ -75,21 +86,40 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
-    const key = keySource as { id?: string } | null;
+    const key = keySource as { id?: string; fromMe?: boolean } | null;
     const rawStatus = (entry.status as string) || (baseData.status as string) || '';
     const newStatus = statusMap[rawStatus] || rawStatus.toLowerCase();
 
     if (newStatus && key?.id) {
       const now = new Date().toISOString();
-      const { data: currentMessage } = await supabase.from('messages')
-        .select('id, status').eq('external_id', key.id).maybeSingle();
+      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+      // Esta funcao trata receipts das duas direcoes, entao o sender vem de
+      // key.fromMe quando o provedor manda o flag; sem ele, cai no
+      // comportamento antigo (linha mais recente da conexao).
+      let currentMessageQuery = supabase.from('messages')
+        .select('id, status').eq('external_id', key.id);
+      if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
+      if (typeof key.fromMe === 'boolean') {
+        currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
+      }
+      const { data: currentMessage } = await currentMessageQuery
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (currentMessage?.id) {
         if (shouldUpdateStatus(currentMessage.status, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
-          console.log(`Message ${key.id} status: ${currentMessage.status} → ${newStatus}`);
+          console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
+      } else if (key.fromMe === true) {
+        // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
+        // external_id (corrida envio x webhook): criar stub aqui duplicaria a
+        // mensagem -- o eco send.message / o frontend resolvem em seguida.
+        console.warn(`Receipt for own message ${key.id} before external_id landed -- skipping stub`);
       } else {
+        // GAP-1 FIX (2026-09-01): so cria stub quando o contato eh resolvivel.
+        // Antes: criava '[Mensagem recebida]' com contact_id=null para receipts
+        // de mensagens LID nao resolvidas -- gerava ~500 orphans/hora (~12k/dia).
+        // Agora: resolve o contato; sem contato, loga e continua sem inserir.
         let contactId: string | null = null;
         if (connection?.id) {
           const remoteJid = resolveEventJid(entry, baseData);
@@ -102,11 +132,17 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           }
         }
 
-        await supabase.from('messages').insert({
+        if (contactId === null) {
+          // Sem contato resolvivel nao ha inbox onde mostrar -- skip silencioso.
+          console.warn(`Receipt for unresolvable message ${key.id} (status=${newStatus}) -- no contact, skipping stub`);
+          continue;
+        }
+
+        await supabase.from('messages').upsert({
           content: '[Mensagem recebida]', message_type: 'text', sender: 'contact',
           external_id: key.id, status: newStatus, status_updated_at: now, created_at: now,
           contact_id: contactId, whatsapp_connection_id: connection?.id ?? null,
-        });
+        }, { ignoreDuplicates: true });
       }
     }
   }
@@ -118,13 +154,22 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
       ? entry.key : (typeof entry.id === 'string' ? entry : null) ?? (isRecord(baseData.key) ? baseData.key : null);
-    const key = keySource as { id?: string; remoteJid?: string } | null;
+    const key = keySource as { id?: string; remoteJid?: string; fromMe?: boolean } | null;
     if (!key?.id) continue;
 
     const now = new Date().toISOString();
-    const { data: updatedMessages } = await supabase.from('messages')
+    // Escopado por whatsapp_connection_id (+ sender quando key.fromMe vem no
+    // evento) para bater com o indice unico real (ux_messages_dedup): sem isso
+    // um delete de uma direcao marcaria tambem a mensagem da outra direcao que
+    // compartilha o mesmo external_id.
+    let deleteUpdateQuery = supabase.from('messages')
       .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
-      .eq('external_id', key.id).select('id');
+      .eq('external_id', key.id);
+    if (connection?.id) deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
+    if (typeof key.fromMe === 'boolean') {
+      deleteUpdateQuery = deleteUpdateQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
+    }
+    const { data: updatedMessages } = await deleteUpdateQuery.select('id');
 
     if (!updatedMessages?.length) {
       let contactId: string | null = null;
@@ -134,11 +179,18 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
         if (phone) { const contact = await getContactByPhone(supabase, phone, connection.id); contactId = contact?.id ?? null; }
       }
 
-      await supabase.from('messages').insert({
-        content: '[Mensagem apagada]', message_type: 'text', sender: 'contact',
+      // GAP-1 FIX: so insere tombstone quando ha contato resolvivel.
+      // Sem contato nao ha inbox onde exibir '[Mensagem apagada]'.
+      if (contactId === null) {
+        console.warn(`Delete event for unresolvable message ${key.id} -- no contact, skipping tombstone`);
+        continue;
+      }
+
+      await supabase.from('messages').upsert({
+        content: '[Mensagem apagada]', message_type: 'text', sender: key.fromMe === true ? 'agent' : 'contact',
         external_id: key.id, status: 'deleted', is_deleted: true, status_updated_at: now,
         created_at: now, contact_id: contactId, whatsapp_connection_id: connection?.id ?? null,
-      });
+      }, { ignoreDuplicates: true });
     }
     console.log(`Message deleted: ${key.id}`);
   }
@@ -159,7 +211,16 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     const bestJid = resolveEventJid(key, entry);
     if (!key?.id || !bestJid || bestJid.endsWith('@g.us')) { skipped++; continue; }
 
-    const { data: existing } = await supabase.from('messages').select('id').eq('external_id', key.id).maybeSingle();
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+    // Escopado por whatsapp_connection_id + sender para bater com o indice unico
+    // real (ux_messages_dedup); connection ja garantido non-null pelo early
+    // return acima. Sem o sender, uma mensagem real seria descartada quando a
+    // direcao oposta ja ocupa o mesmo external_id.
+    const senderDirection = key.fromMe ? 'agent' : 'contact';
+    const { data: existing } = await supabase.from('messages').select('id')
+      .eq('whatsapp_connection_id', connection.id).eq('external_id', key.id)
+      .eq('sender', senderDirection)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) { skipped++; continue; }
 
     const phone = normalizePhone(bestJid);
@@ -180,11 +241,11 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     if (!content && messageType === 'text') { skipped++; continue; }
 
     const ts = (entry.messageTimestamp as number) ? new Date((entry.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
-    await supabase.from('messages').insert({
-      content, message_type: messageType, sender: key.fromMe ? 'agent' : 'contact',
+    await supabase.from('messages').upsert({
+      content, message_type: messageType, sender: senderDirection,
       external_id: key.id, contact_id: contact.id, whatsapp_connection_id: connection.id,
       status: key.fromMe ? 'sent' : null, is_read: key.fromMe ? true : false, created_at: ts,
-    });
+    }, { ignoreDuplicates: true });
     synced++;
   }
   console.log(`messages.set: synced ${synced}, skipped ${skipped} for ${instance}`);
@@ -204,7 +265,9 @@ export async function handleMessagesEdited(supabase: any, data: unknown, baseDat
 
     if (!editedContent) continue;
 
-    const { data: existing } = await supabase.from('messages').select('id').eq('external_id', key.id).maybeSingle();
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+    const { data: existing } = await supabase.from('messages').select('id')
+      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) {
       await supabase.from('messages').update({ content: editedContent, is_edited: true, updated_at: new Date().toISOString() }).eq('id', existing.id);
       console.log(`Message edited: ${key.id}`);

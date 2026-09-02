@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,14 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
   const bodyPreview = message.body_text?.slice(0, 300) || message.snippet || '';
   const hasMore = (message.body_text?.length || 0) > 300;
+  // E37: sanitizar HTML para renderizacao segura
+  const sanitizedHtml = message.body_html && !message.body_text
+    ? DOMPurify.sanitize(message.body_html, {
+        ALLOWED_TAGS: ['p','br','strong','em','a','ul','ol','li','blockquote','span','div','table','tr','td','th','h1','h2','h3'],
+        ALLOWED_ATTR: ['href','target','style'],
+        FORCE_BODY: true,
+      })
+    : null;
 
   return (
     <TooltipProvider>
@@ -139,7 +148,9 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
             {/* Body */}
             <div className="text-sm whitespace-pre-wrap leading-relaxed break-words">
-              {expanded ? (message.body_text || message.snippet) : bodyPreview}
+              {sanitizedHtml && expanded
+              ? <div className="email-html-body text-sm" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+              : <span>{expanded ? (message.body_text || message.snippet) : bodyPreview}</span>}
               {hasMore && !expanded && '…'}
             </div>
 

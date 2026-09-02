@@ -6,7 +6,29 @@ import {
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
   generatePhoneVariants,
 } from "./evolution-helpers.ts";
-import { persistMediaToStorage, persistMediaViaApi, parseMessageContent } from "./evolution-media.ts";
+import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+
+// Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
+// com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
+// download via API. Retorna a URL permanente no Storage ou null.
+// deno-lint-ignore no-explicit-any
+async function persistIncomingMedia(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  messageType: string, msgId: string, parsedUrl: string | null,
+): Promise<string | null> {
+  const message = data.message as Record<string, unknown> | undefined;
+  const webhookB64 = (data.base64 as string) || (message?.base64 as string);
+  if (typeof webhookB64 === 'string' && webhookB64) {
+    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId);
+    if (fromB64) return fromB64;
+  }
+  const directUrl = parsedUrl || (data.mediaUrl as string) || (message?.mediaUrl as string) || null;
+  if (directUrl && directUrl.startsWith('http')) {
+    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId);
+    if (fromUrl) return fromUrl;
+  }
+  return await persistMediaViaApi(supabase, instance, data, messageType, msgId);
+}
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 
@@ -45,7 +67,18 @@ export async function handleOutgoingWhatsAppMessage(
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
-  const { data: existingMessage } = await supabase.from('messages').select('id').eq('external_id', externalId).maybeSingle();
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup). key.id do WhatsApp so eh garantidamente unico
+  // por chat/dispositivo, nao globalmente -- sem o escopo, uma colisao entre
+  // duas conexoes diferentes faria este pre-check achar a linha errada.
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
   if (existingMessage) return;
 
   const payloadKey = isRecord(data.key) ? data.key : null;
@@ -56,9 +89,6 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
   const contact = await getContactByPhone(supabase, phone, connection.id);
   if (!contact) return;
 
@@ -68,11 +98,10 @@ export async function handleOutgoingWhatsAppMessage(
   if (!parsed.content && parsed.messageType === 'text') return;
 
   let { mediaUrl } = parsed;
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
     const msgId = key.id.replace(/[^a-zA-Z0-9]/g, '');
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, parsed.messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else { const apiUrl = await persistMediaViaApi(supabase, instance, data, parsed.messageType, msgId); if (apiUrl) mediaUrl = apiUrl; }
   }
 
   const messageCreatedAt = (data.messageTimestamp as number)
@@ -89,11 +118,17 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  const { error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel.
+  const { error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
     message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
     status: 'sent', created_at: messageCreatedAt, agent_id: contact.assigned_to || null,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true });
 
   if (msgError) { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
   await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contact.id);
@@ -119,18 +154,21 @@ export async function handleIncomingMessage(
   let { mediaUrl } = parsed;
   const { content, messageType } = parsed;
 
+  // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
+  // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
+  if (!content && messageType === 'text' && !mediaUrl) {
+    console.log(`[INCOMING] Ignored empty message ${key.id}`);
+    return;
+  }
+
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
   }
 
-  if (mediaUrl && ['image', 'video', 'audio', 'document'].includes(messageType)) {
+  if (['image', 'video', 'audio', 'document'].includes(messageType)) {
     const msgId = key.id || `${Date.now()}`;
-    const permanentUrl = await persistMediaToStorage(supabase, mediaUrl, messageType, msgId);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl);
     if (permanentUrl) mediaUrl = permanentUrl;
-    else {
-      const apiUrl = await persistMediaViaApi(supabase, instance, data, messageType, msgId);
-      if (apiUrl) mediaUrl = apiUrl;
-    }
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
@@ -171,8 +209,13 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const { data: existingMessage } = await supabase.from('messages')
-    .select('id, status, content').eq('external_id', key.id).maybeSingle();
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup) -- ver comentario equivalente em
+  // handleOutgoingWhatsAppMessage.
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id, status, content').eq('whatsapp_connection_id', connection.id).eq('sender', 'contact').eq('external_id', key.id)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
 
   if (existingMessage?.id) {
     const preservedStatus = existingMessage.status && existingMessage.status !== 'received' ? existingMessage.status : 'received';
@@ -185,17 +228,28 @@ export async function handleIncomingMessage(
     return;
   }
 
-  const { data: insertedMessage, error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel. .maybeSingle() retorna null (sem erro) se
+  // DO NOTHING silenciou uma duplicata.
+  const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content,
     message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
     status: 'received', created_at: messageCreatedAt,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true }).select('id').maybeSingle();
 
   if (msgError) {
     console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });
     return;
   }
-  if (messageType === 'audio' && mediaUrl && insertedMessage) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (!insertedMessage) {
+    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
+    return;
+  }
+  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (messageType === 'text' && insertedMessage?.id && content) {
     void enrichIncomingLinkPreview(supabase, insertedMessage.id, content, supabaseUrl, supabaseServiceKey);
   }
@@ -225,7 +279,8 @@ export async function handleStickerMedia(
     } catch { return null; }
   };
 
-  const b64Direct = (data.base64 as string) || ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
+  const b64Direct = (data.base64 as string) || (message?.base64 as string) ||
+    ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
   if (b64Direct) mediaUrl = await uploadBase64Sticker(b64Direct);
 
   if (!mediaUrl) {

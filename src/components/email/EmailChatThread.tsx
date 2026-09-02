@@ -46,12 +46,13 @@ function DateSeparator({ date }: { date: string }) {
 export function EmailChatThread({ thread, onBack, onToggleDetails, showDetailsButton }: EmailChatThreadProps) {
   const {
     threadMessages, messagesLoading, markAsRead,
-    trashMessage, setSelectedThreadId, activeAccount
+    trashMessage, trashThread, modifyLabels, setSelectedThreadId, activeAccount
   } = useGmail();
 
   const [replyMode, setReplyMode] = useState<'reply' | 'reply-all' | 'forward' | 'new'>('reply');
   const [showComposer, setShowComposer] = useState(false);
   const [composerMode, setComposerMode] = useState<'reply' | 'forward'>('reply');
+  const [forwardMsg, setForwardMsg] = useState<EmailMessage | null>(null); // E33
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -101,6 +102,7 @@ export function EmailChatThread({ thread, onBack, onToggleDetails, showDetailsBu
   }, []);
 
   const handleBubbleForward = useCallback((msg: EmailMessage) => {
+    setForwardMsg(msg); // E33: registrar mensagem a encaminhar
     setComposerMode('forward');
     setShowComposer(true);
   }, []);
@@ -134,7 +136,7 @@ export function EmailChatThread({ thread, onBack, onToggleDetails, showDetailsBu
             ))}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Arquivar">
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Arquivar" onClick={() => { if (lastMessage) modifyLabels.mutate({ message_id: lastMessage.gmail_message_id, remove_labels: ['INBOX'] }); onBack(); }}>
                   <Archive className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -144,7 +146,7 @@ export function EmailChatThread({ thread, onBack, onToggleDetails, showDetailsBu
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8 text-destructive"
-                  onClick={() => lastMessage && trashMessage.mutate(lastMessage.gmail_message_id)}
+                  onClick={() => { trashThread.mutate(thread.gmail_thread_id); onBack(); }}
                   aria-label="Excluir"
                 >
                   <Trash2 className="w-4 h-4" />

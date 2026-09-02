@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody } from "../_shared/schemas.ts";
+import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     if (action === 'preview') {
       const parsed = parseBody(ElevenLabsVoiceDesignPreviewSchema, body);
-      if (!parsed.success) return errorResponse(parsed.error, 400, req);
+      if (!parsed.success) return validationErrorResponse(parsed, req);
 
       const { description, text } = parsed.data;
       const previewText = text || 'Olá, esta é uma prévia da minha voz. Como posso te ajudar hoje?';
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
     if (action === 'create') {
       const parsed = parseBody(ElevenLabsVoiceDesignCreateSchema, body);
-      if (!parsed.success) return errorResponse(parsed.error, 400, req);
+      if (!parsed.success) return validationErrorResponse(parsed, req);
 
       const { voice_name, voice_description, generated_voice_id, labels } = parsed.data;
 

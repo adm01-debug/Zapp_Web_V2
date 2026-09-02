@@ -142,7 +142,7 @@ export const AccessibilitySettings = forwardRef<HTMLDivElement>((_, ref) => {
           <Contrast className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent aria-describedby={undefined} className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Contrast className="h-5 w-5" />

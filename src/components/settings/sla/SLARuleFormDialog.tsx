@@ -185,7 +185,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{editingRule ? 'Editar Regra de SLA' : 'Nova Regra de SLA'}</DialogTitle>
           <DialogDescription>

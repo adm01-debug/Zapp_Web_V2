@@ -163,7 +163,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
                 className="flex items-center gap-3 p-2.5 rounded-xl"
               >
-                <Skeleton className="w-11 h-11 rounded-full shrink-0" />
+                <Skeleton className="w-12 h-12 rounded-full shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-3.5 rounded-md" style={{ width: `${60 + Math.random() * 40}%` }} />

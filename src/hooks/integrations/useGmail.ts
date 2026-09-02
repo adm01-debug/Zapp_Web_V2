@@ -24,7 +24,8 @@ export function useGmail(accountId?: string) {
         if (error) throw error;
         return (data || []).map((a: Record<string, unknown>) => ({
           id: a.id, email_address: a.email_address, is_active: a.is_active,
-          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at, created_at: a.created_at,
+          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at,
+          last_error: a.last_error ?? null, created_at: a.created_at,
         })) as GmailAccount[];
       }
     },
@@ -138,6 +139,14 @@ export function useGmail(accountId?: string) {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Email movido para lixeira'); },
   });
 
+  const trashThread = useMutation({
+    mutationFn: async (gmailThreadId: string) => {
+      if (!activeAccount) throw new Error('No active Gmail account');
+      return callGmailFunction('gmail-send', { action: 'trash-thread', account_id: activeAccount.id, thread_id: gmailThreadId });
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Thread movida para lixeira'); },
+  });
+
   const modifyLabels = useMutation({
     mutationFn: async (params: { message_id: string; add_labels?: string[]; remove_labels?: string[] }) => {
       if (!activeAccount) throw new Error('No active Gmail account');
@@ -159,7 +168,7 @@ export function useGmail(accountId?: string) {
     accounts, activeAccount, accountsLoading, connectGmail, exchangeCode, disconnectGmail,
     threads, threadsLoading, selectedThreadId, setSelectedThreadId, refetchThreads,
     threadMessages, messagesLoading, labels,
-    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, modifyLabels,
+    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels,
     subscribeToThreads,
     unreadCount: threads.filter(t => t.is_unread).length,
     starredCount: threads.filter(t => t.is_starred).length,

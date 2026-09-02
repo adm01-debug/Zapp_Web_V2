@@ -61,6 +61,7 @@ export function EmailChatReplyBar({
   const [body, setBody] = useState('');
   const [to, setTo] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [newSubject, setNewSubject] = useState(''); // E26
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -121,6 +122,7 @@ export function EmailChatReplyBar({
           to: mode === 'reply-all' ? target.split(', ').filter(Boolean) : target,
           text_body: body,
           cc: ccAddresses?.length ? ccAddresses : undefined,
+          attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
         });
       } else if (mode === 'forward') {
         const fwdBody = lastMessage
@@ -133,9 +135,10 @@ export function EmailChatReplyBar({
           attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
         });
       } else {
+        if (!newSubject?.trim()) { toast.error('Informe o assunto do e-mail'); return; }
         await sendEmail.mutateAsync({
           to: target,
-          subject: '',
+          subject: newSubject.trim(),
           text_body: body,
           attachments: base64Attachments.length > 0 ? base64Attachments : undefined,
         });

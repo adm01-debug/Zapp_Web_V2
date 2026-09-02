@@ -6,7 +6,7 @@
 
 DO $$ BEGIN
   PERFORM cron.unschedule('avatars-refresh');
-EXCEPTION WHEN undefined_object THEN NULL;
+EXCEPTION WHEN OTHERS THEN NULL;  -- pg_cron raises internal_error (XX000), not undefined_object
 END $$;
 
 SELECT cron.schedule(

@@ -121,7 +121,7 @@ export function OmnichannelManager() {
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" />Adicionar Canal</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Canal</DialogTitle>
                 </DialogHeader>

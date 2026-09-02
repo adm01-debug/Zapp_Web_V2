@@ -1,17 +1,12 @@
-# =================================================
-# ZAPP-WEB · Guardas de banco de dados
-# =================================================
-# Origem: plano da auditoria de 27/08/2026, etapas 11, 98 e 99.
-# Ver docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md
-#
-# Tres jobs, de proposito separados por dependencia de credencial:
-#
-#   usage-guard      OFFLINE. Roda sempre, inclusive em PR de fork.
-#   migration-drift  precisa de DESTINO_URL. Pula com aviso se ausente.
-#   catalog-fresh    precisa de DESTINO_URL. So no agendamento semanal / manual.
-# =================================================
+# ==================================================================
+# ZAPP-WEB · Guardas de banco OFFLINE
+# ==================================================================
+# Este workflow nunca recebe DESTINO_URL e pode executar codigo de PRs.
+# Consultas ao banco oficial ficam isoladas em db-live-guard.yml, que nao
+# possui gatilho pull_request e so aceita refs/heads/main.
+# ==================================================================
 
-name: DB Guard
+name: DB Guard (offline)
 
 on:
   push:
@@ -21,94 +16,64 @@ on:
       - 'supabase/**'
       - 'scripts/db-audit/**'
       - '.github/workflows/db-guard.yml'
+      - '.github/workflows/db-live-guard.yml'
+      - '.github/workflows/types-sync.yml'
   pull_request:
     branches: [main, develop]
-  schedule:
-    # segunda-feira 06:00 UTC (03:00 em Curitiba)
-    - cron: '0 6 * * 1'
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'scripts/db-audit/**'
+      - '.github/workflows/db-guard.yml'
+      - '.github/workflows/db-live-guard.yml'
+      - '.github/workflows/types-sync.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: db-guard-offline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ===========================================
-  # JOB 1: acoplamento codigo <-> banco (offline)
-  # ===========================================
-  usage-guard:
-    name: 🔗 Acoplamento codigo/banco
+  offline-contract:
+    name: Contrato DB offline
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node
-        uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: '20'
+          persist-credentials: false
 
-      # Sem `install`: o script nao tem dependencia, e node puro.
-      - name: 🔗 Validar .from() e .rpc() contra o catalogo
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
-  # ===========================================
-  # JOB 2: drift entre arquivos e schema_migrations
-  # ===========================================
-  migration-drift:
-    name: 🧭 Drift de migrations
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+      - name: Testar comparadores de catalogo, manifesto e migrations
+        run: node --test scripts/db-audit/*.test.mjs
 
-      - name: 🟢 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
+        run: bash scripts/db-audit/catalog-manifest.test.sh
 
-      - name: 🐘 Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
-
-      - name: 🧭 Comparar arquivos com schema_migrations
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+      # Sem DESTINO_URL: valida nomes, duplicatas e conteudo local das
+      # migrations, mas nao consulta schema_migrations.
+      - name: Validar migrations localmente
         run: node scripts/db-audit/check-migration-drift.mjs
 
-  # ===========================================
-  # JOB 3: frescura do catalogo + seguranca (semanal)
-  # ===========================================
-  catalog-fresh:
-    name: 🗂️ Frescura do catalogo
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 🐘 Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
-
-      - name: 🗂️ Regerar catalogo e comparar com o commitado
+      # Harness descartavel na mesma major do banco oficial. Exercita o SQL real e
+      # prova que cada regressao de ACL/contrato encerra com codigo nao zero.
+      - name: Simular regressões do contrato mcp_exec
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
-        run: |
-          if [ -z "$DESTINO_URL" ]; then
-            echo "DESTINO_URL ausente - checagem de frescura pulada."
-            exit 0
-          fi
-          psql "$DESTINO_URL" -At -f scripts/db-audit/catalog.sql > /tmp/fresh.json
-          node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh.json
+          ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
 
-      - name: 🔒 Verificar ACL de mcp_exec e mcp_exec_many
-        # mcp_exec e mcp_exec_many sao funcoes SECURITY DEFINER que executam SQL
-        # arbitrario. Se authenticated ou anon ganharem EXECUTE, qualquer usuario
-        # logado teria SQL arbitrario como superusuario. Ver docs/DB-SECURITY.md s1.
+      - name: Simular regressões da ACL da dead-letter queue
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -134,3 +99,13 @@ jobs:
             esac
           done
           exit $FALHA
+
+      - name: Simular regressões da ACL de webhook failures
+        env:
+          WEBHOOK_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/check-webhook-failures-acl.test.sh
+
+      - name: Simular reconciliação segura do ledger
+        env:
+          LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/check-reconcile-ledger-drift.test.sh

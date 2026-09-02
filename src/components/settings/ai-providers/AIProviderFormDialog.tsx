@@ -62,7 +62,7 @@ export function AIProviderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl">
+      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
           <DialogTitle>{editingId ? 'Editar Provedor' : 'Novo Provedor de IA'}</DialogTitle>
         </DialogHeader>

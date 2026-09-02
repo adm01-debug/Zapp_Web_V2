@@ -204,3 +204,68 @@ Preferir escrever um runner `apply-batch.js` (Node, usa `pg`, BEGIN/COMMIT por l
 - Gate 57: Supabase PAT do destino
 - Gate 60: decisão LOVABLE_API_KEY (provider próprio)
 - Decisão 39: site_url + redirect URLs + providers auth do destino
+
+---
+
+## ADENDA — Validação exaustiva pós-migração GO (28/08/2026)
+
+> Sessão de revisão com 5 agentes coordenados. Tudo validado por evidência direta.
+
+### Estado final do destino (`tnnnlkbymytvtqngbbqh`, PostgreSQL 17.6)
+
+| Item | Status | Evidência |
+|---|---|---|
+| T1 `clear_login_attempts` guard | ✅ COMPLETO | Teste comportamental 3/3: próprio OK, alheio BLOQUEADO, service_role OK |
+| T2 paridade migrations | ✅ COMPLETO | 277 arquivos = 277 registros, hash `dc8d0af1...` idêntico |
+| T3a `gmail-oauth` drift user_id | ✅ COMPLETO | Fixado e redeploy em v10 nesta sessão |
+| T3b `get/store_gmail_tokens` | ✅ COMPLETO | Existem, ACL só postgres+service_role, roundtrip cripto = TRUE |
+| T3c chave cripto via vault | ✅ COMPLETO | `gmail_encryption_key` em `vault.secrets` |
+| T4 edges órfãs removidas | ✅ COMPLETO | `evolution-health` e `analyze-external-db` ausentes no destino |
+| T5 ACL `mcp_exec` no CI | ✅ COMPLETO | `db-guard.yml:108-120`, cobre também `mcp_exec_many` |
+| T6 SECURITY DEFINER guards | ✅ COMPLETO | 5/5 com RAISE no corpo, teste comportamental PASS |
+| Guard baseline | ✅ | 0 violações, exit 0 |
+
+### Functions no destino (estado final após sessão)
+
+| Function | Versão | verify_jwt |
+|---|---|---|
+| evolution-webhook | v15 | false |
+| evolution-api | v15 | true |
+| webhook-diagnostic | v12 | false |
+| connection-health-check | v13 | **true** (restaurado) |
+| batch-fetch-avatars | v13 | **true** (restaurado) |
+| talkx-send | v13 | **true** (restaurado) |
+| public-api | v12 | false |
+| gmail-oauth | v10 | true |
+| gmail-send | v10 | true |
+| gmail-sync | v10 | true |
+| gmail-webhook | v10 | false |
+
+### Vulnerabilidade corrigida nesta sessão
+
+A sessão paralela havia redeploy de `talkx-send` / `connection-health-check` / `batch-fetch-avatars` com `verify_jwt=false` (auth interna ausente). `talkx-send` enviava WhatsApp sem autenticação para qualquer chamador da internet. Restaurado para `verify_jwt=true` — teste real confirmou 401 sem JWT.
+
+### ⚠️ ARMADILHA CRÍTICA: MCP Lovable aponta para banco ERRADO
+
+O conector **`MCP - SUPABASE / LOVABLE CLOUD - ZAPP WEB V2`** (`supabase-zapp-audit-mcp`) aponta para um banco diferente com apenas **10 migrations** e sem as funções do projeto. Qualquer diagnóstico feito via esse conector é **completamente falso**.
+
+O conector correto é **`SUPABASE - ZAPP WEB V2 - MCP`** (`supabase-zapp-web-v2-mcp`) — 277 migrations, banco real de produção (`tnnnlkbymytvtqngbbqh`).
+
+### Gaps GO sem equivalente (5 rotas — sem UX ativa)
+
+Estas ações estão implementadas no edge com retorno 501 explícito e **não têm call site no front** (exports órfãos nos hooks):
+
+- `sendTemplateMessage` → `send-template` → 501 (GO 0.7.x sem endpoint)
+- `offerCall` → `offer-call` → 501 (GO 0.7.x sem endpoint)
+- `setPresence` (instância) → `set-presence` → 501 (GO 0.7.x sem endpoint)
+
+`instance-info` e `delete-instance` são atendidos via `resolveGoInstanceId` + endpoint GO nativo.
+
+### Pipeline GO em produção (28/08 ~21h)
+
+```
+state: open | Connected:true LoggedIn:true | webhook 16 eventos
+fluxo: ~44 msgs/h chegando, gravando no destino
+imagem: evoapicloud/evolution-go:0.7.2 (pinada)
+instância: PRINCIPAL, JID 551146375517
+```

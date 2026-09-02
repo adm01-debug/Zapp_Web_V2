@@ -2,7 +2,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Command, ArrowRight, Clock, Star, X, Loader2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent } from './dialog';
+import { Dialog, DialogContent, DialogTitle } from './dialog';
 import { Badge } from './badge';
 import { ScrollArea } from './scroll-area';
 import { useDebounce } from '@/hooks/system/useDebounce';
@@ -99,7 +99,8 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden gap-0">
+        <DialogTitle className="sr-only">Paleta de comandos</DialogTitle>
         <div className="flex items-center border-b border-border px-4">
           <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}

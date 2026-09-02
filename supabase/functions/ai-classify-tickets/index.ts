@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
-import { AiClassifyTicketsSchema, parseBody } from "../_shared/schemas.ts";
+import { AiClassifyTicketsSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (__guard) return __guard;
 
     const parsed = parseBody(AiClassifyTicketsSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { limit } = parsed.data;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);

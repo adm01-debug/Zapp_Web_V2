@@ -86,7 +86,7 @@ export function GroupsView() {
                   Adicionar Grupo
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                   <DialogTitle>Adicionar Grupo</DialogTitle>
                 </DialogHeader>
@@ -275,7 +275,7 @@ export function GroupsView() {
 
       {/* Broadcast Dialog */}
       <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-primary" />

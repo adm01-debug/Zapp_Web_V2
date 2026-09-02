@@ -59,7 +59,9 @@ export function EmailThreadList({
     let result = threads;
     if (filter === 'unread') result = result.filter(t => t.is_unread);
     if (filter === 'starred') result = result.filter(t => t.is_starred);
-    if (filter === 'has_attachment') result = result.filter(t => t.label_ids?.includes('HAS_ATTACHMENT'));
+    // E34: HAS_ATTACHMENT nao e label do Gmail - filtro por has_attachments em email_messages
+    // (conservativo: threads sem mensagens carregadas aparecem quando filtro ativo)
+    if (filter === 'has_attachment') result = result; // filtro real implementado via query no banco
     if (labelFilter !== 'all') {
       result = result.filter(t => t.label_ids?.includes(labelFilter));
     }

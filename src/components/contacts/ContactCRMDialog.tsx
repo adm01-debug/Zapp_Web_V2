@@ -13,7 +13,7 @@ interface ContactCRMDialogProps {
 export function ContactCRMDialog({ open, onOpenChange, onContactSelected }: ContactCRMDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[80vh] p-0 flex flex-col">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl h-[80vh] p-0 flex flex-col">
         <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />Busca avançada — CRM 360°

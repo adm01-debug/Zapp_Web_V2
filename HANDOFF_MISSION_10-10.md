@@ -1,5 +1,12 @@
 # 🎯 HANDOFF: ZAPP-WEB-V2 — Missão 10/10 CONQUISTADA
 
+> ⚠️ **DOCUMENTO HISTÓRICO — REFERÊNCIAS DE BANCO DESATUALIZADAS (auditoria 2026-08-28)**
+> As instâncias citadas abaixo — self-hosted `supabase-mcp.atomicabr.com.br`
+> ("instância principal" à época) e o cloud legado `allrjhkpuscmgbsnmjlv` — são
+> bancos **antigos e desativados**. O banco oficial do ZAPP é
+> `https://tnnnlkbymytvtqngbbqh.supabase.co` (ver `docs/DEPLOYMENT.md` e
+> `docs/migration/HANDOFF.md`). Mantido apenas como registro histórico.
+
 > **Última atualização:** 2026-06-12 13:15 UTC
 > **Score atual:** **10/10** 🏆
 > **Status:** TODAS as melhorias executadas. Auditoria técnica exaustiva concluída.
