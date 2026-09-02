@@ -86,7 +86,7 @@ export function usePerformanceMonitor(
   componentName: string,
   threshold = 16
 ) {
-  const startTime = useRef<number>();
+  const startTime = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     startTime.current = performance.now();
