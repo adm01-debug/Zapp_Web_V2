@@ -62,12 +62,23 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     }
   }, []);
 
+  // getItemKey PRECISA ter identidade estável entre renders: em
+  // @tanstack/react-virtual 3.13.x, options.getItemKey é dependência do memo
+  // getMeasurementOptions do virtual-core; uma closure inline nova a cada
+  // render dispara notify() → onChange → dispatch do useReducer DURANTE a
+  // fase de render (getVirtualItems no JSX), causando loop infinito
+  // ("Too many re-renders" em dev / React #301 minificado em produção).
+  const getItemKey = useCallback(
+    (index: number) => messages[index]?.id ?? index,
+    [messages]
+  );
+
   const virtualizer = useVirtualizer({
     count: messages.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 100,
     overscan: 10,
-    getItemKey: (index) => messages[index]?.id ?? index,
+    getItemKey,
   });
 
   useImperativeHandle(ref, () => ({
