@@ -154,8 +154,8 @@
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
-      "bytes": 2832,
-      "sha256": "0987693a0ccf7c0972ee845ebece46e35bac4efba3a76384b3ea9469f1354c25"
+      "bytes": 2839,
+      "sha256": "8c8efa2303679ee9518b57e75b04a346ea63320da7ad6b540b65261e20e4ff21"
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
@@ -549,7 +549,7 @@
       "name": "auto-close-conversations",
       "entrypoint": "supabase/functions/auto-close-conversations/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f7edb3535588c9c555b98af750ac33b8f592f71c4e67fa6c70a5858ab04ac70c",
+      "source_sha256": "23422b6d24836fe00ba929c73344ba9348e04b5dbae9afea175f6b4b58035604",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f94237e7725bb808935942ae1b6642a492d1526d5513f76fef2d0b0f5e084e3c"
+  "manifest_sha256": "aadb8093c50d92d435e939cec0316b0e4c5fee6c0422898494ca0a26671c10f1"
 }
