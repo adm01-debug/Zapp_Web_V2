@@ -41,7 +41,7 @@ serve(async (req) => {
     // Objetivo: confirmar via logs de producao se a Evolution GO ja envia
     // assinatura valida antes de um PR futuro ativar enforcement (401).
     const rawBodyTextForAuthShadow = await req.clone().text();
-    await logWebhookAuthShadow('evolution-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('EVOLUTION_WEBHOOK_SECRET'));
+    await logWebhookAuthShadow('evolution-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('EVOLUTION_WEBHOOK_SECRET'), 'x-evolution-signature');
     // A Evolution API (infra antiga wpp2/v2.3.7) documentava um header
     // `x-webhook-secret` com o secret cru (nao um HMAC do body). Mecanismo
     // nao confirmado como ativo na Evolution GO atual — ver docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md.
@@ -54,7 +54,7 @@ serve(async (req) => {
       if (legacyValid) {
         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
       } else {
-        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) ausente/invalido — modo sombra, requisicao processada mesmo assim');
+        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) presente mas nao confere com o secret configurado — modo sombra, requisicao processada mesmo assim');
       }
     } else {
       console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado, infra wpp2/Evolution v2.3.7) nao enviado — mecanismo nao confirmado como ativo na Evolution GO atual, modo sombra, requisicao processada mesmo assim');

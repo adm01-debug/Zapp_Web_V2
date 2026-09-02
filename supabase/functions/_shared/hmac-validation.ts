@@ -282,8 +282,14 @@ export async function logWebhookAuthShadow(
   headers: Headers,
   payload: string,
   secret: string | undefined | null,
+  expectedHeader?: string,
 ): Promise<WebhookAuthShadowResult> {
-  const signature = extractSignatureFromHeaders(headers);
+  // Sem expectedHeader, extractSignatureFromHeaders escolhe pela ordem de
+  // precedencia generica e pode validar o header de outro provedor, produzindo
+  // resultado sombra falso. Handlers que sabem seu header passam ele aqui.
+  const signature = expectedHeader
+    ? headers.get(expectedHeader)
+    : extractSignatureFromHeaders(headers);
 
   if (!signature) {
     console.warn(`[WEBHOOK_AUTH_SHADOW] ${handlerName}: assinatura ausente/invalida — modo sombra, requisicao processada mesmo assim`);
