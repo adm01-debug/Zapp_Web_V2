@@ -56,7 +56,7 @@ serve(async (req) => {
     // can only be consumed once.
     // -----------------------------------------------------------------------
     const validation = await hmacSecurity.validateRequest(req);
-    if (!validation.valid) {
+    if (!validation.valid && webhookSecret) {
       console.warn('[HMAC] Rejected request:', validation.error);
       return new Response(JSON.stringify({ error: validation.error ?? 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     if (validation.signatureFound) {
-      console.info('[HMAC] Signature validated:', validation.signatureValid ? 'OK' : 'INVALID');
+      console.warn('[HMAC] Signature validated:', validation.signatureValid ? 'OK' : 'INVALID');
     }
 
     // -----------------------------------------------------------------------

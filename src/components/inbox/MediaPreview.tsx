@@ -89,7 +89,7 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       <motion.button
         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
         onClick={(e) => { e.stopPropagation(); void handleDownload(); }}
-        disabled={isDownloading || isResolvingUrl}
+        disabled={isDownloading || isResolvingUrl || !resolvedUrl}
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
           isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary"

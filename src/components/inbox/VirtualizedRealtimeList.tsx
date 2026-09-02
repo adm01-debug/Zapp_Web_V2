@@ -110,6 +110,12 @@ export function VirtualizedRealtimeList({
 
 import { memo } from 'react';
 
+const SENTIMENT_LABEL: Record<string, string> = {
+  positive: 'positivo',
+  negative: 'negativo',
+  neutral: 'neutro',
+};
+
 const ConversationRow = memo(({
   conversation,
   virtualRow,
@@ -158,7 +164,8 @@ const ConversationRow = memo(({
 
         <div className="relative flex-shrink-0">
           <Avatar className="w-12 h-12">
-            <AvatarImage src={conversation.contact.avatar_url || undefined} />
+            {/* alt vazio: o nome do contato ja esta no texto visivel do botao. */}
+            <AvatarImage src={conversation.contact.avatar_url || undefined} alt="" />
             <AvatarFallback className={cn(
               'text-xs font-semibold',
               getAvatarColor(conversation.contact.name || '?').bg,
@@ -169,13 +176,15 @@ const ConversationRow = memo(({
           </Avatar>
           {conversation.contact.ai_sentiment && (
             <span
+              role="img"
+              aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
               className={cn(
-                'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card',
+                'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
                 conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
                 conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
                 conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
               )}
-              title={`Sentimento: ${conversation.contact.ai_sentiment}`}
+              title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
             />
           )}
         </div>
@@ -195,7 +204,7 @@ const ConversationRow = memo(({
                 })()}
               </span>
               {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
-                <span className="text-xs flex-shrink-0" title={`Sentimento: ${conversation.contact.ai_sentiment}`}>
+                <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}>
                   {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
                 </span>
               )}

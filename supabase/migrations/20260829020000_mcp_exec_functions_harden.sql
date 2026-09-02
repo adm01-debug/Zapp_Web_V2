@@ -57,3 +57,17 @@ begin
     'ms', round(extract(epoch from clock_timestamp()-t0)*1000));
 end
 $function$;
+
+-- ACL fail-closed reaplicada logo apos o CREATE OR REPLACE acima.
+--
+-- Em producao o CREATE OR REPLACE preserva a ACL ja endurecida por
+-- 20260827000100, entao estes comandos sao no-op. Num replay do zero as
+-- funcoes nao existiam quando 20260827000100 rodou (os blocos DO toleraram
+-- o undefined_function) e sao criadas aqui com a ACL default do Postgres,
+-- que inclui EXECUTE para PUBLIC -- ou seja, anon e authenticated ganhariam
+-- acesso a duas funcoes SECURITY DEFINER que executam SQL arbitrario.
+-- Ver scripts/db-audit/check-mcp-exec-acl.sql (guard fail-closed do contrato).
+REVOKE EXECUTE ON FUNCTION public.mcp_exec(text, integer) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.mcp_exec_many(text[], integer) FROM authenticated, anon, PUBLIC;
+GRANT EXECUTE ON FUNCTION public.mcp_exec(text, integer) TO service_role, postgres;
+GRANT EXECUTE ON FUNCTION public.mcp_exec_many(text[], integer) TO service_role, postgres;
