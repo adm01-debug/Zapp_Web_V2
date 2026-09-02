@@ -93,11 +93,15 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
     if (newStatus && key?.id) {
       const now = new Date().toISOString();
       // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
-      // Escopado por whatsapp_connection_id (sem filtro de sender -- esta
-      // funcao trata receipts tanto de mensagens enviadas quanto recebidas).
+      // Esta funcao trata receipts das duas direcoes, entao o sender vem de
+      // key.fromMe quando o provedor manda o flag; sem ele, cai no
+      // comportamento antigo (linha mais recente da conexao).
       let currentMessageQuery = supabase.from('messages')
         .select('id, status').eq('external_id', key.id);
       if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
+      if (typeof key.fromMe === 'boolean') {
+        currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
+      }
       const { data: currentMessage } = await currentMessageQuery
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
@@ -150,17 +154,21 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
       ? entry.key : (typeof entry.id === 'string' ? entry : null) ?? (isRecord(baseData.key) ? baseData.key : null);
-    const key = keySource as { id?: string; remoteJid?: string } | null;
+    const key = keySource as { id?: string; remoteJid?: string; fromMe?: boolean } | null;
     if (!key?.id) continue;
 
     const now = new Date().toISOString();
-    // Escopado por whatsapp_connection_id para bater com o indice unico real
-    // (ux_messages_dedup) e evitar marcar como deletada a mensagem errada em
-    // caso de colisao de external_id entre conexoes diferentes.
+    // Escopado por whatsapp_connection_id (+ sender quando key.fromMe vem no
+    // evento) para bater com o indice unico real (ux_messages_dedup): sem isso
+    // um delete de uma direcao marcaria tambem a mensagem da outra direcao que
+    // compartilha o mesmo external_id.
     let deleteUpdateQuery = supabase.from('messages')
       .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
       .eq('external_id', key.id);
     if (connection?.id) deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
+    if (typeof key.fromMe === 'boolean') {
+      deleteUpdateQuery = deleteUpdateQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
+    }
     const { data: updatedMessages } = await deleteUpdateQuery.select('id');
 
     if (!updatedMessages?.length) {
@@ -179,7 +187,7 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
       }
 
       await supabase.from('messages').upsert({
-        content: '[Mensagem apagada]', message_type: 'text', sender: 'contact',
+        content: '[Mensagem apagada]', message_type: 'text', sender: key.fromMe === true ? 'agent' : 'contact',
         external_id: key.id, status: 'deleted', is_deleted: true, status_updated_at: now,
         created_at: now, contact_id: contactId, whatsapp_connection_id: connection?.id ?? null,
       }, { ignoreDuplicates: true });
@@ -204,10 +212,14 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     if (!key?.id || !bestJid || bestJid.endsWith('@g.us')) { skipped++; continue; }
 
     // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
-    // Escopado por whatsapp_connection_id para bater com o indice unico real
-    // (ux_messages_dedup); connection ja garantido non-null pelo early return acima.
+    // Escopado por whatsapp_connection_id + sender para bater com o indice unico
+    // real (ux_messages_dedup); connection ja garantido non-null pelo early
+    // return acima. Sem o sender, uma mensagem real seria descartada quando a
+    // direcao oposta ja ocupa o mesmo external_id.
+    const senderDirection = key.fromMe ? 'agent' : 'contact';
     const { data: existing } = await supabase.from('messages').select('id')
       .eq('whatsapp_connection_id', connection.id).eq('external_id', key.id)
+      .eq('sender', senderDirection)
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) { skipped++; continue; }
 
@@ -230,7 +242,7 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
 
     const ts = (entry.messageTimestamp as number) ? new Date((entry.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
     await supabase.from('messages').upsert({
-      content, message_type: messageType, sender: key.fromMe ? 'agent' : 'contact',
+      content, message_type: messageType, sender: senderDirection,
       external_id: key.id, contact_id: contact.id, whatsapp_connection_id: connection.id,
       status: key.fromMe ? 'sent' : null, is_read: key.fromMe ? true : false, created_at: ts,
     }, { ignoreDuplicates: true });
