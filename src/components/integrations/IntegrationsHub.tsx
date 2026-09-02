@@ -18,7 +18,8 @@ const integrations = [
     description: 'Automação de workflows via webhooks. Conecte eventos do sistema a fluxos n8n.',
     icon: Zap,
     color: 'bg-warning',
-    status: 'available' as const,
+    // Tela de demonstração — ainda não há integração real com um servidor n8n.
+    status: 'demo' as const,
   },
   {
     id: 'sentry' as const,
@@ -84,7 +85,9 @@ export function IntegrationsHub() {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${integration.color}`}>
                     <integration.icon className="w-5 h-5 text-primary-foreground" />
                   </div>
-                  <Badge variant="default">Disponível</Badge>
+                  <Badge variant={integration.status === 'demo' ? 'warning' : 'default'}>
+                    {integration.status === 'demo' ? 'Demonstração' : 'Disponível'}
+                  </Badge>
                 </div>
                 <CardTitle className="text-base mt-2">{integration.name}</CardTitle>
                 <CardDescription className="text-xs">{integration.description}</CardDescription>

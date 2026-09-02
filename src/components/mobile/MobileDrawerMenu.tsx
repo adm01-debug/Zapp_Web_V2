@@ -13,7 +13,7 @@ import {
   salesNav,
   connectionsNav,
   analyticsNav,
-  systemNav,
+  systemNav, inDevelopmentNav,
   advancedNav,
 } from '@/components/layout/sidebarNavConfig';
 
@@ -31,7 +31,7 @@ interface MobileDrawerMenuProps {
 // Deduplicated list for search and recents
 const allItems = (() => {
   const seen = new Set<string>();
-  return [...primaryNav, ...salesNav, ...automationNav, ...analyticsNav, ...connectionsNav, ...systemNav, ...advancedNav]
+  return [...primaryNav, ...salesNav, ...automationNav, ...analyticsNav, ...connectionsNav, ...systemNav, ...inDevelopmentNav, ...advancedNav]
     .filter(item => { if (seen.has(item.id)) return false; seen.add(item.id); return true; });
 })();
 
@@ -41,7 +41,7 @@ const sections = [
   { title: 'Automação & IA', items: automationNav },
   { title: 'Analytics', items: analyticsNav },
   { title: 'Conexões', items: connectionsNav },
-  { title: 'Sistema', items: systemNav },
+  { title: 'Sistema', items: systemNav }, { title: 'Em Desenvolvimento', items: inDevelopmentNav },
   { title: 'Avançado', items: advancedNav },
 ];
 

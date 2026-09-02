@@ -11,10 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch'; import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Plus, Activity, Send, CheckCircle, XCircle, BarChart3, Zap,
-  MousePointer, ShoppingCart, CreditCard, UserPlus, Eye, Settings
+  MousePointer, ShoppingCart, CreditCard, UserPlus, Eye, Settings, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -91,6 +91,8 @@ export function MetaCAPIView() {
     setShowConfig(false);
   };
 
+  // Não conectado à UI enquanto o envio para a Meta CAPI não for implementado de verdade
+  // (ver aviso de demonstração acima) — mantido aqui para quando a integração real existir.
   const sendTestEvent = async (eventName: string) => {
     const { error } = await supabase.from('meta_capi_events').insert({
       event_name: eventName,
@@ -123,6 +125,16 @@ export function MetaCAPIView() {
           </div>
         }
       />
+
+      <div className="px-6 pt-4">
+        <Alert className="border-warning/30 bg-warning/10">
+          <FlaskConical className="h-4 w-4 !text-warning" />
+          <AlertTitle className="text-warning">Funcionalidade em demonstração</AlertTitle>
+          <AlertDescription>
+            Os eventos ficam registrados apenas neste sistema — o envio para a Meta Conversions API (graph.facebook.com) ainda não foi implementado. Em desenvolvimento.
+          </AlertDescription>
+        </Alert>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 pb-4">
@@ -165,14 +177,20 @@ export function MetaCAPIView() {
         <h3 className="text-sm font-semibold text-foreground mb-3">Eventos por Tipo</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {eventCounts.map(({ name, label, icon: Icon, color, count }) => (
-            <Card key={name} className="bg-card/50 border-border/30 hover:border-secondary/30 transition-all cursor-pointer"
-              onClick={() => sendTestEvent(name)}>
-              <CardContent className="p-3 text-center">
-                <Icon className={cn("w-6 h-6 mx-auto mb-1", color)} />
-                <p className="text-xs font-medium">{label}</p>
-                <p className="text-lg font-bold mt-1">{count}</p>
-              </CardContent>
-            </Card>
+            <Tooltip key={name}>
+              <TooltipTrigger asChild>
+                <div tabIndex={0}>
+                  <Card className="bg-card/50 border-border/30 opacity-60 cursor-not-allowed">
+                    <CardContent className="p-3 text-center">
+                      <Icon className={cn("w-6 h-6 mx-auto mb-1", color)} />
+                      <p className="text-xs font-medium">{label}</p>
+                      <p className="text-lg font-bold mt-1">{count}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Envio de eventos de teste para a Meta CAPI ainda não está disponível — em desenvolvimento.</TooltipContent>
+            </Tooltip>
           ))}
         </div>
       </div>

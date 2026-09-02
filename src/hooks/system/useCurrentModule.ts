@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { primaryNav, communicationNav, automationNav, salesNav, connectionsNav, analyticsNav, systemNav } from '@/components/layout/sidebarNavConfig';
+import { primaryNav, communicationNav, automationNav, salesNav, connectionsNav, analyticsNav, systemNav, inDevelopmentNav } from '@/components/layout/sidebarNavConfig';
 import type { NavItemConfig } from '@/components/layout/SidebarNavItem';
 
 const allGroups: { label: string; items: readonly NavItemConfig[] }[] = [
@@ -9,7 +9,7 @@ const allGroups: { label: string; items: readonly NavItemConfig[] }[] = [
   { label: 'Vendas & CRM', items: salesNav },
   { label: 'Conexões', items: connectionsNav },
   { label: 'Analytics', items: analyticsNav },
-  { label: 'Sistema', items: systemNav },
+  { label: 'Sistema', items: systemNav }, { label: 'Em Desenvolvimento', items: inDevelopmentNav },
 ];
 
 export function useCurrentModule(viewId: string) {
