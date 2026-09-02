@@ -177,9 +177,10 @@ jobs:
       # independente do resultado dos gates.
       - name: Publicar candidatos como artifact
         if: steps.diff.outputs.schema_changed == 'true'
+        continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: types-sync-candidates-${{ github.run_id }}
+          name: types-sync-candidates-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
