@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "command": "eslint . --format json",
   "eslintVersion": "9.32.0",
-  "eslintConfigSha256": "ba163c2b494684314f3255f371e036a82efbda41cadebc21672102b908c9e9ce",
+  "eslintConfigSha256": "bee5c195b21240e8f43ac7f9b2b6517b644051b610f1feb0bb08211e0661a6ad",
   "files": [
     {
       "path": "generate_audit_pdf.ts",
@@ -366,7 +366,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "e3e43ed1f0d628f220bc0890767953be2e9ecdffb140b94501a0ef88bee83a5e"
+      "sha256": "4cabc989d6f3137f743890c537ad483dbe78612a40c5d3d212549a460a18ddfe"
     },
     {
       "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
@@ -462,7 +462,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
-      "sha256": "90b1837e860f7cc6561ca4e64a052c76e25b1f82ad572ee4aa990faa3f0a6cd5"
+      "sha256": "660475c6e9ac0dba6ab62d38a88a902811bfa9b586de0a0b880483ab7463d183"
     },
     {
       "path": "src/components/inbox/RemindersPanel.tsx",
@@ -487,10 +487,6 @@
     {
       "path": "src/components/inbox/TransferDialog.tsx",
       "sha256": "4c4650cc88c0937bf20eb40f13ebf1a529d79f30c3176b08dd622755e843e044"
-    },
-    {
-      "path": "src/components/inbox/useFileUploadLogic.ts",
-      "sha256": "c7aa06e07f5236e39283a76e995a6057a29a65ea44702ae043bacc1b0cc0ba27"
     },
     {
       "path": "src/components/inbox/useGlobalSearchData.ts",
@@ -634,7 +630,7 @@
     },
     {
       "path": "src/components/queues/QueueCharts.tsx",
-      "sha256": "5ea0419c53b5d817b896d32202393b0ff7a0012cefdc48e211bba7a45d111128"
+      "sha256": "2908a3e6671a5adc870d4796152e79a893e0f037ba75ca366313b47ca8e3a09f"
     },
     {
       "path": "src/components/queues/QueueGoalsDialog.tsx",
@@ -762,7 +758,7 @@
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "e9c9d963b6796c3a6bc1b6faa7f82ef8c662ff6a602c8554c1b9e76a789225af"
+      "sha256": "3a76ee01d1095465dbd01d82337182cb1bbf0b2109a7eb011bc35882e5c6ff05"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
@@ -966,7 +962,7 @@
     },
     {
       "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "sha256": "b955257d438fb75c1526d5c0ab07c79fc72adf6b419e55e57fb2e2c3a01dd782"
+      "sha256": "ce9efa88382d990f25554c5d1f0ca13ab3a5968ede631be0ec7b58270087aa8e"
     },
     {
       "path": "src/hooks/__tests__/useGlobalSettings.test.tsx",
@@ -1046,7 +1042,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "sha256": "56a5d890eabb194f76a9e1808155f12e21d79bb3e2bfc13dfbeb90020506a4d9"
+      "sha256": "8a0ec09881cb5ab2f6732171d36fe39694262de6df6b444d98350beaa1eba9d0"
     },
     {
       "path": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
@@ -1122,7 +1118,7 @@
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "sha256": "a48be23e7b5451217dc4a32a09550adea9f2000cabc50153683061f1ef6ffd3e"
+      "sha256": "864920529245f439fad01c61e935d24d3fe45d486cf0cba0fdeaddca57c3b1d9"
     },
     {
       "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
@@ -1134,7 +1130,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "f069b917a3e8d068850882223951477bad86b9c7959a859d13f2ee6a6ecd25cd"
+      "sha256": "76381278593af7d50b83337714b0d0bb41e5c5b0a06d9521b3025df52fe5a95f"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -1213,12 +1209,8 @@
       "sha256": "f33d94b70fadddf9598cf4b1dad10d8aa1ede0c873c58c678d1f42d663fcb7b2"
     },
     {
-      "path": "src/hooks/communication/useAudioPlayer.ts",
-      "sha256": "49c849e99f3adbf1f0acc89dc408d4beefc8e8a1d38d185bfd98554f976f46cd"
-    },
-    {
       "path": "src/hooks/communication/useAudioRecorder.ts",
-      "sha256": "913ef4e7c206d9caa86407f8f2dcf9af5809e971f87a8427a142b929d77ce6e8"
+      "sha256": "4b9def42509dd4c6fe2c0f631ab001506c5ac0d65ee89c878d3306514698d531"
     },
     {
       "path": "src/hooks/communication/useSipClient.ts",
@@ -1227,10 +1219,6 @@
     {
       "path": "src/hooks/communication/useTextToSpeech.ts",
       "sha256": "53c567e51e1fe797ada359eafc66ba937626509fa44746c04d0ae56cc0eae1e5"
-    },
-    {
-      "path": "src/hooks/communication/useVoiceAgent.ts",
-      "sha256": "2c4f15576c8ef307b0d7a2485e7f93a2e4c886dff7c9be8f8312111c1e1ed6a3"
     },
     {
       "path": "src/hooks/crm/useContactCustomFields.ts",
@@ -1282,7 +1270,7 @@
     },
     {
       "path": "src/hooks/inbox/useRealtimeInbox.ts",
-      "sha256": "fd7184592b48655d87340372c7b98369e8cd8ad0d91d814ded5a847b7b647ca9"
+      "sha256": "1ba88adf1761b3b6a76e853ca48f2ccd51e6344eaae92bf6be43bfbf3bcaad6c"
     },
     {
       "path": "src/hooks/integrations/useCustomEmojis.ts",
@@ -1322,7 +1310,7 @@
     },
     {
       "path": "src/hooks/performance/useMonitoring.ts",
-      "sha256": "7003e7be15c761c917a3f212bcdee02ba2e1168323659bec88184ffd0c3f495d"
+      "sha256": "fc1d6e881f29e55bdfcf43a933adb363cfa788ca91bb1590306465f3253a769c"
     },
     {
       "path": "src/hooks/performance/useObservers.ts",
@@ -1330,7 +1318,7 @@
     },
     {
       "path": "src/hooks/performance/useTimingHooks.ts",
-      "sha256": "2b2a627eabb712427540d18c585333c11349e2b70f9226b15626a48630683cc7"
+      "sha256": "6a38d0e660b1a9d04289fb332b79b702314eaac852cc587ac45b0170e3fd66f8"
     },
     {
       "path": "src/hooks/reactions/useBatchReactions.ts",
@@ -1338,7 +1326,7 @@
     },
     {
       "path": "src/hooks/realtime/useSupabaseRealtime.ts",
-      "sha256": "4556abd97969758e892d191870d8a967ef721c048a04f7af7e26682f97a1e1ab"
+      "sha256": "12460f86514fa605a6c9e7bb8e913f5a2b06639a2e93096903fd2572643c467f"
     },
     {
       "path": "src/hooks/sip/useSipConnection.ts",
@@ -1461,10 +1449,6 @@
       "sha256": "77d9b30b706fefce7fe8bc55d270dedcc27dc17d4fda25301d3cb88e9e2ab800"
     },
     {
-      "path": "src/lib/externalProxy.ts",
-      "sha256": "a73760b9db10107a180d7895d41400c6d99ba04ed08a75c86b4edc50055820a1"
-    },
-    {
       "path": "src/lib/lazyWithRetry.ts",
       "sha256": "51f65b31b928f659b2fa05863a9bf168d845097909ee239009d8952f04807598"
     },
@@ -1510,7 +1494,7 @@
     },
     {
       "path": "src/services/realtime.service.ts",
-      "sha256": "51a1e7acb11ab4b6051683c6b996dfc69e5f9695155200f23e63159a172cc026"
+      "sha256": "497dbe6c7d8f7d5a2b622863c2b92fa92d2b75099d865a3ce51019ce326fae49"
     },
     {
       "path": "src/test/mocks/auth.tsx",
@@ -1538,7 +1522,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "sha256": "3fbe4c233d734143b534fb365220b2c1d8f545804d241ef32fdf68b979df628e"
+      "sha256": "ad4ae7aa18e522ec73c1500f34d1d88f12b7e52ca8fc73db5863e39b86f95a20"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1546,7 +1530,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "sha256": "5abc6152c7eae4247111c0ba9a5be26b61a5f9841f5a206fd482f91598bc9c18"
+      "sha256": "5db118185acd2563c1f09c8562d25959d5a1307094082e8723d4ea8f3e532e62"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -1566,15 +1550,15 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "sha256": "f468b5b434d7b738694ed419e6686e6b05b67bf161aef390f6ba69b890508e22"
+      "sha256": "51140efda8fa488e0ff1e9aa07038bb2cd3a9e031b47350d7a31cc7b3bc9324c"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "sha256": "324fd6e78bebb0ecd4a17708204a7ba0ecc02e26dc5fdf6a09c67b7f59755b60"
+      "sha256": "b52ad25c4c67ab6a53c74c707daf7d33af5e977d7a74a27dcf9dcea1e9f8fb9a"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "sha256": "8103a31b6c4aa7381ec41ea10ffefbf28fb851a641d7662cc1631ae60589dad3"
+      "sha256": "1af0866989e3eb648092acfd1370fb5dca167031e83886162055f9a244435ca7"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
@@ -1582,39 +1566,39 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "sha256": "906a1f4b6af9c4927d98f1ef7a4369b38de5da743eebdf2937a0af77e73a399d"
+      "sha256": "c92f93103040c39d9d2ff864ab6306110e0156a32896c249ddd3473efff1ca53"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "245897bb16c56cff845960567ad09c3a478fc37a9bca5c3f987a6965667563b3"
+      "sha256": "4699e43cf1b0a0972b5f3286740f34b7ee8ae5924951681c7ddb0b8e208e452a"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
-      "sha256": "8f86169dd2e3055097bfbbb3ef33a6b0d50513b9d2ee5b02b420de51d243a9cb"
+      "sha256": "513c826b5f846bc83a6b0d449706a564323a486f20d3516ebf2980314aaf96e4"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "sha256": "3a037747ae1c179f272a69c8781cba5167154fd49f1dfd5bdfc49090e9ff6863"
+      "sha256": "758b1a54783200715b1a4e77191f7e62b994b13fcb4067e2adbc64e3c5f86e02"
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "d2f5281aef4aa7a6c852d7aad29d2f4661478669058200099308749651039317"
+      "sha256": "a160f970aebde49c26330507ef6f1dca0890cc98f3bc06352c39133984b39a64"
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "sha256": "22533e432dc99567b9f0d71d279d4ac1b9727117ea7e7d0238abfaae032fa5b1"
+      "sha256": "581d9b8fdf978cf1837500b36fa24b855b87124ed54a7afe0085d27809d8ab0f"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "00e0ddff1877fc82bbe9bbe52ee032449314e7546911ae4701ab8b79e5eed383"
+      "sha256": "c809d119680d48037cfdca1986f02e004d643cad6b5de4c2b31e85398d1916e1"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "sha256": "585b41d9d4080f94ba3979fb3b5da8a760f6d8a3e7e3ca9c0c2b9b99e17e2505"
+      "sha256": "51d05c0ebccf326302e32334919dbee2127c40ecd2eb9b668d8542e36d92628d"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
-      "sha256": "6f41a3100a0e891e9d22f0bf20ac62f5e22e4803cbab156d0b52912253cde04a"
+      "sha256": "9424a20c030f6f6bb4834cb422e8b2598b29d86a4cb12d90c72870b11075d337"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
@@ -1626,7 +1610,7 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "sha256": "58e69d6410c8bb161c1d84334d28814b8fbf30e2fe6ff55553a3578e2cd51a0f"
+      "sha256": "8aa6d1cee5d754fd980feaf06508155dc6f3488a92972ddaf9c3d0c5117479dd"
     },
     {
       "path": "supabase/functions/webhook-diagnostic/diagnostic.test.ts",
@@ -1634,7 +1618,7 @@
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "sha256": "ffc52a1a140eb1096ac5cf96e4b901e365c6c77d36aec3af77d0a756834c7a9b"
+      "sha256": "9e5a7acbe379944ab07869d6482c2cc5279910fa336cc43f9eefa61f16d8b9c6"
     },
     {
       "path": "tailwind.config.ts",
@@ -6193,20 +6177,6 @@
       "contextHash": "34cd087713d5e6c332271bf1b34a617bf39fc65c2f44447d27a91626492cc522"
     },
     {
-      "file": "src/components/inbox/useFileUploadLogic.ts",
-      "line": 170,
-      "column": 9,
-      "endLine": 170,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "d6fffb5ebb4ea318fa6c542c5a7eb620e7347b8ffea9034f0351ae6085e4acff",
-      "lineHash": "d6fffb5ebb4ea318fa6c542c5a7eb620e7347b8ffea9034f0351ae6085e4acff",
-      "contextHash": "cea71a2be773243d0c5705c43ba17c31b1cb90d127506084eba6814e1107299f"
-    },
-    {
       "file": "src/components/inbox/useGlobalSearchData.ts",
       "line": 219,
       "column": 7,
@@ -7436,7 +7406,7 @@
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "eb5f1254019d75c68c93e909c56471d7de20b67c75e489b52e81be6470cff46a",
-      "contextHash": "aa9fa93ea34fd13a580f313c5351a02539714b701e6a18222a86386a28bc8baf"
+      "contextHash": "966b0f63764972167fdf282b9a33ce3b6e13f8d9e3a75ffd91c648cbb2b14c04"
     },
     {
       "file": "src/components/queues/QueueGoalsDialog.tsx",
@@ -11654,20 +11624,6 @@
     },
     {
       "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "line": 248,
-      "column": 49,
-      "endLine": 248,
-      "endColumn": 52,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "ad16a2d453c5ee5b7d2e67cacecb0c1c31794ede007e7660c251917ae10aea8f",
-      "contextHash": "11d6ac5e6f51210bb19a5f2150dcffe437c2c71df908f738a92925fde985c787"
-    },
-    {
-      "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
       "line": 25,
       "column": 24,
       "endLine": 25,
@@ -11679,6 +11635,20 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a98d96e32cd783e820573a3755987ff9ce28bf983f62855e4b181dc08e334731",
       "contextHash": "8c60da5a22a6d8e84b700f4d8359aaa3975d9744c7b24576c00e98ef7ac6b71f"
+    },
+    {
+      "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
+      "line": 251,
+      "column": 49,
+      "endLine": 251,
+      "endColumn": 52,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "ad16a2d453c5ee5b7d2e67cacecb0c1c31794ede007e7660c251917ae10aea8f",
+      "contextHash": "11d6ac5e6f51210bb19a5f2150dcffe437c2c71df908f738a92925fde985c787"
     },
     {
       "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
@@ -12760,9 +12730,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 157,
+      "line": 178,
       "column": 17,
-      "endLine": 157,
+      "endLine": 178,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -13263,20 +13233,6 @@
       "contextHash": "0c738c009a96defc85c464f82cb64c3ec5bd1b97009602a3f42dc2aef00cb02c"
     },
     {
-      "file": "src/hooks/communication/useAudioPlayer.ts",
-      "line": 23,
-      "column": 44,
-      "endLine": 23,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/hooks/communication/useAudioPlayer.ts:23:44 21 | 22 | const waveformHeights = useMemo( > 23 | () => Array.from({ length: 30 }, () => Math.random() * 60 + 20), | ^^^^^^^^^^^^^ Cannot call impure function 24 | [] 25 | ); 26 |",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "0fe9300f713004e60afb0dd7e2637d582e93b8212808f7e0098d9d3960254225",
-      "contextHash": "895db615950da60820e65288fc1e524bac1556dabbb17f79f19085aa4c01ad6d"
-    },
-    {
       "file": "src/hooks/communication/useAudioRecorder.ts",
       "line": 62,
       "column": 13,
@@ -13429,34 +13385,6 @@
       "spanHash": "91e10380739015aafd0ed9fb344ec18728e648492611867c5aae2ce3497b539d",
       "lineHash": "c1a3b3ea2fa97ba1e17cdb5fc0abda37a6ee2996f738eb33006d1e6036198357",
       "contextHash": "0a19ce6715498023d1bd6b93a908f509a291b1b5d8f7563eac3d8554286373ba"
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 109,
-      "column": 35,
-      "endLine": 109,
-      "endColumn": 41,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `scribe` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/communication/useVoiceAgent.ts:109:35 107 | safeSetPhase('idle'); 108 | autoRestartRef.current = setTimeout(() => { > 109 | if (mountedRef.current && scribe.isConnected) { | ^^^^^^ `scribe` accessed before it is declared 110 | safeSetPhase('listening'); 111 | } 112 | }, AUTO_RESTART_DELAY_MS); <ROOT>/src/hooks/communication/useVoiceAgent.ts:138:3 136 | }, [supabaseUrl, supabaseKey, safeSetPhase]); 137 | > 138 | const scribe = useScribe({ | ^^^^^^^^^^^^^^^^^^^^^^^^^^ > 139 | modelId: 'scribe_v2_realtime', | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 140 | commitStrategy: CommitStrategy.VAD, … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 152 | }, | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 153 | }); | ^^^^^^ `scribe` is declared here 154 | 155 | const startListening = useCallback(async () => { 156 | if (phaseRef.current === 'booting' || phaseRef.current === 'processing') return;",
-      "spanHash": "ffb301e28a65f3046dd636ef12d04f8d2fc2e2b3b0001b0d88ce5e770dbca2da",
-      "lineHash": "445062254275b924504bca6ca96e36986bb36da81c3cbdc18ab1c3ed32bac204",
-      "contextHash": "c86b008a9a65565052cf7941cb37ad62e69d8ade101b5e376e8cb0eda67b39ff"
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 136,
-      "column": 6,
-      "endLine": 136,
-      "endColumn": 46,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useCallback has a missing dependency: 'scribe.isConnected'. Either include it or remove the dependency array.",
-      "spanHash": "dcd833fc074d7a37f0c9345bb8340efc6cdbbb5a4a77ebeaa8eb2c077125a703",
-      "lineHash": "a1033f9f584060c4fa9d55d25b05007fdcda6e5e53f4f1beecca6ec1d2ea2076",
-      "contextHash": "50c229cabd6c12cdc12a0b26cd8dee0660c222037be828b95e28b04e6a49c0cb"
     },
     {
       "file": "src/hooks/crm/useContactCustomFields.ts",
@@ -14049,9 +13977,9 @@
     {
       "file": "src/hooks/realtime/useSupabaseRealtime.ts",
       "line": 18,
-      "column": 65,
+      "column": 64,
       "endLine": 18,
-      "endColumn": 68,
+      "endColumn": 67,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -14063,9 +13991,9 @@
     {
       "file": "src/hooks/realtime/useSupabaseRealtime.ts",
       "line": 6,
-      "column": 54,
+      "column": 53,
       "endLine": 6,
-      "endColumn": 57,
+      "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -14635,48 +14563,6 @@
       "contextHash": "0496db9832d05a534bb4bb445f36b94db9b9e7d9bd31474e9d145c0b56470c73"
     },
     {
-      "file": "src/lib/externalProxy.ts",
-      "line": 63,
-      "column": 17,
-      "endLine": 63,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "8fa213e8fe84eddda52315d03d877290e69611c0cf33d288ab84117e9d168511",
-      "contextHash": "b9d4f36df80c95a5c1cf4f1ec5a16d3e9c269676b54dd83a37d3b8aff1229539"
-    },
-    {
-      "file": "src/lib/externalProxy.ts",
-      "line": 64,
-      "column": 17,
-      "endLine": 64,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "35b217017d425a8a712ee0f4f216e3c683a595a42f620ed9371cc121eb839906",
-      "contextHash": "fa756fb38e90c3b46ae6dc02419ebbcfe72d23d39b9a3a076f842b7584c7cc31"
-    },
-    {
-      "file": "src/lib/externalProxy.ts",
-      "line": 65,
-      "column": 17,
-      "endLine": 65,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "7449b4cc32fab07126bd7b26525e35f03a97b14ef1a748c00b7b34ab98b71d1a",
-      "contextHash": "9c0a70261d467076d72b11ea951a52d61422152f8a0a092427cb6a8a5bf7d988"
-    },
-    {
       "file": "src/lib/lazyWithRetry.ts",
       "line": 7,
       "column": 61,
@@ -15238,37 +15124,9 @@
     },
     {
       "file": "src/services/realtime.service.ts",
-      "line": 74,
-      "column": 50,
-      "endLine": 74,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 74,
-      "column": 84,
-      "endLine": 74,
-      "endColumn": 87,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 87,
+      "line": 105,
       "column": 70,
-      "endLine": 87,
+      "endLine": 105,
       "endColumn": 73,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15280,9 +15138,9 @@
     },
     {
       "file": "src/services/realtime.service.ts",
-      "line": 98,
+      "line": 116,
       "column": 33,
-      "endLine": 98,
+      "endLine": 116,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15291,6 +15149,34 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "ab705307d692327ee76e107e082c63cf8633b6606db47a6a30cbc8ad7b1bdf4d",
       "contextHash": "3fcdafe335b1a89294acc4c7bfff7b77b00f405b03fab1b2fdee1afc2a1b7c31"
+    },
+    {
+      "file": "src/services/realtime.service.ts",
+      "line": 92,
+      "column": 50,
+      "endLine": 92,
+      "endColumn": 53,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
+      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
+    },
+    {
+      "file": "src/services/realtime.service.ts",
+      "line": 92,
+      "column": 84,
+      "endLine": 92,
+      "endColumn": 87,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
+      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
     },
     {
       "file": "src/test/mocks/auth.tsx",
@@ -15588,34 +15474,6 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 174,
-      "column": 57,
-      "endLine": 174,
-      "endColumn": 60,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "b41374d1bfa66c6a004dfb4c4c06df32c408b31c6727921932dc5529010dec11",
-      "contextHash": "edce13c605751c8c768bff086ee74c1aa298e694fa2f22a3a3b69146e6ffa341"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 182,
-      "column": 11,
-      "endLine": 182,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "6b92dc4f902e1d070064cf9cbdfe6dc1a4afa97e27e14f9c74f4606119edfc40",
-      "contextHash": "6c2c563fa309f02d7a8a216f09c4d971f0ac9beb66115911ed641ec91da8bb0f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
       "line": 26,
       "column": 66,
       "endLine": 26,
@@ -15742,9 +15600,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 172,
+      "line": 197,
       "column": 13,
-      "endLine": 172,
+      "endLine": 197,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15756,9 +15614,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 198,
+      "line": 223,
       "column": 13,
-      "endLine": 198,
+      "endLine": 223,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15770,9 +15628,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 224,
+      "line": 249,
       "column": 7,
-      "endLine": 224,
+      "endLine": 249,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15784,9 +15642,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 280,
+      "line": 305,
       "column": 55,
-      "endLine": 280,
+      "endLine": 305,
       "endColumn": 58,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15798,9 +15656,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 307,
+      "line": 332,
       "column": 53,
-      "endLine": 307,
+      "endLine": 332,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15812,9 +15670,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 315,
+      "line": 340,
       "column": 25,
-      "endLine": 315,
+      "endLine": 340,
       "endColumn": 36,
       "severity": 1,
       "ruleId": "no-console",
@@ -15826,9 +15684,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 318,
+      "line": 343,
       "column": 36,
-      "endLine": 318,
+      "endLine": 343,
       "endColumn": 47,
       "severity": 1,
       "ruleId": "no-console",
@@ -15840,9 +15698,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 325,
+      "line": 350,
       "column": 7,
-      "endLine": 325,
+      "endLine": 350,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15854,9 +15712,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 335,
+      "line": 360,
       "column": 7,
-      "endLine": 335,
+      "endLine": 360,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16330,9 +16188,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 125,
+      "line": 134,
       "column": 13,
-      "endLine": 125,
+      "endLine": 134,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16344,9 +16202,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 133,
+      "line": 142,
       "column": 5,
-      "endLine": 133,
+      "endLine": 142,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16358,9 +16216,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 146,
+      "line": 155,
       "column": 5,
-      "endLine": 146,
+      "endLine": 155,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16386,9 +16244,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 180,
+      "line": 189,
       "column": 9,
-      "endLine": 180,
+      "endLine": 189,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -16400,9 +16258,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 230,
+      "line": 252,
       "column": 13,
-      "endLine": 230,
+      "endLine": 252,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16414,9 +16272,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 313,
+      "line": 335,
       "column": 58,
-      "endLine": 313,
+      "endLine": 335,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16456,9 +16314,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 77,
+      "line": 80,
       "column": 5,
-      "endLine": 77,
+      "endLine": 80,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16470,9 +16328,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 121,
+      "line": 135,
       "column": 54,
-      "endLine": 121,
+      "endLine": 135,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16484,9 +16342,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 148,
+      "line": 169,
       "column": 5,
-      "endLine": 148,
+      "endLine": 169,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16498,9 +16356,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 153,
+      "line": 174,
       "column": 51,
-      "endLine": 153,
+      "endLine": 174,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16512,9 +16370,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 195,
+      "line": 218,
       "column": 3,
-      "endLine": 195,
+      "endLine": 218,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16526,9 +16384,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 199,
+      "line": 222,
       "column": 54,
-      "endLine": 199,
+      "endLine": 222,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16540,9 +16398,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 215,
+      "line": 240,
       "column": 7,
-      "endLine": 215,
+      "endLine": 240,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16554,9 +16412,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 65,
+      "line": 67,
       "column": 5,
-      "endLine": 65,
+      "endLine": 67,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16568,9 +16426,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 70,
+      "line": 72,
       "column": 54,
-      "endLine": 70,
+      "endLine": 72,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16593,34 +16451,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "2ff1bf8c69fb2459c0253ec4985e90c5e8dbfdb05e1afeecd8e760626c35a841",
       "contextHash": "b1578bd11c8b463ac5565c79e03dbe0734c0a6e96eefe2ec4e02996878d650e0"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 90,
-      "column": 11,
-      "endLine": 90,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "8353c7b29471c867087a622291cb61a1a7aaa1da401bb4e7e50729dbc5228556",
-      "contextHash": "de517a4ae4bbf6aba992d6245fab4cb5c6bdb43d80718a091be683674f7a2939"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 96,
-      "column": 9,
-      "endLine": 96,
-      "endColumn": 20,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "bebe2caf315e1c86c11e71a32802b04c4dbbe926dfd2d671d198f4439fecc849",
-      "contextHash": "3b3e2dac79302fa8c0a2c8da6b60de6a937c3bb90d72c476b2861407ed41e12d"
     },
     {
       "file": "supabase/functions/_shared/gmail-helpers.ts",
@@ -16848,9 +16678,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 106,
+      "line": 118,
       "column": 9,
-      "endLine": 106,
+      "endLine": 118,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -16862,9 +16692,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 110,
+      "line": 122,
       "column": 11,
-      "endLine": 110,
+      "endLine": 122,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16876,9 +16706,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 116,
+      "line": 128,
       "column": 11,
-      "endLine": 116,
+      "endLine": 128,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16890,9 +16720,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 119,
+      "line": 131,
       "column": 11,
-      "endLine": 119,
+      "endLine": 131,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16904,9 +16734,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 136,
+      "line": 148,
       "column": 32,
-      "endLine": 136,
+      "endLine": 148,
       "endColumn": 43,
       "severity": 1,
       "ruleId": "no-console",
@@ -16918,9 +16748,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 141,
+      "line": 153,
       "column": 7,
-      "endLine": 141,
+      "endLine": 153,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16932,9 +16762,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 43,
+      "line": 55,
       "column": 5,
-      "endLine": 43,
+      "endLine": 55,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16946,9 +16776,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 66,
+      "line": 78,
       "column": 7,
-      "endLine": 66,
+      "endLine": 78,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16960,9 +16790,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 76,
+      "line": 88,
       "column": 11,
-      "endLine": 76,
+      "endLine": 88,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -17086,9 +16916,9 @@
     },
     {
       "file": "supabase/functions/gmail-send/index.ts",
-      "line": 233,
+      "line": 241,
       "column": 26,
-      "endLine": 233,
+      "endLine": 241,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17338,9 +17168,9 @@
     },
     {
       "file": "supabase/functions/webhook-diagnostic/index.ts",
-      "line": 77,
+      "line": 74,
       "column": 22,
-      "endLine": 77,
+      "endLine": 74,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
