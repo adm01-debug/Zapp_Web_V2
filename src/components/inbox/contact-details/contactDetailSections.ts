@@ -29,7 +29,7 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'media', label: 'Mídia Compartilhada', icon: Image, customIndex: 8 },
 ];
 
-export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'custom-fields', 'notes', 'history', 'stats'];
+export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'custom-fields', 'notes', 'history', 'stats', 'media'];
 
 const ACCORDION_STORAGE_KEY = 'contact-details-accordion-state';
 
