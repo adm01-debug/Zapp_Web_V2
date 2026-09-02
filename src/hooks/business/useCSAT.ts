@@ -195,9 +195,14 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
   return useQuery({
     queryKey: ['csat-breakdown', periodDays],
     queryFn: async (): Promise<SatisfactionBreakdown> => {
+      // Janela = os ultimos `periodDays` dias de calendario local, incluindo hoje.
+      // Ancorar no inicio do dia local mantem headline, distribuicao e timeline
+      // cobrindo exatamente o mesmo intervalo -- antes o dia mais antigo entrava
+      // nas metricas mas nao aparecia na Evolucao.
       const now = new Date();
       const currentStart = new Date(now);
-      currentStart.setDate(currentStart.getDate() - periodDays);
+      currentStart.setDate(currentStart.getDate() - (periodDays - 1));
+      currentStart.setHours(0, 0, 0, 0);
       const previousStart = new Date(currentStart);
       previousStart.setDate(previousStart.getDate() - periodDays);
 
@@ -252,7 +257,7 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
           queueMap.set(queueId, entry);
         }
 
-        const day = r.created_at.slice(0, 10);
+        const day = format(new Date(r.created_at), 'yyyy-MM-dd');
         const dayRatings = dayMap.get(day) || [];
         dayRatings.push(r.rating);
         dayMap.set(day, dayRatings);
@@ -280,7 +285,7 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
       for (let i = periodDays - 1; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
-        const key = d.toISOString().slice(0, 10);
+        const key = format(d, 'yyyy-MM-dd');
         const dayRatings = dayMap.get(key) || [];
         timeline.push({
           date: format(d, 'dd/MM'),
