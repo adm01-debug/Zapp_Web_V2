@@ -72,7 +72,7 @@ export const MessageBubble = memo(function MessageBubble({
           ref={registerRef}
           data-search-highlight={highlightedMessageIds?.has(message.id) ? 'true' : undefined}
           className={cn(
-            'flex group gap-2.5 transition-all duration-300',
+            'flex group gap-2.5 transition-all duration-300 msg-anim-in',
             isSent ? 'justify-end' : 'justify-start',
             !isLastInGroup && 'mb-0.5',
             highlightedMessageIds?.has(message.id) && 'relative',
@@ -143,12 +143,12 @@ export const MessageBubble = memo(function MessageBubble({
                   (message.type === 'image' || message.type === 'video') && !message.content ? 'p-0' : 'px-3.5 py-2',
                   isSent
                     ? cn('bg-primary text-primary-foreground shadow-sm',
-                        isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-br-md',
+                        isFirstInGroup && isLastInGroup && 'rounded-[4px_13px_13px_13px]',
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-br-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tr-sm rounded-br-md',
                         !isFirstInGroup && !isLastInGroup && 'rounded-xl rounded-tr-sm rounded-br-sm')
-                    : cn('bg-card border border-border/30 text-foreground shadow-sm',
-                        isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-bl-md',
+                    : cn('bg-card fut-received border border-border/30 text-foreground shadow-sm',
+                        isFirstInGroup && isLastInGroup && 'rounded-[13px_4px_13px_13px]',
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-bl-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tl-sm rounded-bl-md',
                         !isFirstInGroup && !isLastInGroup && 'rounded-xl rounded-tl-sm rounded-bl-sm')

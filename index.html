@@ -47,8 +47,8 @@
     <link rel="dns-prefetch" href="https://ai.gateway.lovable.dev" />
     
     <!-- Preload critical fonts for faster LCP -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" as="style" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
     
     <!-- Preload critical resources -->
     <link rel="preload" href="/src/index.css" as="style" />
@@ -147,6 +147,46 @@
   <meta name="twitter:title" content="ZAPP Web - Plataforma de Multiatendimento">
   <meta property="og:description" content="Plataforma completa de multiatendimento WhatsApp para equipes comerciais. Inbox unificada, gestão de filas, dashboard com métricas e muito mais.">
   <meta name="twitter:description" content="Plataforma completa de multiatendimento WhatsApp para equipes comerciais. Inbox unificada, gestão de filas, dashboard com métricas e muito mais.">
+  <script>
+    // DESIGN PREVIEW ONLY (cópia de design) — seletor flutuante de variantes
+    (function(){
+      var SAVED = 'zapp-design-variant';
+      function apply(name){
+        var root = document.documentElement;
+        ['theme-aurora','theme-emerald','theme-violet','theme-futurista'].forEach(function(c){ root.classList.remove(c); });
+        if (name && name !== 'original') root.classList.add('theme-' + name);
+        localStorage.setItem(SAVED, name || 'original');
+      }
+      var saved = null; try { saved = localStorage.getItem(SAVED); } catch(e){}
+      apply(saved || 'futurista');
+      function mount(){
+        if (document.getElementById('zapp-design-switcher')) return;
+        var bar = document.createElement('div');
+        bar.id = 'zapp-design-switcher';
+        bar.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:99999;display:flex;gap:6px;align-items:center;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:9999px;padding:6px 10px;font:600 11px Outfit,system-ui,sans-serif;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.4);';
+        bar.innerHTML = '<span style="opacity:.6;margin-right:2px;">🎨</span>';
+        [['original','Original'],['aurora','Aurora'],['emerald','Emerald'],['violet','Violet'],['futurista','Futurista']].forEach(function(o){
+          var b = document.createElement('button');
+          b.textContent = o[1];
+          b.dataset.variant = o[0];
+          b.style.cssText = 'border:0;background:transparent;color:#fff;font:inherit;padding:4px 10px;border-radius:9999px;cursor:pointer;';
+          b.onclick = function(){ apply(o[0]); sync(); };
+          bar.appendChild(b);
+        });
+        function sync(){
+          var cur = 'original'; try { cur = localStorage.getItem(SAVED) || 'original'; } catch(e){}
+          bar.querySelectorAll('button').forEach(function(b){
+            var on = b.dataset.variant === cur;
+            b.style.background = on ? 'rgba(255,255,255,.22)' : 'transparent';
+          });
+        }
+        sync();
+        document.body.appendChild(bar);
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+      else mount();
+    })();
+  </script>
 </head>
 
   <body class="bg-background antialiased selection:bg-primary/20">

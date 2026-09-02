@@ -63,7 +63,7 @@ export function ChatHeader({
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card">
       <div className="flex items-center gap-3">
         <motion.div whileHover={{ scale: 1.05 }}>
-          <Avatar className="w-10 h-10 ring-2 ring-border/30">
+          <Avatar className="w-12 h-12 ring-2 ring-border/30">
             <AvatarImage src={conversation.contact.avatar} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}

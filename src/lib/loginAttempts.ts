@@ -79,3 +79,28 @@ export function formatLockTime(seconds: number): string {
   const minutes = Math.ceil(seconds / 60);
   return `${minutes} minuto${minutes !== 1 ? 's' : ''}`;
 }
+
+// Portado do V3 (design copy 20260831)
+export type LoginBlockReason =
+  | 'ip_blocked'
+  | 'ip_not_whitelisted'
+  | 'country_blocked'
+  | 'country_not_allowed'
+  | 'lock_check_failed';
+
+export function blockReasonMessage(reason: LoginBlockReason | null): string {
+  switch (reason) {
+    case 'ip_blocked':
+      return 'Seu IP está bloqueado por medidas de segurança. Tente novamente mais tarde ou contate o administrador.';
+    case 'ip_not_whitelisted':
+      return 'Seu IP não está na lista de IPs permitidos. Contate o administrador.';
+    case 'country_blocked':
+      return 'Acesso negado: seu país está na lista de bloqueio desta plataforma.';
+    case 'country_not_allowed':
+      return 'Acesso negado: seu país não está na lista de países permitidos.';
+    case 'lock_check_failed':
+      return 'Não foi possível verificar o bloqueio da conta. Tente novamente em instantes.';
+    default:
+      return 'Acesso bloqueado pela política de segurança.';
+  }
+}

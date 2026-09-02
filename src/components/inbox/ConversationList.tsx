@@ -12,6 +12,11 @@ import { ConversationContextMenu } from './ConversationContextMenu';
 import { useExternalContact360Batch, CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import {
+  Mic,
+  ImageIcon,
+  Video,
+  FileText,
+  MapPin,
   Search,
   Filter,
   Clock,
@@ -57,6 +62,21 @@ const statusColors = {
   resolved: 'bg-status-resolved',
   waiting: 'bg-status-waiting',
 };
+
+// Ícone do tipo da última mensagem no preview da lista (plano #28)
+function MessageTypeIcon({ type }: { type: string }) {
+  const map: Record<string, { icon: typeof Mic; cls: string }> = {
+    audio: { icon: Mic, cls: 'text-info' },
+    image: { icon: ImageIcon, cls: 'text-secondary' },
+    video: { icon: Video, cls: 'text-secondary' },
+    document: { icon: FileText, cls: 'text-warning' },
+    location: { icon: MapPin, cls: 'text-destructive' },
+  };
+  const cfg = map[type];
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+  return <Icon className={`w-3 h-3 shrink-0 ${cfg.cls}`} aria-hidden="true" />;
+}
 
 export function ConversationList({
   conversations,
@@ -243,7 +263,10 @@ export function ConversationList({
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground truncate pr-2">
+                          <p className="text-sm text-muted-foreground truncate pr-2 flex items-center gap-1">
+                            {conversation.lastMessage?.type && conversation.lastMessage.type !== 'text' && (
+                              <MessageTypeIcon type={conversation.lastMessage.type} />
+                            )}
                             {conversation.lastMessage?.content || 'Sem mensagens'}
                           </p>
                           {conversation.unreadCount > 0 && (
@@ -251,7 +274,8 @@ export function ConversationList({
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                              className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground"
+                              className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold text-primary-foreground"
+                              style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))' }}
                             >
                               {conversation.unreadCount}
                             </motion.span>

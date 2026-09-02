@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Search, Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
+import { ZappLogo } from '@/components/auth/ZappLogo';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/ui/useTheme';
 import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
@@ -68,10 +69,10 @@ export const Sidebar = React.memo(function Sidebar({
 
       {/* Logo + Toggle */}
       <div className={cn('flex items-center h-[56px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
-        <button onClick={() => onViewChange('inbox')} className="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
-          <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
+        <button onClick={() => onViewChange('inbox')} className="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-transparent hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
+          <ZappLogo className="w-[26px] h-[26px] drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]" />
         </button>
-        {!collapsed && <span className="text-sm font-bold text-foreground tracking-tight ml-2 mr-auto">ZAPP</span>}
+        {!collapsed && <span className="text-sm font-bold tracking-tight ml-1 mr-auto bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">ZAPP</span>}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">

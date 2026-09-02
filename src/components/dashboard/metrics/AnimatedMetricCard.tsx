@@ -94,7 +94,8 @@ export function AnimatedMetricCard({
       </div>
       <div className="flex items-baseline gap-1 mb-2">
         {prefix && <span className={cn('font-medium', sizes.label)}>{prefix}</span>}
-        <motion.span key={String(value)} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('font-bold tabular-nums', sizes.value, styles.value)}>
+        <motion.span key={String(value)} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('font-bold tabular-nums', sizes.value, styles.value)}
+          style={{ fontFamily: 'var(--font-numeric)' }}>
           {formatValue(displayValue)}
         </motion.span>
         {suffix && <span className={cn('text-muted-foreground', sizes.label)}>{suffix}</span>}

@@ -27,6 +27,7 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          style={{ zoom: 0.75 }}
           className="relative w-full max-w-lg mx-4 bg-card border border-border rounded-3xl shadow-2xl overflow-hidden"
         >
           {/* Background decoration */}

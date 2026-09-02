@@ -1,0 +1,190 @@
+/* ============================================================
+   DESIGN VARIANTS — ambiente de design 20260831 (CÓPIA)
+   3 explorações de identidade visual, 100% via tokens CSS.
+   Ativação: classe no <html> (html.theme-aurora / .theme-emerald / .theme-violet)
+   Este arquivo NÃO existe no projeto original.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   VARIANTE A — "Aurora" (conservadora)
+   Refinamento do azul atual: dark mais profundo e azulado
+   (grafite-azulado em vez de cinza puro), azul um pouco mais
+   vívido. Menor distância do atual = menor risco.
+   ------------------------------------------------------------ */
+.theme-aurora {
+  --background: 225 25% 5%;
+  --card: 228 14% 10%;
+  --card-elevated: 228 14% 15%;
+  --popover: 228 14% 12%;
+  --muted: 228 12% 15%;
+  --muted-foreground: 222 18% 70%;
+  --border: 228 12% 19%;
+  --input: 228 12% 15%;
+  --primary: 217 91% 60%;
+  --primary-glow: 213 94% 66%;
+  --ring: 217 91% 60%;
+  --accent: 222 45% 20%;
+  --accent-foreground: 214 95% 78%;
+  --sidebar-background: 228 16% 7%;
+  --sidebar-border: 228 12% 16%;
+  --sidebar-accent: 222 45% 18%;
+  --sidebar-accent-foreground: 214 95% 80%;
+  --chat-bubble-received: 228 12% 15%;
+  --chat-header: 228 14% 10%;
+  --chat-input-bg: 228 14% 13%;
+  --gradient-surface: linear-gradient(180deg, hsl(228 14% 10%), hsl(228 18% 6%));
+  --shadow-glow-primary: 0 4px 24px hsl(217 91% 60% / 0.45);
+}
+
+/* ------------------------------------------------------------
+   VARIANTE B — "Emerald" (forte aderência ao domínio)
+   Zapp é plataforma de atendimento WhatsApp: o verde do
+   produto vira a cor primária. Neutros levemente esverdeados.
+   Identidade própria, não copia a cor do WhatsApp literal.
+   ------------------------------------------------------------ */
+.theme-emerald {
+  --background: 220 18% 4%;
+  --card: 165 10% 9%;
+  --card-elevated: 165 10% 14%;
+  --popover: 165 10% 11%;
+  --muted: 165 9% 14%;
+  --muted-foreground: 160 8% 68%;
+  --border: 165 9% 18%;
+  --input: 165 9% 14%;
+  --primary: 158 72% 46%;
+  --primary-foreground: 160 80% 6%;
+  --primary-glow: 152 80% 55%;
+  --secondary: 190 75% 50%;
+  --ring: 158 72% 46%;
+  --accent: 158 45% 16%;
+  --accent-foreground: 155 80% 72%;
+  --sidebar-background: 165 12% 6%;
+  --sidebar-border: 165 9% 14%;
+  --sidebar-primary: 158 72% 46%;
+  --sidebar-accent: 158 40% 14%;
+  --sidebar-accent-foreground: 155 80% 74%;
+  --chat-bubble-sent: 158 72% 38%;
+  --chat-bubble-sent-foreground: 160 70% 96%;
+  --chat-bubble-received: 165 9% 14%;
+  --chat-header: 165 10% 9%;
+  --chat-input-bg: 165 10% 12%;
+  --unread: 158 80% 50%;
+  --gradient-surface: linear-gradient(180deg, hsl(165 10% 9%), hsl(170 14% 5%));
+  --gradient-primary: linear-gradient(135deg, hsl(158 72% 46%), hsl(172 75% 42%));
+  --shadow-glow-primary: 0 4px 24px hsl(158 72% 46% / 0.45);
+}
+
+/* ------------------------------------------------------------
+   VARIANTE C — "Violet" (divergente)
+   Exploração de fronteira: violeta elétrico sobre neutros frios
+   quase pretos. Postura mais "produto tech premium".
+   ------------------------------------------------------------ */
+.theme-violet {
+  --background: 260 20% 4%;
+  --card: 255 12% 10%;
+  --card-elevated: 255 12% 15%;
+  --popover: 255 12% 12%;
+  --muted: 255 10% 15%;
+  --muted-foreground: 250 12% 70%;
+  --border: 255 10% 19%;
+  --input: 255 10% 15%;
+  --primary: 262 89% 66%;
+  --primary-glow: 268 95% 72%;
+  --secondary: 290 70% 58%;
+  --ring: 262 89% 66%;
+  --accent: 260 45% 20%;
+  --accent-foreground: 262 90% 80%;
+  --sidebar-background: 258 14% 6%;
+  --sidebar-border: 255 10% 15%;
+  --sidebar-primary: 262 89% 66%;
+  --sidebar-accent: 260 40% 18%;
+  --sidebar-accent-foreground: 262 90% 82%;
+  --chat-bubble-sent: 262 80% 52%;
+  --chat-bubble-sent-foreground: 260 60% 98%;
+  --chat-bubble-received: 255 10% 15%;
+  --chat-header: 255 12% 10%;
+  --chat-input-bg: 255 12% 13%;
+  --gradient-surface: linear-gradient(180deg, hsl(255 12% 10%), hsl(258 16% 5%));
+  --gradient-primary: linear-gradient(135deg, hsl(262 89% 66%), hsl(290 70% 58%));
+  --gradient-vibrant: linear-gradient(135deg, hsl(262 89% 66%), hsl(290 70% 58%), hsl(230 80% 60%));
+  --shadow-glow-primary: 0 4px 24px hsl(262 89% 66% / 0.45);
+}
+
+/* Modo light das variantes (o app abre em dark, mas cobrimos o básico) */
+:root.theme-aurora:not(.dark) {
+  --primary: 217 91% 52%;
+  --ring: 217 91% 52%;
+  --accent: 222 60% 94%;
+  --accent-foreground: 217 91% 40%;
+}
+:root.theme-emerald:not(.dark) {
+  --primary: 158 72% 36%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 158 72% 36%;
+  --accent: 158 60% 92%;
+  --accent-foreground: 158 72% 26%;
+}
+:root.theme-violet:not(.dark) {
+  --primary: 262 89% 58%;
+  --ring: 262 89% 58%;
+  --accent: 262 60% 94%;
+  --accent-foreground: 262 89% 46%;
+}
+
+/* ------------------------------------------------------------
+   VARIANTE D — "Futurista" (plano #2+#12, DreamsChat neon)
+   Ciano elétrico + violeta sobre quase-preto azulado.
+   Contraste validado no plano: #22d3ee sobre #04050a = 9.8:1 AA.
+   ------------------------------------------------------------ */
+.theme-futurista {
+  --background: 228 55% 3%;
+  --foreground: 220 30% 93%;
+  --card: 227 41% 6%;
+  --card-elevated: 227 38% 9%;
+  --popover: 227 41% 7%;
+  --muted: 227 35% 10%;
+  --muted-foreground: 210 25% 62%;
+  --border: 227 32% 14%;
+  --input: 227 35% 10%;
+  --primary: 190 84% 51%;
+  --primary-glow: 192 100% 68%;
+  --secondary: 258 90% 66%;
+  --ring: 190 84% 51%;
+  --accent: 210 50% 14%;
+  --accent-foreground: 192 100% 70%;
+  --sidebar-background: 228 50% 4%;
+  --sidebar-border: 227 32% 12%;
+  --sidebar-primary: 190 84% 51%;
+  --sidebar-accent: 210 45% 12%;
+  --sidebar-accent-foreground: 192 100% 70%;
+  --chat-bubble-sent: 190 80% 38%;
+  --chat-bubble-sent-foreground: 190 100% 96%;
+  --chat-bubble-received: 228 0% 100%;
+  --chat-bubble-received-alpha: 0.045; /* protótipo: rgba(255,255,255,.045) — usar com /alpha no hsl() */
+  --chat-header: 227 41% 6%;
+  --chat-input-bg: 227 41% 7%;
+  --gradient-primary: linear-gradient(135deg, hsl(190 84% 51%), hsl(258 90% 66%));
+  --gradient-vibrant: linear-gradient(135deg, hsl(190 84% 51%), hsl(210 90% 60%), hsl(258 90% 66%));
+  --shadow-glow-primary: 0 4px 24px hsl(190 84% 51% / 0.4);
+}
+:root.theme-futurista:not(.dark) {
+  --primary: 190 84% 40%;
+  --ring: 190 84% 40%;
+  --accent: 190 60% 92%;
+  --accent-foreground: 190 84% 30%;
+}
+
+
+/* ── Futurista: polish de componentes (run h356738, protótipos .dc.html) ── */
+.theme-futurista #main-navigation nav li > button:hover,
+.theme-futurista #main-navigation nav li > a:hover {
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.14);
+}
+.theme-futurista #main-navigation {
+  background-image: linear-gradient(hsl(var(--primary) / 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.016) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+.theme-futurista .fut-received {
+  background-color: hsl(var(--chat-bubble-received) / var(--chat-bubble-received-alpha, 0.045));
+}
