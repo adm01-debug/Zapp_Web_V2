@@ -81,7 +81,7 @@ npm audit fix
 | 2026-04-11 | Removido .env do repositório | ✅ Corrigido |
 | 2026-04-11 | Atualizado .gitignore com regras de segurança | ✅ Corrigido |
 | 2026-04-11 | Adicionado CI/CD com security audit | ✅ Implementado |
-| 2026-09-02 | `xlsx` migrado para CDN oficial SheetJS (0.20.3), fecha 2 vulnerabilidades altas do `^0.18.5` | ✅ Corrigido |
+| 2026-09-02 | `xlsx` migrado para CDN oficial SheetJS (0.20.3), fecha CVE-2023-30533 (prototype pollution, média, CVSS 5.3) e CVE-2024-22363 (ReDoS, alta, CVSS 7.5) do `^0.18.5` | ✅ Corrigido |
 
 ## Contato
 
