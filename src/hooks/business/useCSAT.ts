@@ -151,6 +151,34 @@ interface CSATBreakdownRow {
   contact: { queue_id: string | null } | null;
 }
 
+const CSAT_PAGE_SIZE = 1000;
+
+/**
+ * PostgREST limita a resposta a um teto de linhas (1000 por padrao). Sem
+ * paginar, uma janela com mais surveys que o teto devolveria apenas as linhas
+ * mais antigas e o dashboard perderia silenciosamente as respostas recentes.
+ */
+async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
+  const rows: CSATBreakdownRow[] = [];
+
+  for (let page = 0; ; page++) {
+    const { data, error } = await supabase
+      .from('csat_surveys')
+      .select(
+        'agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
+      )
+      .gte('created_at', start.toISOString())
+      .order('created_at', { ascending: true })
+      .range(page * CSAT_PAGE_SIZE, (page + 1) * CSAT_PAGE_SIZE - 1);
+
+    if (error) throw error;
+
+    const batch = (data || []) as unknown as CSATBreakdownRow[];
+    rows.push(...batch);
+    if (batch.length < CSAT_PAGE_SIZE) return rows;
+  }
+}
+
 function csatPercentFromRatings(ratings: number[]): number {
   return (ratings.filter((r) => r >= 4).length / ratings.length) * 100;
 }
@@ -173,22 +201,15 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
       const previousStart = new Date(currentStart);
       previousStart.setDate(previousStart.getDate() - periodDays);
 
-      const [{ data: surveys, error: surveysError }, { data: queues, error: queuesError }] = await Promise.all([
-        supabase
-          .from('csat_surveys')
-          .select(
-            'agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
-          )
-          .gte('created_at', previousStart.toISOString())
-          .order('created_at', { ascending: true }),
+      const [surveys, { data: queues, error: queuesError }] = await Promise.all([
+        fetchSurveysSince(previousStart),
         supabase.from('queues').select('id, name'),
       ]);
 
-      if (surveysError) throw surveysError;
       if (queuesError) throw queuesError;
 
       const queueNameById = new Map((queues || []).map((q) => [q.id, q.name]));
-      const rows = (surveys || []) as unknown as CSATBreakdownRow[];
+      const rows = surveys;
 
       const currentStartMs = currentStart.getTime();
       const currentRows = rows.filter((r) => new Date(r.created_at).getTime() >= currentStartMs);

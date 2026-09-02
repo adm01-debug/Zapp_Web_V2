@@ -30,7 +30,7 @@ export const SatisfactionMetrics = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const periodDays = PERIOD_DAYS[selectedPeriod];
-  const { data: breakdown, isLoading: isBreakdownLoading } = useSatisfactionBreakdown(periodDays);
+  const { data: breakdown, isLoading: isBreakdownLoading, isError: isBreakdownError } = useSatisfactionBreakdown(periodDays);
   const { surveys: npsSurveys, isLoading: isNpsLoading } = useNPSSurveys();
 
   const npsInPeriod = useMemo(() => {
@@ -47,13 +47,25 @@ export const SatisfactionMetrics = () => {
     return Math.round(((promoters - detractors) / total) * 100);
   }, [npsInPeriod]);
 
-  const isLoading = isBreakdownLoading || isNpsLoading || !breakdown;
+  const isLoading = isBreakdownLoading || isNpsLoading;
 
   if (isLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-64">
           <div className="animate-pulse text-muted-foreground">Carregando métricas...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Sem este ramo, uma query que falha deixa isLoading=false e breakdown=undefined,
+  // prendendo o card no estado de carregamento para sempre.
+  if (isBreakdownError || !breakdown) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Não foi possível carregar as métricas de satisfação.</div>
         </CardContent>
       </Card>
     );
