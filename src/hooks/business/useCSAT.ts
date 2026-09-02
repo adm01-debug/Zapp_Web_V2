@@ -170,7 +170,10 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
   const rows: CSATBreakdownRow[] = [];
   let cursor: { createdAt: string; id: string } | null = null;
 
-  for (let page = 0; page < CSAT_MAX_PAGES; page++) {
+  // <= e nao <: com exatamente CSAT_MAX_PAGES paginas cheias, a iteracao extra
+  // volta vazia e retorna normalmente. Com < , esse caso exato cairia no throw
+  // sem existir pagina seguinte.
+  for (let page = 0; page <= CSAT_MAX_PAGES; page++) {
     let query = supabase
       .from('csat_surveys')
       .select(
