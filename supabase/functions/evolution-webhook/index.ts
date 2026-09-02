@@ -10,6 +10,7 @@ import { parseMessageContent } from "../_shared/evolution-media.ts";
 import { EvolutionWebhookEnvelopeV1Schema, EvolutionWebhookEnvelopeV2Schema, validationErrorResponse } from "../_shared/schemas.ts";
 import { parseVersioned } from "../_shared/contracts.ts";
 import { isGoPayload, translateGoPayload } from "../_shared/evolution-go-adapter.ts";
+import { logWebhookAuthShadow, timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
   handleConnectionUpdate, handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
   handleContactsUpsert, handlePresenceUpdate, handleChatsUpdate,
@@ -34,6 +35,30 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // [WEBHOOK_AUTH_SHADOW] Modo sombra: valida mas NUNCA bloqueia nesta etapa.
+    // Le o body via clone() para nao alterar o comportamento de req.json() abaixo.
+    // Objetivo: confirmar via logs de producao se a Evolution GO ja envia
+    // assinatura valida antes de um PR futuro ativar enforcement (401).
+    const rawBodyTextForAuthShadow = await req.clone().text();
+    await logWebhookAuthShadow('evolution-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('EVOLUTION_WEBHOOK_SECRET'));
+    // A Evolution API (infra antiga wpp2/v2.3.7) documentava um header
+    // `x-webhook-secret` com o secret cru (nao um HMAC do body). Mecanismo
+    // nao confirmado como ativo na Evolution GO atual — ver docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md.
+    // Loga em paralelo para permitir observar qual (se algum) dos dois
+    // mecanismos documentados realmente chega em producao.
+    const legacyWebhookSecretHeader = req.headers.get('x-webhook-secret');
+    const configuredEvolutionSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET');
+    if (legacyWebhookSecretHeader) {
+      const legacyValid = !!configuredEvolutionSecret && timingSafeEqual(legacyWebhookSecretHeader, configuredEvolutionSecret);
+      if (legacyValid) {
+        console.log('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) valido');
+      } else {
+        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado) ausente/invalido — modo sombra, requisicao processada mesmo assim');
+      }
+    } else {
+      console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: header x-webhook-secret (legado, infra wpp2/Evolution v2.3.7) nao enviado — mecanismo nao confirmado como ativo na Evolution GO atual, modo sombra, requisicao processada mesmo assim');
+    }
 
     const rawBody: unknown = await req.json().catch(() => null);
     if (rawBody === null || typeof rawBody !== 'object') {
