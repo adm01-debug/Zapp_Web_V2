@@ -67,8 +67,16 @@ export async function handleOutgoingWhatsAppMessage(
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup). key.id do WhatsApp so eh garantidamente unico
+  // por chat/dispositivo, nao globalmente -- sem o escopo, uma colisao entre
+  // duas conexoes diferentes faria este pre-check achar a linha errada.
   const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
-    .select('id').eq('external_id', externalId)
+    .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
   if (existingMessage) return;
@@ -80,9 +88,6 @@ export async function handleOutgoingWhatsAppMessage(
     console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
     return;
   }
-
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
 
   const contact = await getContactByPhone(supabase, phone, connection.id);
   if (!contact) return;
@@ -204,8 +209,11 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup) -- ver comentario equivalente em
+  // handleOutgoingWhatsAppMessage.
   const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
-    .select('id, status, content').eq('external_id', key.id)
+    .select('id, status, content').eq('whatsapp_connection_id', connection.id).eq('sender', 'contact').eq('external_id', key.id)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
 
