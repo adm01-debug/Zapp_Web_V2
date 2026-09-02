@@ -1,4 +1,22 @@
-project_id = "tnnnlkbymytvtqngbbqh"
+project_id = "zapp_migration_replay_de5f78a2"
+
+[api]
+port = 56421
+
+[db]
+port = 56422
+
+[studio]
+port = 56423
+
+[inbucket]
+port = 56424
+
+[analytics]
+port = 56427
+
+[db.pooler]
+port = 56429
 
 # Excecoes de verify_jwt. Regra: so entra aqui quem NAO tem como enviar um JWT
 # do Supabase — servicos externos (webhooks) ou APIs com autenticacao propria.
