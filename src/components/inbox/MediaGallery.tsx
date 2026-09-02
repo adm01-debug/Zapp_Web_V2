@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Image, FileVideo, FileAudio, File, Download, Search, Grid3X3, List, X, Check, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,27 @@ interface MediaGalleryProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface MediaGalleryContentProps {
+  contactId: string;
+}
+
 export function MediaGallery({ contactId, open, onOpenChange }: MediaGalleryProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent aria-describedby={undefined} aria-label="Galeria de Mídia" className="max-w-4xl max-h-[90vh] flex flex-col">
+        <MediaGalleryContent contactId={contactId} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Corpo da galeria para renderização INLINE (ex.: seção "Mídia Compartilhada"
+ * dos detalhes do contato). NÃO renderiza Dialog/overlay — correção do bug
+ * "abrir Detalhes do Contato abria a Galeria de Mídia por cima da tela"
+ * (run h528ce06a). Para uso como diálogo, preferir o wrapper MediaGallery.
+ */
+export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
   const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'audio' | 'document'>('all');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -44,7 +64,7 @@ export function MediaGallery({ contactId, open, onOpenChange }: MediaGalleryProp
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!contactId,
+    enabled: !!contactId,
   });
 
   const mediaItems = useMemo((): MediaItem[] => {
@@ -80,13 +100,9 @@ export function MediaGallery({ contactId, open, onOpenChange }: MediaGalleryProp
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Grid3X3 className="w-5 h-5" />Galeria de Mídia<Badge variant="secondary">{counts.all} itens</Badge>
-            </DialogTitle>
-          </DialogHeader>
+          <div className="flex items-center gap-2 px-1 pb-1" role="heading" aria-level={3}>
+            <Grid3X3 className="w-5 h-5" />Galeria de Mídia<Badge variant="secondary">{counts.all} itens</Badge>
+          </div>
 
           <div className="flex items-center gap-4 py-2">
             <div className="relative flex-1">
@@ -159,9 +175,6 @@ export function MediaGallery({ contactId, open, onOpenChange }: MediaGalleryProp
               </div>
             )}
           </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
       <MediaPreviewDialog item={previewItem} open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)} />
     </>
   );
