@@ -202,7 +202,8 @@ jobs:
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, 'audit')
+      contains(github.event.head_commit.message, 'audit') &&
+      !contains(github.event.head_commit.message, '[auto]')
     permissions:
       contents: write
       pull-requests: write
