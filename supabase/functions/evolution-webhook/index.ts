@@ -37,7 +37,10 @@ import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
 // mantido como fallback só por compatibilidade com o nome genérico do exemplo
 // em hmac-validation.ts, para não silenciar a validação se só um dos dois
 // estiver configurado no Supabase Dashboard → Edge Functions → Secrets.
-const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') ?? Deno.env.get('WEBHOOK_SECRET') ?? '';
+// `||` (não `??`): uma env var configurada como string vazia precisa cair
+// pro fallback também, senão o guard `!webhookSecret` abaixo trataria ''
+// como "secret configurado" e nunca rejeitaria assinatura inválida.
+const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') || Deno.env.get('WEBHOOK_SECRET') || '';
 const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);
 
 serve(async (req) => {
