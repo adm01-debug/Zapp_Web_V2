@@ -32,16 +32,34 @@ export function toEventRecords(data: unknown, collectionKeys: string[] = []): Re
 
 export function normalizePhone(rawJid?: string): string | null {
   if (!rawJid) return null;
+
+  // LIDs usam sufixo @lid — identificador de dispositivo vinculado, nao numero E.164.
+  // Rejeitar antes de strip para nao criar contatos-LID fragmentados (E35).
+  if (rawJid.includes('@lid')) {
+    const lidDigits = rawJid.replace(/@lid.*/, '').replace(/\D/g, '');
+    console.warn(`[normalizePhone] LID rejeitado (${lidDigits.length} digitos): ${lidDigits.substring(0, 6)}***`);
+    return null;
+  }
+
   const sanitized = rawJid
     .trim()
     .replace(/:\d+(?=@)/, '')
     .replace('@s.whatsapp.net', '')
     .replace('@g.us', '')
     .replace('@broadcast', '')
-    .replace('@lid', '')
     .replace(/^\+/, '');
 
   const digitsOnly = sanitized.replace(/\D/g, '');
+
+  // Fallback: LIDs que chegam sem sufixo @lid tem >= 14 digitos. Heuristica de
+  // tamanho + prefixo, nao validacao real de E.164/DDI — numeros internacionais
+  // legitimos de 14-15 digitos (E.164 permite ate 15) tambem caem aqui.
+  // Grupos WhatsApp (prefixo 120363/120392/120415/120496) sao excecoes validas.
+  if (digitsOnly.length >= 14 && !/^12(0363|0392|0415|0496)/.test(digitsOnly)) {
+    console.warn(`[normalizePhone] ${digitsOnly.length} digitos rejeitados como possivel LID: ${digitsOnly.substring(0, 6)}***`);
+    return null;
+  }
+
   return digitsOnly || sanitized || null;
 }
 
