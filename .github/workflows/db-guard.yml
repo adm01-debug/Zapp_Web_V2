@@ -124,8 +124,8 @@ jobs:
                WHERE n.nspname='public' AND p.proname='${func}'")
             echo "${func} ACL: ${acl}"
             case "${acl}" in
-              *authenticated=X*|*anon=X*)
-                echo "FALHA: ${func} executavel por authenticated ou anon!"
+              *authenticated=X*|*anon=X*|*,=X*|=X/*)
+                echo "FALHA: ${func} executavel por authenticated, anon ou PUBLIC!"
                 FALHA=1
                 ;;
               *)

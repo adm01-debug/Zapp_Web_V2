@@ -49,10 +49,10 @@ Deno.serve(async (req) => {
     if (agent_id) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('name')
         .eq('id', agent_id)
         .single();
-      if (profile?.full_name) agentName = profile.full_name;
+      if (profile?.name) agentName = profile.name;
     }
 
     // Forward to Sicoob Gifts
