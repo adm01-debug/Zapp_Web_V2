@@ -134,7 +134,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
             <div className="flex items-center gap-2"><Image className="w-3.5 h-3.5" />Mídia Compartilhada</div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
-            <MediaGallery contactId={contact.id} open={true} onOpenChange={() => {}} />
+            <MediaGallery contactId={contact.id} inline />
           </AccordionContent>
         </AccordionItem>
       </motion.div>
