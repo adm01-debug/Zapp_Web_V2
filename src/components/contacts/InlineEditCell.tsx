@@ -30,7 +30,9 @@ export function InlineEditCell({ contactId, field, value, onUpdate }: InlineEdit
     setSaving(true);
     const { error } = await supabase
       .from('contacts')
-      .update({ [field]: editValue || null })
+      // Dynamic column name chosen at runtime by the caller: postgrest-js's
+      // literal-key checking (RejectExcessProperties) can't be satisfied here.
+      .update({ [field]: editValue || null } as never)
       .eq('id', contactId);
 
     if (error) {

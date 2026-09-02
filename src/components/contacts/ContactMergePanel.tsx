@@ -75,9 +75,11 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
       mergedData.tags = allTags;
 
       // Update primary with merged data
+      // Fields merged dynamically from a caller-driven MERGE_FIELDS list: postgrest-js's
+      // literal-key checking (RejectExcessProperties) can't be satisfied here.
       const { error: updateError } = await supabase
         .from('contacts')
-        .update(mergedData)
+        .update(mergedData as never)
         .eq('id', primary.id);
 
       if (updateError) throw updateError;

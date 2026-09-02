@@ -54,7 +54,9 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
       });
       merged.tags = [...new Set(contacts.flatMap(c => c.tags || []))];
 
-      await supabase.from('contacts').update(merged).eq('id', primary.id);
+      // Fields merged dynamically from a caller-driven FIELDS list: postgrest-js's
+      // literal-key checking (RejectExcessProperties) can't be satisfied here.
+      await supabase.from('contacts').update(merged as never).eq('id', primary.id);
       for (let i = 1; i < contacts.length; i++) {
         await supabase.from('messages').update({ contact_id: primary.id }).eq('contact_id', contacts[i].id);
         await supabase.from('contacts').delete().eq('id', contacts[i].id);

@@ -66,9 +66,9 @@ export function useGeoBlocking() {
   const handleAddCountry = async (countryCode: string, countryName: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const table = activeTab === 'whitelist' ? 'allowed_countries' : 'blocked_countries';
-      const userField = activeTab === 'whitelist' ? 'added_by' : 'blocked_by';
-      const { error } = await supabase.from(table).insert({ country_code: countryCode, country_name: countryName, [userField]: user?.id });
+      const { error } = activeTab === 'whitelist'
+        ? await supabase.from('allowed_countries').insert({ country_code: countryCode, country_name: countryName, added_by: user?.id })
+        : await supabase.from('blocked_countries').insert({ country_code: countryCode, country_name: countryName, blocked_by: user?.id });
       if (error) {
         if (error.code === '23505') { toast.error('Este país já está na lista'); return; }
         throw error;
