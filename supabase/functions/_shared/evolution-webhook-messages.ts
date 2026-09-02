@@ -102,7 +102,7 @@ export async function handleOutgoingWhatsAppMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const recentCutoff = new Date(Date.now.) - 60_000).toISOString();
+  const recentCutoff = new Date(Date.now() - 60_000).toISOString();
   const { data: pendingMessage } = await supabase.from('messages').select('id')
     .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
     .is('external_id', null).gte('created_at', recentCutoff)
