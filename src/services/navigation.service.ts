@@ -1,4 +1,5 @@
-import { AppRole } from './role.service';
+import type { AppRole } from './role.service';
+import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
   Building2, Wallet, Package, CreditCard, Tag, LayoutDashboard, CalendarClock, UsersRound,
@@ -6,17 +7,24 @@ import {
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
-  ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit, Code2, Webhook, HardDrive, Landmark
+  ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit, Code2,
+  Webhook, HardDrive, Landmark, FlaskConical,
 } from 'lucide-react';
 
 export interface NavItem {
   id: string;
-  icon: any;
+  icon: LucideIcon;
   label: string;
   roles?: AppRole[];
   permission?: string;
   /** 'full' = view manages its own layout (no ViewContainer scroll wrapper) */
   layout?: 'full' | 'scroll';
+}
+
+export interface NavGroup {
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
 }
 
 export class NavigationService {
@@ -33,7 +41,7 @@ export class NavigationService {
     ];
   }
 
-  static getGroups() {
+  static getGroups(): NavGroup[] {
     return [
       {
         label: 'Vendas & CRM',
@@ -42,12 +50,11 @@ export class NavigationService {
           { id: 'crm360', icon: Building2, label: 'CRM 360°' },
           { id: 'wallet', icon: Wallet, label: 'Carteira' },
           { id: 'catalog', icon: Package, label: 'Catálogo' },
-          { id: 'payments', icon: CreditCard, label: 'Pagamentos' },
           { id: 'tags', icon: Tag, label: 'Etiquetas' },
           { id: 'queues', icon: LayoutDashboard, label: 'Filas' },
           { id: 'schedule', icon: CalendarClock, label: 'Agendamentos' },
           { id: 'groups', icon: UsersRound, label: 'Grupos' },
-        ]
+        ],
       },
       {
         label: 'Automação & IA',
@@ -61,7 +68,7 @@ export class NavigationService {
           { id: 'ticket-classifier', icon: Tags, label: 'Classificador IA' },
           { id: 'campaigns', icon: Megaphone, label: 'Campanhas Clássicas' },
           { id: 'wa-templates', icon: FileText, label: 'Templates WA' },
-        ]
+        ],
       },
       {
         label: 'Analytics',
@@ -73,7 +80,7 @@ export class NavigationService {
           { id: 'nps', icon: Gauge, label: 'NPS' },
           { id: 'sla', icon: Target, label: 'SLA' },
           { id: 'achievements', icon: Trophy, label: 'Conquistas' },
-        ]
+        ],
       },
       {
         label: 'Conexões',
@@ -83,9 +90,7 @@ export class NavigationService {
           { id: 'integrations', icon: Plug, label: 'Integrações' },
           { id: 'omni-inbox', icon: Inbox, label: 'Omnichannel', layout: 'full' },
           { id: 'voip', icon: PhoneCall, label: 'VoIP' },
-          { id: 'meta-capi', icon: Activity, label: 'Meta CAPI' },
-          { id: 'google-calendar', icon: Calendar, label: 'Calendário' },
-        ]
+        ],
       },
       {
         label: 'Sistema',
@@ -97,8 +102,20 @@ export class NavigationService {
           { id: 'admin', icon: UserCog, label: 'Admin', roles: ['admin'] },
           { id: 'themes', icon: Palette, label: 'Skins' },
           { id: 'docs', icon: BookOpen, label: 'Documentação' },
-        ]
-      }
+        ],
+      },
+      {
+        // Facades: telas com UI completa mas sem integração real por trás ainda.
+        // Mantidas fora dos grupos principais para não confundir o usuário comum;
+        // continuam pesquisáveis (Ctrl+K) e acessíveis para quem procurar.
+        label: 'Em Desenvolvimento',
+        icon: FlaskConical,
+        items: [
+          { id: 'payments', icon: CreditCard, label: 'Pagamentos' },
+          { id: 'meta-capi', icon: Activity, label: 'Meta CAPI' },
+          { id: 'google-calendar', icon: Calendar, label: 'Calendário' },
+        ],
+      },
     ];
   }
 
