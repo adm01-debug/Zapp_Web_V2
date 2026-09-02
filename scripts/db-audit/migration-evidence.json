@@ -337,6 +337,14 @@
       "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstruído depois com o DDL completo (CREATE TABLE + índice + RLS + policies); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
     },
     {
+      "version": "20260901200001",
+      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
+      "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+      "ledger_name": "e23_default_queue_rls_policies",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo PR #116 documenta retroativamente o DDL reprodutível; o ledger tem SQL canônico vazio — pinagem por filename e ledger_name apenas."
+    },
+    {
       "version": "20260902100001",
       "filename": "20260902100001_drop_dead_index_wc_id.sql",
       "file_sha256": "f2cee80ed3f33d53ce29e88454eacfc2fb371f9f0f6047eadeff592c7af3e89e",
