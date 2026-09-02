@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,15 +42,21 @@ const KANBAN_COLUMNS = [
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
   const [localContacts, setLocalContacts] = useState<KanbanContact[]>(contacts);
-  const [syncedContacts, setSyncedContacts] = useState<KanbanContact[]>(contacts);
+  const inFlightDrags = useRef<Set<string>>(new Set());
 
-  // Sync when parent contacts change. O setState fica guardado por comparação
-  // (padrão "adjust state during render"): sem a guarda, o update em fase de
-  // render se repete a cada passe e o React aborta com "Too many re-renders".
-  if (syncedContacts !== contacts) {
-    setSyncedContacts(contacts);
-    setLocalContacts(contacts);
-  }
+  // Merge server data into local state, preserving contact_type for in-flight drags
+  useEffect(() => {
+    setLocalContacts(prev => {
+      const prevMap = new Map(prev.map(c => [c.id, c]));
+      return contacts.map(server => {
+        const local = prevMap.get(server.id);
+        if (!local) return server;
+        return inFlightDrags.current.has(server.id)
+          ? { ...server, contact_type: local.contact_type }
+          : server;
+      });
+    });
+  }, [contacts]);
 
   const columns = useMemo(() => {
     const grouped: Record<string, KanbanContact[]> = {};
@@ -76,6 +82,8 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
     const contact = localContacts.find(c => c.id === draggableId);
     if (!contact || contact.contact_type === newType) return;
 
+    inFlightDrags.current.add(draggableId);
+
     // Optimistic update
     setLocalContacts(prev =>
       prev.map(c => c.id === draggableId ? { ...c, contact_type: newType } : c)
@@ -85,6 +93,8 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       .from('contacts')
       .update({ contact_type: newType })
       .eq('id', draggableId);
+
+    inFlightDrags.current.delete(draggableId);
 
     if (error) {
       // Revert
