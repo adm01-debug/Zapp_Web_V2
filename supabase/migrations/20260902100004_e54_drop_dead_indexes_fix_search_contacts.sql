@@ -96,4 +96,8 @@ DROP INDEX IF EXISTS public.idx_contacts_surname_trgm;
 DROP INDEX IF EXISTS public.idx_contacts_phone_trgm;
 DROP INDEX IF EXISTS public.idx_contacts_company_trgm;
 DROP INDEX IF EXISTS public.idx_contacts_job_title_trgm;
-DROP INDEX IF EXISTS public.idx_contacts_channel_connection_id;
+-- idx_contacts_channel_connection_id: FK-backing index (FK ON DELETE SET NULL);
+-- 0 scans em queries não significa que pode ser dropado — PostgreSQL usa este índice
+-- para enforcer a FK em DELETE/UPDATE de channel_connections. Mantido.
+-- Recriado caso tenha sido dropado acidentalmente:
+CREATE INDEX IF NOT EXISTS idx_contacts_channel_connection_id ON public.contacts(channel_connection_id);
