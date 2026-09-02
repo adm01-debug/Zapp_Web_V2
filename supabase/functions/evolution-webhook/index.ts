@@ -20,6 +20,23 @@ import {
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
+import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
+
+// ---------------------------------------------------------------------------
+// HMAC validation (D2 — security hardening)
+//
+// strictMode = false  → permite requests sem assinatura (rollout gradual).
+//   - Requests SEM header de assinatura: aceitos (backwards-compatible).
+//   - Requests COM header de assinatura INVÁLIDA: rejeitados com 401.
+//
+// Quando a Evolution GO estiver configurada para enviar HMAC e todos os
+// webhooks confirmados OK, altere para strictMode = true.
+//
+// WEBHOOK_SECRET deve ser configurado em:
+//   Supabase Dashboard → Project → Edge Functions → Secrets
+// ---------------------------------------------------------------------------
+const webhookSecret = Deno.env.get('WEBHOOK_SECRET') ?? '';
+const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -31,14 +48,42 @@ serve(async (req) => {
   }
 
   try {
+    // -----------------------------------------------------------------------
+    // HMAC validation — MUST happen before any other body read.
+    // WebhookSecurityService.validateRequest() consumes req.text() internally;
+    // the parsed body is available in validation.payload (raw string).
+    // Using req.json() AFTER this point would throw because Deno body streams
+    // can only be consumed once.
+    // -----------------------------------------------------------------------
+    const validation = await hmacSecurity.validateRequest(req);
+    if (!validation.valid) {
+      console.warn('[HMAC] Rejected request:', validation.error);
+      return new Response(JSON.stringify({ error: validation.error ?? 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (validation.signatureFound) {
+      console.info('[HMAC] Signature validated:', validation.signatureValid ? 'OK' : 'INVALID');
+    }
+
+    // -----------------------------------------------------------------------
+    // Parse body from the already-read text (NOT req.json() — body consumed above).
+    // -----------------------------------------------------------------------
+    let rawBody: unknown;
+    try {
+      rawBody = validation.payload ? JSON.parse(validation.payload) : null;
+    } catch {
+      rawBody = null;
+    }
+    if (rawBody === null || typeof rawBody !== 'object') {
+      return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const rawBody: unknown = await req.json().catch(() => null);
-    if (rawBody === null || typeof rawBody !== 'object') {
-      return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
-    }
     let payload: WebhookPayload = rawBody as WebhookPayload;
     if (isGoPayload(payload)) payload = translateGoPayload(payload) as unknown as WebhookPayload;
     const contract = parseVersioned(req, payload, {
@@ -59,14 +104,10 @@ serve(async (req) => {
     if (event === 'qrcode.updated') {
       const qrCode = (baseData.qrcode as Record<string, string>)?.base64;
       if (qrCode) {
-        // 'qr_pending' é o valor do CHECK de whatsapp_connections.status
-        // ('pending' violava o constraint e o update inteiro era rejeitado)
         await supabase.from('whatsapp_connections')
           .update({ qr_code: qrCode, status: 'qr_pending', updated_at: new Date().toISOString() })
           .eq('instance_id', instance);
       } else if (!isRecord(baseData.qrcode)) {
-        // QRTimeout (GO manda data vazio): janela de pareamento venceu —
-        // limpa o QR vencido. v2 sempre traz o objeto qrcode; fica intacto.
         await supabase.from('whatsapp_connections')
           .update({ qr_code: null, status: 'disconnected', updated_at: new Date().toISOString() })
           .eq('instance_id', instance);
