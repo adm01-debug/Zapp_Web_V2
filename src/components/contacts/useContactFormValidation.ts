@@ -44,7 +44,7 @@ export function useContactFormValidation(
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldError>({});
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
-  const dupCheckTimer = useRef<ReturnType<typeof setTimeout>>();
+  const dupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const checkDuplicate = useCallback(async (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
