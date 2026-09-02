@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 
@@ -104,4 +105,180 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     isLoading: surveysQuery.isLoading,
     submitSurvey,
   };
+}
+
+// --- Satisfaction dashboard breakdown (real data for src/components/dashboard/SatisfactionMetrics.tsx) ---
+
+export interface CSATAgentBreakdown {
+  agentId: string;
+  agentName: string;
+  csatPercent: number;
+  responses: number;
+}
+
+export interface CSATQueueBreakdown {
+  queueId: string;
+  queueName: string;
+  csatPercent: number;
+  responses: number;
+}
+
+export interface CSATTimelinePoint {
+  date: string;
+  csatPercent: number | null;
+  responses: number;
+}
+
+export interface SatisfactionBreakdown {
+  totalResponses: number;
+  /** % of responses with rating >= 4 (industry-standard CSAT calculation). null = no responses in period. */
+  csatPercent: number | null;
+  previousCsatPercent: number | null;
+  trend: 'up' | 'down' | 'stable' | null;
+  /** Percentage-point delta vs the immediately preceding period of the same length. */
+  trendValue: number;
+  distribution: { rating: number; count: number }[];
+  byAgent: CSATAgentBreakdown[];
+  byQueue: CSATQueueBreakdown[];
+  timeline: CSATTimelinePoint[];
+}
+
+interface CSATBreakdownRow {
+  agent_id: string | null;
+  rating: number;
+  created_at: string;
+  agent: { name: string } | null;
+  contact: { queue_id: string | null } | null;
+}
+
+function csatPercentFromRatings(ratings: number[]): number {
+  return (ratings.filter((r) => r >= 4).length / ratings.length) * 100;
+}
+
+/**
+ * Aggregates csat_surveys (joined with the responding agent's profile and the
+ * contact's queue) into the breakdown shape the satisfaction dashboard needs:
+ * overall CSAT %, trend vs previous period, rating distribution, per-agent and
+ * per-queue CSAT, and a daily timeline. All derived from real rows — no mocked
+ * values. Periods with zero surveys surface as `null`/empty arrays so the UI
+ * can render an honest empty state instead of fabricated numbers.
+ */
+export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
+  return useQuery({
+    queryKey: ['csat-breakdown', periodDays],
+    queryFn: async (): Promise<SatisfactionBreakdown> => {
+      const now = new Date();
+      const currentStart = new Date(now);
+      currentStart.setDate(currentStart.getDate() - periodDays);
+      const previousStart = new Date(currentStart);
+      previousStart.setDate(previousStart.getDate() - periodDays);
+
+      const [{ data: surveys, error: surveysError }, { data: queues, error: queuesError }] = await Promise.all([
+        supabase
+          .from('csat_surveys')
+          .select(
+            'agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
+          )
+          .gte('created_at', previousStart.toISOString())
+          .order('created_at', { ascending: true }),
+        supabase.from('queues').select('id, name'),
+      ]);
+
+      if (surveysError) throw surveysError;
+      if (queuesError) throw queuesError;
+
+      const queueNameById = new Map((queues || []).map((q) => [q.id, q.name]));
+      const rows = (surveys || []) as unknown as CSATBreakdownRow[];
+
+      const currentStartMs = currentStart.getTime();
+      const currentRows = rows.filter((r) => new Date(r.created_at).getTime() >= currentStartMs);
+      const previousRows = rows.filter((r) => new Date(r.created_at).getTime() < currentStartMs);
+
+      const csatPercent = currentRows.length > 0 ? csatPercentFromRatings(currentRows.map((r) => r.rating)) : null;
+      const previousCsatPercent =
+        previousRows.length > 0 ? csatPercentFromRatings(previousRows.map((r) => r.rating)) : null;
+
+      let trend: SatisfactionBreakdown['trend'] = null;
+      let trendValue = 0;
+      if (csatPercent !== null && previousCsatPercent !== null) {
+        trendValue = Math.round(csatPercent - previousCsatPercent);
+        trend = trendValue > 0 ? 'up' : trendValue < 0 ? 'down' : 'stable';
+      }
+
+      const distribution = [5, 4, 3, 2, 1].map((rating) => ({
+        rating,
+        count: currentRows.filter((r) => r.rating === rating).length,
+      }));
+
+      const agentMap = new Map<string, { agentName: string; ratings: number[] }>();
+      const queueMap = new Map<string, { queueName: string; ratings: number[] }>();
+      const dayMap = new Map<string, number[]>();
+
+      for (const r of currentRows) {
+        if (r.agent_id) {
+          const entry = agentMap.get(r.agent_id) || { agentName: r.agent?.name || 'Agente removido', ratings: [] };
+          entry.ratings.push(r.rating);
+          agentMap.set(r.agent_id, entry);
+        }
+
+        const queueId = r.contact?.queue_id;
+        if (queueId) {
+          const entry = queueMap.get(queueId) || {
+            queueName: queueNameById.get(queueId) || 'Fila removida',
+            ratings: [],
+          };
+          entry.ratings.push(r.rating);
+          queueMap.set(queueId, entry);
+        }
+
+        const day = r.created_at.slice(0, 10);
+        const dayRatings = dayMap.get(day) || [];
+        dayRatings.push(r.rating);
+        dayMap.set(day, dayRatings);
+      }
+
+      const byAgent: CSATAgentBreakdown[] = Array.from(agentMap.entries())
+        .map(([agentId, v]) => ({
+          agentId,
+          agentName: v.agentName,
+          csatPercent: csatPercentFromRatings(v.ratings),
+          responses: v.ratings.length,
+        }))
+        .sort((a, b) => b.csatPercent - a.csatPercent);
+
+      const byQueue: CSATQueueBreakdown[] = Array.from(queueMap.entries())
+        .map(([queueId, v]) => ({
+          queueId,
+          queueName: v.queueName,
+          csatPercent: csatPercentFromRatings(v.ratings),
+          responses: v.ratings.length,
+        }))
+        .sort((a, b) => b.csatPercent - a.csatPercent);
+
+      const timeline: CSATTimelinePoint[] = [];
+      for (let i = periodDays - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const dayRatings = dayMap.get(key) || [];
+        timeline.push({
+          date: format(d, 'dd/MM'),
+          csatPercent: dayRatings.length > 0 ? csatPercentFromRatings(dayRatings) : null,
+          responses: dayRatings.length,
+        });
+      }
+
+      return {
+        totalResponses: currentRows.length,
+        csatPercent,
+        previousCsatPercent,
+        trend,
+        trendValue,
+        distribution,
+        byAgent,
+        byQueue,
+        timeline,
+      };
+    },
+  });
 }
