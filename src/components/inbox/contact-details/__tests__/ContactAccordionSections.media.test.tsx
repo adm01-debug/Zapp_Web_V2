@@ -72,16 +72,16 @@ vi.mock('../../ConversationMemoryPanel', () => ({ ConversationMemoryPanel: () =>
 vi.mock('../../LeadRiskScorePanel', () => ({ LeadRiskScorePanel: () => null }));
 vi.mock('../../ContactPurchasesPanel', () => ({ ContactPurchasesPanel: () => null }));
 vi.mock('../../ConversationTimeline', () => ({ ConversationTimeline: () => null }));
-vi.mock('./ContactInfoSection', () => ({
+vi.mock('../ContactInfoSection', () => ({
   ContactInfoSection: () => React.createElement('div', { 'data-testid': 'info-section-stub' }, 'info'),
 }));
-vi.mock('./AssignmentSection', () => ({ AssignmentSection: () => null }));
-vi.mock('./ContactStatsSection', () => ({ ContactStatsSection: () => null }));
-vi.mock('./SLAAndAITagsSection', () => ({ SLAAndAITagsSection: () => null }));
-vi.mock('./ExternalContact360Panel', () => ({ ExternalContact360Panel: () => null }));
-vi.mock('./ContactIntelligencePanel', () => ({ ContactIntelligencePanel: () => null }));
-vi.mock('./WhatsAppStatusSection', () => ({ WhatsAppStatusSection: () => null }));
-vi.mock('./EvolutionContactProfileSection', () => ({ EvolutionContactProfileSection: () => null }));
+vi.mock('../AssignmentSection', () => ({ AssignmentSection: () => null }));
+vi.mock('../ContactStatsSection', () => ({ ContactStatsSection: () => null }));
+vi.mock('../SLAAndAITagsSection', () => ({ SLAAndAITagsSection: () => null }));
+vi.mock('../ExternalContact360Panel', () => ({ ExternalContact360Panel: () => null }));
+vi.mock('../ContactIntelligencePanel', () => ({ ContactIntelligencePanel: () => null }));
+vi.mock('../WhatsAppStatusSection', () => ({ WhatsAppStatusSection: () => null }));
+vi.mock('../EvolutionContactProfileSection', () => ({ EvolutionContactProfileSection: () => null }));
 
 import { ContactAccordionSections } from '@/components/inbox/contact-details/ContactAccordionSections';
 
