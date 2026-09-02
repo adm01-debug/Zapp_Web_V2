@@ -113,7 +113,12 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  // E08: upsert idempotente — ignoreDuplicates protege contra race condition entre webhooks
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel.
   const { error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
     message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
@@ -216,20 +221,29 @@ export async function handleIncomingMessage(
     return;
   }
 
-  // E08: upsert idempotente — ignoreDuplicates protege contra race condition entre webhooks
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel. .maybeSingle() retorna null (sem erro) se
+  // DO NOTHING silenciou uma duplicata.
   const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content,
     message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
     status: 'received', created_at: messageCreatedAt,
-  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true })
-    .select('id').maybeSingle();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true }).select('id').maybeSingle();
 
   // E09: 23505 = conflito único (invocação concorrente do webhook) → mensagem já inserida → ok
   if (msgError && msgError.code !== '23505') {
     console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });
     return;
   }
-  if (messageType === 'audio' && mediaUrl && insertedMessage) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (!insertedMessage) {
+    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
+    return;
+  }
+  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (messageType === 'text' && insertedMessage?.id && content) {
     void enrichIncomingLinkPreview(supabase, insertedMessage.id, content, supabaseUrl, supabaseServiceKey);
   }

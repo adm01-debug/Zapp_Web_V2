@@ -46,8 +46,8 @@ export function useThrottle<T>(value: T, limit: number): T {
  * RAF-based animation frame hook
  */
 export function useAnimationFrame(callback: (deltaTime: number) => void, isRunning = true) {
-  const requestRef = useRef<number>();
-  const previousTimeRef = useRef<number>();
+  const requestRef = useRef<number | undefined>(undefined);
+  const previousTimeRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isRunning) return;

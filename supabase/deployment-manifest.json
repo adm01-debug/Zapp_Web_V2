@@ -49,8 +49,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "bytes": 12507,
-      "sha256": "5abc6152c7eae4247111c0ba9a5be26b61a5f9841f5a206fd482f91598bc9c18"
+      "bytes": 13918,
+      "sha256": "5db118185acd2563c1f09c8562d25959d5a1307094082e8723d4ea8f3e532e62"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -74,8 +74,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 16885,
-      "sha256": "60e4d364a9c3087fb7774ecd097a4982be6e919729eafaff03e37ebcf418fff2"
+      "bytes": 18037,
+      "sha256": "51140efda8fa488e0ff1e9aa07038bb2cd3a9e031b47350d7a31cc7b3bc9324c"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -154,8 +154,8 @@
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
-      "bytes": 2832,
-      "sha256": "0987693a0ccf7c0972ee845ebece46e35bac4efba3a76384b3ea9469f1354c25"
+      "bytes": 2839,
+      "sha256": "8c8efa2303679ee9518b57e75b04a346ea63320da7ad6b540b65261e20e4ff21"
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
@@ -549,7 +549,7 @@
       "name": "auto-close-conversations",
       "entrypoint": "supabase/functions/auto-close-conversations/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f7edb3535588c9c555b98af750ac33b8f592f71c4e67fa6c70a5858ab04ac70c",
+      "source_sha256": "23422b6d24836fe00ba929c73344ba9348e04b5dbae9afea175f6b4b58035604",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -814,7 +814,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "3c8108540eb691d09c7299cc368a5081179d0ddc94c6153c92a57d913eceaf18",
+      "source_sha256": "08a2d79434565120003e6634509d6bd631350c6e324893be8b44426fb1ee37e5",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "37048dddb4b681966df03e1c151a13c539000f02818e294814b8e3937c2ae3b9"
+  "manifest_sha256": "5c9c07f2b72cd2ce996a399ebb1a4f43e7eada6823ea2fbfd95ccf35cd8e3154"
 }
