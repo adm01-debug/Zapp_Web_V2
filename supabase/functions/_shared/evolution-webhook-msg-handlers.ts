@@ -7,6 +7,10 @@ import {
 
 // deno-lint-ignore no-explicit-any
 export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+  // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
+  // permite escopar o dup-check abaixo por whatsapp_connection_id.
+  const connection = await getConnectionByInstance(supabase, instance);
+
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
@@ -16,9 +20,14 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
     let updatedMessageId: string | null = null;
     const now = new Date().toISOString();
 
-    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
-    const { data: existingMessage } = await supabase.from('messages')
-      .select('id, status').eq('external_id', externalId)
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+    // Escopado por whatsapp_connection_id para bater com o indice unico real
+    // (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
+    // conexoes diferentes faria este pre-check achar a linha errada.
+    let dupCheckQuery = supabase.from('messages')
+      .select('id, status').eq('external_id', externalId);
+    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
+    const { data: existingMessage } = await dupCheckQuery
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     if (existingMessage?.id) {
@@ -32,7 +41,6 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
 
     if (!updatedMessageId) {
       const phone = normalizePhone(resolveEventJid(key, entry, baseData) ?? undefined);
-      const connection = await getConnectionByInstance(supabase, instance);
 
       if (connection?.id && phone) {
         const contact = await getContactByPhone(supabase, phone, connection.id);
@@ -83,9 +91,13 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 
     if (newStatus && key?.id) {
       const now = new Date().toISOString();
-      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
-      const { data: currentMessage } = await supabase.from('messages')
-        .select('id, status').eq('external_id', key.id)
+      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+      // Escopado por whatsapp_connection_id (sem filtro de sender -- esta
+      // funcao trata receipts tanto de mensagens enviadas quanto recebidas).
+      let currentMessageQuery = supabase.from('messages')
+        .select('id, status').eq('external_id', key.id);
+      if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
+      const { data: currentMessage } = await currentMessageQuery
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (currentMessage?.id) {
@@ -141,9 +153,14 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
     if (!key?.id) continue;
 
     const now = new Date().toISOString();
-    const { data: updatedMessages } = await supabase.from('messages')
+    // Escopado por whatsapp_connection_id para bater com o indice unico real
+    // (ux_messages_dedup) e evitar marcar como deletada a mensagem errada em
+    // caso de colisao de external_id entre conexoes diferentes.
+    let deleteUpdateQuery = supabase.from('messages')
       .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
-      .eq('external_id', key.id).select('id');
+      .eq('external_id', key.id);
+    if (connection?.id) deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
+    const { data: updatedMessages } = await deleteUpdateQuery.select('id');
 
     if (!updatedMessages?.length) {
       let contactId: string | null = null;
@@ -185,9 +202,12 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
     const bestJid = resolveEventJid(key, entry);
     if (!key?.id || !bestJid || bestJid.endsWith('@g.us')) { skipped++; continue; }
 
-    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
+    // Escopado por whatsapp_connection_id para bater com o indice unico real
+    // (ux_messages_dedup); connection ja garantido non-null pelo early return acima.
     const { data: existing } = await supabase.from('messages').select('id')
-      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      .eq('whatsapp_connection_id', connection.id).eq('external_id', key.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) { skipped++; continue; }
 
     const phone = normalizePhone(bestJid);
