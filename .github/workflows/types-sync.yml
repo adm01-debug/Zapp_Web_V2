@@ -171,6 +171,21 @@ jobs:
             cp /tmp/manifest.new.json supabase/schema-manifest.json
           fi
 
+      # Se um gate bloquear a proposta (ex.: Gate 3, remocoes > 10 linhas),
+      # nenhum PR e aberto e os candidatos ficam presos no runner efemero.
+      # Publica os 3 candidatos como artifact para revisao/aplicacao manual,
+      # independente do resultado dos gates.
+      - name: Publicar candidatos como artifact
+        if: steps.diff.outputs.schema_changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: types-sync-candidates-${{ github.run_id }}
+          path: |
+            src/integrations/supabase/types.ts
+            supabase/schema-catalog.json
+            supabase/schema-manifest.json
+          retention-days: 14
+
       - name: Setup Bun
         if: steps.diff.outputs.schema_changed == 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
