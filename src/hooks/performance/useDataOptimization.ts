@@ -48,7 +48,7 @@ export function usePrefetch<T>(
   options: { delay?: number } = {}
 ) {
   const { delay = 150 } = options;
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const dataRef = useRef<T | null>(null);
   const [isPrefetched, setIsPrefetched] = useState(false);
 
