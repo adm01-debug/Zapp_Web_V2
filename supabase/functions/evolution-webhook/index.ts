@@ -32,10 +32,15 @@ import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
 // Quando a Evolution GO estiver configurada para enviar HMAC e todos os
 // webhooks confirmados OK, altere para strictMode = true.
 //
-// WEBHOOK_SECRET deve ser configurado em:
-//   Supabase Dashboard → Project → Edge Functions → Secrets
-// ---------------------------------------------------------------------------
-const webhookSecret = Deno.env.get('WEBHOOK_SECRET') ?? '';
+// EVOLUTION_WEBHOOK_SECRET é o nome usado em todo o resto do projeto (docs,
+// _shared/hmac-validation.ts em modo sombra, auditoria) — WEBHOOK_SECRET é
+// mantido como fallback só por compatibilidade com o nome genérico do exemplo
+// em hmac-validation.ts, para não silenciar a validação se só um dos dois
+// estiver configurado no Supabase Dashboard → Edge Functions → Secrets.
+// `||` (não `??`): uma env var configurada como string vazia precisa cair
+// pro fallback também, senão o guard `!webhookSecret` abaixo trataria ''
+// como "secret configurado" e nunca rejeitaria assinatura inválida.
+const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') || Deno.env.get('WEBHOOK_SECRET') || '';
 const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);
 
 serve(async (req) => {
