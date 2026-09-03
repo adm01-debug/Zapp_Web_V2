@@ -18,6 +18,19 @@ interface State {
   prevResetKey?: string | number;
 }
 
+// sessionStorage key to throttle auto-reload -- avoids infinite loop
+// when a chunk is genuinely broken (not just stale).
+const CHUNK_RELOAD_KEY = 'zapp_chunk_reload_v1';
+
+function isChunkLoadError(error: Error): boolean {
+  return (
+    error.name === 'ChunkLoadError' ||
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Loading chunk') ||
+    error.message.includes('Loading CSS chunk')
+  );
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -40,17 +53,40 @@ export class ErrorBoundary extends Component<Props, State> {
     log.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
+
+    // Auto-reload on ChunkLoadError -- happens when the browser has a stale
+    // index.html referencing chunk hashes from a previous Vercel deployment.
+    // One reload per session to prevent infinite loops if the chunk is
+    // genuinely missing (not just stale).
+    if (isChunkLoadError(error)) {
+      try {
+        if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+          log.warn('ChunkLoadError detected -- reloading for fresh deployment assets');
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+          window.location.reload();
+          return;
+        }
+        log.warn('ChunkLoadError after reload -- chunk genuinely missing, showing error UI');
+      } catch {
+        // sessionStorage unavailable (e.g., private browsing restrictions)
+        window.location.reload();
+        return;
+      }
+    }
   }
 
   private handleRetry = () => {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   private handleGoHome = () => {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
     window.location.href = '/';
   };
 
   private handleReload = () => {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
     window.location.reload();
   };
 
@@ -79,14 +115,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 Ops! Algo deu errado
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Encontramos um erro inesperado. Tente recarregar a página.
+                Encontramos um erro inesperado. Tente recarregar a pagina.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
               {/* BUG-5 FIX: use import.meta.env.DEV, not process.env.NODE_ENV
-                  process.env.NODE_ENV is not populated by Vite in browser builds,
-                  so this block would NEVER render in development with the old code. */}
+                    process.env.NODE_ENV is not populated by Vite in browser builds,
+                    so this block would NEVER render in development with the old code. */}
               {import.meta.env.DEV && this.state.error && (
                 <details className="text-sm bg-muted/50 rounded-lg p-3 border border-border">
                   <summary className="cursor-pointer font-medium text-foreground flex items-center gap-2">
@@ -121,7 +157,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   className="flex-1"
                 >
                   <Home className="w-4 h-4 mr-2" />
-                  Voltar ao início
+                  Voltar ao inicio
                 </Button>
               </div>
 
@@ -129,7 +165,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReload}
                 className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
               >
-                Ou recarregue a página completamente
+                Ou recarregue a pagina completamente
               </button>
             </CardContent>
           </Card>
