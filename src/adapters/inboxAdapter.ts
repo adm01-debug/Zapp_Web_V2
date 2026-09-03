@@ -51,15 +51,16 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
   const slaRows = (rc.contact as RealtimeContact & {
     conversation_sla?: Array<{ first_response_at: string | null }> | null;
   }).conversation_sla;
-  // canonico: linha ABERTA (sem resposta) tem prioridade — e a pendencia atual;
-  // caso nao exista, a linha respondida mais recente (historico). Evita que um
-  // SLA antigo respondido faca o badge parar de contar a pendencia viva.
-  const slaOpen = slaRows?.find(r => r.first_response_at == null);
-  const slaEmbed = slaOpen
-    ?? [...(slaRows ?? [])]
+  // canonico: se existe linha ABERTA (sem resposta), a pendencia esta viva e
+  // firstResponseAt DEVE ser null (cronometro conta). So usamos a linha
+  // respondida mais recente quando NAO ha linha aberta no banco.
+  const slaOpen = slaRows?.find(r => r.first_response_at == null) ?? null;
+  const slaAnswered = slaOpen
+    ? null
+    : [...(slaRows ?? [])]
         .filter(r => r.first_response_at != null)
         .sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? ''))
-        .pop();
+        .pop() ?? null;
 
   const firstAgentMessage = rc.messages
     .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
@@ -75,9 +76,11 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
-    firstResponseAt: slaEmbed?.first_response_at
-      ? new Date(slaEmbed.first_response_at)
-      : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
+    firstResponseAt: slaOpen
+      ? null // pendencia viva registrada no banco: cronometro continua
+      : slaAnswered?.first_response_at
+        ? new Date(slaAnswered.first_response_at)
+        : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
     assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
     sentiment: rc.contact.ai_sentiment,
   };
