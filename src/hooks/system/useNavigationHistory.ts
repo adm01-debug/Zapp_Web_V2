@@ -50,15 +50,30 @@ function getViewFromUrl(defaultView: string): string {
 }
 
 /**
+ * Writes the canonical view to the URL (?view=<id>), preserving skip-to-content
+ * anchors. Single source of the URL rules: the hook and every non-hook call site
+ * go through here, so the reserved-hash semantics cannot drift between them.
+ */
+export function setViewParam(view: string, replace = false): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set('view', view);
+  if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
+    url.hash = '';
+  }
+  if (replace) {
+    window.history.replaceState(null, '', url.href);
+  } else {
+    window.history.pushState(null, '', url.href);
+  }
+}
+
+/**
  * Shared navigation helper for non-hook call sites (GlobalSearch, ContactActionButtons, etc.).
  * Updates the URL and dispatches a custom event so the hook pushes a new history entry
  * without a synthetic popstate being misinterpreted as browser back/forward traversal.
  */
 export function navigateToView(view: string): void {
-  const u = new URL(window.location.href);
-  u.searchParams.set('view', view);
-  if (u.hash && !RESERVED_HASHES.has(u.hash.replace('#', ''))) u.hash = '';
-  window.history.pushState(null, '', u.href);
+  setViewParam(view);
   window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view } }));
 }
 
@@ -134,10 +149,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     }
 
     // Migrate the URL: replace hash with ?view= query param
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', hash);
-    url.hash = '';
-    window.history.replaceState(null, '', url.href);
+    setViewParam(hash, true);
 
     // Handle as a view change using the same logic as onPopState
     onPopState();
@@ -148,10 +160,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     const hash = window.location.hash.replace('#', '');
     const params = new URLSearchParams(window.location.search);
     if (hash && !RESERVED_HASHES.has(hash) && !params.get('view')) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', hash);
-      url.hash = '';
-      window.history.replaceState(null, '', url.href);
+      setViewParam(hash, true);
     }
 
     window.addEventListener('popstate', onPopState);
@@ -165,17 +174,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   }, [onPopState, onHashChange, onZappNavigate]);
 
   const syncView = useCallback((viewId: string, replace = false) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', viewId);
-    // Clear any lingering hash that is not a skip-to-content anchor
-    if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
-      url.hash = '';
-    }
-    if (replace) {
-      window.history.replaceState(null, '', url.href);
-    } else {
-      window.history.pushState(null, '', url.href);
-    }
+    setViewParam(viewId, replace);
   }, []);
 
   const navigateTo = useCallback((viewId: string) => {

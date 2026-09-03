@@ -9,6 +9,15 @@ import { callGmailFunction } from '../gmail/gmailApi';
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 import type { GmailAccount, EmailThread, EmailMessage, EmailLabel } from '../gmail/gmailTypes';
 
+/**
+ * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
+ * hash stays as a migration fallback for links minted before the switch.
+ */
+function getOAuthReturnView(): string {
+  const viewParam = new URLSearchParams(window.location.search).get('view');
+  return viewParam || window.location.hash.replace('#', '') || 'integrations';
+}
+
 export function useGmail(accountId?: string) {
   const queryClient = useQueryClient();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -35,12 +44,12 @@ export function useGmail(accountId?: string) {
 
   const connectGmail = useMutation({
     mutationFn: async () => {
-      const returnView = window.location.hash.replace('#', '') || 'integrations';
+      const returnView = getOAuthReturnView();
       const state = createGmailOAuthState({ view: returnView, integrationView: 'gmail' });
       const result = await callGmailFunction('gmail-oauth', { action: 'get-auth-url', state });
       return result.url as string;
     },
-    onSuccess: (url) => { const rv = window.location.hash.replace('#', '') || 'integrations'; storeGmailOAuthReturnContext(rv, 'gmail'); window.location.assign(url); },
+    onSuccess: (url) => { storeGmailOAuthReturnContext(getOAuthReturnView(), 'gmail'); window.location.assign(url); },
     onError: (error: Error) => { toast.error(`Erro ao conectar Gmail: ${error.message}`); },
   });
 
