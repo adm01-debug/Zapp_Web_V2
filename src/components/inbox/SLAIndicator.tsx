@@ -66,7 +66,6 @@ export function SLAIndicator({
   if (firstResponseAt && sla.firstResponse.status === 'ok') return null;
 
   const style = statusStyles[sla.firstResponse.status];
-  const Icon = style.icon;
 
   const frTotalMs = firstResponseMinutes * 60_000;
 
@@ -120,7 +119,6 @@ export function SLAIndicator({
 
   return (
     <div role="status" aria-label="Indicador de SLA de primeira resposta" className={cn('flex items-center gap-2', className)}>
-      <Icon className={cn('w-3.5 h-3.5 hidden', style.text)} />
       {!firstResponseAt ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
