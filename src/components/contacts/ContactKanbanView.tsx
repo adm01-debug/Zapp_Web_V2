@@ -47,9 +47,14 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
   // podia sobrescrever o novo (ou reverter para um valor ja superado).
   const inFlightDrags = useRef<Map<string, number>>(new Map());
   const dragSeq = useRef(0);
+  // Ultimo contact_type confirmado pelo servidor, por contato. A prop 'contacts'
+  // so muda em refetch, entao depois de um drag que gravou ela ainda traz o tipo
+  // antigo — reverter para ela mostraria uma coluna ja superada.
+  const confirmedTypes = useRef<Map<string, KanbanContact['contact_type']>>(new Map());
 
   // Merge server data into local state, preserving contact_type for in-flight drags
   useEffect(() => {
+    for (const server of contacts) confirmedTypes.current.set(server.id, server.contact_type);
     setLocalContacts(prev => {
       const prevMap = new Map(prev.map(c => [c.id, c]));
       return contacts.map(server => {
@@ -109,16 +114,21 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       // drag capturou de localContacts: se um drag anterior do mesmo contato
       // tambem falhou, o capturado ja e o otimista dele e restaura-lo mostraria
       // uma coluna que o banco nunca teve.
-      const serverType = contacts.find(c => c.id === draggableId)?.contact_type ?? contact.contact_type;
+      // '.has' e nao '??': contact_type null e valor legitimo e nao pode cair
+      // no capturado, que pode ser otimista.
+      const serverType = confirmedTypes.current.has(draggableId)
+        ? confirmedTypes.current.get(draggableId)!
+        : contact.contact_type;
       setLocalContacts(prev =>
         prev.map(c => c.id === draggableId ? { ...c, contact_type: serverType } : c)
       );
       toast.error('Erro ao mover contato');
     } else {
+      confirmedTypes.current.set(draggableId, newType);
       const col = KANBAN_COLUMNS.find(c => c.type === newType);
       toast.success(`Movido para ${col?.label || newType}`);
     }
-  }, [localContacts, contacts]);
+  }, [localContacts]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
