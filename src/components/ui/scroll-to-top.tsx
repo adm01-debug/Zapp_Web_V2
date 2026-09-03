@@ -55,25 +55,3 @@ export function ScrollToTopButton({ scrollRef, threshold = 400, className }: Scr
     </AnimatePresence>
   );
 }
-
-/**
- * Hook version for custom implementations
- */
-export function useScrollToTop(scrollRef: RefObject<HTMLElement | null>, threshold = 400) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const handleScroll = () => setVisible(el.scrollTop > threshold);
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, [scrollRef, threshold]);
-
-  const scrollToTop = useCallback(() => {
-    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [scrollRef]);
-
-  return { visible, scrollToTop };
-}
