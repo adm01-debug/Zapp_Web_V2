@@ -15,11 +15,14 @@ interface UseSLACalculationParams {
   firstMessageAt: Date;
   firstResponseAt?: Date | null;
   firstResponseMinutes: number;
+  /** Minutos decorridos a partir dos quais o indicador entra em alerta (laranja). Padrao: 2. */
+  warningMinutes?: number;
 }
 
 function calculateStatus(
   remainingMs: number,
   totalMs: number,
+  warningMs: number,
   completed: boolean,
   completedAt?: Date | null,
   deadline?: Date
@@ -29,11 +32,12 @@ function calculateStatus(
     return { status: breached ? 'breached' : 'ok', remainingMs: 0, breached };
   }
 
-  const warningThreshold = totalMs * 0.3;
   if (remainingMs <= 0) {
     return { status: 'breached', remainingMs, breached: true };
   }
-  if (remainingMs <= warningThreshold) {
+  // alerta (laranja) quando os minutos decorridos atingem warningMinutes,
+  // ou seja, restante <= total - warning
+  if (remainingMs <= totalMs - warningMs) {
     return { status: 'warning', remainingMs, breached: false };
   }
   return { status: 'ok', remainingMs, breached: false };
@@ -42,10 +46,12 @@ function calculateStatus(
 function compute(params: UseSLACalculationParams): SLATimerState {
   const now = new Date();
   const frDeadline = new Date(params.firstMessageAt.getTime() + params.firstResponseMinutes * 60_000);
+  const warningMs = (params.warningMinutes ?? 2) * 60_000;
 
   const firstResponse = calculateStatus(
     frDeadline.getTime() - now.getTime(),
     params.firstResponseMinutes * 60_000,
+    warningMs,
     !!params.firstResponseAt,
     params.firstResponseAt,
     frDeadline
@@ -74,6 +80,7 @@ export function useSLACalculation(params: UseSLACalculationParams): SLATimerStat
     params.firstMessageAt,
     params.firstResponseAt,
     params.firstResponseMinutes,
+    params.warningMinutes,
   ]);
 
   useEffect(() => {
