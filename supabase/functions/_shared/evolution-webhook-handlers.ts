@@ -82,10 +82,14 @@ export async function handleContactsUpsert(supabase: any, instance: string, data
 
     if (connection && pushName) {
       let permanentAvatarUrl: string | null = null;
-      if (profilePicUrl && profilePicUrl.includes('pps.whatsapp.net')) {
-        permanentAvatarUrl = await persistProfilePicture(supabase, phone, profilePicUrl);
-      } else if (profilePicUrl) {
-        permanentAvatarUrl = profilePicUrl;
+      if (profilePicUrl) {
+        // Use hostname comparison to prevent URL-path bypass (e.g. evil.com/pps.whatsapp.net/...)
+        const _picHost = (() => { try { return new URL(profilePicUrl).hostname.toLowerCase(); } catch { return ''; } })();
+        if (_picHost === 'pps.whatsapp.net') {
+          permanentAvatarUrl = await persistProfilePicture(supabase, phone, profilePicUrl);
+        } else {
+          permanentAvatarUrl = profilePicUrl;
+        }
       }
 
       const existing = await getContactByPhone(supabase, phone, connection.id);
