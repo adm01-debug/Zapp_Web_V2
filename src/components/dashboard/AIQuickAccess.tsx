@@ -89,12 +89,7 @@ export function AIQuickAccess() {
     if (feature.route) {
       navigate(feature.route);
     } else if (feature.action === 'inbox') {
-      navigate('/');
-      // Small delay to ensure navigation, then switch to inbox tab
-      setTimeout(() => {
-        const inboxTab = document.querySelector('[data-tab="inbox"]') as HTMLElement;
-        if (inboxTab) inboxTab.click();
-      }, 100);
+      navigate('/?view=inbox');
     }
   };
 

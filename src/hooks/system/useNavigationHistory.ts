@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface NavigationEntry {
   viewId: string;
@@ -60,6 +61,7 @@ function getViewFromUrl(defaultView: string): string {
  * between separate setState calls.
  */
 export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryReturn {
+  const navigate = useNavigate();
   const [state, setState] = useState<NavigationState>(() => ({
     entries: [{ viewId: getViewFromUrl(defaultView), timestamp: Date.now() }],
     index: 0,
@@ -105,11 +107,11 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     const url = new URL(window.location.href);
     url.searchParams.set('view', hash);
     url.hash = '';
-    window.history.replaceState(null, '', url.href);
+    navigate({ pathname: url.pathname, search: url.search, hash: url.hash }, { replace: true });
 
     // Handle as a view change using the same logic as onPopState
     onPopState();
-  }, [onPopState]);
+  }, [navigate, onPopState]);
 
   useEffect(() => {
     // One-time migration: if URL still uses hash (#inbox) with no ?view=, rewrite to ?view=inbox
@@ -119,7 +121,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       const url = new URL(window.location.href);
       url.searchParams.set('view', hash);
       url.hash = '';
-      window.history.replaceState(null, '', url.href);
+      navigate({ pathname: url.pathname, search: url.search, hash: url.hash }, { replace: true });
     }
 
     window.addEventListener('popstate', onPopState);
@@ -128,7 +130,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('hashchange', onHashChange);
     };
-  }, [onPopState, onHashChange]);
+  }, [navigate, onPopState, onHashChange]);
 
   const syncView = useCallback((viewId: string, replace = false) => {
     const url = new URL(window.location.href);
@@ -137,12 +139,11 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
       url.hash = '';
     }
-    if (replace) {
-      window.history.replaceState(null, '', url.href);
-    } else {
-      window.history.pushState(null, '', url.href);
-    }
-  }, []);
+    navigate(
+      { pathname: url.pathname, search: url.search, hash: url.hash },
+      { replace }
+    );
+  }, [navigate]);
 
   const navigateTo = useCallback((viewId: string) => {
     setState(prev => {
