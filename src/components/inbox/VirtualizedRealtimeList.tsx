@@ -208,9 +208,19 @@ const ConversationRow = memo(({
             </div>
           )}
 
-          <button
-            type="button"
+          {/* role="button" e nao <button>: o conteudo tem <div> e <p>, que nao sao
+              conteudo valido de button. Aqui nao ha mais aninhamento — checkbox e
+              faixa de acoes sao irmaos deste elemento, entao o onKeyDown so
+              dispara com o foco nele. */}
+          <div
+            role="button"
+            tabIndex={0}
             onClick={(e) => handleClick(contactId, e)}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              handleClick(contactId, e);
+            }}
             className="flex-1 min-w-0 flex items-center gap-3 text-left cursor-pointer outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary/40"
           >
           <div className="relative flex-shrink-0">
@@ -300,7 +310,7 @@ const ConversationRow = memo(({
               </div>
             )}
           </div>
-          </button>
+          </div>
         </div>
 
         {/* Hover action buttons */}
