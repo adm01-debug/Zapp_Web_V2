@@ -48,9 +48,13 @@ export function useMediaUpload(type: MediaType, onComplete: () => void) {
       try {
         // Áudio: padroniza em MP3 antes do upload (reprodução universal).
         const converted = type === 'audio_memes' ? await convertAudioToMp3(file, file.name) : null;
-        const payload: File | Blob = converted?.blob ?? file;
-        const contentType = converted ? 'audio/mpeg' : (file.type || 'application/octet-stream');
-        const ext = converted ? 'mp3' : (file.name.split('.').pop() || (type === 'audio_memes' ? 'mp3' : 'webp'));
+        if (converted && converted.ok && converted.blob.size > MAX_UPLOAD_SIZE_BYTES) {
+          log.error(`Conversão MP3 de ${file.name} excede ${MAX_UPLOAD_SIZE_MB}MB — ignorado`);
+          continue;
+        }
+        const payload: File | Blob = converted?.ok ? converted.blob : file;
+        const contentType = converted?.ok ? 'audio/mpeg' : (file.type || 'application/octet-stream');
+        const ext = converted?.ok ? 'mp3' : (file.name.split('.').pop() || (type === 'audio_memes' ? 'mp3' : 'webp'));
         const storagePath = `bulk_${Date.now()}_${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from(bucket).upload(storagePath, payload, { contentType, cacheControl: '31536000' });
