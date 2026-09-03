@@ -1,6 +1,3 @@
--- 20260903180000_fix_gmail_pgcrypto_schema
--- Versionado do ledger (DDL aplicado direto no banco por outro agente).
-
 -- Fix: decrypt_gmail_token e encrypt_gmail_token falhavam com
 -- "function pgp_sym_decrypt(bytea, text) does not exist"
 -- porque search_path=public nao inclui o schema extensions onde

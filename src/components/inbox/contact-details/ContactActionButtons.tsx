@@ -11,6 +11,7 @@ import {
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { CRMSyncButton } from '../CRMAutoSync';
 import type { Conversation } from '@/types/chat';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface ContactActionButtonsProps {
   contact: { id: string; name: string; phone: string; email?: string };
@@ -59,7 +60,8 @@ export function ContactActionButtons({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon" className="w-9 h-9 border-border/30 hover:border-primary/50 hover:bg-primary/10"
-              onClick={() => { if (contact.email) window.location.hash = '#email-chat'; }} disabled={!contact.email}>
+              onClick={() => { if (contact.email) navigateToView('email-chat'); }}
+              disabled={!contact.email}>
               <Mail className="w-4 h-4 text-primary" />
             </Button>
           </TooltipTrigger>
