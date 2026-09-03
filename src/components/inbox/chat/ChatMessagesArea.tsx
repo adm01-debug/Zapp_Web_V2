@@ -97,7 +97,8 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
 
   // contactJid é estável durante toda a vida da conversa; firstMessageId muda
   // se mensagens são pré-carregadas (prepend) e causaria churn de subscription.
-  const subscriptionKey = contactJid ?? messages[0]?.id;
+  // Usar || (não ??) porque contactJid pode ser '' quando contato não tem phone.
+  const subscriptionKey = contactJid || messages[0]?.id;
   const messageIdsSetRef = useRef<Set<string>>(new Set());
   messageIdsSetRef.current = useMemo(
     () => new Set(messages.map((message) => message.id).filter(Boolean)),
