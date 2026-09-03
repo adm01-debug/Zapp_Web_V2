@@ -76,6 +76,9 @@ jobs:
       - name: Simular regressões da ACL da dead-letter queue
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          # sem isto o psql aceita conexao em claro se o servidor oferecer.
+          # 'verify-full' exigiria fixar a CA do Supabase no runner — item a parte.
+          PGSSLMODE: require
         run: |
           if [ -z "$DESTINO_URL" ]; then
             echo "DESTINO_URL ausente - verificacao de ACL pulada."
@@ -89,7 +92,7 @@ jobs:
                WHERE n.nspname='public' AND p.proname='${func}'")
             echo "${func} ACL: ${acl}"
             case "${acl}" in
-              *authenticated=X*|*anon=X*|*{=X*|*,=X*|=X/*)
+              *authenticated=X*|*anon=X*|*\{=X*|*,=X*|=X/*)
                 echo "FALHA: ${func} executavel por authenticated, anon ou PUBLIC!"
                 FALHA=1
                 ;;

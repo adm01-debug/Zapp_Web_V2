@@ -66,6 +66,7 @@ BEGIN
     CASE WHEN sort_field='updated_at' AND sort_direction='asc'  THEN c.updated_at END ASC  NULLS LAST,
     CASE WHEN sort_field='updated_at' AND sort_direction='desc' THEN c.updated_at END DESC NULLS LAST,
     c.name ASC NULLS LAST,
-    c.id   ASC;
+    c.id   ASC
+  LIMIT page_size OFFSET page_offset;
 END;
 $function$;
