@@ -381,8 +381,8 @@
     {
       "version": "20260902000600",
       "filename": "20260902000600_fix_record_failed_login_acl.sql",
-      "file_sha256": "de5ad1537676b8b85684a7a57f4c25bbc274c9fee96b0ab98d8b8a539d01bf75",
-      "file_sql_sha256": "e1da28d6dfc143d1848416e514bdef3ea47819c57f835ebca7715c31a589ab83",
+      "file_sha256": "6af4a33161a619dec393e55fc497246fb9790b0af694aa8857fb208e5d7b1bb2",
+      "file_sql_sha256": "7b2a37d64938bdfb58a2f81b6fca3ab733fd518fbd4d64c3dfb81d9585ce63b7",
       "ledger_name": "fix_record_failed_login_acl",
       "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13a2dacc3f734",
       "ledger_statements_sha256": "471c9385c7467e2731ba51231b46bbc697430f24eac7ff1d21c3f132e485fc21",
@@ -479,7 +479,7 @@
       "ledger_sql_sha256": "2cd2da4a06ee2bad606a97e86d7139e92318f452a336cff63d045af4c3ee0efc",
       "ledger_statements_sha256": "0f359b0bfdc8e4c6318b6eb1369fd241d391e11b4711d588ad144262ed606d56",
       "kind": "ledger-divergence/pinned-replay",
-      "reason": "safer-replay",
+      "reason": "ledger-summary",
       "related_migration": null,
       "justification": "Ledger capturou apenas resumo em prosa (nao executavel); arquivo pin carrega a definicao SQL completa vigente do banco (tiebreaker c.id ASC) para replay valido."
     }
