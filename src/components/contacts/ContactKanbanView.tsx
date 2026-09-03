@@ -67,9 +67,17 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       return contacts.map(server => {
         const local = prevMap.get(server.id);
         if (!local) return server;
-        return inFlightDrags.current.has(server.id)
-          ? { ...server, contact_type: local.contact_type }
-          : server;
+        // Drag em voo mantem o otimista; confirmacao pendente mantem o valor
+        // que o servidor ja aceitou — este snapshot foi capturado antes do
+        // write e mostraria a coluna antiga.
+        if (inFlightDrags.current.has(server.id)) {
+          return { ...server, contact_type: local.contact_type };
+        }
+        const known = confirmedTypes.current.get(server.id);
+        if (known?.pending) {
+          return { ...server, contact_type: known.type };
+        }
+        return server;
       });
     });
   }, [contacts]);
