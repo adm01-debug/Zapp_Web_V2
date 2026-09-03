@@ -56,6 +56,17 @@ const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ 
 // motivo do webhookSecret acima.
 const instanceToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') || '';
 const enforceMode = Deno.env.get('EVOLUTION_WEBHOOK_ENFORCE') || 'shadow';
+
+if (enforceMode !== 'shadow' && enforceMode !== 'token') {
+  throw new Error(`EVOLUTION_WEBHOOK_ENFORCE invalido: ${enforceMode} (use 'shadow' ou 'token')`);
+}
+// Em token mode sem token configurado, goTokenMatches devolve false para todo
+// corpo e a GO — que nunca assina HMAC — levaria 401 em 100% dos eventos, sem
+// nenhum sinal de que a causa e configuracao. Falha no boot em vez disso.
+if (enforceMode === 'token' && !instanceToken) {
+  throw new Error('EVOLUTION_WEBHOOK_ENFORCE=token exige EVOLUTION_INSTANCE_TOKEN configurado');
+}
+
 let tokenOkLogged = false;
 
 function goTokenMatches(body: Record<string, unknown>): boolean {
@@ -135,10 +146,11 @@ serve(async (req) => {
         tokenOkLogged = true;
         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken valido (1o match desta instancia)');
       }
-      // O token é credencial viva da API GO — não deixá-lo descer para
-      // handlers, logs ou persistência.
-      delete bodyRec.instanceToken;
     }
+
+    // O token é credencial viva da API GO — não deixá-lo descer para handlers,
+    // logs ou persistência. Fora do gate: vale também quando o HMAC e valido.
+    delete (rawBody as Record<string, unknown>).instanceToken;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

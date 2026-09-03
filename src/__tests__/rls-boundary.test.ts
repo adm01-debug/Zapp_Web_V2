@@ -200,7 +200,7 @@ describe('RLS boundary - authenticated role (row isolation)', () => {
     const result = await supabase
       .from('messages')
       .select('*')
-      .eq('connection_id', 'other-conn');
+      .eq('whatsapp_connection_id', 'other-conn');
 
     expect(result.data).toEqual([]);
   });

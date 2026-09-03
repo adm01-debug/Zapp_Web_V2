@@ -82,13 +82,17 @@ export async function handleContactsUpsert(supabase: any, instance: string, data
 
     if (connection && pushName) {
       let permanentAvatarUrl: string | null = null;
-      if (profilePicUrl) {
-        // Use hostname comparison to prevent URL-path bypass (e.g. evil.com/pps.whatsapp.net/...)
-        const _picHost = (() => { try { return new URL(profilePicUrl).hostname.toLowerCase(); } catch { return ''; } })();
-        if (_picHost === 'pps.whatsapp.net') {
-          permanentAvatarUrl = await persistProfilePicture(supabase, phone, profilePicUrl);
-        } else {
-          permanentAvatarUrl = profilePicUrl;
+      if (typeof profilePicUrl === 'string' && profilePicUrl) {
+        // Comparacao por hostname para nao cair em bypass de path
+        // (e.g. evil.com/pps.whatsapp.net/...). URL invalida e descartada: o
+        // catch antes devolvia '' e o else gravava o valor malformado.
+        try {
+          const picHost = new URL(profilePicUrl).hostname.toLowerCase();
+          permanentAvatarUrl = picHost === 'pps.whatsapp.net'
+            ? await persistProfilePicture(supabase, phone, profilePicUrl)
+            : profilePicUrl;
+        } catch {
+          permanentAvatarUrl = null;
         }
       }
 

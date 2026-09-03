@@ -12,7 +12,7 @@ interface LogContext {
 }
 
 // Session-level correlation ID for tracing across the app lifetime
-const sessionId = crypto.randomUUID();
+const sessionId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 // Per-request correlation ID generator
 let requestCounter = 0;
