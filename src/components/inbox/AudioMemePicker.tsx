@@ -114,7 +114,7 @@ export function AudioMemePicker({ onSendAudio, disabled }: AudioMemePickerProps)
         </PopoverTrigger>
       </TooltipTrigger>
       <TooltipContent side="top">Áudio Memes</TooltipContent>
-      <PopoverContent className="w-[360px] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
+      <PopoverContent className="w-[min(360px,calc(100vw_-_1rem))] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
           <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><Music className="w-4 h-4 text-primary" />Áudios Meme</h4>
           <div className="flex items-center gap-1">
