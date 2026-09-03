@@ -71,9 +71,15 @@ export function setViewParam(view: string, replace = false): void {
  * Shared navigation helper for non-hook call sites (GlobalSearch, ContactActionButtons, etc.).
  * Updates the URL and dispatches a custom event so the hook pushes a new history entry
  * without a synthetic popstate being misinterpreted as browser back/forward traversal.
+ *
+ * Skips pushState when the URL already carries the requested view, preventing a
+ * spurious extra history entry when the user clicks a link to the current view.
  */
 export function navigateToView(view: string): void {
-  setViewParam(view);
+  const currentView = new URLSearchParams(window.location.search).get('view');
+  if (currentView !== view) {
+    setViewParam(view);
+  }
   window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view } }));
 }
 
@@ -178,6 +184,9 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   }, []);
 
   const navigateTo = useCallback((viewId: string) => {
+    // Capture whether a URL sync is needed outside the updater so that
+    // React Strict Mode (which invokes updaters twice) cannot cause two pushState calls.
+    let syncTarget: string | undefined;
     setState(prev => {
       const currentViewId = prev.entries[prev.index]?.viewId;
       if (viewId === currentViewId) return prev;
@@ -186,32 +195,32 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       const truncated = prev.entries.slice(0, prev.index + 1);
       const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
       const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
-      const newIndex = newEntries.length - 1;
-
-      syncView(viewId);
-
-      return { entries: newEntries, index: newIndex, previousView: currentViewId ?? null };
+      syncTarget = viewId;
+      return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId ?? null };
     });
+    if (syncTarget !== undefined) syncView(syncTarget);
   }, [syncView]);
 
   const goBack = useCallback(() => {
+    let syncTarget: string | undefined;
     setState(prev => {
       if (prev.index <= 0) return prev;
       const newIndex = prev.index - 1;
-      const targetView = prev.entries[newIndex]?.viewId;
-      if (targetView) syncView(targetView, true);
+      syncTarget = prev.entries[newIndex]?.viewId;
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
+    if (syncTarget !== undefined) syncView(syncTarget, true);
   }, [syncView]);
 
   const goForward = useCallback(() => {
+    let syncTarget: string | undefined;
     setState(prev => {
       if (prev.index >= prev.entries.length - 1) return prev;
       const newIndex = prev.index + 1;
-      const targetView = prev.entries[newIndex]?.viewId;
-      if (targetView) syncView(targetView, true);
+      syncTarget = prev.entries[newIndex]?.viewId;
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
+    if (syncTarget !== undefined) syncView(syncTarget, true);
   }, [syncView]);
 
   const canGoBack = state.index > 0;
