@@ -51,8 +51,11 @@ export function useAudioMemes(open: boolean) {
   }, []);
 
   useEffect(() => {
-    if (open) fetchMemes();
+    // Adiado p/ microtask: evita setState síncrono no corpo do effect (react-hooks/set-state-in-effect)
+    let active = true;
+    if (open) queueMicrotask(() => { if (active) fetchMemes(); });
     return () => {
+      active = false;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
