@@ -112,3 +112,13 @@ export function useOfflineCache(conversations: ConversationWithMessages[], loadi
     clearCache,
   };
 }
+
+/**
+ * Apaga o cache offline de conversas. Ele nao e escopado por usuario, entao
+ * precisa ser limpo no sign-out para o proximo login na mesma aba nao ver as
+ * conversas do anterior. Fica no fim do arquivo de proposito: inserir linhas
+ * acima desloca o ranking do lint-ratchet, cuja chave inclui o numero da linha.
+ */
+export function clearOfflineCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* storage indisponivel */ }
+}

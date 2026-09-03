@@ -9,7 +9,6 @@ interface DailyViolation {
   date: string;
   dateLabel: string;
   firstResponseBreaches: number;
-  resolutionBreaches: number;
   totalBreaches: number;
   totalConversations: number;
   slaRate: number;
@@ -24,14 +23,12 @@ interface SLAHistoryData {
   dailyData: DailyViolation[];
   totals: {
     firstResponseBreaches: number;
-    resolutionBreaches: number;
     totalBreaches: number;
     totalConversations: number;
     overallSLARate: number;
   };
   trends: {
     firstResponse: ViolationTrend;
-    resolution: ViolationTrend;
     overall: ViolationTrend;
   };
   worstDays: DailyViolation[];
@@ -81,7 +78,6 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
       date: dateKey,
       dateLabel: format(day, 'dd MMM', { locale: ptBR }),
       firstResponseBreaches: 0,
-      resolutionBreaches: 0,
       totalBreaches: 0,
       totalConversations: 0,
       slaRate: 100,
@@ -94,14 +90,12 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
     if (dayData) {
       dayData.totalConversations++;
       if (record.first_response_breached) { dayData.firstResponseBreaches++; dayData.totalBreaches++; }
-      if (record.resolution_breached) { dayData.resolutionBreaches++; dayData.totalBreaches++; }
     }
   });
 
   dailyMap.forEach(day => {
     if (day.totalConversations > 0) {
-      const successCount = (day.totalConversations * 2) - day.totalBreaches;
-      day.slaRate = (successCount / (day.totalConversations * 2)) * 100;
+      day.slaRate = ((day.totalConversations - day.totalBreaches) / day.totalConversations) * 100;
     }
   });
 
@@ -110,16 +104,15 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
   const totals = dailyData.reduce(
     (acc, day) => ({
       firstResponseBreaches: acc.firstResponseBreaches + day.firstResponseBreaches,
-      resolutionBreaches: acc.resolutionBreaches + day.resolutionBreaches,
       totalBreaches: acc.totalBreaches + day.totalBreaches,
       totalConversations: acc.totalConversations + day.totalConversations,
       overallSLARate: 0,
     }),
-    { firstResponseBreaches: 0, resolutionBreaches: 0, totalBreaches: 0, totalConversations: 0, overallSLARate: 0 }
+    { firstResponseBreaches: 0, totalBreaches: 0, totalConversations: 0, overallSLARate: 0 }
   );
 
   totals.overallSLARate = totals.totalConversations > 0
-    ? ((totals.totalConversations * 2 - totals.totalBreaches) / (totals.totalConversations * 2)) * 100
+    ? ((totals.totalConversations - totals.totalBreaches) / totals.totalConversations) * 100
     : 100;
 
   const midpoint = Math.floor(dailyData.length / 2);
@@ -128,7 +121,6 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
 
   const trends = {
     firstResponse: calcTrend(firstHalf, secondHalf, d => d.firstResponseBreaches),
-    resolution: calcTrend(firstHalf, secondHalf, d => d.resolutionBreaches),
     overall: calcTrend(firstHalf, secondHalf, d => d.slaRate),
   };
 

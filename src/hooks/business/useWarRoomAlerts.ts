@@ -92,8 +92,8 @@ export function useWarRoomAlerts(soundEnabled = true) {
     const checkSLABreaches = async () => {
       const { data: breaches } = await supabase
         .from('conversation_sla')
-        .select('id, contact_id, first_response_breached, resolution_breached')
-        .or('first_response_breached.eq.true,resolution_breached.eq.true');
+        .select('id, contact_id, first_response_breached')
+        .eq('first_response_breached', true);
 
       if (breaches && breaches.length > 0) {
         const newBreachCount = breaches.length;

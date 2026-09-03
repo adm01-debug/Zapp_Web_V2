@@ -12,9 +12,11 @@ interface StatusResult {
 }
 
 // Mirror the pure calculation logic from useSLACalculation
+// Regra de negocio: alerta (warning) apos 2 min fixos; breach no deadline (5 min)
 function calculateStatus(
   remainingMs: number,
   totalMs: number,
+  warningMs: number,
   completed: boolean,
   completedAt?: Date | null,
   deadline?: Date
@@ -23,11 +25,13 @@ function calculateStatus(
     const breached = completedAt > deadline;
     return { status: breached ? 'breached' : 'ok', remainingMs: 0, breached };
   }
-  const warningThreshold = totalMs * 0.3;
   if (remainingMs <= 0) return { status: 'breached', remainingMs, breached: true };
-  if (remainingMs <= warningThreshold) return { status: 'warning', remainingMs, breached: false };
+  // alerta (laranja) quando decorridos >= warningMinutes (restante <= total - warning)
+  if (remainingMs <= totalMs - warningMs) return { status: 'warning', remainingMs, breached: false };
   return { status: 'ok', remainingMs, breached: false };
 }
+
+const WARNING_MS = 2 * 60_000; // 2 minutos fixos
 
 function formatTimeRemaining(ms: number): string {
   const absMs = Math.abs(ms);
@@ -45,7 +49,7 @@ describe('calculateStatus', () => {
   it('returns ok when completed on time', () => {
     const deadline = new Date('2026-01-01T12:05:00Z');
     const completedAt = new Date('2026-01-01T12:03:00Z');
-    const result = calculateStatus(0, 300_000, true, completedAt, deadline);
+    const result = calculateStatus(0, 300_000, WARNING_MS, true, completedAt, deadline);
     expect(result.status).toBe('ok');
     expect(result.breached).toBe(false);
     expect(result.remainingMs).toBe(0);
@@ -54,7 +58,7 @@ describe('calculateStatus', () => {
   it('returns breached when completed late', () => {
     const deadline = new Date('2026-01-01T12:05:00Z');
     const completedAt = new Date('2026-01-01T12:10:00Z');
-    const result = calculateStatus(0, 300_000, true, completedAt, deadline);
+    const result = calculateStatus(0, 300_000, WARNING_MS, true, completedAt, deadline);
     expect(result.status).toBe('breached');
     expect(result.breached).toBe(true);
   });
@@ -62,50 +66,51 @@ describe('calculateStatus', () => {
   it('returns ok with plenty of time remaining', () => {
     const totalMs = 5 * 60_000; // 5 min
     const remainingMs = 4 * 60_000; // 4 min (80% left)
-    const result = calculateStatus(remainingMs, totalMs, false);
+    const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
     expect(result.status).toBe('ok');
     expect(result.remainingMs).toBe(remainingMs);
   });
 
-  it('returns warning at 30% threshold', () => {
-    const totalMs = 10 * 60_000; // 10 min
-    const remainingMs = 2.5 * 60_000; // 2.5 min (25% left, below 30%)
-    const result = calculateStatus(remainingMs, totalMs, false);
+  it('returns warning dentro da janela de 2 min (regra: laranja apos 2 min)', () => {
+    const totalMs = 5 * 60_000; // deadline 5 min
+    const remainingMs = 2.5 * 60_000; // decorridos 2.5 min (> 2 min, < 5 min)
+    const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
     expect(result.status).toBe('warning');
     expect(result.breached).toBe(false);
   });
 
-  it('returns warning at exactly 30%', () => {
-    const totalMs = 10 * 60_000;
-    const remainingMs = 3 * 60_000; // exactly 30%
-    const result = calculateStatus(remainingMs, totalMs, false);
+  it('returns warning exatamente aos 2 min', () => {
+    const totalMs = 5 * 60_000;
+    const remainingMs = 3 * 60_000; // 3 min restantes = 2 min decorridos
+    const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
     expect(result.status).toBe('warning');
   });
 
-  it('returns ok at 31%', () => {
-    const totalMs = 10 * 60_000;
-    const remainingMs = 3.1 * 60_000; // 31%
-    const result = calculateStatus(remainingMs, totalMs, false);
+  it('returns ok antes dos 2 min', () => {
+    const totalMs = 5 * 60_000;
+    const remainingMs = 3.1 * 60_000; // 1.9 min decorridos
+    const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
     expect(result.status).toBe('ok');
   });
 
+
   it('returns breached when remaining is 0', () => {
-    const result = calculateStatus(0, 60_000, false);
+    const result = calculateStatus(0, 60_000, WARNING_MS, false);
     expect(result.status).toBe('breached');
     expect(result.breached).toBe(true);
   });
 
   it('returns breached when remaining is negative', () => {
-    const result = calculateStatus(-30_000, 60_000, false);
+    const result = calculateStatus(-30_000, 60_000, WARNING_MS, false);
     expect(result.status).toBe('breached');
     expect(result.remainingMs).toBe(-30_000);
   });
 
-  it('handles 1 minute deadline correctly', () => {
+  it('deadline curto (1 min) permanece ok antes do prazo quando warningMinutes e maior que o prazo', () => {
     const totalMs = 60_000;
-    const remainingMs = 15_000; // 25% (below 30% threshold)
-    const result = calculateStatus(remainingMs, totalMs, false);
-    expect(result.status).toBe('warning');
+    const remainingMs = 55_000; // 5s decorridos; restante > total - 2min (negativo) -> ok
+    const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
+    expect(result.status).toBe('ok');
   });
 });
 

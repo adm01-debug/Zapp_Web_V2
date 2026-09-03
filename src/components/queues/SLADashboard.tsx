@@ -32,7 +32,6 @@ export const SLADashboard = () => {
 
   // Extract sparkline data from 7-day history
   const sparkFR = historyData?.dailyData.map(d => d.totalConversations > 0 ? 100 - (d.firstResponseBreaches / d.totalConversations) * 100 : 100) || [];
-  const sparkRes = historyData?.dailyData.map(d => d.totalConversations > 0 ? 100 - (d.resolutionBreaches / d.totalConversations) * 100 : 100) || [];
   const sparkOverall = historyData?.dailyData.map(d => d.slaRate) || [];
   const sparkConversations = historyData?.dailyData.map(d => d.totalConversations) || [];
 
@@ -69,8 +68,8 @@ export const SLADashboard = () => {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-64" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -122,19 +121,16 @@ export const SLADashboard = () => {
       { header: 'Agente', key: 'agentName', width: 20 },
       { header: 'Taxa SLA (%)', key: 'overallRate', width: 12 },
       { header: '1ª Resp. (%)', key: 'firstResponseRate', width: 12 },
-      { header: 'Resolução (%)', key: 'resolutionRate', width: 12 },
     ],
     rows: data.byAgent.map(a => ({
       agentName: a.agentName,
       overallRate: a.overallRate.toFixed(1),
       firstResponseRate: a.firstResponse.rate.toFixed(1),
-      resolutionRate: a.resolution.rate.toFixed(1),
     })),
     summary: [
       { label: 'Taxa SLA Geral', value: `${data.overall.overallRate.toFixed(1)}%` },
       { label: 'Total Conversas', value: data.overall.totalConversations },
       { label: '1ª Resposta no Prazo', value: data.overall.firstResponse.onTime },
-      { label: 'Resolução no Prazo', value: data.overall.resolution.onTime },
     ],
   });
 
@@ -145,7 +141,7 @@ export const SLADashboard = () => {
         <div>
           <h2 className="text-2xl font-bold">Dashboard de SLA</h2>
           <p className="text-muted-foreground">
-            Métricas de tempo de resposta e resolução
+            Métricas de tempo de primeira resposta
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -182,7 +178,6 @@ export const SLADashboard = () => {
         periodLabel={periodLabels[period]}
         sparkOverall={sparkOverall}
         sparkFR={sparkFR}
-        sparkRes={sparkRes}
         sparkConversations={sparkConversations}
       />
 
@@ -212,20 +207,6 @@ export const SLADashboard = () => {
                 <span>{data.overall.firstResponse.breached} atrasados</span>
               </div>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Resolução</span>
-                <span className={cn("text-sm font-bold", getRateColor(data.overall.resolution.rate))}>
-                  {data.overall.resolution.rate.toFixed(1)}%
-                </span>
-              </div>
-              <Progress value={data.overall.resolution.rate} className="h-3" />
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>{data.overall.resolution.onTime} no prazo</span>
-                <span>{data.overall.resolution.breached} atrasados</span>
-              </div>
-            </div>
         </CardContent>
         </Card>
         </motion.div>
@@ -246,22 +227,10 @@ export const SLADashboard = () => {
                   {data.overall.firstResponse.breached}
                 </p>
               </motion.div>
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.8 }} className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/15 transition-colors">
-                <p className="text-sm text-muted-foreground">Violações Resolução</p>
-                <p className="text-2xl font-bold text-destructive">
-                  {data.overall.resolution.breached}
-                </p>
-              </motion.div>
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.9 }} className="p-4 rounded-xl bg-success/10 border border-success/20 hover:bg-success/15 transition-colors">
                 <p className="text-sm text-muted-foreground">No Prazo 1ª Resposta</p>
                 <p className="text-2xl font-bold text-success">
                   {data.overall.firstResponse.onTime}
-                </p>
-              </motion.div>
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.0 }} className="p-4 rounded-xl bg-success/10 border border-success/20 hover:bg-success/15 transition-colors">
-                <p className="text-sm text-muted-foreground">No Prazo Resolução</p>
-                <p className="text-2xl font-bold text-success">
-                  {data.overall.resolution.onTime}
                 </p>
               </motion.div>
             </div>

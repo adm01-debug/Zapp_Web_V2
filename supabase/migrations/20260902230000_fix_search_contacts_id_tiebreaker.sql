@@ -1,29 +1,21 @@
--- B3 FIX: search_contacts deterministic pagination tiebreaker
--- Adds c.id ASC as final ORDER BY to prevent non-deterministic pagination
--- when multiple rows share identical sort key values.
--- Supersedes 20260902000700 (which was overridden by 20260902100004).
-CREATE OR REPLACE FUNCTION public.search_contacts(
-  search_term          text                     DEFAULT ''::text,
-  contact_type_filter  text                     DEFAULT NULL::text,
-  company_filter       text                     DEFAULT NULL::text,
-  job_title_filter     text                     DEFAULT NULL::text,
-  tag_filter           text                     DEFAULT NULL::text,
-  date_from            timestamp with time zone DEFAULT NULL::timestamp with time zone,
-  sort_field           text                     DEFAULT 'name'::text,
-  sort_direction       text                     DEFAULT 'asc'::text,
-  page_size            integer                  DEFAULT 50,
-  page_offset          integer                  DEFAULT 0
-)
-RETURNS TABLE(
-  id uuid, name text, nickname text, surname text, job_title text,
-  company text, phone text, email text, avatar_url text, tags text[],
-  notes text, contact_type text,
-  created_at timestamp with time zone, updated_at timestamp with time zone,
-  total_count bigint
-)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
+-- 20260902230000_fix_search_contacts_id_tiebreaker
+-- search_contacts com tiebreaker c.id ASC no ORDER BY (paginacao estavel).
+--
+-- O ledger guarda apenas um resumo em prosa desta versao (statements[1] =
+-- "CREATE OR REPLACE FUNCTION public.search_contacts with c.id ASC ORDER BY
+-- tiebreaker — see migration file for full SQL"), que nao e SQL executavel.
+-- A definicao abaixo veio de pg_get_functiondef da funcao viva em producao,
+-- entao este arquivo e a unica fonte fiel para replay.
+
+
+CREATE OR REPLACE FUNCTION public.search_contacts(search_term text DEFAULT ''::text, contact_type_filter text DEFAULT NULL::text, company_filter text DEFAULT NULL::text, job_title_filter text DEFAULT NULL::text, tag_filter text DEFAULT NULL::text, date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, sort_field text DEFAULT 'name'::text, sort_direction text DEFAULT 'asc'::text, page_size integer DEFAULT 50, page_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, total_count bigint)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
 AS $function$
-DECLARE v_search text;
+DECLARE
+  v_search text;
 BEGIN
   v_search := NULLIF(TRIM(search_term), '');
   RETURN QUERY
@@ -66,6 +58,7 @@ BEGIN
     CASE WHEN sort_field='updated_at' AND sort_direction='asc'  THEN c.updated_at END ASC  NULLS LAST,
     CASE WHEN sort_field='updated_at' AND sort_direction='desc' THEN c.updated_at END DESC NULLS LAST,
     c.name ASC NULLS LAST,
-    c.id   ASC;
+    c.id   ASC
+  LIMIT page_size OFFSET page_offset;
 END;
 $function$;

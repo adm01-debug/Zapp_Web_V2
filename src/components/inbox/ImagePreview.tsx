@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, ZoomIn, ZoomOut } from 'lucide-react';
@@ -19,6 +19,14 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
 ) {
   const [isZoomed, setIsZoomed] = useState(false);
   const { canDownload } = useDownloadPermission();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleDownload = async () => {
     if (!canDownload) {

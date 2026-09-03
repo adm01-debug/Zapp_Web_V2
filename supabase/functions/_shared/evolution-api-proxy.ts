@@ -19,6 +19,11 @@ export function normalizeGoSendResponse(data: any): unknown {
 }
 
 // Normalizações GO→v2 dependentes da rota traduzida (goPath):
+// /instance/all → remove `token` de cada instância (credencial de instância
+//   do GO; o da instância padrão é o EVOLUTION_INSTANCE_TOKEN). A edge
+//   evolution-api é chamável por qualquer usuário logado e nenhum consumidor
+//   do front precisa desse campo — com token + URL pública da GO dá pra
+//   operar a instância fora do app ·
 // /label/list → [{id,name,color}] (o front espera o array v2) ·
 // /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
 // demais respostas: injeção aditiva de key/messageId nos envios.
@@ -36,6 +41,14 @@ export function normalizeGoResponse(goPath: string | null, data: any): unknown {
       exists: u.IsInWhatsapp === true, jid: u.JID ?? u.RemoteJID ?? null,
       number: u.Query ?? null, ...(u.VerifiedName ? { name: u.VerifiedName } : {}),
     }));
+  }
+  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
+    const instances = data.data.map((instance: Record<string, unknown>) => {
+      const safe = { ...instance };
+      delete safe.token;
+      return safe;
+    });
+    return { ...data, data: instances };
   }
   return normalizeGoSendResponse(data);
 }
@@ -62,6 +75,15 @@ export async function proxyToEvolution(
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
     const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      // Convencao do proxy: 200 com { error: true, message } — e o que o
+      // useEvolutionApiCore le para mostrar toast. Um 400 cru cairia no ramo de
+      // erro de rede. Sem corsHeaders o browser nem entrega o corpo.
+      return new Response(JSON.stringify({ error: true, message: go.invalid }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     if (go) {
       path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
       goPath = go.path;

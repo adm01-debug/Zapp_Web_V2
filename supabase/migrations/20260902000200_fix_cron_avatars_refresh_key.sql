@@ -1,18 +1,11 @@
--- CRITICAL FIX: avatars-refresh cron uses sicoob_service_role_key (Sicoob PIX API key)
--- as the Supabase Bearer token. Supabase gateway rejects it → job has been silently
--- failing every hour since deployment.
--- Fix: switch to zapp_anon_key (valid Supabase API key; function uses internal
--- SUPABASE_SERVICE_ROLE_KEY env for data access, so anon key suffices for gateway auth).
+-- 20260902000200_fix_cron_avatars_refresh_key
+-- Reagenda avatars-refresh para usar zapp_anon_key (vault) em vez de sicoob_service_role_key.
+-- SQL real conforme estado vigente no banco (cron.job jobid=8).
 
-DO $$ BEGIN
-  PERFORM cron.unschedule('avatars-refresh');
-EXCEPTION WHEN OTHERS THEN NULL;  -- pg_cron raises internal_error (XX000), not undefined_object
-END $$;
-
-SELECT cron.schedule(
-  'avatars-refresh',
-  '0 * * * *',
-  $cmd$
+select cron.alter_job(
+  job_id := 8,
+  schedule := '0 * * * *',
+  command := $cron$
   SELECT net.http_post(
     url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/batch-fetch-avatars',
     headers := jsonb_build_object(
@@ -22,5 +15,5 @@ SELECT cron.schedule(
     body := '{}'::jsonb,
     timeout_milliseconds := 150000
   )
-  $cmd$
+  $cron$
 );

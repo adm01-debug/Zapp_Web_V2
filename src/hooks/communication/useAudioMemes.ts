@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { convertAudioToMp3 } from '@/utils/audioToMp3';
 
 const log = getLogger('useAudioMemes');
 
@@ -50,8 +51,11 @@ export function useAudioMemes(open: boolean) {
   }, []);
 
   useEffect(() => {
-    if (open) fetchMemes();
+    // Adiado p/ microtask: evita setState síncrono no corpo do effect (react-hooks/set-state-in-effect)
+    let active = true;
+    if (open) queueMicrotask(() => { if (active) fetchMemes(); });
     return () => {
+      active = false;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -90,29 +94,41 @@ export function useAudioMemes(open: boolean) {
 
     setUploading(true);
     try {
-      const ext = getFileExtensionWithDefault(file.name, 'mp3');
+      // Padroniza em MP3 (audio/mpeg) — reprodução universal iOS/Android/desktop.
+      // Fallback: se o browser não decodificar o formato, usa o arquivo original.
+      const converted = await convertAudioToMp3(file, file.name);
+      if (converted.ok && converted.blob.size > 5 * 1024 * 1024) {
+        toast.error('O áudio convertido em MP3 excede 5MB. Use um áudio mais curto.');
+        return;
+      }
+      const payload: File | Blob = converted.ok ? converted.blob : file;
+      const contentType = converted.ok ? 'audio/mpeg' : (file.type || 'audio/mpeg');
+      const ext = converted.ok ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
       const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')
-        .upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
+        .upload(storagePath, payload, { contentType, cacheControl: '31536000' });
 
       if (uploadError) { toast.error('Erro ao enviar arquivo'); return; }
 
       const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(storagePath);
 
-      let duration: number | null = null;
-      try {
-        const tempAudio = new Audio(urlData.publicUrl);
-        await new Promise<void>((resolve) => {
-          tempAudio.onloadedmetadata = () => {
-            duration = isFinite(tempAudio.duration) ? Math.round(tempAudio.duration * 100) / 100 : null;
-            resolve();
-          };
-          tempAudio.onerror = () => resolve();
-          setTimeout(resolve, 3000);
-        });
-      } catch (err) { log.error('Unexpected error in useAudioMemes:', err); }
+      // duração: preferir a calculada localmente do MP3 CBR (sem depender de rede)
+      let duration: number | null = converted.ok ? converted.durationSeconds : null;
+      if (duration === null) {
+        try {
+          const tempAudio = new Audio(urlData.publicUrl);
+          await new Promise<void>((resolve) => {
+            tempAudio.onloadedmetadata = () => {
+              duration = isFinite(tempAudio.duration) ? Math.round(tempAudio.duration * 100) / 100 : null;
+              resolve();
+            };
+            tempAudio.onerror = () => resolve();
+            setTimeout(resolve, 3000);
+          });
+        } catch (err) { log.error('Unexpected error in useAudioMemes:', err); }
+      }
 
       let aiCategory = 'outros';
       try {

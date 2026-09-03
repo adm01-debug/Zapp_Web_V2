@@ -20,7 +20,7 @@ import {
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
-import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
+import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 // ---------------------------------------------------------------------------
 // HMAC validation (D2 — security hardening)
@@ -29,8 +29,11 @@ import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
 //   - Requests SEM header de assinatura: aceitos (backwards-compatible).
 //   - Requests COM header de assinatura INVÁLIDA: rejeitados com 401.
 //
-// Quando a Evolution GO estiver configurada para enviar HMAC e todos os
-// webhooks confirmados OK, altere para strictMode = true.
+// A Evolution GO NÃO assina webhooks nem aceita headers customizados
+// (webhook_producer.go envia só Content-Type; ConnectStruct não tem campo de
+// secret/headers) — strictMode=true rejeitaria 100% do tráfego GO e NÃO deve
+// ser ligado enquanto ela for a emissora. O fechamento real do endpoint é o
+// gate por instanceToken abaixo.
 //
 // EVOLUTION_WEBHOOK_SECRET é o nome usado em todo o resto do projeto (docs,
 // _shared/hmac-validation.ts em modo sombra, auditoria) — WEBHOOK_SECRET é
@@ -42,6 +45,26 @@ import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
 // como "secret configurado" e nunca rejeitaria assinatura inválida.
 const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') || Deno.env.get('WEBHOOK_SECRET') || '';
 const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);
+
+// ---------------------------------------------------------------------------
+// Gate por instanceToken (Evolution GO) — a única credencial que a GO entrega
+// é o instanceToken presente no CORPO de todo evento (webhook_producer.go).
+// EVOLUTION_WEBHOOK_ENFORCE:
+//   'shadow' (default) → só loga ausência/divergência; nada é rejeitado;
+//   'token'            → corpo sem instanceToken correto recebe 401.
+// Flip e rollback por secret no Dashboard, sem redeploy. `||` pelo mesmo
+// motivo do webhookSecret acima.
+const instanceToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') || '';
+const enforceMode = Deno.env.get('EVOLUTION_WEBHOOK_ENFORCE') || 'shadow';
+if (enforceMode !== 'shadow' && enforceMode !== 'token') {
+  throw new Error(`EVOLUTION_WEBHOOK_ENFORCE must be "shadow" or "token", got: "${enforceMode}"`);
+}
+// enforce=token sem instanceToken configurado rejeitaria 100% do trafego GO (que
+// nunca traz HMAC). Falha no boot em vez de derrubar o WhatsApp silenciosamente.
+if (enforceMode === 'token' && !instanceToken) {
+  throw new Error('EVOLUTION_WEBHOOK_ENFORCE=token requires EVOLUTION_INSTANCE_TOKEN to be set');
+}
+let tokenOkLogged = false;
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -83,6 +106,35 @@ serve(async (req) => {
     }
     if (rawBody === null || typeof rawBody !== 'object') {
       return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
+    }
+
+    // O instanceToken é credencial viva da API GO — remover SEMPRE do body
+    // antes de descer para handlers, logs ou persistência, independente do
+    // resultado HMAC. Extraímos antes de deletar para uso no gate abaixo.
+    const bodyRec = rawBody as Record<string, unknown>;
+    const instanceTokenFromBody = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : undefined;
+    delete bodyRec.instanceToken; // sempre removido, mesmo com HMAC válido
+
+    // Sem assinatura HMAC válida, aplica gate de instanceToken. Em 'shadow' só
+    // observa payloads GO (isGoPayload), para não ruidar com o tráfego v2 legado;
+    // em 'token' o gate vale para qualquer payload, senão um envelope v2 forjado
+    // entraria sem HMAC e sem instanceToken.
+    if (!validation.signatureValid && (isGoPayload(rawBody) || enforceMode === 'token')) {
+      const tokenOk = !!instanceToken
+        && typeof instanceTokenFromBody === 'string'
+        && instanceTokenFromBody.length === instanceToken.length
+        && timingSafeEqual(instanceTokenFromBody, instanceToken);
+      if (!tokenOk) {
+        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${instanceTokenFromBody === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''})`);
+        if (enforceMode === 'token') {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else if (!tokenOkLogged) {
+        tokenOkLogged = true;
+        console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken valido (1o match desta instancia)');
+      }
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
