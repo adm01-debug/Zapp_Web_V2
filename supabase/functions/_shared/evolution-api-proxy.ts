@@ -75,6 +75,12 @@ export async function proxyToEvolution(
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
     const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      return new Response(JSON.stringify({ error: go.invalid }), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
     if (go) {
       path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
       goPath = go.path;

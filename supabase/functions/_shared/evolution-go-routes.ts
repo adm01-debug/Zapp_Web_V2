@@ -12,6 +12,9 @@ export interface GoRoute {
   method: string;
   body?: unknown;
   auth: 'instance' | 'admin';
+  // Payload v2 invalido: a rota existe, mas falta dado obrigatorio. Diferente de
+  // 'null' (rota nao mapeada), que faz o wrapper repassar o path v2 original.
+  invalid?: string;
   // Content-Type alternativo (workaround do jid_validation_middleware do GO,
   // que corrompe arrays em application/json; o handler faz o bind normalmente).
   contentType?: string;
@@ -127,7 +130,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     return { path: '/send/status/media', method: 'POST', auth: 'instance', body: { url: b.content ?? b.media, type: b.type ?? 'image', ...(b.caption ? { caption: b.caption } : {}) } };
   }
   if (m(/^\/message\/sendReaction\/[^/]+$/)) {
-    if (!b.key?.remoteJid || !b.key?.id) return null;
+    if (!b.key?.remoteJid || !b.key?.id) return { path: '/message/react', method: 'POST', auth: 'instance', invalid: 'sendReaction requer key.remoteJid e key.id' };
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
       number: jidWithoutDevice(b.key.remoteJid), reaction: b.reaction, id: b.key.id,
       fromMe: b.key?.fromMe === true,
@@ -147,11 +150,12 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       chat: b.remoteJid, messageId: b.id,
     }};
   if (m(/^\/chat\/markMessageAsRead\/[^/]+$/)) {
-    const msgs = Array.isArray(b.readMessages) ? b.readMessages : [];
-    if (msgs.length === 0 || !msgs[0]?.remoteJid) return null;
+    const msgs: Record<string, unknown>[] = Array.isArray(b.readMessages) ? b.readMessages : [];
+    const firstJid = typeof msgs[0]?.remoteJid === 'string' ? msgs[0].remoteJid : undefined;
+    if (!firstJid) return { path: '/message/markread', method: 'POST', auth: 'instance', invalid: 'markMessageAsRead requer readMessages[0].remoteJid' };
     return { path: '/message/markread', method: 'POST', auth: 'instance', body: {
-      id: msgs.map((x: any) => x?.id).filter(Boolean),
-      number: jidWithoutDevice(msgs[0].remoteJid),
+      id: msgs.map((x) => x?.id).filter(Boolean),
+      number: jidWithoutDevice(firstJid),
     }};
   }
   // GO exige o waE2E.Message com os nós de mídia (URL/mediaKey/directPath).
@@ -276,8 +280,8 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/label\/findLabels\/[^/]+$/))
     return { path: '/label/list', method: 'GET', auth: 'instance' };
   if (m(/^\/label\/handleLabel\/[^/]+$/)) {
-    const raw = String(b.number ?? '');
-    const jid = raw.includes('@') ? raw : raw + '@s.whatsapp.net';
+    const jid = toUserJid(b.number);
+    if (!jid) return { path: '/label/chat', method: 'POST', auth: 'instance', invalid: 'handleLabel requer number' };
     return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
       jid, labelId: b.labelId,
     }};
