@@ -1,5 +1,6 @@
  import { useEffect, useRef } from 'react';
  import { useQueryClient } from '@tanstack/react-query';
+ import type { User } from '@supabase/supabase-js';
  import { supabase } from '@/integrations/supabase/client';
  import { toast } from 'sonner';
  import {
@@ -14,7 +15,7 @@ const VALID_VIEWS = new Set([
 ]);
 const VALID_INTEGRATION_VIEWS = new Set(['gmail', 'whatsapp', 'calendar']);
 
- export function useGmailOAuth(user: any, loading: boolean, setCurrentView: (view: string) => void) {
+ export function useGmailOAuth(user: User | null, loading: boolean, setCurrentView: (view: string) => void) {
    const queryClient = useQueryClient();
    const handledRef = useRef(false);
 
