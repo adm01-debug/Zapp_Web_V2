@@ -28,10 +28,6 @@ export function normalizeGoSendResponse(data: any): unknown {
 // demais respostas: injeção aditiva de key/messageId nos envios.
 // deno-lint-ignore no-explicit-any
 export function normalizeGoResponse(goPath: string | null, data: any): unknown {
-  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
-    // deno-lint-ignore no-explicit-any
-    return { ...data, data: data.data.map(({ token: _token, ...instance }: any) => instance) };
-  }
   if (goPath === '/label/list' && Array.isArray(data?.data)) {
     // deno-lint-ignore no-explicit-any
     return data.data.map((l: any) => ({
@@ -44,6 +40,14 @@ export function normalizeGoResponse(goPath: string | null, data: any): unknown {
       exists: u.IsInWhatsapp === true, jid: u.JID ?? u.RemoteJID ?? null,
       number: u.Query ?? null, ...(u.VerifiedName ? { name: u.VerifiedName } : {}),
     }));
+  }
+  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
+    const instances = data.data.map((instance: Record<string, unknown>) => {
+      const safe = { ...instance };
+      delete safe.token;
+      return safe;
+    });
+    return { ...data, data: instances };
   }
   return normalizeGoSendResponse(data);
 }
