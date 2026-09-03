@@ -132,6 +132,15 @@ export default defineConfig(({ mode }) => {
             if (id.includes("mapbox-gl")) {
               return "vendor-maps";
             }
+            // VoIP / SIP stack (heavy, loaded only on call views).
+            // Ancorado em node_modules: "sip/" solto tambem casava com
+            // src/hooks/sip/, jogando codigo da app no chunk de vendor.
+            if (
+              id.includes("node_modules/sip.js") ||
+              id.includes("node_modules/sipjs")
+            ) {
+              return "vendor-voip";
+            }
             // Voice SDK — @elevenlabs/react embute LiveKit (~610KB min);
             // sem esta regra cai num chunk "dist-*" importado pelo ChatPanel.
             if (id.includes("@elevenlabs") || id.includes("livekit")) {
