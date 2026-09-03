@@ -106,7 +106,6 @@ describe('SLARulesManager', () => {
     await waitFor(() => {
       expect(screen.getByText('Nome da Regra')).toBeInTheDocument();
       expect(screen.getByText('1ª Resposta (min)')).toBeInTheDocument();
-      expect(screen.getByText('Resolução (min)')).toBeInTheDocument();
       expect(screen.getByText('Prioridade (maior = mais prioritário)')).toBeInTheDocument();
     });
   });
@@ -115,7 +114,7 @@ describe('SLARulesManager', () => {
     render(<SLARulesManager />, { wrapper: createWrapper() });
     await waitFor(() => fireEvent.click(screen.getByText('Nova Regra')));
     await waitFor(() => {
-      expect(screen.getByText(/Defina prazos específicos de resposta e resolução/)).toBeInTheDocument();
+      expect(screen.getByText(/Defina prazos específicos de primeira resposta/)).toBeInTheDocument();
     });
   });
 

@@ -59,13 +59,13 @@ describe('audit logging', () => {
     }));
   });
 
-  it('sends null for optional fields when not provided', async () => {
+  it('omite os campos opcionais nao informados (DEFAULT NULL no SQL)', async () => {
     await logAudit({ action: 'logout' });
 
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
       p_action: 'logout',
-      p_entity_type: null,
-      p_entity_id: null,
+      p_entity_type: undefined,
+      p_entity_id: undefined,
       p_details: null,
     }));
   });

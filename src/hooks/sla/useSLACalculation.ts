@@ -1,14 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export type SLAStatus = 'ok' | 'warning' | 'breached';
 
 export interface SLATimerState {
   firstResponse: {
-    status: SLAStatus;
-    remainingMs: number;
-    breached: boolean;
-  };
-  resolution: {
     status: SLAStatus;
     remainingMs: number;
     breached: boolean;
@@ -19,14 +14,15 @@ export interface SLATimerState {
 interface UseSLACalculationParams {
   firstMessageAt: Date;
   firstResponseAt?: Date | null;
-  resolvedAt?: Date | null;
   firstResponseMinutes: number;
-  resolutionMinutes: number;
+  /** Minutos decorridos a partir dos quais o indicador entra em alerta (laranja). Padrao: 2. */
+  warningMinutes?: number;
 }
 
 function calculateStatus(
   remainingMs: number,
   totalMs: number,
+  warningMs: number,
   completed: boolean,
   completedAt?: Date | null,
   deadline?: Date
@@ -36,45 +32,32 @@ function calculateStatus(
     return { status: breached ? 'breached' : 'ok', remainingMs: 0, breached };
   }
 
-  const warningThreshold = totalMs * 0.3;
   if (remainingMs <= 0) {
     return { status: 'breached', remainingMs, breached: true };
   }
-  if (remainingMs <= warningThreshold) {
+  // alerta (laranja) quando os minutos decorridos atingem warningMinutes,
+  // ou seja, restante <= total - warning
+  if (remainingMs <= totalMs - warningMs) {
     return { status: 'warning', remainingMs, breached: false };
   }
   return { status: 'ok', remainingMs, breached: false };
 }
 
-function compute(params: UseSLACalculationParams): SLATimerState {
-  const now = new Date();
+function compute(params: UseSLACalculationParams, nowMs: number): SLATimerState {
+  const now = new Date(nowMs);
   const frDeadline = new Date(params.firstMessageAt.getTime() + params.firstResponseMinutes * 60_000);
-  const resDeadline = new Date(params.firstMessageAt.getTime() + params.resolutionMinutes * 60_000);
+  const warningMs = (params.warningMinutes ?? 2) * 60_000;
 
   const firstResponse = calculateStatus(
     frDeadline.getTime() - now.getTime(),
     params.firstResponseMinutes * 60_000,
+    warningMs,
     !!params.firstResponseAt,
     params.firstResponseAt,
     frDeadline
   );
 
-  const resolution = calculateStatus(
-    resDeadline.getTime() - now.getTime(),
-    params.resolutionMinutes * 60_000,
-    !!params.resolvedAt,
-    params.resolvedAt,
-    resDeadline
-  );
-
-  const worstStatus: SLAStatus =
-    firstResponse.status === 'breached' || resolution.status === 'breached'
-      ? 'breached'
-      : firstResponse.status === 'warning' || resolution.status === 'warning'
-        ? 'warning'
-        : 'ok';
-
-  return { firstResponse, resolution, worstStatus };
+  return { firstResponse, worstStatus: firstResponse.status };
 }
 
 export function formatTimeRemaining(ms: number): string {
@@ -91,22 +74,14 @@ export function formatTimeRemaining(ms: number): string {
 }
 
 export function useSLACalculation(params: UseSLACalculationParams): SLATimerState {
-  const [state, setState] = useState<SLATimerState>(() => compute(params));
-
-  const recompute = useCallback(() => setState(compute(params)), [
-    params.firstMessageAt,
-    params.firstResponseAt,
-    params.resolvedAt,
-    params.firstResponseMinutes,
-    params.resolutionMinutes,
-  ]);
+  // relogio derivado: tick assincrono via interval (nunca setState sincrono no effect)
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    recompute();
-    if (params.firstResponseAt && params.resolvedAt) return;
-    const interval = setInterval(recompute, 1000);
+    if (params.firstResponseAt) return;
+    const interval = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [recompute, params.firstResponseAt, params.resolvedAt]);
+  }, [params.firstResponseAt]);
 
-  return state;
+  return useMemo(() => compute(params, nowMs), [params, nowMs]);
 }

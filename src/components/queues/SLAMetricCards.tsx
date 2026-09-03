@@ -21,7 +21,6 @@ interface OverallData {
   overallRate: number;
   totalConversations: number;
   firstResponse: { rate: number; onTime: number; breached: number };
-  resolution: { rate: number; onTime: number; breached: number };
 }
 
 interface SLAMetricCardsProps {
@@ -29,13 +28,12 @@ interface SLAMetricCardsProps {
   periodLabel: string;
   sparkOverall: number[];
   sparkFR: number[];
-  sparkRes: number[];
   sparkConversations: number[];
 }
 
-export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, sparkRes, sparkConversations }: SLAMetricCardsProps) {
+export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, sparkConversations }: SLAMetricCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card className={cn("border-l-4 border-l-primary", getRateBg(data.overallRate))}>
           <CardContent className="pt-6">
@@ -72,27 +70,6 @@ export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, spark
                 <span className="text-destructive flex items-center gap-1"><XCircle className="h-4 w-4" />{data.firstResponse.breached} atrasados</span>
               </div>
               {sparkFR.length >= 2 && <Sparkline data={sparkFR} width={64} height={20} color="hsl(var(--info))" />}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Resolução</p>
-                <p className={cn("text-3xl font-bold", getRateColor(data.resolution.rate))}>{data.resolution.rate.toFixed(1)}%</p>
-              </div>
-              <div className="p-3 rounded-full bg-primary/10"><CheckCircle2 className="h-6 w-6 text-primary" /></div>
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="flex gap-4 text-sm flex-1">
-                <span className="text-success flex items-center gap-1"><CheckCircle2 className="h-4 w-4" />{data.resolution.onTime} no prazo</span>
-                <span className="text-destructive flex items-center gap-1"><XCircle className="h-4 w-4" />{data.resolution.breached} atrasados</span>
-              </div>
-              {sparkRes.length >= 2 && <Sparkline data={sparkRes} width={64} height={20} color="hsl(var(--primary))" />}
             </div>
           </CardContent>
         </Card>
