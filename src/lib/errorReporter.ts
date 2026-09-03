@@ -53,19 +53,30 @@ export function reportClientError(
   opts?: ReportOptions
 ): void {
   if (import.meta.env.DEV && !opts?.force) return;
-  const err = error instanceof Error ? error : new Error(String(error ?? 'unknown'));
-  const message = err.message || 'unknown';
+  let errMsg: string;
+  if (error instanceof Error) {
+    errMsg = error.message || 'unknown';
+  } else if (typeof error === 'string') {
+    errMsg = error || 'unknown';
+  } else if (error !== null && error !== undefined && typeof (error as Record<string, unknown>)['message'] === 'string') {
+    errMsg = (error as Record<string, unknown>)['message'] as string;
+  } else {
+    try { errMsg = JSON.stringify(error) ?? 'unknown'; } catch { errMsg = 'unknown'; }
+  }
+  const stack = error instanceof Error ? (error.stack ?? '') : '';
+  const err = { message: errMsg, stack };
+  const message = errMsg;
   const source = typeof context.source === 'string' ? context.source : undefined;
   if (!shouldReport(message, source)) return;
   void logAudit({
     action: 'client_error',
     details: {
-      message: message.slice(0, MAX_FIELD_LEN),
-      stack: (err.stack ?? '').slice(0, MAX_FIELD_LEN),
+      ...context,                                      // campos extras primeiro
+      message: errMsg.slice(0, MAX_FIELD_LEN),         // campos canônicos sobrescrevem
+      stack: stack.slice(0, MAX_FIELD_LEN),
       path: window.location.pathname,
       buildId: BUILD_ID.slice(0, 12),
       sessionId: getSessionId(),
-      ...context,
     },
   });
 }

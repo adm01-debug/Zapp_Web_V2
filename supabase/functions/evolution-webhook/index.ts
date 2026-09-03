@@ -56,13 +56,10 @@ const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ 
 // motivo do webhookSecret acima.
 const instanceToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') || '';
 const enforceMode = Deno.env.get('EVOLUTION_WEBHOOK_ENFORCE') || 'shadow';
-let tokenOkLogged = false;
-
-function goTokenMatches(body: Record<string, unknown>): boolean {
-  if (!instanceToken) return false;
-  const tok = body.instanceToken;
-  return typeof tok === 'string' && timingSafeEqual(tok, instanceToken);
+if (enforceMode !== 'shadow' && enforceMode !== 'token') {
+  throw new Error(`EVOLUTION_WEBHOOK_ENFORCE must be "shadow" or "token", got: "${enforceMode}"`);
 }
+let tokenOkLogged = false;
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -106,12 +103,22 @@ serve(async (req) => {
       return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
     }
 
-    // Sem assinatura HMAC válida (a GO nunca envia uma), o gate é o
-    // instanceToken do corpo. Em 'shadow' apenas observa via logs.
-    if (!validation.signatureValid) {
-      const bodyRec = rawBody as Record<string, unknown>;
-      if (!goTokenMatches(bodyRec)) {
-        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''})`);
+    // O instanceToken é credencial viva da API GO — remover SEMPRE do body
+    // antes de descer para handlers, logs ou persistência, independente do
+    // resultado HMAC. Extraímos antes de deletar para uso no gate abaixo.
+    const bodyRec = rawBody as Record<string, unknown>;
+    const instanceTokenFromBody = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : undefined;
+    delete bodyRec.instanceToken; // sempre removido, mesmo com HMAC válido
+
+    // Sem assinatura HMAC válida, aplica gate de instanceToken — mas somente
+    // para payloads GO (isGoPayload). Payloads v2 legados usam HMAC ou shadow.
+    if (!validation.signatureValid && isGoPayload(rawBody)) {
+      const tokenOk = !!instanceToken
+        && typeof instanceTokenFromBody === 'string'
+        && instanceTokenFromBody.length === instanceToken.length
+        && timingSafeEqual(instanceTokenFromBody, instanceToken);
+      if (!tokenOk) {
+        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${instanceTokenFromBody === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''})`);
         if (enforceMode === 'token') {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -121,9 +128,6 @@ serve(async (req) => {
         tokenOkLogged = true;
         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken valido (1o match desta instancia)');
       }
-      // O token é credencial viva da API GO — não deixá-lo descer para
-      // handlers, logs ou persistência.
-      delete bodyRec.instanceToken;
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
