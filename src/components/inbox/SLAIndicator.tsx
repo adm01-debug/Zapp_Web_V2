@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Clock, AlertTriangle, CheckCircle, Timer } from 'lucide-react';
+import { AlertTriangle, Timer } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   Tooltip,
@@ -17,10 +17,10 @@ interface SLAIndicatorProps {
   compact?: boolean;
 }
 
-const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; icon: React.ElementType; ring: string }> = {
-  ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', icon: CheckCircle, ring: 'stroke-success' },
-  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30', icon: Clock, ring: 'stroke-warning' },
-  breached: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30', icon: AlertTriangle, ring: 'stroke-destructive' },
+const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; ring: string }> = {
+  ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', ring: 'stroke-success' },
+  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30', ring: 'stroke-warning' },
+  breached: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30', ring: 'stroke-destructive' },
 };
 
 function SLAProgressRing({ status, percent, size = 28 }: { status: SLAStatus; percent: number; size?: number }) {
@@ -66,7 +66,6 @@ export function SLAIndicator({
   if (firstResponseAt && sla.firstResponse.status === 'ok') return null;
 
   const style = statusStyles[sla.firstResponse.status];
-  const Icon = style.icon;
 
   const frTotalMs = firstResponseMinutes * 60_000;
 
@@ -120,7 +119,6 @@ export function SLAIndicator({
 
   return (
     <div role="status" aria-label="Indicador de SLA de primeira resposta" className={cn('flex items-center gap-2', className)}>
-      <Icon className={cn('w-3.5 h-3.5 hidden', style.text)} />
       {!firstResponseAt ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}

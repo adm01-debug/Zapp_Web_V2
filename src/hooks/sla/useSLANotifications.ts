@@ -27,7 +27,8 @@ export const useSLANotifications = () => {
     log.debug('Setting up realtime subscription');
 
     const handleBreachNotification = async (
-      contactId: string
+      contactId: string,
+      slaRecordId: string
     ) => {
       // Fetch contact info
       const { data: contact } = await supabase
@@ -57,7 +58,7 @@ export const useSLANotifications = () => {
       // Show browser notification if enabled
       if (settings.browserNotifications && settings.desktopAlerts) {
         showBrowserNotification(title, description, {
-          tag: 'sla-breach-first-response',
+          tag: `sla-breach-first-response-${slaRecordId}`,
         });
       }
     };
@@ -82,7 +83,7 @@ export const useSLANotifications = () => {
             const breachKey = `fr-${newRecord.id}`;
             if (!notifiedBreaches.current.has(breachKey)) {
               notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification(newRecord.contact_id);
+              await handleBreachNotification(newRecord.contact_id, newRecord.id);
             }
           }
         }
@@ -104,7 +105,7 @@ export const useSLANotifications = () => {
             const breachKey = `fr-${newRecord.id}`;
             if (!notifiedBreaches.current.has(breachKey)) {
               notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification(newRecord.contact_id);
+              await handleBreachNotification(newRecord.contact_id, newRecord.id);
             }
           }
         }

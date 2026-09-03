@@ -109,7 +109,7 @@ export function SLAConfigurationManager() {
         <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Editar SLA' : 'Nova Configuração de SLA'}</DialogTitle>
-            <DialogDescription>{editingId ? 'Atualize os prazos e nível de prioridade desta configuração.' : 'Defina metas de tempo de primeira resposta para um nível de prioridade.'}</DialogDescription>
+            <DialogDescription>{editingId ? 'Atualize o prazo de primeira resposta e o nível de prioridade desta configuração.' : 'Defina metas de tempo de primeira resposta para um nível de prioridade.'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
