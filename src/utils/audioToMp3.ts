@@ -21,15 +21,19 @@ declare global {
   }
 }
 
-let lamejsCache: { Mp3Encoder: new (channels: number, sampleRate: number, kbps: number) => {
-  encodeBuffer: (samples: Int16Array) => Int8Array;
-  flush: () => Int8Array;
-} } | null = null;
+interface LamejsModule {
+  Mp3Encoder: new (channels: number, sampleRate: number, kbps: number) => {
+    encodeBuffer: (samples: Int16Array) => Int8Array;
+    flush: () => Int8Array;
+  };
+}
 
-let lamejsLoadPromise: Promise<NonNullable<typeof lamejsCache>> | null = null;
+let lamejsCache: LamejsModule | null = null;
+
+let lamejsLoadPromise: Promise<LamejsModule> | null = null;
 
 /** Carrega lamejs uma única vez por sessão (script tag + Promise compartilhada). */
-function loadLamejs(): Promise<NonNullable<typeof lamejsCache>> {
+function loadLamejs(): Promise<LamejsModule> {
   if (lamejsCache) return Promise.resolve(lamejsCache);
   // Promise compartilhada: chamadas concorrentes aguardam o MESMO load — sem
   // listeners órfãos em script cujo evento 'load' já disparou (race que travava o upload).
