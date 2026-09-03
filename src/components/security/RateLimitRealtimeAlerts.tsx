@@ -31,6 +31,16 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: 'border-l-red-500'
 };
 
+function playAlertSound() {
+  try {
+    const audio = new Audio('/notification.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {
+    console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
+  }
+}
+
 export function RateLimitRealtimeAlerts() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -61,7 +71,7 @@ export function RateLimitRealtimeAlerts() {
         (payload) => {
           const newAlert = payload.new as SecurityAlert;
           setAlerts(prev => [newAlert, ...prev].slice(0, 10));
-          
+
           // Play sound for critical alerts
           if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
             playAlertSound();
@@ -74,16 +84,6 @@ export function RateLimitRealtimeAlerts() {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  const playAlertSound = () => {
-    try {
-      const audio = new Audio('/notification.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    } catch (e) {
-      console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
-    }
-  };
 
   const handleDismiss = async (alertId: string) => {
     setDismissed(prev => new Set([...prev, alertId]));
