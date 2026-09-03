@@ -58,6 +58,7 @@ describe('useWarRoomAlerts', () => {
       if (table === 'conversation_sla') {
         return {
           select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
             or: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         };
