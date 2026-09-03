@@ -51,8 +51,15 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
   const slaRows = (rc.contact as RealtimeContact & {
     conversation_sla?: Array<{ first_response_at: string | null }> | null;
   }).conversation_sla;
-  // canonico = registro mais recente (relacao 1:N; embed sem ordenacao)
-  const slaEmbed = [...(slaRows ?? [])].sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? '')).pop();
+  // canonico: linha ABERTA (sem resposta) tem prioridade — e a pendencia atual;
+  // caso nao exista, a linha respondida mais recente (historico). Evita que um
+  // SLA antigo respondido faca o badge parar de contar a pendencia viva.
+  const slaOpen = slaRows?.find(r => r.first_response_at == null);
+  const slaEmbed = slaOpen
+    ?? [...(slaRows ?? [])]
+        .filter(r => r.first_response_at != null)
+        .sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? ''))
+        .pop();
 
   const firstAgentMessage = rc.messages
     .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
