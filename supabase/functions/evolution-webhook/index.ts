@@ -110,9 +110,11 @@ serve(async (req) => {
     const instanceTokenFromBody = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : undefined;
     delete bodyRec.instanceToken; // sempre removido, mesmo com HMAC válido
 
-    // Sem assinatura HMAC válida, aplica gate de instanceToken — mas somente
-    // para payloads GO (isGoPayload). Payloads v2 legados usam HMAC ou shadow.
-    if (!validation.signatureValid && isGoPayload(rawBody)) {
+    // Sem assinatura HMAC válida, aplica gate de instanceToken. Em 'shadow' só
+    // observa payloads GO (isGoPayload), para não ruidar com o tráfego v2 legado;
+    // em 'token' o gate vale para qualquer payload, senão um envelope v2 forjado
+    // entraria sem HMAC e sem instanceToken.
+    if (!validation.signatureValid && (isGoPayload(rawBody) || enforceMode === 'token')) {
       const tokenOk = !!instanceToken
         && typeof instanceTokenFromBody === 'string'
         && instanceTokenFromBody.length === instanceToken.length
