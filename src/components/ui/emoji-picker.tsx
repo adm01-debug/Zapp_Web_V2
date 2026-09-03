@@ -83,7 +83,7 @@ export function EmojiPicker({
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0 bg-popover border-border" align="start" sideOffset={8}>
+      <PopoverContent className="w-[min(340px,calc(100vw_-_1rem))] p-0 bg-popover border-border" align="start" sideOffset={8}>
         <div className="flex flex-col h-[360px]">
           {/* Search */}
           <div className="p-2 border-b border-border">

@@ -22,7 +22,7 @@
     },
     {
       "path": "src/components/admin/AIUsageUsersTab.tsx",
-      "sha256": "9810b0f6e1b099fabdfaba6703663ce029ce8e86d41c524a78dd7d4d98812401"
+      "sha256": "31eddffe5cdbb48ea8e242b085ad11ec58a4714db712e616e1bff6f1ce0c8131"
     },
     {
       "path": "src/components/admin/CrisisRoom.tsx",
@@ -177,10 +177,6 @@
       "sha256": "716b944ff04a84decf6e71b2449a8066212c28108e7ee15be50cfd71ff7cc3d8"
     },
     {
-      "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "3dcbb6792db5566af5fef90f9803a8ca69b85ae076adb65c2d82cbfd49217414"
-    },
-    {
       "path": "src/components/contacts/ContactMergePanel.tsx",
       "sha256": "63afcb55cf83fa098e52182cf80057e55236b898b5e018b0b037d99fcbb3cd45"
     },
@@ -270,7 +266,7 @@
     },
     {
       "path": "src/components/errors/ErrorBoundary.tsx",
-      "sha256": "26803099c940edc0727dc77bd2e98e3a70f2e4beb8d58a17e99cd9426f567710"
+      "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca"
     },
     {
       "path": "src/components/gamification/AchievementsStats.tsx",
@@ -330,15 +326,11 @@
     },
     {
       "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
-      "sha256": "b56e33d947da90c59b55a8c8cdfc05aaf861417cb2e3268884b99773c259df86"
+      "sha256": "5543da64064a3d9e5ad9068cca08c4878124038144074aff8df455a51d0a4d2e"
     },
     {
       "path": "src/components/inbox/chat/ChatInputArea.tsx",
       "sha256": "09d9c874ded588273889245a00a8617bac065ad8b85dc675e5b00f96ac1d3ea6"
-    },
-    {
-      "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "64792bd9c026e2970311a79322512b6dd965e0a976d85149f104852f822eb054"
     },
     {
       "path": "src/components/inbox/chat/MarkdownPreview.tsx",
@@ -366,7 +358,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "e1382d7cd60154f9773bf632ce34b625d1abb6d7163149bfb026608faec8acb3"
+      "sha256": "286ef03b7a60b961dd25b12b8332e589dc96941837055e0ebedfd60ebdca733f"
     },
     {
       "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
@@ -498,7 +490,7 @@
     },
     {
       "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "sha256": "adc9fa60229a894493e1ac11d4c2ffaa28c8f084ce336900e4ff7123e90ece20"
+      "sha256": "19bfda55a7ee8f521047f420ca029c782a740ff651a2644e6c40f89acdaa962f"
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
@@ -638,7 +630,7 @@
     },
     {
       "path": "src/components/queues/SLADashboard.tsx",
-      "sha256": "9f1185168ac1d299268bc0257b3f2d1bb09b2bb987e4307e098d76324fe1ca7a"
+      "sha256": "5ada01f1550e96ad9b554f74edbf2cb7a16fa0141fec2bc2be1419e336eea808"
     },
     {
       "path": "src/components/reports/AbandonmentRate.tsx",
@@ -718,7 +710,7 @@
     },
     {
       "path": "src/components/settings/MediaLibraryAdmin.tsx",
-      "sha256": "921b54143ac0a0ec7235378623666abf0f14f75454df20064c5ecba1b1618faf"
+      "sha256": "7d04b2d22e488297e0f8a3c933d7615c1390c110a32ecf6467f5289d42c25f3e"
     },
     {
       "path": "src/components/settings/SoundCustomizationPanel.tsx",
@@ -890,7 +882,7 @@
     },
     {
       "path": "src/hooks/__tests__/useAuth.test.tsx",
-      "sha256": "f79a44c28156496a4fb56ab7c0137a401bcd71b472734b735c56b53318c88b6c"
+      "sha256": "ce2a88e73a0d2f82566b0d1775d277c46b4fbbd5a7ecc8b54a8b9b146318722d"
     },
     {
       "path": "src/hooks/__tests__/useAutoCloseConversations.test.tsx",
@@ -1122,7 +1114,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "76381278593af7d50b83337714b0d0bb41e5c5b0a06d9521b3025df52fe5a95f"
+      "sha256": "92670a56282d725ec8870538dd7aaefd70f9c3fd0b69a9a5a145e8247227339b"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -1354,7 +1346,7 @@
     },
     {
       "path": "src/hooks/system/useOfflineCache.ts",
-      "sha256": "8e94403867a6ae773a09bf0507379f2dc4cdece2f89376b8de4653c3b546a6f0"
+      "sha256": "9ce40c53aa61c13fa649d1a54a861ce63ecb17d6220a2c57a9336ba08e199dd6"
     },
     {
       "path": "src/hooks/system/useRateLimitLogs.ts",
@@ -1474,7 +1466,7 @@
     },
     {
       "path": "src/services/realtime.service.ts",
-      "sha256": "497dbe6c7d8f7d5a2b622863c2b92fa92d2b75099d865a3ce51019ce326fae49"
+      "sha256": "b69d5809aba4267cfa0eb86bb586d99c762718fefdd4087cef0f80673ab71bb4"
     },
     {
       "path": "src/test/mocks/auth.tsx",
@@ -2863,20 +2855,6 @@
       "contextHash": "2f1a73f335b415f4d58fdc21afa13273daf36b6600e483357f2ca5e7555aae51"
     },
     {
-      "file": "src/components/contacts/ContactKanbanView.tsx",
-      "line": 47,
-      "column": 19,
-      "endLine": 47,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-render",
-      "messageId": null,
-      "message": "Error: Calling setState from useMemo may trigger an infinite loop Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState). <ROOT>/src/components/contacts/ContactKanbanView.tsx:47:19 45 | 46 | // Sync when parent contacts change > 47 | useMemo(() => { setLocalContacts(contacts); }, [contacts]); | ^^^^^^^^^^^^^^^^ Found setState() within useMemo() 48 | 49 | const columns = useMemo(() => { 50 | const grouped: Record<string, KanbanContact[]> = {};",
-      "spanHash": "5da640d86e3c16366aac1ac49d084fe20182fb360ea4094e9be990fe490215cd",
-      "lineHash": "49b8096f349a9aff56ffa17c30d9528580cd4b117e60757cce37d4435df5cf32",
-      "contextHash": "40c5b6a67960db062f5036f671e8e1712bf673108b8826712c08aa7e250831f0"
-    },
-    {
       "file": "src/components/contacts/ContactMergePanel.tsx",
       "line": 66,
       "column": 40,
@@ -3382,9 +3360,9 @@
     },
     {
       "file": "src/components/errors/ErrorBoundary.tsx",
-      "line": 152,
+      "line": 219,
       "column": 17,
-      "endLine": 152,
+      "endLine": 219,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -4023,20 +4001,6 @@
       "spanHash": "d19eaff4cf82736e1cd2ab3305fd6bc107ba03e3903d98e65f87a763be67b4ed",
       "lineHash": "9ce49198bf3206167ed6cb62a52c199e89ddfcf245bea95b0964f5cf62d51fad",
       "contextHash": "c62b127b60468f50d65e7fd591f07c671df44dc5ad399bee30b35c0466b3a704"
-    },
-    {
-      "file": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "line": 119,
-      "column": 6,
-      "endLine": 119,
-      "endColumn": 68,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'messageIds'. Either include it or remove the dependency array.",
-      "spanHash": "711b1b225f35fa7f9a032d73d62bcda9236ac4b1afebe50fcd6ea3a67dc49f32",
-      "lineHash": "d6daf36fa3b518b32056be335b2c75a0d346565041f020581d9455df9269f5fa",
-      "contextHash": "5fd195a80f3e7af3a020d9ac8f39b298fe9b6ee6c80cce50495b274303ac4423"
     },
     {
       "file": "src/components/inbox/chat/MarkdownPreview.tsx",
@@ -8114,84 +8078,84 @@
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 55,
+      "line": 54,
       "column": 120,
-      "endLine": 55,
+      "endLine": 54,
       "endColumn": 143,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:55:120 53 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 54 | </Select> > 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 58 | </Button>",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:54:120 52 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 53 | </Select> > 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 57 | </Button>",
       "spanHash": "c1c3d7e404062266dcf2b40e31c4a802de19c547587e3ca6148dc3fb1181286e",
       "lineHash": "b08377189ae5add5a36d5c3392230035e484c198b325c3afb73ce5fcffd92594",
       "contextHash": "610c3941cdcff3a09c5add99d7fd58dd51a1ab8ee98b8bf2baf399018de7aae7"
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 55,
+      "line": 54,
       "column": 21,
-      "endLine": 55,
+      "endLine": 54,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:55:21 53 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 54 | </Select> > 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 58 | </Button>",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:54:21 52 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 53 | </Select> > 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 57 | </Button>",
       "spanHash": "af71ec1dfa3d89b7d9a0765cdba6883ec0df4b983a053beac2e57d9981a514d1",
       "lineHash": "b08377189ae5add5a36d5c3392230035e484c198b325c3afb73ce5fcffd92594",
       "contextHash": "610c3941cdcff3a09c5add99d7fd58dd51a1ab8ee98b8bf2baf399018de7aae7"
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 55,
+      "line": 54,
       "column": 62,
-      "endLine": 55,
+      "endLine": 54,
       "endColumn": 80,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:55:62 53 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 54 | </Select> > 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 58 | </Button>",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:54:62 52 | <SelectContent><SelectItem value=\"all\">Todas ({lib.items.length})</SelectItem>{lib.existingCategories.map(cat => <SelectItem key={cat} value={cat}>{lib.categories[cat] || '📦'} {cat} ({lib.items.filter(i => i.category === cat).length})</SelectItem>)}</SelectContent> 53 | </Select> > 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> | ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 57 | </Button>",
       "spanHash": "55c09d7daf79821662f190ca3f4b1244f4527080ab68ae9da1a47cfd0d5e83b8",
       "lineHash": "b08377189ae5add5a36d5c3392230035e484c198b325c3afb73ce5fcffd92594",
       "contextHash": "610c3941cdcff3a09c5add99d7fd58dd51a1ab8ee98b8bf2baf399018de7aae7"
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 56,
+      "line": 55,
       "column": 132,
-      "endLine": 56,
+      "endLine": 55,
       "endColumn": 152,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:56:132 54 | </Select> 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> > 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> | ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 58 | </Button> 59 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>}",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:55:132 53 | </Select> 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> > 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> | ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} 57 | </Button> 58 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>}",
       "spanHash": "5a15914415c543530da72296916bd00b73d8a0ca6b82feea8b88dbf919b1b6f0",
       "lineHash": "c0e3dea4ed584bbbbb03fbd16b7897dcb7b3bdba9ac81466f0d9b3bc725a25d7",
       "contextHash": "031d68430de6191bbe6ce47a9800209eda28366f96dbf55754297c142aacb87f"
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 57,
+      "line": 56,
       "column": 12,
-      "endLine": 57,
+      "endLine": 56,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:57:12 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> > 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} | ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 58 | </Button> 59 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>} 60 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={lib.fetchItems}><RefreshCw className=\"w-3.5 h-3.5\" /> Atualizar</Button>",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:56:12 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> > 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} | ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 57 | </Button> 58 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>} 59 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={lib.fetchItems}><RefreshCw className=\"w-3.5 h-3.5\" /> Atualizar</Button>",
       "spanHash": "5a15914415c543530da72296916bd00b73d8a0ca6b82feea8b88dbf919b1b6f0",
       "lineHash": "5f08d880a1e6c51a8e3a9c6855b2af1c5e3c6a9fbfc07bed1e06db535768248c",
       "contextHash": "72130e79e8f58bdddce5af6cfd1834ca3382a5c52ab3a9c0501821d4d4f564bc"
     },
     {
       "file": "src/components/settings/MediaLibraryAdmin.tsx",
-      "line": 57,
+      "line": 56,
       "column": 86,
-      "endLine": 57,
+      "endLine": 56,
       "endColumn": 107,
       "severity": 2,
       "ruleId": "react-hooks/refs",
       "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:57:86 55 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> 56 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> > 57 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} | ^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 58 | </Button> 59 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>} 60 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={lib.fetchItems}><RefreshCw className=\"w-3.5 h-3.5\" /> Atualizar</Button>",
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/settings/MediaLibraryAdmin.tsx:56:86 54 | <input ref={upload.fileInputRef} type=\"file\" accept={upload.acceptTypes} className=\"hidden\" multiple onChange={upload.handleBulkUpload} /> 55 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => upload.fileInputRef.current?.click()} disabled={upload.bulkUploading}> > 56 | {upload.bulkUploading ? <><Loader2 className=\"w-3.5 h-3.5 animate-spin\" />{upload.uploadProgress}%</> : <><Upload className=\"w-3.5 h-3.5\" />Upload em massa</>} | ^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 57 | </Button> 58 | {type === 'audio_memes' && <Button variant=\"default\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={() => setShowGenDialog(true)}><Sparkles className=\"w-3.5 h-3.5\" /> Gerar com IA</Button>} 59 | <Button variant=\"outline\" size=\"sm\" className=\"h-9 gap-1.5\" onClick={lib.fetchItems}><RefreshCw className=\"w-3.5 h-3.5\" /> Atualizar</Button>",
       "spanHash": "e4202948890cc321c25778f33a63f31a36c3ef7a13a31ba03de603b3171cbcf0",
       "lineHash": "5f08d880a1e6c51a8e3a9c6855b2af1c5e3c6a9fbfc07bed1e06db535768248c",
       "contextHash": "72130e79e8f58bdddce5af6cfd1834ca3382a5c52ab3a9c0501821d4d4f564bc"
@@ -9766,9 +9730,9 @@
     },
     {
       "file": "src/hooks/__tests__/useAuth.test.tsx",
-      "line": 37,
+      "line": 47,
       "column": 34,
-      "endLine": 37,
+      "endLine": 47,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -9780,9 +9744,9 @@
     },
     {
       "file": "src/hooks/__tests__/useAuth.test.tsx",
-      "line": 46,
+      "line": 56,
       "column": 42,
-      "endLine": 46,
+      "endLine": 56,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -9794,9 +9758,9 @@
     },
     {
       "file": "src/hooks/__tests__/useAuth.test.tsx",
-      "line": 62,
+      "line": 72,
       "column": 25,
-      "endLine": 62,
+      "endLine": 72,
       "endColumn": 28,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -9808,9 +9772,9 @@
     },
     {
       "file": "src/hooks/__tests__/useAuth.test.tsx",
-      "line": 66,
+      "line": 76,
       "column": 31,
-      "endLine": 66,
+      "endLine": 76,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -12566,9 +12530,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 178,
+      "line": 191,
       "column": 17,
-      "endLine": 178,
+      "endLine": 191,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -14862,23 +14826,9 @@
     },
     {
       "file": "src/services/realtime.service.ts",
-      "line": 105,
-      "column": 70,
-      "endLine": 105,
-      "endColumn": 73,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "2c41313ba34d35fbf240145698629d82dc914253a02e78d8b16d0b3ab58183a7",
-      "contextHash": "74c7b9351e8d66c8baf412d0e5dcf2f07fd259b1cd1963afb67a4722da500ec5"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 116,
+      "line": 103,
       "column": 33,
-      "endLine": 116,
+      "endLine": 103,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -14891,30 +14841,16 @@
     {
       "file": "src/services/realtime.service.ts",
       "line": 92,
-      "column": 50,
+      "column": 70,
       "endLine": 92,
-      "endColumn": 53,
+      "endColumn": 73,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 92,
-      "column": 84,
-      "endLine": 92,
-      "endColumn": 87,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
+      "lineHash": "2c41313ba34d35fbf240145698629d82dc914253a02e78d8b16d0b3ab58183a7",
+      "contextHash": "74c7b9351e8d66c8baf412d0e5dcf2f07fd259b1cd1963afb67a4722da500ec5"
     },
     {
       "file": "src/test/mocks/auth.tsx",
