@@ -59,7 +59,7 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Selecione o atendente</label>
+            <p className="text-sm font-medium">Selecione o atendente</p>
             <ScrollArea className="h-48 border rounded-lg p-2">
               <div className="space-y-1">
                 {agents?.map((agent) => (
@@ -78,8 +78,8 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
             </ScrollArea>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Comentário (opcional)</label>
-            <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ex: Cliente precisa de suporte técnico" />
+            <label htmlFor="handoff-comment" className="text-sm font-medium">Comentário (opcional)</label>
+            <Input id="handoff-comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ex: Cliente precisa de suporte técnico" />
           </div>
         </div>
         <DialogFooter>

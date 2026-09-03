@@ -214,6 +214,7 @@ export function QueuesComparisonDashboard() {
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[300px]">
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/20">
@@ -280,6 +281,7 @@ export function QueuesComparisonDashboard() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               </ScrollArea>
             </CardContent>
           </Card>

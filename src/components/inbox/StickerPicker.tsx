@@ -40,7 +40,7 @@ export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
             </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent side="top">Figurinhas</TooltipContent>
-          <PopoverContent className={cn('w-[380px] p-0 bg-popover border-border', isDragOver && 'ring-2 ring-primary ring-offset-2')} align="end" side="top" sideOffset={8} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+          <PopoverContent className={cn('w-[min(380px,calc(100vw-1rem))] p-0 bg-popover border-border', isDragOver && 'ring-2 ring-primary ring-offset-2')} align="end" side="top" sideOffset={8} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
             {isDragOver && (
               <div className="absolute inset-0 z-50 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center">
                 <div className="text-center"><Upload className="w-8 h-8 text-primary mx-auto mb-2" /><p className="text-sm font-medium text-primary">Solte aqui para adicionar</p></div>

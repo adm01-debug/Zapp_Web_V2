@@ -196,8 +196,9 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-medium">Nome da Regra</Label>
+            <Label htmlFor="sla-name" className="text-xs font-medium">Nome da Regra</Label>
             <Input
+              id="sla-name"
               value={form.name}
               onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors(e2 => ({ ...e2, name: '' })); }}
               placeholder="Ex: SLA VIP — Empresa X"
@@ -215,8 +216,9 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-medium">1ª Resposta (min)</Label>
+              <Label htmlFor="sla-fr" className="text-xs font-medium">1ª Resposta (min)</Label>
               <Input
+                id="sla-fr"
                 type="number" min={1}
                 value={form.first_response_minutes}
                 onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))}
@@ -225,8 +227,9 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               {errors.fr && <p className="text-[11px] text-destructive mt-1">{errors.fr}</p>}
             </div>
             <div>
-              <Label className="text-xs font-medium">Resolução (min)</Label>
+              <Label htmlFor="sla-res" className="text-xs font-medium">Resolução (min)</Label>
               <Input
+                id="sla-res"
                 type="number" min={1}
                 value={form.resolution_minutes}
                 onChange={e => setForm(f => ({ ...f, resolution_minutes: parseInt(e.target.value) || 1 }))}
@@ -237,8 +240,9 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
           </div>
 
           <div>
-            <Label className="text-xs font-medium">Prioridade (maior = mais prioritário)</Label>
+            <Label htmlFor="sla-priority" className="text-xs font-medium">Prioridade (maior = mais prioritário)</Label>
             <Input
+              id="sla-priority"
               type="number" min={0} max={100}
               value={form.priority}
               onChange={e => setForm(f => ({ ...f, priority: parseInt(e.target.value) || 0 }))}
@@ -260,10 +264,11 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               <Label className="text-xs">Notificar ao atingir limite de aviso (70%)</Label>
             </div>
             <div>
-              <Label className="text-xs font-medium flex items-center gap-1">
+              <Label htmlFor="sla-notes" className="text-xs font-medium flex items-center gap-1">
                 <FileText className="w-3 h-3" /> Notas de Escalação
               </Label>
               <Textarea
+                id="sla-notes"
                 value={form.metadata?.escalation_notes || ''}
                 onChange={e => setForm(f => ({ ...f, metadata: { ...f.metadata, escalation_notes: e.target.value } }))}
                 placeholder="Ex: Escalar para gerente se violado..."

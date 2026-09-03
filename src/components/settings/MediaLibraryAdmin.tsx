@@ -76,6 +76,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
 
       <Card className="border-border/50">
         <ScrollArea className="h-[500px]">
+          <div className="overflow-x-auto">
           <div className="min-w-[600px]">
             <div className="sticky top-0 z-10 flex items-center gap-3 px-3 py-2 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
               <Checkbox checked={lib.filtered.length > 0 && lib.selected.size === lib.filtered.length} onCheckedChange={lib.toggleSelectAll} className="mr-1" />
@@ -123,6 +124,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
                 );
               })
             )}
+          </div>
           </div>
         </ScrollArea>
       </Card>
