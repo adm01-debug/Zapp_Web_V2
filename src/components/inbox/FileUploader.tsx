@@ -115,7 +115,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
       </Tooltip>
 
       <Dialog open={logic.isDialogOpen} onOpenChange={logic.handleClose}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />

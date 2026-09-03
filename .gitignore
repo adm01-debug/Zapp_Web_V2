@@ -17,6 +17,7 @@
 *.pem
 *.key
 *.crt
+!scripts/db-audit/certs/supabase-prod-ca-2021.crt
 *.p12
 secrets/
 .secrets
@@ -106,3 +107,7 @@ supabase/.temp/
 
 # Deno (tooling local de deno check nas edge functions; o repo usa bun.lock)
 deno.lock
+graphify-out/
+
+# Scratch local — nunca deve ser versionado (achado G-05, auditoria 2026-08-30)
+tmp/

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -54,5 +54,44 @@ describe('usePushNotifications', () => {
   it('has isSupported property', () => {
     const { result } = renderHook(() => usePushNotifications());
     expect(typeof result.current.isSupported).toBe('boolean');
+  });
+
+  it('does not wait for serviceWorker.ready while the feature is disabled', async () => {
+    const readyGetter = vi.fn();
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: Object.defineProperty({}, 'ready', { get: readyGetter }),
+    });
+    Object.defineProperty(window, 'PushManager', {
+      configurable: true,
+      value: class PushManager {},
+    });
+
+    const { result } = renderHook(() => usePushNotifications());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isEnabled).toBe(false);
+    expect(result.current.isSupported).toBe(false);
+    expect(readyGetter).not.toHaveBeenCalled();
+  });
+
+  it('fails disabled operations immediately without touching the Service Worker', async () => {
+    const readyGetter = vi.fn();
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: Object.defineProperty({}, 'ready', { get: readyGetter }),
+    });
+    const { result } = renderHook(() => usePushNotifications());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await expect(result.current.requestPermission()).resolves.toBe(false);
+      await expect(result.current.subscribe()).resolves.toBeNull();
+      await expect(result.current.unsubscribe()).resolves.toBe(false);
+      await expect(result.current.showNotification({ title: 'test', body: 'test' }))
+        .resolves.toBe(false);
+    });
+
+    expect(readyGetter).not.toHaveBeenCalled();
   });
 });

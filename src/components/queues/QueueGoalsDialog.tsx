@@ -62,7 +62,7 @@ export function QueueGoalsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-card border-border/30">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-lg bg-card border-border/30">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Target className="w-5 h-5" style={{ color: queueColor }} />

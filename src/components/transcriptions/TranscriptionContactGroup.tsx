@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, Calendar, Clock, FileText, Play, Volume2 } from 'lucide-react';
 import { format, formatDistanceToNow, startOfDay, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 interface TranscriptionRecord {
   id: string;
@@ -27,6 +28,12 @@ interface TranscriptionContactGroupProps {
   isExpanded: boolean;
   onToggle: () => void;
   index: number;
+}
+
+function TranscriptionAudio({ source, onEnded }: { source: string; onEnded: () => void }) {
+  const { url, isLoading, refresh } = useResolvedStorageUrl(source);
+  if (isLoading || !url) return null;
+  return <audio src={url} autoPlay onError={() => { void refresh(); }} onEnded={onEnded} className="hidden" />;
 }
 
 function groupByDate(items: TranscriptionRecord[]) {
@@ -102,7 +109,7 @@ export function TranscriptionContactGroup({ contact, transcriptions, isExpanded,
                           )}
                         </div>
                         <p className="text-sm text-foreground/90 italic leading-relaxed">"{item.transcription}"</p>
-                        {playingAudio === item.id && item.media_url && <audio src={item.media_url} autoPlay onEnded={() => setPlayingAudio(null)} className="hidden" />}
+                        {playingAudio === item.id && item.media_url && <TranscriptionAudio source={item.media_url} onEnded={() => setPlayingAudio(null)} />}
                       </motion.div>
                     ))}
                   </div>

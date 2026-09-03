@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { WhatsAppStatusMessage } from '@/hooks/integrations/useWhatsAppStatus';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Image as ImageIcon, Video, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -119,7 +119,8 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 gap-0 bg-background/95 border-border/20 overflow-hidden [&>button]:hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl w-[95vw] p-0 gap-0 bg-background/95 border-border/20 overflow-hidden [&>button]:hidden">
+        <DialogTitle className="sr-only">Visualizador de status</DialogTitle>
         <div className="flex gap-0.5 px-3 pt-3">
           {messages.map((_, i) => (
             <div key={i} className="flex-1 h-[3px] rounded-full overflow-hidden bg-white/20">

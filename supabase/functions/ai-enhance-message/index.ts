@@ -2,7 +2,7 @@ import {
   handleCors, errorResponse, jsonResponse,
   sanitizeString, isValidUUID, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth,
 } from "../_shared/validation.ts";
-import { AiEnhanceMessageSchema, parseBody } from "../_shared/schemas.ts";
+import { AiEnhanceMessageSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Limite de requisições excedido. Tente novamente em 1 minuto.", 429, req);
 
     const parsed = parseBody(AiEnhanceMessageSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { message, tone, contactName } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");

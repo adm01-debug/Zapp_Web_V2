@@ -34,7 +34,7 @@ export function ClientWalletView() {
                 <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
               </motion.div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Criar Regra de Carteira</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">

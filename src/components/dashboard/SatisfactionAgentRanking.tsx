@@ -26,7 +26,7 @@ const getCSATColor = (value: number) => {
 export function SatisfactionAgentRanking({ open, onOpenChange, agents }: SatisfactionAgentRankingProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Award className="h-5 w-5 text-warning" />

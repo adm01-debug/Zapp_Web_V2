@@ -19,6 +19,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
 
 export function MFASettings() {
@@ -145,7 +146,8 @@ export function MFASettings() {
 
       {/* Enroll Dialog */}
       <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
-        <DialogContent className="sm:max-w-md p-0">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0">
+          <DialogTitle className="sr-only">Configurar autenticação de dois fatores</DialogTitle>
           <MFAEnroll
             onSuccess={() => {
               setShowEnrollDialog(false);

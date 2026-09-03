@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
+import { logGmailOidcAuthShadow } from "../_shared/hmac-validation.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -113,6 +114,11 @@ serve(async (req) => {
     const SUPABASE_URL = requireEnv("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // [WEBHOOK_AUTH_SHADOW] Modo sombra: apenas loga presenca/aud/iss do token
+    // OIDC do Google Pub/Sub — NUNCA bloqueia. Verificacao completa (assinatura
+    // contra JWKS do Google, audience/issuer) fica para iteracao futura.
+    logGmailOidcAuthShadow(req.headers);
 
     const rawBody = await req.json();
     const parsed = PubSubSchema.safeParse(rawBody);
@@ -245,7 +251,7 @@ serve(async (req) => {
           references_header: getHeader(headers, "References") || null,
           internal_date: new Date(parseInt(msg.internalDate)).toISOString(),
           direction: isOutbound ? "outbound" : "inbound",
-        }, { onConflict: "gmail_message_id" });
+        }, { onConflict: "gmail_account_id,gmail_message_id" });
 
         // Link to contact if possible
         if (thread && !thread.contact_id) {

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Zap, Bug, ArrowRight, Building2 } from 'lucide-react';
 import { N8nIntegrationView } from './N8nIntegrationView';
+import { GmailIntegrationCard } from './GmailIntegrationCard'; // E45
 import { SentryIntegrationView } from './SentryIntegrationView';
 import { BitrixIntegrationView } from './BitrixIntegrationView';
 
@@ -99,6 +100,7 @@ export function IntegrationsHub() {
             </Card>
           </motion.div>
         ))}
+        <GmailIntegrationCard />
       </div>
     </div>
   );

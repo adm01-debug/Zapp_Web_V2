@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { SentimentAlertSchema, parseBody } from "../_shared/schemas.ts";
+import { SentimentAlertSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(SentimentAlertSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, contactName, sentimentScore, previousScore, analysisId, threshold, consecutiveRequired } = parsed.data;
 

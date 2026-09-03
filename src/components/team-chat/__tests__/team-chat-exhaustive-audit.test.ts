@@ -103,7 +103,8 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should render image with click-to-open', () => {
-      expect(panelSrc).toMatch(/onClick.*window\.open.*media_url/);
+      expect(panelSrc).toMatch(/onClick.*window\.open.*resolvedUrl/);
+      expect(panelSrc).toContain('useResolvedStorageUrl(source)');
     });
 
     it('should render video with controls', () => {

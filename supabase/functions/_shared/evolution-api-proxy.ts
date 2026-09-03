@@ -169,22 +169,78 @@ export async function proxyToEvolution(
   });
 }
 
-// Helper to generate signed URLs for private storage buckets
-// deno-lint-ignore no-explicit-any
-export async function resolvePrivateBucketUrl(supabase: any, url: string, buckets: string[] = ['whatsapp-media', 'audio-messages']): Promise<string> {
-  if (typeof url !== 'string') return url;
-  for (const bucket of buckets) {
-    if (url.includes(`/storage/v1/object/public/${bucket}/`)) {
-      const storagePath = url.split(`/storage/v1/object/public/${bucket}/`)[1];
-      if (storagePath) {
-        const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 300);
-        if (signedData?.signedUrl) {
-          console.log(`[Evolution API] Using signed URL for private bucket ${bucket}`);
-          return signedData.signedUrl;
-        }
-      }
-      break;
-    }
+const PRIVATE_STORAGE_URL_PREFIXES = [
+  '/storage/v1/object/sign/',
+  '/storage/v1/object/public/',
+  '/storage/v1/object/authenticated/',
+];
+
+function parsePrivateStorageObject(url: string, buckets: string[], expectedOrigin?: string): { bucket: string; path: string } | null {
+  try {
+    const unsafeRawSegment = url.split(/[?#]/, 1)[0].split('/').some((rawSegment) => {
+      const decodedSegment = decodeURIComponent(decodeURIComponent(rawSegment));
+      return decodedSegment === '.' || decodedSegment === '..' ||
+        decodedSegment.includes('\\') || decodedSegment.includes('\0');
+    });
+    if (unsafeRawSegment) return null;
+
+    const parsedUrl = new URL(url);
+    if (expectedOrigin && parsedUrl.origin !== new URL(expectedOrigin).origin) return null;
+    const prefix = PRIVATE_STORAGE_URL_PREFIXES.find((candidate) =>
+      parsedUrl.pathname.startsWith(candidate)
+    );
+    if (!prefix) return null;
+
+    const encodedLocation = parsedUrl.pathname.slice(prefix.length);
+    const separatorIndex = encodedLocation.indexOf('/');
+    if (separatorIndex <= 0 || separatorIndex === encodedLocation.length - 1) return null;
+
+    const bucket = decodeURIComponent(encodedLocation.slice(0, separatorIndex));
+    const path = decodeURIComponent(encodedLocation.slice(separatorIndex + 1));
+    const safePath = Boolean(path) && !path.includes('\\') && !path.includes('\0') &&
+      path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..');
+
+    if (!buckets.includes(bucket) || !safePath) return null;
+    return { bucket, path };
+  } catch {
+    return null;
   }
-  return url;
+}
+
+// Generate a short-lived delivery URL from either a stable private-object
+// locator or a legacy (possibly expired) signed URL.
+interface PrivateStorageSigner {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresIn: number
+      ) => PromiseLike<{
+        data?: { signedUrl?: string } | null;
+        error?: unknown;
+      }>;
+    };
+  };
+}
+
+export async function resolvePrivateBucketUrl(
+  supabase: PrivateStorageSigner,
+  url: string,
+  buckets: string[] = ['whatsapp-media', 'audio-messages'],
+  expectedOrigin?: string
+): Promise<string> {
+  if (typeof url !== 'string') return url;
+  const objectReference = parsePrivateStorageObject(url, buckets, expectedOrigin);
+  if (!objectReference) return url;
+
+  const { data: signedData, error } = await supabase.storage
+    .from(objectReference.bucket)
+    .createSignedUrl(objectReference.path, 300);
+
+  if (error) throw error;
+  if (!signedData?.signedUrl) {
+    throw new Error(`Unable to sign private object from bucket ${objectReference.bucket}`);
+  }
+
+  return signedData.signedUrl;
 }

@@ -3,7 +3,7 @@ import {
   handleCors, errorResponse, jsonResponse,
   sanitizeString, isValidUUID, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth,
 } from "../_shared/validation.ts";
-import { AiAutoTagSchema, parseBody } from "../_shared/schemas.ts";
+import { AiAutoTagSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const parsed = parseBody(AiAutoTagSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, messages: inputMessages } = parsed.data;
     const validContactId = contactId && isValidUUID(contactId) ? contactId : null;

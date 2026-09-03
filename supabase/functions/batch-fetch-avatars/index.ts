@@ -14,18 +14,23 @@ Deno.serve(async (req) => {
     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
     const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
 
+    // Backoff: nao reprocessar ocultos/sem-foto por 7 dias.
+    // NULL = nunca tentado (sempre entra); contatos novos entram automaticamente.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
     const { data: contacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('id, phone, name, avatar_url, whatsapp_connection_id')
+      .select('id, phone, name, avatar_url, avatar_fetch_attempted_at, whatsapp_connection_id')
       .not('whatsapp_connection_id', 'is', null)
       .not('phone', 'like', '%@lid')
       .or('avatar_url.is.null,avatar_url.like.%pps.whatsapp.net%')
+      .or(`avatar_fetch_attempted_at.is.null,avatar_fetch_attempted_at.lt.${sevenDaysAgo}`)
       .order('created_at', { ascending: false })
       .limit(500);
 
     if (contactsError) throw contactsError;
     if (!contacts?.length) {
-      return jsonResponse({ success: true, processed: 0, updated: 0, message: 'Todos os contatos já possuem avatar.' }, 200, req);
+      return jsonResponse({ success: true, processed: 0, updated: 0, message: 'Todos os contatos j\u00e1 possuem avatar.' }, 200, req);
     }
 
     log.info("Found contacts needing avatars", { count: contacts.length });
@@ -35,7 +40,7 @@ Deno.serve(async (req) => {
       .from('whatsapp_connections').select('id, instance_id').in('id', connectionIds).eq('status', 'connected');
 
     if (!connections?.length) {
-      return jsonResponse({ success: false, message: 'Nenhuma conexão WhatsApp ativa encontrada.' }, 200, req);
+      return jsonResponse({ success: false, message: 'Nenhuma conex\u00e3o WhatsApp ativa encontrada.' }, 200, req);
     }
 
     const connectionMap = new Map(connections.map(c => [c.id, c.instance_id]));
@@ -51,33 +56,43 @@ Deno.serve(async (req) => {
         const instanceId = connectionMap.get(contact.whatsapp_connection_id);
         if (!instanceId || !evolutionUrl || !evolutionKey) { skipped++; return; }
 
+        // Marca attempted_at em todos os tentados (sucesso E falha) para o
+        // backoff de 7d funcionar nos contatos ocultos/sem-foto.
+        const markAttempted = () =>
+          supabase.from('contacts')
+            .update({ avatar_fetch_attempted_at: new Date().toISOString() })
+            .eq('id', contact.id);
+
         try {
           const baseUrl = evolutionUrl.replace(/\/+$/, '');
           const resp = await evoFetch(baseUrl, evolutionKey,
             `/chat/fetchProfilePictureUrl/${instanceId}`, { number: contact.phone },
             (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
-          if (!resp.ok) { failed++; return; }
+          if (!resp.ok) { failed++; await markAttempted(); return; }
           const result = await resp.json();
           const picUrl = extractAvatarUrl(result);
-          if (!picUrl) { failed++; return; }
+          if (!picUrl) { failed++; await markAttempted(); return; }
 
           const imgResp = await fetch(picUrl, { signal: AbortSignal.timeout(8000) });
-          if (!imgResp.ok) { failed++; return; }
+          if (!imgResp.ok) { failed++; await markAttempted(); return; }
           const blob = await imgResp.arrayBuffer();
           const bytes = new Uint8Array(blob);
-          if (bytes.length < 100) { failed++; return; }
+          if (bytes.length < 100) { failed++; await markAttempted(); return; }
 
           const fileName = `${contact.phone}_${Date.now()}.jpg`;
           const storagePath = `avatars/${fileName}`;
           const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
             contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
           });
-          if (error) { failed++; return; }
+          if (error) { failed++; await markAttempted(); return; }
 
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
-          await supabase.from('contacts').update({ avatar_url: urlData.publicUrl }).eq('id', contact.id);
+          await supabase.from('contacts').update({
+            avatar_url: urlData.publicUrl,
+            avatar_fetch_attempted_at: new Date().toISOString(),
+          }).eq('id', contact.id);
           updated++;
-        } catch { failed++; }
+        } catch { failed++; await markAttempted(); }
       }));
 
       if (i + 5 < contacts.length) await new Promise(r => setTimeout(r, 1000));

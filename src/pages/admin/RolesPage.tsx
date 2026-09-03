@@ -123,7 +123,7 @@ export default function RolesPage() {
       </Tabs>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Atribuir Role</DialogTitle>
             <DialogDescription>Selecione um usuário e a role que deseja atribuir</DialogDescription>

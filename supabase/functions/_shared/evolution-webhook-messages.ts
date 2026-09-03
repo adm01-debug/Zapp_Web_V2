@@ -67,7 +67,18 @@ export async function handleOutgoingWhatsAppMessage(
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
 ) {
   const externalId = key.id;
-  const { data: existingMessage } = await supabase.from('messages').select('id').eq('external_id', externalId).maybeSingle();
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup). key.id do WhatsApp so eh garantidamente unico
+  // por chat/dispositivo, nao globalmente -- sem o escopo, uma colisao entre
+  // duas conexoes diferentes faria este pre-check achar a linha errada.
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
   if (existingMessage) return;
 
   const payloadKey = isRecord(data.key) ? data.key : null;
@@ -77,9 +88,6 @@ export async function handleOutgoingWhatsAppMessage(
     console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
     return;
   }
-
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
 
   const contact = await getContactByPhone(supabase, phone, connection.id);
   if (!contact) return;
@@ -110,11 +118,17 @@ export async function handleOutgoingWhatsAppMessage(
     return;
   }
 
-  const { error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel.
+  const { error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
     message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
     status: 'sent', created_at: messageCreatedAt, agent_id: contact.assigned_to || null,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true });
 
   if (msgError) { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
   await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contact.id);
@@ -195,8 +209,13 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const { data: existingMessage } = await supabase.from('messages')
-    .select('id, status, content').eq('external_id', key.id).maybeSingle();
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup) -- ver comentario equivalente em
+  // handleOutgoingWhatsAppMessage.
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id, status, content').eq('whatsapp_connection_id', connection.id).eq('sender', 'contact').eq('external_id', key.id)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
 
   if (existingMessage?.id) {
     const preservedStatus = existingMessage.status && existingMessage.status !== 'received' ? existingMessage.status : 'received';
@@ -209,17 +228,28 @@ export async function handleIncomingMessage(
     return;
   }
 
-  const { data: insertedMessage, error: msgError } = await supabase.from('messages').insert({
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel. .maybeSingle() retorna null (sem erro) se
+  // DO NOTHING silenciou uma duplicata.
+  const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, content,
     message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
     status: 'received', created_at: messageCreatedAt,
-  }).select('id').single();
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true }).select('id').maybeSingle();
 
   if (msgError) {
     console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });
     return;
   }
-  if (messageType === 'audio' && mediaUrl && insertedMessage) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (!insertedMessage) {
+    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
+    return;
+  }
+  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (messageType === 'text' && insertedMessage?.id && content) {
     void enrichIncomingLinkPreview(supabase, insertedMessage.id, content, supabaseUrl, supabaseServiceKey);
   }

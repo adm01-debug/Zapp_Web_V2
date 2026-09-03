@@ -219,7 +219,7 @@ export function IPWhitelistPanel() {
 
       {/* Add IP Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Adicionar à Whitelist</DialogTitle>
             <DialogDescription>

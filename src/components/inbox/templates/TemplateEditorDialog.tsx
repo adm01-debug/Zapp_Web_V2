@@ -104,7 +104,7 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{template ? 'Editar Template' : 'Novo Template'}</DialogTitle>
           <DialogDescription>Use variáveis dinâmicas para personalizar suas mensagens</DialogDescription>

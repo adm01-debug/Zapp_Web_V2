@@ -48,7 +48,7 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Keyboard className="h-5 w-5" />Speed Typing</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex items-center justify-between">
@@ -95,7 +95,7 @@ export function QuizGame({ isOpen, onClose, onComplete }: GameDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Brain className="h-5 w-5" />Quiz do Atendimento</DialogTitle></DialogHeader>
         {!showResult ? (
           <div className="space-y-4 py-4">
@@ -146,7 +146,7 @@ export function EmojiDecodeGame({ isOpen, onClose, onComplete }: GameDialogProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Target className="h-5 w-5" />Emoji Decode</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex items-center justify-between">

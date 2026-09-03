@@ -19,7 +19,7 @@ export interface KBArticle {
 export function useKnowledgeBaseSearch() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const handleSearch = useCallback((value: string) => {
     setQuery(value);

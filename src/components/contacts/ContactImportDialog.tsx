@@ -112,7 +112,7 @@ export function ContactImportDialog({ open, onOpenChange, onImportComplete }: Co
 
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) reset(); onOpenChange(v); }}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="w-5 h-5 text-primary" />Importar Contatos</DialogTitle>
           <DialogDescription>

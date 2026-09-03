@@ -28,6 +28,29 @@ mcp_exec_many  -> {postgres=X/postgres, service_role=X/postgres}
 **Se `EXECUTE` voltar para `authenticated` ou `anon`, qualquer usuario logado tem SQL
 arbitrario como superusuario.**
 
+No Supabase Cloud, `postgres` e uma pseudo-superuser com `rolsuper=false`. A
+topologia canônica observada no PostgreSQL 17.6 em 31/08/2026 e:
+
+| Role concedida | Membro | INHERIT da aresta | SET | ADMIN |
+|---|---|---:|---:|---:|
+| `service_role` | `authenticator` | false | true | false |
+| `service_role` | `postgres` | true | true | true |
+| `service_role` | `supabase_realtime_admin` | false | true | false |
+| `authenticator` | `postgres` | true | true | true |
+| `authenticator` | `supabase_storage_admin` | false | true | false |
+
+Assim, Storage alcanca `service_role` por `authenticator`; nao existe grant
+direto de `service_role` para `supabase_storage_admin`. O guard compara o
+conjunto completo de arestas e seus atributos, alem de testar o privilegio
+efetivo com `has_function_privilege`. Qualquer role custom, aresta adicional,
+aresta ausente ou mudanca de `INHERIT`/`SET`/`ADMIN` permanece fail-closed.
+Revogar memberships internos sem coordenacao com a plataforma pode interromper
+Auth, Realtime ou Storage e nao e uma correcao segura.
+
+O corpo compacto de `mcp_exec_many` recuperado do runtime e semanticamente
+identico ao fonte formatado da migration `20260829020000`. O guard aceita apenas
+os dois fingerprints revisados; um terceiro corpo continua bloqueado.
+
 ### Verificacao
 
 ```sql
@@ -65,45 +88,39 @@ Registre a data nesta tabela no mesmo PR da rotacao.
 
 ---
 
-## 3. `app.encryption_key` — NAO esta configurada
+## 3. Criptografia de tokens Gmail — VAULT (implementado em 27/08/2026)
 
-`encrypt_gmail_token` e `decrypt_gmail_token` dependem de
-`current_setting('app.encryption_key', true)`. Em 27/08/2026 essa GUC **nao existe em
-nenhum escopo**: nem na sessao, nem em `pg_db_role_setting` (0 de 11 entradas mencionam
-`app.*`).
+`encrypt_gmail_token` e `decrypt_gmail_token` foram refatoradas pela migration
+`20260827210000_gmail_crypto_vault` para usar o vault do Supabase em vez de uma GUC.
 
-### Por que isso era pior do que parecia
+**Estado atual:** chave `gmail_encryption_key` presente em `vault.decrypted_secrets`.
+As funcoes leem a chave via `SELECT decrypted_secret FROM vault.decrypted_secrets WHERE
+name='gmail_encryption_key'` e levantam `RAISE EXCEPTION` se estiver ausente.
 
-1. As duas funcoes tinham `SET search_path TO 'public'`, mas `pgcrypto` esta instalada no
-   schema `extensions`. `pgp_sym_encrypt` nunca era resolvivel — a funcao falhava **sempre**,
-   nao "quando faltasse a chave".
-2. `pgp_sym_encrypt` e `STRICT`. Com chave `NULL` ele retorna `NULL` **em silencio**.
-   Corrigir apenas o `search_path` faria o fluxo Gmail gravar
-   `access_token_encrypted = NULL` sem erro nenhum.
+A GUC `app.encryption_key` **nao e mais usada**. Nao reintroduza
+`current_setting('app.encryption_key')` — o mecanismo mudou.
 
-A migration `20260827130000` corrigiu os dois pontos: schema-qualificou
-`extensions.pgp_sym_encrypt` e adicionou `RAISE EXCEPTION` explicito quando a chave falta.
+### Por que o vault foi escolhido sobre a GUC
 
-### Antes de ligar o fluxo Gmail
-
-Configure a chave num escopo persistente e **nao** no codigo da aplicacao:
-
-```sql
--- escopo de banco, sobrevive a reconexao
-ALTER DATABASE postgres SET app.encryption_key = '<chave>';
-```
-
-Alternativa preferivel: guardar a chave no `vault` do Supabase e ler por
-`vault.decrypted_secrets` dentro das proprias funcoes, eliminando a GUC. Isso muda a
-assinatura do par de funcoes — decida antes de popular `gmail_accounts`, que hoje tem
-0 linhas.
+1. A GUC exigia `ALTER DATABASE postgres SET app.encryption_key = '<chave>'` — visivel
+   em `pg_db_role_setting` para qualquer `superuser`.
+2. O vault do Supabase usa `pgsodium` para cifrar o valor em repouso. So funcoes com
+   `SECURITY DEFINER` que chamam `vault.decrypted_secrets` conseguem ler o plaintext.
+3. Zero config extra: a chave e gerada em-banco e nunca transita pelo codigo da aplicacao.
 
 ### Verificacao
 
 ```sql
-SELECT current_setting('app.encryption_key', true) IS NOT NULL AS configurada;
-SELECT count(*) FROM pg_db_role_setting
-WHERE array_to_string(setconfig,',') ILIKE '%app.encryption_key%';
+-- Chave presente (sem expor o valor)
+SELECT id, name, created_at FROM vault.secrets WHERE name = 'gmail_encryption_key';
+
+-- Roundtrip criptografico funcionando
+SELECT public.decrypt_gmail_token(
+  public.encrypt_gmail_token('TOKEN_TESTE')
+) = 'TOKEN_TESTE' AS roundtrip_ok;
+
+-- NULL-safe: deve retornar NULL sem RAISE
+SELECT public.decrypt_gmail_token(NULL) IS NULL AS null_safe;
 ```
 
 ---
@@ -114,10 +131,7 @@ A protecao real e a policy RLS `"Admins full access to channels"`
 (`has_role(auth.uid(),'admin')`) mais a view `channel_connections_safe`, que omite a coluna.
 
 `mask_channel_credentials()` **nao** protege nada: o corpo e `RETURN NEW` e ela nao esta
-anexada a nenhuma trigger. Uma trigger `BEFORE` nao consegue mascarar coluna em `SELECT` —
-o proprio comentario no corpo admite isso. A etapa 67 do plano mandava anexa-la; isso foi
-deliberadamente **nao** executado, porque criaria aparencia de controle sem controle.
-Decidir entre implementar mascaramento real ou remover a funcao.
+anexada a nenhuma trigger. Decidir entre implementar mascaramento real ou remover a funcao.
 
 ---
 
@@ -126,24 +140,139 @@ Decidir entre implementar mascaramento real ou remover a funcao.
 28 policies usam `USING(true)` ou `WITH CHECK(true)`:
 
 - **4 em `service_role`** — irrelevante, `service_role` bypassa RLS de qualquer forma.
-- **24 SELECT para `authenticated`** em tabelas de catalogo e configuracao
-  (`queues`, `tags`, `products`, `stickers`, `permissions`, `business_hours`,
-  `sla_configurations`, `whatsapp_templates`, etc).
+- **24 SELECT para `authenticated`** em tabelas de catalogo e configuracao.
 
 O sistema e single-tenant, entao visibilidade de catalogo para qualquer usuario logado e
-decisao de design, nao bug. **Nao mude sem decisao de negocio.** Levantamento:
+decisao de design, nao bug. **Nao mude sem decisao de negocio.**
+
+---
+
+## 6. Teste de regressao (etapas 76 e 96)
+
+Os contratos de `mcp_exec` e `webhook_failures` sao verificados pelo DB Guard
+offline em todo PR/push relevante e pelo DB Live Guard na `main` e no cron.
+
+---
+
+## 7. `reassign_absent_agents` — proxy de presenca via `user_sessions`
+
+**Contexto:** a funcao tinha bug de runtime — referenciava `profiles.last_seen_at`
+(coluna inexistente). Corrigida pela migration `20260829020000`.
+
+### Logica atual
 
 ```sql
-SELECT tablename, policyname, cmd, array_to_string(roles,'+') AS roles
-FROM pg_policies
-WHERE schemaname='public' AND (qual = 'true' OR with_check = 'true')
-ORDER BY tablename, policyname;
+NOT EXISTS (
+  SELECT 1 FROM user_sessions us
+  WHERE us.user_id = p.user_id
+    AND us.is_active = true
+    AND us.last_activity_at > now() - (inactive_minutes || ' minutes')::interval
+)
+```
+
+### Risco: sessoes stale
+
+`user_sessions.is_active = true` pode persistir para sessoes que expiraram. Mitigacao
+recomendada: `pg_cron` diario que desativa `WHERE expires_at < now()`.
+
+### Guard de autorizacao
+
+A funcao exige perfil `admin` ou `supervisor` (migration `20260828000000`).
+
+---
+
+## 8. `gmail-incremental-sync` — autenticacao via vault
+
+O cron `*/5 * * * *` chama a edge `gmail-cron-sync` com header `x-cron-secret`.
+O secret e lido de `vault.decrypted_secrets WHERE name='gmail_cron_secret'` em runtime.
+
+**Nao existe secret hardcodado em `cron.job.command`.**
+
+### Dependencias de reset
+
+Em `supabase db reset`, recriar manualmente no vault:
+```sql
+SELECT vault.create_secret('<uuid-do-secret>', 'gmail_cron_secret');
+```
+E configurar o mesmo UUID no secret `CRON_SECRET` da edge function.
+
+### Verificacao
+
+```sql
+SELECT command ILIKE '%vault%' AS usa_vault FROM cron.job WHERE jobname='gmail-incremental-sync';
 ```
 
 ---
 
-## 6. Teste de regressao (etapa 76)
+## 9. `clear_login_attempts` — historico de bugs e versoes
 
-O ACL de `mcp_exec` ainda **nao** tem teste automatizado. O job `catalog-fresh` do
-`db-guard.yml` roda semanalmente com `DESTINO_URL` e e o lugar natural para adicionar a
-assercao. Query pronta na secao 1.
+A funcao passou por 2 reescritas:
+
+1. **Pre-auditoria:** sem guard. Qualquer usuario limpava tentativas de qualquer email.
+2. **20260829090000:** guard com `IS DISTINCT FROM coalesce(auth.jwt()->>'email', '')`. Valido.
+3. **20260829100000 (atual):** `NOT (auth.role()='authenticated' AND LOWER(auth.jwt()->>'email') = LOWER(p_email))`. Mais legivel.
+
+As versoes 090000 e 100000 sao funcionalmente equivalentes. 100000 e a canonicamente correta.
+
+### Verificacao
+
+```sql
+SELECT prosrc ILIKE '%auth.jwt()->>%email%' AND prosrc ILIKE '%RAISE EXCEPTION%' AS guard_ok
+FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+WHERE n.nspname='public' AND p.proname='clear_login_attempts';
+```
+
+---
+
+## 10. `email_messages` — ausencia de DELETE policy (intencional)
+
+**Decisao:** `email_messages` nao tem policy DELETE para `authenticated`.
+
+**Racional:**
+- Deletar uma `email_thread` elimina por CASCADE todas as mensagens. Thread delete = message delete.
+- Deletar mensagem individual sem deletar thread criaria inconsistencia (`message_count`, `snippet`).
+- O fluxo de email padrao arquiva/move threads, nunca deleta mensagens individuais.
+- Adicionando DELETE exigiria trigger de manutencao de `message_count` — complexidade desnecessaria.
+
+**Estado das policies:**
+
+| CMD | Roles | Observacao |
+|---|---|---|
+| SELECT | authenticated | Via FK com gmail_accounts |
+| UPDATE | authenticated | Marcar lida, estrelar |
+| DELETE | **ausente** | Intencional — ver acima |
+| INSERT | **ausente** | So via service_role/edges |
+
+---
+
+## 11. `webhook_failures` — dead-letter queue restrita
+
+A migration original `20260830153000` criou a policy `service_role_full` sem
+clausula `TO`. No PostgreSQL, a omissao equivale a `TO PUBLIC`; combinada aos
+default grants do schema, a policy permitia acesso efetivo de `anon` e
+`authenticated` a payloads truncados e mensagens de erro.
+
+A migration forward-only `20260831120000_harden_webhook_failures_acl`:
+
+- recria a unica policy como `FOR ALL TO service_role`;
+- remove ACLs residuais atribuidas diretamente a colunas, inclusive de roles
+  adicionais, usando `REVOKE ... CASCADE` para nao deixar grants derivados;
+- revoga todos os privilegios de `PUBLIC`, `anon` e `authenticated`;
+- reduz `service_role` a `SELECT`, `INSERT`, `UPDATE` e `DELETE`;
+- preserva RLS habilitado.
+
+O guard `check-webhook-failures-acl.sql` compara policy, owner, RLS, ACL de
+tabela, ausencia total de ACL de coluna e privilegios efetivos. A suite
+descartavel prova que a migration original e bloqueada, que o hardening remove
+grants legados por coluna e cobre grants indevidos, policy publica/adicional,
+RLS desligado, privilegios excessivos e tabela ausente.
+
+O DB Live Guard valida a identidade canônica antes da primeira consulta,
+rejeita qualquer `sslmode` configurado abaixo de `verify-full` e fixa
+`sslmode=verify-full` com a CA oficial `Supabase Root 2021 CA` versionada em
+`scripts/db-audit/certs/` na URL mascarada usada por todos os passos seguintes.
+A CA tem SHA-256 de arquivo
+`700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`,
+fingerprint X.509
+`80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`
+e expira em 26/04/2031. Qualquer CA divergente na URL e rejeitada.

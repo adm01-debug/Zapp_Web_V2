@@ -130,7 +130,7 @@ export function AdminView() {
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
           {editingUser && (
             <div className="space-y-4 pt-4">
@@ -198,7 +198,7 @@ export function AdminView() {
 
       {/* Add User Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader><DialogTitle>Adicionar Novo Usuário</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-1">
             <div className="space-y-2"><Label>Primeiro Nome *</Label><Input placeholder="Ex: João" value={newUser.name} onChange={(e) => setNewUser(p => ({ ...p, name: e.target.value }))} /></div>

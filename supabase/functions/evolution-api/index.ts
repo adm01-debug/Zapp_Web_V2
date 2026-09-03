@@ -156,7 +156,9 @@ serve(async (req) => {
       let audioSource = typeof rawAudio === 'string'
         ? rawAudio.trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
         : rawAudio;
-      if (typeof audioSource === 'string') audioSource = await resolvePrivateBucketUrl(supabase, audioSource);
+      if (typeof audioSource === 'string') {
+        audioSource = await resolvePrivateBucketUrl(supabase, audioSource, undefined, supabaseUrl);
+      }
       const audioPayload: Record<string, unknown> = { number: body.number, audio: audioSource };
       if (body.delay) audioPayload.delay = body.delay;
       if (body.quoted) audioPayload.quoted = body.quoted;
@@ -165,7 +167,14 @@ serve(async (req) => {
 
     if (action === 'send-sticker') {
       let finalStickerUrl = body.sticker || body.mediaUrl;
-      if (typeof finalStickerUrl === 'string') finalStickerUrl = await resolvePrivateBucketUrl(supabase, finalStickerUrl, ['whatsapp-media']);
+      if (typeof finalStickerUrl === 'string') {
+        finalStickerUrl = await resolvePrivateBucketUrl(
+          supabase,
+          finalStickerUrl,
+          ['whatsapp-media'],
+          supabaseUrl
+        );
+      }
       return await proxy(`/message/sendSticker/${instance}`, 'POST', { number: body.number, sticker: finalStickerUrl, quoted: body.quoted });
     }
 

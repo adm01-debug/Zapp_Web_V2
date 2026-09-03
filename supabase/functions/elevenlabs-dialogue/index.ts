@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
-import { ElevenLabsDialogueSchema, parseBody } from "../_shared/schemas.ts";
+import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ElevenLabsDialogueSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { script, languageCode } = parsed.data;
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");

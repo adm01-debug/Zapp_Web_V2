@@ -25,11 +25,13 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const onErrorRef = useRef(options?.onError);
   const ttsRef = useRef<TtsPlayback | null>(null);
   const phaseRef = useRef<VoiceAgentPhase>('idle');
-  const bootTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const autoRestartRef = useRef<ReturnType<typeof setTimeout>>();
-  const errorResetRef = useRef<ReturnType<typeof setTimeout>>();
+  const bootTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const autoRestartRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const errorResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
   const processingAbortRef = useRef<AbortController | null>(null);
+  const connectingRef = useRef(false);
+  const scribeRef = useRef<{ disconnect: () => void; isConnected: boolean } | null>(null);
 
   useEffect(() => {
     onActionRef.current = options?.onAction;
@@ -106,7 +108,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
 
       safeSetPhase('idle');
       autoRestartRef.current = setTimeout(() => {
-        if (mountedRef.current && scribe.isConnected) {
+        if (mountedRef.current && scribeRef.current?.isConnected) {
           safeSetPhase('listening');
         }
       }, AUTO_RESTART_DELAY_MS);
@@ -130,7 +132,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       errorResetRef.current = setTimeout(() => {
         if (!mountedRef.current) return;
         setError('');
-        safeSetPhase(scribe.isConnected ? 'listening' : 'idle');
+        safeSetPhase(scribeRef.current?.isConnected ? 'listening' : 'idle');
       }, ERROR_RESET_DELAY_MS);
     }
   }, [supabaseUrl, supabaseKey, safeSetPhase]);
@@ -151,9 +153,13 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       }
     },
   });
+  useEffect(() => {
+    scribeRef.current = scribe;
+  }, [scribe]);
 
   const startListening = useCallback(async () => {
-    if (phaseRef.current === 'booting' || phaseRef.current === 'processing') return;
+    if (connectingRef.current || scribe.isConnected || phaseRef.current === 'booting' || phaseRef.current === 'processing') return;
+    connectingRef.current = true;
 
     clearAllTimers();
     safeSetPhase('booting');
@@ -222,6 +228,8 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
           safeSetPhase('idle');
         }
       }, ERROR_RESET_DELAY_MS);
+    } finally {
+      connectingRef.current = false;
     }
   }, [scribe, clearAllTimers, safeSetPhase]);
 
@@ -255,13 +263,13 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   useEffect(() => {
     return () => {
       processingAbortRef.current?.abort();
-      scribe.disconnect();
+      scribeRef.current?.disconnect();
       ttsRef.current?.stop();
       clearTimeout(bootTimeoutRef.current);
       clearTimeout(autoRestartRef.current);
       clearTimeout(errorResetRef.current);
     };
-  }, [scribe]);
+  }, [clearAllTimers]);
 
   return {
     phase,

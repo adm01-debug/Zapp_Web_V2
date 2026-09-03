@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { ElevenLabsTTSSchema, parseBody } from "../_shared/schemas.ts";
+import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ElevenLabsTTSSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { text, voiceId, modelId, languageCode, applyTextNormalization } = parsed.data;
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");

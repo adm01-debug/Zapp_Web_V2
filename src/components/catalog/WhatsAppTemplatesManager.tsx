@@ -117,7 +117,7 @@ export function WhatsAppTemplatesManager() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTemplate.id ? 'Editar Template' : 'Novo Template'}</DialogTitle>
             <DialogDescription>Configure o template para uso com a WhatsApp Business API</DialogDescription>
@@ -176,7 +176,7 @@ export function WhatsAppTemplatesManager() {
       </Dialog>
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader><DialogTitle>Preview do Template</DialogTitle><DialogDescription>Visualize como o template será exibido</DialogDescription></DialogHeader>
           {previewTemplate && (
             <div className="space-y-4">

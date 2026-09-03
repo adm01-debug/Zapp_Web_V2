@@ -108,7 +108,7 @@ export function ScheduledReportsManager() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={mgr.isDialogOpen} onOpenChange={mgr.setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{mgr.editingReport.id ? 'Editar Relatório' : 'Novo Relatório Agendado'}</DialogTitle>
             <DialogDescription>Configure o envio automático de relatórios por email</DialogDescription>

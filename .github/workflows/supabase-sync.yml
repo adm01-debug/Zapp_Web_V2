@@ -8,32 +8,81 @@ name: Supabase Sync & Validate
 # Regerar o export a partir do banco oficial antes de reativar qualquer gatilho.
 on:
   workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: 'Digite o project-ref oficial para confirmar o import destrutivo.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-legacy-import
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
+      - name: Exigir ref confiavel da main
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Import legado so pode executar a partir de refs/heads/main."
+            exit 1
+          fi
+
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
 
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
+      - name: Confirmar identidade do banco oficial
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          if [ "$CONFIRM_PROJECT_REF" != "tnnnlkbymytvtqngbbqh" ]; then
+            echo "::error::Confirmacao incorreta; import cancelado."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            validarDestino,
+          } from './scripts/db-audit/database-identity.mjs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log('OK: destino oficial comprovado; import manual autorizado.');
+          NODE
+
       - name: Run Import and Validation
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          if [ -z "$DESTINO_URL" ]; then
-            echo "❌ DESTINO_URL secret is not set. Please configure it in GitHub Secrets."
-            exit 1
-          fi
           bash supabase-export/import.sh
 
       - name: Archive validation logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: validation-logs
           path: |

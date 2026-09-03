@@ -15,7 +15,7 @@ O ZAPP-WEB recebe eventos do WhatsApp através de webhooks configurados na Evolu
 ## 📥 ENDPOINT DE RECEBIMENTO
 
 ```
-POST https://[PROJECT_ID].supabase.co/functions/v1/evolution-sync
+POST https://[PROJECT_ID].supabase.co/functions/v1/evolution-webhook
 ```
 
 ### Headers Esperados
@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
 ### Mensagens não aparecem na UI
 
 1. Verificar se webhook está configurado na Evolution API
-2. Verificar logs da edge function `evolution-sync`
+2. Verificar logs da edge function `evolution-webhook`
 3. Verificar se `external_id` não está duplicado
 
 ### QR Code não aparece

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getClientIP } from "../_shared/validation.ts";
-import { DetectNewDeviceSchema, parseBody } from "../_shared/schemas.ts";
+import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     log.info("User authenticated", { userId: user.id });
 
     const parsed = parseBody(DetectNewDeviceSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { device_fingerprint, browser, os, device_name } = parsed.data;
     const clientIp = getClientIP(req);

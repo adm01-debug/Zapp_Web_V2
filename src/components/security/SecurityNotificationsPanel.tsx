@@ -11,6 +11,7 @@ import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNoti
 
 export function SecurityNotificationsPanel() {
   const {
+    isEnabled,
     isSupported,
     permission,
     isSubscribed,
@@ -43,6 +44,22 @@ export function SecurityNotificationsPanel() {
       setTestSending(false);
     }
   };
+
+  if (!isEnabled) {
+    return (
+      <Card className="border-muted bg-card">
+        <CardContent className="flex items-start gap-4 p-4">
+          <BellOff className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <div>
+            <h4 className="font-medium">Notificações Push Indisponíveis</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              Os alertas push estão temporariamente desativados nesta versão.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!isSupported) {
     return (

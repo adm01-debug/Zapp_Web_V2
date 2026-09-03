@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { AiConversationAnalysisSchema, parseBody } from "../_shared/schemas.ts";
+import { AiConversationAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
 
     const parsed = parseBody(AiConversationAnalysisSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, contactName, contactId } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");

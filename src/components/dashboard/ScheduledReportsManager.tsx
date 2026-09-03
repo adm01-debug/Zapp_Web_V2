@@ -235,7 +235,7 @@ export function ScheduledReportsManager() {
       </Card>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Novo Relatório Agendado</DialogTitle>
             <DialogDescription>Configure um relatório para envio automático</DialogDescription>

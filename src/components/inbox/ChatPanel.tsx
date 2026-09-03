@@ -113,8 +113,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const { signatureEnabled, agentName, toggleSignature, applySignature } = useMessageSignature();
   const { instanceName, whatsappConnectionId, initResolve, handleSendSticker, handleSendCustomEmoji, handleSendAudioMeme } = useChatMediaSending(conversation.contact.id, conversation.contact.phone);
 
-  const handleVoiceChange = (v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); };
-  const handleSpeedChange = (s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); };
+  const handleVoiceChange = useCallback((v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
+  const handleSpeedChange = useCallback((s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
   const { speak, stop, isLoading: ttsLoading, isPlaying: ttsPlaying, currentMessageId: ttsMessageId, voiceId, setVoiceId, speed, setSpeed } = useTextToSpeech({
     initialVoiceId: settings.tts_voice_id, initialSpeed: settings.tts_speed, onVoiceChange: handleVoiceChange, onSpeedChange: handleSpeedChange,
   });
@@ -173,11 +173,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       if (attachment) {
         const fileName = `scheduled_${Date.now()}_${attachment.name}`;
         const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, attachment);
-        if (!uploadError) {
-          const { data: signedData } = await supabase.storage.from('whatsapp-media').createSignedUrl(fileName, 3600);
-          mediaUrl = signedData?.signedUrl;
-          messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
-        }
+        if (uploadError) throw uploadError;
+        const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+        if (!locatorData?.publicUrl) throw new Error('Não foi possível criar a referência durável do anexo');
+        mediaUrl = locatorData.publicUrl;
+        messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
       }
       await scheduleMessage({ contactId: conversation.contact.id, content: message, scheduledAt, messageType, mediaUrl });
       closeDialog('scheduleDialog');

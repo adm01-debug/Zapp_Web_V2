@@ -32,7 +32,7 @@ interface AddNodeDialogProps {
 export function AddNodeDialog({ open, onOpenChange, onAdd }: AddNodeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-sm">
         <DialogHeader><DialogTitle>Adicionar Nó</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-2">
           {Object.entries(nodeTypes).map(([type, config]) => {
@@ -63,7 +63,7 @@ export function EditNodeDialog({ node, onClose, onSave, onChange }: EditNodeDial
 
   return (
     <Dialog open={!!node} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader><DialogTitle>Editar Nó: {node.data.label}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div>

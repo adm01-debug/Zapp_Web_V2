@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ClassifyEmojiSchema, parseBody } from "../_shared/schemas.ts";
+import { ClassifyEmojiSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const EMOJI_CATEGORIES = [
   'sorriso', 'riso', 'amor', 'triste', 'raiva',
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ClassifyEmojiSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { image_url, file_name } = parsed.data;
 
