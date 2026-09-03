@@ -174,15 +174,16 @@ if (!confirm(`Tem certeza que deseja forçar logout de ${userName}?`)) return;
 
 **Arquivos:** `src/pages/ViewRouter.tsx`, `src/pages/Index.tsx`
 
-**Evidência:** 55+ views do painel navegam via `currentView` string interno sem atualizar a URL. O botão "voltar" do browser não funciona entre views internas. Não é possível compartilhar link direto para uma view específica (ex: `/contacts`, `/reports`).
+**Evidência:** `useNavigationHistory` já sincroniza cada view com a URL via hash (`#inbox`, `#contacts`, etc.), incluindo suporte a Back/Forward do browser via listener `hashchange` e deep-link inicial via `window.location.hash`. `ViewRouter` usa `useAriaAnnouncer` para anunciar mudanças de view para leitores de tela. O que permanece em aberto é o padrão de URL: atualmente usa `#view` (hash fragment), que pode ser migrado para `?view=X` (query string) ou `/app/X` (path) para melhor indexação e UX de compartilhamento.
 
-**Impacto:**
-- Usuário pressiona Back → sai do app (vai para `/auth` ou página anterior)
-- Não é possível fazer bookmark de uma view específica
-- Acessibilidade: leitores de tela não anunciam mudança de "página" para o browser
-- Suporte já parcial via `useNavigationHistory` hook — mas é história interna, não URL
+**Impacto atual (já resolvido):**
+- ✅ Back/Forward do browser funciona entre views via hash
+- ✅ Deep-link direto funciona (ex: `/#contacts`, `/#reports`)
+- ✅ Leitores de tela recebem anúncio de mudança de módulo via `useAriaAnnouncer`
 
-**Correção sugerida:** Implementar `/?view=contacts` ou `/app/contacts` como padrão de URL para views internas, preservando deep-linking. **Status: ABERTO — requer decisão de arquitetura**
+**Pendência de arquitetura:** Migrar de `#view` para `?view=X` ou `/app/X` requer decisão sobre React Router vs. solução customizada e impacto em SSR/Vercel routing.
+
+**Correção sugerida:** Implementar `/?view=contacts` ou `/app/contacts` como padrão de URL canônica. **Status: PARCIALMENTE IMPLEMENTADO (hash) — migração para path/query requer decisão de arquitetura**
 
 ---
 
@@ -211,7 +212,7 @@ const playAlertSound = () => {
 
 ## PRÓXIMOS PASSOS (pendentes de aprovação)
 
-```
+```text
 Próximos passos
 1. [URL por view] Implementar deep-link via ?view=X ou /app/X — corrige Back button e bookmarking · src/pages/Index.tsx + ViewRouter.tsx
 2. [Wiring real das ações] Conectar onResolve/onTransfer/onArchive ao ConversationItem nos pais reais — a prop já existe, falta o pai passá-la · src/components/inbox/conversation-list/ConversationList.tsx
