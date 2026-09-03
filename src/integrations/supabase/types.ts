@@ -7509,6 +7509,7 @@ export type Database = {
       }
     }
     Functions: {
+      mark_first_response: { Args: { p_contact_id: string }; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       cleanup_expired_challenges: { Args: never; Returns: undefined }
       cleanup_link_preview_cache: {
