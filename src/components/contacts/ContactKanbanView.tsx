@@ -47,14 +47,21 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
   // podia sobrescrever o novo (ou reverter para um valor ja superado).
   const inFlightDrags = useRef<Map<string, number>>(new Map());
   const dragSeq = useRef(0);
-  // Ultimo contact_type confirmado pelo servidor, por contato. A prop 'contacts'
-  // so muda em refetch, entao depois de um drag que gravou ela ainda traz o tipo
-  // antigo — reverter para ela mostraria uma coluna ja superada.
-  const confirmedTypes = useRef<Map<string, KanbanContact['contact_type']>>(new Map());
+  // Ultimo contact_type confirmado, por contato. 'pending' marca uma confirmacao
+  // vinda do nosso proprio write: ate o refetch devolver esse valor, qualquer
+  // snapshot da prop foi capturado antes dele e nao pode sobrescreve-lo — senao
+  // um rollback posterior voltaria para uma coluna ja superada.
+  const confirmedTypes = useRef<Map<string, { type: KanbanContact['contact_type']; pending: boolean }>>(new Map());
 
   // Merge server data into local state, preserving contact_type for in-flight drags
   useEffect(() => {
-    for (const server of contacts) confirmedTypes.current.set(server.id, server.contact_type);
+    for (const server of contacts) {
+      const known = confirmedTypes.current.get(server.id);
+      // Snapshot mais antigo que a confirmacao local: ignora ate ele ecoar o
+      // valor que gravamos, momento em que o refetch alcancou o write.
+      if (known?.pending && known.type !== server.contact_type) continue;
+      confirmedTypes.current.set(server.id, { type: server.contact_type, pending: false });
+    }
     setLocalContacts(prev => {
       const prevMap = new Map(prev.map(c => [c.id, c]));
       return contacts.map(server => {
@@ -114,17 +121,16 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       // drag capturou de localContacts: se um drag anterior do mesmo contato
       // tambem falhou, o capturado ja e o otimista dele e restaura-lo mostraria
       // uma coluna que o banco nunca teve.
-      // '.has' e nao '??': contact_type null e valor legitimo e nao pode cair
-      // no capturado, que pode ser otimista.
-      const serverType = confirmedTypes.current.has(draggableId)
-        ? confirmedTypes.current.get(draggableId)!
-        : contact.contact_type;
+      // Checa a entrada e nao '??': contact_type null e valor legitimo e nao
+      // pode cair no capturado, que pode ser otimista.
+      const known = confirmedTypes.current.get(draggableId);
+      const serverType = known ? known.type : contact.contact_type;
       setLocalContacts(prev =>
         prev.map(c => c.id === draggableId ? { ...c, contact_type: serverType } : c)
       );
       toast.error('Erro ao mover contato');
     } else {
-      confirmedTypes.current.set(draggableId, newType);
+      confirmedTypes.current.set(draggableId, { type: newType, pending: true });
       const col = KANBAN_COLUMNS.find(c => c.type === newType);
       toast.success(`Movido para ${col?.label || newType}`);
     }
