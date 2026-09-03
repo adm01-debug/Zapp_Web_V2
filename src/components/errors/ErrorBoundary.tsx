@@ -23,6 +23,34 @@ interface State {
 // when a chunk is genuinely broken (not just stale).
 const CHUNK_RELOAD_KEY = 'zapp_chunk_reload_v1';
 
+// sessionStorage lanca quando o navegador bloqueia storage (private browsing,
+// cookies de terceiros, iframe sandbox). Sem estes wrappers, qualquer acesso
+// derruba o proprio boundary ou os botoes de recuperacao.
+function readReloadFlag(): { ok: boolean; value: string | null } {
+  try {
+    return { ok: true, value: sessionStorage.getItem(CHUNK_RELOAD_KEY) };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
+function writeReloadFlag(): boolean {
+  try {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearReloadFlag(): void {
+  try {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+  } catch {
+    // sem storage nao ha flag para limpar
+  }
+}
+
 function isChunkLoadError(error: Error): boolean {
   return (
     error.name === 'ChunkLoadError' ||
@@ -64,34 +92,33 @@ export class ErrorBoundary extends Component<Props, State> {
     // One reload per session to prevent infinite loops if the chunk is
     // genuinely missing (not just stale).
     if (isChunkLoadError(error)) {
-      try {
-        if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
-          log.warn('ChunkLoadError detected -- reloading for fresh deployment assets');
-          sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
-          window.location.reload();
-          return;
-        }
-        log.warn('ChunkLoadError after reload -- chunk genuinely missing, showing error UI');
-      } catch {
-        // sessionStorage unavailable (e.g., private browsing restrictions)
+      const flag = readReloadFlag();
+      if (!flag.ok) {
+        // Sem storage nao da para registrar que ja recarregamos; recarregar aqui
+        // viraria loop infinito quando o chunk esta mesmo faltando.
+        log.warn('ChunkLoadError com sessionStorage indisponivel -- mostrando UI de erro em vez de recarregar');
+      } else if (!flag.value && writeReloadFlag()) {
+        log.warn('ChunkLoadError detected -- reloading for fresh deployment assets');
         window.location.reload();
         return;
+      } else {
+        log.warn('ChunkLoadError after reload -- chunk genuinely missing, showing error UI');
       }
     }
   }
 
   private handleRetry = () => {
-    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    clearReloadFlag();
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   private handleGoHome = () => {
-    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    clearReloadFlag();
     window.location.href = '/';
   };
 
   private handleReload = () => {
-    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    clearReloadFlag();
     window.location.reload();
   };
 
@@ -120,7 +147,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Ops! Algo deu errado
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Encontramos um erro inesperado. Tente recarregar a pagina.
+                Encontramos um erro inesperado. Tente recarregar a página.
               </CardDescription>
             </CardHeader>
 
@@ -162,7 +189,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   className="flex-1"
                 >
                   <Home className="w-4 h-4 mr-2" />
-                  Voltar ao inicio
+                  Voltar ao início
                 </Button>
               </div>
 
@@ -170,7 +197,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReload}
                 className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
               >
-                Ou recarregue a pagina completamente
+                Ou recarregue a página completamente
               </button>
             </CardContent>
           </Card>

@@ -32,7 +32,7 @@
   ],
   "rewrites": [
     {
-      "source": "/(((?!assets/|version\\.json$).*)",
+      "source": "/((?!assets/|version\\.json$).*)",
       "destination": "/index.html"
     }
   ]
