@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -75,13 +74,12 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
       </AnimatePresence>
 
       <Card className="border-border/50">
-        <ScrollArea className="h-[500px]">
-          <div className="sticky top-0 z-10 flex items-center gap-3 px-3 py-2 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground overflow-x-hidden">
+        <div className="h-[500px] overflow-auto">
+          <div className="min-w-[600px]">
+          <div className="sticky top-0 z-10 flex items-center gap-3 px-3 py-2 border-b border-border bg-muted text-xs font-medium text-muted-foreground">
             <Checkbox checked={lib.filtered.length > 0 && lib.selected.size === lib.filtered.length} onCheckedChange={lib.toggleSelectAll} className="mr-1" />
             <span className="w-12">Preview</span><span className="flex-1">Nome</span><span className="w-[130px]">Categoria</span><span className="w-16 text-center">Usos</span><span className="w-12 text-center">⭐</span><span className="w-24 text-right">Ações</span>
           </div>
-          <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
             {lib.loading ? (
               <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-muted-foreground animate-spin" /></div>
             ) : lib.filtered.length === 0 ? (
@@ -125,8 +123,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
               })
             )}
           </div>
-          </div>
-        </ScrollArea>
+        </div>
       </Card>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Exibindo {lib.filtered.length} de {lib.items.length} itens</span>

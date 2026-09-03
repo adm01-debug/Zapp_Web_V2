@@ -4,10 +4,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 import { callGmailFunction } from '../gmail/gmailApi';
+import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 import type { GmailAccount, EmailThread, EmailMessage, EmailLabel } from '../gmail/gmailTypes';
+
+/**
+ * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
+ * hash stays as a migration fallback for links minted before the switch.
+ * Skip-to-content anchors (RESERVED_HASHES) are not navigation views.
+ */
+function getOAuthReturnView(): string {
+  const viewParam = new URLSearchParams(window.location.search).get('view');
+  if (viewParam) return viewParam;
+  const hash = window.location.hash.replace('#', '');
+  if (hash && !RESERVED_HASHES.has(hash)) return hash;
+  return 'integrations';
+}
 
 export function useGmail(accountId?: string) {
   const queryClient = useQueryClient();
@@ -35,12 +49,12 @@ export function useGmail(accountId?: string) {
 
   const connectGmail = useMutation({
     mutationFn: async () => {
-      const returnView = new URLSearchParams(window.location.search).get('view') || 'integrations';
+      const returnView = getOAuthReturnView();
       const state = createGmailOAuthState({ view: returnView, integrationView: 'gmail' });
       const result = await callGmailFunction('gmail-oauth', { action: 'get-auth-url', state });
-      return result.url as string;
+      return { url: result.url as string, returnView };
     },
-    onSuccess: (url) => { const rv = new URLSearchParams(window.location.search).get('view') || 'integrations'; storeGmailOAuthReturnContext(rv, 'gmail'); window.location.assign(url); },
+    onSuccess: ({ url, returnView }) => { storeGmailOAuthReturnContext(returnView, 'gmail'); window.location.assign(url); },
     onError: (error: Error) => { toast.error(`Erro ao conectar Gmail: ${error.message}`); },
   });
 
