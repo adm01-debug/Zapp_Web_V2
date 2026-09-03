@@ -59,7 +59,7 @@ export function CampaignsView() {
   };
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="flex flex-col w-full min-w-0 space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

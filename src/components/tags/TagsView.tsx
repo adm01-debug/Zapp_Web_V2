@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { TagsEmptyState } from '@/components/ui/contextual-empty-states';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
@@ -145,11 +146,11 @@ export function TagsView() {
   const totalContacts = tags.reduce((sum, t) => sum + (t.contact_count || 0), 0);
   const mostUsedTag = [...tags].sort((a, b) => (b.contact_count || 0) - (a.contact_count || 0))[0];
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const layoutScrollRef = useLayoutScroll();
 
   return (
-    <div ref={scrollRef} className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
-      <ScrollToTopButton scrollRef={scrollRef} />
+    <div className="space-y-6 relative bg-background w-full min-w-0">
+      <ScrollToTopButton scrollRef={layoutScrollRef} />
       <AuroraBorealis />
       <FloatingParticles />
       {/* Header with Breadcrumbs */}

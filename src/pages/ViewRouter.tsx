@@ -1,11 +1,12 @@
 import { Construction } from 'lucide-react';
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCurrentModule } from '@/hooks/system/useCurrentModule';
 import { useDocumentTitle } from '@/hooks/ui/useDocumentTitle';
 import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
 import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
+import { LayoutScrollProvider } from '@/contexts/LayoutScrollContext';
 
 import * as Views from './lazyViews';
 
@@ -29,11 +30,14 @@ interface WithHeaderProps {
 }
 
 function WithHeader({ viewId, children }: WithHeaderProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   if (FULL_SCREEN_VIEWS.has(viewId)) return <>{children}</>;
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0 overflow-auto p-6">{children}</div>
-    </div>
+    <LayoutScrollProvider value={scrollRef}>
+      <div className="flex flex-col h-full w-full min-w-0 flex-1">
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6">{children}</div>
+      </div>
+    </LayoutScrollProvider>
   );
 }
 
@@ -145,7 +149,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            className="h-full w-full"
+            className="h-full w-full min-w-0"
           >
             {content}
           </motion.div>

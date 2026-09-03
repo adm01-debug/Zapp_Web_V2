@@ -82,7 +82,7 @@ export function TranscriptionsHistoryView() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+      <div className="space-y-6 relative bg-background w-full min-w-0">
         <AuroraBorealis /><FloatingParticles />
         <div className="space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-64 w-full" /><Skeleton className="h-64 w-full" /></div>
       </div>
@@ -90,7 +90,7 @@ export function TranscriptionsHistoryView() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis /><FloatingParticles />
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between relative z-10">
         <div>

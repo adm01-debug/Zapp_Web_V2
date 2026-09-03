@@ -111,7 +111,7 @@ export function MetaCAPIView() {
   }));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader
         title="Meta Conversions API"
         subtitle="Rastreie eventos de conversão para otimização de anúncios"

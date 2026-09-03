@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -65,10 +66,11 @@ export function ContactsView() {
 
   const contactPhones = useMemo(() => filteredContacts.map(c => c.phone), [filteredContacts]);
   const { lookup: getCRMData } = useExternalContact360Batch(contactPhones);
+  const layoutScrollRef = useLayoutScroll();
 
   return (
-    <div ref={scrollContainerRef} className="p-6 space-y-5 overflow-y-auto h-full relative bg-background">
-      <ScrollToTopButton scrollRef={scrollContainerRef} />
+    <div className="space-y-5 relative bg-background w-full min-w-0">
+      <ScrollToTopButton scrollRef={layoutScrollRef} />
       <AuroraBorealis />
       <FloatingParticles />
 

@@ -70,7 +70,7 @@ export function SicoobBridgeDashboard() {
   const uniqueSingulars = new Set(mappings.map(m => m.sicoob_singular_id)).size;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-primary/10">

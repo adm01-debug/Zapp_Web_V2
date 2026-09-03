@@ -94,7 +94,7 @@ export function ChatbotFlowsView() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 space-y-6">
+    <div className="h-full flex flex-col space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -49,7 +49,7 @@ export function CRM360ExplorerView() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 h-full flex flex-col">
+    <div className="space-y-4 h-full flex flex-col w-full min-w-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" />CRM 360° Explorer</h1>

@@ -60,7 +60,7 @@ export function GroupsView() {
   };
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="space-y-4 sm:space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
       <PageHeader

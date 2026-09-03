@@ -118,7 +118,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
         aria-label="Conteúdo principal"
         tabIndex={-1}
         className={cn(
-          'flex flex-1 overflow-hidden relative min-w-0 min-h-0 h-full max-h-full focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px]',
+          'flex flex-1 items-stretch overflow-hidden relative min-w-0 min-h-0 h-full max-h-full focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px]',
           isMobile && 'pt-12 pb-[56px]'
         )}
       >

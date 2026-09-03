@@ -64,7 +64,7 @@ export function PageTemplate({
       initial="initial"
       animate="animate"
       className={cn(
-        'flex flex-col w-full h-full overflow-hidden',
+        'flex flex-col w-full min-w-0 h-full overflow-hidden',
         !fullBleed && 'max-w-full'
       )}
     >
