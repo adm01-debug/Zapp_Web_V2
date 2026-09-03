@@ -132,6 +132,10 @@ export default defineConfig(({ mode }) => {
             if (id.includes("mapbox-gl")) {
               return "vendor-maps";
             }
+            // VoIP / SIP stack (heavy, loaded only on call views)
+            if (id.includes("sip.js") || id.includes("sip/") || id.includes("sipjs")) {
+              return "vendor-voip";
+            }
           },
         },
       },

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { Message, InteractiveButton } from '@/types/chat';
 import { motion } from 'framer-motion';
@@ -8,8 +8,11 @@ import { DocumentPreview, VideoPreview } from './MediaPreview';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from './InteractiveMessage';
 import { DeletedMessagePlaceholder } from './DeletedMessagePlaceholder';
 import { QuotedMessage } from './ReplyQuote';
-import { LocationMessageDisplay } from './LocationMessage';
 import { AudioMessagePlayer } from './AudioMessagePlayer';
+
+const LocationMessageDisplay = lazy(() =>
+  import('./LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
+);
 import { TextToSpeechButton } from './TextToSpeechButton';
 import {
   Check, CheckCheck, Clock, X, Reply, Forward, Copy,
@@ -85,7 +88,7 @@ export function MessageBubble({
             {message.type === 'video' && message.mediaUrl && <div className="mb-2"><VideoPreview url={message.mediaUrl} caption={message.content} isSent={isSent} /></div>}
             {message.type === 'audio' && message.mediaUrl && <div className="mb-2"><AudioMessagePlayer audioUrl={message.mediaUrl} messageId={message.id} isSent={isSent} existingTranscription={message.transcription} transcriptionStatus={message.transcriptionStatus} /></div>}
             {message.type === 'document' && message.mediaUrl && <div className="mb-2"><DocumentPreview url={message.mediaUrl} fileName="document" isSent={isSent} /></div>}
-            {message.type === 'location' && message.location && <LocationMessageDisplay location={message.location} isSent={isSent} />}
+            {message.type === 'location' && message.location && <Suspense fallback={null}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
             {message.content && message.type === 'text' && <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>}
             <div className={cn('flex items-center gap-1 mt-1 text-[10px]', isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
               <span>{formatMessageTime(message.timestamp)}</span>

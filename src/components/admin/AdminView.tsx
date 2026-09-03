@@ -147,21 +147,21 @@ export function AdminView() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Nome</Label><Input value={editingUser.name} onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Apelido</Label><Input placeholder="Ex: Joãozinho" value={editingUser.nickname || ''} onChange={(e) => setEditingUser({ ...editingUser, nickname: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_nome">Nome</Label><Input id="edit_nome" value={editingUser.name} onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_apelido">Apelido</Label><Input id="edit_apelido" placeholder="Ex: Joãozinho" value={editingUser.nickname || ''} onChange={(e) => setEditingUser({ ...editingUser, nickname: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Cargo</Label><Input placeholder="Ex: Atendente Senior" value={editingUser.job_title || ''} onChange={(e) => setEditingUser({ ...editingUser, job_title: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Departamento</Label><Input placeholder="Ex: Vendas" value={editingUser.department || ''} onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_cargo">Cargo</Label><Input id="edit_cargo" placeholder="Ex: Atendente Senior" value={editingUser.job_title || ''} onChange={(e) => setEditingUser({ ...editingUser, job_title: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_dept">Departamento</Label><Input id="edit_dept" placeholder="Ex: Vendas" value={editingUser.department || ''} onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })} /></div>
               </div>
               <div className="space-y-2">
-                <Label>Assinatura</Label>
-                <Input placeholder="Ex: João Silva - Suporte Técnico" value={editingUser.signature || ''} onChange={(e) => setEditingUser({ ...editingUser, signature: e.target.value })} />
+                <Label htmlFor="edit_assinatura">Assinatura</Label>
+                <Input id="edit_assinatura" placeholder="Ex: João Silva - Suporte Técnico" value={editingUser.signature || ''} onChange={(e) => setEditingUser({ ...editingUser, signature: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Texto usado como assinatura em mensagens</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Telefone</Label><Input value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Limite de Chats</Label><Input type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: parseInt(e.target.value) })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_tel">Telefone</Label><Input id="edit_tel" value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: parseInt(e.target.value) })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -180,10 +180,10 @@ export function AdminView() {
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Permitir Download</Label>
+                  <Label htmlFor="edit_download" className="text-sm font-medium">Permitir Download</Label>
                   <p className="text-xs text-muted-foreground">Habilita download de arquivos e imagens para este usuário</p>
                 </div>
-                <Switch checked={editingUser.can_download ?? false} onCheckedChange={(checked) => setEditingUser({ ...editingUser, can_download: checked })} />
+                <Switch id="edit_download" checked={editingUser.can_download ?? false} onCheckedChange={(checked) => setEditingUser({ ...editingUser, can_download: checked })} />
               </div>
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
@@ -201,12 +201,12 @@ export function AdminView() {
         <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader><DialogTitle>Adicionar Novo Usuário</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-1">
-            <div className="space-y-2"><Label>Primeiro Nome *</Label><Input placeholder="Ex: João" value={newUser.name} onChange={(e) => setNewUser(p => ({ ...p, name: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Apelido</Label><Input placeholder="Ex: Joãozinho" value={newUser.nickname} onChange={(e) => setNewUser(p => ({ ...p, nickname: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Cargo</Label><Input placeholder="Ex: Atendente Senior" value={newUser.jobTitle} onChange={(e) => setNewUser(p => ({ ...p, jobTitle: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="add_nome">Primeiro Nome *</Label><Input id="add_nome" placeholder="Ex: João" value={newUser.name} onChange={(e) => setNewUser(p => ({ ...p, name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="add_apelido">Apelido</Label><Input id="add_apelido" placeholder="Ex: Joãozinho" value={newUser.nickname} onChange={(e) => setNewUser(p => ({ ...p, nickname: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="add_cargo">Cargo</Label><Input id="add_cargo" placeholder="Ex: Atendente Senior" value={newUser.jobTitle} onChange={(e) => setNewUser(p => ({ ...p, jobTitle: e.target.value }))} /></div>
             <div className="space-y-2">
-              <Label>Assinatura</Label>
-              <Input placeholder="Ex: João Silva - Suporte" value={newUser.signature} onChange={(e) => setNewUser(p => ({ ...p, signature: e.target.value }))} />
+              <Label htmlFor="add_assinatura">Assinatura</Label>
+              <Input id="add_assinatura" placeholder="Ex: João Silva - Suporte" value={newUser.signature} onChange={(e) => setNewUser(p => ({ ...p, signature: e.target.value }))} />
               <p className="text-xs text-muted-foreground">Texto usado como assinatura em mensagens e e-mails.</p>
             </div>
             <div className="space-y-2">
@@ -214,8 +214,8 @@ export function AdminView() {
               <Input type="file" accept="image/*" onChange={(e) => setNewUserAvatarFile(e.target.files?.[0] || null)} />
               {newUserAvatarFile && <p className="text-xs text-muted-foreground">{newUserAvatarFile.name}</p>}
             </div>
-            <div className="space-y-2"><Label>Email *</Label><Input type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Senha *</Label><Input type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>

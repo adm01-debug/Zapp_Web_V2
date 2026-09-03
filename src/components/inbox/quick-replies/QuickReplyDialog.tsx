@@ -36,7 +36,7 @@ export function QuickReplyDialog({ open, editingTemplate, isSubmitting, onClose,
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{editingTemplate ? 'Editar Resposta Rápida' : 'Nova Resposta Rápida'}</DialogTitle>
           <DialogDescription>Crie respostas prontas para agilizar seu atendimento</DialogDescription>

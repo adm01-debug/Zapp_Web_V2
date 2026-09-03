@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { motion, AnimatePresence } from '@/components/ui/motion';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,9 @@ import { DocumentPreview, VideoPreview } from '../MediaPreview';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
-import { LocationMessageDisplay } from '../LocationMessage';
+const LocationMessageDisplay = lazy(() =>
+  import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
+);
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatMessageTime, MessageStatusIcon } from './messageUtils';
@@ -192,7 +194,7 @@ export const MessageBubble = memo(function MessageBubble({
                   </div>
                 )}
 
-                {message.type === 'location' && message.location && <LocationMessageDisplay location={message.location} isSent={isSent} />}
+                {message.type === 'location' && message.location && <Suspense fallback={null}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
 
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">

@@ -185,7 +185,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{editingRule ? 'Editar Regra de SLA' : 'Nova Regra de SLA'}</DialogTitle>
           <DialogDescription>
@@ -258,10 +258,11 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             </p>
             <div className="flex items-center gap-3">
               <Switch
+                id="sla-notify"
                 checked={form.metadata?.notify_on_warning ?? false}
                 onCheckedChange={v => setForm(f => ({ ...f, metadata: { ...f.metadata, notify_on_warning: v } }))}
               />
-              <Label className="text-xs">Notificar ao atingir limite de aviso (70%)</Label>
+              <Label htmlFor="sla-notify" className="text-xs">Notificar ao atingir limite de aviso (70%)</Label>
             </div>
             <div>
               <Label htmlFor="sla-notes" className="text-xs font-medium flex items-center gap-1">
