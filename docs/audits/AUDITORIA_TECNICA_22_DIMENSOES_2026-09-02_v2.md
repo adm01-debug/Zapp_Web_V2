@@ -434,3 +434,8 @@ Persistem: Sentry, transações em edges, testes RLS/E2E, zodResolver, husky, ru
 
 ---
 *Gerado em 2026-09-02 ~21:45 UTC. Próxima re-auditoria sugerida após fechamento das ondas Quick Wins + Sprint 1.*
+
+**Addendum (mesma sessão, ~22:00 UTC) — P1, P2 e P3 executados:**
+- **P1 (drift):** migrations retroativas `20260902210334` e `20260902220001` criadas com corpo byte-idêntico ao ledger (md5 verificado) + `schema-manifest.json` re-sincronizado (2 índices novos + hash corrigido de `contacts.idx_contacts_email_trgm`, que o sync #159 capturou em estado transitório). `check-migration-drift.mjs` executado contra o ledger real de produção: exit 0, 341=341.
+- **P2 (CVE react-router):** `react-router-dom` 6.30.1→6.30.6 / `@remix-run/router` 1.23.0→1.23.4 no `bun.lock` (dentro do range `^6.30.1`); GHSA-2w69-qvjg-hvjx eliminado do `bun audit` (38→37 HIGH; restantes = cadeia browserslist, build-time). Validado: install frozen, build, 2.519 testes, ratchets.
+- **P3 (firewall VPS):** firewall `zapp-evolution-go-rxj2` (id 355246, TCP 22/80/443) criado e **ativado** na VPS `srv1481814` via API Hostinger (2× action `ct_firewall` = success; `firewall_group_id` preenchido). URL pública da Evolution GO validada antes e depois (Traefik 443 respondendo ~1s). Porta 32783 e demais deixam de aceitar tráfego externo.
