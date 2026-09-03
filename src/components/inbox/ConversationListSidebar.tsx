@@ -15,6 +15,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { MessageSquare, RefreshCw, Search as SearchIcon, MessageSquarePlus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const SKELETON_WIDTHS = [
+  { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
+  { name: 91, msg: 80 }, { name: 65, msg: 48 }, { name: 78, msg: 65 },
+  { name: 88, msg: 73 },
+];
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ConversationListSidebarProps {
   inbox: any;
@@ -120,7 +126,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
               )}
             </div>
           )}
-          <div className={cn("shrink-0", isMobile ? "w-[130px]" : "w-[130px]")}>
+          <div className="shrink-0 w-[130px]">
             <ContactTypeFilter value={inboxFilters.selectedContactType} onChange={inboxFilters.handleContactTypeChange} conversations={inbox.cachedConversations} />
           </div>
         </div>
@@ -155,7 +161,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
       >
         {inbox.loading ? (
           <div className="p-3 space-y-1">
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            {SKELETON_WIDTHS.map(({ name, msg }, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -8 }}
@@ -166,10 +172,10 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 <Skeleton className="w-12 h-12 rounded-full shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-3.5 rounded-md" style={{ width: `${60 + Math.random() * 40}%` }} />
+                    <Skeleton className="h-3.5 rounded-md" style={{ width: `${name}%` }} />
                     <Skeleton className="h-3 w-10 rounded-md" />
                   </div>
-                  <Skeleton className="h-3 rounded-md" style={{ width: `${40 + Math.random() * 30}%` }} />
+                  <Skeleton className="h-3 rounded-md" style={{ width: `${msg}%` }} />
                 </div>
               </motion.div>
             ))}
