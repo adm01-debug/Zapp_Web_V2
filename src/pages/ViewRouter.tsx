@@ -1,10 +1,11 @@
 import { Construction } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCurrentModule } from '@/hooks/system/useCurrentModule';
 import { useDocumentTitle } from '@/hooks/ui/useDocumentTitle';
 import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
+import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 
 import * as Views from './lazyViews';
 
@@ -154,7 +155,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   );
 }
 
-/** Per-view error boundary with automatic retry */
+/** Per-view error boundary with automatic retry and Suspense for lazy loading */
 function ErrorBoundaryView({ viewId, children }: { viewId: string; children: React.ReactNode }) {
   const mod = useCurrentModule(viewId);
   return (
@@ -163,7 +164,9 @@ function ErrorBoundaryView({ viewId, children }: { viewId: string; children: Rea
       moduleName={mod.label}
       maxAutoRetries={2}
     >
-      {children}
+      <Suspense fallback={<ViewLoadingFallback noPadding />}>
+        {children}
+      </Suspense>
     </ErrorBoundaryWithRetry>
   );
 }

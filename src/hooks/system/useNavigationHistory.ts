@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 export interface NavigationEntry {
   viewId: string;
@@ -8,6 +8,7 @@ export interface NavigationEntry {
 interface NavigationState {
   entries: NavigationEntry[];
   index: number;
+  previousView: string | null;
 }
 
 interface NavigationHistoryReturn {
@@ -47,32 +48,49 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   const [state, setState] = useState<NavigationState>(() => ({
     entries: [{ viewId: getInitialView(), timestamp: Date.now() }],
     index: 0,
+    previousView: null,
   }));
-
-  const previousViewRef = useRef<string | null>(null);
-  const isInternalNav = useRef(false);
 
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
-  // Sync hash → state on browser back/forward
+  // Sync hash → state on browser back/forward.
+  // pushState/replaceState do NOT fire hashchange, so no isInternalNav guard is needed here.
+  const onHashChange = useCallback(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (RESERVED_HASHES.has(hash)) return;
+    // Empty hash (e.g. Back to "/") resolves to defaultView to keep state consistent
+    const viewId = hash || defaultView;
+
+    setState(prev => {
+      const currentViewId = prev.entries[prev.index]?.viewId;
+      if (viewId === currentViewId) return prev;
+
+      // Browser went back → find matching entry before current index
+      for (let i = prev.index - 1; i >= 0; i--) {
+        if (prev.entries[i].viewId === viewId) {
+          return { ...prev, index: i, previousView: currentViewId ?? null };
+        }
+      }
+      // Browser went forward → find matching entry after current index
+      for (let i = prev.index + 1; i < prev.entries.length; i++) {
+        if (prev.entries[i].viewId === viewId) {
+          return { ...prev, index: i, previousView: currentViewId ?? null };
+        }
+      }
+      // Address bar / deep link → push new entry
+      const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
+      const truncated = prev.entries.slice(0, prev.index + 1);
+      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
+      return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId ?? null };
+    });
+  }, [defaultView]);
+
   useEffect(() => {
-    const onHashChange = () => {
-      if (isInternalNav.current) {
-        isInternalNav.current = false;
-        return;
-      }
-      const hash = window.location.hash.replace('#', '');
-      if (hash && hash !== currentView && !RESERVED_HASHES.has(hash)) {
-        navigateTo(hash);
-      }
-    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView]);
+  }, [onHashChange]);
 
   const syncHash = useCallback((viewId: string, replace = false) => {
-    isInternalNav.current = true;
     const url = new URL(window.location.href);
     url.hash = viewId;
     if (replace) {
@@ -87,8 +105,6 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       const currentViewId = prev.entries[prev.index]?.viewId;
       if (viewId === currentViewId) return prev;
 
-      previousViewRef.current = currentViewId ?? null;
-
       // Truncate forward history
       const truncated = prev.entries.slice(0, prev.index + 1);
       const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
@@ -97,29 +113,27 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
       syncHash(viewId);
 
-      return { entries: newEntries, index: newIndex };
+      return { entries: newEntries, index: newIndex, previousView: currentViewId ?? null };
     });
   }, [syncHash]);
 
   const goBack = useCallback(() => {
     setState(prev => {
       if (prev.index <= 0) return prev;
-      previousViewRef.current = prev.entries[prev.index]?.viewId ?? null;
       const newIndex = prev.index - 1;
       const targetView = prev.entries[newIndex]?.viewId;
       if (targetView) syncHash(targetView, true); // Use replace when going back through internal stack
-      return { ...prev, index: newIndex };
+      return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
   }, [syncHash]);
 
   const goForward = useCallback(() => {
     setState(prev => {
       if (prev.index >= prev.entries.length - 1) return prev;
-      previousViewRef.current = prev.entries[prev.index]?.viewId ?? null;
       const newIndex = prev.index + 1;
       const targetView = prev.entries[newIndex]?.viewId;
       if (targetView) syncHash(targetView, true); // Use replace when going forward through internal stack
-      return { ...prev, index: newIndex };
+      return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
   }, [syncHash]);
 
@@ -147,7 +161,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     canGoBack,
     canGoForward,
     breadcrumbTrail,
-    previousView: previousViewRef.current,
+    previousView: state.previousView,
     history: state.entries,
   };
 }
