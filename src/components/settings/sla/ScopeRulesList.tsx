@@ -125,6 +125,7 @@ export function ScopeRulesList({ scope }: ScopeRulesListProps) {
       )}
 
       <SLARuleFormDialog
+        key={showDialog ? `open-${editingRule?.id ?? 'new'}` : 'closed'}
         open={showDialog}
         onOpenChange={setShowDialog}
         scope={scope}

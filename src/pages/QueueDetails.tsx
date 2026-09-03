@@ -17,9 +17,9 @@ import { QueueCharts } from '@/components/queues/QueueCharts';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
 
-interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number; created_at: string; }
+interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number | null; created_at: string; }
 interface QueueMember { id: string; profile_id: string; profile: { name: string; avatar_url: string | null; is_active: boolean }; }
-interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string; avatar_url: string | null }; messages_count: number; last_message_at: string | null; }
+interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string | null; avatar_url: string | null } | null; messages_count: number; last_message_at: string | null; }
 interface QueueMetrics { totalContacts: number; assignedContacts: number; waitingContacts: number; avgResponseTime: string; resolvedToday: number; }
 
 export default function QueueDetails() {

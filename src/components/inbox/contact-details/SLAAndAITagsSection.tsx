@@ -22,7 +22,7 @@ const confidenceColor = (c: number) => {
 };
 
 export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProps) {
-  const hasSLA = slaInfo && (slaInfo.first_response_breached !== null || slaInfo.resolution_breached !== null);
+  const hasSLA = slaInfo && slaInfo.first_response_breached !== null;
   const hasAITags = aiTags.length > 0;
 
   if (!hasSLA && !hasAITags) return null;
@@ -50,27 +50,6 @@ export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProp
             ) : (
               <Badge variant="outline" className="text-[10px] bg-warning/15 text-warning border-warning/30">
                 Pendente
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center justify-between text-xs bg-muted/20 rounded-lg p-2.5 hover:bg-muted/30 transition-colors">
-            <div className="flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-primary" />
-              <span className="text-muted-foreground">Resolução</span>
-            </div>
-            {slaInfo.resolution_breached ? (
-              <Badge variant="outline" className="text-[10px] bg-destructive/15 text-destructive border-destructive/30 animate-pulse">
-                <AlertTriangle className="w-3 h-3 mr-1" />
-                Violado
-              </Badge>
-            ) : slaInfo.resolved_at ? (
-              <Badge variant="outline" className="text-[10px] bg-success/15 text-success border-success/30">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Resolvido
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-[10px] bg-warning/15 text-warning border-warning/30">
-                Em andamento
               </Badge>
             )}
           </div>
