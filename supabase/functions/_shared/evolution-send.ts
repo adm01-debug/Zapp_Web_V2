@@ -19,6 +19,12 @@ export function evoFetch(
   let contentType = "application/json";
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      return new Response(JSON.stringify({ error: go.invalid }), {
+        status: 400, headers: { "Content-Type": "application/json" },
+      });
+    }
     if (go) {
       path = go.path;
       method = go.method;
