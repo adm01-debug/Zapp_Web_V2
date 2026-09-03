@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -12,6 +12,7 @@ export interface AccordionSectionConfig {
 export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'info', label: 'Informações', icon: Info, customIndex: 0 },
   { value: 'whatsapp-status', label: 'Status WhatsApp', icon: Smartphone, customIndex: 1 },
+  { value: 'evolution-profile', label: 'Perfil WhatsApp', icon: BadgeCheck, customIndex: 1.5 },
   { value: 'sla-ai', label: 'SLA & Inteligência', icon: Brain, customIndex: 1 },
   { value: 'crm-360', label: 'CRM 360°', icon: Sparkles, customIndex: 2 },
   { value: 'intelligence', label: 'Inteligência Comercial', icon: Brain, customIndex: 2.5 },
@@ -29,14 +30,22 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'media', label: 'Mídia Compartilhada', icon: Image, customIndex: 8 },
 ];
 
-export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'custom-fields', 'notes', 'history', 'stats'];
+export const DEFAULT_OPEN_SECTIONS = ['info', 'crm-360', 'intelligence', 'tags', 'assignment', 'notes', 'history', 'stats', 'media'];
 
 const ACCORDION_STORAGE_KEY = 'contact-details-accordion-state';
 
 export function getStoredAccordionState(): string[] {
   try {
     const stored = localStorage.getItem(ACCORDION_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) {
+        // localStorage antigo pode ter secao que nao existe mais (ex.: custom-fields)
+        const known = new Set(CONTACT_DETAIL_SECTIONS.map((s) => s.value));
+        const valid = parsed.filter((v) => known.has(v));
+        if (valid.length > 0) return valid;
+      }
+    }
   } catch { /* storage unavailable */ }
   return DEFAULT_OPEN_SECTIONS;
 }

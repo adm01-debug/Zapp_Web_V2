@@ -373,7 +373,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 119,
+      "line": 126,
       "column": 28,
       "severity": "error",
       "code": "TS2322",
@@ -382,7 +382,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 124,
+      "line": 131,
       "column": 30,
       "severity": "error",
       "code": "TS2322",
@@ -391,7 +391,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 68,
+      "line": 75,
       "column": 28,
       "severity": "error",
       "code": "TS2322",
@@ -400,7 +400,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 73,
+      "line": 80,
       "column": 30,
       "severity": "error",
       "code": "TS2322",
@@ -625,7 +625,7 @@
     },
     {
       "file": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "line": 49,
+      "line": 63,
       "column": 19,
       "severity": "error",
       "code": "TS2345",
@@ -940,7 +940,7 @@
     },
     {
       "file": "src/hooks/communication/useAudioMemes.ts",
-      "line": 43,
+      "line": 44,
       "column": 7,
       "severity": "error",
       "code": "TS2322",
@@ -949,7 +949,7 @@
     },
     {
       "file": "src/hooks/communication/useAudioMemes.ts",
-      "line": 45,
+      "line": 46,
       "column": 7,
       "severity": "error",
       "code": "TS2322",
@@ -1030,15 +1030,6 @@
     },
     {
       "file": "src/hooks/system/useDiagnosticsData.ts",
-      "line": 107,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '(string | null)[]' is not assignable to parameter of type 'readonly string[]'. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "447a17c08c82f9c6f52aafc78fce5e0cd8a462606bc9874ca993227bb32bb00a"
-    },
-    {
-      "file": "src/hooks/system/useDiagnosticsData.ts",
       "line": 112,
       "column": 29,
       "severity": "error",
@@ -1047,62 +1038,8 @@
       "contextHash": "4efdb5b0dcf02007d1c32ad41982e4883c6d07232fd314f4174a2af2276e6e08"
     },
     {
-      "file": "src/hooks/system/useRateLimitLogs.ts",
-      "line": 40,
-      "column": 22,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }[]' is not assignable to parameter of type 'RateLimitLog[]'. Type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }' is not assignable to type 'RateLimitLog'. Types of property 'blocked' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "5af4c54f804e1fc992f5d955e7302d07d0ab191f44ed7b19050460f5769cd68a"
-    },
-    {
-      "file": "src/hooks/system/useRateLimitLogs.ts",
-      "line": 39,
-      "column": 15,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }[]' is not assignable to parameter of type 'SetStateAction<RateLimitLog[]>'. Type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }[]' is not assignable to type 'RateLimitLog[]'. Type '{ blocked: boolean | null; city: string | null; country: string | null; created_at: string; endpoint: string; id: string; ip_address: string; request_count: number; user_agent: string | null; user_id: string | null; }' is not assignable to type 'RateLimitLog'. Types of property 'blocked' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "69c89636f5bfc8412ce619918357975113acec80e54d95fb8241caf1000d6a01"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamConversations.ts",
-      "line": 76,
-      "column": 13,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ type: \"group\" | \"direct\"; name: string | null; avatar_url: string | null | undefined; members: TeamMember[]; last_message: TeamMessage | null; unread_count: number; created_at: string; created_by: string | null; id: string; updated_at: string; }[]' is not assignable to type 'TeamConversation[]'. Type '{ type: \"direct\" | \"group\"; name: string | null; avatar_url: string | null | undefined; members: TeamMember[]; last_message: TeamMessage | null; unread_count: number; created_at: string; created_by: string | null; id: string; updated_at: string; }' is not assignable to type 'TeamConversation'. Types of property 'avatar_url' are incompatible. Type 'string | null | undefined' is not assignable to type 'string | null'. Type 'undefined' is not assignable to type 'string | null'.",
-      "contextHash": "bfc0944caddc9de3d6f5e24b5d703fcefa339d35172a2ee7ad3b8b57a186962e"
-    },
-    {
-      "file": "src/lib/audit.ts",
-      "line": 31,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "fe968c1de007596fcc548dc83069a13accd91e94e279f4d349e7f459509882a4"
-    },
-    {
-      "file": "src/lib/audit.ts",
-      "line": 32,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "727a0ed13dad490952f72a0dc1cfed65569c20609eddcf4748ebd61a490ffb1c"
-    },
-    {
-      "file": "src/lib/loginAttempts.ts",
-      "line": 40,
-      "column": 5,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "7224ae88216969120f034153806436252ba1d6170ba5be63c32d8f180998de3e"
-    },
-    {
       "file": "src/main.tsx",
-      "line": 12,
+      "line": 13,
       "column": 27,
       "severity": "error",
       "code": "TS2774",
@@ -1117,78 +1054,6 @@
       "code": "TS2322",
       "message": "Type '{ name: string; avatar_url: string | null; } | null' is not assignable to type 'null'. Type '{ name: string; avatar_url: string | null; }' is not assignable to type 'null'.",
       "contextHash": "10f584adfa7853cc09642d28aa91768a34879780c606ad27e6bb20c6f088f7e6"
-    },
-    {
-      "file": "src/pages/QueueDetails.tsx",
-      "line": 44,
-      "column": 16,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ color: string; created_at: string; description: string | null; id: string; is_active: boolean | null; max_wait_time_minutes: number | null; name: string; priority: number | null; updated_at: string; }' is not assignable to parameter of type 'SetStateAction<QueueDetailsData | null>'. Type '{ color: string; created_at: string; description: string | null; id: string; is_active: boolean | null; max_wait_time_minutes: number | null; name: string; priority: number | null; updated_at: string; }' is not assignable to type 'QueueDetailsData'. Types of property 'max_wait_time_minutes' are incompatible. Type 'number | null' is not assignable to type 'number'. Type 'null' is not assignable to type 'number'.",
-      "contextHash": "f89898ee95a2c56be9dc32d493eb65151c008d96fd57002edb3bc8b2c886a20f"
-    },
-    {
-      "file": "src/pages/QueueDetails.tsx",
-      "line": 60,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ messages_count: number; last_message_at: string | null; assigned_agent: null; id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; }[]' is not assignable to parameter of type 'SetStateAction<QueueContact[]>'. Type '{ messages_count: number; last_message_at: string | null; assigned_agent: null; id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; }[]' is not assignable to type 'QueueContact[]'. Type '{ messages_count: number; last_message_at: string | null; assigned_agent: null; id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; }' is not assignable to type 'QueueContact'. Types of property 'assigned_agent' are incompatible. Type 'null' is not assignable to type '{ name: string; avatar_url: string | null; } | undefined'.",
-      "contextHash": "7e0d7f90402d34fd6cf0bd2c20302bf34a0716c06dc3ae5a066c10efd7cc7fda"
-    },
-    {
-      "file": "src/services/contact.service.ts",
-      "line": 23,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "53f0fd97a42e3a193bb0b603a0632fdb8d107830bbdc0db5c4bcb63245a3212d"
-    },
-    {
-      "file": "src/services/contact.service.ts",
-      "line": 24,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "fd7c33bfeb96e6f6df408f04f5df9049e85a3cd822666687f7d72041f7b0ff48"
-    },
-    {
-      "file": "src/services/contact.service.ts",
-      "line": 25,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "1c30ba8e157af39d329556ce936b55032598142da2436dcb7e2741b869258195"
-    },
-    {
-      "file": "src/services/contact.service.ts",
-      "line": 26,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "cda83177b41608f9a0bb960f97ff2ede6455a0591b5bfaca51526cdf7b1377a0"
-    },
-    {
-      "file": "src/services/contact.service.ts",
-      "line": 27,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "7a282e01583f91ebc2a1cabfeb8e11bf32f6702ecf07460bc33bc43ea96b1f98"
-    },
-    {
-      "file": "src/services/role.service.ts",
-      "line": 26,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'catch' does not exist on type 'PromiseLike<AppRole[]>'.",
-      "contextHash": "0d9339f5bfd05664d0f2ce0dbedcfac70c1a4db2688976ce6fc62d9578a0f3ad"
     },
     {
       "file": "vite.config.ts",

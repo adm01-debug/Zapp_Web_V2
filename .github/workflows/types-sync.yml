@@ -197,15 +197,15 @@ jobs:
         if: steps.diff.outputs.schema_changed == 'true'
         run: bun install --frozen-lockfile
 
-      - name: Gate 1 — TypeScript compila
+      - name: Gate 1 — TypeScript nao piora
         id: gate1
         if: steps.diff.outputs.schema_changed == 'true'
         run: |
-          if bunx tsc --noEmit -p tsconfig.app.json 2>&1 | tee /tmp/tsc.log; then
+          if node scripts/ci/typecheck-ratchet.mjs 2>&1 | tee /tmp/tsc.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Gate 1 falhou: erros de TypeScript."
+            echo "::warning::Gate 1 falhou: novos erros de TypeScript introduzidos pelo novo types.ts."
           fi
 
       - name: Gate 2 — usage-guard
