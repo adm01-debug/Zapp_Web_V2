@@ -106,6 +106,7 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Desfazer aprimoramento"
                   className="w-8 h-8 text-warning hover:text-warning hover:bg-warning/10"
                   onClick={handleUndo}
                 >
@@ -127,6 +128,7 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Aprimorar mensagem com IA"
                   disabled={isLoading || !inputValue.trim()}
                   className={cn(
                     "w-8 h-8 text-muted-foreground hover:text-primary hover:bg-primary/10",

@@ -36,29 +36,29 @@ export function QuickReplyDialog({ open, editingTemplate, isSubmitting, onClose,
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{editingTemplate ? 'Editar Resposta Rápida' : 'Nova Resposta Rápida'}</DialogTitle>
           <DialogDescription>Crie respostas prontas para agilizar seu atendimento</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Título</label>
-            <Input placeholder="Ex: Saudação inicial" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+            <label htmlFor="qr-title" className="text-sm font-medium">Título</label>
+            <Input id="qr-title" placeholder="Ex: Saudação inicial" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Conteúdo</label>
-            <Textarea placeholder="Digite o conteúdo da resposta..." value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} rows={4} />
+            <label htmlFor="qr-content" className="text-sm font-medium">Conteúdo</label>
+            <Textarea id="qr-content" placeholder="Digite o conteúdo da resposta..." value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} rows={4} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Atalho</label>
-              <Input placeholder="/saudacao" value={formData.shortcut} onChange={(e) => setFormData({ ...formData, shortcut: e.target.value })} />
+              <label htmlFor="qr-shortcut" className="text-sm font-medium">Atalho</label>
+              <Input id="qr-shortcut" placeholder="/saudacao" value={formData.shortcut} onChange={(e) => setFormData({ ...formData, shortcut: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Categoria</label>
+              <label htmlFor="qr-category" className="text-sm font-medium">Categoria</label>
               <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="qr-category"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="geral">Geral</SelectItem>
                   <SelectItem value="saudacao">Saudação</SelectItem>

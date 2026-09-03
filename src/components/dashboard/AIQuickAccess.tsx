@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import {
   Brain,
   Sparkles,
@@ -89,12 +90,7 @@ export function AIQuickAccess() {
     if (feature.route) {
       navigate(feature.route);
     } else if (feature.action === 'inbox') {
-      navigate('/');
-      // Small delay to ensure navigation, then switch to inbox tab
-      setTimeout(() => {
-        const inboxTab = document.querySelector('[data-tab="inbox"]') as HTMLElement;
-        if (inboxTab) inboxTab.click();
-      }, 100);
+      navigateToView('inbox');
     }
   };
 

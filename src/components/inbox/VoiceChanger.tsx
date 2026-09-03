@@ -129,7 +129,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[300px] p-0 bg-popover border-border"
+        className="w-[min(300px,calc(100vw_-_1rem))] p-0 bg-popover border-border"
         align="end"
         side="top"
         sideOffset={8}
