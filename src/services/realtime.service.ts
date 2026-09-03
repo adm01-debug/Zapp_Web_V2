@@ -89,19 +89,6 @@ export class RealtimeService {
     return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages);
   }
 
-  static subscribeToMessages(onInsert: (payload: any) => void, onUpdate: (payload: any) => void, channelName = 'messages-realtime') {
-    return supabase.channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, onInsert)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, onUpdate)
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          log.debug(`Realtime subscribed: ${channelName}`);
-        } else if (status === 'CHANNEL_ERROR') {
-          log.error(`Realtime channel error: ${channelName}`);
-        }
-      });
-  }
-
   static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {
     return supabase
       .channel(`chat-reactions:${messageId}`)
