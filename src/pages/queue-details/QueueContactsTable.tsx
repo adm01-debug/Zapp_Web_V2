@@ -14,7 +14,7 @@ interface QueueContact {
   avatar_url: string | null;
   assigned_to: string | null;
   created_at: string;
-  assigned_agent?: { name: string; avatar_url: string | null };
+  assigned_agent?: { name: string | null; avatar_url: string | null } | null;
   messages_count: number;
   last_message_at: string | null;
 }
@@ -46,10 +46,13 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {contact.assigned_agent ? (
+                      {/* gate por assigned_to, nao por assigned_agent: o join de profiles
+                          pode voltar null e a coluna dizia "Aguardando" enquanto o badge
+                          de status dizia "Em atendimento" */}
+                      {contact.assigned_to ? (
                         <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent.avatar_url || undefined} /><AvatarFallback className="text-xs">{contact.assigned_agent.name[0]}</AvatarFallback></Avatar>
-                          <span className="text-sm">{contact.assigned_agent.name}</span>
+                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent?.avatar_url || undefined} /><AvatarFallback className="text-xs">{(contact.assigned_agent?.name || '?')[0]}</AvatarFallback></Avatar>
+                          <span className="text-sm">{contact.assigned_agent?.name || 'Atendente'}</span>
                         </div>
                       ) : <Badge variant="outline" className="text-warning border-warning/30">Aguardando</Badge>}
                     </TableCell>
