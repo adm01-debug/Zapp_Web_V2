@@ -49,9 +49,9 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
           size="sm"
           disabled={loading}
           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          title="Forçar logout"
+          aria-label="Forçar logout"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <LogOut className="w-4 h-4" aria-hidden="true" />}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
