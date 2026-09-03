@@ -93,10 +93,10 @@ export function useWarRoomData() {
 
       const { data: slaData } = await supabase
         .from('conversation_sla')
-        .select('contact_id, first_response_breached, resolution_breached');
+        .select('contact_id, first_response_breached');
 
       const breachedContacts = new Set(
-        (slaData || []).filter(s => s.first_response_breached || s.resolution_breached).map(s => s.contact_id)
+        (slaData || []).filter(s => s.first_response_breached).map(s => s.contact_id)
       );
 
       return (dbQueues || []).map((q): WarRoomQueue => {

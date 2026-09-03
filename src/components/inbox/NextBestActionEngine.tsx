@@ -96,11 +96,11 @@ export function NextBestActionEngine({ contactId, contactName }: NextBestActionP
     // Check SLA
     const { data: slaData } = await supabase
       .from('conversation_sla')
-      .select('first_response_breached, resolution_breached')
+      .select('first_response_breached')
       .eq('contact_id', contactId)
       .maybeSingle();
 
-    if (slaData?.first_response_breached || slaData?.resolution_breached) {
+    if (slaData?.first_response_breached) {
       suggestedActions.push({
         type: 'escalate',
         label: 'Escalar para supervisor',
