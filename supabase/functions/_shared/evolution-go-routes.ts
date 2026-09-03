@@ -12,6 +12,9 @@ export interface GoRoute {
   method: string;
   body?: unknown;
   auth: 'instance' | 'admin';
+  // Payload v2 invalido: a rota existe, mas falta dado obrigatorio. Diferente de
+  // 'null' (rota nao mapeada), que faz o wrapper repassar o path v2 original.
+  invalid?: string;
   // Content-Type alternativo (workaround do jid_validation_middleware do GO,
   // que corrompe arrays em application/json; o handler faz o bind normalmente).
   contentType?: string;
@@ -76,7 +79,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   }
   if (m(/^\/message\/sendWhatsAppAudio\/[^/]+$/)) {
     return { path: '/send/media', method: 'POST', auth: 'instance', body: {
-      number: b.number, url: b.audio ?? b.media, type: 'audio',
+      number: b.number, url: b.audio ?? b.media, type: 'ptt',
       ...(b.delay ? { delay: b.delay } : {}),
       ...quotedToGo(b.quoted),
     }};
@@ -126,12 +129,14 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       return { path: '/send/status/text', method: 'POST', auth: 'instance', body: { text: b.content ?? b.text } };
     return { path: '/send/status/media', method: 'POST', auth: 'instance', body: { url: b.content ?? b.media, type: b.type ?? 'image', ...(b.caption ? { caption: b.caption } : {}) } };
   }
-  if (m(/^\/message\/sendReaction\/[^/]+$/))
+  if (m(/^\/message\/sendReaction\/[^/]+$/)) {
+    if (!b.key?.remoteJid || !b.key?.id) return { path: '/message/react', method: 'POST', auth: 'instance', invalid: 'sendReaction requer key.remoteJid e key.id' };
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
-      number: jidWithoutDevice(b.key?.remoteJid), reaction: b.reaction, id: b.key?.id,
+      number: jidWithoutDevice(b.key.remoteJid), reaction: b.reaction, id: b.key.id,
       fromMe: b.key?.fromMe === true,
       ...(b.key?.participant ? { participant: b.key.participant } : {}),
     }};
+  }
   if (m(/^\/message\/delete\/[^/]+$/))
     return { path: '/message/delete', method: 'POST', auth: 'instance', body: {
       chat: b.remoteJid, messageId: b.id,
@@ -145,10 +150,12 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       chat: b.remoteJid, messageId: b.id,
     }};
   if (m(/^\/chat\/markMessageAsRead\/[^/]+$/)) {
-    const msgs = Array.isArray(b.readMessages) ? b.readMessages : [];
+    const msgs: Record<string, unknown>[] = Array.isArray(b.readMessages) ? b.readMessages : [];
+    const firstJid = typeof msgs[0]?.remoteJid === 'string' ? msgs[0].remoteJid : undefined;
+    if (!firstJid) return { path: '/message/markread', method: 'POST', auth: 'instance', invalid: 'markMessageAsRead requer readMessages[0].remoteJid' };
     return { path: '/message/markread', method: 'POST', auth: 'instance', body: {
-      id: msgs.map((x: any) => x?.id).filter(Boolean),
-      number: jidWithoutDevice(msgs[0]?.remoteJid),
+      id: msgs.map((x) => x?.id).filter(Boolean),
+      number: jidWithoutDevice(firstJid),
     }};
   }
   // GO exige o waE2E.Message com os nós de mídia (URL/mediaKey/directPath).
@@ -272,10 +279,16 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   // ── Labels ──
   if (m(/^\/label\/findLabels\/[^/]+$/))
     return { path: '/label/list', method: 'GET', auth: 'instance' };
-  if (m(/^\/label\/handleLabel\/[^/]+$/))
+  if (m(/^\/label\/handleLabel\/[^/]+$/)) {
+    // Sem a heuristica de LID do toUserJid: alvo de rotulo e telefone, e numero
+    // internacional de 14-15 digitos cairia em @lid e a GO nao acharia o contato.
+    const rawNumber = typeof b.number === 'string' ? b.number.trim() : '';
+    if (!rawNumber) return { path: '/label/chat', method: 'POST', auth: 'instance', invalid: 'handleLabel requer number' };
+    const jid = rawNumber.includes('@') ? rawNumber : `${rawNumber}@s.whatsapp.net`;
     return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
-      jid: b.number, labelId: b.labelId,
+      jid, labelId: b.labelId,
     }};
+  }
 
   // ── Webhook por instância (D1 do GO_GAPS: reconecta com webhookUrl) ──
   if (m(/^\/webhook\/set\/[^/]+$/)) {

@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export interface NavigationEntry {
   viewId: string;
@@ -30,49 +29,38 @@ interface NavigationHistoryReturn {
 const MAX_HISTORY = 50;
 const BREADCRUMB_DEPTH = 4;
 
-// Hashes that are NOT view IDs (e.g. skip-to-content anchors)
-const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
-
-/**
- * Reads the active view from the URL.
- * Canonical format: ?view=<id>
- * Legacy compat: #<id> (hash) — migrated to ?view= on first load.
- */
-function getViewFromUrl(defaultView: string): string {
-  const params = new URLSearchParams(window.location.search);
-  const viewParam = params.get('view');
-  if (viewParam) return viewParam;
-
-  // Backward compat: hash-based deep links ("#inbox") before migration
-  const hash = window.location.hash.replace('#', '');
-  if (hash && !RESERVED_HASHES.has(hash)) return hash;
-
-  return defaultView;
-}
-
 /**
  * Navigation history with back/forward stacks, breadcrumb trail,
- * and URL query-param sync (?view=<id>) for deep linking.
- *
- * Canonical URL format: ?view=<viewId>
- * Legacy hash URLs (#<viewId>) are migrated to ?view= on first load.
+ * and URL hash sync for deep linking.
  *
  * Uses a single state atom for history+index to prevent race conditions
  * between separate setState calls.
  */
+// Hashes that are NOT view IDs (e.g. skip-to-content anchors)
+const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
+
 export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryReturn {
-  const navigate = useNavigate();
+  const getInitialView = () => {
+    const hash = window.location.hash.replace('#', '');
+    return (hash && !RESERVED_HASHES.has(hash)) ? hash : defaultView;
+  };
+
   const [state, setState] = useState<NavigationState>(() => ({
-    entries: [{ viewId: getViewFromUrl(defaultView), timestamp: Date.now() }],
+    entries: [{ viewId: getInitialView(), timestamp: Date.now() }],
     index: 0,
     previousView: null,
   }));
 
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
-  // Sync ?view= → state on browser back/forward (popstate fires for pushState/replaceState).
-  const onPopState = useCallback(() => {
-    const viewId = getViewFromUrl(defaultView);
+  // Sync hash → state on browser back/forward.
+  // pushState/replaceState do NOT fire hashchange, so no isInternalNav guard is needed here.
+  const onHashChange = useCallback(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (RESERVED_HASHES.has(hash)) return;
+    // Empty hash (e.g. Back to "/") resolves to defaultView to keep state consistent
+    const viewId = hash || defaultView;
+
     setState(prev => {
       const currentViewId = prev.entries[prev.index]?.viewId;
       if (viewId === currentViewId) return prev;
@@ -97,53 +85,20 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     });
   }, [defaultView]);
 
-  // Migration bridge: legacy code (e.g. GlobalSearch, ContactsCRUD) may still write
-  // window.location.hash = '#inbox'. Intercept hashchange, migrate URL to ?view=, and handle.
-  const onHashChange = useCallback(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (!hash || RESERVED_HASHES.has(hash)) return;
-
-    // Migrate the URL: replace hash with ?view= query param
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', hash);
-    url.hash = '';
-    navigate({ pathname: url.pathname, search: url.search, hash: url.hash }, { replace: true });
-
-    // Handle as a view change using the same logic as onPopState
-    onPopState();
-  }, [navigate, onPopState]);
-
   useEffect(() => {
-    // One-time migration: if URL still uses hash (#inbox) with no ?view=, rewrite to ?view=inbox
-    const hash = window.location.hash.replace('#', '');
-    const params = new URLSearchParams(window.location.search);
-    if (hash && !RESERVED_HASHES.has(hash) && !params.get('view')) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', hash);
-      url.hash = '';
-      navigate({ pathname: url.pathname, search: url.search, hash: url.hash }, { replace: true });
-    }
-
-    window.addEventListener('popstate', onPopState);
     window.addEventListener('hashchange', onHashChange);
-    return () => {
-      window.removeEventListener('popstate', onPopState);
-      window.removeEventListener('hashchange', onHashChange);
-    };
-  }, [navigate, onPopState, onHashChange]);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [onHashChange]);
 
-  const syncView = useCallback((viewId: string, replace = false) => {
+  const syncHash = useCallback((viewId: string, replace = false) => {
     const url = new URL(window.location.href);
-    url.searchParams.set('view', viewId);
-    // Clear any lingering hash that is not a skip-to-content anchor
-    if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
-      url.hash = '';
+    url.hash = viewId;
+    if (replace) {
+      window.history.replaceState(null, '', url.href);
+    } else {
+      window.history.pushState(null, '', url.href);
     }
-    navigate(
-      { pathname: url.pathname, search: url.search, hash: url.hash },
-      { replace }
-    );
-  }, [navigate]);
+  }, []);
 
   const navigateTo = useCallback((viewId: string) => {
     setState(prev => {
@@ -156,31 +111,31 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
       const newIndex = newEntries.length - 1;
 
-      syncView(viewId);
+      syncHash(viewId);
 
       return { entries: newEntries, index: newIndex, previousView: currentViewId ?? null };
     });
-  }, [syncView]);
+  }, [syncHash]);
 
   const goBack = useCallback(() => {
     setState(prev => {
       if (prev.index <= 0) return prev;
       const newIndex = prev.index - 1;
       const targetView = prev.entries[newIndex]?.viewId;
-      if (targetView) syncView(targetView, true);
+      if (targetView) syncHash(targetView, true); // Use replace when going back through internal stack
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
-  }, [syncView]);
+  }, [syncHash]);
 
   const goForward = useCallback(() => {
     setState(prev => {
       if (prev.index >= prev.entries.length - 1) return prev;
       const newIndex = prev.index + 1;
       const targetView = prev.entries[newIndex]?.viewId;
-      if (targetView) syncView(targetView, true);
+      if (targetView) syncHash(targetView, true); // Use replace when going forward through internal stack
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
-  }, [syncView]);
+  }, [syncHash]);
 
   const canGoBack = state.index > 0;
   const canGoForward = state.index < state.entries.length - 1;

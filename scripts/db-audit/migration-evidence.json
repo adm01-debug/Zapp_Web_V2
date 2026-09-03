@@ -371,6 +371,35 @@
       "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo PR #116 documenta retroativamente o DDL reprodutível; o ledger tem SQL canônico vazio — pinagem por filename e ledger_name apenas."
     },
     {
+      "version": "20260902000200",
+      "filename": "20260902000200_fix_cron_avatars_refresh_key.sql",
+      "file_sha256": "b24a05f478f55fd29dfa5b8f6ed2c7e733e3a04a9a89b58e22db382b65877034",
+      "ledger_name": "fix_cron_avatars_refresh_key",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Reagendamento do cron avatars-refresh aplicado direto no banco 02/09 sem captura de SQL no ledger; arquivo pin com o statement real."
+    },
+    {
+      "version": "20260902000600",
+      "filename": "20260902000600_fix_record_failed_login_acl.sql",
+      "file_sha256": "6af4a33161a619dec393e55fc497246fb9790b0af694aa8857fb208e5d7b1bb2",
+      "file_sql_sha256": "7b2a37d64938bdfb58a2f81b6fca3ab733fd518fbd4d64c3dfb81d9585ce63b7",
+      "ledger_name": "fix_record_failed_login_acl",
+      "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13a2dacc3f734",
+      "ledger_statements_sha256": "471c9385c7467e2731ba51231b46bbc697430f24eac7ff1d21c3f132e485fc21",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Arquivo mantem EXECUTE de anon em record_failed_login (REVOKE so de PUBLIC): revogar anon quebrou o lockout de login em producao (revertido no banco por 20260903170000). Ledger guarda o SQL original com o REVOKE de anon — divergencia intencional segura."
+    },
+    {
+      "version": "20260902000700",
+      "filename": "20260902000700_fix_search_contacts_order_tiebreaker.sql",
+      "file_sha256": "2f8e35056034bf4914da6d05e4e4de9f6dfa2d4c719b0118d544c9a6ca2019c7",
+      "ledger_name": "fix_search_contacts_order_tiebreaker",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Superseded por 20260902230000; ledger sem SQL capturado; arquivo pin."
+    },
+    {
       "version": "20260902100001",
       "filename": "20260902100001_drop_dead_index_wc_id.sql",
       "file_sha256": "f2cee80ed3f33d53ce29e88454eacfc2fb371f9f0f6047eadeff592c7af3e89e",
@@ -440,6 +469,19 @@
       "ledger_name": "audit_fix_secdef_search_path_realtime_indexes",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Arquivo reconstrói com certeza os 2 índices novos (idx_contacts_updated_at, idx_messages_unread_contact) verificados contra pg_indexes; a parte de search_path em funções SECURITY DEFINER não foi reconstruída como DDL por falta de baseline histórico do delta exato — verificado ao vivo que 0 funções SECURITY DEFINER do schema public estão hoje sem search_path. Ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260902230000",
+      "filename": "20260902230000_fix_search_contacts_id_tiebreaker.sql",
+      "file_sha256": "21b6fc46216e03426f12bdca47ee752777dfcc623875a0e4c54e5ab730edf55f",
+      "file_sql_sha256": "2472992e578bd2339db8fe20a6d85b9d5eb8ddb2ce6e3567cea4b43b6a3bcfbe",
+      "ledger_name": "fix_search_contacts_id_tiebreaker",
+      "ledger_sql_sha256": "2cd2da4a06ee2bad606a97e86d7139e92318f452a336cff63d045af4c3ee0efc",
+      "ledger_statements_sha256": "66e4f41dbc6d2c9125ebe014d2b4e73587cbe8be2ea994a52a363d1978f64876",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Ledger capturou apenas resumo em prosa (nao executavel); arquivo pin carrega a definicao SQL completa vigente do banco (tiebreaker c.id ASC) para replay valido."
     }
   ]
 }

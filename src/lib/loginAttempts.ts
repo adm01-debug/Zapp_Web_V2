@@ -37,7 +37,7 @@ export async function checkAccountLock(email: string): Promise<LockStatus> {
 export async function recordFailedLogin(email: string): Promise<LockStatus> {
   const { data, error } = await supabase.rpc('record_failed_login', {
     p_email: email,
-    p_ip_address: null,
+    p_ip_address: undefined,
     p_user_agent: navigator.userAgent
   });
 

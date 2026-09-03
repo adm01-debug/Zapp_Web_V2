@@ -136,6 +136,11 @@ export default defineConfig(({ mode }) => {
             if (id.includes("sip.js") || id.includes("sip/") || id.includes("sipjs")) {
               return "vendor-voip";
             }
+            // Voice SDK — @elevenlabs/react embute LiveKit (~610KB min);
+            // sem esta regra cai num chunk "dist-*" importado pelo ChatPanel.
+            if (id.includes("@elevenlabs") || id.includes("livekit")) {
+              return "vendor-voice";
+            }
           },
         },
       },
