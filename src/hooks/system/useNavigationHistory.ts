@@ -100,9 +100,13 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   // Ref mirrors last-rendered state so URL sync in callbacks can read current
   // history without adding state to dependency arrays (which would regenerate
-  // memoized callbacks on every navigation).
+  // memoized callbacks on every navigation). Updated in an effect (not during
+  // render) to satisfy react-hooks/refs; safe because callbacks are event
+  // handlers that always run after effects.
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useEffect(() => {
+    stateRef.current = state;
+  });
 
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
