@@ -26,14 +26,19 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 describe('useAuth hook', () => {
+  // Uma instancia por teste: recriar o client a cada render do wrapper jogaria
+  // fora o cache em qualquer re-render e mascararia o efeito do queryClient.clear().
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   });
 
   // AuthProvider limpa o cache do react-query no SIGNED_OUT, entao precisa do
   // QueryClientProvider por volta — igual a AppProviders.
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>{children}</AuthProvider>
     </QueryClientProvider>
   );

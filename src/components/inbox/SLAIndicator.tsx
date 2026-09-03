@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Clock, AlertTriangle, CheckCircle, Timer } from 'lucide-react';
+import { AlertTriangle, Timer } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   Tooltip,
@@ -17,10 +17,10 @@ interface SLAIndicatorProps {
   compact?: boolean;
 }
 
-const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; icon: React.ElementType; ring: string }> = {
-  ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', icon: CheckCircle, ring: 'stroke-success' },
-  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30', icon: Clock, ring: 'stroke-warning' },
-  breached: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30', icon: AlertTriangle, ring: 'stroke-destructive' },
+const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; ring: string }> = {
+  ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', ring: 'stroke-success' },
+  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30', ring: 'stroke-warning' },
+  breached: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30', ring: 'stroke-destructive' },
 };
 
 function SLAProgressRing({ status, percent, size = 28 }: { status: SLAStatus; percent: number; size?: number }) {

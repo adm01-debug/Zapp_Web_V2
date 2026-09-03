@@ -1,5 +1,6 @@
  import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
  import { useQueryClient } from '@tanstack/react-query';
+import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService } from '@/services/auth.service';
  import { Profile } from '@/types';
@@ -110,6 +111,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // sem limpar, o proximo login na mesma aba le dados em cache do usuario
         // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
         queryClient.clear();
+        clearOfflineCache();
       }
     });
 
@@ -171,6 +173,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        setProfile(null);
        setSession(null);
        setUser(null);
+       // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
+       // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
+       // deixe dados do usuario anterior para tras.
+       queryClient.clear();
+       clearOfflineCache();
      }
    };
 
