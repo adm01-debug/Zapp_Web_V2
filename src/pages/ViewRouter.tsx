@@ -7,6 +7,7 @@ import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
 import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 import { ViewContainer } from '@/components/layout/ViewContainer';
+import { NavigationService } from '@/services/navigation.service';
 
 import * as Views from './lazyViews';
 
@@ -21,8 +22,14 @@ interface ViewRouterProps {
   onNavigateTo?: (viewId: string) => void;
 }
 
-// Views that manage their own full-screen layout (no header wrapper, no shared scroller)
-const FULL_SCREEN_VIEWS = new Set(['inbox', 'pipeline', 'omni-inbox', 'team-chat', 'email-chat']);
+// Derived from nav metadata — single source of truth for full-screen layout flag
+const FULL_SCREEN_VIEWS = new Set(
+  [
+    ...NavigationService.getPrimaryNav(),
+    ...NavigationService.getGroups().flatMap(g => g.items),
+    ...NavigationService.getAdvancedNav(),
+  ].filter(item => item.layout === 'full').map(item => item.id)
+);
 
 // Declarative route map — easier to maintain than switch/case
 const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, never>>>> = {
