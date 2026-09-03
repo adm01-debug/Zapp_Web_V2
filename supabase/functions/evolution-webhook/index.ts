@@ -59,6 +59,11 @@ const enforceMode = Deno.env.get('EVOLUTION_WEBHOOK_ENFORCE') || 'shadow';
 if (enforceMode !== 'shadow' && enforceMode !== 'token') {
   throw new Error(`EVOLUTION_WEBHOOK_ENFORCE must be "shadow" or "token", got: "${enforceMode}"`);
 }
+// enforce=token sem instanceToken configurado rejeitaria 100% do trafego GO (que
+// nunca traz HMAC). Falha no boot em vez de derrubar o WhatsApp silenciosamente.
+if (enforceMode === 'token' && !instanceToken) {
+  throw new Error('EVOLUTION_WEBHOOK_ENFORCE=token requires EVOLUTION_INSTANCE_TOKEN to be set');
+}
 let tokenOkLogged = false;
 
 serve(async (req) => {
