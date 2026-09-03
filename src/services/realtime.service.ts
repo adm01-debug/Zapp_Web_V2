@@ -30,7 +30,7 @@ export class RealtimeService {
     for (const idsChunk of chunkArray(uniqueIds, CONTACT_FETCH_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*')
+        .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
         .in('id', idsChunk);
         
       if (error) {
@@ -45,7 +45,7 @@ export class RealtimeService {
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('*')
+      .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       

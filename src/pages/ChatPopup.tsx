@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, lazy, Suspense, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { sendMessageToContact } from '@/hooks/realtime/messageSender';
 import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
@@ -125,12 +126,9 @@ export default function ChatPopup() {
   const handleSendMessage = useCallback(
     async (content: string) => {
       if (!contactId) return;
-      await supabase.from('messages').insert({
-        contact_id: contactId,
-        content,
-        sender: 'agent',
-        message_type: 'text',
-      });
+      // envia de verdade via Evolution API (antes: so gravava no banco —
+      // a mensagem nunca chegava ao cliente no WhatsApp)
+      await sendMessageToContact(contactId, content, 'text');
     },
     [contactId]
   );
@@ -150,13 +148,8 @@ export default function ChatPopup() {
           .from('whatsapp-media')
           .getPublicUrl(fileName);
 
-        await supabase.from('messages').insert({
-          contact_id: contactId,
-          content: '🎵 Mensagem de áudio',
-          sender: 'agent',
-          message_type: 'audio',
-          media_url: urlData.publicUrl,
-        });
+        // envia de verdade via Evolution API (antes: so gravava no banco)
+        await sendMessageToContact(contactId, '🎵 Mensagem de áudio', 'audio', urlData.publicUrl);
       } catch (err) {
         log.error('Failed to send audio from popup:', err);
       }
