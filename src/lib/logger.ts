@@ -12,7 +12,7 @@ interface LogContext {
 }
 
 // Session-level correlation ID for tracing across the app lifetime
-const sessionId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const sessionId = crypto.randomUUID();
 
 // Per-request correlation ID generator
 let requestCounter = 0;
@@ -119,4 +119,3 @@ export async function logAsyncPerformance<T>(label: string, fn: () => Promise<T>
   console.debug(`[PERF] [sid:${sessionId.slice(0, 8)}] ${label}: ${(end - start).toFixed(2)}ms`);
   return result;
 }
-
