@@ -371,6 +371,22 @@
       "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo PR #116 documenta retroativamente o DDL reprodutível; o ledger tem SQL canônico vazio — pinagem por filename e ledger_name apenas."
     },
     {
+      "version": "20260902000200",
+      "filename": "20260902000200_fix_cron_avatars_refresh_key.sql",
+      "file_sha256": "b24a05f478f55fd29dfa5b8f6ed2c7e733e3a04a9a89b58e22db382b65877034",
+      "ledger_name": "fix_cron_avatars_refresh_key",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Reagendamento do cron avatars-refresh aplicado direto no banco 02/09 sem captura de SQL no ledger; arquivo pin com o statement real."
+    },
+    {
+      "version": "20260902000700",
+      "filename": "20260902000700_fix_search_contacts_order_tiebreaker.sql",
+      "file_sha256": "2f8e35056034bf4914da6d05e4e4de9f6dfa2d4c719b0118d544c9a6ca2019c7",
+      "ledger_name": "fix_search_contacts_order_tiebreaker",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Superseded por 20260902230000; ledger sem SQL capturado; arquivo pin."
+    },
+    {
       "version": "20260902100001",
       "filename": "20260902100001_drop_dead_index_wc_id.sql",
       "file_sha256": "f2cee80ed3f33d53ce29e88454eacfc2fb371f9f0f6047eadeff592c7af3e89e",

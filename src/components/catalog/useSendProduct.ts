@@ -82,6 +82,10 @@ export function useSendToContact(onSuccess: () => void) {
         .limit(1);
 
       const connection = connections?.[0];
+      if (!connection) {
+        toast({ title: 'Nenhuma conexão ativa', description: 'Conecte uma instância do WhatsApp antes de enviar.', variant: 'destructive' });
+        return;
+      }
 
       // Send images
       for (const imgUrl of imageUrls) {
