@@ -130,6 +130,12 @@ export async function sendMessageToContact(
     throw error;
   }
 
+  // SLA de 1a resposta: registra o timestamp real da primeira resposta do atendente.
+  // Fire-and-forget — falha aqui nao deve travar o envio da mensagem.
+  supabase.rpc('mark_first_response', { p_contact_id: contactId }).then(({ error: slaError }) => {
+    if (slaError) log.warn('mark_first_response failed:', slaError);
+  });
+
   try {
     const { data: contact } = await supabase
       .from('contacts')

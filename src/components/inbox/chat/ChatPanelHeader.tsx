@@ -74,7 +74,7 @@ function ChatPanelHeaderBase({
             <h3 className="font-semibold text-foreground text-[15px]">{conversation.contact.name}</h3>
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
-              firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null}
+              firstResponseAt={conversation.firstResponseAt ?? null}
               firstResponseMinutes={5}
             />
           </div>

@@ -105,6 +105,7 @@ export default function ChatPopup() {
         priority: contact.ai_priority === 'high' ? 'high' : 'medium',
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
+        firstResponseAt: null,
         assignedTo: undefined,
       }
     : null;
