@@ -70,7 +70,6 @@ export const ProductManagement: React.FC = () => {
       {/* Products Table */}
       <div className="border rounded-lg overflow-hidden">
         <ScrollArea className="h-[60vh]">
-          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -142,7 +141,6 @@ export const ProductManagement: React.FC = () => {
               )}
             </TableBody>
           </Table>
-          </div>
         </ScrollArea>
       </div>
 

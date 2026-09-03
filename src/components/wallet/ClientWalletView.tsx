@@ -99,7 +99,6 @@ export function ClientWalletView() {
           ) : w.rules.length === 0 ? (
             <EmptyState icon={Wallet} title="Nenhuma regra configurada" description="Configure regras para atribuir clientes automaticamente" illustration="wallet" size="sm" actionLabel="Criar Primeira Regra" onAction={() => w.setIsAddDialogOpen(true)} />
           ) : (
-            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -119,7 +118,6 @@ export function ClientWalletView() {
                 ))}
               </TableBody>
             </Table>
-            </div>
           )}
         </CardContent>
       </Card>

@@ -30,7 +30,6 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
           {contacts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground"><User className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum contato nesta fila ainda</p></div>
           ) : (
-            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/20">
@@ -70,7 +69,6 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
                 ))}
               </TableBody>
             </Table>
-            </div>
           )}
         </ScrollArea>
       </CardContent>

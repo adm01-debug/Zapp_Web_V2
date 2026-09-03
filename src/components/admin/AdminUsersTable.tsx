@@ -30,7 +30,6 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
     <Card className="border border-secondary/20 bg-card">
       <CardHeader><CardTitle className="text-lg">Usuários</CardTitle></CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -110,7 +109,6 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
             })}
           </TableBody>
         </Table>
-        </div>
       </CardContent>
     </Card>
   );

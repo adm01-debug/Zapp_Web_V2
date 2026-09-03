@@ -247,7 +247,7 @@ export default function RateLimitDashboard() {
               <CardDescription>Últimas 100 requisições monitoradas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>

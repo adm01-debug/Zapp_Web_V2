@@ -22,7 +22,6 @@ export function AdminAuditTable({ logs }: AdminAuditTableProps) {
     <Card>
       <CardHeader><CardTitle className="text-lg">Logs de Auditoria</CardTitle></CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -45,7 +44,6 @@ export function AdminAuditTable({ logs }: AdminAuditTableProps) {
             ))}
           </TableBody>
         </Table>
-        </div>
       </CardContent>
     </Card>
   );

@@ -109,7 +109,6 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
         <ScrollArea className="max-h-[55vh]">
-          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -151,7 +150,6 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
               )}
             </TableBody>
           </Table>
-          </div>
         </ScrollArea>
       </div>
 

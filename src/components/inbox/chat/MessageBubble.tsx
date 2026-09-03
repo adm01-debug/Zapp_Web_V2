@@ -194,7 +194,7 @@ export const MessageBubble = memo(function MessageBubble({
                   </div>
                 )}
 
-                {message.type === 'location' && message.location && <Suspense fallback={null}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
+                {message.type === 'location' && message.location && <Suspense fallback={<div className="w-full h-32 bg-muted animate-pulse rounded-lg" />}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
 
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">
