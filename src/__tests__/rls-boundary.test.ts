@@ -36,6 +36,11 @@ const CRITICAL_TABLES = [
   'blocked_ips',
 ] as const;
 
+/** Insert sem o tipo por tabela: ver o comentario no teste de INSERT anon. */
+type LooseInsert = {
+  insert: (values: Record<string, unknown>) => Promise<{ error: { code?: string } | null }>;
+};
+
 // 42501 = insufficient_privilege (PostgREST RLS denial code)
 const rlsDenialError = {
   code: '42501',
@@ -90,14 +95,18 @@ describe('RLS boundary - anon role (writes blocked with 42501)', () => {
       mockInsert.mockResolvedValue({ data: null, error: rlsDenialError });
 
       const { supabase } = await import('@/integrations/supabase/client');
-      const result = await supabase.from(table).insert({ id: 'inject-attempt' });
+      // 'table' e um union: nenhum literal tipa contra todas as assinaturas de
+      // insert de uma vez. O client esta mockado, o payload nao chega ao banco.
+      const result = await (supabase.from(table) as unknown as LooseInsert).insert({ id: 'inject-attempt' });
 
       expect(mockFrom).toHaveBeenCalledWith(table);
       expect(result.error?.code).toBe('42501');
     });
 
     it(`${table}: anon DELETE -> 42501`, async () => {
-      mockDelete.mockResolvedValue({ data: null, error: rlsDenialError });
+      // Resultado no ultimo elo da cadeia: .delete() precisa continuar
+      // devolvendo o chain para o .eq() existir.
+      mockEq.mockResolvedValue({ data: null, error: rlsDenialError });
 
       const { supabase } = await import('@/integrations/supabase/client');
       const result = await supabase.from(table).delete().eq('id', 'any-id');
@@ -145,7 +154,7 @@ describe('RLS boundary - authenticated role (row isolation)', () => {
   });
 
   it('profiles: role escalation to admin blocked (42501)', async () => {
-    mockUpdate.mockResolvedValue({ data: null, error: rlsDenialError });
+    mockEq.mockResolvedValue({ data: null, error: rlsDenialError });
 
     const { supabase } = await import('@/integrations/supabase/client');
     const result = await supabase
@@ -169,13 +178,13 @@ describe('RLS boundary - authenticated role (row isolation)', () => {
     mockInsert.mockResolvedValue({ data: null, error: rlsDenialError });
 
     const { supabase } = await import('@/integrations/supabase/client');
-    const result = await supabase.from('blocked_ips').insert({ ip: '1.2.3.4' });
+    const result = await supabase.from('blocked_ips').insert({ ip_address: '1.2.3.4', reason: 'rls-boundary-test' });
 
     expect(result.error?.code).toBe('42501');
   });
 
   it('audit_logs: authenticated user cannot delete records (42501)', async () => {
-    mockDelete.mockResolvedValue({ data: null, error: rlsDenialError });
+    mockEq.mockResolvedValue({ data: null, error: rlsDenialError });
 
     const { supabase } = await import('@/integrations/supabase/client');
     const result = await supabase.from('audit_logs').delete().eq('id', 'log-1');
@@ -185,7 +194,7 @@ describe('RLS boundary - authenticated role (row isolation)', () => {
 
   it('messages: authenticated user cannot read other connections messages', async () => {
     // RLS policy on messages filters by whatsapp_connection_id ownership
-    mockSelect.mockResolvedValue({ data: [], error: null });
+    mockEq.mockResolvedValue({ data: [], error: null });
 
     const { supabase } = await import('@/integrations/supabase/client');
     const result = await supabase
@@ -227,7 +236,7 @@ describe('RLS boundary - grant surface regression (PR #61)', () => {
   });
 
   it('ai_providers: anon UPDATE blocked after PR #61 (42501)', async () => {
-    mockUpdate.mockResolvedValue({ data: null, error: rlsDenialError });
+    mockEq.mockResolvedValue({ data: null, error: rlsDenialError });
 
     const { supabase } = await import('@/integrations/supabase/client');
     const result = await supabase
@@ -239,7 +248,7 @@ describe('RLS boundary - grant surface regression (PR #61)', () => {
   });
 
   it('ai_providers: anon DELETE blocked after PR #61 (42501)', async () => {
-    mockDelete.mockResolvedValue({ data: null, error: rlsDenialError });
+    mockEq.mockResolvedValue({ data: null, error: rlsDenialError });
 
     const { supabase } = await import('@/integrations/supabase/client');
     const result = await supabase.from('ai_providers').delete().eq('id', 'p1');
