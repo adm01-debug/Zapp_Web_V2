@@ -218,6 +218,8 @@ const ConversationRow = memo(({
             onClick={(e) => handleClick(contactId, e)}
             onKeyDown={(e) => {
               if (e.key !== 'Enter' && e.key !== ' ') return;
+              // Espaco segurado auto-repete; um <button> nativo ignora repeticao.
+              if (e.repeat) return;
               e.preventDefault();
               handleClick(contactId, e);
             }}
