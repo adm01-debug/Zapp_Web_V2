@@ -35,7 +35,7 @@ function playAlertSound() {
   try {
     const audio = new Audio('/notification.mp3');
     audio.volume = 0.5;
-    audio.play().catch(() => {});
+    audio.play().catch((err) => { console.warn('[RateLimitRealtimeAlerts] Audio play failed:', err); });
   } catch (e) {
     console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
   }

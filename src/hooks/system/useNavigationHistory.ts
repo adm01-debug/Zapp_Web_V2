@@ -50,17 +50,12 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   }));
 
   const previousViewRef = useRef<string | null>(null);
-  const isInternalNav = useRef(false);
 
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
-  // Sync hash → state on browser back/forward
-  // Uses setState callback to avoid stale closure and properly detect back vs forward
+  // Sync hash → state on browser back/forward.
+  // pushState/replaceState do NOT fire hashchange, so no isInternalNav guard is needed here.
   const onHashChange = useCallback(() => {
-    if (isInternalNav.current) {
-      isInternalNav.current = false;
-      return;
-    }
     const hash = window.location.hash.replace('#', '');
     if (!hash || RESERVED_HASHES.has(hash)) return;
 
@@ -97,7 +92,6 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   }, [onHashChange]);
 
   const syncHash = useCallback((viewId: string, replace = false) => {
-    isInternalNav.current = true;
     const url = new URL(window.location.href);
     url.hash = viewId;
     if (replace) {

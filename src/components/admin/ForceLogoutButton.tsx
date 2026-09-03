@@ -24,6 +24,7 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
   const [loading, setLoading] = useState(false);
 
   const handleForceLogout = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const { error } = await supabase
@@ -64,8 +65,10 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleForceLogout}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={loading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
           >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Forçar logout
           </AlertDialogAction>
         </AlertDialogFooter>
