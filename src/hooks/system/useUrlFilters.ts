@@ -105,11 +105,11 @@ export function useUrlFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  // Clear all filters
+  // Clear all filters — preserves non-filter params (e.g. ?view=)
   const clearFilters = useCallback(() => {
     setSearchParams(prev => {
-      const params = new URLSearchParams();
-      // Preserve non-filter params if any
+      const params = new URLSearchParams(prev);
+      Object.values(PARAM_KEYS).forEach(key => params.delete(key));
       return params;
     }, { replace: true });
   }, [setSearchParams]);

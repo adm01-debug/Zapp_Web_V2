@@ -107,7 +107,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent side="top">Emojis Personalizados</TooltipContent>
-        <PopoverContent className="w-[360px] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
+        <PopoverContent className="w-[min(360px,calc(100vw_-_1rem))] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
               <button onClick={() => setActiveTab('native')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all', activeTab === 'native' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
