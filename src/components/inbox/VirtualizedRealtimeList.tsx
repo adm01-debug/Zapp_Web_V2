@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useMemo } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -67,14 +67,17 @@ export function VirtualizedRealtimeList({
     });
   }, [safeConversations, pinnedIds]);
 
+  const getScrollElement = useCallback(() => parentRef.current, []);
+  const estimateSize = useCallback(() => ITEM_HEIGHT, []);
+
   const virtualizer = useVirtualizer({
     count: sortedConversations.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ITEM_HEIGHT,
+    getScrollElement,
+    estimateSize,
     overscan: 5,
   });
 
-  const handleClick = useCallback((contactId: string, e: React.MouseEvent) => {
+  const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
     if (selectionMode && onToggleSelection) {
       e.preventDefault();
       onToggleSelection(contactId);
@@ -99,14 +102,12 @@ export function VirtualizedRealtimeList({
         {virtualizer.getVirtualItems().map((virtualRow) => (
           <ConversationRow
             key={sortedConversations[virtualRow.index].contact.id}
-            index={virtualRow.index}
             conversation={sortedConversations[virtualRow.index]}
             virtualRow={virtualRow}
             selectedContactId={selectedContactId}
             isSelected={selectedIds.has(sortedConversations[virtualRow.index].contact.id)}
             isPinned={pinnedIds.has(sortedConversations[virtualRow.index].contact.id)}
             selectionMode={selectionMode}
-            onSelectConversation={onSelectConversation}
             onToggleSelection={onToggleSelection}
             handleClick={handleClick}
             onResolve={onResolve}
@@ -130,6 +131,23 @@ const SENTIMENT_LABEL: Record<string, string> = {
   neutral: 'neutro',
 };
 
+interface ConversationRowProps {
+  conversation: ConversationWithMessages;
+  virtualRow: VirtualItem;
+  selectedContactId: string | null;
+  isSelected: boolean;
+  isPinned: boolean;
+  selectionMode: boolean;
+  onToggleSelection?: (contactId: string) => void;
+  handleClick: (contactId: string, e: React.SyntheticEvent) => void;
+  onResolve?: (contactId: string) => void;
+  onTransfer?: (contactId: string) => void;
+  onPin?: (contactId: string) => void;
+  onFavorite?: (contactId: string) => void;
+  onSnooze?: (contactId: string) => void;
+  onArchive?: (contactId: string) => void;
+}
+
 const ConversationRow = memo(({
   conversation,
   virtualRow,
@@ -145,7 +163,7 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
-}: any) => {
+}: ConversationRowProps) => {
   const contactId = conversation.contact.id;
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
@@ -170,7 +188,7 @@ const ConversationRow = memo(({
         role="button"
         tabIndex={0}
         onClick={(e) => handleClick(contactId, e)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(contactId, e as any); } }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(contactId, e); } }}
         className={cn(
           'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
           'hover:bg-muted/50',
@@ -266,7 +284,7 @@ const ConversationRow = memo(({
             </p>
             {conversation.contact.tags && conversation.contact.tags.length > 0 && (
               <div className="flex gap-1 mt-1">
-                {conversation.contact.tags.slice(0, 2).map((tag: any) => (
+                {conversation.contact.tags.slice(0, 2).map((tag: string) => (
                   <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
                     {tag}
                   </Badge>

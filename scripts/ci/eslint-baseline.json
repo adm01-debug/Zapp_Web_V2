@@ -270,7 +270,7 @@
     },
     {
       "path": "src/components/errors/ErrorBoundary.tsx",
-      "sha256": "99e273a9251e0ef7a809425d0b88f6a92c3f80b82a780eda7353c11f0387c19d"
+      "sha256": "26803099c940edc0727dc77bd2e98e3a70f2e4beb8d58a17e99cd9426f567710"
     },
     {
       "path": "src/components/gamification/AchievementsStats.tsx",
@@ -306,7 +306,7 @@
     },
     {
       "path": "src/components/inbox/__tests__/SLAIndicator.test.tsx",
-      "sha256": "56dee1e647c62c5a0abbad077836cc1b792a681fb6864aa74d7cf5a9f863399b"
+      "sha256": "2cae6150b0a9b2abc06c61855f74f52a112ab9c777c50c662178621e1f319dd5"
     },
     {
       "path": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx",
@@ -338,7 +338,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "a40480971821947650dac1f413ac8a90d7ddb0c1558946bf844d7d3683fa5384"
+      "sha256": "64792bd9c026e2970311a79322512b6dd965e0a976d85149f104852f822eb054"
     },
     {
       "path": "src/components/inbox/chat/MarkdownPreview.tsx",
@@ -366,7 +366,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "e3e43ed1f0d628f220bc0890767953be2e9ecdffb140b94501a0ef88bee83a5e"
+      "sha256": "e1382d7cd60154f9773bf632ce34b625d1abb6d7163149bfb026608faec8acb3"
     },
     {
       "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
@@ -394,7 +394,7 @@
     },
     {
       "path": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "sha256": "1885454f2328525da6689e4733c106af1222234cd362b044679fdc5b5dff932d"
+      "sha256": "7a118d50cec83ff63c35a695a716da8bdcfa3e029b329eb6a675654b0941d72b"
     },
     {
       "path": "src/components/inbox/ConversationHistory.tsx",
@@ -402,7 +402,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "5a47ee2687e3a81aa02348a1723953404c6ba3abe89ad41ac28d3ad50abdad54"
+      "sha256": "06d5129db4da47da525afcb7a3561f34a583e5dcdd5e9990492a8a8428633131"
     },
     {
       "path": "src/components/inbox/ConversationMemoryPanel.tsx",
@@ -450,7 +450,7 @@
     },
     {
       "path": "src/components/inbox/NextBestActionEngine.tsx",
-      "sha256": "7fd4d3d33ae71df023cd842dbfa75dfaf45316deb8f813fa731ce79d0a28e3b8"
+      "sha256": "b91382ac3448d1128f309ce0aab4039091e76402c3c6698b3c7c7b9c62b46457"
     },
     {
       "path": "src/components/inbox/ObjectionDetector.tsx",
@@ -458,11 +458,11 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "8eab76d5fb29d0e26b8c15adeb3404dbbb400dc1447db0cc3950b5710af386f1"
+      "sha256": "412266a0bb830dab376310401cb97d7eb56e671db0e50f61fd08edbb15b3e093"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
-      "sha256": "90b1837e860f7cc6561ca4e64a052c76e25b1f82ad572ee4aa990faa3f0a6cd5"
+      "sha256": "660475c6e9ac0dba6ab62d38a88a902811bfa9b586de0a0b880483ab7463d183"
     },
     {
       "path": "src/components/inbox/RemindersPanel.tsx",
@@ -489,20 +489,16 @@
       "sha256": "4c4650cc88c0937bf20eb40f13ebf1a529d79f30c3176b08dd622755e843e044"
     },
     {
-      "path": "src/components/inbox/useFileUploadLogic.ts",
-      "sha256": "c7aa06e07f5236e39283a76e995a6057a29a65ea44702ae043bacc1b0cc0ba27"
-    },
-    {
       "path": "src/components/inbox/useGlobalSearchData.ts",
       "sha256": "6b3a4f095e67fdad0ccd0db5472907c470e3c354f7f799ce795a160d9bb2fd84"
     },
     {
       "path": "src/components/inbox/VirtualizedConversationList.tsx",
-      "sha256": "2d9fdfc0658320d1d00f75dffc04614bcab908e1441906a27a5a093332621d4a"
+      "sha256": "c089155357d64868a80634753f0d05e428ad24121989204c9b78f11e40e32ee8"
     },
     {
       "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "sha256": "1e9ee4933fa5cc9c839ac3623aa6fccc5b034320bf699207186633598e39a3af"
+      "sha256": "bea3a95a2d87f688404ecd95441ef7bdc90e7442efae94356d86ebe05885bfc5"
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
@@ -634,7 +630,7 @@
     },
     {
       "path": "src/components/queues/QueueCharts.tsx",
-      "sha256": "5ea0419c53b5d817b896d32202393b0ff7a0012cefdc48e211bba7a45d111128"
+      "sha256": "2908a3e6671a5adc870d4796152e79a893e0f037ba75ca366313b47ca8e3a09f"
     },
     {
       "path": "src/components/queues/QueueGoalsDialog.tsx",
@@ -642,7 +638,7 @@
     },
     {
       "path": "src/components/queues/SLADashboard.tsx",
-      "sha256": "2e8c1e199daf2c12a8568960c5e838956157fe1285add9bd638e836be73dc9ad"
+      "sha256": "9f1185168ac1d299268bc0257b3f2d1bb09b2bb987e4307e098d76324fe1ca7a"
     },
     {
       "path": "src/components/reports/AbandonmentRate.tsx",
@@ -693,10 +689,6 @@
       "sha256": "665811cb94e587a7da0401bbc39d5a91c2c36a1ed18216c038ae551bcc6eeadd"
     },
     {
-      "path": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "sha256": "01c6fc8de7b1ce3533614387ce05bf54a4cbdb6284f559184c05b96718dfd50c"
-    },
-    {
       "path": "src/components/security/SecurityOverview.tsx",
       "sha256": "168f69402f3493867fb198b1ed222a738a97bf081e6a4c0f75cc649207ba5ebb"
     },
@@ -706,11 +698,11 @@
     },
     {
       "path": "src/components/settings/__tests__/SLAConfigurationManager.test.tsx",
-      "sha256": "8196fe92c114e84d5aba21e6df7076bcf1fa3b6e4126028a857b73f7b8247e76"
+      "sha256": "b9fd7e277b3e82cdf99a6bb75530720aee49241578f5b255772dc21fa4795443"
     },
     {
       "path": "src/components/settings/__tests__/SLARulesManager.test.tsx",
-      "sha256": "588eb4a168ae3ec05df042cf2cb15d92ca7c8a503d00d66ecf4584d206954160"
+      "sha256": "38e78410d554d550ef232216d3891123f0eb096f9f8733237d45ef9afdb988b6"
     },
     {
       "path": "src/components/settings/AutoCloseSettings.tsx",
@@ -729,10 +721,6 @@
       "sha256": "921b54143ac0a0ec7235378623666abf0f14f75454df20064c5ecba1b1618faf"
     },
     {
-      "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
-      "sha256": "3d0912f7696e67cea62f408218ea5ee475a056c7fbdd90c3e45cb3332b5957fb"
-    },
-    {
       "path": "src/components/settings/SoundCustomizationPanel.tsx",
       "sha256": "e0e28546cdb2d7184020d5bf1c64b2dd7900d94cd2d72833382b986ca5cc27df"
     },
@@ -742,7 +730,7 @@
     },
     {
       "path": "src/components/sla/SLACharts.tsx",
-      "sha256": "d373f77f88637091543a5a742476b8506cc9d2579f307d5ed765232406c6cddd"
+      "sha256": "5901c8a851203767e2db96182268aea33e3451b3be02ef504184349092775545"
     },
     {
       "path": "src/components/tags/TagsView.tsx",
@@ -762,7 +750,7 @@
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "e9c9d963b6796c3a6bc1b6faa7f82ef8c662ff6a602c8554c1b9e76a789225af"
+      "sha256": "3a76ee01d1095465dbd01d82337182cb1bbf0b2109a7eb011bc35882e5c6ff05"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
@@ -966,7 +954,7 @@
     },
     {
       "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "sha256": "b955257d438fb75c1526d5c0ab07c79fc72adf6b419e55e57fb2e2c3a01dd782"
+      "sha256": "ce9efa88382d990f25554c5d1f0ca13ab3a5968ede631be0ec7b58270087aa8e"
     },
     {
       "path": "src/hooks/__tests__/useGlobalSettings.test.tsx",
@@ -1046,7 +1034,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "sha256": "56a5d890eabb194f76a9e1808155f12e21d79bb3e2bfc13dfbeb90020506a4d9"
+      "sha256": "8a0ec09881cb5ab2f6732171d36fe39694262de6df6b444d98350beaa1eba9d0"
     },
     {
       "path": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
@@ -1078,7 +1066,7 @@
     },
     {
       "path": "src/hooks/__tests__/useSLAHistory.test.tsx",
-      "sha256": "5d51400e2f636e1bf77b6e9f24cc6e4950d657b1fead0f0da3d53aa9ca7ad8c5"
+      "sha256": "754d7c1f0161018780db49a497a323d35bc4d4f4a7782fe0eec383e95a6702ab"
     },
     {
       "path": "src/hooks/__tests__/useSLAMetrics.test.tsx",
@@ -1110,7 +1098,7 @@
     },
     {
       "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
-      "sha256": "6645473ba944eccc8c41760db2e80ffc83192d5622bfc0a774b28743250bad90"
+      "sha256": "8ee5db6d663ea9e986f5ef08bba96e50513e7381e8b4a6fda253d062ed7781d5"
     },
     {
       "path": "src/hooks/__tests__/useWebAuthn.test.tsx",
@@ -1122,7 +1110,7 @@
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "sha256": "a48be23e7b5451217dc4a32a09550adea9f2000cabc50153683061f1ef6ffd3e"
+      "sha256": "864920529245f439fad01c61e935d24d3fe45d486cf0cba0fdeaddca57c3b1d9"
     },
     {
       "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
@@ -1134,7 +1122,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "f069b917a3e8d068850882223951477bad86b9c7959a859d13f2ee6a6ecd25cd"
+      "sha256": "76381278593af7d50b83337714b0d0bb41e5c5b0a06d9521b3025df52fe5a95f"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -1142,7 +1130,7 @@
     },
     {
       "path": "src/hooks/business/useCSAT.ts",
-      "sha256": "a240272752d60308712426aeeaa7bd7c48c075cc52dc8e1d677a1ec6a5315e82"
+      "sha256": "08b7292c04ac7ae470b4ff808d75913f0678c8c137829e135b406209b5a699f7"
     },
     {
       "path": "src/hooks/business/useNPSSurveys.ts",
@@ -1209,16 +1197,8 @@
       "sha256": "49d20bc646e6d0aefbd875eb9ebff870d155661e91f4923fa03063e5c8cfa081"
     },
     {
-      "path": "src/hooks/communication/useAudioMemes.ts",
-      "sha256": "f33d94b70fadddf9598cf4b1dad10d8aa1ede0c873c58c678d1f42d663fcb7b2"
-    },
-    {
-      "path": "src/hooks/communication/useAudioPlayer.ts",
-      "sha256": "49c849e99f3adbf1f0acc89dc408d4beefc8e8a1d38d185bfd98554f976f46cd"
-    },
-    {
       "path": "src/hooks/communication/useAudioRecorder.ts",
-      "sha256": "913ef4e7c206d9caa86407f8f2dcf9af5809e971f87a8427a142b929d77ce6e8"
+      "sha256": "4b9def42509dd4c6fe2c0f631ab001506c5ac0d65ee89c878d3306514698d531"
     },
     {
       "path": "src/hooks/communication/useSipClient.ts",
@@ -1227,10 +1207,6 @@
     {
       "path": "src/hooks/communication/useTextToSpeech.ts",
       "sha256": "53c567e51e1fe797ada359eafc66ba937626509fa44746c04d0ae56cc0eae1e5"
-    },
-    {
-      "path": "src/hooks/communication/useVoiceAgent.ts",
-      "sha256": "2c4f15576c8ef307b0d7a2485e7f93a2e4c886dff7c9be8f8312111c1e1ed6a3"
     },
     {
       "path": "src/hooks/crm/useContactCustomFields.ts",
@@ -1282,7 +1258,7 @@
     },
     {
       "path": "src/hooks/inbox/useRealtimeInbox.ts",
-      "sha256": "fd7184592b48655d87340372c7b98369e8cd8ad0d91d814ded5a847b7b647ca9"
+      "sha256": "1ba88adf1761b3b6a76e853ca48f2ccd51e6344eaae92bf6be43bfbf3bcaad6c"
     },
     {
       "path": "src/hooks/integrations/useCustomEmojis.ts",
@@ -1322,7 +1298,7 @@
     },
     {
       "path": "src/hooks/performance/useMonitoring.ts",
-      "sha256": "7003e7be15c761c917a3f212bcdee02ba2e1168323659bec88184ffd0c3f495d"
+      "sha256": "fc1d6e881f29e55bdfcf43a933adb363cfa788ca91bb1590306465f3253a769c"
     },
     {
       "path": "src/hooks/performance/useObservers.ts",
@@ -1330,7 +1306,7 @@
     },
     {
       "path": "src/hooks/performance/useTimingHooks.ts",
-      "sha256": "2b2a627eabb712427540d18c585333c11349e2b70f9226b15626a48630683cc7"
+      "sha256": "6a38d0e660b1a9d04289fb332b79b702314eaac852cc587ac45b0170e3fd66f8"
     },
     {
       "path": "src/hooks/reactions/useBatchReactions.ts",
@@ -1338,15 +1314,11 @@
     },
     {
       "path": "src/hooks/realtime/useSupabaseRealtime.ts",
-      "sha256": "4556abd97969758e892d191870d8a967ef721c048a04f7af7e26682f97a1e1ab"
+      "sha256": "12460f86514fa605a6c9e7bb8e913f5a2b06639a2e93096903fd2572643c467f"
     },
     {
       "path": "src/hooks/sip/useSipConnection.ts",
       "sha256": "6cd4568e3e964044cdb4e89dcff9ead01392e8598cbc66f1c1d878b776907b6d"
-    },
-    {
-      "path": "src/hooks/sla/useSLACalculation.ts",
-      "sha256": "127ca4c9535cba6f1cb432de46d120bef44ec14c927c889dc603435bf9922238"
     },
     {
       "path": "src/hooks/sticker-picker/useStickerPicker.ts",
@@ -1358,7 +1330,7 @@
     },
     {
       "path": "src/hooks/system/useDiagnosticsData.ts",
-      "sha256": "b87e9ce4ab07e9c425495e5eabd5e5b219673cbcf1a6ef7738d6477398a76251"
+      "sha256": "bfb151d63c09ce96f57525001730f44636d50c909a109f9c01291d11b6e11f86"
     },
     {
       "path": "src/hooks/system/useGeoBlocking.ts",
@@ -1377,10 +1349,6 @@
       "sha256": "4c1c50f677a366d4b1ea0e639cf58126e99a8902deb0804a117548bc23542139"
     },
     {
-      "path": "src/hooks/system/useNavigationHistory.ts",
-      "sha256": "dbe34ff1233139250f7287b6c5a4683407992d8813e3f0c94ae89a23102cf815"
-    },
-    {
       "path": "src/hooks/system/useNotifications.ts",
       "sha256": "7c78ded2fedf821d3971f4948bad451cf18b636d9507229f9e67383db2684d3c"
     },
@@ -1390,7 +1358,7 @@
     },
     {
       "path": "src/hooks/system/useRateLimitLogs.ts",
-      "sha256": "252c9c3f41ea56debd4ad32581a0213fa13feac2d2a68e75f754010b28745c0d"
+      "sha256": "c6a28db12735eb53e6b2007f2cc4336698e17b2c4a0773644d8ab24a5492d35e"
     },
     {
       "path": "src/hooks/system/useSearchHistory.ts",
@@ -1442,7 +1410,7 @@
     },
     {
       "path": "src/lib/__tests__/audit.test.ts",
-      "sha256": "d77e666a5b9ff4a0b290aaf1a17b1cb1517dba76979c878b5aedbc5b90bd0cc3"
+      "sha256": "e90982e8e4e3b72beb8f11f5fd074ecc622a02fad353b7bd7c7bcdcef45abb78"
     },
     {
       "path": "src/lib/__tests__/groupsAutoSync.test.ts",
@@ -1461,16 +1429,12 @@
       "sha256": "77d9b30b706fefce7fe8bc55d270dedcc27dc17d4fda25301d3cb88e9e2ab800"
     },
     {
-      "path": "src/lib/externalProxy.ts",
-      "sha256": "a73760b9db10107a180d7895d41400c6d99ba04ed08a75c86b4edc50055820a1"
-    },
-    {
       "path": "src/lib/lazyWithRetry.ts",
       "sha256": "51f65b31b928f659b2fa05863a9bf168d845097909ee239009d8952f04807598"
     },
     {
       "path": "src/lib/logger.ts",
-      "sha256": "3a2b20ffbf2ade287f3a03412105cf00797b3e3ae58a13efa68de58f2474c55a"
+      "sha256": "62d3ff45af530f5ee3a11b217372cb7a08a6659466ec93be34bdee8bd8a4cfe8"
     },
     {
       "path": "src/pages/admin/useRolesPageState.ts",
@@ -1486,7 +1450,7 @@
     },
     {
       "path": "src/pages/QueueDetails.tsx",
-      "sha256": "93d50d87f5aff2c6c6b5916a5ce46e7ad8087403ed2a1aef3a2f6507f986aa61"
+      "sha256": "26e65c73c407604622fdea042eba00aa0b0922cc690986c078a4012d995158f3"
     },
     {
       "path": "src/pages/SSOCallback.tsx",
@@ -1494,7 +1458,7 @@
     },
     {
       "path": "src/pages/ViewRouter.tsx",
-      "sha256": "4399b10c9b4ebe6639c1e1b90911835ac7462da6c77f8cf9fb0bb27015976076"
+      "sha256": "46bc40d3986afa73b8ca6fff2f2ccc95f3c0eb4c618888691d9f1e699835b2d6"
     },
     {
       "path": "src/services/crm/external-crm.service.ts",
@@ -1510,7 +1474,7 @@
     },
     {
       "path": "src/services/realtime.service.ts",
-      "sha256": "51a1e7acb11ab4b6051683c6b996dfc69e5f9695155200f23e63159a172cc026"
+      "sha256": "497dbe6c7d8f7d5a2b622863c2b92fa92d2b75099d865a3ce51019ce326fae49"
     },
     {
       "path": "src/test/mocks/auth.tsx",
@@ -1526,7 +1490,7 @@
     },
     {
       "path": "src/types/chat.ts",
-      "sha256": "6b9f276b2193586f4edd08bbc0045176a10e3cef1b58debe9ffb4b77bb54967d"
+      "sha256": "8c082dd1d82efd3f37bbae9d22a5a20d18eec077038a7ed9343db00ab602bb53"
     },
     {
       "path": "src/types/queue.ts",
@@ -1538,7 +1502,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "sha256": "3fbe4c233d734143b534fb365220b2c1d8f545804d241ef32fdf68b979df628e"
+      "sha256": "01c0552cdd218b1c85e03b3d41fbd3835567d254163474f4c3b55171ae5d421e"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1546,7 +1510,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "sha256": "5abc6152c7eae4247111c0ba9a5be26b61a5f9841f5a206fd482f91598bc9c18"
+      "sha256": "5db118185acd2563c1f09c8562d25959d5a1307094082e8723d4ea8f3e532e62"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -1566,59 +1530,59 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "sha256": "f468b5b434d7b738694ed419e6686e6b05b67bf161aef390f6ba69b890508e22"
+      "sha256": "6fc161a23d840320f909e3b5d57b98fdefebe6a87efbdb5f5751ce78e3c5ff30"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "sha256": "324fd6e78bebb0ecd4a17708204a7ba0ecc02e26dc5fdf6a09c67b7f59755b60"
+      "sha256": "55cacedbeeecbd7888f1504169b93762bb797517fd902b8e3c40447b25b262c7"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "sha256": "8103a31b6c4aa7381ec41ea10ffefbf28fb851a641d7662cc1631ae60589dad3"
+      "sha256": "1af0866989e3eb648092acfd1370fb5dca167031e83886162055f9a244435ca7"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
-      "sha256": "54b037e7743b8d38ed75742bcb5a3e001feaf4b3c88d9752b944c5c719b35f43"
+      "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da"
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "sha256": "906a1f4b6af9c4927d98f1ef7a4369b38de5da743eebdf2937a0af77e73a399d"
+      "sha256": "c92f93103040c39d9d2ff864ab6306110e0156a32896c249ddd3473efff1ca53"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "245897bb16c56cff845960567ad09c3a478fc37a9bca5c3f987a6965667563b3"
+      "sha256": "4699e43cf1b0a0972b5f3286740f34b7ee8ae5924951681c7ddb0b8e208e452a"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
-      "sha256": "8f86169dd2e3055097bfbbb3ef33a6b0d50513b9d2ee5b02b420de51d243a9cb"
+      "sha256": "513c826b5f846bc83a6b0d449706a564323a486f20d3516ebf2980314aaf96e4"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "sha256": "3a037747ae1c179f272a69c8781cba5167154fd49f1dfd5bdfc49090e9ff6863"
+      "sha256": "758b1a54783200715b1a4e77191f7e62b994b13fcb4067e2adbc64e3c5f86e02"
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "d2f5281aef4aa7a6c852d7aad29d2f4661478669058200099308749651039317"
+      "sha256": "a160f970aebde49c26330507ef6f1dca0890cc98f3bc06352c39133984b39a64"
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "sha256": "22533e432dc99567b9f0d71d279d4ac1b9727117ea7e7d0238abfaae032fa5b1"
+      "sha256": "d45a0c2770850f4dcd82643476bedb3d22de82ffee09f43563f3155192b1765a"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "00e0ddff1877fc82bbe9bbe52ee032449314e7546911ae4701ab8b79e5eed383"
+      "sha256": "c809d119680d48037cfdca1986f02e004d643cad6b5de4c2b31e85398d1916e1"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "sha256": "585b41d9d4080f94ba3979fb3b5da8a760f6d8a3e7e3ca9c0c2b9b99e17e2505"
+      "sha256": "51d05c0ebccf326302e32334919dbee2127c40ecd2eb9b668d8542e36d92628d"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
-      "sha256": "6f41a3100a0e891e9d22f0bf20ac62f5e22e4803cbab156d0b52912253cde04a"
+      "sha256": "9424a20c030f6f6bb4834cb422e8b2598b29d86a4cb12d90c72870b11075d337"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "sha256": "4e76ed7d99114b2b9fd6cc01c44312966da6efb79d87a4b0e14b70e23c99cd70"
+      "sha256": "daf1277d9949542e1d1cb300613b0948b4ba9ef18c41057e82d44efa57c98bfa"
     },
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
@@ -1626,7 +1590,7 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "sha256": "58e69d6410c8bb161c1d84334d28814b8fbf30e2fe6ff55553a3578e2cd51a0f"
+      "sha256": "8aa6d1cee5d754fd980feaf06508155dc6f3488a92972ddaf9c3d0c5117479dd"
     },
     {
       "path": "supabase/functions/webhook-diagnostic/diagnostic.test.ts",
@@ -1634,7 +1598,7 @@
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "sha256": "ffc52a1a140eb1096ac5cf96e4b901e365c6c77d36aec3af77d0a756834c7a9b"
+      "sha256": "9e5a7acbe379944ab07869d6482c2cc5279910fa336cc43f9eefa61f16d8b9c6"
     },
     {
       "path": "tailwind.config.ts",
@@ -3422,9 +3386,9 @@
     },
     {
       "file": "src/components/errors/ErrorBoundary.tsx",
-      "line": 147,
+      "line": 152,
       "column": 17,
-      "endLine": 147,
+      "endLine": 152,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -4066,9 +4030,9 @@
     },
     {
       "file": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "line": 107,
+      "line": 119,
       "column": 6,
-      "endLine": 107,
+      "endLine": 119,
       "endColumn": 68,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -4514,9 +4478,9 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 33,
+      "line": 34,
       "column": 14,
-      "endLine": 33,
+      "endLine": 34,
       "endColumn": 25,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -4528,9 +4492,9 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 40,
+      "line": 41,
       "column": 14,
-      "endLine": 40,
+      "endLine": 41,
       "endColumn": 26,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -4570,79 +4534,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 152,
-      "column": 14,
-      "endLine": 152,
-      "endColumn": 40,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/inbox/ConversationListSidebar.tsx:152:14 150 | 151 | <div > 152 | ref={pullToRefresh.containerRef} | ^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 153 | className=\"flex-1 min-h-0 overflow-y-auto overflow-x-hidden\" 154 | {...(isMobile ? pullToRefresh.handlers : {})} 155 | >",
-      "spanHash": "1f83eec40d8f9610aaee83181dd1be94369a265092b9088b3b2a73598024b851",
-      "lineHash": "e6c445c91e16eb6c4576ed287c8fd58e0fc6106b0ee5a693ef779c27e81b22d7",
-      "contextHash": "5ab6eec1b02c7e841e3e075be7a6be7c821ae6c4f56b808f179526a9e81ba6f0"
-    },
-    {
-      "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 154,
-      "column": 14,
-      "endLine": 154,
-      "endColumn": 52,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/components/inbox/ConversationListSidebar.tsx:154:14 152 | ref={pullToRefresh.containerRef} 153 | className=\"flex-1 min-h-0 overflow-y-auto overflow-x-hidden\" > 154 | {...(isMobile ? pullToRefresh.handlers : {})} | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 155 | > 156 | {inbox.loading ? ( 157 | <div className=\"p-3 space-y-1\">",
-      "spanHash": "59a462457d7902f194e73ecea8db92101ce765753425e2ca04ef128e7897beff",
-      "lineHash": "7ad1a55799af094ece4bcb96a2349dc541e0307140a730380e890477be5d1b5f",
-      "contextHash": "ede900aeb3734b396d24bd10d677e7ab2f2d70cd8876c5b029d01c73a224fc6a"
-    },
-    {
-      "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 169,
-      "column": 84,
-      "endLine": 169,
-      "endColumn": 97,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/ConversationListSidebar.tsx:169:84 167 | <div className=\"flex-1 space-y-2\"> 168 | <div className=\"flex items-center justify-between\"> > 169 | <Skeleton className=\"h-3.5 rounded-md\" style={{ width: `${60 + Math.random() * 40}%` }} /> | ^^^^^^^^^^^^^ Cannot call impure function 170 | <Skeleton className=\"h-3 w-10 rounded-md\" /> 171 | </div> 172 | <Skeleton className=\"h-3 rounded-md\" style={{ width: `${40 + Math.random() * 30}%` }} />",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "da929735749614be81673454cfc27eea46cbdb23bd7ca4addbc5609097118433",
-      "contextHash": "40736fb2c86f8447fcc52641f19a26dd720c882f839b7e6e97aebdd9deceea93"
-    },
-    {
-      "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 172,
-      "column": 80,
-      "endLine": 172,
-      "endColumn": 93,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/ConversationListSidebar.tsx:172:80 170 | <Skeleton className=\"h-3 w-10 rounded-md\" /> 171 | </div> > 172 | <Skeleton className=\"h-3 rounded-md\" style={{ width: `${40 + Math.random() * 30}%` }} /> | ^^^^^^^^^^^^^ Cannot call impure function 173 | </div> 174 | </motion.div> 175 | ))}",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "11292b5343e4937788c03fbafadb88ae81588118c0c1280a0aa5e968e7134213",
-      "contextHash": "a91df9425a381886530d67cccae12c81b095285841306a5c6b172bd1d04e47d1"
-    },
-    {
-      "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 18,
-      "column": 1,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 1,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').",
-      "spanHash": null,
-      "lineHash": "8a528046fa1f335c47c2fd155bc280e737d2cac63f778a483418ea4fe39e9bc8",
-      "contextHash": "83a6857cfd3e7d562c9fa96930fb54229010e4e77e286b300e9461eaba89b2c9"
-    },
-    {
-      "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 20,
+      "line": 25,
       "column": 10,
-      "endLine": 20,
+      "endLine": 25,
       "endColumn": 13,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4654,9 +4548,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 21,
+      "line": 26,
       "column": 17,
-      "endLine": 21,
+      "endLine": 26,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4668,9 +4562,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 22,
+      "line": 27,
       "column": 16,
-      "endLine": 22,
+      "endLine": 27,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4682,9 +4576,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 23,
+      "line": 28,
       "column": 18,
-      "endLine": 23,
+      "endLine": 28,
       "endColumn": 21,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -6193,20 +6087,6 @@
       "contextHash": "34cd087713d5e6c332271bf1b34a617bf39fc65c2f44447d27a91626492cc522"
     },
     {
-      "file": "src/components/inbox/useFileUploadLogic.ts",
-      "line": 170,
-      "column": 9,
-      "endLine": 170,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "d6fffb5ebb4ea318fa6c542c5a7eb620e7347b8ffea9034f0351ae6085e4acff",
-      "lineHash": "d6fffb5ebb4ea318fa6c542c5a7eb620e7347b8ffea9034f0351ae6085e4acff",
-      "contextHash": "cea71a2be773243d0c5705c43ba17c31b1cb90d127506084eba6814e1107299f"
-    },
-    {
       "file": "src/components/inbox/useGlobalSearchData.ts",
       "line": 219,
       "column": 7,
@@ -6264,45 +6144,17 @@
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 122,
-      "column": 4,
-      "endLine": 122,
-      "endColumn": 7,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "166fb95eef99aba3016dbcc4faf52004f2ced2862dd5465da6819397f864fa31",
-      "contextHash": "80b92f24550666f30f95cdeb1047644928f48c2969c944e73f370274f0bcf75a"
-    },
-    {
-      "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 231,
-      "column": 64,
-      "endLine": 231,
-      "endColumn": 67,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "6627fb6d5b0faff00bed355e8355a94721e32ba76c1fd5c665a1aed41efdfc43",
-      "contextHash": "9944dc1e0adb09821bfe32ae6fca5b75a267f166730e7ac088c99586546cd85f"
-    },
-    {
-      "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 62,
+      "line": 73,
       "column": 23,
-      "endLine": 62,
+      "endLine": 73,
       "endColumn": 37,
       "severity": 1,
       "ruleId": "react-hooks/incompatible-library",
       "messageId": null,
-      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:62:23 60 | }, [safeConversations, pinnedIds]); 61 | > 62 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 63 | count: sortedConversations.length, 64 | getScrollElement: () => parentRef.current, 65 | estimateSize: () => ITEM_HEIGHT,",
+      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:73:23 71 | const estimateSize = useCallback(() => ITEM_HEIGHT, []); 72 | > 73 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 74 | count: sortedConversations.length, 75 | getScrollElement, 76 | estimateSize,",
       "spanHash": "f4e0eaa448a4a05be7d6db80323e491f2377e2c17a034e8f2ee6e2bd44a923b0",
       "lineHash": "c198de567abd89b5e249ef2ea843524d4f27a54f243ab646c25ccaf2785a33ac",
-      "contextHash": "5e9b1629388db7972bae926479a6a362fafe193a79b654c7bfa1bd9ad9e2ad63"
+      "contextHash": "5bbfdf0ac57f6bca119c0b98d1290e97b395d0d9e773a9024d1bb05117f254d3"
     },
     {
       "file": "src/components/inbox/VoiceSelector.tsx",
@@ -7436,7 +7288,7 @@
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "eb5f1254019d75c68c93e909c56471d7de20b67c75e489b52e81be6470cff46a",
-      "contextHash": "aa9fa93ea34fd13a580f313c5351a02539714b701e6a18222a86386a28bc8baf"
+      "contextHash": "966b0f63764972167fdf282b9a33ce3b6e13f8d9e3a75ffd91c648cbb2b14c04"
     },
     {
       "file": "src/components/queues/QueueGoalsDialog.tsx",
@@ -7468,9 +7320,9 @@
     },
     {
       "file": "src/components/queues/SLADashboard.tsx",
-      "line": 51,
+      "line": 50,
       "column": 6,
-      "endLine": 51,
+      "endLine": 50,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -7731,34 +7583,6 @@
       "spanHash": "ac1fbc635eeaaec4db4a37b3fd8f5fe30de750f78c0e368e780506dcf55c1445",
       "lineHash": "c672662539989e7993688a833e8535eec64e3081dc39a49a1949b4c2674b0446",
       "contextHash": "cf9c5dcf73b65d5201ea46dd4e73f1fd8b85d040af30f8848a42ab721ab12cd3"
-    },
-    {
-      "file": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "line": 67,
-      "column": 13,
-      "endLine": 67,
-      "endColumn": 27,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `playAlertSound` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/security/RateLimitRealtimeAlerts.tsx:67:13 65 | // Play sound for critical alerts 66 | if (newAlert.severity === 'critical' || newAlert.severity === 'high') { > 67 | playAlertSound(); | ^^^^^^^^^^^^^^ `playAlertSound` accessed before it is declared 68 | } 69 | } 70 | ) <ROOT>/src/components/security/RateLimitRealtimeAlerts.tsx:78:3 76 | }, []); 77 | > 78 | const playAlertSound = () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 79 | try { | ^^^^^^^^^ > 80 | const audio = new Audio('/notification.mp3'); | ^^^^^^^^^ > 81 | audio.volume = 0.5; | ^^^^^^^^^ > 82 | audio.play().catch(() => {}); | ^^^^^^^^^ > 83 | } catch (e) {} | ^^^^^^^^^ > 84 | }; | ^^^^^ `playAlertSound` is declared here 85 | 86 | const handleDismiss = async (alertId: string) => { 87 | setDismissed(prev => new Set([...prev, alertId]));",
-      "spanHash": "e88d6dc9c5518bc5f8688a56975b343503e7936bad427f5363e1f504b4ee0b89",
-      "lineHash": "2fc1c20df2681c15edfebd4a32dee7ddda037d4d9d8ec534065362dd9cab1b34",
-      "contextHash": "0db430461f1de31f36856fe1a34bae7dcc9f330da772e2ee94638c8770005251"
-    },
-    {
-      "file": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "line": 83,
-      "column": 17,
-      "endLine": 83,
-      "endColumn": 19,
-      "severity": 2,
-      "ruleId": "no-empty",
-      "messageId": "unexpected",
-      "message": "Empty block statement.",
-      "spanHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "lineHash": "e5f3427c21f620cf763f3725c061f45fe5f3e19e77ac41a2bebd7d6ecdc8b132",
-      "contextHash": "da9e76ab9ebacdbf19ac34490283209f91d6d148e6709e698cb3894d18017a22"
     },
     {
       "file": "src/components/security/SecurityOverview.tsx",
@@ -8377,20 +8201,6 @@
       "contextHash": "72130e79e8f58bdddce5af6cfd1834ca3382a5c52ab3a9c0501821d4d4f564bc"
     },
     {
-      "file": "src/components/settings/sla/SLARuleFormDialog.tsx",
-      "line": 39,
-      "column": 7,
-      "endLine": 39,
-      "endColumn": 14,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/settings/sla/SLARuleFormDialog.tsx:39:7 37 | useEffect(() => { 38 | if (open && editingRule) { > 39 | setForm({ | ^^^^^^^ Avoid calling setState() directly within an effect 40 | name: editingRule.name, 41 | first_response_minutes: editingRule.first_response_minutes, 42 | resolution_minutes: editingRule.resolution_minutes,",
-      "spanHash": "9c19f45ce87b76505e1fe93d2c162898f57c08d357e153f7b0cba6d092d8ca02",
-      "lineHash": "23b2a2a1db7cdcfec1413f5de2938222ed3d3bf5097ad623e1de3e1c5fec9050",
-      "contextHash": "9fe10fb4a6f55bc3d3997dae94a3f2342679d38923f331ba198ac348ef7e3a08"
-    },
-    {
       "file": "src/components/settings/SoundCustomizationPanel.tsx",
       "line": 42,
       "column": 63,
@@ -8420,9 +8230,9 @@
     },
     {
       "file": "src/components/sla/SLACharts.tsx",
-      "line": 43,
+      "line": 42,
       "column": 159,
-      "endLine": 43,
+      "endLine": 42,
       "endColumn": 162,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11654,20 +11464,6 @@
     },
     {
       "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "line": 248,
-      "column": 49,
-      "endLine": 248,
-      "endColumn": 52,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "ad16a2d453c5ee5b7d2e67cacecb0c1c31794ede007e7660c251917ae10aea8f",
-      "contextHash": "11d6ac5e6f51210bb19a5f2150dcffe437c2c71df908f738a92925fde985c787"
-    },
-    {
-      "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
       "line": 25,
       "column": 24,
       "endLine": 25,
@@ -11679,6 +11475,20 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a98d96e32cd783e820573a3755987ff9ce28bf983f62855e4b181dc08e334731",
       "contextHash": "8c60da5a22a6d8e84b700f4d8359aaa3975d9744c7b24576c00e98ef7ac6b71f"
+    },
+    {
+      "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
+      "line": 251,
+      "column": 49,
+      "endLine": 251,
+      "endColumn": 52,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "ad16a2d453c5ee5b7d2e67cacecb0c1c31794ede007e7660c251917ae10aea8f",
+      "contextHash": "11d6ac5e6f51210bb19a5f2150dcffe437c2c71df908f738a92925fde985c787"
     },
     {
       "file": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
@@ -12760,9 +12570,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 157,
+      "line": 178,
       "column": 17,
-      "endLine": 157,
+      "endLine": 178,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -12788,9 +12598,9 @@
     },
     {
       "file": "src/hooks/business/useCSAT.ts",
-      "line": 31,
+      "line": 32,
       "column": 9,
-      "endLine": 31,
+      "endLine": 32,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "no-case-declarations",
@@ -12802,9 +12612,9 @@
     },
     {
       "file": "src/hooks/business/useCSAT.ts",
-      "line": 35,
+      "line": 36,
       "column": 9,
-      "endLine": 35,
+      "endLine": 36,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "no-case-declarations",
@@ -13249,34 +13059,6 @@
       "contextHash": "c06e05fdbd80a17c94c7e1fd2236db3e4dc4472029db9dd6ed629e1e058362f3"
     },
     {
-      "file": "src/hooks/communication/useAudioMemes.ts",
-      "line": 53,
-      "column": 15,
-      "endLine": 53,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/communication/useAudioMemes.ts:53:15 51 | 52 | useEffect(() => { > 53 | if (open) fetchMemes(); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 54 | return () => { 55 | if (audioRef.current) { 56 | audioRef.current.pause();",
-      "spanHash": "104081241194a04924cc946ac3b00a5339800c81ea284a71929e61d5daff7aef",
-      "lineHash": "d276d4d2c2e1adcdef451ada4a851820287e8c2b9b9a3d82311c42eb5a884d7b",
-      "contextHash": "0c738c009a96defc85c464f82cb64c3ec5bd1b97009602a3f42dc2aef00cb02c"
-    },
-    {
-      "file": "src/hooks/communication/useAudioPlayer.ts",
-      "line": 23,
-      "column": 44,
-      "endLine": 23,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/hooks/communication/useAudioPlayer.ts:23:44 21 | 22 | const waveformHeights = useMemo( > 23 | () => Array.from({ length: 30 }, () => Math.random() * 60 + 20), | ^^^^^^^^^^^^^ Cannot call impure function 24 | [] 25 | ); 26 |",
-      "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
-      "lineHash": "0fe9300f713004e60afb0dd7e2637d582e93b8212808f7e0098d9d3960254225",
-      "contextHash": "895db615950da60820e65288fc1e524bac1556dabbb17f79f19085aa4c01ad6d"
-    },
-    {
       "file": "src/hooks/communication/useAudioRecorder.ts",
       "line": 62,
       "column": 13,
@@ -13429,34 +13211,6 @@
       "spanHash": "91e10380739015aafd0ed9fb344ec18728e648492611867c5aae2ce3497b539d",
       "lineHash": "c1a3b3ea2fa97ba1e17cdb5fc0abda37a6ee2996f738eb33006d1e6036198357",
       "contextHash": "0a19ce6715498023d1bd6b93a908f509a291b1b5d8f7563eac3d8554286373ba"
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 109,
-      "column": 35,
-      "endLine": 109,
-      "endColumn": 41,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `scribe` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/communication/useVoiceAgent.ts:109:35 107 | safeSetPhase('idle'); 108 | autoRestartRef.current = setTimeout(() => { > 109 | if (mountedRef.current && scribe.isConnected) { | ^^^^^^ `scribe` accessed before it is declared 110 | safeSetPhase('listening'); 111 | } 112 | }, AUTO_RESTART_DELAY_MS); <ROOT>/src/hooks/communication/useVoiceAgent.ts:138:3 136 | }, [supabaseUrl, supabaseKey, safeSetPhase]); 137 | > 138 | const scribe = useScribe({ | ^^^^^^^^^^^^^^^^^^^^^^^^^^ > 139 | modelId: 'scribe_v2_realtime', | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 140 | commitStrategy: CommitStrategy.VAD, … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 152 | }, | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 153 | }); | ^^^^^^ `scribe` is declared here 154 | 155 | const startListening = useCallback(async () => { 156 | if (phaseRef.current === 'booting' || phaseRef.current === 'processing') return;",
-      "spanHash": "ffb301e28a65f3046dd636ef12d04f8d2fc2e2b3b0001b0d88ce5e770dbca2da",
-      "lineHash": "445062254275b924504bca6ca96e36986bb36da81c3cbdc18ab1c3ed32bac204",
-      "contextHash": "c86b008a9a65565052cf7941cb37ad62e69d8ade101b5e376e8cb0eda67b39ff"
-    },
-    {
-      "file": "src/hooks/communication/useVoiceAgent.ts",
-      "line": 136,
-      "column": 6,
-      "endLine": 136,
-      "endColumn": 46,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useCallback has a missing dependency: 'scribe.isConnected'. Either include it or remove the dependency array.",
-      "spanHash": "dcd833fc074d7a37f0c9345bb8340efc6cdbbb5a4a77ebeaa8eb2c077125a703",
-      "lineHash": "a1033f9f584060c4fa9d55d25b05007fdcda6e5e53f4f1beecca6ec1d2ea2076",
-      "contextHash": "50c229cabd6c12cdc12a0b26cd8dee0660c222037be828b95e28b04e6a49c0cb"
     },
     {
       "file": "src/hooks/crm/useContactCustomFields.ts",
@@ -14049,9 +13803,9 @@
     {
       "file": "src/hooks/realtime/useSupabaseRealtime.ts",
       "line": 18,
-      "column": 65,
+      "column": 64,
       "endLine": 18,
-      "endColumn": 68,
+      "endColumn": 67,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -14063,9 +13817,9 @@
     {
       "file": "src/hooks/realtime/useSupabaseRealtime.ts",
       "line": 6,
-      "column": 54,
+      "column": 53,
       "endLine": 6,
-      "endColumn": 57,
+      "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
@@ -14087,34 +13841,6 @@
       "spanHash": "5a638a128ca67348f1073ba0aed26d85905a29128cbd71b250c9cf4e598c7f0d",
       "lineHash": "75b67f2e04ad63f532482cd0e38a4fa77bbd115a01680e643e4b1d0026ce7057",
       "contextHash": "5123344637bbf38764b4bc5611e11e7243ef3997e253f672be21853950774009"
-    },
-    {
-      "file": "src/hooks/sla/useSLACalculation.ts",
-      "line": 105,
-      "column": 5,
-      "endLine": 105,
-      "endColumn": 14,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/sla/useSLACalculation.ts:105:5 103 | 104 | useEffect(() => { > 105 | recompute(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 106 | if (params.firstResponseAt && params.resolvedAt) return; 107 | const interval = setInterval(recompute, 1000); 108 | return () => clearInterval(interval);",
-      "spanHash": "823116272fd060c10a98b57a557c0d5cd84905084b26e733083fbfd1a6ade921",
-      "lineHash": "b9c3dc411cc161245a1f83932057048f927383b203aeccf07ed1055fde8c6282",
-      "contextHash": "bed210ab1497b1ea2775df18a7437dc61348635bd4c02602a21f8009232a3b79"
-    },
-    {
-      "file": "src/hooks/sla/useSLACalculation.ts",
-      "line": 96,
-      "column": 66,
-      "endLine": 102,
-      "endColumn": 4,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useCallback has a missing dependency: 'params'. Either include it or remove the dependency array. If 'setState' needs the current value of 'params', you can also switch to useReducer instead of useState and read 'params' in the reducer.",
-      "spanHash": "57434c78c2c0174b347e2bc55e5b601a943d1929463329ba9aa96cd2f2eb9c2d",
-      "lineHash": "2357b1e84a7ca976352e2674967f841d479898bd098dddeaa31c356d60f24821",
-      "contextHash": "51f9f704e8d15cbeb25a1680b5bb39c896974768bf758a6b32f704dd1b4c35e2"
     },
     {
       "file": "src/hooks/sticker-picker/useStickerPicker.ts",
@@ -14241,62 +13967,6 @@
       "spanHash": "b9adfe5892cbe4cbfa0518704c32aa71bd35a60f4a305097e8dc9e406f77b65c",
       "lineHash": "b1f5d519af1c4ce59cdedc366b56942d53e29b1c18483281ed6c2611a895e97f",
       "contextHash": "82d0794a7f9cd80d4551db41a7032d4acdeab01a3d544ee13dd990635166b905"
-    },
-    {
-      "file": "src/hooks/system/useNavigationHistory.ts",
-      "line": 150,
-      "column": 19,
-      "endLine": 150,
-      "endColumn": 42,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/system/useNavigationHistory.ts:150:19 148 | canGoForward, 149 | breadcrumbTrail, > 150 | previousView: previousViewRef.current, | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 151 | history: state.entries, 152 | }; 153 | }",
-      "spanHash": "31ca0ff345b40ab71cf122673f545f91af707ab365be65a1bb5ec6f3fa7441ba",
-      "lineHash": "0b93849b710669213f3c7217b52fe882a1bbd8094b6cfc882594d3d2859c52f1",
-      "contextHash": "ef20e22a4627c2dc0e6fd4f71f693000c00dc971639a0917866e7d6cff7b588e"
-    },
-    {
-      "file": "src/hooks/system/useNavigationHistory.ts",
-      "line": 150,
-      "column": 19,
-      "endLine": 150,
-      "endColumn": 42,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/system/useNavigationHistory.ts:150:19 148 | canGoForward, 149 | breadcrumbTrail, > 150 | previousView: previousViewRef.current, | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render 151 | history: state.entries, 152 | }; 153 | }",
-      "spanHash": "31ca0ff345b40ab71cf122673f545f91af707ab365be65a1bb5ec6f3fa7441ba",
-      "lineHash": "0b93849b710669213f3c7217b52fe882a1bbd8094b6cfc882594d3d2859c52f1",
-      "contextHash": "ef20e22a4627c2dc0e6fd4f71f693000c00dc971639a0917866e7d6cff7b588e"
-    },
-    {
-      "file": "src/hooks/system/useNavigationHistory.ts",
-      "line": 66,
-      "column": 9,
-      "endLine": 66,
-      "endColumn": 19,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `navigateTo` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/system/useNavigationHistory.ts:66:9 64 | const hash = window.location.hash.replace('#', ''); 65 | if (hash && hash !== currentView && !RESERVED_HASHES.has(hash)) { > 66 | navigateTo(hash); | ^^^^^^^^^^ `navigateTo` accessed before it is declared 67 | } 68 | }; 69 | window.addEventListener('hashchange', onHashChange); <ROOT>/src/hooks/system/useNavigationHistory.ts:85:3 83 | }, []); 84 | > 85 | const navigateTo = useCallback((viewId: string) => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 86 | setState(prev => { | ^^^^^^^^^^^^^^^^^^^^^^ > 87 | const currentViewId = prev.entries[prev.index]?.viewId; … | ^^^^^^^^^^^^^^^^^^^^^^ > 101 | }); | ^^^^^^^^^^^^^^^^^^^^^^ > 102 | }, [syncHash]); | ^^^^^^^^^^^^^^^^^^ `navigateTo` is declared here 103 | 104 | const goBack = useCallback(() => { 105 | setState(prev => {",
-      "spanHash": "94f205cf8a3fb5359ea16c8e35fe44a1cead07175a8c2cd05e35a45bd15b5b0e",
-      "lineHash": "9c18e8ffb30a21da8c153590861c5852e0d09fe0003c918a12b77e64f86ee5ad",
-      "contextHash": "b505cc3c69b0480384b168ce27c3e6d99ff5e64b52e83a5828e01f1ae83ec697"
-    },
-    {
-      "file": "src/hooks/system/useNavigationHistory.ts",
-      "line": 85,
-      "column": 34,
-      "endLine": 102,
-      "endColumn": 4,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output. <ROOT>/src/hooks/system/useNavigationHistory.ts:85:34 83 | }, []); 84 | > 85 | const navigateTo = useCallback((viewId: string) => { | ^^^^^^^^^^^^^^^^^^^^^ > 86 | setState(prev => { | ^^^^^^^^^^^^^^^^^^^^^^ > 87 | const currentViewId = prev.entries[prev.index]?.viewId; … | ^^^^^^^^^^^^^^^^^^^^^^ > 101 | }); | ^^^^^^^^^^^^^^^^^^^^^^ > 102 | }, [syncHash]); | ^^^^ Could not preserve existing memoization 103 | 104 | const goBack = useCallback(() => { 105 | setState(prev => {",
-      "spanHash": "610c60e3743eeaa5b73678402cd951d7e7b16e9c649ba34f12381c85f7586254",
-      "lineHash": "c079e8eeb7609a4c6a660e7f629f599d828ceb61820cb520d483d84d4dba5bf0",
-      "contextHash": "1517c789de4a2b0a2b30ef313c87be9c01e4ca10c2694241896e246ec3c4cb4b"
     },
     {
       "file": "src/hooks/system/useNotifications.ts",
@@ -14635,48 +14305,6 @@
       "contextHash": "0496db9832d05a534bb4bb445f36b94db9b9e7d9bd31474e9d145c0b56470c73"
     },
     {
-      "file": "src/lib/externalProxy.ts",
-      "line": 63,
-      "column": 17,
-      "endLine": 63,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "8fa213e8fe84eddda52315d03d877290e69611c0cf33d288ab84117e9d168511",
-      "contextHash": "b9d4f36df80c95a5c1cf4f1ec5a16d3e9c269676b54dd83a37d3b8aff1229539"
-    },
-    {
-      "file": "src/lib/externalProxy.ts",
-      "line": 64,
-      "column": 17,
-      "endLine": 64,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "35b217017d425a8a712ee0f4f216e3c683a595a42f620ed9371cc121eb839906",
-      "contextHash": "fa756fb38e90c3b46ae6dc02419ebbcfe72d23d39b9a3a076f842b7584c7cc31"
-    },
-    {
-      "file": "src/lib/externalProxy.ts",
-      "line": 65,
-      "column": 17,
-      "endLine": 65,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "7449b4cc32fab07126bd7b26525e35f03a97b14ef1a748c00b7b34ab98b71d1a",
-      "contextHash": "9c0a70261d467076d72b11ea951a52d61422152f8a0a092427cb6a8a5bf7d988"
-    },
-    {
       "file": "src/lib/lazyWithRetry.ts",
       "line": 7,
       "column": 61,
@@ -14874,9 +14502,9 @@
     },
     {
       "file": "src/pages/ViewRouter.tsx",
-      "line": 133,
+      "line": 134,
       "column": 6,
-      "endLine": 133,
+      "endLine": 134,
       "endColumn": 27,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -15238,37 +14866,9 @@
     },
     {
       "file": "src/services/realtime.service.ts",
-      "line": 74,
-      "column": 50,
-      "endLine": 74,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 74,
-      "column": 84,
-      "endLine": 74,
-      "endColumn": 87,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
-      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
-    },
-    {
-      "file": "src/services/realtime.service.ts",
-      "line": 87,
+      "line": 105,
       "column": 70,
-      "endLine": 87,
+      "endLine": 105,
       "endColumn": 73,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15280,9 +14880,9 @@
     },
     {
       "file": "src/services/realtime.service.ts",
-      "line": 98,
+      "line": 116,
       "column": 33,
-      "endLine": 98,
+      "endLine": 116,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15291,6 +14891,34 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "ab705307d692327ee76e107e082c63cf8633b6606db47a6a30cbc8ad7b1bdf4d",
       "contextHash": "3fcdafe335b1a89294acc4c7bfff7b77b00f405b03fab1b2fdee1afc2a1b7c31"
+    },
+    {
+      "file": "src/services/realtime.service.ts",
+      "line": 92,
+      "column": 50,
+      "endLine": 92,
+      "endColumn": 53,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
+      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
+    },
+    {
+      "file": "src/services/realtime.service.ts",
+      "line": 92,
+      "column": 84,
+      "endLine": 92,
+      "endColumn": 87,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "224265530bce25cc66bec7a25e10c88bc63b8318542e5d99de14f161e855e757",
+      "contextHash": "ac5efe0027f34b209203fe478af08da45b8c9c03199ad15a6bc6dccae12d0056"
     },
     {
       "file": "src/test/mocks/auth.tsx",
@@ -15532,9 +15160,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 101,
+      "line": 114,
       "column": 9,
-      "endLine": 101,
+      "endLine": 114,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -15546,9 +15174,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 105,
+      "line": 118,
       "column": 7,
-      "endLine": 105,
+      "endLine": 118,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15560,9 +15188,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 130,
+      "line": 143,
       "column": 53,
-      "endLine": 130,
+      "endLine": 143,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15574,9 +15202,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 134,
+      "line": 147,
       "column": 64,
-      "endLine": 134,
+      "endLine": 147,
       "endColumn": 67,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15588,37 +15216,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 174,
-      "column": 57,
-      "endLine": 174,
-      "endColumn": 60,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "b41374d1bfa66c6a004dfb4c4c06df32c408b31c6727921932dc5529010dec11",
-      "contextHash": "edce13c605751c8c768bff086ee74c1aa298e694fa2f22a3a3b69146e6ffa341"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 182,
-      "column": 11,
-      "endLine": 182,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "6b92dc4f902e1d070064cf9cbdfe6dc1a4afa97e27e14f9c74f4606119edfc40",
-      "contextHash": "6c2c563fa309f02d7a8a216f09c4d971f0ac9beb66115911ed641ec91da8bb0f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 26,
+      "line": 31,
       "column": 66,
-      "endLine": 26,
+      "endLine": 31,
       "endColumn": 69,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15630,9 +15230,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 29,
+      "line": 34,
       "column": 30,
-      "endLine": 29,
+      "endLine": 34,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15644,9 +15244,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 35,
+      "line": 40,
       "column": 36,
-      "endLine": 35,
+      "endLine": 40,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15655,20 +15255,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "cc0c321cc8a825509f84deb3c3c0b1a1975551de7f8a6b8f79c791e29795cbf5",
       "contextHash": "36ad57afc341cf478172d598a6dbfe1779d4d2b48b267b54c7e983c840689c8b"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 74,
-      "column": 7,
-      "endLine": 74,
-      "endColumn": 18,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "0f1afa9985befa28506821ce8ae4d9b0c6c73a4642963ee1a49e1825cede8f26",
-      "contextHash": "b64d11211721dff1413b85c4f27d1a3aca77392abbcca50503545e1e049acecd"
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -15683,6 +15269,20 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a3043e3f41e7ca474ebec03b49ebbf3052f54197cf3bf5a7d54d734bcd6dfaeb",
       "contextHash": "795329cc897cbd312e965008bda76b83297cb594118bdd48aae5302c968bb822"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
+      "line": 87,
+      "column": 7,
+      "endLine": 87,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "0f1afa9985befa28506821ce8ae4d9b0c6c73a4642963ee1a49e1825cede8f26",
+      "contextHash": "b64d11211721dff1413b85c4f27d1a3aca77392abbcca50503545e1e049acecd"
     },
     {
       "file": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -15742,9 +15342,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 172,
+      "line": 197,
       "column": 13,
-      "endLine": 172,
+      "endLine": 197,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15756,9 +15356,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 198,
+      "line": 223,
       "column": 13,
-      "endLine": 198,
+      "endLine": 223,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15770,9 +15370,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 224,
+      "line": 249,
       "column": 7,
-      "endLine": 224,
+      "endLine": 249,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15784,9 +15384,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 280,
+      "line": 305,
       "column": 55,
-      "endLine": 280,
+      "endLine": 305,
       "endColumn": 58,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15798,9 +15398,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 307,
+      "line": 332,
       "column": 53,
-      "endLine": 307,
+      "endLine": 332,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15812,9 +15412,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 315,
+      "line": 340,
       "column": 25,
-      "endLine": 315,
+      "endLine": 340,
       "endColumn": 36,
       "severity": 1,
       "ruleId": "no-console",
@@ -15826,9 +15426,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 318,
+      "line": 343,
       "column": 36,
-      "endLine": 318,
+      "endLine": 343,
       "endColumn": 47,
       "severity": 1,
       "ruleId": "no-console",
@@ -15840,9 +15440,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 325,
+      "line": 350,
       "column": 7,
-      "endLine": 325,
+      "endLine": 350,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15854,9 +15454,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 335,
+      "line": 360,
       "column": 7,
-      "endLine": 335,
+      "endLine": 360,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16330,9 +15930,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 125,
+      "line": 139,
       "column": 13,
-      "endLine": 125,
+      "endLine": 139,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16344,9 +15944,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 133,
+      "line": 147,
       "column": 5,
-      "endLine": 133,
+      "endLine": 147,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16355,20 +15955,6 @@
       "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
       "lineHash": "26599fbde41a8ee5e763c2c173bfb5b40f1cc4d78f72103fa417e5f324a35046",
       "contextHash": "252bfc913ea2dc9cbf9b751d30470acad48e8565f794850c3093da79a30d6b5f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 146,
-      "column": 5,
-      "endLine": 146,
-      "endColumn": 16,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "5f2f8b10c6bfe06d6695279f9b6b914e054f860298946626a15bb146eb49bc20",
-      "contextHash": "94e07a7a6a2fe577ca75947fe694d020cb7388015a502916c8950dee8120f86d"
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -16386,9 +15972,23 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 180,
+      "line": 160,
+      "column": 5,
+      "endLine": 160,
+      "endColumn": 16,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "5f2f8b10c6bfe06d6695279f9b6b914e054f860298946626a15bb146eb49bc20",
+      "contextHash": "94e07a7a6a2fe577ca75947fe694d020cb7388015a502916c8950dee8120f86d"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "line": 194,
       "column": 9,
-      "endLine": 180,
+      "endLine": 194,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -16400,9 +16000,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 230,
+      "line": 260,
       "column": 13,
-      "endLine": 230,
+      "endLine": 260,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16414,9 +16014,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 313,
+      "line": 343,
       "column": 58,
-      "endLine": 313,
+      "endLine": 343,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16456,9 +16056,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 77,
+      "line": 88,
       "column": 5,
-      "endLine": 77,
+      "endLine": 88,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16470,9 +16070,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 121,
+      "line": 152,
       "column": 54,
-      "endLine": 121,
+      "endLine": 152,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16484,9 +16084,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 148,
+      "line": 195,
       "column": 5,
-      "endLine": 148,
+      "endLine": 195,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16498,9 +16098,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 153,
+      "line": 200,
       "column": 51,
-      "endLine": 153,
+      "endLine": 200,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16512,9 +16112,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 195,
+      "line": 251,
       "column": 3,
-      "endLine": 195,
+      "endLine": 251,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16526,9 +16126,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 199,
+      "line": 255,
       "column": 54,
-      "endLine": 199,
+      "endLine": 255,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16540,9 +16140,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 215,
+      "line": 273,
       "column": 7,
-      "endLine": 215,
+      "endLine": 273,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16554,9 +16154,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 65,
+      "line": 76,
       "column": 5,
-      "endLine": 65,
+      "endLine": 76,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16568,9 +16168,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 70,
+      "line": 81,
       "column": 54,
-      "endLine": 70,
+      "endLine": 81,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16592,35 +16192,7 @@
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "2ff1bf8c69fb2459c0253ec4985e90c5e8dbfdb05e1afeecd8e760626c35a841",
-      "contextHash": "b1578bd11c8b463ac5565c79e03dbe0734c0a6e96eefe2ec4e02996878d650e0"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 90,
-      "column": 11,
-      "endLine": 90,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "8353c7b29471c867087a622291cb61a1a7aaa1da401bb4e7e50729dbc5228556",
-      "contextHash": "de517a4ae4bbf6aba992d6245fab4cb5c6bdb43d80718a091be683674f7a2939"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 96,
-      "column": 9,
-      "endLine": 96,
-      "endColumn": 20,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "bebe2caf315e1c86c11e71a32802b04c4dbbe926dfd2d671d198f4439fecc849",
-      "contextHash": "3b3e2dac79302fa8c0a2c8da6b60de6a937c3bb90d72c476b2861407ed41e12d"
+      "contextHash": "a2b4b9b0b0e2e6370a1007f6c8b0f7b31e3b2b7f9a9b4c913da8862f6002658d"
     },
     {
       "file": "supabase/functions/_shared/gmail-helpers.ts",
@@ -16848,93 +16420,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 106,
-      "column": 9,
-      "endLine": 106,
-      "endColumn": 20,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "86a7eb32501e1b8e704463456f0e0b665389d0ac9a3dafc5dc604a333977ef76",
-      "contextHash": "6347f5d4a0cec96f0785e26edc98c0aaad1b202af4b98df1c396c4fb5436c8f8"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 110,
-      "column": 11,
-      "endLine": 110,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "14ae738343fe4977b6ea37adab1266e2abbe596ed04f54e0856ba62fe52d2bc9",
-      "contextHash": "7291dc38a7f4ee3b16c34d19394b10b83b63a9a72d6d7ee0df26b61f693113de"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 116,
-      "column": 11,
-      "endLine": 116,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "d2c1efaaf507b27373780c490e7c1860d4525ed8939343f8ea4d5e836aa386b9",
-      "contextHash": "e0f54c3b2cb06d81841f48ada1486cc95fcabeb359f7e94b0067f1d12a1129fa"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 119,
-      "column": 11,
-      "endLine": 119,
-      "endColumn": 22,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "14de75999f02199f4caa08c86f034f9c159e6e3008461debebfc2d2dba5c4ea4",
-      "contextHash": "d0a29094f2ce0954498f335f123eb0ef2301a62637a05509cbf62645eafaaa43"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 136,
-      "column": 32,
-      "endLine": 136,
-      "endColumn": 43,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "271d5217936a4510093bd3af2b10a58291c1856d57f1c57211ea5679d72812d5",
-      "contextHash": "b08207f748e2655542621b9ce710fed3ca8988f55868dc7636ba15f3db83c4bf"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 141,
-      "column": 7,
-      "endLine": 141,
-      "endColumn": 18,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "fecd002a70844ca21fc13b0d3d09cc48cf5fbe9fd5f125dd62259c270eacac68",
-      "contextHash": "0ed9ea982526684864521f6ee586bb9deeaa4ae795c61b9aedbcb545b62f7b2f"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 43,
+      "line": 157,
       "column": 5,
-      "endLine": 43,
+      "endLine": 157,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16946,9 +16434,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 66,
+      "line": 176,
       "column": 7,
-      "endLine": 66,
+      "endLine": 176,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16960,9 +16448,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 76,
+      "line": 186,
       "column": 11,
-      "endLine": 76,
+      "endLine": 186,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16971,6 +16459,90 @@
       "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
       "lineHash": "9fffe72c2b83d7893241e5acf8ad6f500784dbcda3a03b0308add4a74f894122",
       "contextHash": "6f626b4054ba848e7abdc8da8987681e0b91a512c7c28d410ce9a29751ecf5ea"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 216,
+      "column": 9,
+      "endLine": 216,
+      "endColumn": 20,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "86a7eb32501e1b8e704463456f0e0b665389d0ac9a3dafc5dc604a333977ef76",
+      "contextHash": "6347f5d4a0cec96f0785e26edc98c0aaad1b202af4b98df1c396c4fb5436c8f8"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 220,
+      "column": 11,
+      "endLine": 220,
+      "endColumn": 22,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "14ae738343fe4977b6ea37adab1266e2abbe596ed04f54e0856ba62fe52d2bc9",
+      "contextHash": "7291dc38a7f4ee3b16c34d19394b10b83b63a9a72d6d7ee0df26b61f693113de"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 226,
+      "column": 11,
+      "endLine": 226,
+      "endColumn": 22,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "d2c1efaaf507b27373780c490e7c1860d4525ed8939343f8ea4d5e836aa386b9",
+      "contextHash": "e0f54c3b2cb06d81841f48ada1486cc95fcabeb359f7e94b0067f1d12a1129fa"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 229,
+      "column": 11,
+      "endLine": 229,
+      "endColumn": 22,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "14de75999f02199f4caa08c86f034f9c159e6e3008461debebfc2d2dba5c4ea4",
+      "contextHash": "d0a29094f2ce0954498f335f123eb0ef2301a62637a05509cbf62645eafaaa43"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 246,
+      "column": 32,
+      "endLine": 246,
+      "endColumn": 43,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "271d5217936a4510093bd3af2b10a58291c1856d57f1c57211ea5679d72812d5",
+      "contextHash": "b08207f748e2655542621b9ce710fed3ca8988f55868dc7636ba15f3db83c4bf"
+    },
+    {
+      "file": "supabase/functions/evolution-webhook/index.ts",
+      "line": 251,
+      "column": 7,
+      "endLine": 251,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "fecd002a70844ca21fc13b0d3d09cc48cf5fbe9fd5f125dd62259c270eacac68",
+      "contextHash": "0ed9ea982526684864521f6ee586bb9deeaa4ae795c61b9aedbcb545b62f7b2f"
     },
     {
       "file": "supabase/functions/external-db-bridge/index.ts",
@@ -17086,9 +16658,9 @@
     },
     {
       "file": "supabase/functions/gmail-send/index.ts",
-      "line": 233,
+      "line": 241,
       "column": 26,
-      "endLine": 233,
+      "endLine": 241,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17128,9 +16700,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 18,
+      "line": 19,
       "column": 36,
-      "endLine": 18,
+      "endLine": 19,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17142,9 +16714,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 243,
+      "line": 249,
       "column": 63,
-      "endLine": 243,
+      "endLine": 249,
       "endColumn": 66,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17156,9 +16728,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 25,
+      "line": 26,
       "column": 38,
-      "endLine": 25,
+      "endLine": 26,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17170,9 +16742,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 34,
+      "line": 35,
       "column": 39,
-      "endLine": 34,
+      "endLine": 35,
       "endColumn": 42,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17184,9 +16756,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 34,
+      "line": 35,
       "column": 53,
-      "endLine": 34,
+      "endLine": 35,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17198,9 +16770,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 79,
+      "line": 80,
       "column": 31,
-      "endLine": 79,
+      "endLine": 80,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17212,9 +16784,9 @@
     },
     {
       "file": "supabase/functions/gmail-webhook/index.ts",
-      "line": 84,
+      "line": 85,
       "column": 30,
-      "endLine": 84,
+      "endLine": 85,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17338,9 +16910,9 @@
     },
     {
       "file": "supabase/functions/webhook-diagnostic/index.ts",
-      "line": 77,
+      "line": 74,
       "column": 22,
-      "endLine": 77,
+      "endLine": 74,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
