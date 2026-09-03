@@ -12,7 +12,7 @@
 
 import { chromium } from 'playwright';
 
-const BASE_URL = process.env.APP_URL || `http://localhost:${process.env.VITE_PORT || 5173}`;
+const BASE_URL = process.env.APP_URL || `http://localhost:${process.env.VITE_PORT || 8080}`;
 const VIEWPORT = { width: 1280, height: 800 };
 
 // Views to check — subset covering the layout-critical paths

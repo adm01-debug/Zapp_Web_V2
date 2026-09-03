@@ -28,7 +28,7 @@ const FULL_SCREEN = new Set([
 /** Walk a directory and yield .tsx files */
 function* walkTsx(dir) {
   let entries;
-  try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+  try { entries = readdirSync(dir, { withFileTypes: true }); } catch (e) { throw e; }
   for (const e of entries) {
     const full = path.join(dir, e.name);
     if (e.isDirectory()) {

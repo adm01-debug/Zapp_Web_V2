@@ -130,7 +130,7 @@ export function ContactsView() {
         <div className="col-span-full lg:col-span-3">
           <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
         </div>
-        <div>
+        <div className="col-span-full xl:col-span-1">
           <ContactBirthdayPanel
             contacts={filteredContacts.map(c => ({ id: c.id, name: c.name, avatar_url: c.avatar_url, birthday: undefined }))}
             onContactClick={openContactChat}
