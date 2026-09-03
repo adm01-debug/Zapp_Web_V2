@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -110,7 +111,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
                 {message.body_html && showHtml ? (
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert text-sm overflow-auto max-h-[400px] rounded border p-3 bg-background"
-                    dangerouslySetInnerHTML={{ __html: message.body_html }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.body_html, { USE_PROFILES: { html: true } }) }}
                   />
                 ) : (
                   <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
