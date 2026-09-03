@@ -101,8 +101,8 @@ export function SLAMetricsDashboard() {
                     </div>
                     <Badge className={cn("font-semibold border-0", getRateBadge(agent.overallRate))}>{Math.round(agent.overallRate)}%</Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[{ label: '1ª Resposta', icon: Clock, data: agent.firstResponse }, { label: 'Resolução', icon: CheckCircle2, data: agent.resolution }].map(col => (
+                  <div className="grid grid-cols-1 gap-3">
+                    {[{ label: '1ª Resposta', icon: Clock, data: agent.firstResponse }].map(col => (
                       <div key={col.label} className="space-y-1">
                         <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground flex items-center gap-1"><col.icon className="w-3 h-3" />{col.label}</span><span className={getRateColor(col.data.rate)}>{Math.round(col.data.rate)}%</span></div>
                         <div className="relative h-1.5 bg-muted rounded-full overflow-hidden"><motion.div className={cn("absolute inset-y-0 left-0 rounded-full", getRateBg(col.data.rate))} initial={{ width: 0 }} animate={{ width: `${col.data.rate}%` }} transition={{ duration: 0.8, delay: 0.7 + index * 0.05 }} /></div>
@@ -110,8 +110,8 @@ export function SLAMetricsDashboard() {
                     ))}
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" />{agent.firstResponse.onTime + agent.resolution.onTime} no prazo</span>
-                    <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-destructive" />{agent.firstResponse.breached + agent.resolution.breached} violações</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" />{agent.firstResponse.onTime} no prazo</span>
+                    <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-destructive" />{agent.firstResponse.breached} violações</span>
                   </div>
                 </motion.div>
               ))}

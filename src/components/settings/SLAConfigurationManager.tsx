@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Settings2, Plus, Trash2, Clock, Target, AlertTriangle, Edit2, Loader2 } from 'lucide-react';
+import { Settings2, Plus, Trash2, Clock, AlertTriangle, Edit2, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatSLAMinutes } from './sla/sla-utils';
 import { useSLAConfigurations, PRIORITY_CONFIG } from '@/hooks/sla/useSLAConfigurations';
@@ -42,7 +42,7 @@ export function SLAConfigurationManager() {
                 Configurações Globais de SLA
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Defina metas padrão de tempo de resposta e resolução por nível de prioridade.
+                Defina metas padrão de tempo de primeira resposta por nível de prioridade.
               </p>
             </div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -57,7 +57,7 @@ export function SLAConfigurationManager() {
                 className="flex flex-col items-center justify-center py-12 text-muted-foreground px-4">
                 <AlertTriangle className="w-10 h-10 mb-3 opacity-30" />
                 <p className="text-sm font-medium">Nenhuma configuração de SLA</p>
-                <p className="text-xs mt-1 opacity-70">Defina metas de tempo de resposta e resolução</p>
+                <p className="text-xs mt-1 opacity-70">Defina metas de tempo de primeira resposta</p>
               </motion.div>
             ) : (
               <ScrollArea className="max-h-[400px]">
@@ -77,7 +77,6 @@ export function SLAConfigurationManager() {
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 1ª Resp: <span className="font-medium text-foreground/80">{formatSLAMinutes(cfg.first_response_minutes)}</span></span>
-                            <span className="flex items-center gap-1"><Target className="w-3 h-3" /> Resolução: <span className="font-medium text-foreground/80">{formatSLAMinutes(cfg.resolution_minutes)}</span></span>
                           </div>
                         </div>
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl hover:bg-primary/10" onClick={() => openEdit(cfg)}><Edit2 className="w-3.5 h-3.5" /></Button>
@@ -110,7 +109,7 @@ export function SLAConfigurationManager() {
         <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Editar SLA' : 'Nova Configuração de SLA'}</DialogTitle>
-            <DialogDescription>{editingId ? 'Atualize os prazos e nível de prioridade desta configuração.' : 'Defina metas de tempo de resposta e resolução para um nível de prioridade.'}</DialogDescription>
+            <DialogDescription>{editingId ? 'Atualize os prazos e nível de prioridade desta configuração.' : 'Defina metas de tempo de primeira resposta para um nível de prioridade.'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -126,15 +125,9 @@ export function SLAConfigurationManager() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs font-medium">1ª Resposta (min)</Label>
-                <Input type="number" min={1} value={form.first_response_minutes} onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs font-medium">Resolução (min)</Label>
-                <Input type="number" min={1} value={form.resolution_minutes} onChange={e => setForm(f => ({ ...f, resolution_minutes: parseInt(e.target.value) || 1 }))} className="mt-1" />
-              </div>
+            <div>
+              <Label className="text-xs font-medium">1ª Resposta (min)</Label>
+              <Input type="number" min={1} value={form.first_response_minutes} onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))} className="mt-1" />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_default} onCheckedChange={v => setForm(f => ({ ...f, is_default: v }))} />

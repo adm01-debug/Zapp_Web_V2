@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Clock, Target, Edit2, Trash2, Bell } from 'lucide-react';
+import { Clock, Edit2, Trash2, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatSLAMinutes } from './sla-utils';
 import {
@@ -76,9 +76,6 @@ export function SLARuleRow({ rule, scope, scopeLabel, index, onEdit, onDelete, o
         <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" /> 1ª Resp: <span className="font-medium text-foreground/80">{formatSLAMinutes(rule.first_response_minutes)}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <Target className="w-3 h-3" /> Resolução: <span className="font-medium text-foreground/80">{formatSLAMinutes(rule.resolution_minutes)}</span>
           </span>
         </div>
       </div>

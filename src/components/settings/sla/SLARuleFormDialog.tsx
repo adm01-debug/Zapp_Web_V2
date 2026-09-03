@@ -108,8 +108,6 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
     if (!form.name.trim()) e.name = 'Nome é obrigatório';
     if (!scopeValue) e.scope = `Selecione um(a) ${SCOPE_LABELS[scope].toLowerCase()}`;
     if (form.first_response_minutes < 1) e.fr = 'Mínimo 1 minuto';
-    if (form.resolution_minutes < 1) e.res = 'Mínimo 1 minuto';
-    if (form.resolution_minutes <= form.first_response_minutes) e.res = 'Deve ser maior que 1ª Resposta';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -191,7 +189,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
           <DialogDescription>
             {editingRule
               ? 'Atualize os prazos e escopo desta regra.'
-              : 'Defina prazos específicos de resposta e resolução para este escopo.'}
+              : 'Defina prazos específicos de primeira resposta para este escopo.'}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -213,27 +211,15 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             {errors.scope && <p className="text-[11px] text-destructive mt-1">{errors.scope}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs font-medium">1ª Resposta (min)</Label>
-              <Input
-                type="number" min={1}
-                value={form.first_response_minutes}
-                onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))}
-                className={cn('mt-1', errors.fr && 'border-destructive')}
-              />
-              {errors.fr && <p className="text-[11px] text-destructive mt-1">{errors.fr}</p>}
-            </div>
-            <div>
-              <Label className="text-xs font-medium">Resolução (min)</Label>
-              <Input
-                type="number" min={1}
-                value={form.resolution_minutes}
-                onChange={e => setForm(f => ({ ...f, resolution_minutes: parseInt(e.target.value) || 1 }))}
-                className={cn('mt-1', errors.res && 'border-destructive')}
-              />
-              {errors.res && <p className="text-[11px] text-destructive mt-1">{errors.res}</p>}
-            </div>
+          <div>
+            <Label className="text-xs font-medium">1ª Resposta (min)</Label>
+            <Input
+              type="number" min={1}
+              value={form.first_response_minutes}
+              onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))}
+              className={cn('mt-1', errors.fr && 'border-destructive')}
+            />
+            {errors.fr && <p className="text-[11px] text-destructive mt-1">{errors.fr}</p>}
           </div>
 
           <div>

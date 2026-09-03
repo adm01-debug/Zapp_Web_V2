@@ -16,14 +16,12 @@ interface AgentSLAMetric {
   agentName: string;
   avatarUrl?: string;
   firstResponse: SLAMetric;
-  resolution: SLAMetric;
   overallRate: number;
 }
 
 export interface SLADashboardData {
   overall: {
     firstResponse: SLAMetric;
-    resolution: SLAMetric;
     totalConversations: number;
     overallRate: number;
   };
@@ -65,35 +63,26 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
   // Overall
   const frOnTime = slaData.filter(s => s.first_response_at && !s.first_response_breached).length;
   const frBreached = slaData.filter(s => s.first_response_breached).length;
-  const resOnTime = slaData.filter(s => s.resolved_at && !s.resolution_breached).length;
-  const resBreached = slaData.filter(s => s.resolution_breached).length;
 
   const firstResponse = buildMetric(frOnTime, frBreached);
-  const resolution = buildMetric(resOnTime, resBreached);
   const totalConversations = slaData.length;
-  const combinedTotal = firstResponse.total + resolution.total;
 
   const overall = {
     firstResponse,
-    resolution,
     totalConversations,
-    overallRate: combinedTotal > 0
-      ? ((frOnTime + resOnTime) / combinedTotal) * 100
-      : 100,
+    overallRate: firstResponse.rate,
   };
 
   // By agent
-  const agentMap = new Map<string, { frOn: number; frBr: number; resOn: number; resBr: number }>();
+  const agentMap = new Map<string, { frOn: number; frBr: number }>();
 
   for (const sla of slaData) {
     const agentId = sla.contacts?.assigned_to;
     if (!agentId) continue;
 
-    const stats = agentMap.get(agentId) || { frOn: 0, frBr: 0, resOn: 0, resBr: 0 };
+    const stats = agentMap.get(agentId) || { frOn: 0, frBr: 0 };
     if (sla.first_response_at && !sla.first_response_breached) stats.frOn++;
     if (sla.first_response_breached) stats.frBr++;
-    if (sla.resolved_at && !sla.resolution_breached) stats.resOn++;
-    if (sla.resolution_breached) stats.resBr++;
     agentMap.set(agentId, stats);
   }
 
@@ -101,15 +90,12 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
     .map(([agentId, s]) => {
       const profile = profiles.find(p => p.id === agentId);
       const fr = buildMetric(s.frOn, s.frBr);
-      const res = buildMetric(s.resOn, s.resBr);
-      const total = fr.total + res.total;
       return {
         agentId,
         agentName: profile?.name || 'Agente',
         avatarUrl: profile?.avatar_url || undefined,
         firstResponse: fr,
-        resolution: res,
-        overallRate: total > 0 ? ((s.frOn + s.resOn) / total) * 100 : 100,
+        overallRate: fr.rate,
       };
     })
     .sort((a, b) => b.overallRate - a.overallRate);
