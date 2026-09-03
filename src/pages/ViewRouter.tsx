@@ -1,12 +1,12 @@
 import { Construction } from 'lucide-react';
-import React, { Suspense, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCurrentModule } from '@/hooks/system/useCurrentModule';
 import { useDocumentTitle } from '@/hooks/ui/useDocumentTitle';
 import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
 import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
-import { LayoutScrollProvider } from '@/contexts/LayoutScrollContext';
+import { ViewContainer } from '@/components/layout/ViewContainer';
 
 import * as Views from './lazyViews';
 
@@ -21,29 +21,8 @@ interface ViewRouterProps {
   onNavigateTo?: (viewId: string) => void;
 }
 
-// Views that manage their own full-screen layout (no header)
+// Views that manage their own full-screen layout (no header wrapper, no shared scroller)
 const FULL_SCREEN_VIEWS = new Set(['inbox', 'pipeline', 'omni-inbox', 'team-chat', 'email-chat']);
-
-interface WithHeaderProps {
-  viewId: string;
-  children: React.ReactNode;
-}
-
-// SCROLL OWNERSHIP RULE: this wrapper is the ONE AND ONLY scroller for all standard views.
-// Views must NOT add overflow-y-auto / h-full at their root — they receive a scrollable parent
-// and must be w-full min-w-0 flat containers. Full-screen views (inbox, pipeline…) opt out
-// via FULL_SCREEN_VIEWS and manage their own scroll internally.
-function WithHeader({ viewId, children }: WithHeaderProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  if (FULL_SCREEN_VIEWS.has(viewId)) return <>{children}</>;
-  return (
-    <LayoutScrollProvider value={scrollRef}>
-      <div className="flex flex-col h-full w-full min-w-0 flex-1">
-        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6">{children}</div>
-      </div>
-    </LayoutScrollProvider>
-  );
-}
 
 // Declarative route map — easier to maintain than switch/case
 const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, never>>>> = {
@@ -142,7 +121,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   }, [currentView, userId]);
 
   return (
-    <WithHeader viewId={currentView}>
+    <ViewContainer fullScreen={FULL_SCREEN_VIEWS.has(currentView)}>
       {prefersReduced ? (
         <div key={currentView} className="h-full w-full">{content}</div>
       ) : (
@@ -159,7 +138,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
           </motion.div>
         </AnimatePresence>
       )}
-    </WithHeader>
+    </ViewContainer>
   );
 }
 
