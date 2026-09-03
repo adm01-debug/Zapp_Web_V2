@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { LayoutScrollProvider } from '@/contexts/LayoutScrollContext';
 
 interface ViewContainerProps {
@@ -13,8 +13,7 @@ interface ViewContainerProps {
  * Single scroll owner for all standard views.
  * Views rendered inside must be w-full min-w-0 flat containers — no overflow-y-auto at root.
  */
-export const ViewContainer = forwardRef<HTMLDivElement, ViewContainerProps>(
-  function ViewContainer({ children, fullScreen, viewId }, _ref) {
+export function ViewContainer({ children, fullScreen, viewId }: ViewContainerProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // O div rolavel sobrevive a troca de view (so o conteudo e remontado),
@@ -38,4 +37,3 @@ export const ViewContainer = forwardRef<HTMLDivElement, ViewContainerProps>(
       </LayoutScrollProvider>
     );
   }
-);

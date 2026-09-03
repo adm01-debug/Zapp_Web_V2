@@ -67,7 +67,7 @@ export function PageTemplate({
       initial="initial"
       animate="animate"
       className={cn(
-        'flex flex-col w-full min-w-0 h-full overflow-hidden',
+        'flex flex-col w-full min-w-0 min-h-full',
         !fullBleed && 'max-w-full'
       )}
     >
@@ -119,7 +119,7 @@ export function PageTemplate({
       <motion.div
         variants={childVariants}
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-hidden min-h-0',
+          'flex-1 overflow-x-hidden',
           padded && 'p-[var(--density-padding-x)] sm:p-[calc(var(--density-padding-x)*1.5)]',
           className
         )}
