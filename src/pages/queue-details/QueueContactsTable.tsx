@@ -48,7 +48,7 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
                     <TableCell>
                       {contact.assigned_agent ? (
                         <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent.avatar_url || undefined} /><AvatarFallback className="text-xs">{(contact.assigned_agent.name ?? '?')[0]}</AvatarFallback></Avatar>
+                          <Avatar className="w-6 h-6"><AvatarImage src={contact.assigned_agent.avatar_url || undefined} /><AvatarFallback className="text-xs">{(contact.assigned_agent.name || '?')[0]}</AvatarFallback></Avatar>
                           <span className="text-sm">{contact.assigned_agent.name}</span>
                         </div>
                       ) : <Badge variant="outline" className="text-warning border-warning/30">Aguardando</Badge>}

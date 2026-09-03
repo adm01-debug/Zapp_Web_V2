@@ -203,7 +203,9 @@ jobs:
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       contains(github.event.head_commit.message, 'audit') &&
-      !contains(github.event.head_commit.message, '[auto]')
+      !contains(github.event.head_commit.message, '[auto]') &&
+      !contains(github.event.head_commit.message, 'relatório de auditoria') &&
+      !contains(github.event.head_commit.message, 'automation/audit-report')
     permissions:
       contents: write
       pull-requests: write

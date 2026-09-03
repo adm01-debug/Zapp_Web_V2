@@ -71,6 +71,7 @@ export interface Conversation {
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
+  firstResponseAt?: Date | null;
   assignedTo?: AssignedAgentInfo | null;
   queue?: { id: string; name: string; color?: string } | null;
   sentiment?: string | null;
