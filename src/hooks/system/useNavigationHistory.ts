@@ -50,6 +50,19 @@ function getViewFromUrl(defaultView: string): string {
 }
 
 /**
+ * Shared navigation helper for non-hook call sites (GlobalSearch, ContactActionButtons, etc.).
+ * Updates the URL and dispatches a custom event so the hook pushes a new history entry
+ * without a synthetic popstate being misinterpreted as browser back/forward traversal.
+ */
+export function navigateToView(view: string): void {
+  const u = new URL(window.location.href);
+  u.searchParams.set('view', view);
+  if (u.hash && !RESERVED_HASHES.has(u.hash.replace('#', ''))) u.hash = '';
+  window.history.pushState(null, '', u.href);
+  window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view } }));
+}
+
+/**
  * Navigation history with back/forward stacks, breadcrumb trail,
  * and URL query-param sync (?view=<id>) for deep linking.
  *
@@ -95,11 +108,30 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     });
   }, [defaultView]);
 
+  // Always push a new entry for zapp:navigate — never treated as back/forward traversal.
+  const onZappNavigate = useCallback((e: Event) => {
+    const view = (e as CustomEvent<{ view: string }>).detail?.view;
+    if (!view) return;
+    setState(prev => {
+      const currentViewId = prev.entries[prev.index]?.viewId;
+      if (view === currentViewId) return prev;
+      const truncated = prev.entries.slice(0, prev.index + 1);
+      const newEntry: NavigationEntry = { viewId: view, timestamp: Date.now() };
+      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
+      return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId ?? null };
+    });
+  }, []);
+
   // Migration bridge: legacy code (e.g. GlobalSearch, ContactsCRUD) may still write
   // window.location.hash = '#inbox'. Intercept hashchange, migrate URL to ?view=, and handle.
   const onHashChange = useCallback(() => {
     const hash = window.location.hash.replace('#', '');
-    if (!hash || RESERVED_HASHES.has(hash)) return;
+    if (RESERVED_HASHES.has(hash)) return;
+    if (!hash) {
+      // Empty hash after hashchange (e.g. back to URL without anchor) — re-sync view from ?view=
+      onPopState();
+      return;
+    }
 
     // Migrate the URL: replace hash with ?view= query param
     const url = new URL(window.location.href);
@@ -124,11 +156,13 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
     window.addEventListener('popstate', onPopState);
     window.addEventListener('hashchange', onHashChange);
+    window.addEventListener('zapp:navigate', onZappNavigate);
     return () => {
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('zapp:navigate', onZappNavigate);
     };
-  }, [onPopState, onHashChange]);
+  }, [onPopState, onHashChange, onZappNavigate]);
 
   const syncView = useCallback((viewId: string, replace = false) => {
     const url = new URL(window.location.href);

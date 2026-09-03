@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
-import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface ContactFormData {
   name: string;
@@ -54,13 +54,8 @@ export function useContactsCRUD() {
   const openContactChat = useCallback((contactId: string) => {
     const appWindow = window as Window & { __pendingOpenContactId?: string };
     appWindow.__pendingOpenContactId = contactId;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('view') !== 'inbox') {
-      const u = new URL(window.location.href);
-      u.searchParams.set('view', 'inbox');
-      if (u.hash && !RESERVED_HASHES.has(u.hash.replace('#', ''))) u.hash = '';
-      window.history.pushState(null, '', u.href);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+    if (new URLSearchParams(window.location.search).get('view') !== 'inbox') {
+      navigateToView('inbox');
     }
     let attempts = 0;
     const tryDispatch = () => {
