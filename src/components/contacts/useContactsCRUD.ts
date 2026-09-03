@@ -53,10 +53,13 @@ export function useContactsCRUD() {
   const openContactChat = useCallback((contactId: string) => {
     const appWindow = window as Window & { __pendingOpenContactId?: string };
     appWindow.__pendingOpenContactId = contactId;
-    if (window.location.hash !== '#inbox') {
-      window.location.hash = 'inbox';
-    } else {
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') !== 'inbox') {
+      const u = new URL(window.location.href);
+      u.searchParams.set('view', 'inbox');
+      u.hash = '';
+      window.history.pushState(null, '', u.href);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
     let attempts = 0;
     const tryDispatch = () => {

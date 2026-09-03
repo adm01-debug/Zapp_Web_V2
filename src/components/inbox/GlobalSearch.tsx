@@ -27,6 +27,14 @@ interface GlobalSearchProps {
   onSelectResult: (result: SearchResult) => void;
 }
 
+function navToView(view: string) {
+  const u = new URL(window.location.href);
+  u.searchParams.set('view', view);
+  u.hash = '';
+  window.history.pushState(null, '', u.href);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearchProps) {
   const {
     search, isLoading, results, setResults, selectedIndex, setSelectedIndex,
@@ -38,9 +46,9 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
   const quickActions: QuickAction[] = useMemo(() => [
     { id: 'new-conversation', title: 'Nova conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['nova', 'novo', 'conversa', 'chat', 'iniciar', 'criar'] },
-    { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#inbox'; }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
-    { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#dashboard'; }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
-    { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#settings'; }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
+    { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); navToView('inbox'); }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
+    { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); navToView('dashboard'); }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
+    { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); navToView('settings'); }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
     { id: 'quick-reply', title: 'Respostas rápidas', description: 'Gerenciar templates de resposta', icon: <Zap className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['resposta', 'rápida', 'template', 'templates', 'atalho'] },
   ], [onOpenChange]);
 
