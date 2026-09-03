@@ -477,7 +477,7 @@
       "file_sql_sha256": "2472992e578bd2339db8fe20a6d85b9d5eb8ddb2ce6e3567cea4b43b6a3bcfbe",
       "ledger_name": "fix_search_contacts_id_tiebreaker",
       "ledger_sql_sha256": "2cd2da4a06ee2bad606a97e86d7139e92318f452a336cff63d045af4c3ee0efc",
-      "ledger_statements_sha256": "0f359b0bfdc8e4c6318b6eb1369fd241d391e11b4711d588ad144262ed606d56",
+      "ledger_statements_sha256": "66e4f41dbc6d2c9125ebe014d2b4e73587cbe8be2ea994a52a363d1978f64876",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "ledger-summary",
       "related_migration": null,
