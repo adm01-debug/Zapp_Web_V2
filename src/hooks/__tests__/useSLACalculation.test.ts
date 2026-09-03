@@ -106,7 +106,7 @@ describe('calculateStatus', () => {
     expect(result.remainingMs).toBe(-30_000);
   });
 
-  it('deadline curto (1 min) ja nasce em warning quando warningMinutes e maior que o prazo', () => {
+  it('deadline curto (1 min) permanece ok antes do prazo quando warningMinutes e maior que o prazo', () => {
     const totalMs = 60_000;
     const remainingMs = 55_000; // 5s decorridos; restante > total - 2min (negativo) -> ok
     const result = calculateStatus(remainingMs, totalMs, WARNING_MS, false);
