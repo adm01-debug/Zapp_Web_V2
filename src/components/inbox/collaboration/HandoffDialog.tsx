@@ -68,7 +68,7 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
                       selectedAgent === agent.id ? 'bg-primary/20 border border-primary' : 'hover:bg-muted')}>
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={agent.avatar_url || undefined} />
-                      <AvatarFallback>{agent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>{(agent.name ?? '?').substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <span className="flex-1 text-left text-sm">{agent.name}</span>
                     {selectedAgent === agent.id && <Check className="w-4 h-4 text-primary" />}

@@ -192,7 +192,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
         </TooltipTrigger>
         <TooltipContent side="top">Voice Changer</TooltipContent>
 
-        <PopoverContent className="w-[320px] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
+        <PopoverContent className="w-[min(320px,calc(100vw-1rem))] p-0 bg-popover border-border" align="end" side="top" sideOffset={8}>
           {/* Header */}
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
             <Wand2 className="w-4 h-4 text-primary" />

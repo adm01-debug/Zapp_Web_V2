@@ -35,12 +35,12 @@ export function useGmail(accountId?: string) {
 
   const connectGmail = useMutation({
     mutationFn: async () => {
-      const returnView = window.location.hash.replace('#', '') || 'integrations';
+      const returnView = new URLSearchParams(window.location.search).get('view') || 'integrations';
       const state = createGmailOAuthState({ view: returnView, integrationView: 'gmail' });
       const result = await callGmailFunction('gmail-oauth', { action: 'get-auth-url', state });
       return result.url as string;
     },
-    onSuccess: (url) => { const rv = window.location.hash.replace('#', '') || 'integrations'; storeGmailOAuthReturnContext(rv, 'gmail'); window.location.assign(url); },
+    onSuccess: (url) => { const rv = new URLSearchParams(window.location.search).get('view') || 'integrations'; storeGmailOAuthReturnContext(rv, 'gmail'); window.location.assign(url); },
     onError: (error: Error) => { toast.error(`Erro ao conectar Gmail: ${error.message}`); },
   });
 
