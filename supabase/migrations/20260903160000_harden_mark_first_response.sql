@@ -5,7 +5,7 @@
 -- fora da sua carteira. Adiciona o mesmo predicado do contacts_select_policy antes
 -- de qualquer leitura/escrita. Resto do corpo inalterado.
 
-BEGIN;
+
 
 CREATE OR REPLACE FUNCTION public.mark_first_response(p_contact_id uuid)
 RETURNS void
@@ -90,5 +90,3 @@ $$;
 
 REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;
-
-COMMIT;
