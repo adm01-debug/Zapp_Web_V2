@@ -75,6 +75,15 @@ export async function proxyToEvolution(
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
     const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      // Convencao do proxy: 200 com { error: true, message } — e o que o
+      // useEvolutionApiCore le para mostrar toast. Um 400 cru cairia no ramo de
+      // erro de rede. Sem corsHeaders o browser nem entrega o corpo.
+      return new Response(JSON.stringify({ error: true, message: go.invalid }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     if (go) {
       path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
       goPath = go.path;

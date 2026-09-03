@@ -81,22 +81,36 @@ serve(async (req) => {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       const data = await response.json();
-      if (data?.data && data.state === undefined) data.state = (data.data.loggedIn ?? data.data.LoggedIn) ? 'open' : 'close';
+      // '||' e nao '??': loggedIn:false explicito nao pode curto-circuitar o
+      // fallback por State — a GO manda os dois e nem sempre concordam.
+      if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
+      if (response.ok) {
+        const status = data.state === 'open' ? 'connected' : 'disconnected';
+        await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
+      }
       const status = data.state === 'open' ? 'connected' : 'disconnected';
-      await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Endpoints admin do GO usam instanceId (UUID) no path; o app guarda o NOME
     // da instância. Resolve nome→id via /instance/all antes de chamar.
     const resolveGoInstanceId = async (name: string): Promise<string | null> => {
-      const res = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey } });
-      if (!res.ok) return null;
-      const json = await res.json();
-      const records = Array.isArray(json?.data) ? json.data : [];
-      // deno-lint-ignore no-explicit-any
-      const found = records.find((r: any) => r?.name === name || r?.instanceId === name || r?.id === name);
-      return found?.instanceId ?? found?.id ?? null;
+      try {
+        const res = await fetch(`${evolutionApiUrl}/instance/all`, {
+          headers: { 'apikey': evolutionApiKey },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const records: Record<string, unknown>[] =
+          Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+        const found = records.find((r) =>
+          r?.name === name || r?.Name === name ||
+          r?.instanceId === name || r?.InstanceID === name || r?.id === name || r?.ID === name);
+        return (found?.instanceId ?? found?.InstanceID ?? found?.id ?? found?.ID ?? null) as string | null;
+      } catch {
+        return null;
+      }
     };
     const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
