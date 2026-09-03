@@ -52,7 +52,7 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
                 <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={handleKeyDown} placeholder="Buscar na conversa..."
                   className="h-full text-sm border-none bg-transparent shadow-none focus-visible:ring-0 px-0 min-w-0" />
-                {query && <button onClick={() => setQuery('')} className="p-1 rounded-full hover:bg-background shrink-0"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                {query && <button aria-label="Limpar busca" onClick={() => setQuery('')} className="p-1 rounded-full hover:bg-background shrink-0"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
                 {(debouncedQuery.trim() || filter !== 'all' || hasDateFilter) && (
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 tabular-nums font-medium" aria-live="polite">
                     {results.length > 0 ? `${activeIndex + 1}/${results.length}` : '0'}
@@ -60,11 +60,11 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
                 )}
               </div>
               <div className="flex items-center shrink-0 bg-muted rounded-xl border border-border">
-                <Button variant="ghost" size="icon" className="w-8 h-10 rounded-l-xl rounded-r-none hover:bg-accent" onClick={navigateUp} disabled={results.length === 0}><ChevronUp className="w-4 h-4" /></Button>
+                <Button aria-label="Resultado anterior" variant="ghost" size="icon" className="w-8 h-10 rounded-l-xl rounded-r-none hover:bg-accent" onClick={navigateUp} disabled={results.length === 0}><ChevronUp className="w-4 h-4" /></Button>
                 <div className="w-px h-5 bg-border" />
-                <Button variant="ghost" size="icon" className="w-8 h-10 rounded-r-xl rounded-l-none hover:bg-accent" onClick={navigateDown} disabled={results.length === 0}><ChevronDown className="w-4 h-4" /></Button>
+                <Button aria-label="Próximo resultado" variant="ghost" size="icon" className="w-8 h-10 rounded-r-xl rounded-l-none hover:bg-accent" onClick={navigateDown} disabled={results.length === 0}><ChevronDown className="w-4 h-4" /></Button>
               </div>
-              <Button variant="ghost" size="icon" className="w-8 h-10 rounded-xl shrink-0 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}><X className="w-4 h-4" /></Button>
+              <Button aria-label="Fechar busca" variant="ghost" size="icon" className="w-8 h-10 rounded-xl shrink-0 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}><X className="w-4 h-4" /></Button>
             </div>
 
             <ChatSearchFilters filter={filter} setFilter={setFilter} filterCounts={filterCounts} debouncedQuery={debouncedQuery} hasDateFilter={hasDateFilter}
