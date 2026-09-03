@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 
 export interface NavigationEntry {
   viewId: string;
@@ -100,11 +100,11 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   // Ref mirrors last-rendered state so URL sync in callbacks can read current
   // history without adding state to dependency arrays (which would regenerate
-  // memoized callbacks on every navigation). Updated in an effect (not during
-  // render) to satisfy react-hooks/refs; safe because callbacks are event
-  // handlers that always run after effects.
+  // memoized callbacks on every navigation). useLayoutEffect (not useEffect)
+  // runs synchronously before paint, closing the window where stateRef would
+  // be stale if goBack/goForward fired between DOM commit and effect.
   const stateRef = useRef(state);
-  useEffect(() => {
+  useLayoutEffect(() => {
     stateRef.current = state;
   });
 
