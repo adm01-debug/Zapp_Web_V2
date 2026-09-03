@@ -89,7 +89,7 @@ export const MediaCard = memo(function MediaCard({ item, isSelected, onSelect, o
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <p className="text-xs text-primary-foreground">
-          {format(new Date(item.created_at), 'dd/MM/yy HH:mm', { locale: ptBR })}
+          {item.created_at ? format(new Date(item.created_at), 'dd/MM/yy HH:mm', { locale: ptBR }) : '—'}
         </p>
       </div>
     </motion.div>

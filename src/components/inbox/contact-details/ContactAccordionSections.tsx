@@ -13,7 +13,6 @@ import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { CustomFieldsSection } from '@/components/contacts/CustomFieldsSection';
 import { PrivateNotes } from '../PrivateNotes';
 import { ConversationHistory } from '../ConversationHistory';
 import { MediaGalleryContent } from '../MediaGallery';
