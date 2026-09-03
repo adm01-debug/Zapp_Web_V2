@@ -1,11 +1,11 @@
-{"-- 20260903160000_harden_mark_first_response
+-- 20260903160000_harden_mark_first_response
 -- mark_first_response e SECURITY DEFINER e escrevia em conversation_sla a partir de
 -- um p_contact_id vindo direto do cliente, sem checar escopo (IDOR): qualquer
 -- authenticated podia carimbar first_response_at/first_response_breached de contato
 -- fora da sua carteira. Adiciona o mesmo predicado do contacts_select_policy antes
 -- de qualquer leitura/escrita. Resto do corpo inalterado.
 
-
+BEGIN;
 
 CREATE OR REPLACE FUNCTION public.mark_first_response(p_contact_id uuid)
 RETURNS void
@@ -89,4 +89,6 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;"}
+GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;
+
+COMMIT;

@@ -444,10 +444,10 @@
     {
       "version": "20260903160000",
       "filename": "20260903160000_harden_mark_first_response.sql",
-      "file_sha256": "b4678b7133d0949ecefe180689ed4c0bc4de9df1829e914fb85ac975f7c5d1ff",
+      "file_sha256": "750f12d1edc49a69c0ccd4139df8cf70d9589db2f1447b7774d493470de57a8c",
       "ledger_name": "harden_mark_first_response",
       "kind": "ledger-only/name-and-file-pinned",
-      "justification": "Harden IDOR da mark_first_response aplicado direto no banco em 03/09 16:00Z (predicado de autorizacao de contacts antes de escrever em conversation_sla). Arquivo criado retroativamente a partir do SQL exato do ledger para versionar; hashes do ledger estao vazios/e3b0 (stmts via db_transaction)."
+      "justification": "Harden IDOR da mark_first_response aplicado direto no banco em 03/09 16:00Z (predicado de autorizacao de contacts antes de escrever em conversation_sla). Arquivo criado junto com a aplicacao; paridade conferida contra statements[1] do ledger (len=2907, md5=42ecbf1e911060116159dea7bb104f54) apos remover BEGIN;/COMMIT; do arquivo."
     }
   ]
 }
