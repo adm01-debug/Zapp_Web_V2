@@ -78,7 +78,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   });
 
   return (
-    <div className="flex h-screen max-h-screen min-h-screen bg-background overflow-hidden relative">
+    <div className="flex h-[100dvh] max-h-[100dvh] min-h-[100dvh] bg-background overflow-hidden relative">
       <RouteLoadingBar isLoading={loading} />
 
        <A11yBoilerplate />

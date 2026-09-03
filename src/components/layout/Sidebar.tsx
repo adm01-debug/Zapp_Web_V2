@@ -64,7 +64,7 @@ export const Sidebar = React.memo(function Sidebar({
 
   return (
     <aside id="main-navigation" role="navigation" aria-label="Menu de navegação principal"
-      className={cn('flex flex-col h-screen border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[62px]' : 'w-[220px]')}>
+      className={cn('flex flex-col h-[100dvh] border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[62px]' : 'w-[220px]')}>
 
       {/* Logo + Toggle */}
       <div className={cn('flex items-center h-[56px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
