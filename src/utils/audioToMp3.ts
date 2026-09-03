@@ -26,24 +26,46 @@ let lamejsCache: { Mp3Encoder: new (channels: number, sampleRate: number, kbps: 
   flush: () => Int8Array;
 } } | null = null;
 
-/** Carrega lamejs uma única vez por sessão (script tag + cache em módulo). */
-async function loadLamejs(): Promise<NonNullable<typeof lamejsCache>> {
-  if (lamejsCache) return lamejsCache;
-  await new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[data-lamejs="1"]`);
-    if (existing) { existing.addEventListener('load', () => resolve()); existing.addEventListener('error', () => reject(new Error('Falha ao carregar lamejs'))); return; }
-    const s = document.createElement('script');
-    s.src = LAMEJS_URL;
-    s.async = true;
-    s.dataset.lamejs = '1';
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Falha ao carregar lamejs do CDN'));
-    document.head.appendChild(s);
-  });
-  const ctx = window as unknown as { lamejs?: NonNullable<typeof lamejsCache> };
-  if (!ctx.lamejs) throw new Error('lamejs não disponível após load');
-  lamejsCache = ctx.lamejs;
-  return lamejsCache;
+let lamejsLoadPromise: Promise<NonNullable<typeof lamejsCache>> | null = null;
+
+/** Carrega lamejs uma única vez por sessão (script tag + Promise compartilhada). */
+function loadLamejs(): Promise<NonNullable<typeof lamejsCache>> {
+  if (lamejsCache) return Promise.resolve(lamejsCache);
+  // Promise compartilhada: chamadas concorrentes aguardam o MESMO load — sem
+  // listeners órfãos em script cujo evento 'load' já disparou (race que travava o upload).
+  if (!lamejsLoadPromise) {
+    lamejsLoadPromise = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>(`script[data-lamejs="1"]`);
+      const attach = (s: HTMLScriptElement) => {
+        s.addEventListener('load', () => resolve());
+        s.addEventListener('error', () => reject(new Error('Falha ao carregar lamejs do CDN')));
+      };
+      if (existing) {
+        // Se o script já terminou de carregar, o evento 'load' não dispara mais —
+        // resolve imediatamente se o global já existe, senão anexa listeners.
+        const w = window as unknown as { lamejs?: NonNullable<typeof lamejsCache> };
+        if (w.lamejs) { resolve(); return; }
+        attach(existing);
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = LAMEJS_URL;
+      s.async = true;
+      s.dataset.lamejs = '1';
+      attach(s);
+      document.head.appendChild(s);
+    }).then(() => {
+      const ctx = window as unknown as { lamejs?: NonNullable<typeof lamejsCache> };
+      if (!ctx.lamejs) throw new Error('lamejs não disponível após load');
+      lamejsCache = ctx.lamejs;
+      return lamejsCache;
+    }).catch((err) => {
+      // permite retry em falha de rede (não deixa a promise rejeitada em cache)
+      lamejsLoadPromise = null;
+      throw err;
+    });
+  }
+  return lamejsLoadPromise;
 }
 
 function floatToInt16(input: Float32Array): Int16Array {
