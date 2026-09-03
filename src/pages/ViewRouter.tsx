@@ -5,6 +5,7 @@ import { useCurrentModule } from '@/hooks/system/useCurrentModule';
 import { useDocumentTitle } from '@/hooks/ui/useDocumentTitle';
 import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
+import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 
 import * as Views from './lazyViews';
 
@@ -154,21 +155,6 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   );
 }
 
-function ViewLoadingSkeleton() {
-  return (
-    <div className="flex items-center justify-center h-full" role="status" aria-busy="true" aria-label="Carregando módulo">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 animate-pulse" />
-        <div className="flex gap-1" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** Per-view error boundary with automatic retry and Suspense for lazy loading */
 function ErrorBoundaryView({ viewId, children }: { viewId: string; children: React.ReactNode }) {
   const mod = useCurrentModule(viewId);
@@ -178,7 +164,7 @@ function ErrorBoundaryView({ viewId, children }: { viewId: string; children: Rea
       moduleName={mod.label}
       maxAutoRetries={2}
     >
-      <Suspense fallback={<ViewLoadingSkeleton />}>
+      <Suspense fallback={<ViewLoadingFallback />}>
         {children}
       </Suspense>
     </ErrorBoundaryWithRetry>

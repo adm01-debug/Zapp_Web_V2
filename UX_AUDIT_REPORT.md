@@ -106,7 +106,7 @@
 
 **Impacto:** 6 ações aparecem no hover de TODA conversa na inbox principal. Usuário clica — nada acontece. Nenhum feedback visual ou auditivo. Pior que não ter os botões: promete e não entrega.
 
-**Correção:** Adicionadas props opcionais `onResolve`, `onTransfer`, `onPin`, `onFavorite`, `onSnooze`, `onArchive`. Se não fornecidas pelo pai, mostra `toast.info("Em desenvolvimento")`. **Status: CORRIGIDO** ✅
+**Correção:** Adicionadas props opcionais `onResolve`, `onTransfer`, `onPin`, `onFavorite`, `onSnooze`, `onArchive` em `ConversationItem`. Se não fornecidas pelo pai, exibe `toast.info('‹Ação›: em breve')` (ex: `'Resolver: em breve'`). **Status: PARCIALMENTE IMPLEMENTADO** — handlers em `ConversationItem`; wiring para `ConversationRow` (caminho real de renderização via `VirtualizedRealtimeList`) é pendência de PR separado.
 
 ---
 
@@ -193,20 +193,32 @@ if (!confirm(`Tem certeza que deseja forçar logout de ${userName}?`)) return;
 
 **Arquivo:** `src/components/security/RateLimitRealtimeAlerts.tsx:83`
 
-**Evidência:**
+**Evidência (código original com falha):**
 ```tsx
 const playAlertSound = () => {
   try {
     const audio = new Audio('/notification.mp3');
     audio.volume = 0.5;
-    audio.play().catch(() => {});
-  } catch (e) {} // ← silencioso
+    audio.play().catch(() => {}); // ← falha assíncrona silenciosa
+  } catch (e) {} // ← falha síncrona silenciosa
 };
 ```
 
 **Impacto:** Em componente de alertas de segurança, falhas no construtor `Audio()` são engolidas sem rastro. Se o arquivo de áudio não existir ou o ambiente não suportar Web Audio, o administrador não percebe que o alerta sonoro não funciona.
 
-**Correção:** Substituído `} catch (e) {}` por `} catch (e) { console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e); }`. Erro visível em DevTools sem interromper o fluxo. **Status: CORRIGIDO** ✅
+**Correção (código atual):**
+```tsx
+function playAlertSound() {
+  try {
+    const audio = new Audio('/notification.mp3');
+    audio.volume = 0.5;
+    audio.play().catch((err) => { console.warn('[RateLimitRealtimeAlerts] Audio play failed:', err); });
+  } catch (e) {
+    console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
+  }
+}
+```
+Ambas as falhas (síncrona e assíncrona) agora registram em DevTools sem interromper o fluxo. **Status: CORRIGIDO** ✅
 
 ---
 
