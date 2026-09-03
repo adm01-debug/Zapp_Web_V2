@@ -371,6 +371,48 @@
       "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo PR #116 documenta retroativamente o DDL reprodutível; o ledger tem SQL canônico vazio — pinagem por filename e ledger_name apenas."
     },
     {
+      "version": "20260902000200",
+      "filename": "20260902000200_fix_cron_avatars_refresh_key.sql",
+      "file_sha256": "388b70e41c26ba3dbd43292c7c4bc7fb84d9d1fdaa582e47148cde5e4a75df9c",
+      "ledger_name": "fix_cron_avatars_refresh_key",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Reagendamento do cron avatars-refresh aplicado direto no banco 02/09 sem captura de SQL no ledger; arquivo pin com o statement real."
+    },
+    {
+      "version": "20260902000500",
+      "filename": "20260902000500_fix_idor_get_connection_functions.sql",
+      "file_sha256": "7d7261b93e4bed70457871b655bff7c86e4fff84a9c6e6a0a134fab19fcd8b1a",
+      "ledger_name": "fix_idor_get_connection_functions",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_sql_sha256": "b0c66d5b4719b7018090b697b6cc7032a2020b8e817ec7279ca496c95fca3a33",
+      "ledger_statements_sha256": "8babb9c1cf06bbe1dcb43434096b25c67c10e352ceb150a72c2f523a9cc1266f",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Reconciliacao de DDL de 02/09 aplicado fora do Git; arquivo criado do statement do ledger.",
+      "file_sql_sha256": "c67511268e711693d6875dd9f381b9d3db6e9a06d1ba2926951941be86e5131b"
+    },
+    {
+      "version": "20260902000600",
+      "filename": "20260902000600_fix_record_failed_login_acl.sql",
+      "file_sha256": "386e5dac13c8186ae20b01af4963b31c207be44bbf69f8d63d71083dff6910fa",
+      "ledger_name": "fix_record_failed_login_acl",
+      "kind": "ledger-divergence/pinned-replay",
+      "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13a2dacc3f734",
+      "ledger_statements_sha256": "471c9385c7467e2731ba51231b46bbc697430f24eac7ff1d21c3f132e485fc21",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Reconciliacao de DDL de 02/09 aplicado fora do Git; arquivo criado do statement do ledger.",
+      "file_sql_sha256": "e1da28d6dfc143d1848416e514bdef3ea47819c57f835ebca7715c31a589ab83"
+    },
+    {
+      "version": "20260902000700",
+      "filename": "20260902000700_fix_search_contacts_order_tiebreaker.sql",
+      "file_sha256": "6969ebcbae830679e5b137013c05f57b1a44dbd35529fc0748873cb79c37231b",
+      "ledger_name": "fix_search_contacts_order_tiebreaker",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Superseded por 20260902230000; ledger sem SQL capturado; arquivo pin."
+    },
+    {
       "version": "20260902100001",
       "filename": "20260902100001_drop_dead_index_wc_id.sql",
       "file_sha256": "f2cee80ed3f33d53ce29e88454eacfc2fb371f9f0f6047eadeff592c7af3e89e",
