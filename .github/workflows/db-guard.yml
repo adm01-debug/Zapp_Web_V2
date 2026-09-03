@@ -73,7 +73,61 @@ jobs:
           ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
 
+      # Validacao de TLS e consulta no MESMO step: a credencial fica so no env
+      # deste step e nunca vai para o GITHUB_ENV, senao todo step seguinte
+      # (inclusive script alteravel pelo PR) passaria a enxerga-la.
+      # Endurecimento igual ao de db-live-guard.yml: confirma que a URL e o
+      # endpoint oficial, recusa sslmode reduzido vindo na propria string e fixa
+      # a CA do Supabase. 'require' sozinho criptografa mas nao autentica o
+      # servidor, entao um endpoint que intercepte TLS receberia a credencial.
       - name: Simular regressões da ACL da dead-letter queue
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "DESTINO_URL ausente - verificacao de ACL pulada."
+            exit 0
+          fi
+          DESTINO_URL=$(node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.error('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
+          process.stdout.write(tls.connectionString);
+          NODE
+          ) || exit 1
+          echo "::add-mask::$DESTINO_URL"
+          export PGSSLMODE=verify-full
+          FALHA=0
+          for func in mcp_exec mcp_exec_many; do
+            acl=$(psql "$DESTINO_URL" -At -c \
+              "SELECT COALESCE(proacl::text, '{=X/postgres}') FROM pg_proc p \
+               JOIN pg_namespace n ON n.oid=p.pronamespace \
+               WHERE n.nspname='public' AND p.proname='${func}'")
+            echo "${func} ACL: ${acl}"
+            case "${acl}" in
+              *authenticated=X*|*anon=X*|*\{=X*|*,=X*|=X/*)
+                echo "FALHA: ${func} executavel por authenticated, anon ou PUBLIC!"
+                FALHA=1
+                ;;
+              *)
+                echo "OK: ${func} restrito a postgres e service_role"
+                ;;
+            esac
+          done
+          exit $FALHA
+
+      - name: Simular regressões da ACL de webhook failures
         env:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/check-webhook-failures-acl.test.sh
