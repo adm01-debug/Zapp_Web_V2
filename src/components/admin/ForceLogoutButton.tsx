@@ -3,6 +3,17 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ForceLogoutButtonProps {
   userId: string;
@@ -13,8 +24,7 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
   const [loading, setLoading] = useState(false);
 
   const handleForceLogout = async () => {
-    if (!confirm(`Tem certeza que deseja forçar logout de ${userName}?`)) return;
-
+    if (loading) return;
     setLoading(true);
     try {
       const { error } = await supabase
@@ -32,15 +42,37 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleForceLogout}
-      disabled={loading}
-      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-      title="Forçar logout"
-    >
-      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-    </Button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={loading}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          aria-label="Forçar logout"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <LogOut className="w-4 h-4" aria-hidden="true" />}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Forçar logout de {userName}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            A sessão ativa de <strong>{userName}</strong> será invalidada imediatamente. O usuário precisará fazer login novamente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleForceLogout}
+            disabled={loading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Forçar logout
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

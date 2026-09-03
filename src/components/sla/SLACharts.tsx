@@ -12,7 +12,6 @@ interface DailyData {
   dateLabel: string;
   totalConversations: number;
   firstResponseBreaches: number;
-  resolutionBreaches: number;
   totalBreaches: number;
   slaRate: number;
 }
@@ -65,7 +64,6 @@ export function SLAViolationsChart({ dailyData }: { dailyData: DailyData[] }) {
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
               <Legend />
               <Bar dataKey="firstResponseBreaches" name="1ª Resposta" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="resolutionBreaches" name="Resolução" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

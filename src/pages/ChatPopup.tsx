@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useMessages } from '@/hooks/chat/useMessages';
@@ -70,6 +70,14 @@ export default function ChatPopup() {
     enabled: !!contactId,
   });
 
+  // SLA de 1a resposta: timestamp da primeira mensagem efetivamente enviada pelo atendente
+  const firstResponseAt = useMemo(() => {
+    const sent = (messages as unknown as Array<{ sender?: string; status?: string | null; created_at?: string }>)
+      .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
+      .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+    return sent[0]?.created_at ? new Date(sent[0].created_at) : null;
+  }, [messages]);
+
   useEffect(() => {
     if (!contactId) return;
     (async () => {
@@ -105,6 +113,7 @@ export default function ChatPopup() {
         priority: contact.ai_priority === 'high' ? 'high' : 'medium',
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
+        firstResponseAt,
         assignedTo: undefined,
       }
     : null;
