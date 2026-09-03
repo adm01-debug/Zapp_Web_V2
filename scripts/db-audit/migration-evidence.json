@@ -440,6 +440,14 @@
       "ledger_name": "audit_fix_secdef_search_path_realtime_indexes",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Arquivo reconstrói com certeza os 2 índices novos (idx_contacts_updated_at, idx_messages_unread_contact) verificados contra pg_indexes; a parte de search_path em funções SECURITY DEFINER não foi reconstruída como DDL por falta de baseline histórico do delta exato — verificado ao vivo que 0 funções SECURITY DEFINER do schema public estão hoje sem search_path. Ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260903160000",
+      "filename": "20260903160000_harden_mark_first_response.sql",
+      "file_sha256": "b4678b7133d0949ecefe180689ed4c0bc4de9df1829e914fb85ac975f7c5d1ff",
+      "ledger_name": "harden_mark_first_response",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Harden IDOR da mark_first_response aplicado direto no banco em 03/09 16:00Z (predicado de autorizacao de contacts antes de escrever em conversation_sla). Arquivo criado retroativamente a partir do SQL exato do ledger para versionar; hashes do ledger estao vazios/e3b0 (stmts via db_transaction)."
     }
   ]
 }

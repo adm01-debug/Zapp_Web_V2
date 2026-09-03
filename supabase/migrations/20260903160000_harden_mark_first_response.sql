@@ -1,8 +1,9 @@
-{"-- 20260903120000_register_first_response
--- Registra o timestamp real da primeira resposta do atendente (SLA de 1a resposta).
--- Necessario porque a UI usava conversation.updatedAt (tempo de resolucao) como
--- first_response_at, gerando violacoes falsas; e ninguem escrevia first_response_at.
--- RLS de conversation_sla so permite escrita de admin/supervisor -> SECURITY DEFINER.
+{"-- 20260903160000_harden_mark_first_response
+-- mark_first_response e SECURITY DEFINER e escrevia em conversation_sla a partir de
+-- um p_contact_id vindo direto do cliente, sem checar escopo (IDOR): qualquer
+-- authenticated podia carimbar first_response_at/first_response_breached de contato
+-- fora da sua carteira. Adiciona o mesmo predicado do contacts_select_policy antes
+-- de qualquer leitura/escrita. Resto do corpo inalterado.
 
 
 
@@ -17,6 +18,27 @@ DECLARE
   v_now timestamptz := now();
   v_row_id uuid;
 BEGIN
+  -- autorizacao: mesmo predicado do contacts_select_policy (RLS nao se aplica
+  -- dentro de SECURITY DEFINER, entao a checagem e explicita aqui)
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.contacts c
+    WHERE c.id = p_contact_id
+      AND (
+        public.is_admin_or_supervisor(auth.uid())
+        OR c.assigned_to IN (SELECT public.get_visible_agent_ids(auth.uid()))
+        OR EXISTS (
+          SELECT 1 FROM public.queue_members qm
+          WHERE qm.queue_id = c.queue_id
+            AND qm.profile_id = public.get_profile_id_for_user(auth.uid())
+            AND qm.is_active = true
+        )
+      )
+  ) THEN
+    RAISE EXCEPTION 'nao autorizado para o contato %', p_contact_id
+      USING ERRCODE = '42501';
+  END IF;
+
   -- registro de SLA mais recente do contato ainda sem primeira resposta
   SELECT id
   INTO v_row_id
@@ -66,6 +88,5 @@ BEGIN
 END;
 $$;
 
--- So usuarios autenticados podem chamar; anon nao
 REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;"}
