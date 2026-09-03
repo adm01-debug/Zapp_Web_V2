@@ -124,7 +124,8 @@ export async function syncMessages(
     const { data: existing } = await supabase.from('messages').select('id').eq('external_id', externalId).maybeSingle();
     if (existing) continue;
 
-    const { content, messageType } = parseEvolutionMessage(msg.message || {});
+    const { content, messageType, shouldSkip } = parseEvolutionMessage(msg.message || {});
+    if (shouldSkip) continue;
 
     const sender = key.fromMe ? 'agent' : 'contact';
     const createdAt = msg.messageTimestamp ? new Date(Number(msg.messageTimestamp) * 1000).toISOString() : new Date().toISOString();

@@ -379,32 +379,6 @@
       "justification": "Reagendamento do cron avatars-refresh aplicado direto no banco 02/09 sem captura de SQL no ledger; arquivo pin com o statement real."
     },
     {
-      "version": "20260902000500",
-      "filename": "20260902000500_fix_idor_get_connection_functions.sql",
-      "file_sha256": "81f665b1dd811f5c71434f0b1f7a2880490a8325928af2988aaa765b34261918",
-      "ledger_name": "fix_idor_get_connection_functions",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_sql_sha256": "b0c66d5b4719b7018090b697b6cc7032a2020b8e817ec7279ca496c95fca3a33",
-      "ledger_statements_sha256": "8babb9c1cf06bbe1dcb43434096b25c67c10e352ceb150a72c2f523a9cc1266f",
-      "reason": "ledger-summary",
-      "related_migration": null,
-      "justification": "Reconciliacao de DDL de 02/09 aplicado fora do Git; arquivo criado do statement do ledger.",
-      "file_sql_sha256": "2dc6431c91fe59c6979d1825e8b3c87f08afad81ca5ded01cc8c0651804e4efd"
-    },
-    {
-      "version": "20260902000600",
-      "filename": "20260902000600_fix_record_failed_login_acl.sql",
-      "file_sha256": "ef5424e1922f9533159824f14f0a780f040e9208d1b4f889bc314d4b56336c70",
-      "ledger_name": "fix_record_failed_login_acl",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13a2dacc3f734",
-      "ledger_statements_sha256": "471c9385c7467e2731ba51231b46bbc697430f24eac7ff1d21c3f132e485fc21",
-      "reason": "ledger-summary",
-      "related_migration": null,
-      "justification": "Reconciliacao de DDL de 02/09 aplicado fora do Git; arquivo criado do statement do ledger.",
-      "file_sql_sha256": "89eeb9f5547dc4a7df2779bb6da20fca008bedc7aacb5574a8c5a56a4134d659"
-    },
-    {
       "version": "20260902000700",
       "filename": "20260902000700_fix_search_contacts_order_tiebreaker.sql",
       "file_sha256": "2f8e35056034bf4914da6d05e4e4de9f6dfa2d4c719b0118d544c9a6ca2019c7",
