@@ -164,7 +164,7 @@ function ErrorBoundaryView({ viewId, children }: { viewId: string; children: Rea
       moduleName={mod.label}
       maxAutoRetries={2}
     >
-      <Suspense fallback={<ViewLoadingFallback />}>
+      <Suspense fallback={<ViewLoadingFallback noPadding />}>
         {children}
       </Suspense>
     </ErrorBoundaryWithRetry>
