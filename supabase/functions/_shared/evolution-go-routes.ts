@@ -280,8 +280,11 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/label\/findLabels\/[^/]+$/))
     return { path: '/label/list', method: 'GET', auth: 'instance' };
   if (m(/^\/label\/handleLabel\/[^/]+$/)) {
-    const jid = toUserJid(b.number);
-    if (!jid) return { path: '/label/chat', method: 'POST', auth: 'instance', invalid: 'handleLabel requer number' };
+    // Sem a heuristica de LID do toUserJid: alvo de rotulo e telefone, e numero
+    // internacional de 14-15 digitos cairia em @lid e a GO nao acharia o contato.
+    const rawNumber = typeof b.number === 'string' ? b.number.trim() : '';
+    if (!rawNumber) return { path: '/label/chat', method: 'POST', auth: 'instance', invalid: 'handleLabel requer number' };
+    const jid = rawNumber.includes('@') ? rawNumber : `${rawNumber}@s.whatsapp.net`;
     return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
       jid, labelId: b.labelId,
     }};

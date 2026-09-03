@@ -77,8 +77,11 @@ export async function proxyToEvolution(
     const go = translateV2ToGo(v2Path, method, body);
     if (go?.invalid) {
       console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
-      return new Response(JSON.stringify({ error: go.invalid }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+      // Convencao do proxy: 200 com { error: true, message } — e o que o
+      // useEvolutionApiCore le para mostrar toast. Um 400 cru cairia no ramo de
+      // erro de rede. Sem corsHeaders o browser nem entrega o corpo.
+      return new Response(JSON.stringify({ error: true, message: go.invalid }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     if (go) {

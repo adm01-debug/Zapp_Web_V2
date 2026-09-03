@@ -34,8 +34,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 10812,
-      "sha256": "db62b10c6d659108dc55cf9acc24b0c0337af7e2b4124bc752ada0d5111d642f"
+      "bytes": 11070,
+      "sha256": "7cf2f8ef1b4bd923d7755fdbfa7ec3100036ea067b3630914ca5dfb91ccb64da"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -44,8 +44,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
-      "bytes": 17246,
-      "sha256": "5e3b679ea26f5ffdbef16167e9bec32898f19a8825f283df96f6e4f862555bd0"
+      "bytes": 17539,
+      "sha256": "b2808b9d8f2631ea0fa395b54fe6348d967f7f038667de1532b1886a61e7597c"
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
@@ -194,8 +194,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 5348,
-      "sha256": "07e9c0abda6c9b081fc6750216ab1659157ec24b6cb493873b760a40976d0893"
+      "bytes": 5620,
+      "sha256": "c05e0a74fa30b0f75b2af33133d1c97689de0a851fc97fcf9dd9e8188bf3b957"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -560,7 +560,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4676405ce5599bbe3795a6fb2ff01cc3d927242c9944105d09f78c0e5fe3950f",
+      "source_sha256": "e5c8f2a7993c1cee94eafa5fcd000d16401fb7ae889403736159fcb4e907acb6",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -645,7 +645,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3e5a029d2b040f914443aadaee0b01f8dbc0f473002c63cc04f22ecc7f3cec65",
+      "source_sha256": "c78ed14c7338549c1bbcdbc22844f3bd46bd44a1ed8a2068e91a40fa49631c68",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -787,7 +787,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b170840e33b6b269c2559a0a0466e982185195e33d799c136864499df94465d1",
+      "source_sha256": "e55ae0553e0b599c857c19c7c396d30cddea4d7e00d8fcd674ea7e56449dec63",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -800,7 +800,7 @@
       "name": "evolution-sync",
       "entrypoint": "supabase/functions/evolution-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7311036cbe6f58b6ce0f30f3f9f483cbdb9bbc37f5248aa25e38ee5cebdaf407",
+      "source_sha256": "5a77d1c7249c6429e7fdd8d5b2600038f289eeb8568ef27aff04d16c72d908db",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -814,7 +814,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "58681a5a13966780ffa398748baa128abefa2d2173167d4da041538cf5b226d3",
+      "source_sha256": "7dfb72aeb2451b23a17fe3a0010c989c4d6e91b25dfafd1639cb2d2a1a63e53f",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -950,7 +950,7 @@
       "name": "migrate-media-storage",
       "entrypoint": "supabase/functions/migrate-media-storage/index.ts",
       "verify_jwt": true,
-      "source_sha256": "735a7416872d2048f0b261cd501e4075709343f3c2f5aa8859caf90689d0486b",
+      "source_sha256": "0d7a051a59b27e2acd19da894b65fa97222dea7d1c78a5d8303d65a32bf27ee9",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -974,7 +974,7 @@
       "name": "public-api",
       "entrypoint": "supabase/functions/public-api/index.ts",
       "verify_jwt": false,
-      "source_sha256": "7e1d8118b53d109b523d435bf3233fe2a47b747898183633498a637746b8e6dc",
+      "source_sha256": "037e71cd78b72b3c57c319459199f6b7e78d10f11c3c07a1ea5cdefebf2f3d30",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -987,7 +987,7 @@
       "name": "recover-corrupted-audios",
       "entrypoint": "supabase/functions/recover-corrupted-audios/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2bfbc3456a05afadd4fcc89b01bb6f4019c2fc4120e1e6689fc5c05a4871c860",
+      "source_sha256": "e5905d69aa07d5b53ea4477522a8af5f1fcaae3416a64d23267997cbc2ab4cfc",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1083,7 +1083,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8f3f5720346772010ad4aab916f473dd2d68db2091e8dc440bdfff1821744646",
+      "source_sha256": "356d49417ad74de92cf509c9a29642f355d296dee3b91536bc16ae16e8d4a681",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1141,7 +1141,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "60bf4bf525232aa82f09203a5a20177a0ef7cc2507cb0ca77c33640f153e5d92",
+      "source_sha256": "6a35feb29bf47100961e28bd4f51fa53877e015d432f9caacf80e8f86867f023",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "311c2fa737e7f671b5ee5597d1c74912d8aeb90b19bbf7b1efe2d43b4ca4b30c"
+  "manifest_sha256": "0f33a490b3c0e4c7cb65ef1b0f31097d4bd1aaeaa316f867b14b1ed938104ed7"
 }
