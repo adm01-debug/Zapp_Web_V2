@@ -127,7 +127,8 @@ export function SLAConfigurationManager() {
             </div>
             <div>
               <Label className="text-xs font-medium">1ª Resposta (min)</Label>
-              <Input type="number" min={1} value={form.first_response_minutes} onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))} className="mt-1" />
+              <Input type="number" min={1} max={5} value={5} disabled className="mt-1 opacity-70" aria-describedby="sla-fr-hint" />
+              <p id="sla-fr-hint" className="text-[11px] text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_default} onCheckedChange={v => setForm(f => ({ ...f, is_default: v }))} />

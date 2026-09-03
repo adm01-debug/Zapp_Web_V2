@@ -157,11 +157,12 @@ describe('SLAIndicator — calculateSLAState', () => {
       firstResponseStatus = firstResponseBreached ? 'breached' : 'ok';
       firstResponseRemaining = 0;
     } else {
-      const warningThreshold = firstResponseMinutes * 60 * 1000 * 0.3;
+      // regra de negocio: warning apos 2 min fixos (restante <= total - 2min)
+      const warningMs = 2 * 60 * 1000;
       if (firstResponseRemaining <= 0) {
         firstResponseStatus = 'breached';
         firstResponseBreached = true;
-      } else if (firstResponseRemaining <= warningThreshold) {
+      } else if (firstResponseRemaining <= firstResponseMinutes * 60 * 1000 - warningMs) {
         firstResponseStatus = 'warning';
       }
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSLARules, SLARuleForm, SLARule, SLARuleScope, SLARuleMetadata } from '@/hooks/sla/useSLARules';
@@ -22,37 +22,38 @@ interface SLARuleFormDialogProps {
   editingRule: SLARule | null;
 }
 
+const EMPTY_FORM: SLARuleForm = {
+  name: '',
+  first_response_minutes: 5,
+  resolution_minutes: 60,
+  priority: 10,
+  metadata: { notify_on_warning: false, escalation_notes: '' },
+};
+
+function buildForm(editingRule: SLARule | null): SLARuleForm {
+  if (!editingRule) return { ...EMPTY_FORM, metadata: { ...EMPTY_FORM.metadata } };
+  return {
+    name: editingRule.name,
+    first_response_minutes: 5,
+    resolution_minutes: editingRule.resolution_minutes,
+    priority: editingRule.priority,
+    metadata: editingRule.metadata || { notify_on_warning: false, escalation_notes: '' },
+  };
+}
+
+function buildScopeValue(editingRule: SLARule | null): string {
+  if (!editingRule) return '';
+  return editingRule.contact_id || editingRule.company || editingRule.job_title ||
+    editingRule.contact_type || editingRule.queue_id || editingRule.agent_id || '';
+}
+
 export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SLARuleFormDialogProps) {
   const { createRule, updateRule, isCreating, isUpdating } = useSLARules(scope);
-  const [form, setForm] = useState<SLARuleForm>({
-    name: '',
-    first_response_minutes: 5,
-    resolution_minutes: 60,
-    priority: 10,
-    metadata: { notify_on_warning: false, escalation_notes: '' },
-  });
-  const [scopeValue, setScopeValue] = useState('');
+  // Estado inicial derivado de editingRule; o componente e remontado (key no pai)
+  // a cada abertura, entao nao precisa de effect de reset.
+  const [form, setForm] = useState<SLARuleForm>(() => buildForm(editingRule));
+  const [scopeValue, setScopeValue] = useState(() => buildScopeValue(editingRule));
   const [contactSearch, setContactSearch] = useState('');
-
-  useEffect(() => {
-    if (open && editingRule) {
-      setForm({
-        name: editingRule.name,
-        first_response_minutes: editingRule.first_response_minutes,
-        resolution_minutes: editingRule.resolution_minutes,
-        priority: editingRule.priority,
-        metadata: editingRule.metadata || { notify_on_warning: false, escalation_notes: '' },
-      });
-      setScopeValue(
-        editingRule.contact_id || editingRule.company || editingRule.job_title ||
-        editingRule.contact_type || editingRule.queue_id || editingRule.agent_id || ''
-      );
-    } else if (open) {
-      setForm({ name: '', first_response_minutes: 5, resolution_minutes: 60, priority: 10, metadata: { notify_on_warning: false, escalation_notes: '' } });
-      setScopeValue('');
-      setContactSearch('');
-    }
-  }, [open, editingRule]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['sla-scope-companies'],
@@ -214,11 +215,13 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
           <div>
             <Label className="text-xs font-medium">1ª Resposta (min)</Label>
             <Input
-              type="number" min={1}
+              type="number" min={1} max={5}
               value={form.first_response_minutes}
-              onChange={e => setForm(f => ({ ...f, first_response_minutes: parseInt(e.target.value) || 1 }))}
-              className={cn('mt-1', errors.fr && 'border-destructive')}
+              disabled
+              className={cn('mt-1 opacity-70', errors.fr && 'border-destructive')}
+              aria-describedby="sla-rule-fr-hint"
             />
+            <p id="sla-rule-fr-hint" className="text-[11px] text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
             {errors.fr && <p className="text-[11px] text-destructive mt-1">{errors.fr}</p>}
           </div>
 

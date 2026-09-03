@@ -130,12 +130,6 @@ export async function sendMessageToContact(
     throw error;
   }
 
-  // SLA de 1a resposta: registra o timestamp real da primeira resposta do atendente.
-  // Fire-and-forget — falha aqui nao deve travar o envio da mensagem.
-  supabase.rpc('mark_first_response', { p_contact_id: contactId }).then(({ error: slaError }) => {
-    if (slaError) log.warn('mark_first_response failed:', slaError);
-  });
-
   try {
     const { data: contact } = await supabase
       .from('contacts')
@@ -171,6 +165,13 @@ export async function sendMessageToContact(
 
     const externalId = apiResult?.key?.id || apiResult?.messageId || null;
     await supabase.from('messages').update({ status: 'sent', external_id: externalId, whatsapp_connection_id: resolvedConnectionId }).eq('id', data.id);
+
+    // SLA de 1a resposta: registra somente apos a Evolution confirmar o envio
+    // (se falhar antes, a mensagem fica 'failed' e o SLA nao deve contar resposta).
+    // Fire-and-forget — falha aqui nao deve travar o envio ja confirmado.
+    supabase.rpc('mark_first_response', { p_contact_id: contactId }).then(({ error: slaError }) => {
+      if (slaError) log.warn('mark_first_response failed:', slaError);
+    });
   } catch (evolutionError) {
     log.error('Error sending via Evolution API:', evolutionError);
     await supabase.from('messages').update({ status: 'failed' }).eq('id', data.id);

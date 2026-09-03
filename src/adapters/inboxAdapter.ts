@@ -47,7 +47,7 @@ export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?
 export function mapRealtimeConversationToConversation(rc: ConversationWithMessages): Conversation {
   // SLA de 1a resposta: timestamp real da primeira mensagem do atendente na conversa
   const firstAgentMessage = rc.messages
-    .filter(m => m.sender === 'agent')
+    .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
     .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
 
   return {
