@@ -19,11 +19,19 @@ export function normalizeGoSendResponse(data: any): unknown {
 }
 
 // Normalizações GO→v2 dependentes da rota traduzida (goPath):
+// /instance/all → remove `token` de cada instância (é o EVOLUTION_INSTANCE_TOKEN;
+//   a edge evolution-api é chamável por qualquer usuário logado e nenhum
+//   consumidor do front precisa dele — com token + URL pública da GO dá pra
+//   operar a instância fora do app) ·
 // /label/list → [{id,name,color}] (o front espera o array v2) ·
 // /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
 // demais respostas: injeção aditiva de key/messageId nos envios.
 // deno-lint-ignore no-explicit-any
 export function normalizeGoResponse(goPath: string | null, data: any): unknown {
+  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
+    // deno-lint-ignore no-explicit-any
+    return { ...data, data: data.data.map(({ token: _token, ...instance }: any) => instance) };
+  }
   if (goPath === '/label/list' && Array.isArray(data?.data)) {
     // deno-lint-ignore no-explicit-any
     return data.data.map((l: any) => ({
