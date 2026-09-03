@@ -73,14 +73,45 @@ jobs:
           ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
 
-      - name: Simular regressões da ACL da dead-letter queue
+      # Mesmo endurecimento de db-live-guard.yml: valida que a URL e o endpoint
+      # oficial, normaliza o sslmode que possa vir embutido na string e fixa a CA
+      # do Supabase. 'require' sozinho criptografa mas nao autentica o servidor,
+      # entao um endpoint que intercepte TLS receberia a credencial do banco.
+      - name: Endurecer TLS do DESTINO_URL
+        id: tls
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
-          # sem isto o psql aceita conexao em claro se o servidor oferecer.
-          # 'verify-full' exigiria fixar a CA do Supabase no runner — item a parte.
-          PGSSLMODE: require
         run: |
           if [ -z "$DESTINO_URL" ]; then
+            echo "destino=ausente" >> "$GITHUB_OUTPUT"
+            echo "DESTINO_URL ausente - verificacao de ACL sera pulada."
+            exit 0
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          appendFileSync(process.env.GITHUB_OUTPUT, 'destino=ok\n');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
+          NODE
+
+      - name: Simular regressões da ACL da dead-letter queue
+        run: |
+          if [ "${{ steps.tls.outputs.destino }}" != "ok" ]; then
             echo "DESTINO_URL ausente - verificacao de ACL pulada."
             exit 0
           fi
