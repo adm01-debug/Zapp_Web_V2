@@ -8,20 +8,13 @@ export interface SLATimerState {
     remainingMs: number;
     breached: boolean;
   };
-  resolution: {
-    status: SLAStatus;
-    remainingMs: number;
-    breached: boolean;
-  };
   worstStatus: SLAStatus;
 }
 
 interface UseSLACalculationParams {
   firstMessageAt: Date;
   firstResponseAt?: Date | null;
-  resolvedAt?: Date | null;
   firstResponseMinutes: number;
-  resolutionMinutes: number;
 }
 
 function calculateStatus(
@@ -49,7 +42,6 @@ function calculateStatus(
 function compute(params: UseSLACalculationParams): SLATimerState {
   const now = new Date();
   const frDeadline = new Date(params.firstMessageAt.getTime() + params.firstResponseMinutes * 60_000);
-  const resDeadline = new Date(params.firstMessageAt.getTime() + params.resolutionMinutes * 60_000);
 
   const firstResponse = calculateStatus(
     frDeadline.getTime() - now.getTime(),
@@ -59,22 +51,7 @@ function compute(params: UseSLACalculationParams): SLATimerState {
     frDeadline
   );
 
-  const resolution = calculateStatus(
-    resDeadline.getTime() - now.getTime(),
-    params.resolutionMinutes * 60_000,
-    !!params.resolvedAt,
-    params.resolvedAt,
-    resDeadline
-  );
-
-  const worstStatus: SLAStatus =
-    firstResponse.status === 'breached' || resolution.status === 'breached'
-      ? 'breached'
-      : firstResponse.status === 'warning' || resolution.status === 'warning'
-        ? 'warning'
-        : 'ok';
-
-  return { firstResponse, resolution, worstStatus };
+  return { firstResponse, worstStatus: firstResponse.status };
 }
 
 export function formatTimeRemaining(ms: number): string {
@@ -96,17 +73,15 @@ export function useSLACalculation(params: UseSLACalculationParams): SLATimerStat
   const recompute = useCallback(() => setState(compute(params)), [
     params.firstMessageAt,
     params.firstResponseAt,
-    params.resolvedAt,
     params.firstResponseMinutes,
-    params.resolutionMinutes,
   ]);
 
   useEffect(() => {
     recompute();
-    if (params.firstResponseAt && params.resolvedAt) return;
+    if (params.firstResponseAt) return;
     const interval = setInterval(recompute, 1000);
     return () => clearInterval(interval);
-  }, [recompute, params.firstResponseAt, params.resolvedAt]);
+  }, [recompute, params.firstResponseAt]);
 
   return state;
 }
