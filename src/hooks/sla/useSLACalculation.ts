@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export type SLAStatus = 'ok' | 'warning' | 'breached';
 
@@ -43,8 +43,8 @@ function calculateStatus(
   return { status: 'ok', remainingMs, breached: false };
 }
 
-function compute(params: UseSLACalculationParams): SLATimerState {
-  const now = new Date();
+function compute(params: UseSLACalculationParams, nowMs: number): SLATimerState {
+  const now = new Date(nowMs);
   const frDeadline = new Date(params.firstMessageAt.getTime() + params.firstResponseMinutes * 60_000);
   const warningMs = (params.warningMinutes ?? 2) * 60_000;
 
@@ -74,21 +74,14 @@ export function formatTimeRemaining(ms: number): string {
 }
 
 export function useSLACalculation(params: UseSLACalculationParams): SLATimerState {
-  const [state, setState] = useState<SLATimerState>(() => compute(params));
-
-  const recompute = useCallback(() => setState(compute(params)), [
-    params.firstMessageAt,
-    params.firstResponseAt,
-    params.firstResponseMinutes,
-    params.warningMinutes,
-  ]);
+  // relogio derivado: tick assincrono via interval (nunca setState sincrono no effect)
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    recompute();
     if (params.firstResponseAt) return;
-    const interval = setInterval(recompute, 1000);
+    const interval = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [recompute, params.firstResponseAt]);
+  }, [params.firstResponseAt]);
 
-  return state;
+  return useMemo(() => compute(params, nowMs), [params, nowMs]);
 }
