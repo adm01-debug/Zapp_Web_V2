@@ -80,7 +80,9 @@ export function RateLimitRealtimeAlerts() {
       const audio = new Audio('/notification.mp3');
       audio.volume = 0.5;
       audio.play().catch(() => {});
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[RateLimitRealtimeAlerts] Alert sound failed:', e);
+    }
   };
 
   const handleDismiss = async (alertId: string) => {
