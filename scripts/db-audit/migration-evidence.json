@@ -456,6 +456,19 @@
       "ledger_name": "audit_fix_secdef_search_path_realtime_indexes",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Arquivo reconstrói com certeza os 2 índices novos (idx_contacts_updated_at, idx_messages_unread_contact) verificados contra pg_indexes; a parte de search_path em funções SECURITY DEFINER não foi reconstruída como DDL por falta de baseline histórico do delta exato — verificado ao vivo que 0 funções SECURITY DEFINER do schema public estão hoje sem search_path. Ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260902230000",
+      "filename": "20260902230000_fix_search_contacts_id_tiebreaker.sql",
+      "file_sha256": "a95082340eb1a1bb59a9014830d097031e956b73be1ffae681865a9fd89e1dfb",
+      "file_sql_sha256": "2472992e578bd2339db8fe20a6d85b9d5eb8ddb2ce6e3567cea4b43b6a3bcfbe",
+      "ledger_name": "fix_search_contacts_id_tiebreaker",
+      "ledger_sql_sha256": "2cd2da4a06ee2bad606a97e86d7139e92318f452a336cff63d045af4c3ee0efc",
+      "ledger_statements_sha256": "0f359b0bfdc8e4c6318b6eb1369fd241d391e11b4711d588ad144262ed606d56",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Ledger capturou apenas placeholder textual; arquivo pin carrega a definicao SQL completa vigente do banco (tiebreaker c.id ASC) para replay valido em ambientes novos."
     }
   ]
 }
