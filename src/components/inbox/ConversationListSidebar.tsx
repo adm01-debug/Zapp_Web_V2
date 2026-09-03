@@ -21,7 +21,6 @@ const SKELETON_WIDTHS = [
   { name: 88, msg: 73 },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ConversationListSidebarProps {
   inbox: any;
   inboxFilters: any;
@@ -155,8 +154,10 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
       )}
 
       <div
+        // eslint-disable-next-line react-hooks/refs
         ref={pullToRefresh.containerRef}
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+        // eslint-disable-next-line react-hooks/refs
         {...(isMobile ? pullToRefresh.handlers : {})}
       >
         {inbox.loading ? (

@@ -166,6 +166,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     canGoBack,
     canGoForward,
     breadcrumbTrail,
+    // eslint-disable-next-line react-hooks/refs -- tracking previous view for transition direction; stale read is acceptable
     previousView: previousViewRef.current,
     history: state.entries,
   };
