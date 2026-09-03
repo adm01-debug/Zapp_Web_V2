@@ -166,20 +166,24 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
         ) : (
           <div className="space-y-2 p-2">
             {filteredItems.map((item) => (
-              <div key={item.id} role="button" tabIndex={0} aria-label={`Pré-visualizar ${item.filename}`} className={cn('flex items-center gap-3 p-2 rounded-lg border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selectedItems.has(item.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50')} onClick={() => openPreview(item)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(item); } }}>
-                <button type="button" aria-label={`Selecionar ${item.filename}`} aria-pressed={selectedItems.has(item.id)} className={cn('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selectedItems.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/50')} onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }} onKeyDown={(e) => e.stopPropagation()}>
+              // wrapper nao-interativo: botao dentro de botao esconde a acao de
+              // selecao das tecnologias assistivas
+              <div key={item.id} className={cn('flex items-center gap-3 p-2 rounded-lg border transition-colors', selectedItems.has(item.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50')}>
+                <button type="button" aria-label={`Selecionar ${item.filename}`} aria-pressed={selectedItems.has(item.id)} className={cn('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selectedItems.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/50')} onClick={() => toggleSelect(item.id)}>
                   {selectedItems.has(item.id) && <Check className="w-3 h-3" />}
                 </button>
-                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
-                  {item.type === 'image' && <Image className="w-5 h-5 text-muted-foreground" />}
-                  {item.type === 'video' && <FileVideo className="w-5 h-5 text-muted-foreground" />}
-                  {item.type === 'audio' && <FileAudio className="w-5 h-5 text-muted-foreground" />}
-                  {item.type === 'document' && <File className="w-5 h-5 text-muted-foreground" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.filename}</p>
-                  <p className="text-xs text-muted-foreground">{item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—'}</p>
-                </div>
+                <button type="button" aria-label={`Pré-visualizar ${item.filename}`} className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded" onClick={() => openPreview(item)}>
+                  <span className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                    {item.type === 'image' && <Image className="w-5 h-5 text-muted-foreground" />}
+                    {item.type === 'video' && <FileVideo className="w-5 h-5 text-muted-foreground" />}
+                    {item.type === 'audio' && <FileAudio className="w-5 h-5 text-muted-foreground" />}
+                    {item.type === 'document' && <File className="w-5 h-5 text-muted-foreground" />}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium truncate">{item.filename}</span>
+                    <span className="block text-xs text-muted-foreground">{item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—'}</span>
+                  </span>
+                </button>
               </div>
             ))}
           </div>

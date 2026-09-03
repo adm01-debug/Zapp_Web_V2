@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -12,6 +12,7 @@ export interface AccordionSectionConfig {
 export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'info', label: 'Informações', icon: Info, customIndex: 0 },
   { value: 'whatsapp-status', label: 'Status WhatsApp', icon: Smartphone, customIndex: 1 },
+  { value: 'evolution-profile', label: 'Perfil WhatsApp', icon: BadgeCheck, customIndex: 1.5 },
   { value: 'sla-ai', label: 'SLA & Inteligência', icon: Brain, customIndex: 1 },
   { value: 'crm-360', label: 'CRM 360°', icon: Sparkles, customIndex: 2 },
   { value: 'intelligence', label: 'Inteligência Comercial', icon: Brain, customIndex: 2.5 },
