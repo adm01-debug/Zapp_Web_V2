@@ -96,13 +96,17 @@ export class ErrorBoundary extends Component<Props, State> {
       if (!flag.ok) {
         // Sem storage nao da para registrar que ja recarregamos; recarregar aqui
         // viraria loop infinito quando o chunk esta mesmo faltando.
-        log.warn('ChunkLoadError com sessionStorage indisponivel -- mostrando UI de erro em vez de recarregar');
-      } else if (!flag.value && writeReloadFlag()) {
-        log.warn('ChunkLoadError detected -- reloading for fresh deployment assets');
+        log.warn('ChunkLoadError com sessionStorage indisponivel (leitura) -- mostrando UI de erro em vez de recarregar');
+      } else if (flag.value) {
+        log.warn('ChunkLoadError depois de ja ter recarregado -- chunk realmente ausente, mostrando UI de erro');
+      } else if (writeReloadFlag()) {
+        log.warn('ChunkLoadError detectado -- recarregando para pegar os assets do deploy novo');
         window.location.reload();
         return;
       } else {
-        log.warn('ChunkLoadError after reload -- chunk genuinely missing, showing error UI');
+        // Leitura passou mas escrita falhou (Safari em navegacao privada, quota
+        // estourada). Diagnostico proprio: nao e chunk ausente, e storage.
+        log.warn('ChunkLoadError com sessionStorage indisponivel (escrita) -- mostrando UI de erro em vez de recarregar');
       }
     }
   }
