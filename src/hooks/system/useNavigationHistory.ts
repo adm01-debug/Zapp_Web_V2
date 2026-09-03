@@ -192,9 +192,9 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   }, []);
 
   const navigateTo = useCallback((viewId: string) => {
-    // Read current view from ref (last-rendered state) so the URL sync decision
-    // does not depend on the setState updater running synchronously.
-    const currentViewId = stateRef.current.entries[stateRef.current.index]?.viewId;
+    // Read current view from URL (updated synchronously by setViewParam) rather than stateRef,
+    // which may be stale when goBack() + navigateTo() fire in the same synchronous tick.
+    const currentViewId = new URLSearchParams(window.location.search).get('view') ?? defaultView;
     setState(prev => {
       const cvid = prev.entries[prev.index]?.viewId;
       if (viewId === cvid) return prev;
@@ -204,7 +204,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       return { entries: newEntries, index: newEntries.length - 1, previousView: cvid ?? null };
     });
     if (currentViewId !== viewId) syncView(viewId);
-  }, [syncView]);
+  }, [syncView, defaultView]);
 
   const goBack = useCallback(() => {
     const { entries, index } = stateRef.current;
