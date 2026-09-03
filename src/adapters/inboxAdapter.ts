@@ -48,9 +48,11 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
   // SLA de 1a resposta: prioridade para o canônico do banco (conversation_sla),
   // que existe mesmo quando a janela de mensagens veio vazia; fallback no
   // derivado da primeira mensagem do atendente efetivamente enviada.
-  const slaEmbed = (rc.contact as RealtimeContact & {
-    conversation_sla?: { first_response_at: string | null } | null;
+  const slaRows = (rc.contact as RealtimeContact & {
+    conversation_sla?: Array<{ first_response_at: string | null }> | null;
   }).conversation_sla;
+  // canonico = registro mais recente (relacao 1:N; embed sem ordenacao)
+  const slaEmbed = [...(slaRows ?? [])].sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? '')).pop();
 
   const firstAgentMessage = rc.messages
     .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
