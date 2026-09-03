@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
+import { reportClientError } from '@/lib/errorReporter';
 
 interface Props {
   children: React.ReactNode;
@@ -29,6 +30,11 @@ export class SectionErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     log.error(`[SectionError] ${this.props.sectionName || 'Unknown'}:`, error, info.componentStack);
+    reportClientError(error, {
+      source: 'SectionErrorBoundary',
+      section: this.props.sectionName ?? 'Unknown',
+      componentStack: (info.componentStack ?? '').slice(0, 1500),
+    });
   }
 
   handleRetry = () => {
