@@ -3,7 +3,7 @@
 **Sintoma relatado:** a aplicação "é menor que a tela"; sobra uma faixa morta (~200–230px) à direita, com uma segunda barra de rolagem interna visível antes do fim da tela.
 
 **Escopo:** shell de layout (`AppShell` → `main` → `ViewRouter/WithHeader` → views) e as 25 views que dependem dele.
-**Não escopo:** cores/tokens de marca, conteúdo de negócio, banco.
+**Fora de escopo:** cores/tokens de marca, conteúdo de negócio, banco.
 
 ---
 
@@ -65,10 +65,15 @@ Arquivo órfão com `#root { max-width:1280px }`. Aceite: `grep -r "App.css" src
 
 **2. Corrigir o flex item de `WithHeader`**
 `src/pages/ViewRouter.tsx:34` → `className="flex flex-col h-full w-full min-w-0 flex-1"`.
-Aceite: em `/contatos` (viewport 1920), `document.querySelector('#main-content > div').clientWidth === main.clientWidth`.
+Aceite: em `/contatos` (viewport 1920), o wrapper do `WithHeader` ocupa a largura inteira do `main`:
+```js
+const main = document.querySelector('#main-content');
+const wrapper = main.querySelector(':scope > div.flex.flex-col');
+wrapper.clientWidth === main.clientWidth;
+```
 
 **3. Blindar o `main` contra sizing por conteúdo**
-`AppShell.tsx:121`: manter `flex flex-1 min-w-0`, adicionar `items-stretch` e garantir que todo filho direto de conteúdo seja `flex-1`. Aceite: nenhuma faixa morta com sidebar aberta ou recolhida (62px/220px).
+`AppShell.tsx:121`: manter `flex flex-1 min-w-0` e garantir que todo filho direto de conteúdo seja `flex-1 min-w-0`. `items-stretch` nao entra: `main` e um container `row`, entao `align-items` mexe na altura (eixo cruzado) e nao na largura, que e o que gera a faixa morta. Aceite: nenhuma faixa morta com sidebar aberta ou recolhida (62px/220px).
 
 **4. Dar `w-full min-w-0` ao `motion.div` do router**
 `ViewRouter.tsx:139,145` — já tem `h-full w-full`; adicionar `min-w-0` para evitar que grids largas estourem em vez de encolher. Aceite: sem scroll horizontal em `/contatos` a 1280px.
@@ -80,7 +85,14 @@ Aceite: em `/contatos` (viewport 1920), `document.querySelector('#main-content >
 Aplicar `w-full` (ou `flex-1 min-w-0`) na raiz de cada uma das 25 listadas em 1.2. Aceite: script de auditoria (etapa 27) com 0 violações.
 
 **7. Eliminar o scroll duplo — decidir o dono do scroll**
-Regra: **o scroller é o wrapper do router**; view nunca cria `overflow-y-auto h-full` na raiz. Aceite: em qualquer view, `document.querySelectorAll('#main-content [class*=overflow-y-auto]')` com no máximo 1 elemento na cadeia raiz.
+Regra: **o scroller é o wrapper do router**; view nunca cria `overflow-y-auto h-full` na raiz. Aceite (checa a cadeia raiz, nao descendentes — scroller interno de lista virtualizada e legitimo):
+```js
+const main = document.querySelector('#main-content');
+const scroller = main.querySelector(':scope > div.flex.flex-col > div.flex-1');
+const viewRoot = scroller.firstElementChild;
+getComputedStyle(scroller).overflowY === 'auto'
+  && getComputedStyle(viewRoot).overflowY !== 'auto';
+```
 
 **8. Remover `overflow-y-auto h-full` das raízes das views**
 Começar pelas 10 confirmadas: `Contacts, Dashboard, Admin, Agents, Connections, Groups, Queues, Tags, TranscriptionsHistory, ClientWallet`. Aceite: uma única barra de rolagem, colada na borda direita do `main`.
@@ -161,7 +173,12 @@ Screenshots em 1280/1440/1920/2560 das 6 views principais, anexadas ao PR. Aceit
 
 ## 3. Ordem mínima para matar o sintoma hoje
 
-Etapas **1, 2, 5, 8, 9** — cinco arquivos, ~10 linhas. O resto é o que impede o bug de voltar.
+Etapas **1, 2, 5, 7, 8, 9, 10** — o resto é o que impede o bug de voltar.
+
+A 7 e a 10 entram no caminho curto porque a tabela de riscos da seção 4 as exige
+antes da 8: tirar `overflow-y-auto` das raízes sem antes decidir o dono do scroll
+(7) quebra o scroll interno, e sem a 10 o `ScrollToTopButton` passa a observar um
+elemento que não rola mais.
 
 ## 4. Riscos
 
