@@ -408,6 +408,46 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "A migration foi aplicada direto em produção com statements resumidos no ledger (CREATE TABLE ... (...); INSERT ...). O arquivo em supabase/migrations reconstrói o DDL completo verificado contra o schema vivo (colunas com message_count bigint, índices idx_lid_snapshot_phone/contact, RLS com policies service_role_full_access e admin_read); ambos ficam fixados por hashes independentes."
+    },
+    {
+      "version": "20260902100004",
+      "filename": "20260902100004_e54_drop_dead_indexes_fix_search_contacts.sql",
+      "file_sha256": "1905b0711408b128ef00e58edccc5396a2eeefa47c24e96d89a06ba118647fe5",
+      "ledger_name": "e54_drop_dead_indexes_fix_search_contacts",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. O arquivo em supabase/migrations documenta o fix de search_contacts (furo de RLS via SECURITY DEFINER) e o drop dos 6 índices trigram com 0 scans; ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260902100005",
+      "filename": "20260902100005_e24_backfill_assigned_to_active_contacts.sql",
+      "file_sha256": "bda9af3c3d6a707ed096e9e5f204a8c28f7e41a6a6b0d96004a798415f7ea48d",
+      "ledger_name": "e24_backfill_assigned_to_active_contacts",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Backfill de dados (UPDATE), sem DDL estrutural; ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260902120000",
+      "filename": "20260902120000_team_chat_v3_parity_reactions_status_departments.sql",
+      "file_sha256": "0c19508fa9cf8522cea46d22c55b0fce91aa2070db0d2abf081811d8620ec790",
+      "ledger_name": "team_chat_v3_parity_reactions_status_departments",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Aplicado via MCP db_batch_query direto em produção, sem captura de statements SQL (só um comentário-placeholder apontando para este arquivo). Reconstruído em 02/09/2026 a partir do catálogo vivo (departments, department_invitations, team_message_reactions, team_messages.status) — confirmado coluna a coluna, FK a FK, policy a policy contra information_schema/pg_catalog. Ledger sem SQL/hash real — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260902150000",
+      "filename": "20260902150000_audit_fix_secdef_search_path_realtime_indexes.sql",
+      "file_sha256": "d59cbcf98c7d93ff945938620a0e5b5a2f3f7da80bd6020e0b26f369065bcc18",
+      "ledger_name": "audit_fix_secdef_search_path_realtime_indexes",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Arquivo reconstrói com certeza os 2 índices novos (idx_contacts_updated_at, idx_messages_unread_contact) verificados contra pg_indexes; a parte de search_path em funções SECURITY DEFINER não foi reconstruída como DDL por falta de baseline histórico do delta exato — verificado ao vivo que 0 funções SECURITY DEFINER do schema public estão hoje sem search_path. Ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
+    },
+    {
+      "version": "20260903160000",
+      "filename": "20260903160000_harden_mark_first_response.sql",
+      "file_sha256": "750f12d1edc49a69c0ccd4139df8cf70d9589db2f1447b7774d493470de57a8c",
+      "ledger_name": "harden_mark_first_response",
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "Harden IDOR da mark_first_response aplicado direto no banco em 03/09 16:00Z (predicado de autorizacao de contacts antes de escrever em conversation_sla). Arquivo criado junto com a aplicacao; paridade conferida contra statements[1] do ledger (len=2907, md5=42ecbf1e911060116159dea7bb104f54) apos remover BEGIN;/COMMIT; do arquivo."
     }
   ]
 }

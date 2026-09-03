@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MediaItem, getMediaType, getFilename } from './media-gallery/mediaUtils';
+import { MediaItem, getMediaType, getFilename, notifyDownloadBlocked } from './media-gallery/mediaUtils';
 import { MediaCard } from './media-gallery/MediaCard';
 import { MediaPreviewDialog } from './media-gallery/MediaPreviewDialog';
 
@@ -57,7 +57,7 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('messages')
-        .select('id, media_url, message_type, media_filename, caption, created_at')
+        .select('id, media_url, message_type, media_filename, caption, content, created_at')
         .eq('contact_id', contactId)
         .not('media_url', 'is', null)
         .order('created_at', { ascending: false })
@@ -77,7 +77,8 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
       type: getMediaType(m.media_url!, m.message_type),
       filename: m.media_filename || getFilename(m.media_url!),
       created_at: m.created_at,
-      caption: m.caption ?? null,
+      // useFileUploadLogic grava a legenda em 'content', nao em 'caption'
+      caption: m.caption ?? m.content ?? null,
     }));
   }, [messages]);
 
@@ -108,10 +109,7 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
     setPreviewOpen(true);
   };
 
-  const handleDownloadSelected = async () => {
-    const { toast } = await import('sonner');
-    toast.error('🔒 Download bloqueado por política de segurança', { description: 'O download de arquivos está desabilitado para proteção de dados.' });
-  };
+  const handleDownloadSelected = () => { void notifyDownloadBlocked(); };
 
   return (
     <>
@@ -125,18 +123,18 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
           <Input placeholder="Buscar mídia..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className="flex items-center gap-1 border rounded-md p-1">
-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}><Grid3X3 className="w-4 h-4" /></Button>
-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}><List className="w-4 h-4" /></Button>
+          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" aria-label="Visualizar em grade" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}><Grid3X3 className="w-4 h-4" /></Button>
+          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" aria-label="Visualizar em lista" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><List className="w-4 h-4" /></Button>
         </div>
       </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
         <TabsList className="grid grid-cols-5">
           <TabsTrigger value="all" className="gap-1 text-xs">Todos <Badge variant="outline" className="ml-1">{counts.all}</Badge></TabsTrigger>
-          <TabsTrigger value="image" className="gap-1" aria-label="Imagens"><Image className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.image}</Badge></TabsTrigger>
-          <TabsTrigger value="video" className="gap-1" aria-label="Vídeos"><FileVideo className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.video}</Badge></TabsTrigger>
-          <TabsTrigger value="audio" className="gap-1" aria-label="Áudios"><FileAudio className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.audio}</Badge></TabsTrigger>
-          <TabsTrigger value="document" className="gap-1" aria-label="Documentos"><File className="w-3 h-3" /><Badge variant="outline" className="ml-1">{counts.document}</Badge></TabsTrigger>
+          <TabsTrigger value="image" className="gap-1" aria-label="Imagens"><Image className="w-3 h-3" /><span className="hidden sm:inline">Imagens</span><Badge variant="outline" className="ml-1">{counts.image}</Badge></TabsTrigger>
+          <TabsTrigger value="video" className="gap-1" aria-label="Vídeos"><FileVideo className="w-3 h-3" /><span className="hidden sm:inline">Vídeos</span><Badge variant="outline" className="ml-1">{counts.video}</Badge></TabsTrigger>
+          <TabsTrigger value="audio" className="gap-1" aria-label="Áudios"><FileAudio className="w-3 h-3" /><span className="hidden sm:inline">Áudios</span><Badge variant="outline" className="ml-1">{counts.audio}</Badge></TabsTrigger>
+          <TabsTrigger value="document" className="gap-1" aria-label="Documentos"><File className="w-3 h-3" /><span className="hidden sm:inline">Docs</span><Badge variant="outline" className="ml-1">{counts.document}</Badge></TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -154,7 +152,7 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
         )}
       </AnimatePresence>
 
-      <ScrollArea className="h-[360px]">
+      <ScrollArea className="flex-1 max-h-[360px]">
         {isLoading ? (
           <div className="grid grid-cols-3 gap-2 p-2">{[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}</div>
         ) : filteredItems.length === 0 ? (
@@ -168,10 +166,10 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
         ) : (
           <div className="space-y-2 p-2">
             {filteredItems.map((item) => (
-              <div key={item.id} className={cn('flex items-center gap-3 p-2 rounded-lg border transition-colors cursor-pointer', selectedItems.has(item.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50')} onClick={() => openPreview(item)}>
-                <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0', selectedItems.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/50')} onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}>
+              <div key={item.id} role="button" tabIndex={0} aria-label={`Pré-visualizar ${item.filename}`} className={cn('flex items-center gap-3 p-2 rounded-lg border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selectedItems.has(item.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50')} onClick={() => openPreview(item)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(item); } }}>
+                <button type="button" aria-label={`Selecionar ${item.filename}`} aria-pressed={selectedItems.has(item.id)} className={cn('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selectedItems.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/50')} onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }} onKeyDown={(e) => e.stopPropagation()}>
                   {selectedItems.has(item.id) && <Check className="w-3 h-3" />}
-                </div>
+                </button>
                 <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
                   {item.type === 'image' && <Image className="w-5 h-5 text-muted-foreground" />}
                   {item.type === 'video' && <FileVideo className="w-5 h-5 text-muted-foreground" />}

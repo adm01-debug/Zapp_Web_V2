@@ -55,7 +55,7 @@ export const MediaCard = memo(function MediaCard({ item, isSelected, onSelect, o
                 onLoad={() => { setIsLoading(false); setHasError(false); }}
                 onError={() => {
                   setIsLoading(false);
-                  void refresh().then((freshUrl) => setHasError(freshUrl === null ? false : !freshUrl));
+                  void refresh().then((freshUrl) => setHasError(!freshUrl));
                 }}
               />
             ) : (

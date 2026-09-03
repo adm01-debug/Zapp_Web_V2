@@ -132,6 +132,11 @@ export default defineConfig(({ mode }) => {
             if (id.includes("mapbox-gl")) {
               return "vendor-maps";
             }
+            // Voice SDK — @elevenlabs/react embute LiveKit (~610KB min);
+            // sem esta regra cai num chunk "dist-*" importado pelo ChatPanel.
+            if (id.includes("@elevenlabs") || id.includes("livekit")) {
+              return "vendor-voice";
+            }
           },
         },
       },

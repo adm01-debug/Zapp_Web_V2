@@ -38,7 +38,12 @@ export function getStoredAccordionState(): string[] {
     const stored = localStorage.getItem(ACCORDION_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) return parsed;
+      if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) {
+        // localStorage antigo pode ter secao que nao existe mais (ex.: custom-fields)
+        const known = new Set(CONTACT_DETAIL_SECTIONS.map((s) => s.value));
+        const valid = parsed.filter((v) => known.has(v));
+        if (valid.length > 0) return valid;
+      }
     }
   } catch { /* storage unavailable */ }
   return DEFAULT_OPEN_SECTIONS;

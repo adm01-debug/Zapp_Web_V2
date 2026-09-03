@@ -1,8 +1,7 @@
-import { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Download, File } from 'lucide-react';
-import { MediaItem } from './mediaUtils';
+import { MediaItem, notifyDownloadBlocked } from './mediaUtils';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 interface MediaPreviewDialogProps {
@@ -12,10 +11,10 @@ interface MediaPreviewDialogProps {
 }
 
 export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDialogProps) {
-  // Keep last non-null item so Dialog exit animation has content to display
-  const lastItemRef = useRef<MediaItem | null>(null);
-  if (item) lastItemRef.current = item;
-  const displayItem = item ?? lastItemRef.current;
+  // O chamador (MediaGallery) so troca previewItem ao abrir outro item e nunca
+  // o zera ao fechar, entao o conteudo continua disponivel durante a animacao de
+  // saida do Dialog — nao ha por que guardar uma copia local aqui.
+  const displayItem = item;
 
   const { url: resolvedUrl, isLoading, error, refresh } = useResolvedStorageUrl(displayItem?.url || '');
 
@@ -31,9 +30,7 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
               <Button variant="ghost" size="icon" asChild>
                 <a href={resolvedUrl || undefined} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
               </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <a href={resolvedUrl || undefined} download={displayItem.filename}><Download className="w-4 h-4" /></a>
-              </Button>
+              <Button variant="ghost" size="icon" aria-label="Download" onClick={() => { void notifyDownloadBlocked(); }}><Download className="w-4 h-4" /></Button>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -47,7 +44,7 @@ export function MediaPreviewDialog({ item, open, onOpenChange }: MediaPreviewDia
             <div className="text-center p-8">
               <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p className="text-foreground mb-4">{displayItem.filename}</p>
-              <Button asChild><a href={resolvedUrl || undefined} download={displayItem.filename}><Download className="w-4 h-4 mr-2" />Download</a></Button>
+              <Button onClick={() => { void notifyDownloadBlocked(); }}><Download className="w-4 h-4 mr-2" />Download</Button>
             </div>
           )}
         </div>
