@@ -29,6 +29,10 @@ interface WithHeaderProps {
   children: React.ReactNode;
 }
 
+// SCROLL OWNERSHIP RULE: this wrapper is the ONE AND ONLY scroller for all standard views.
+// Views must NOT add overflow-y-auto / h-full at their root — they receive a scrollable parent
+// and must be w-full min-w-0 flat containers. Full-screen views (inbox, pipeline…) opt out
+// via FULL_SCREEN_VIEWS and manage their own scroll internally.
 function WithHeader({ viewId, children }: WithHeaderProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   if (FULL_SCREEN_VIEWS.has(viewId)) return <>{children}</>;
