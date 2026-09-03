@@ -128,7 +128,7 @@ export function ChatHeader({
               const TypeIcon = cfg.icon;
               return <Badge variant="outline" className={cn('text-[10px] border font-medium', cfg.color)}><TypeIcon className="w-3 h-3 mr-0.5" />{cfg.label}</Badge>;
             })()}
-            <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null} resolvedAt={conversation.status === 'resolved' ? conversation.updatedAt : null} firstResponseMinutes={conversation.priority === 'high' ? 2 : 5} resolutionMinutes={conversation.priority === 'high' ? 30 : 60} />
+            <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.firstResponseAt ?? null} firstResponseMinutes={5} />
             <CrmBadges crmCompany={crmCompany} crmCustomer={crmCustomer} crmRfm={crmRfm} />
             <BusinessHoursBadge connectionId={conversation.contact.whatsapp_connection_id} />
             <AnalysisBadges contactId={conversation.contact.id} compact />

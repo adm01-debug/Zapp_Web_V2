@@ -89,21 +89,21 @@ export function useWarRoomData() {
 
       const { data: contacts } = await supabase
         .from('contacts')
-        .select('queue_id, assigned_to');
+        .select('id, queue_id, assigned_to');
 
       const { data: slaData } = await supabase
         .from('conversation_sla')
-        .select('contact_id, first_response_breached, resolution_breached');
+        .select('contact_id, first_response_breached');
 
       const breachedContacts = new Set(
-        (slaData || []).filter(s => s.first_response_breached || s.resolution_breached).map(s => s.contact_id)
+        (slaData || []).filter(s => s.first_response_breached).map(s => s.contact_id)
       );
 
       return (dbQueues || []).map((q): WarRoomQueue => {
         const queueContacts = (contacts || []).filter(c => c.queue_id === q.id);
         const waiting = queueContacts.filter(c => !c.assigned_to).length;
         const inProgress = queueContacts.filter(c => c.assigned_to).length;
-        const slaBreaches = queueContacts.filter(c => breachedContacts.has(c.queue_id)).length;
+        const slaBreaches = queueContacts.filter(c => breachedContacts.has(c.id)).length;
 
         return {
           id: q.id, name: q.name, color: q.color,

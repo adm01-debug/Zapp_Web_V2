@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Timer, CheckCircle2, TrendingUp, Users } from 'lucide-react';
+import { Timer, TrendingUp, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const getRateColor = (rate: number) => {
@@ -24,7 +24,6 @@ interface AgentData {
   avatarUrl?: string;
   overallRate: number;
   firstResponse: { rate: number; onTime: number; total: number };
-  resolution: { rate: number; onTime: number; total: number };
 }
 
 interface SLAAgentTableProps {
@@ -75,12 +74,6 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                       <span className="text-muted-foreground">1ª Resposta:</span>
                       <span className={getRateColor(agent.firstResponse.rate)}>{agent.firstResponse.rate.toFixed(0)}%</span>
                       <span className="text-muted-foreground">({agent.firstResponse.onTime}/{agent.firstResponse.total})</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span className="text-muted-foreground">Resolução:</span>
-                      <span className={getRateColor(agent.resolution.rate)}>{agent.resolution.rate.toFixed(0)}%</span>
-                      <span className="text-muted-foreground">({agent.resolution.onTime}/{agent.resolution.total})</span>
                     </div>
                   </div>
                 </div>

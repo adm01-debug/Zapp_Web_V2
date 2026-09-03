@@ -67,7 +67,7 @@ describe('useSLAHistory', () => {
     const now = new Date();
     const mockRecords = [
       { id: '1', contact_id: 'c1', first_response_breached: true, resolution_breached: false, created_at: now.toISOString(), first_message_at: now.toISOString(), first_response_at: now.toISOString(), resolved_at: null },
-      { id: '2', contact_id: 'c2', first_response_breached: false, resolution_breached: true, created_at: now.toISOString(), first_message_at: now.toISOString(), first_response_at: now.toISOString(), resolved_at: now.toISOString() },
+      { id: '2', contact_id: 'c2', first_response_breached: true, resolution_breached: true, created_at: now.toISOString(), first_message_at: now.toISOString(), first_response_at: now.toISOString(), resolved_at: now.toISOString() },
     ];
 
     mockFrom.mockReturnValue({
@@ -81,8 +81,9 @@ describe('useSLAHistory', () => {
     const { result } = renderHook(() => useSLAHistory('7d'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.data?.totals.firstResponseBreaches).toBe(1);
-    expect(result.current.data?.totals.resolutionBreaches).toBe(1);
+    // Só SLA de 1ª resposta conta agora (resolution_breached é ignorado)
+    expect(result.current.data?.totals.firstResponseBreaches).toBe(2);
+    expect(result.current.data?.totals.totalBreaches).toBe(2);
   });
 
   it('handles fetch error gracefully', async () => {
