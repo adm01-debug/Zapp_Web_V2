@@ -18,10 +18,10 @@ interface SecurityAlert {
 }
 
 const ALERT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  rate_limit: { icon: Clock, color: 'text-warning', bg: 'bg-warning/10 dark:bg-warning/20/30' },
-  blocked_ip: { icon: Ban, color: 'text-destructive', bg: 'bg-destructive/10 dark:bg-destructive/20/30' },
-  suspicious: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10 dark:bg-warning/20/30' },
-  default: { icon: Shield, color: 'text-info', bg: 'bg-info/10 dark:bg-info/20/30' }
+  rate_limit: { icon: Clock, color: 'text-warning', bg: 'bg-warning/10 dark:bg-warning/20' },
+  blocked_ip: { icon: Ban, color: 'text-destructive', bg: 'bg-destructive/10 dark:bg-destructive/20' },
+  suspicious: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10 dark:bg-warning/20' },
+  default: { icon: Shield, color: 'text-info', bg: 'bg-info/10 dark:bg-info/20' }
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -48,13 +48,17 @@ export function RateLimitRealtimeAlerts() {
   useEffect(() => {
     // Fetch recent unresolved alerts
     const fetchAlerts = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('security_alerts')
         .select('*')
         .eq('is_resolved', false)
         .order('created_at', { ascending: false })
         .limit(10);
 
+      if (error) {
+        console.warn('[RateLimitRealtimeAlerts] Failed to fetch alerts:', error);
+        return;
+      }
       if (data) {
         setAlerts(data);
       }
