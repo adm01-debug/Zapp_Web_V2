@@ -1,4 +1,4 @@
--- 20260903120000_register_first_response
+{"-- 20260903120000_register_first_response
 -- Registra o timestamp real da primeira resposta do atendente (SLA de 1a resposta).
 -- Necessario porque a UI usava conversation.updatedAt (tempo de resolucao) como
 -- first_response_at, gerando violacoes falsas; e ninguem escrevia first_response_at.
@@ -68,4 +68,4 @@ $$;
 
 -- So usuarios autenticados podem chamar; anon nao
 REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;"}
