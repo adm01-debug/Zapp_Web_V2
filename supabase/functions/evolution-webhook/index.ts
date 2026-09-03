@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import {
   isRecord, normalizeEventName, toEventRecords,
   handleReactionEvent,
@@ -73,6 +73,15 @@ serve(async (req) => {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
+  // C9: rate-limit per IP before body is read (200 req/min covers GO burst traffic)
+  const ip = getClientIP(req);
+  const rl = checkRateLimit(`evowh:${ip}`, 200, 60_000);
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     // -----------------------------------------------------------------------
     // HMAC validation — MUST happen before any other body read.
@@ -111,7 +120,12 @@ serve(async (req) => {
     if (!validation.signatureValid) {
       const bodyRec = rawBody as Record<string, unknown>;
       if (!goTokenMatches(bodyRec)) {
-        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''})`);
+        // C11: v2-shaped payloads (with 'instance' field, no 'instanceName') also
+        // reach this branch because isGoPayload() returns false — but the token check
+        // runs here on the raw body regardless of shape. In shadow mode all payloads
+        // are accepted; in token mode both GO and v2-shaped payloads are rejected.
+        const payloadShape = typeof (bodyRec as Record<string, unknown>).instanceName === 'string' ? 'go' : 'v2';
+        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''}, shape=${payloadShape})`);
         if (enforceMode === 'token') {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
