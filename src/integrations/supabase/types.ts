@@ -7509,7 +7509,6 @@ export type Database = {
       }
     }
     Functions: {
-      mark_first_response: { Args: { p_contact_id: string }; Returns: undefined }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       cleanup_expired_challenges: { Args: never; Returns: undefined }
       cleanup_link_preview_cache: {
@@ -7722,6 +7721,10 @@ export type Database = {
           p_entity_type?: string
           p_user_agent?: string
         }
+        Returns: undefined
+      }
+      mark_first_response: {
+        Args: { p_contact_id: string }
         Returns: undefined
       }
       mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
@@ -7983,3 +7986,4 @@ export const Constants = {
     },
   },
 } as const
+
