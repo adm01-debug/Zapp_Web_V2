@@ -1,8 +1,4 @@
 -- 20260903170000_restore_record_failed_login_anon_grant
--- Restore do GRANT anon em record_failed_login (revert do REVOKE de 20260902000600
--- que quebrou o login anon). SQL conforme ledger.
-
--- 20260903170000_restore_record_failed_login_anon_grant
 -- Regressao de 20260902000600: revogar EXECUTE de anon em record_failed_login
 -- desligou o lockout de login em producao. A funcao e chamada pela tela de login
 -- ANTES de qualquer sessao existir (src/lib/loginAttempts.ts -> useAuthForm.ts,
