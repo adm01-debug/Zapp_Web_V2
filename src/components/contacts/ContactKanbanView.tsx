@@ -105,16 +105,20 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
     inFlightDrags.current.delete(draggableId);
 
     if (error) {
-      // Revert
+      // Rollback para o valor do servidor (prop 'contacts'), nao para o que este
+      // drag capturou de localContacts: se um drag anterior do mesmo contato
+      // tambem falhou, o capturado ja e o otimista dele e restaura-lo mostraria
+      // uma coluna que o banco nunca teve.
+      const serverType = contacts.find(c => c.id === draggableId)?.contact_type ?? contact.contact_type;
       setLocalContacts(prev =>
-        prev.map(c => c.id === draggableId ? { ...c, contact_type: contact.contact_type } : c)
+        prev.map(c => c.id === draggableId ? { ...c, contact_type: serverType } : c)
       );
       toast.error('Erro ao mover contato');
     } else {
       const col = KANBAN_COLUMNS.find(c => c.type === newType);
       toast.success(`Movido para ${col?.label || newType}`);
     }
-  }, [localContacts]);
+  }, [localContacts, contacts]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
