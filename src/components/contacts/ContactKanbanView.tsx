@@ -42,7 +42,11 @@ const KANBAN_COLUMNS = [
 
 export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanViewProps) {
   const [localContacts, setLocalContacts] = useState<KanbanContact[]>(contacts);
-  const inFlightDrags = useRef<Set<string>>(new Set());
+  // id do contato -> token do drag mais recente. Set nao distinguia dois drags
+  // do mesmo contato: o primeiro a responder limpava a flag e um update antigo
+  // podia sobrescrever o novo (ou reverter para um valor ja superado).
+  const inFlightDrags = useRef<Map<string, number>>(new Map());
+  const dragSeq = useRef(0);
 
   // Merge server data into local state, preserving contact_type for in-flight drags
   useEffect(() => {
@@ -82,7 +86,8 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
     const contact = localContacts.find(c => c.id === draggableId);
     if (!contact || contact.contact_type === newType) return;
 
-    inFlightDrags.current.add(draggableId);
+    const token = ++dragSeq.current;
+    inFlightDrags.current.set(draggableId, token);
 
     // Optimistic update
     setLocalContacts(prev =>
@@ -94,6 +99,9 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       .update({ contact_type: newType })
       .eq('id', draggableId);
 
+    // Se outro drag do mesmo contato comecou depois deste, ele e a verdade:
+    // ignora resultado e rollback desta operacao ja superada.
+    if (inFlightDrags.current.get(draggableId) !== token) return;
     inFlightDrags.current.delete(draggableId);
 
     if (error) {

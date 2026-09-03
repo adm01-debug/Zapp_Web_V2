@@ -23,6 +23,8 @@ interface ChatMessagesAreaProps {
   ttsPlaying: boolean;
   ttsMessageId: string | null;
   instanceName?: string;
+  /** Id da conversa (contato). Ancora estavel do canal de reactions. */
+  conversationId?: string;
   contactJid?: string;
   contactAvatar?: string;
   onSpeak: (messageId: string, text: string) => void;
@@ -46,7 +48,7 @@ export interface ChatMessagesAreaRef {
 
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
-  instanceName, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
+  instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
 }, ref) => {
   const queryClient = useQueryClient();
@@ -95,10 +97,10 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     },
   }), [messages, virtualizer]);
 
-  // contactJid é estável durante toda a vida da conversa; firstMessageId muda
-  // se mensagens são pré-carregadas (prepend) e causaria churn de subscription.
-  // Usar || (não ??) porque contactJid pode ser '' quando contato não tem phone.
-  const subscriptionKey = contactJid || messages[0]?.id;
+  // conversationId é o id do contato: estável por toda a vida da conversa e
+  // presente mesmo sem telefone. contactJid vem depois só por compatibilidade;
+  // messages[0]?.id é último recurso porque muda em prepend e causa churn.
+  const subscriptionKey = conversationId || contactJid || messages[0]?.id;
   const messageIdsSetRef = useRef<Set<string>>(new Set());
   messageIdsSetRef.current = useMemo(
     () => new Set(messages.map((message) => message.id).filter(Boolean)),
