@@ -2,8 +2,10 @@
 -- Each was verified: the covering index has the same leading column (full, non-partial).
 -- EXPLAIN on messages.contact_id confirmed planner already uses idx_messages_contact_created.
 --
--- Savings: ~9 index writes per INSERT/UPDATE/DELETE on affected tables.
--- Biggest gain: email_messages (2 indexes) and messages (1 index, high-traffic).
+-- Savings: nine index structures a menos. O ganho por linha e por tabela, nao
+-- somado: um write em messages economiza uma manutencao de indice, audit_logs
+-- economiza duas, email_messages duas. UPDATEs que ficam HOT nao pagavam essas
+-- manutencoes de qualquer forma. O ganho real depende do volume de cada tabela.
 
 -- audit_logs: covered by idx_audit_logs_action_created_at (action, created_at)
 DROP INDEX IF EXISTS public.idx_audit_logs_action;
