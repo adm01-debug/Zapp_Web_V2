@@ -23,14 +23,12 @@ describe('SLAIndicator', () => {
     vi.useRealTimers();
   });
 
-  it('renders nothing when resolved and within SLA', () => {
+  it('renders nothing when first response given and within SLA', () => {
     const { container } = render(
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T11:00:00Z')}
         firstResponseAt={new Date('2026-04-08T11:02:00Z')}
-        resolvedAt={new Date('2026-04-08T11:30:00Z')}
         firstResponseMinutes={5}
-        resolutionMinutes={60}
       />
     );
     expect(container.innerHTML).toBe('');
@@ -41,23 +39,21 @@ describe('SLAIndicator', () => {
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T11:58:00Z')}
         firstResponseMinutes={5}
-        resolutionMinutes={60}
       />
     );
     // Should show 1ª Resp text
     expect(container.textContent).toContain('1ª Resp');
   });
 
-  it('shows resolution countdown when response given but not resolved', () => {
+  it('renders nothing after on-time response even if conversation stays open (sem SLA de resolução)', () => {
     const { container } = render(
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T11:00:00Z')}
         firstResponseAt={new Date('2026-04-08T11:02:00Z')}
         firstResponseMinutes={5}
-        resolutionMinutes={120}
       />
     );
-    expect(container.textContent).toContain('Resolução');
+    expect(container.innerHTML).toBe('');
   });
 
   it('shows breached status when first response deadline passed', () => {
@@ -65,19 +61,17 @@ describe('SLAIndicator', () => {
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T10:00:00Z')} // 2 hours ago
         firstResponseMinutes={5} // 5 min deadline
-        resolutionMinutes={60}
       />
     );
     expect(container.textContent).toContain('Violado');
   });
 
-  it('shows breached status for resolution when past deadline', () => {
+  it('shows breached badge for first response even after response given late', () => {
     const { container } = render(
       <SLAIndicator
-        firstMessageAt={new Date('2026-04-08T09:00:00Z')} // 3 hours ago
-        firstResponseAt={new Date('2026-04-08T09:03:00Z')}
+        firstMessageAt={new Date('2026-04-08T09:00:00Z')}
+        firstResponseAt={new Date('2026-04-08T09:10:00Z')} // 10 min response, 5 min SLA
         firstResponseMinutes={5}
-        resolutionMinutes={60} // 1 hour deadline, 3 hours ago
       />
     );
     expect(container.textContent).toContain('Violado');
@@ -88,7 +82,6 @@ describe('SLAIndicator', () => {
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T11:58:00Z')}
         firstResponseMinutes={5}
-        resolutionMinutes={60}
         compact
       />
     );
@@ -101,7 +94,6 @@ describe('SLAIndicator', () => {
       <SLAIndicator
         firstMessageAt={new Date('2026-04-08T11:58:00Z')}
         firstResponseMinutes={5}
-        resolutionMinutes={60}
         className="my-custom-class"
       />
     );
@@ -151,13 +143,10 @@ describe('SLAIndicator — calculateSLAState', () => {
   function calculateSLAState(
     firstMessageAt: Date,
     firstResponseAt: Date | null | undefined,
-    resolvedAt: Date | null | undefined,
-    firstResponseMinutes: number,
-    resolutionMinutes: number
+    firstResponseMinutes: number
   ) {
     const now = new Date();
     const firstResponseDeadline = new Date(firstMessageAt.getTime() + firstResponseMinutes * 60 * 1000);
-    const resolutionDeadline = new Date(firstMessageAt.getTime() + resolutionMinutes * 60 * 1000);
 
     let firstResponseStatus: SLAStatus = 'ok';
     let firstResponseRemaining = firstResponseDeadline.getTime() - now.getTime();
@@ -168,36 +157,18 @@ describe('SLAIndicator — calculateSLAState', () => {
       firstResponseStatus = firstResponseBreached ? 'breached' : 'ok';
       firstResponseRemaining = 0;
     } else {
-      const warningThreshold = firstResponseMinutes * 60 * 1000 * 0.3;
+      // regra de negocio: warning apos 2 min fixos (restante <= total - 2min)
+      const warningMs = 2 * 60 * 1000;
       if (firstResponseRemaining <= 0) {
         firstResponseStatus = 'breached';
         firstResponseBreached = true;
-      } else if (firstResponseRemaining <= warningThreshold) {
+      } else if (firstResponseRemaining <= firstResponseMinutes * 60 * 1000 - warningMs) {
         firstResponseStatus = 'warning';
-      }
-    }
-
-    let resolutionStatus: SLAStatus = 'ok';
-    let resolutionRemaining = resolutionDeadline.getTime() - now.getTime();
-    let resolutionBreached = false;
-
-    if (resolvedAt) {
-      resolutionBreached = resolvedAt > resolutionDeadline;
-      resolutionStatus = resolutionBreached ? 'breached' : 'ok';
-      resolutionRemaining = 0;
-    } else {
-      const warningThreshold = resolutionMinutes * 60 * 1000 * 0.3;
-      if (resolutionRemaining <= 0) {
-        resolutionStatus = 'breached';
-        resolutionBreached = true;
-      } else if (resolutionRemaining <= warningThreshold) {
-        resolutionStatus = 'warning';
       }
     }
 
     return {
       firstResponse: { status: firstResponseStatus, remainingMs: firstResponseRemaining, breached: firstResponseBreached },
-      resolution: { status: resolutionStatus, remainingMs: resolutionRemaining, breached: resolutionBreached },
     };
   }
 
@@ -209,23 +180,22 @@ describe('SLAIndicator — calculateSLAState', () => {
 
   it('returns ok when well within deadline', () => {
     const state = calculateSLAState(
-      new Date('2026-04-08T11:59:00Z'), null, null, 5, 60
+      new Date('2026-04-08T11:59:00Z'), null, 5
     );
     expect(state.firstResponse.status).toBe('ok');
-    expect(state.resolution.status).toBe('ok');
   });
 
   it('returns warning when within 30% threshold', () => {
     // 10 min SLA, started 8 min ago → 2 min remaining = 20% of 10 min
     const state = calculateSLAState(
-      new Date('2026-04-08T11:52:00Z'), null, null, 10, 60
+      new Date('2026-04-08T11:52:00Z'), null, 10
     );
     expect(state.firstResponse.status).toBe('warning');
   });
 
   it('returns breached when past deadline', () => {
     const state = calculateSLAState(
-      new Date('2026-04-08T11:00:00Z'), null, null, 5, 30
+      new Date('2026-04-08T11:00:00Z'), null, 5
     );
     expect(state.firstResponse.status).toBe('breached');
     expect(state.firstResponse.breached).toBe(true);
@@ -235,7 +205,7 @@ describe('SLAIndicator — calculateSLAState', () => {
     const state = calculateSLAState(
       new Date('2026-04-08T11:55:00Z'),
       new Date('2026-04-08T11:57:00Z'), // 2 min response, 5 min SLA
-      null, 5, 60
+      5
     );
     expect(state.firstResponse.status).toBe('ok');
     expect(state.firstResponse.breached).toBe(false);
@@ -245,20 +215,9 @@ describe('SLAIndicator — calculateSLAState', () => {
     const state = calculateSLAState(
       new Date('2026-04-08T11:00:00Z'),
       new Date('2026-04-08T11:10:00Z'), // 10 min response, 5 min SLA
-      null, 5, 60
+      5
     );
     expect(state.firstResponse.status).toBe('breached');
     expect(state.firstResponse.breached).toBe(true);
-  });
-
-  it('marks resolution as breached when resolved after deadline', () => {
-    const state = calculateSLAState(
-      new Date('2026-04-08T10:00:00Z'),
-      new Date('2026-04-08T10:03:00Z'),
-      new Date('2026-04-08T11:30:00Z'), // 90 min, 60 min SLA
-      5, 60
-    );
-    expect(state.resolution.status).toBe('breached');
-    expect(state.resolution.breached).toBe(true);
   });
 });

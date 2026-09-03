@@ -20,11 +20,11 @@ export class ContactService {
   static async searchContacts(params: SearchContactsParams) {
     return supabase.rpc('search_contacts', {
       search_term: params.search_term || '',
-      contact_type_filter: params.contact_type_filter || null,
-      company_filter: params.company_filter || null,
-      job_title_filter: params.job_title_filter || null,
-      tag_filter: params.tag_filter || null,
-      date_from: params.date_from || null,
+      contact_type_filter: params.contact_type_filter || undefined,
+      company_filter: params.company_filter || undefined,
+      job_title_filter: params.job_title_filter || undefined,
+      tag_filter: params.tag_filter || undefined,
+      date_from: params.date_from || undefined,
       sort_field: params.sort_field || 'name',
       sort_direction: params.sort_direction || 'asc',
       page_size: params.page_size || 50,

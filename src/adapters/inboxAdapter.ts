@@ -45,6 +45,11 @@ export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?
 }
 
 export function mapRealtimeConversationToConversation(rc: ConversationWithMessages): Conversation {
+  // SLA de 1a resposta: timestamp real da primeira mensagem do atendente na conversa
+  const firstAgentMessage = rc.messages
+    .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
+
   return {
     id: rc.contact.id,
     contact: mapRealtimeContactToContact(rc.contact),
@@ -55,6 +60,7 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
+    firstResponseAt: firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
     assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
     sentiment: rc.contact.ai_sentiment,
   };

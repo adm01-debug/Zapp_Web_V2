@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Clock, XCircle, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Clock, Calendar } from 'lucide-react';
 import { useSLAHistory, HistoryPeriod } from '@/hooks/sla/useSLAHistory';
 import { ExportButton } from '@/components/reports/ExportButton';
 import { ReportData } from '@/utils/exportReport';
@@ -63,7 +63,6 @@ export const SLAHistoryDashboard = () => {
       { header: 'Data', key: 'dateLabel', width: 15 },
       { header: 'Conversas', key: 'totalConversations', width: 12 },
       { header: 'Violações 1ª Resp.', key: 'firstResponseBreaches', width: 18 },
-      { header: 'Violações Resolução', key: 'resolutionBreaches', width: 18 },
       { header: 'Total Violações', key: 'totalBreaches', width: 15 },
       { header: 'Taxa SLA (%)', key: 'slaRate', width: 12 },
     ],
@@ -72,7 +71,6 @@ export const SLAHistoryDashboard = () => {
       { label: 'Taxa SLA Geral', value: `${data.totals.overallSLARate.toFixed(1)}%` },
       { label: 'Total de Conversas', value: data.totals.totalConversations },
       { label: 'Violações 1ª Resposta', value: data.totals.firstResponseBreaches },
-      { label: 'Violações Resolução', value: data.totals.resolutionBreaches },
       { label: 'Total de Violações', value: data.totals.totalBreaches },
     ],
   });
@@ -80,7 +78,6 @@ export const SLAHistoryDashboard = () => {
   const summaryCards = [
     { icon: Target, color: 'primary', label: 'Taxa SLA Geral', value: `${data.totals.overallSLARate.toFixed(1)}%`, extra: <TrendIndicator trend={data.trends.overall} label="vs período anterior" /> },
     { icon: Clock, color: 'warning', label: 'Violações 1ª Resposta', value: data.totals.firstResponseBreaches, extra: <TrendIndicator trend={data.trends.firstResponse} inverse label="vs período anterior" /> },
-    { icon: XCircle, color: 'destructive', label: 'Violações Resolução', value: data.totals.resolutionBreaches, extra: <TrendIndicator trend={data.trends.resolution} inverse label="vs período anterior" /> },
     { icon: Calendar, color: 'info', label: 'Total Conversas', value: data.totals.totalConversations, extra: <p className="text-sm text-muted-foreground mt-1">{data.totals.totalBreaches} violações totais</p> },
   ];
 
