@@ -7,7 +7,6 @@ import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mic, Search, Calendar, X, RefreshCw } from 'lucide-react';
@@ -124,7 +123,7 @@ export function TranscriptionsHistoryView() {
         </div>
       </motion.div>
 
-      <ScrollArea className="h-[calc(100vh-280px)]">
+      <div>
         <div className="space-y-4 relative z-10 pr-4">
           <AnimatePresence>
             {Object.keys(groupedByContact).length === 0 ? (
@@ -141,7 +140,7 @@ export function TranscriptionsHistoryView() {
             )}
           </AnimatePresence>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

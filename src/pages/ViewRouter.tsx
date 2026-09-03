@@ -121,7 +121,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   }, [currentView, userId]);
 
   return (
-    <ViewContainer fullScreen={FULL_SCREEN_VIEWS.has(currentView)}>
+    <ViewContainer fullScreen={FULL_SCREEN_VIEWS.has(currentView)} viewId={currentView}>
       {prefersReduced ? (
         <div key={currentView} className="h-full w-full">{content}</div>
       ) : (
