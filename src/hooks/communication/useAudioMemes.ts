@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { convertAudioToMp3 } from '@/utils/audioToMp3';
 
 const log = getLogger('useAudioMemes');
 
@@ -90,12 +91,17 @@ export function useAudioMemes(open: boolean) {
 
     setUploading(true);
     try {
-      const ext = getFileExtensionWithDefault(file.name, 'mp3');
+      // Padroniza em MP3 (audio/mpeg) — reprodução universal iOS/Android/desktop.
+      // Fallback: se o browser não decodificar o formato, usa o arquivo original.
+      const converted = await convertAudioToMp3(file, file.name);
+      const payload: File | Blob = converted?.blob ?? file;
+      const contentType = converted ? 'audio/mpeg' : (file.type || 'audio/mpeg');
+      const ext = converted ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
       const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')
-        .upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
+        .upload(storagePath, payload, { contentType, cacheControl: '31536000' });
 
       if (uploadError) { toast.error('Erro ao enviar arquivo'); return; }
 
