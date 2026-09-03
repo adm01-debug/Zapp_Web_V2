@@ -1442,7 +1442,7 @@
     },
     {
       "path": "src/pages/ViewRouter.tsx",
-      "sha256": "458039e8572c23c314f04b8a00b3705ddb421baf01c6c3ac1d2cbaf7e013e302"
+      "sha256": "aa88333699c5ed8ccfb81996016775967c74ac87b22251db7b3188e333a52d24"
     },
     {
       "path": "src/services/crm/external-crm.service.ts",
