@@ -156,7 +156,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
 
 function ViewLoadingSkeleton() {
   return (
-    <div className="flex items-center justify-center h-full" aria-busy="true" aria-label="Carregando módulo">
+    <div className="flex items-center justify-center h-full" role="status" aria-busy="true" aria-label="Carregando módulo">
       <div className="flex flex-col items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 animate-pulse" />
         <div className="flex gap-1" aria-hidden="true">

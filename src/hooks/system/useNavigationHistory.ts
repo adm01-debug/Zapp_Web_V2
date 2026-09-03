@@ -57,34 +57,36 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   // pushState/replaceState do NOT fire hashchange, so no isInternalNav guard is needed here.
   const onHashChange = useCallback(() => {
     const hash = window.location.hash.replace('#', '');
-    if (!hash || RESERVED_HASHES.has(hash)) return;
+    if (RESERVED_HASHES.has(hash)) return;
+    // Empty hash (e.g. Back to "/") resolves to defaultView to keep state consistent
+    const viewId = hash || defaultView;
 
     setState(prev => {
       const currentViewId = prev.entries[prev.index]?.viewId;
-      if (hash === currentViewId) return prev;
+      if (viewId === currentViewId) return prev;
 
       // Browser went back → find matching entry before current index
       for (let i = prev.index - 1; i >= 0; i--) {
-        if (prev.entries[i].viewId === hash) {
+        if (prev.entries[i].viewId === viewId) {
           previousViewRef.current = currentViewId ?? null;
           return { ...prev, index: i };
         }
       }
       // Browser went forward → find matching entry after current index
       for (let i = prev.index + 1; i < prev.entries.length; i++) {
-        if (prev.entries[i].viewId === hash) {
+        if (prev.entries[i].viewId === viewId) {
           previousViewRef.current = currentViewId ?? null;
           return { ...prev, index: i };
         }
       }
       // Address bar / deep link → push new entry
       previousViewRef.current = currentViewId ?? null;
-      const newEntry: NavigationEntry = { viewId: hash, timestamp: Date.now() };
+      const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
       const truncated = prev.entries.slice(0, prev.index + 1);
       const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
       return { entries: newEntries, index: newEntries.length - 1 };
     });
-  }, []);
+  }, [defaultView]);
 
   useEffect(() => {
     window.addEventListener('hashchange', onHashChange);
