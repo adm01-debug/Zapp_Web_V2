@@ -46,6 +46,13 @@ export interface ConversationContact {
   job_title?: string | null;
   assigned_to?: string | null;
   queue_id?: string | null;
+  /** SLA de 1a resposta canônico do banco (embed do relacionamento conversation_sla;
+   *  relação 1:N — o PostgREST devolve array; usamos o item mais recente) */
+  conversation_sla?: Array<{
+    first_response_at: string | null;
+    first_message_at: string | null;
+    first_response_breached: boolean | null;
+  }> | null;
   created_at?: string;
   createdAt?: Date;
   updated_at?: string;
