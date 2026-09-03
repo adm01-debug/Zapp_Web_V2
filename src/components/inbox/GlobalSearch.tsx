@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useGlobalSearchData, type SearchResult } from './useGlobalSearchData';
 import { GlobalSearchFilters } from './search/GlobalSearchFilters';
 import { GlobalSearchResults } from './search/GlobalSearchResults';
+import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 
 interface QuickAction {
   id: string;
@@ -30,7 +31,7 @@ interface GlobalSearchProps {
 function navToView(view: string) {
   const u = new URL(window.location.href);
   u.searchParams.set('view', view);
-  u.hash = '';
+  if (u.hash && !RESERVED_HASHES.has(u.hash.replace('#', ''))) u.hash = '';
   window.history.pushState(null, '', u.href);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }

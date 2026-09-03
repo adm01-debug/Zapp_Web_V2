@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
+import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 
 interface ContactFormData {
   name: string;
@@ -57,7 +58,7 @@ export function useContactsCRUD() {
     if (params.get('view') !== 'inbox') {
       const u = new URL(window.location.href);
       u.searchParams.set('view', 'inbox');
-      u.hash = '';
+      if (u.hash && !RESERVED_HASHES.has(u.hash.replace('#', ''))) u.hash = '';
       window.history.pushState(null, '', u.href);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }

@@ -30,7 +30,7 @@ const MAX_HISTORY = 50;
 const BREADCRUMB_DEPTH = 4;
 
 // Hashes that are NOT view IDs (e.g. skip-to-content anchors)
-const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
+export const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
 
 /**
  * Reads the active view from the URL.
