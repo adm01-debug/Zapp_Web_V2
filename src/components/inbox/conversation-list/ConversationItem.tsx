@@ -173,7 +173,7 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
               </TooltipProvider>
             </div>
             <div className="mt-1">
-              <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null} firstResponseMinutes={conversation.priority === 'high' ? 2 : 5} compact />
+              <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null} firstResponseMinutes={5} compact />
             </div>
             {conversation.tags.length > 0 && (
               <div className="flex items-center gap-1 mt-2 flex-wrap">

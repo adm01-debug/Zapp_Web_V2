@@ -266,7 +266,7 @@ export function ConversationList({
                           <SLAIndicator
                             firstMessageAt={conversation.createdAt}
                             firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null}
-                            firstResponseMinutes={conversation.priority === 'high' ? 2 : 5}
+                            firstResponseMinutes={5}
                             compact
                           />
                         </div>
