@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,7 +29,10 @@ interface VirtualizedRealtimeListProps {
   onSnooze?: (contactId: string) => void;
 }
 
-const ITEM_HEIGHT = 88;
+// py-2.5 (20) + conteudo (48 com avatar, ate ~60 com a linha de tags) + gap-1.5
+// (6) + faixa de acoes h-7 (28) + border-b (1). A faixa e escondida com opacity,
+// entao ocupa altura mesmo fora do hover.
+const ITEM_HEIGHT = 120;
 const EMPTY_SET = new Set<string>();
 
 export function VirtualizedRealtimeList({
@@ -185,12 +188,8 @@ const ConversationRow = memo(({
       className="px-2"
     >
       <div
-        role="button"
-        tabIndex={0}
-        onClick={(e) => handleClick(contactId, e)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(contactId, e); } }}
         className={cn(
-          'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+          'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 group',
           'hover:bg-muted/50',
           selectedContactId === contactId && 'bg-primary/10 border-l-2 border-l-primary',
           isSelected && 'bg-primary/15',
@@ -199,17 +198,21 @@ const ConversationRow = memo(({
       >
         <div className="flex items-center gap-3">
           {selectionMode && (
-            <div
-              className="flex-shrink-0 flex items-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSelection?.(contactId);
-              }}
-            >
-              <Checkbox checked={isSelected} className="data-[state=checked]:bg-primary" />
+            <div className="flex-shrink-0 flex items-center">
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggleSelection?.(contactId)}
+                aria-label={`Selecionar conversa com ${conversation.contact.name || 'contato sem nome'}`}
+                className="data-[state=checked]:bg-primary"
+              />
             </div>
           )}
 
+          <button
+            type="button"
+            onClick={(e) => handleClick(contactId, e)}
+            className="flex-1 min-w-0 flex items-center gap-3 text-left cursor-pointer outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
           <div className="relative flex-shrink-0">
             <Avatar className="w-12 h-12">
               <AvatarImage src={conversation.contact.avatar_url || undefined} alt="" />
@@ -297,6 +300,7 @@ const ConversationRow = memo(({
               </div>
             )}
           </div>
+          </button>
         </div>
 
         {/* Hover action buttons */}
