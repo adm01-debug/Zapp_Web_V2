@@ -4,11 +4,13 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pin, Gift } from 'lucide-react';
+import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface VirtualizedRealtimeListProps {
   conversations: ConversationWithMessages[];
@@ -21,9 +23,13 @@ interface VirtualizedRealtimeListProps {
   onArchive?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   pinnedIds?: Set<string>;
+  onResolve?: (contactId: string) => void;
+  onTransfer?: (contactId: string) => void;
+  onFavorite?: (contactId: string) => void;
+  onSnooze?: (contactId: string) => void;
 }
 
-const ITEM_HEIGHT = 80;
+const ITEM_HEIGHT = 88;
 const EMPTY_SET = new Set<string>();
 
 export function VirtualizedRealtimeList({
@@ -37,16 +43,18 @@ export function VirtualizedRealtimeList({
   onArchive,
   onPin,
   pinnedIds = EMPTY_SET,
+  onResolve,
+  onTransfer,
+  onFavorite,
+  onSnooze,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Filter out invalid conversations
   const safeConversations = useMemo(() => {
     if (!Array.isArray(conversations)) return [];
     return conversations.filter(c => c?.contact?.id);
   }, [conversations]);
 
-  // Sort: pinned first, then by last message date
   const sortedConversations = useMemo(() => {
     return [...safeConversations].sort((a, b) => {
       const aPin = pinnedIds.has(a.contact.id);
@@ -101,6 +109,12 @@ export function VirtualizedRealtimeList({
             onSelectConversation={onSelectConversation}
             onToggleSelection={onToggleSelection}
             handleClick={handleClick}
+            onResolve={onResolve}
+            onTransfer={onTransfer}
+            onPin={onPin}
+            onFavorite={onFavorite}
+            onSnooze={onSnooze}
+            onArchive={onArchive}
           />
         ))}
       </div>
@@ -124,9 +138,21 @@ const ConversationRow = memo(({
   isPinned,
   selectionMode,
   onToggleSelection,
-  handleClick
+  handleClick,
+  onResolve,
+  onTransfer,
+  onPin,
+  onFavorite,
+  onSnooze,
+  onArchive,
 }: any) => {
   const contactId = conversation.contact.id;
+
+  const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
+    e.stopPropagation();
+    if (handler) handler(contactId);
+    else toast.info(`${label}: em breve`);
+  };
 
   return (
     <div
@@ -140,117 +166,199 @@ const ConversationRow = memo(({
       }}
       className="px-2"
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={(e) => handleClick(contactId, e)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(contactId, e as any); } }}
         className={cn(
-          'w-full px-3 py-3 flex items-center gap-3 transition-all text-left border-b border-border/50',
+          'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
           'hover:bg-muted/50',
           selectedContactId === contactId && 'bg-primary/10 border-l-2 border-l-primary',
           isSelected && 'bg-primary/15',
           isPinned && selectedContactId !== contactId && 'bg-muted/30'
         )}
       >
-        {selectionMode && (
-          <div
-            className="flex-shrink-0 flex items-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleSelection?.(contactId);
-            }}
-          >
-            <Checkbox checked={isSelected} className="data-[state=checked]:bg-primary" />
-          </div>
-        )}
-
-        <div className="relative flex-shrink-0">
-          <Avatar className="w-12 h-12">
-            {/* alt vazio: o nome do contato ja esta no texto visivel do botao. */}
-            <AvatarImage src={conversation.contact.avatar_url || undefined} alt="" />
-            <AvatarFallback className={cn(
-              'text-xs font-semibold',
-              getAvatarColor(conversation.contact.name || '?').bg,
-              getAvatarColor(conversation.contact.name || '?').text
-            )}>
-              {getInitials(conversation.contact.name || '?')}
-            </AvatarFallback>
-          </Avatar>
-          {conversation.contact.ai_sentiment && (
-            <span
-              role="img"
-              aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
-              className={cn(
-                'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
-                conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
-                conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
-                conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
-              )}
-              title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
-            />
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 mb-0.5">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              {isPinned && <Pin className="w-3 h-3 text-primary flex-shrink-0" />}
-              {conversation.contact.contact_type === 'sicoob_gifts' && (
-                <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
-              )}
-              <span className="font-medium text-foreground truncate text-sm">
-                {(() => {
-                  const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
-                  const company = conversation.contact.company;
-                  return company ? `${firstName} · ${company}` : firstName;
-                })()}
-              </span>
-              {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
-                <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}>
-                  {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
-                </span>
-              )}
-              {conversation.contact.contact_type === 'sicoob_gifts' && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-info/40 text-info bg-info/10 flex-shrink-0">
-                  Sicoob Gifts
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {conversation.lastMessage && (
-                <span className="text-[11px] text-muted-foreground">
-                  {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
-                    addSuffix: false,
-                    locale: ptBR,
-                  })}
-                </span>
-              )}
-              {conversation.unreadCount > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                  {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                </span>
-              )}
-            </div>
-          </div>
-          <p className="text-[13px] text-muted-foreground truncate">
-            {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
-              ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
-              : conversation.lastMessage?.content || 'Sem mensagens'}
-          </p>
-          {conversation.contact.tags && conversation.contact.tags.length > 0 && (
-            <div className="flex gap-1 mt-1.5">
-              {conversation.contact.tags.slice(0, 2).map((tag: any) => (
-                <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                  {tag}
-                </Badge>
-              ))}
-              {conversation.contact.tags.length > 2 && (
-                <span className="text-[10px] text-muted-foreground">
-                  +{conversation.contact.tags.length - 2}
-                </span>
-              )}
+        <div className="flex items-center gap-3">
+          {selectionMode && (
+            <div
+              className="flex-shrink-0 flex items-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelection?.(contactId);
+              }}
+            >
+              <Checkbox checked={isSelected} className="data-[state=checked]:bg-primary" />
             </div>
           )}
+
+          <div className="relative flex-shrink-0">
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={conversation.contact.avatar_url || undefined} alt="" />
+              <AvatarFallback className={cn(
+                'text-xs font-semibold',
+                getAvatarColor(conversation.contact.name || '?').bg,
+                getAvatarColor(conversation.contact.name || '?').text
+              )}>
+                {getInitials(conversation.contact.name || '?')}
+              </AvatarFallback>
+            </Avatar>
+            {conversation.contact.ai_sentiment && (
+              <span
+                role="img"
+                aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
+                className={cn(
+                  'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
+                  conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
+                  conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
+                  conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
+                )}
+                title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
+              />
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                {isPinned && <Pin className="w-3 h-3 text-primary flex-shrink-0" />}
+                {conversation.contact.contact_type === 'sicoob_gifts' && (
+                  <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
+                )}
+                <span className="font-medium text-foreground truncate text-sm">
+                  {(() => {
+                    const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
+                    const company = conversation.contact.company;
+                    return company ? `${firstName} · ${company}` : firstName;
+                  })()}
+                </span>
+                {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
+                  <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}>
+                    {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
+                  </span>
+                )}
+                {conversation.contact.contact_type === 'sicoob_gifts' && (
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-info/40 text-info bg-info/10 flex-shrink-0">
+                    Sicoob Gifts
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {conversation.lastMessage && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
+                      addSuffix: false,
+                      locale: ptBR,
+                    })}
+                  </span>
+                )}
+                {conversation.unreadCount > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="text-[13px] text-muted-foreground truncate">
+              {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
+                ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
+                : conversation.lastMessage?.content || 'Sem mensagens'}
+            </p>
+            {conversation.contact.tags && conversation.contact.tags.length > 0 && (
+              <div className="flex gap-1 mt-1">
+                {conversation.contact.tags.slice(0, 2).map((tag: any) => (
+                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                    {tag}
+                  </Badge>
+                ))}
+                {conversation.contact.tags.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{conversation.contact.tags.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </button>
+
+        {/* Hover action buttons */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-150 translate-y-0.5 group-hover:translate-y-0 pl-[60px]">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Resolver conversa"
+                  onClick={(e) => handleAction(e, onResolve, 'Resolver')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Resolver</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Transferir conversa"
+                  onClick={(e) => handleAction(e, onTransfer, 'Transferir')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Transferir</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Fixar conversa"
+                  onClick={(e) => handleAction(e, onPin, 'Fixar')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                >
+                  <Pin className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Favoritar conversa"
+                  onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-400/10 active:scale-90 transition-all duration-150"
+                >
+                  <Star className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Favoritar</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Adiar conversa"
+                  onClick={(e) => handleAction(e, onSnooze, 'Adiar')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                >
+                  <AlarmClock className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Arquivar conversa"
+                  onClick={(e) => handleAction(e, onArchive, 'Arquivar')}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
     </div>
   );
 });
