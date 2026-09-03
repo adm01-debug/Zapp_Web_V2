@@ -55,21 +55,46 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
   const currentView = state.entries[state.index]?.viewId ?? defaultView;
 
   // Sync hash → state on browser back/forward
+  // Uses setState callback to avoid stale closure and properly detect back vs forward
+  const onHashChange = useCallback(() => {
+    if (isInternalNav.current) {
+      isInternalNav.current = false;
+      return;
+    }
+    const hash = window.location.hash.replace('#', '');
+    if (!hash || RESERVED_HASHES.has(hash)) return;
+
+    setState(prev => {
+      const currentViewId = prev.entries[prev.index]?.viewId;
+      if (hash === currentViewId) return prev;
+
+      // Browser went back → find matching entry before current index
+      for (let i = prev.index - 1; i >= 0; i--) {
+        if (prev.entries[i].viewId === hash) {
+          previousViewRef.current = currentViewId ?? null;
+          return { ...prev, index: i };
+        }
+      }
+      // Browser went forward → find matching entry after current index
+      for (let i = prev.index + 1; i < prev.entries.length; i++) {
+        if (prev.entries[i].viewId === hash) {
+          previousViewRef.current = currentViewId ?? null;
+          return { ...prev, index: i };
+        }
+      }
+      // Address bar / deep link → push new entry
+      previousViewRef.current = currentViewId ?? null;
+      const newEntry: NavigationEntry = { viewId: hash, timestamp: Date.now() };
+      const truncated = prev.entries.slice(0, prev.index + 1);
+      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
+      return { entries: newEntries, index: newEntries.length - 1 };
+    });
+  }, []);
+
   useEffect(() => {
-    const onHashChange = () => {
-      if (isInternalNav.current) {
-        isInternalNav.current = false;
-        return;
-      }
-      const hash = window.location.hash.replace('#', '');
-      if (hash && hash !== currentView && !RESERVED_HASHES.has(hash)) {
-        navigateTo(hash);
-      }
-    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView]);
+  }, [onHashChange]);
 
   const syncHash = useCallback((viewId: string, replace = false) => {
     isInternalNav.current = true;

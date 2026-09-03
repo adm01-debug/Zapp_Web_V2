@@ -22,7 +22,7 @@ interface VirtualizedConversationListProps {
   onMarkRead?: (conversation: Conversation) => void;
 }
 
-export function VirtualizedConversationList({ conversations, selectedId, onSelect, compactMode = false }: VirtualizedConversationListProps) {
+export function VirtualizedConversationList({ conversations, selectedId, onSelect, compactMode = false, onArchive }: VirtualizedConversationListProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const parentRef = useRef<HTMLDivElement>(null);
@@ -82,7 +82,7 @@ export function VirtualizedConversationList({ conversations, selectedId, onSelec
               const conversation = filteredConversations[virtualRow.index];
               return (
                 <div key={virtualRow.key} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)` }}>
-                  <ConversationItem conversation={conversation} isSelected={selectedId === conversation.id} onSelect={onSelect} compact={compactMode} />
+                  <ConversationItem conversation={conversation} isSelected={selectedId === conversation.id} onSelect={onSelect} compact={compactMode} onArchive={onArchive} />
                 </div>
               );
             })}
