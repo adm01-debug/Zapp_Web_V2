@@ -120,7 +120,6 @@ export function PageTemplate({
           padded && 'p-[var(--density-padding-x)] sm:p-[calc(var(--density-padding-x)*1.5)]',
           className
         )}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 500px' }}
       >
         {children}
       </motion.div>

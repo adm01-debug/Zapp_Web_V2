@@ -126,11 +126,11 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+        <div className="col-span-full lg:col-span-3">
           <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
         </div>
-        <div className="lg:col-span-1">
+        <div>
           <ContactBirthdayPanel
             contacts={filteredContacts.map(c => ({ id: c.id, name: c.name, avatar_url: c.avatar_url, birthday: undefined }))}
             onContactClick={openContactChat}
