@@ -1,4 +1,5 @@
  import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
+ import { useQueryClient } from '@tanstack/react-query';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService } from '@/services/auth.service';
  import { Profile } from '@/types';
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
+  const queryClient = useQueryClient();
 
   /**
    * BUG-6 FIX: wrap fetchProfile in try/catch so errors don't leave
@@ -104,6 +106,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         log.info('[AUTH] User signed in');
       } else if (event === 'SIGNED_OUT') {
         log.info('[AUTH] User signed out');
+        // O QueryClient e singleton e o app roda com refetchOnMount desligado:
+        // sem limpar, o proximo login na mesma aba le dados em cache do usuario
+        // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
+        queryClient.clear();
       }
     });
 
@@ -133,7 +139,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, queryClient]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
