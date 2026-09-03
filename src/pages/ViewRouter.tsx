@@ -23,6 +23,10 @@ interface ViewRouterProps {
 }
 
 // Derived from nav metadata — single source of truth for full-screen layout flag
+// Views que trazem o proprio scroller (usam PageTemplate). Nao sao full-screen:
+// continuam dentro do wrapper flat, so nao ganham o scroller compartilhado.
+const OWN_SCROLL_VIEWS = new Set(['settings']);
+
 const FULL_SCREEN_VIEWS = new Set(
   [
     ...NavigationService.getPrimaryNav(),
@@ -128,7 +132,11 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   }, [currentView, userId]);
 
   return (
-    <ViewContainer fullScreen={FULL_SCREEN_VIEWS.has(currentView)} viewId={currentView}>
+    <ViewContainer
+      fullScreen={FULL_SCREEN_VIEWS.has(currentView)}
+      ownScroll={OWN_SCROLL_VIEWS.has(currentView)}
+      viewId={currentView}
+    >
       {prefersReduced ? (
         <div key={currentView} className="h-full w-full">{content}</div>
       ) : (

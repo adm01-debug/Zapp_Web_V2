@@ -89,7 +89,9 @@ Regra: **o scroller é o wrapper do router**; view nunca cria `overflow-y-auto h
 ```js
 const main = document.querySelector('#main-content');
 const scroller = main.querySelector(':scope > div.flex.flex-col > div.flex-1');
-const viewRoot = scroller.firstElementChild;
+// o filho direto do scroller e o wrapper do framer-motion (ou o div h-full
+// w-full em reduced motion); a raiz da view esta um nivel abaixo
+const viewRoot = scroller.firstElementChild?.firstElementChild ?? scroller.firstElementChild;
 getComputedStyle(scroller).overflowY === 'auto'
   && getComputedStyle(viewRoot).overflowY !== 'auto';
 ```
