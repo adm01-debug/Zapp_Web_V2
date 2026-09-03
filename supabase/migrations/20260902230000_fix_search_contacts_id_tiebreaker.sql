@@ -1,4 +1,5 @@
 -- 20260902230000_fix_search_contacts_id_tiebreaker
+<<<<<<< HEAD
 -- search_contacts com tiebreaker c.id ASC (ORDER BY estavel).
 --
 -- O ledger guarda apenas um resumo em prosa desta versao (statements[1] =
@@ -27,6 +28,16 @@ RETURNS TABLE(
 LANGUAGE plpgsql
 STABLE SECURITY DEFINER
 SET search_path TO 'public'
+=======
+-- search_contacts com tiebreaker c.id ASC no ORDER BY (paginacao estavel).
+-- Definicao completa conforme vigente no banco de producao.
+
+CREATE OR REPLACE FUNCTION public.search_contacts(search_term text DEFAULT ''::text, contact_type_filter text DEFAULT NULL::text, company_filter text DEFAULT NULL::text, job_title_filter text DEFAULT NULL::text, tag_filter text DEFAULT NULL::text, date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, sort_field text DEFAULT 'name'::text, sort_direction text DEFAULT 'asc'::text, page_size integer DEFAULT 50, page_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, total_count bigint)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+>>>>>>> 07e8298 (fix(db): search_contacts completo no 230000 + anon grant preservado no 00600)
 AS $function$
 DECLARE
   v_search text;
