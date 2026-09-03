@@ -19,10 +19,11 @@ export function normalizeGoSendResponse(data: any): unknown {
 }
 
 // Normalizações GO→v2 dependentes da rota traduzida (goPath):
-// /instance/all → remove `token` de cada instância (é o EVOLUTION_INSTANCE_TOKEN;
-//   a edge evolution-api é chamável por qualquer usuário logado e nenhum
-//   consumidor do front precisa dele — com token + URL pública da GO dá pra
-//   operar a instância fora do app) ·
+// /instance/all → remove `token` de cada instância (credencial de instância
+//   do GO; o da instância padrão é o EVOLUTION_INSTANCE_TOKEN). A edge
+//   evolution-api é chamável por qualquer usuário logado e nenhum consumidor
+//   do front precisa desse campo — com token + URL pública da GO dá pra
+//   operar a instância fora do app ·
 // /label/list → [{id,name,color}] (o front espera o array v2) ·
 // /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
 // demais respostas: injeção aditiva de key/messageId nos envios.
