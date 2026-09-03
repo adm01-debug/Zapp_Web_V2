@@ -254,27 +254,19 @@ describe('RLS audit findings - documented gaps', () => {
   // Risk: Edge Functions using supabaseAdmin (service_role) skip row-level filters.
   // Mitigation: service_role key must never appear in src/ (client bundles).
   // Action: evaluate enabling rls_forced on whatsapp_connections, contacts, messages.
-  it('documents rls_forced=false on all 10 critical tables (service_role bypass vector)', () => {
-    const tablesWithRlsEnabledButNotForced = [...CRITICAL_TABLES];
-    expect(tablesWithRlsEnabledButNotForced).toHaveLength(10);
-    expect(tablesWithRlsEnabledButNotForced).toContain('messages');
-    expect(tablesWithRlsEnabledButNotForced).toContain('contacts');
-    expect(tablesWithRlsEnabledButNotForced).toContain('profiles');
-    expect(tablesWithRlsEnabledButNotForced).toContain('whatsapp_connections');
-  });
+  //
+  // This cannot be a unit test (requires live DB). Verified via:
+  //   SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname IN (...)
+  it.todo('verify rls_forced=false on all 10 critical tables via live DB query (not a unit test)');
 
   // AUDIT FINDING: service_role key is Edge Function-only (Deno.env).
   // If leaked to src/, all RLS is void for any request using that key.
-  // Guard: scripts/db-audit/supabase-usage-guard.mjs checks for service_role leakage.
-  it('documents service_role key isolation requirement (audit documentation)', () => {
-    // Verified by guard: no SUPABASE_SERVICE_ROLE or service_role_key in src/
-    // supabase-usage-guard.mjs must exit 0 on every PR.
-    expect(true).toBe(true);
-  });
+  // Real guard: scripts/db-audit/supabase-usage-guard.mjs — must exit 0 in CI.
+  // This is a CI-level check, not a unit-test assertion.
+  it.todo('verify service_role key absent from src/ via supabase-usage-guard.mjs (CI guard, not unit test)');
 
   // AUDIT FINDING: 378 RLS policies existed with 0 automated boundary tests before this file.
   // This file adds coverage for 10 critical tables (anon + authenticated + regression).
-  it('documents RLS coverage baseline: 10 tables, 0 to N automated tests', () => {
-    expect(CRITICAL_TABLES).toHaveLength(10);
-  });
+  // Future: assert policy count does not decrease (requires live DB).
+  it.todo('verify RLS policy count does not regress below baseline (requires live DB assertion)');
 });
