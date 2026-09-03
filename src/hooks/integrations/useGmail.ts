@@ -12,8 +12,8 @@ import type { GmailAccount, EmailThread, EmailMessage, EmailLabel } from '../gma
 
 /**
  * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
- * hash stays as a migration fallback for links minted before the switch. A
- * skip-to-content anchor is not a view, so it never becomes a return target.
+ * hash stays as a migration fallback for links minted before the switch.
+ * Skip-to-content anchors (RESERVED_HASHES) are not navigation views.
  */
 function getOAuthReturnView(): string {
   const viewParam = new URLSearchParams(window.location.search).get('view');
