@@ -8,3 +8,7 @@ REVOKE EXECUTE ON FUNCTION public.record_failed_login(text, text, text) FROM PUB
 
 -- anon mantem EXECUTE: record_failed_login roda na tela de login antes de sessao existir
 -- (lockout de forca bruta). O REVOKE e somente de PUBLIC.
+
+-- grant explicito: em replay limpo o REVOKE de PUBLIC remove EXECUTE de anon;
+-- record_failed_login roda na tela de login (sem sessao) — lockout depende disto.
+GRANT EXECUTE ON FUNCTION public.record_failed_login(text, text, text) TO anon;
