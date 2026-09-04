@@ -127,7 +127,8 @@
 .email-html-body td, .email-html-body th { overflow-wrap: anywhere; }
 /* Neutraliza tipografia global (clamp) do app para o conteúdo do e-mail */
 .email-html-body p, .email-html-body h1, .email-html-body h2, .email-html-body h3,
-.email-html-body h4, .email-html-body h5, .email-html-body h6 {
+.email-html-body h4, .email-html-body h5, .email-html-body h6,
+.email-html-body small, .email-html-body pre, .email-html-body code {
   font-size: revert; line-height: 1.5; margin: 0.5em 0; all: revert-layer;
 }
 .email-html-body a { text-decoration: underline; }
