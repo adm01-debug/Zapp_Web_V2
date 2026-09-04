@@ -46,11 +46,19 @@ export function extractRootClassNames(source) {
 
   const body = source.slice(exports[exports.length - 1].index);
 
-  // `return` no nivel do corpo do componente: exatamente 2 espacos de recuo.
+  // `return` no nivel do corpo do componente: a LINHA comeca com exatamente 2
+  // espacos. Vale tanto para `  return (` quanto para a guard clause inline
+  // `  if (!user) return <LoadingSplash />;`, que um ancora em ^ {2}return
+  // deixaria escapar. Callback esta mais fundo e nao entra.
   const roots = [];
-  const returnRe = /^ {2}return\s*(\(|<)/gm;
-  for (const m of body.matchAll(returnRe)) {
-    const tag = openingTagAt(body, m.index);
+  let offset = 0;
+  for (const line of body.split("\n")) {
+    const lineStart = offset;
+    offset += line.length + 1;
+    if (!/^ {2}\S/.test(line)) continue;
+    const m = line.match(/\breturn\s*[(<]/);
+    if (!m) continue;
+    const tag = openingTagAt(body, lineStart + m.index);
     if (tag === null) continue;
     const cls = tag.match(CLASSNAME_RE);
     roots.push(cls ? (cls[1] || cls[2] || cls[3] || cls[4] || cls[5] || "") : "");
