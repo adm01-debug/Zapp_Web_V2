@@ -141,7 +141,7 @@ export function WhatsAppFlowsBuilder() {
 
   if (!selectedFlow) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full w-full min-w-0">
         <PageHeader title="WhatsApp Flows" subtitle="Crie formulários e fluxos interativos nativos do WhatsApp"
           actions={<Button onClick={() => setShowCreateDialog(true)} className="gap-2"><Plus className="w-4 h-4" /> Novo Flow</Button>} />
         <div className="flex-1 overflow-y-auto px-6 pb-6">
@@ -196,7 +196,7 @@ export function WhatsAppFlowsBuilder() {
   const currentScreen = selectedFlow.screens[editingScreen];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader title={selectedFlow.name} subtitle="Editor de WhatsApp Flow"
         actions={
           <div className="flex gap-2">

@@ -272,6 +272,13 @@
     --chart-sentiment-positive: 160 70% 42%;
     --chart-sentiment-neutral: 220 10% 50%;
     --chart-sentiment-negative: 0 84% 60%;
+
+    /* ===== LAYOUT SHELL TOKENS ===== */
+    --sidebar-w: 220px;
+    --sidebar-w-collapsed: 62px;
+    --layout-header-h: 56px;
+    --layout-gutter: 1.5rem;
+    --layout-max-content: 72rem;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */

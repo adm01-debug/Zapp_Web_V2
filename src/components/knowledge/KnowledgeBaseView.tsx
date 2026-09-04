@@ -49,7 +49,7 @@ export function KnowledgeBaseView() {
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader title="Base de Conhecimento" subtitle="Treine a IA com documentos e artigos da sua empresa"
         actions={<div className="flex gap-2">
           <label><Button variant="outline" className="gap-2" asChild><span><Upload className="w-4 h-4" /> Upload</span></Button>

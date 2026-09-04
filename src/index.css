@@ -29,6 +29,7 @@
 /* ===== VIEWPORT LOCK — Allowed overflow on mobile for Auth page compatibility ===== */
 html, body, #root {
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   font-family: var(--font-sans);

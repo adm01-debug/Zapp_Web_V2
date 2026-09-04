@@ -30,7 +30,7 @@ export function WhatsAppTemplatesManager() {
   } = useWhatsAppTemplates();
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 w-full min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg md:text-xl font-bold text-foreground">Templates WhatsApp</h2>

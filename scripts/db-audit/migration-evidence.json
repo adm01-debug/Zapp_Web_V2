@@ -384,7 +384,7 @@
       "file_sha256": "6af4a33161a619dec393e55fc497246fb9790b0af694aa8857fb208e5d7b1bb2",
       "file_sql_sha256": "7b2a37d64938bdfb58a2f81b6fca3ab733fd518fbd4d64c3dfb81d9585ce63b7",
       "ledger_name": "fix_record_failed_login_acl",
-      "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13a2dacc3f734",
+      "ledger_sql_sha256": "069a68c6838bbf98956b4fb08a2dfd23a203edf55168f29c18d13e2dacc3f734",
       "ledger_statements_sha256": "471c9385c7467e2731ba51231b46bbc697430f24eac7ff1d21c3f132e485fc21",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "safer-replay",
@@ -439,36 +439,12 @@
       "justification": "A migration foi aplicada direto em produção com statements resumidos no ledger (CREATE TABLE ... (...); INSERT ...). O arquivo em supabase/migrations reconstrói o DDL completo verificado contra o schema vivo (colunas com message_count bigint, índices idx_lid_snapshot_phone/contact, RLS com policies service_role_full_access e admin_read); ambos ficam fixados por hashes independentes."
     },
     {
-      "version": "20260902100004",
-      "filename": "20260902100004_e54_drop_dead_indexes_fix_search_contacts.sql",
-      "file_sha256": "1905b0711408b128ef00e58edccc5396a2eeefa47c24e96d89a06ba118647fe5",
-      "ledger_name": "e54_drop_dead_indexes_fix_search_contacts",
-      "kind": "ledger-only/name-and-file-pinned",
-      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. O arquivo em supabase/migrations documenta o fix de search_contacts (furo de RLS via SECURITY DEFINER) e o drop dos 6 índices trigram com 0 scans; ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
-    },
-    {
-      "version": "20260902100005",
-      "filename": "20260902100005_e24_backfill_assigned_to_active_contacts.sql",
-      "file_sha256": "bda9af3c3d6a707ed096e9e5f204a8c28f7e41a6a6b0d96004a798415f7ea48d",
-      "ledger_name": "e24_backfill_assigned_to_active_contacts",
-      "kind": "ledger-only/name-and-file-pinned",
-      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Backfill de dados (UPDATE), sem DDL estrutural; ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
-    },
-    {
       "version": "20260902120000",
       "filename": "20260902120000_team_chat_v3_parity_reactions_status_departments.sql",
       "file_sha256": "0c19508fa9cf8522cea46d22c55b0fce91aa2070db0d2abf081811d8620ec790",
       "ledger_name": "team_chat_v3_parity_reactions_status_departments",
       "kind": "ledger-only/name-and-file-pinned",
       "justification": "Aplicado via MCP db_batch_query direto em produção, sem captura de statements SQL (só um comentário-placeholder apontando para este arquivo). Reconstruído em 02/09/2026 a partir do catálogo vivo (departments, department_invitations, team_message_reactions, team_messages.status) — confirmado coluna a coluna, FK a FK, policy a policy contra information_schema/pg_catalog. Ledger sem SQL/hash real — pinagem por filename e ledger_name apenas."
-    },
-    {
-      "version": "20260902150000",
-      "filename": "20260902150000_audit_fix_secdef_search_path_realtime_indexes.sql",
-      "file_sha256": "d59cbcf98c7d93ff945938620a0e5b5a2f3f7da80bd6020e0b26f369065bcc18",
-      "ledger_name": "audit_fix_secdef_search_path_realtime_indexes",
-      "kind": "ledger-only/name-and-file-pinned",
-      "justification": "Aplicado via db_transaction sem captura de statements (stmts_count=NULL); confirmado ao vivo em 02/09/2026. Arquivo reconstrói com certeza os 2 índices novos (idx_contacts_updated_at, idx_messages_unread_contact) verificados contra pg_indexes; a parte de search_path em funções SECURITY DEFINER não foi reconstruída como DDL por falta de baseline histórico do delta exato — verificado ao vivo que 0 funções SECURITY DEFINER do schema public estão hoje sem search_path. Ledger sem SQL/hash — pinagem por filename e ledger_name apenas."
     },
     {
       "version": "20260902230000",
@@ -482,6 +458,19 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "Ledger capturou apenas resumo em prosa (nao executavel); arquivo pin carrega a definicao SQL completa vigente do banco (tiebreaker c.id ASC) para replay valido."
+    },
+    {
+      "version": "20260903200000",
+      "filename": "20260903200000_revoke_anon_record_failed_login.sql",
+      "file_sha256": "7da8dc6622bfe9d5c86bc12a96f5b9b79ba8aaea54fdeb2c1a2d8fadd49151a0",
+      "file_sql_sha256": "3c63b6622599f041a9c0f07fc7f43c25534b38eeb345db9dcebee0480d8422cb",
+      "ledger_name": "revoke_anon_record_failed_login",
+      "ledger_sql_sha256": "86244998cd0d97e89a90de33cb46e2e4235a316d3a047d98316667e69a548cdb",
+      "ledger_statements_sha256": "e3d00bd89a2ef72bac40bdc650da39490559c7695acc6374e826eaacf6732860",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Ledger guarda o REVOKE de anon em record_failed_login; o arquivo e no-op. A funcao e chamada pela tela de login antes de existir sessao (src/lib/loginAttempts.ts, como anon): sem EXECUTE o RPC falha, o erro e engolido e nenhuma conta trava. Num replay limpo o REVOKE abriria essa janela entre esta migration e a 20260903210000, que o desfaz. Estado final permitido e anon com EXECUTE (ver 20260903170000 e 20260903210000) — divergencia intencional segura."
     }
   ]
 }

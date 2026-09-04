@@ -7745,6 +7745,14 @@ export type Database = {
           locked_until: string
         }[]
       }
+      register_first_response_internal: {
+        Args: {
+          p_before_created_at?: string
+          p_contact_id: string
+          p_responded_at: string
+        }
+        Returns: undefined
+      }
       search_contacts: {
         Args: {
           company_filter?: string

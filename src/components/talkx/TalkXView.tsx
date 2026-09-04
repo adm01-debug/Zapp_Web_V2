@@ -120,7 +120,7 @@ export default function TalkXView() {
   ];
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 p-4 md:p-6 overflow-auto">
+    <div className="flex flex-col gap-4 md:gap-6 w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">

@@ -82,7 +82,7 @@ export function QueuesComparisonDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+      <div className="p-6 space-y-6 relative bg-background w-full min-w-0">
         <AuroraBorealis />
         <FloatingParticles />
         <div className="flex items-center gap-4">
@@ -100,7 +100,7 @@ export function QueuesComparisonDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="p-6 space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
 
