@@ -19,7 +19,7 @@ export function ClientWalletView() {
   const w = useClientWallet();
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
 

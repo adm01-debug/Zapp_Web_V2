@@ -18,7 +18,7 @@
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
-      "sha256": "f1ecc8241fc30a5122a44e89b06f4f5ac5b2817a14aa9d1371825d8c052c0adf"
+      "sha256": "eeeff34d33ceed43de979bed35b801e445c9906d08bdb4cd4edcba04e7de88b9"
     },
     {
       "path": "src/components/admin/AIUsageUsersTab.tsx",
@@ -30,7 +30,7 @@
     },
     {
       "path": "src/components/admin/GmailWebhookMonitor.tsx",
-      "sha256": "61af357f59327c653f41173a818c7a2a75c957371bedb98b766be7c47f0cbc67"
+      "sha256": "743385b9a394ee9f1d478ce1083d0588c5a7573901931d48e599267a33ad0318"
     },
     {
       "path": "src/components/admin/PlaybooksManager.tsx",
@@ -38,11 +38,11 @@
     },
     {
       "path": "src/components/admin/PublicApiDashboard.tsx",
-      "sha256": "2929f28e3740d37153e1121a79e9d699c74b19752533389b0df0a2d37e98fdf4"
+      "sha256": "6682cafddbbd2da543fb486cdb4a034eb84294460addbd51fa9f331ec7b26b2f"
     },
     {
       "path": "src/components/admin/SicoobBridgeDashboard.tsx",
-      "sha256": "e3251800531d7feadfd3feb3ccdcab77934355203ce7ce5d113d90d178e0d532"
+      "sha256": "d9d6ff41656a3f27e762226ba5125c0068d7912cd7c7332cebe9e00f7fffc16a"
     },
     {
       "path": "src/components/admin/SupervisorCopilot.tsx",
@@ -66,11 +66,11 @@
     },
     {
       "path": "src/components/ai/AutoTicketClassifier.tsx",
-      "sha256": "8efbd095c53cf63670175981d8203df017da6a93f35a7b5fa81468a933f17ec4"
+      "sha256": "25828e8c0bee291e0ad6acfd145f5bb10ff21e79c90a2bf2370d527596408eea"
     },
     {
       "path": "src/components/ai/ChurnPredictionDashboard.tsx",
-      "sha256": "c9a4d93f7bdfe71377fc58961d9f65a5068619e5c47b679a6c94cd540fcc502d"
+      "sha256": "868a761d069f70703f770f74657b3dd9d14c1db2965c7a861e5a9e5e60296fdd"
     },
     {
       "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
@@ -502,7 +502,7 @@
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "0df6da3bcfc31a553e11a92b237cc5c4fa74149f159f0c76f6a3ed154e7537ef"
+      "sha256": "2f3a96ce7c8eaacdc4e08bf347f3f6486fa6cdfae1bda9324ca9735d43f2dc2d"
     },
     {
       "path": "src/components/layout/SidebarNavGroup.tsx",
@@ -514,7 +514,7 @@
     },
     {
       "path": "src/components/meta-capi/MetaCAPIView.tsx",
-      "sha256": "a64273ed4035cb9f1a4564c7a27086ea22c78c9329747bce3c0d33f0885af20d"
+      "sha256": "134910faa9317f62308942288563aedb3dcc75fa5248bb9491b0faa876c90810"
     },
     {
       "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -590,7 +590,7 @@
     },
     {
       "path": "src/components/payments/PaymentLinksView.tsx",
-      "sha256": "a98d19585c01b88e3715610750040cae6df74c863ff53bb306e0e068249602e6"
+      "sha256": "d76497ae4b93fb6f42b9a38582ea0765cf375430a07ebb914e797186904d9395"
     },
     {
       "path": "src/components/performance/__tests__/PerformanceMonitor.test.tsx",
@@ -602,7 +602,7 @@
     },
     {
       "path": "src/components/performance/PerformanceMonitor.tsx",
-      "sha256": "141986448d7dcf94a361c2dcd529565e0d78969d423044a87e772dd9ec3b9b7d"
+      "sha256": "4c450ef1f2a01114a4497e8a336629570453b5f0ab306ec33eb2fbba946ed8db"
     },
     {
       "path": "src/components/performance/Prefetcher.tsx",
@@ -630,7 +630,7 @@
     },
     {
       "path": "src/components/queues/SLADashboard.tsx",
-      "sha256": "5ada01f1550e96ad9b554f74edbf2cb7a16fa0141fec2bc2be1419e336eea808"
+      "sha256": "15921208ac8fdc8328eb8a10e549d4c60aa5cf93ae4e5a19ea880add410760aa"
     },
     {
       "path": "src/components/reports/AbandonmentRate.tsx",
@@ -662,7 +662,7 @@
     },
     {
       "path": "src/components/security/AuditLogDashboard.tsx",
-      "sha256": "7df32bded6ddf2ac66fa68c9dd32febcc150df0b1e1eeb6733221e32eac45352"
+      "sha256": "1d3c87c9812718a82470055fc52e7190d255bfa2ac8d22f8042f6b5beed6ee1b"
     },
     {
       "path": "src/components/security/BlockedIPsPanel.tsx",
@@ -725,16 +725,12 @@
       "sha256": "5901c8a851203767e2db96182268aea33e3451b3be02ef504184349092775545"
     },
     {
-      "path": "src/components/tags/TagsView.tsx",
-      "sha256": "dccc1bb8d65fd4fc551d2f398672bf5e4a45d8ef88e68891190d37355b678499"
-    },
-    {
       "path": "src/components/talkx/TalkXLiveMonitor.tsx",
       "sha256": "0bc713fa68873c58c6b02bbdd46e16441811592c92e11b58c63150f3600ff97c"
     },
     {
       "path": "src/components/talkx/TalkXView.tsx",
-      "sha256": "553320d8c25afd51c4fdb37e403610615897bff70c8a2847fc0550f3123d7f41"
+      "sha256": "8787ab995489866c548a7af850fa455bb24e77029a7564884bbdbc339ed820d1"
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
@@ -758,7 +754,7 @@
     },
     {
       "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "sha256": "6eb8520e42234959e583efc633bb7581c4874f8963841390030b6e7ea3329725"
+      "sha256": "7e615399d25a3d94acfbfa26b471a1caff225ba85a841002d26a05a2eb0898ce"
     },
     {
       "path": "src/components/ui/accessible-toast.tsx",
@@ -821,10 +817,6 @@
       "sha256": "5de0faf7fef76e6cebf2798b7e153d24babb11ec3294a6ccb80c973624264ecb"
     },
     {
-      "path": "src/components/ui/scroll-to-top.tsx",
-      "sha256": "3795dfcd5e2b598f2dd85bb085c78c3db5bc0d5622d24434934dbd9d87f7fe52"
-    },
-    {
       "path": "src/components/ui/sidebar.tsx",
       "sha256": "294bc8e8c48179ed8102f2f6f47014813b350dc74dd18be56cde45722674786b"
     },
@@ -870,7 +862,7 @@
     },
     {
       "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
-      "sha256": "2a155a4b1be806e377a7ed93ccbc2262fe2283781797790587b56d88641b2e52"
+      "sha256": "9f525d1dccc635e8595fdae3823b8f959b146be8272049f0385c8fda6cd4b0d5"
     },
     {
       "path": "src/hooks/__tests__/useAgentGamification.test.tsx",
@@ -1426,7 +1418,7 @@
     },
     {
       "path": "src/lib/logger.ts",
-      "sha256": "62d3ff45af530f5ee3a11b217372cb7a08a6659466ec93be34bdee8bd8a4cfe8"
+      "sha256": "3a2b20ffbf2ade287f3a03412105cf00797b3e3ae58a13efa68de58f2474c55a"
     },
     {
       "path": "src/pages/admin/useRolesPageState.ts",
@@ -1450,7 +1442,7 @@
     },
     {
       "path": "src/pages/ViewRouter.tsx",
-      "sha256": "46bc40d3986afa73b8ca6fff2f2ccc95f3c0eb4c618888691d9f1e699835b2d6"
+      "sha256": "aa88333699c5ed8ccfb81996016775967c74ac87b22251db7b3188e333a52d24"
     },
     {
       "path": "src/services/crm/external-crm.service.ts",
@@ -1466,7 +1458,7 @@
     },
     {
       "path": "src/services/realtime.service.ts",
-      "sha256": "b69d5809aba4267cfa0eb86bb586d99c762718fefdd4087cef0f80673ab71bb4"
+      "sha256": "95646d4ca2d7455548a127d38ff58c06e8686db66e614a98d5f680486296d3a6"
     },
     {
       "path": "src/test/mocks/auth.tsx",
@@ -1482,7 +1474,7 @@
     },
     {
       "path": "src/types/chat.ts",
-      "sha256": "8c082dd1d82efd3f37bbae9d22a5a20d18eec077038a7ed9343db00ab602bb53"
+      "sha256": "e489aab8daab0de35679582a56cb34b4a98846f084b834f5591dfaabbf58bb62"
     },
     {
       "path": "src/types/queue.ts",
@@ -1518,7 +1510,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "sha256": "56f27bbf238080b2547f0378121469f2b36637eb216ffdf1a8cf1751e0fdf1ee"
+      "sha256": "9cc0032ffefc1382232687ba30433704d7b0a621bf2ead3adb8024169fe588d8"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -1554,7 +1546,7 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "sha256": "d45a0c2770850f4dcd82643476bedb3d22de82ffee09f43563f3155192b1765a"
+      "sha256": "dbf1a886a330f5a65ea9a5f2f2e32aee07c73fd95b874c4a236379f4edcf32f9"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -8203,34 +8195,6 @@
       "contextHash": "db62c9b6f98fe65d4b5657bd7c98b3a7c44451f13c0f913e84b5edfbfa0ef88e"
     },
     {
-      "file": "src/components/tags/TagsView.tsx",
-      "line": 175,
-      "column": 16,
-      "endLine": 175,
-      "endColumn": 23,
-      "severity": 2,
-      "ruleId": "react-hooks/static-components",
-      "messageId": null,
-      "message": "Error: Cannot create components during render Components created during render will reset their state each time they are created. Declare components outside of render. <ROOT>/src/components/tags/TagsView.tsx:175:16 173 | <DialogTitle>Criar Nova Etiqueta</DialogTitle> 174 | </DialogHeader> > 175 | <TagForm | ^^^^^^^ This component is created during render 176 | tag={newTag} 177 | setTag={setNewTag} 178 | onSubmit={handleAddTag} <ROOT>/src/components/tags/TagsView.tsx:83:19 81 | }; 82 | > 83 | const TagForm = ({ tag, setTag, onSubmit, isEdit, isSubmitting }: { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 84 | tag: { name: string; color: string }; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 85 | setTag: (tag: { name: string; color: string }) => void; … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 142 | </div> | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 143 | ); | ^^^^ The component is created during render here 144 | 145 | const totalContacts = tags.reduce((sum, t) => sum + (t.contact_count || 0), 0); 146 | const mostUsedTag = [...tags].sort((a, b) => (b.contact_count || 0) - (a.contact_count || 0))[0];",
-      "spanHash": "e2f533dcdc4c78426be128525ff2a66601fc1b82fdf37d7710ac457f5d2c4a45",
-      "lineHash": "7f852796d4d3934c2e73792ab629242b1aa89126a0ddae51988c5a38054fb540",
-      "contextHash": "b8888649b8308c4c8bb8d0c7495e50d9032984d6fbed5c773bf6a1aedd273ed4"
-    },
-    {
-      "file": "src/components/tags/TagsView.tsx",
-      "line": 193,
-      "column": 14,
-      "endLine": 193,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/static-components",
-      "messageId": null,
-      "message": "Error: Cannot create components during render Components created during render will reset their state each time they are created. Declare components outside of render. <ROOT>/src/components/tags/TagsView.tsx:193:14 191 | </DialogHeader> 192 | {editingTag && ( > 193 | <TagForm | ^^^^^^^ This component is created during render 194 | tag={editingTag} 195 | setTag={(tag) => setEditingTag({ ...editingTag, ...tag })} 196 | onSubmit={handleEditTag} <ROOT>/src/components/tags/TagsView.tsx:83:19 81 | }; 82 | > 83 | const TagForm = ({ tag, setTag, onSubmit, isEdit, isSubmitting }: { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 84 | tag: { name: string; color: string }; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 85 | setTag: (tag: { name: string; color: string }) => void; … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 142 | </div> | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 143 | ); | ^^^^ The component is created during render here 144 | 145 | const totalContacts = tags.reduce((sum, t) => sum + (t.contact_count || 0), 0); 146 | const mostUsedTag = [...tags].sort((a, b) => (b.contact_count || 0) - (a.contact_count || 0))[0];",
-      "spanHash": "e2f533dcdc4c78426be128525ff2a66601fc1b82fdf37d7710ac457f5d2c4a45",
-      "lineHash": "7f852796d4d3934c2e73792ab629242b1aa89126a0ddae51988c5a38054fb540",
-      "contextHash": "8c961d799ed99e08d1eb0e83c545e00c9ef86399bc3dc3c38a753bc4c2337096"
-    },
-    {
       "file": "src/components/talkx/TalkXLiveMonitor.tsx",
       "line": 101,
       "column": 31,
@@ -8918,9 +8882,9 @@
     },
     {
       "file": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "line": 41,
+      "line": 40,
       "column": 49,
-      "endLine": 41,
+      "endLine": 40,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8932,23 +8896,23 @@
     },
     {
       "file": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "line": 50,
+      "line": 49,
       "column": 21,
-      "endLine": 50,
+      "endLine": 49,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/transcriptions/TranscriptionsHistoryView.tsx:50:21 48 | }; 49 | > 50 | useEffect(() => { fetchTranscriptions(); }, []); | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 51 | 52 | const filteredTranscriptions = useMemo(() => { 53 | let filtered = transcriptions;",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/transcriptions/TranscriptionsHistoryView.tsx:49:21 47 | }; 48 | > 49 | useEffect(() => { fetchTranscriptions(); }, []); | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 50 | 51 | const filteredTranscriptions = useMemo(() => { 52 | let filtered = transcriptions;",
       "spanHash": "2c737b7a0ae81e54dae5ada04f22f518737560991ff0d9de1c3a6fcf3d66cca0",
       "lineHash": "2ca033c370479990297a6581c1e23883951a9dfe5010d777cbb8fbceb1700399",
       "contextHash": "f3c272f1bbd53751087acdc0528f9d3e836d084022aa79c3fae17d824ad73410"
     },
     {
       "file": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
-      "line": 79,
+      "line": 78,
       "column": 99,
-      "endLine": 79,
+      "endLine": 78,
       "endColumn": 145,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-unused-expressions",
@@ -9461,20 +9425,6 @@
       "spanHash": "ab8384a8f0431bee113ae83703bbf6193a77f910f60805a66bb6d88699dfc513",
       "lineHash": "b89923db7d6c25efb0465d24a7ca42a8e1375c9bc2a12c0d5c42d69ed327c90a",
       "contextHash": "10907b27d6cf1429a6dd3fc00d010694991af3892b063468332a99c6eed05ec6"
-    },
-    {
-      "file": "src/components/ui/scroll-to-top.tsx",
-      "line": 62,
-      "column": 17,
-      "endLine": 62,
-      "endColumn": 31,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "5055d35171f9355dd9cf1f9eb3cbf0ea76561fe7414b281fdff4ef4145466a5a",
-      "lineHash": "3b1d2cdc260d2eeeaf5ab15569ad0605fba9fdbc02668427b44661ab67e132bc",
-      "contextHash": "d824474d657dbc8eb6b524d591c3f47777ef2ff1c4d80117a230f005839f3585"
     },
     {
       "file": "src/components/ui/sidebar.tsx",
@@ -14462,9 +14412,9 @@
     },
     {
       "file": "src/pages/ViewRouter.tsx",
-      "line": 134,
+      "line": 121,
       "column": 6,
-      "endLine": 134,
+      "endLine": 121,
       "endColumn": 27,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -15050,9 +15000,9 @@
     },
     {
       "file": "src/types/chat.ts",
-      "line": 67,
+      "line": 74,
       "column": 17,
-      "endLine": 67,
+      "endLine": 74,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15638,9 +15588,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 112,
+      "line": 120,
       "column": 54,
-      "endLine": 112,
+      "endLine": 120,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15652,9 +15602,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 144,
+      "line": 152,
       "column": 51,
-      "endLine": 144,
+      "endLine": 152,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15663,20 +15613,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "e6480227f5b7c97987d4092dd572b858c1f4ec367f1d30859ef3907bce870187",
       "contextHash": "89a69767871ddb78d7c6ed9854d945eb73410c2b7c77cdf8faacf995cd53409f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 168,
-      "column": 50,
-      "endLine": 168,
-      "endColumn": 53,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "e42fab22a40564204a68db9c75d2e26a20265c4fb94fab1dff534e339dd8718d",
-      "contextHash": "6534018f8da9dbd4cc4cb314d40cd32aa3f03bf90122e371b610035c12c0633f"
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
@@ -15694,9 +15630,23 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 194,
+      "line": 176,
+      "column": 50,
+      "endLine": 176,
+      "endColumn": 53,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "e42fab22a40564204a68db9c75d2e26a20265c4fb94fab1dff534e339dd8718d",
+      "contextHash": "6534018f8da9dbd4cc4cb314d40cd32aa3f03bf90122e371b610035c12c0633f"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+      "line": 202,
       "column": 57,
-      "endLine": 194,
+      "endLine": 202,
       "endColumn": 60,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15708,9 +15658,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 222,
+      "line": 230,
       "column": 49,
-      "endLine": 222,
+      "endLine": 230,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15722,9 +15672,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 282,
+      "line": 290,
       "column": 51,
-      "endLine": 282,
+      "endLine": 290,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15736,9 +15686,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 303,
+      "line": 311,
       "column": 58,
-      "endLine": 303,
+      "endLine": 311,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15750,9 +15700,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 304,
+      "line": 312,
       "column": 3,
-      "endLine": 304,
+      "endLine": 312,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -15764,9 +15714,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 316,
+      "line": 324,
       "column": 51,
-      "endLine": 316,
+      "endLine": 324,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15778,9 +15728,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 339,
+      "line": 347,
       "column": 3,
-      "endLine": 339,
+      "endLine": 347,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -15792,9 +15742,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 343,
+      "line": 351,
       "column": 48,
-      "endLine": 343,
+      "endLine": 351,
       "endColumn": 51,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15806,9 +15756,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 364,
+      "line": 372,
       "column": 3,
-      "endLine": 364,
+      "endLine": 372,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16324,9 +16274,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 157,
+      "line": 172,
       "column": 5,
-      "endLine": 157,
+      "endLine": 172,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16338,9 +16288,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 176,
+      "line": 191,
       "column": 7,
-      "endLine": 176,
+      "endLine": 191,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16352,9 +16302,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 186,
+      "line": 201,
       "column": 11,
-      "endLine": 186,
+      "endLine": 201,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16366,9 +16316,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 216,
+      "line": 231,
       "column": 9,
-      "endLine": 216,
+      "endLine": 231,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -16380,9 +16330,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 220,
+      "line": 235,
       "column": 11,
-      "endLine": 220,
+      "endLine": 235,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16394,9 +16344,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 226,
+      "line": 241,
       "column": 11,
-      "endLine": 226,
+      "endLine": 241,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16408,9 +16358,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 229,
+      "line": 244,
       "column": 11,
-      "endLine": 229,
+      "endLine": 244,
       "endColumn": 22,
       "severity": 1,
       "ruleId": "no-console",
@@ -16422,9 +16372,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 246,
+      "line": 261,
       "column": 32,
-      "endLine": 246,
+      "endLine": 261,
       "endColumn": 43,
       "severity": 1,
       "ruleId": "no-console",
@@ -16436,9 +16386,9 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 251,
+      "line": 266,
       "column": 7,
-      "endLine": 251,
+      "endLine": 266,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",

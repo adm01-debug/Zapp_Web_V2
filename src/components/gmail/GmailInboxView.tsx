@@ -49,7 +49,7 @@ export default function GmailInboxView() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <div className="p-3 border-b space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">

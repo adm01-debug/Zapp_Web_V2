@@ -7,7 +7,7 @@ import { ShieldAlert } from 'lucide-react';
 
 export function AutoExportManager() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <div>
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-destructive" />
