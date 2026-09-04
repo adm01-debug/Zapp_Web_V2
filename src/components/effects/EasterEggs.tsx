@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, forwardRef } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti, useCelebration } from './Confetti';
 import { toast } from '@/hooks/ui/use-toast';
@@ -26,8 +26,11 @@ const SECRET_CODES: Record<string, { name: string; action: string }> = {
 };
 
 export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderProps>(function EasterEggsProvider({ children }, _ref) {
-  const [konamiProgress, setKonamiProgress] = useState<string[]>([]);
-  const [typedText, setTypedText] = useState('');
+  // Progresso do Konami code e do texto digitado nao afetam a UI — ficam em
+  // ref para nao re-renderizar o provider (e re-registrar o listener) a
+  // cada tecla digitada.
+  const konamiProgressRef = useRef<string[]>([]);
+  const typedTextRef = useRef('');
   const [partyMode, setPartyMode] = useState(false);
   const [matrixMode, setMatrixMode] = useState(false);
   const { celebrate, celebrating } = useCelebration();
@@ -107,23 +110,23 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.code;
-      const newProgress = [...konamiProgress, key].slice(-KONAMI_CODE.length);
-      setKonamiProgress(newProgress);
+      const newProgress = [...konamiProgressRef.current, key].slice(-KONAMI_CODE.length);
+      konamiProgressRef.current = newProgress;
 
       if (newProgress.join(',') === KONAMI_CODE.join(',')) {
         triggerKonamiEasterEgg();
-        setKonamiProgress([]);
+        konamiProgressRef.current = [];
       }
 
       // Detect typed secret codes
       if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
-        const newTyped = (typedText + e.key.toLowerCase()).slice(-10);
-        setTypedText(newTyped);
+        const newTyped = (typedTextRef.current + e.key.toLowerCase()).slice(-10);
+        typedTextRef.current = newTyped;
 
         Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
           if (newTyped.endsWith(code)) {
             triggerSecretCode(name, action);
-            setTypedText('');
+            typedTextRef.current = '';
           }
         });
       }
@@ -131,7 +134,7 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [konamiProgress, typedText, triggerKonamiEasterEgg, triggerSecretCode]);
+  }, [triggerKonamiEasterEgg, triggerSecretCode]);
 
   return (
     <>
