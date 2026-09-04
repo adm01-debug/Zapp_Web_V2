@@ -3,13 +3,13 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "e336bae10b6cecc8b3b147a7c79500cfee5c3a4657903bf0aa1351eb8f8e7813"
+    "sha256": "11e966d7fefe01fbb0d749e3e8feae5f7892dbd1c493e5cfafdedb0538142299"
   },
   "summary": {
     "function_count": 62,
     "source_file_count": 80,
-    "verify_jwt_true": 56,
-    "verify_jwt_false": 6
+    "verify_jwt_true": 55,
+    "verify_jwt_false": 7
   },
   "source_files": [
     {
@@ -602,8 +602,8 @@
     {
       "name": "check-account-lock",
       "entrypoint": "supabase/functions/check-account-lock/index.ts",
-      "verify_jwt": true,
-      "source_sha256": "1ee2453acc57af645cccfa4508eae7f0f73c35f7e6922878cebcfd98ce3d8cd6",
+      "verify_jwt": false,
+      "source_sha256": "ab04028a949a0ca3fc77e7e7127de6c2372315a7d916e4ad12ac50be88281cd1",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1178,5 +1178,5 @@
       ]
     }
   ],
-  "manifest_sha256": "c59f30da4d195fe18d6994a4e97490f9a7d128dc7a6e3d86220cde02cda3903f"
+  "manifest_sha256": "5f3f60b10a8b79f58535bbb2c7a6267cf5b409c8f5226d27b2df4f343977633a"
 }
