@@ -191,13 +191,17 @@ export function checkRateLimit(
   return { allowed: entry.count <= maxRequests, remaining };
 }
 
-/** Extract client IP from request for rate limiting */
+/** Extract client IP from request for rate limiting.
+ * Uses the RIGHTMOST XFF value (set by the trusted Supabase edge proxy) to
+ * prevent attackers from spoofing the IP by prepending fake XFF entries. */
 export function getClientIP(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  const xff = req.headers.get('x-forwarded-for');
+  if (xff) {
+    const parts = xff.split(',');
+    const rightmost = parts[parts.length - 1]?.trim();
+    if (rightmost) return rightmost;
+  }
+  return req.headers.get('x-real-ip') || 'unknown';
 }
 
 /** Get required env var or throw */

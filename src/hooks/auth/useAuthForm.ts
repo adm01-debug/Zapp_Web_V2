@@ -124,14 +124,14 @@ export function useAuthForm() {
       return;
     }
 
+    setLoading(true);
     const currentLock = await checkAccountLock(credentials.email);
     if (currentLock.isLocked) {
+      setLoading(false);
       setLockStatus(currentLock);
       toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
       return;
     }
-
-    setLoading(true);
     const { error } = await signIn(credentials.email, credentials.password);
     setLoading(false);
 

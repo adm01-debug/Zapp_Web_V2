@@ -18,17 +18,17 @@ export async function checkAccountLock(email: string): Promise<LockStatus> {
     return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
   }
 
-  if (!data) {
+  if (!data || typeof data.isLocked !== 'boolean') {
     return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
   }
 
   const lockedUntil = data.lockedUntil ? new Date(data.lockedUntil) : null;
-  const remainingTime = data.remainingTime ?? 0;
+  const remainingTime = typeof data.remainingTime === 'number' ? data.remainingTime : 0;
 
   return {
     isLocked: data.isLocked,
     lockedUntil,
-    attempts: data.attempts,
+    attempts: typeof data.attempts === 'number' ? data.attempts : 0,
     remainingTime
   };
 }
