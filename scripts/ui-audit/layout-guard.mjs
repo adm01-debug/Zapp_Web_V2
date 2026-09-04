@@ -67,15 +67,35 @@ function* walkTsx(dir) {
  * The main view export is typically the last `export function` in the file.
  */
 function extractRootClassName(source) {
-  // Find all `export function`/`export const` declarations
-  const exportMatches = [...source.matchAll(/\bexport\s+(?:function|const)\s+/g)];
+  // Include default exports (export default function Foo)
+  const exportMatches = [...source.matchAll(/\bexport\s+(?:default\s+)?(?:function|const)\s+/g)];
   if (exportMatches.length === 0) return null;
 
   // Use the last export — usually the main view component
   const lastExport = exportMatches[exportMatches.length - 1];
   const fromLastExport = source.slice(lastExport.index);
 
-  const returnIdx = fromLastExport.search(/\breturn\s*[\(<]/);
+  // Find the return at function body depth 1 (not inside callbacks).
+  // Simple .search() matches the first return, which can be inside a useEffect
+  // callback at depth 2+. Track brace depth and match only at depth 1.
+  let depth = 0;
+  let returnIdx = -1;
+  for (let i = 0; i < fromLastExport.length; i++) {
+    const ch = fromLastExport[i];
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const q = ch; i++;
+      while (i < fromLastExport.length && fromLastExport[i] !== q) {
+        if (fromLastExport[i] === '\\') i++;
+        i++;
+      }
+      continue;
+    }
+    if (ch === '{') { depth++; }
+    else if (ch === '}') { depth--; if (depth === 0) break; }
+    else if (depth === 1 && /^return\s*[\(<]/.test(fromLastExport.slice(i))) {
+      returnIdx = i; break;
+    }
+  }
   if (returnIdx === -1) return null;
 
   // Recorta APENAS a tag de abertura do primeiro elemento JSX retornado. Sem
@@ -85,19 +105,19 @@ function extractRootClassName(source) {
   const tagStart = after.indexOf('<');
   if (tagStart === -1) return null;
 
-  let depth = 0;
+  let tagDepth = 0;
   let tagEnd = -1;
   for (let i = tagStart; i < after.length; i += 1) {
     const ch = after[i];
-    if (ch === '{') depth += 1;
-    else if (ch === '}') depth -= 1;
-    else if (ch === '>' && depth === 0) { tagEnd = i; break; }
+    if (ch === '{') tagDepth += 1;
+    else if (ch === '}') tagDepth -= 1;
+    else if (ch === '>' && tagDepth === 0) { tagEnd = i; break; }
   }
   if (tagEnd === -1) return null;
   const openTag = after.slice(tagStart, tagEnd + 1);
 
   // Match className="..." or className={'...'} or className={`...`}
-  const m = openTag.match(/className=(?:["'`]([^"'`]+)["'`]|\{(?:cn\([^)]*?["'`]([^"'`]+)["'`]|\`([^`]+)`|"([^"]+)"|'([^']+)'))/);
+  const m = openTag.match(/className=(?:["'`]([^"'`]+)["'`]|\{(?:cn\([^)]*?["'`]([^"'`]+)["'`]|\`([^`]+)\`|"([^"]+)"|\'([^\']+)\')\})/);
   if (!m) return null;
   return m[1] || m[2] || m[3] || m[4] || m[5] || "";
 }
