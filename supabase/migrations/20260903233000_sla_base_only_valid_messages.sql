@@ -1,9 +1,7 @@
 -- 20260903233000_sla_base_only_valid_messages
 -- Achado do cubic (PR #199): a base do cronometro usava max(created_at) de
--- QUALQUER mensagem do atendente, incluindo status 'sending'/'failed' — uma
--- tentativa falha podia "pular" mensagens do cliente ainda pendentes.
--- Corrige: considera apenas mensagens do atendente com status valido
--- ('sent','delivered','read') como resposta anterior.
+-- QUALQUER mensagem do atendente, incluindo status 'sending'/'failed'.
+-- Corrige: considera apenas mensagens com status ('sent','delivered','read').
 
 CREATE OR REPLACE FUNCTION public.register_first_response_internal(
   p_contact_id uuid,
@@ -18,11 +16,8 @@ AS $$
 DECLARE
   v_first_message_at timestamptz;
 BEGIN
-  -- serializa por contato (fecha corrida de UPDATE concorrente)
   PERFORM pg_advisory_xact_lock(hashtextextended(p_contact_id::text, 42));
 
-  -- base: primeira mensagem do cliente ainda sem resposta EFETIVA do atendente
-  -- (mensagens sending/failed nao contam como resposta anterior)
   SELECT min(m.created_at)
   INTO v_first_message_at
   FROM public.messages m

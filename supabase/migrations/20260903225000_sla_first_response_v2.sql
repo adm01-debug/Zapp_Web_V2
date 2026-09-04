@@ -1,21 +1,15 @@
 -- 20260903225000_sla_first_response_v2
 -- Correcoes P1 da auditoria de 5 agentes (run h439328):
 -- 1) base do cronometro passa a ser a primeira mensagem do cliente AINDA SEM
---    resposta (nao mais a primeira mensagem do historico inteiro, que fazia
---    33% dos contatos nascerem "violados" falsamente);
--- 2) registro passa a ocorrer por TRIGGER quando a mensagem do atendente
---    chega a status='sent' — cobre TODOS os 11 caminhos de envio (midia,
---    produto, enquete, public-api, webhook FROM_ME/celular, popup);
--- 3) corrida de concorrencia fechada com advisory lock + indice unico parcial
---    (uma linha "aberta" por contato) + ON CONFLICT;
--- 4) first_response_at usa o created_at exato da mensagem (sem drift de now()).
+--    resposta (nao mais a primeira mensagem do historico inteiro);
+-- 2) registro via TRIGGER quando mensagem do atendente chega a status='sent';
+-- 3) corrida de concorrencia fechada com advisory lock + indice unico parcial;
+-- 4) first_response_at usa created_at exato da mensagem (sem drift de now()).
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_conversation_sla_open_per_contact
   ON public.conversation_sla (contact_id)
   WHERE first_response_at IS NULL;
 
--- Nucleo interno: sem checagem de auth (so e chamado pelo trigger e pela RPC
--- publica, que faz a checagem IDOR antes).
 CREATE OR REPLACE FUNCTION public.register_first_response_internal(
   p_contact_id uuid,
   p_responded_at timestamptz,
@@ -29,11 +23,8 @@ AS $$
 DECLARE
   v_first_message_at timestamptz;
 BEGIN
-  -- serializa por contato (fecha corrida de UPDATE concorrente)
   PERFORM pg_advisory_xact_lock(hashtextextended(p_contact_id::text, 42));
 
-  -- base: primeira mensagem do cliente ainda sem resposta do atendente,
-  -- considerando apenas mensagens anteriores a resposta sendo registrada
   SELECT min(m.created_at)
   INTO v_first_message_at
   FROM public.messages m
@@ -49,7 +40,6 @@ BEGIN
       timestamptz '-infinity'
     );
 
-  -- sem mensagem do cliente pendente: nada a registrar
   IF v_first_message_at IS NULL THEN
     RETURN;
   END IF;
@@ -67,8 +57,6 @@ BEGIN
 END;
 $$;
 
--- RPC publica (client): mantem o harden IDOR (predicado do contacts_select)
--- e delega ao nucleo interno com now().
 CREATE OR REPLACE FUNCTION public.mark_first_response(p_contact_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -76,8 +64,6 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- autorizacao: mesmo predicado do contacts_select_policy (RLS nao se aplica
-  -- dentro de SECURITY DEFINER, entao a checagem e explicita aqui)
   IF NOT EXISTS (
     SELECT 1
     FROM public.contacts c
@@ -103,12 +89,8 @@ $$;
 
 REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;
--- interna: nenhum grant a roles de cliente (so postgres/trigger)
 REVOKE ALL ON FUNCTION public.register_first_response_internal(uuid, timestamptz, timestamptz) FROM PUBLIC, anon, authenticated;
 
--- Trigger: registra a 1a resposta quando a mensagem do atendente efetivamente
--- sai (status sent) — cobre todos os caminhos de envio, inclusive webhook FROM_ME
--- (atendente respondeu no celular) e public-api.
 CREATE OR REPLACE FUNCTION public.messages_sla_first_response_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
