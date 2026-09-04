@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { Clock, Sun, Moon } from 'lucide-react';
@@ -13,84 +13,71 @@ interface BusinessHoursIndicatorProps {
   showLabel?: boolean;
 }
 
+interface BusinessHoursStatus {
+  isOpen: boolean | null;
+  todayHours: string | null;
+}
+
+async function fetchBusinessHoursStatus(connectionId: string): Promise<BusinessHoursStatus> {
+  // Get current time in Brazil timezone
+  const now = new Date();
+  const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const currentDay = brazilTime.getDay();
+  const currentTimeStr = brazilTime.toTimeString().slice(0, 5); // HH:MM
+
+  // limit(1) em vez de single(): single() força o header
+  // "Accept: application/vnd.pgrst.object+json", que faz o PostgREST
+  // responder 406 sempre que não existe configuração para o dia atual
+  // (caso normal, não um erro).
+  const { data: rows, error } = await supabase
+    .from('business_hours')
+    .select('*')
+    .eq('whatsapp_connection_id', connectionId)
+    .eq('day_of_week', currentDay)
+    .limit(1);
+
+  if (error) {
+    log.error('Error fetching business hours:', error);
+    return { isOpen: null, todayHours: null };
+  }
+
+  const data = rows?.[0] ?? null;
+
+  if (!data) {
+    // No configuration = assume open
+    return { isOpen: true, todayHours: null };
+  }
+
+  if (!data.is_open) {
+    return { isOpen: false, todayHours: 'Fechado hoje' };
+  }
+
+  // Check if current time is within business hours
+  const openTime = data.open_time.slice(0, 5);
+  const closeTime = data.close_time.slice(0, 5);
+  const isWithinHours = currentTimeStr >= openTime && currentTimeStr <= closeTime;
+
+  return { isOpen: isWithinHours, todayHours: `${openTime} - ${closeTime}` };
+}
+
 export function BusinessHoursIndicator({
   connectionId,
   className,
   showLabel = true,
 }: BusinessHoursIndicatorProps) {
-  const [isOpen, setIsOpen] = useState<boolean | null>(null);
-  const [todayHours, setTodayHours] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ['business-hours-status', connectionId],
+    queryFn: () => fetchBusinessHoursStatus(connectionId),
+    enabled: !!connectionId,
+    refetchInterval: 60000, // Check every minute
+  });
 
-  useEffect(() => {
-    checkBusinessHours();
-    
-    // Check every minute
-    const interval = setInterval(checkBusinessHours, 60000);
-    return () => clearInterval(interval);
-  }, [connectionId]);
-
-  const checkBusinessHours = async () => {
-    try {
-      // Get current time in Brazil timezone
-      const now = new Date();
-      const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-      const currentDay = brazilTime.getDay();
-      const currentTimeStr = brazilTime.toTimeString().slice(0, 5); // HH:MM
-
-      // limit(1) em vez de single(): single() força o header
-      // "Accept: application/vnd.pgrst.object+json", que faz o PostgREST
-      // responder 406 sempre que não existe configuração para o dia atual
-      // (caso normal, não um erro).
-      const { data: rows, error } = await supabase
-        .from('business_hours')
-        .select('*')
-        .eq('whatsapp_connection_id', connectionId)
-        .eq('day_of_week', currentDay)
-        .limit(1);
-
-      if (error) {
-        log.error('Error fetching business hours:', error);
-        setIsOpen(null);
-        setLoading(false);
-        return;
-      }
-
-      const data = rows?.[0] ?? null;
-
-      if (!data) {
-        // No configuration = assume open
-        setIsOpen(true);
-        setTodayHours(null);
-        setLoading(false);
-        return;
-      }
-
-      if (!data.is_open) {
-        setIsOpen(false);
-        setTodayHours('Fechado hoje');
-        setLoading(false);
-        return;
-      }
-
-      // Check if current time is within business hours
-      const openTime = data.open_time.slice(0, 5);
-      const closeTime = data.close_time.slice(0, 5);
-      const isWithinHours = currentTimeStr >= openTime && currentTimeStr <= closeTime;
-
-      setIsOpen(isWithinHours);
-      setTodayHours(`${openTime} - ${closeTime}`);
-      setLoading(false);
-    } catch (error) {
-      log.error('Error checking business hours:', error);
-      setIsOpen(null);
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return null;
   }
+
+  const isOpen = data?.isOpen ?? null;
+  const todayHours = data?.todayHours ?? null;
 
   if (isOpen === null) {
     return null; // No business hours configured

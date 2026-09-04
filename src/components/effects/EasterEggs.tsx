@@ -32,35 +32,15 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
   const [matrixMode, setMatrixMode] = useState(false);
   const { celebrate, celebrating } = useCelebration();
 
-  // Konami Code Detection
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.code;
-      const newProgress = [...konamiProgress, key].slice(-KONAMI_CODE.length);
-      setKonamiProgress(newProgress);
-
-      if (newProgress.join(',') === KONAMI_CODE.join(',')) {
-        triggerKonamiEasterEgg();
-        setKonamiProgress([]);
-      }
-
-      // Detect typed secret codes
-      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
-        const newTyped = (typedText + e.key.toLowerCase()).slice(-10);
-        setTypedText(newTyped);
-        
-        Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
-          if (newTyped.endsWith(code)) {
-            triggerSecretCode(name, action);
-            setTypedText('');
-          }
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [konamiProgress, typedText]);
+  // Valores da chuva do Matrix Mode gerados uma unica vez, no mount (lazy
+  // initializer): Math.random() direto no render (mesmo dentro de useMemo)
+  // e impuro e re-randomiza a cada re-render do provider, gerando "saltos"
+  // visuais na animacao. So sao consumidos quando matrixMode fica true.
+  const [matrixColumns] = useState(() => Array.from({ length: 20 }, () => ({
+    duration: 3 + Math.random() * 2,
+    delay: Math.random() * 2,
+    chars: Array.from({ length: 30 }, () => String.fromCharCode(0x30A0 + Math.random() * 96)),
+  })));
 
   const triggerKonamiEasterEgg = useCallback(() => {
     celebrate({
@@ -123,6 +103,36 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
     }
   }, [celebrate]);
 
+  // Konami Code Detection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.code;
+      const newProgress = [...konamiProgress, key].slice(-KONAMI_CODE.length);
+      setKonamiProgress(newProgress);
+
+      if (newProgress.join(',') === KONAMI_CODE.join(',')) {
+        triggerKonamiEasterEgg();
+        setKonamiProgress([]);
+      }
+
+      // Detect typed secret codes
+      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
+        const newTyped = (typedText + e.key.toLowerCase()).slice(-10);
+        setTypedText(newTyped);
+
+        Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
+          if (newTyped.endsWith(code)) {
+            triggerSecretCode(name, action);
+            setTypedText('');
+          }
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [konamiProgress, typedText, triggerKonamiEasterEgg, triggerSecretCode]);
+
   return (
     <>
       {children}
@@ -169,7 +179,7 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
             exit={{ opacity: 0 }}
             className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
           >
-            {Array.from({ length: 20 }).map((_, i) => (
+            {matrixColumns.map((column, i) => (
               <motion.div
                 key={i}
                 className="absolute text-success font-mono text-sm"
@@ -177,14 +187,14 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
                 initial={{ top: '-100%' }}
                 animate={{ top: '100%' }}
                 transition={{
-                  duration: 3 + Math.random() * 2,
-                  delay: Math.random() * 2,
+                  duration: column.duration,
+                  delay: column.delay,
                   repeat: Infinity,
                 }}
               >
-                {Array.from({ length: 30 }).map((_, j) => (
+                {column.chars.map((char, j) => (
                   <div key={j} style={{ opacity: 1 - j * 0.03 }}>
-                    {String.fromCharCode(0x30A0 + Math.random() * 96)}
+                    {char}
                   </div>
                 ))}
               </motion.div>
