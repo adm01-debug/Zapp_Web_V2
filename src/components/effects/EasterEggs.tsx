@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, forwardRef } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti, useCelebration } from './Confetti';
 import { toast } from '@/hooks/ui/use-toast';
@@ -26,88 +26,24 @@ const SECRET_CODES: Record<string, { name: string; action: string }> = {
 };
 
 export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderProps>(function EasterEggsProvider({ children }, _ref) {
-  const [konamiProgress, setKonamiProgress] = useState<string[]>([]);
-  const [typedText, setTypedText] = useState('');
+  // Progresso do Konami code e do texto digitado nao afetam a UI — ficam em
+  // ref para nao re-renderizar o provider (e re-registrar o listener) a
+  // cada tecla digitada.
+  const konamiProgressRef = useRef<string[]>([]);
+  const typedTextRef = useRef('');
   const [partyMode, setPartyMode] = useState(false);
   const [matrixMode, setMatrixMode] = useState(false);
-  const [shakeCount, setShakeCount] = useState(0);
   const { celebrate, celebrating } = useCelebration();
 
-  // Konami Code Detection
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.code;
-      const newProgress = [...konamiProgress, key].slice(-KONAMI_CODE.length);
-      setKonamiProgress(newProgress);
-
-      if (newProgress.join(',') === KONAMI_CODE.join(',')) {
-        triggerKonamiEasterEgg();
-        setKonamiProgress([]);
-      }
-
-      // Detect typed secret codes
-      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
-        const newTyped = (typedText + e.key.toLowerCase()).slice(-10);
-        setTypedText(newTyped);
-        
-        Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
-          if (newTyped.endsWith(code)) {
-            triggerSecretCode(name, action);
-            setTypedText('');
-          }
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [konamiProgress, typedText]);
-
-  // Shake Detection (for mobile)
-  useEffect(() => {
-    let lastX = 0, lastY = 0, lastZ = 0;
-    let shakeThreshold = 15;
-
-    const handleMotion = (e: DeviceMotionEvent) => {
-      const { x, y, z } = e.accelerationIncludingGravity || {};
-      if (x === null || y === null || z === null) return;
-
-      const deltaX = Math.abs((x || 0) - lastX);
-      const deltaY = Math.abs((y || 0) - lastY);
-      const deltaZ = Math.abs((z || 0) - lastZ);
-
-      if (deltaX + deltaY + deltaZ > shakeThreshold) {
-        setShakeCount(prev => {
-          const newCount = prev + 1;
-          if (newCount >= 5) {
-            triggerShakeEasterEgg();
-            return 0;
-          }
-          return newCount;
-        });
-      }
-
-      lastX = x || 0;
-      lastY = y || 0;
-      lastZ = z || 0;
-    };
-
-    if ('DeviceMotionEvent' in window) {
-      window.addEventListener('devicemotion', handleMotion);
-    }
-
-    return () => {
-      window.removeEventListener('devicemotion', handleMotion);
-    };
-  }, []);
-
-  // Reset shake count after inactivity
-  useEffect(() => {
-    if (shakeCount > 0) {
-      const timer = setTimeout(() => setShakeCount(0), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [shakeCount]);
+  // Valores da chuva do Matrix Mode gerados uma unica vez, no mount (lazy
+  // initializer): Math.random() direto no render (mesmo dentro de useMemo)
+  // e impuro e re-randomiza a cada re-render do provider, gerando "saltos"
+  // visuais na animacao. So sao consumidos quando matrixMode fica true.
+  const [matrixColumns] = useState(() => Array.from({ length: 20 }, () => ({
+    duration: 3 + Math.random() * 2,
+    delay: Math.random() * 2,
+    chars: Array.from({ length: 30 }, () => String.fromCharCode(0x30A0 + Math.random() * 96)),
+  })));
 
   const triggerKonamiEasterEgg = useCallback(() => {
     celebrate({
@@ -126,24 +62,6 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
     setTimeout(() => {
       document.body.classList.remove('rainbow-mode');
     }, 5000);
-  }, [celebrate]);
-
-  const triggerShakeEasterEgg = useCallback(() => {
-    // Haptic feedback if available
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 200]);
-    }
-
-    celebrate({
-      title: '📱 SHAKE IT!',
-      subtitle: 'Você sacudiu o suficiente!',
-      emoji: '🎉',
-    });
-
-    toast({
-      title: '📱 Shake Detectado!',
-      description: 'Você descobriu o easter egg de shake!',
-    });
   }, [celebrate]);
 
   const triggerSecretCode = useCallback((name: string, action: string) => {
@@ -187,6 +105,36 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
         break;
     }
   }, [celebrate]);
+
+  // Konami Code Detection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.code;
+      const newProgress = [...konamiProgressRef.current, key].slice(-KONAMI_CODE.length);
+      konamiProgressRef.current = newProgress;
+
+      if (newProgress.join(',') === KONAMI_CODE.join(',')) {
+        triggerKonamiEasterEgg();
+        konamiProgressRef.current = [];
+      }
+
+      // Detect typed secret codes
+      if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
+        const newTyped = (typedTextRef.current + e.key.toLowerCase()).slice(-10);
+        typedTextRef.current = newTyped;
+
+        Object.entries(SECRET_CODES).forEach(([code, { name, action }]) => {
+          if (newTyped.endsWith(code)) {
+            triggerSecretCode(name, action);
+            typedTextRef.current = '';
+          }
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [triggerKonamiEasterEgg, triggerSecretCode]);
 
   return (
     <>
@@ -234,7 +182,7 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
             exit={{ opacity: 0 }}
             className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
           >
-            {Array.from({ length: 20 }).map((_, i) => (
+            {matrixColumns.map((column, i) => (
               <motion.div
                 key={i}
                 className="absolute text-success font-mono text-sm"
@@ -242,14 +190,14 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
                 initial={{ top: '-100%' }}
                 animate={{ top: '100%' }}
                 transition={{
-                  duration: 3 + Math.random() * 2,
-                  delay: Math.random() * 2,
+                  duration: column.duration,
+                  delay: column.delay,
                   repeat: Infinity,
                 }}
               >
-                {Array.from({ length: 30 }).map((_, j) => (
+                {column.chars.map((char, j) => (
                   <div key={j} style={{ opacity: 1 - j * 0.03 }}>
-                    {String.fromCharCode(0x30A0 + Math.random() * 96)}
+                    {char}
                   </div>
                 ))}
               </motion.div>

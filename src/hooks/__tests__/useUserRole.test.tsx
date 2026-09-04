@@ -1,6 +1,15 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function createWrapper() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+}
 
 const mockFrom = vi.fn();
 
@@ -31,7 +40,7 @@ describe('useUserRole', () => {
   it('returns empty roles when no user is logged in', async () => {
     mockUseAuth.mockReturnValue({ user: null, session: null, profile: null, loading: false });
 
-    const { result } = renderHook(() => useUserRole());
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -62,7 +71,7 @@ describe('useUserRole', () => {
       }),
     });
 
-    const { result } = renderHook(() => useUserRole());
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -91,7 +100,7 @@ describe('useUserRole', () => {
       }),
     });
 
-    const { result } = renderHook(() => useUserRole());
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -120,7 +129,7 @@ describe('useUserRole', () => {
       }),
     });
 
-    const { result } = renderHook(() => useUserRole());
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
