@@ -4,13 +4,30 @@
  *
  * Verifica que nenhum elemento da aplicação transborda o viewport horizontalmente.
  *
- * Requer: npx playwright install chromium (uma vez)
- * Executar: VITE_PORT=5173 node scripts/ui-audit/width-regression.mjs
+ * Ferramenta local, nao roda na CI: playwright nao e dependencia do projeto.
+ *   npm i -D playwright && npx playwright install chromium
+ *
+ * As views exigem sessao. Sem estado autenticado toda rota cai em /auth e o
+ * script reprovaria (ou passaria) medindo a tela errada — por isso ele exige
+ * STORAGE_STATE, um storageState.json do playwright:
+ *
+ *   STORAGE_STATE=./.auth/state.json node scripts/ui-audit/width-regression.mjs
+ *
+ * Gerar uma vez: npx playwright open --save-storage=.auth/state.json http://localhost:8080
  *
  * Exit 0 = nenhum overflow. Exit 1 = overflow detectado.
  */
 
-import { chromium } from 'playwright';
+import { existsSync } from 'node:fs';
+
+let chromium;
+try {
+  ({ chromium } = await import('playwright'));
+} catch {
+  console.error('playwright nao instalado — este script e uma ferramenta local.');
+  console.error('  npm i -D playwright && npx playwright install chromium');
+  process.exit(1);
+}
 
 const BASE_URL = process.env.APP_URL || `http://localhost:${process.env.VITE_PORT || 8080}`;
 const VIEWPORT = { width: 1280, height: 800 };
@@ -32,6 +49,11 @@ async function checkOverflow(page, url) {
   await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
   // Wait for lazy views to render
   await page.waitForTimeout(500);
+
+  // Sem sessao valida a rota cai em /auth e mediriamos a tela de login.
+  if (new URL(page.url()).pathname.startsWith('/auth')) {
+    throw new Error('redirecionado para /auth — STORAGE_STATE expirado ou invalido');
+  }
 
   const overflow = await page.evaluate(() => {
     const docWidth = document.documentElement.scrollWidth;
@@ -59,11 +81,20 @@ async function checkOverflow(page, url) {
   return overflow;
 }
 
+const STORAGE_STATE = process.env.STORAGE_STATE;
+if (!STORAGE_STATE || !existsSync(STORAGE_STATE)) {
+  console.error('STORAGE_STATE ausente ou inexistente. As views exigem sessao;');
+  console.error('sem ela toda rota cai em /auth e a medicao nao vale nada.');
+  console.error('  npx playwright open --save-storage=.auth/state.json ' + BASE_URL);
+  console.error('  STORAGE_STATE=.auth/state.json node scripts/ui-audit/width-regression.mjs');
+  process.exit(1);
+}
+
 async function main() {
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
   });
-  const context = await browser.newContext({ viewport: VIEWPORT });
+  const context = await browser.newContext({ viewport: VIEWPORT, storageState: STORAGE_STATE });
   const page = await context.newPage();
 
   let failures = 0;

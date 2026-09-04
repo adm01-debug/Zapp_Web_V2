@@ -10,11 +10,33 @@
  * Exit 0 = no violations. Exit 1 = violations found.
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
 const SRC = path.join(ROOT, "src");
+
+/**
+ * Arquivos auditados: os que lazyViews.ts exporta, que e exatamente o que o
+ * ViewRouter monta. Filtrar por sufixo no nome (View|Dashboard) deixava de fora
+ * views roteadas como ExternalProductManagement.tsx.
+ */
+function routedViewFiles() {
+  const lazy = readFileSync(path.join(SRC, "pages", "lazyViews.ts"), "utf8");
+  const files = new Set();
+  for (const m of lazy.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)) {
+    const spec = m[1];
+    if (!spec.startsWith("@/")) continue;
+    const base = path.join(SRC, spec.slice(2));
+    for (const ext of [".tsx", ".ts"]) {
+      if (existsSync(base + ext)) { files.add(base + ext); break; }
+    }
+  }
+  if (files.size === 0) {
+    throw new Error("lazyViews.ts nao rendeu nenhum arquivo — auditoria incompleta");
+  }
+  return files;
+}
 
 // FULL_SCREEN_VIEWS — these manage their own layout
 const FULL_SCREEN = new Set([
@@ -55,10 +77,27 @@ function extractRootClassName(source) {
 
   const returnIdx = fromLastExport.search(/\breturn\s*[\(<]/);
   if (returnIdx === -1) return null;
-  const after = fromLastExport.slice(returnIdx, returnIdx + 1000);
+
+  // Recorta APENAS a tag de abertura do primeiro elemento JSX retornado. Sem
+  // isso, um root com cn(...) faz o regex escorregar para o className de um
+  // descendente e o guard afere o elemento errado.
+  const after = fromLastExport.slice(returnIdx);
+  const tagStart = after.indexOf('<');
+  if (tagStart === -1) return null;
+
+  let depth = 0;
+  let tagEnd = -1;
+  for (let i = tagStart; i < after.length; i += 1) {
+    const ch = after[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') depth -= 1;
+    else if (ch === '>' && depth === 0) { tagEnd = i; break; }
+  }
+  if (tagEnd === -1) return null;
+  const openTag = after.slice(tagStart, tagEnd + 1);
 
   // Match className="..." or className={'...'} or className={`...`}
-  const m = after.match(/className=(?:["'`]([^"'`]+)["'`]|\{(?:cn\([^)]*["'`]([^"'`]+)["'`]|\`([^`]+)`|"([^"]+)"|'([^']+)'))/);
+  const m = openTag.match(/className=(?:["'`]([^"'`]+)["'`]|\{(?:cn\([^)]*?["'`]([^"'`]+)["'`]|\`([^`]+)`|"([^"]+)"|'([^']+)'))/);
   if (!m) return null;
   return m[1] || m[2] || m[3] || m[4] || m[5] || "";
 }
@@ -84,15 +123,17 @@ const ANTI_PATTERNS = [
 let violations = 0;
 let checked = 0;
 
-for (const file of walkTsx(SRC)) {
+const AUDITED = routedViewFiles();
+
+// Rotas proprias, renderizadas fora do AppShell/ViewContainer — o padding e o
+// scroll sao delas mesmas.
+const STANDALONE = /QueuesComparison|ComparisonDashboard|CSATDashboard|EmailThreadView/;
+
+for (const file of AUDITED) {
   const rel = path.relative(ROOT, file);
 
-  // Only audit routed view-level components
-  if (!/(View|Dashboard)\.tsx$/.test(file)) continue;
-  // Skip test/story files
   if (/\.(test|spec|stories)\./.test(file)) continue;
-  // Skip comparison/special pages that render outside AppShell/ViewContainer
-  if (/QueuesComparison|ComparisonDashboard|CSATDashboard|EmailThreadView/.test(file)) continue;
+  if (STANDALONE.test(file)) continue;
 
   let source;
   try { source = readFileSync(file, "utf8"); } catch { continue; }
