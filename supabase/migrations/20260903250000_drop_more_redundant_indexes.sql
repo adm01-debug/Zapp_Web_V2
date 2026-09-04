@@ -7,7 +7,7 @@ DROP INDEX IF EXISTS public.idx_blocked_ips_ip;                -- UNIQUE blocked
 DROP INDEX IF EXISTS public.idx_business_hours_connection;     -- UNIQUE (whatsapp_connection_id, day_of_week)
 DROP INDEX IF EXISTS public.idx_campaign_contacts_campaign_id; -- composite (campaign_id, status)
 DROP INDEX IF EXISTS public.idx_contact_custom_fields_contact; -- UNIQUE (contact_id, field_name)
-DROP INDEX IF EXISTS public.idx_conversation_analyses_contact_id; -- composite (contact_id, department_id)
+DROP INDEX IF EXISTS public.idx_conversation_analyses_contact_id; -- composite (contact_id, department)
 DROP INDEX IF EXISTS public.idx_email_labels_account;          -- UNIQUE (gmail_account_id, gmail_label_id)
 DROP INDEX IF EXISTS public.idx_versions_entity;               -- UNIQUE (entity_type, entity_id, version_number)
 DROP INDEX IF EXISTS public.idx_reputation_connection;         -- UNIQUE whatsapp_connection_id
