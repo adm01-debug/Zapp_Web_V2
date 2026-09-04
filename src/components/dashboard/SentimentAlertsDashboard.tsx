@@ -14,7 +14,7 @@ export function SentimentAlertsDashboard() {
   const { alerts, analyses, loading, stats, dailyData, agentData, fetchData } = useSentimentData(period);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Alertas de Sentimento</h1><p className="text-muted-foreground">Monitore o sentimento dos clientes e alertas automáticos</p></div>
         <div className="flex items-center gap-3">

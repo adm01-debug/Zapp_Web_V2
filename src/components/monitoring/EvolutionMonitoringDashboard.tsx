@@ -93,7 +93,7 @@ export function EvolutionMonitoringDashboard() {
   const errLogs = healthLogs.filter(l => !['connected', 'healthy'].includes(l.status)).length;
 
   return (
-    <div className="space-y-5" role="main" aria-label="Painel de monitoramento Evolution API">
+    <div className="space-y-5 w-full min-w-0" role="main" aria-label="Painel de monitoramento Evolution API">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">

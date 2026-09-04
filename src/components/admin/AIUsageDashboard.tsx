@@ -20,7 +20,7 @@ export function AIUsageDashboard() {
   const functionNames = Object.keys(FUNCTION_COLORS);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Brain className="w-6 h-6 text-primary" />Consumo de IA</h1>

@@ -53,7 +53,7 @@ export function BitrixIntegrationView() {
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div>
         <h2 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
           Bitrix24

@@ -33,7 +33,7 @@ export function EmailChatInbox() {
   // No account
   if (!activeAccount) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-16 px-6">
+      <div className="flex flex-col items-center justify-center h-full w-full py-16 px-6">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
           <Mail className="w-8 h-8 text-primary" />
         </div>

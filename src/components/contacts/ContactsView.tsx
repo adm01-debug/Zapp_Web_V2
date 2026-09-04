@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -65,10 +66,11 @@ export function ContactsView() {
 
   const contactPhones = useMemo(() => filteredContacts.map(c => c.phone), [filteredContacts]);
   const { lookup: getCRMData } = useExternalContact360Batch(contactPhones);
+  const layoutScrollRef = useLayoutScroll();
 
   return (
-    <div ref={scrollContainerRef} className="p-6 space-y-5 overflow-y-auto h-full relative bg-background">
-      <ScrollToTopButton scrollRef={scrollContainerRef} />
+    <div className="space-y-5 relative bg-background w-full min-w-0">
+      <ScrollToTopButton scrollRef={layoutScrollRef} />
       <AuroraBorealis />
       <FloatingParticles />
 
@@ -124,11 +126,11 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+        <div className="col-span-full lg:col-span-3">
           <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="col-span-full xl:col-span-1">
           <ContactBirthdayPanel
             contacts={filteredContacts.map(c => ({ id: c.id, name: c.name, avatar_url: c.avatar_url, birthday: undefined }))}
             onContactClick={openContactChat}

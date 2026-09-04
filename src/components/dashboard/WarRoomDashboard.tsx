@@ -63,7 +63,7 @@ export function WarRoomDashboard({
   };
 
   return (
-    <div className={cn("min-h-screen bg-background p-4 space-y-4", hasCriticalAlerts && "animate-pulse-subtle", className)}>
+    <div className={cn("space-y-4 bg-background w-full min-w-0", hasCriticalAlerts && "animate-pulse-subtle", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2"><Activity className="w-6 h-6 text-primary" /><h1 className="text-2xl font-bold">War Room</h1></div>
