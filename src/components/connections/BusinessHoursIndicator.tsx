@@ -69,14 +69,18 @@ export function BusinessHoursIndicator({
   className,
   showLabel = true,
 }: BusinessHoursIndicatorProps) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['business-hours-status', connectionId],
     queryFn: () => fetchBusinessHoursStatus(connectionId),
     enabled: !!connectionId,
     refetchInterval: 60000, // Check every minute
   });
 
-  if (isLoading || isError || !data) {
+  // Sem isError na guarda: o react-query mantem o ultimo `data` valido em
+  // cache mesmo quando um refetch falha, entao uma falha transitoria (que
+  // ja aciona o retry com backoff) nao deve esconder o badge — so !data
+  // cobre o caso "nunca carregou com sucesso".
+  if (isLoading || !data) {
     return null;
   }
 
