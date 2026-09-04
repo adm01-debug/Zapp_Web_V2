@@ -3,13 +3,13 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "e336bae10b6cecc8b3b147a7c79500cfee5c3a4657903bf0aa1351eb8f8e7813"
+    "sha256": "11e966d7fefe01fbb0d749e3e8feae5f7892dbd1c493e5cfafdedb0538142299"
   },
   "summary": {
-    "function_count": 61,
-    "source_file_count": 79,
+    "function_count": 62,
+    "source_file_count": 80,
     "verify_jwt_true": 55,
-    "verify_jwt_false": 6
+    "verify_jwt_false": 7
   },
   "source_files": [
     {
@@ -171,6 +171,11 @@
       "path": "supabase/functions/chatbot-l1/index.ts",
       "bytes": 8122,
       "sha256": "0dc07d1dfa676da2d6b6b2240fa0d1d009dae5ed773119212d84d3bbfa6c5f07"
+    },
+    {
+      "path": "supabase/functions/check-account-lock/index.ts",
+      "bytes": 2376,
+      "sha256": "befa161eadaab78d7f3050a823a017791a667ebb64d559113a91f2016d8a8a98"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -592,6 +597,17 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/chatbot-l1/index.ts"
+      ]
+    },
+    {
+      "name": "check-account-lock",
+      "entrypoint": "supabase/functions/check-account-lock/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "ab04028a949a0ca3fc77e7e7127de6c2372315a7d916e4ad12ac50be88281cd1",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/check-account-lock/index.ts"
       ]
     },
     {
@@ -1162,5 +1178,5 @@
       ]
     }
   ],
-  "manifest_sha256": "52d30fd30bd78825f9bb4c699a7329dfba126155bae17449416600f59420ca62"
+  "manifest_sha256": "5f3f60b10a8b79f58535bbb2c7a6267cf5b409c8f5226d27b2df4f343977633a"
 }
