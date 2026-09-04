@@ -70,10 +70,15 @@ export function useCreateTeamConversation() {
         const { data: existing } = await supabase.from('team_conversation_members').select('conversation_id').eq('profile_id', profile.id);
         if (existing?.length) {
           for (const mem of existing) {
-            const { data: conv } = await supabase.from('team_conversations').select('*').eq('id', mem.conversation_id).eq('type', 'direct').single();
+            // limit(1) em vez de single(): a conversa candidata é filtrada por
+            // type='direct' dentro de um loop que também passa por conversas
+            // em grupo, então 0 linhas é o resultado normal na maioria das
+            // iterações, não um erro — single() geraria 406 nesses casos.
+            const { data: convRows } = await supabase.from('team_conversations').select('*').eq('id', mem.conversation_id).eq('type', 'direct').limit(1);
+            const conv = convRows?.[0] ?? null;
             if (conv) {
-              const { data: otherMem } = await supabase.from('team_conversation_members').select('id').eq('conversation_id', conv.id).eq('profile_id', otherId).single();
-              if (otherMem) return conv;
+              const { data: otherMemRows } = await supabase.from('team_conversation_members').select('id').eq('conversation_id', conv.id).eq('profile_id', otherId).limit(1);
+              if (otherMemRows?.[0]) return conv;
             }
           }
         }
