@@ -30,7 +30,6 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
   const [typedText, setTypedText] = useState('');
   const [partyMode, setPartyMode] = useState(false);
   const [matrixMode, setMatrixMode] = useState(false);
-  const [shakeCount, setShakeCount] = useState(0);
   const { celebrate, celebrating } = useCelebration();
 
   // Konami Code Detection
@@ -63,52 +62,6 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [konamiProgress, typedText]);
 
-  // Shake Detection (for mobile)
-  useEffect(() => {
-    let lastX = 0, lastY = 0, lastZ = 0;
-    let shakeThreshold = 15;
-
-    const handleMotion = (e: DeviceMotionEvent) => {
-      const { x, y, z } = e.accelerationIncludingGravity || {};
-      if (x === null || y === null || z === null) return;
-
-      const deltaX = Math.abs((x || 0) - lastX);
-      const deltaY = Math.abs((y || 0) - lastY);
-      const deltaZ = Math.abs((z || 0) - lastZ);
-
-      if (deltaX + deltaY + deltaZ > shakeThreshold) {
-        setShakeCount(prev => {
-          const newCount = prev + 1;
-          if (newCount >= 5) {
-            triggerShakeEasterEgg();
-            return 0;
-          }
-          return newCount;
-        });
-      }
-
-      lastX = x || 0;
-      lastY = y || 0;
-      lastZ = z || 0;
-    };
-
-    if ('DeviceMotionEvent' in window) {
-      window.addEventListener('devicemotion', handleMotion);
-    }
-
-    return () => {
-      window.removeEventListener('devicemotion', handleMotion);
-    };
-  }, []);
-
-  // Reset shake count after inactivity
-  useEffect(() => {
-    if (shakeCount > 0) {
-      const timer = setTimeout(() => setShakeCount(0), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [shakeCount]);
-
   const triggerKonamiEasterEgg = useCallback(() => {
     celebrate({
       title: '🎮 KONAMI CODE!',
@@ -126,24 +79,6 @@ export const EasterEggsProvider = forwardRef<HTMLDivElement, EasterEggsProviderP
     setTimeout(() => {
       document.body.classList.remove('rainbow-mode');
     }, 5000);
-  }, [celebrate]);
-
-  const triggerShakeEasterEgg = useCallback(() => {
-    // Haptic feedback if available
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 200]);
-    }
-
-    celebrate({
-      title: '📱 SHAKE IT!',
-      subtitle: 'Você sacudiu o suficiente!',
-      emoji: '🎉',
-    });
-
-    toast({
-      title: '📱 Shake Detectado!',
-      description: 'Você descobriu o easter egg de shake!',
-    });
   }, [celebrate]);
 
   const triggerSecretCode = useCallback((name: string, action: string) => {

@@ -38,20 +38,25 @@ export function BusinessHoursIndicator({
       const currentDay = brazilTime.getDay();
       const currentTimeStr = brazilTime.toTimeString().slice(0, 5); // HH:MM
 
-      // Fetch business hours for today - using any to bypass type issues
-      const { data, error } = await supabase
+      // limit(1) em vez de single(): single() força o header
+      // "Accept: application/vnd.pgrst.object+json", que faz o PostgREST
+      // responder 406 sempre que não existe configuração para o dia atual
+      // (caso normal, não um erro).
+      const { data: rows, error } = await supabase
         .from('business_hours')
         .select('*')
         .eq('whatsapp_connection_id', connectionId)
         .eq('day_of_week', currentDay)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         log.error('Error fetching business hours:', error);
         setIsOpen(null);
         setLoading(false);
         return;
       }
+
+      const data = rows?.[0] ?? null;
 
       if (!data) {
         // No configuration = assume open
