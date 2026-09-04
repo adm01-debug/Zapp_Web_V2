@@ -20,6 +20,7 @@ WHERE id IN (
 );
 
 -- Step 2: Delete phantom contact rows echoed from outbound agent messages
+-- (sender='contact', content='[Mensagem recebida]' created before fromMe=true fix)
 DELETE FROM public.messages
 WHERE sender = 'contact'
   AND content = '[Mensagem recebida]'
