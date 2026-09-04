@@ -458,6 +458,19 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "Ledger capturou apenas resumo em prosa (nao executavel); arquivo pin carrega a definicao SQL completa vigente do banco (tiebreaker c.id ASC) para replay valido."
+    },
+    {
+      "version": "20260903200000",
+      "filename": "20260903200000_revoke_anon_record_failed_login.sql",
+      "file_sha256": "7da8dc6622bfe9d5c86bc12a96f5b9b79ba8aaea54fdeb2c1a2d8fadd49151a0",
+      "file_sql_sha256": "3c63b6622599f041a9c0f07fc7f43c25534b38eeb345db9dcebee0480d8422cb",
+      "ledger_name": "revoke_anon_record_failed_login",
+      "ledger_sql_sha256": "86244998cd0d97e89a90de33cb46e2e4235a316d3a047d98316667e69a548cdb",
+      "ledger_statements_sha256": "e3d00bd89a2ef72bac40bdc650da39490559c7695acc6374e826eaacf6732860",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "Ledger guarda o REVOKE de anon em record_failed_login; o arquivo e no-op. A funcao e chamada pela tela de login antes de existir sessao (src/lib/loginAttempts.ts, como anon): sem EXECUTE o RPC falha, o erro e engolido e nenhuma conta trava. Num replay limpo o REVOKE abriria essa janela entre esta migration e a 20260903210000, que o desfaz. Estado final permitido e anon com EXECUTE (ver 20260903170000 e 20260903210000) — divergencia intencional segura."
     }
   ]
 }
