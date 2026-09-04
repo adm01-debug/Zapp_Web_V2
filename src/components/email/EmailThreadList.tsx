@@ -236,8 +236,9 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
     || thread.last_from_address
     || thread.contact?.email
     || 'Desconhecido';
-  // Mesma cadeia do nome para as iniciais (antes: só contact → "?)"
-  const initialsSource = thread.contact?.name || thread.contact?.email || thread.last_from_name || thread.last_from_address || undefined;
+  // Mesma cadeia do nome para as iniciais (ordem idêntica: contact.name →
+  // last_from_name → last_from_address → contact.email)
+  const initialsSource = thread.contact?.name || thread.last_from_name || thread.last_from_address || thread.contact?.email || undefined;
 
   return (
     <motion.button
