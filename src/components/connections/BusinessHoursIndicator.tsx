@@ -80,7 +80,7 @@ export function BusinessHoursIndicator({
   const todayHours = data?.todayHours ?? null;
 
   if (isOpen === null) {
-    return null; // No business hours configured
+    return null; // Erro ao buscar o status (ausência de configuração já resulta em isOpen: true)
   }
 
   return (

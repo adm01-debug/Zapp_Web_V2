@@ -14,7 +14,13 @@ export function useUserRole() {
   // própria requisição e seu próprio timer de segurança.
   const { data: roles = [], isLoading, refetch } = useQuery({
     queryKey: ['user-roles', user?.id],
-    queryFn: () => RoleService.fetchUserRoles(user!.id),
+    // Deriva o userId da própria queryKey em vez de "user!.id": refetch()
+    // chamado manualmente ignora `enabled`, então um non-null assertion
+    // aqui quebraria em runtime se refetch() rodasse com user null (logout).
+    queryFn: ({ queryKey }) => {
+      const [, userId] = queryKey;
+      return userId ? RoleService.fetchUserRoles(userId) : Promise.resolve([]);
+    },
     enabled: !!user,
     staleTime: 1000 * 60 * 5,
   });
