@@ -1,0 +1,1 @@
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE public.messages, public.contacts, public.profiles, public.audit_logs, public.whatsapp_connections, public.ai_usage_logs, public.automations, public.agent_skills, public.blocked_ips FROM anon;
