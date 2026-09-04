@@ -14,7 +14,7 @@ interface BusinessHoursIndicatorProps {
 }
 
 interface BusinessHoursStatus {
-  isOpen: boolean | null;
+  isOpen: boolean;
   todayHours: string | null;
 }
 
@@ -36,9 +36,13 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<BusinessH
     .eq('day_of_week', currentDay)
     .limit(1);
 
+  // Lança o erro em vez de engolir: só assim o retry com backoff do
+  // QueryClient global (AppProviders.tsx) entra em ação. Retornar um
+  // "sucesso" aqui faria a UI só tentar de novo no próximo
+  // refetchInterval (60s).
   if (error) {
     log.error('Error fetching business hours:', error);
-    return { isOpen: null, todayHours: null };
+    throw error;
   }
 
   const data = rows?.[0] ?? null;
@@ -65,23 +69,18 @@ export function BusinessHoursIndicator({
   className,
   showLabel = true,
 }: BusinessHoursIndicatorProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['business-hours-status', connectionId],
     queryFn: () => fetchBusinessHoursStatus(connectionId),
     enabled: !!connectionId,
     refetchInterval: 60000, // Check every minute
   });
 
-  if (isLoading) {
+  if (isLoading || isError || !data) {
     return null;
   }
 
-  const isOpen = data?.isOpen ?? null;
-  const todayHours = data?.todayHours ?? null;
-
-  if (isOpen === null) {
-    return null; // Erro ao buscar o status (ausência de configuração já resulta em isOpen: true)
-  }
+  const { isOpen, todayHours } = data;
 
   return (
     <TooltipProvider>
