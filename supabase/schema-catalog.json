@@ -1556,6 +1556,7 @@
         "reassign_absent_agents",
         "reassign_overloaded_agents",
         "record_failed_login",
+        "register_first_response_internal",
         "search_contacts",
         "search_knowledge_base",
         "skill_based_assign",
@@ -1563,7 +1564,7 @@
         "update_own_profile",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-03",
+    "generated_at": "2026-09-04",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
@@ -1615,6 +1616,7 @@
         "reassign_absent_agents(inactive_minutes integer)->integer|kind=f",
         "reassign_overloaded_agents()->integer|kind=f",
         "record_failed_login(p_email text, p_ip_address text, p_user_agent text)->TABLE(is_locked boolean, locked_until timestamp with time zone, attempts integer)|kind=f",
+        "register_first_response_internal(p_contact_id uuid, p_responded_at timestamp with time zone, p_before_created_at timestamp with time zone)->void|kind=f",
         "search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)->TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, total_count bigint)|kind=f",
         "search_knowledge_base(search_query text, max_results integer)->TABLE(id uuid, title text, content text, category text, tags text[], rank real)|kind=f",
         "skill_based_assign(p_queue_id uuid)->uuid|kind=f",
