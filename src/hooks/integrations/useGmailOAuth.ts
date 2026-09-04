@@ -1,5 +1,6 @@
  import { useEffect, useRef } from 'react';
  import { useQueryClient } from '@tanstack/react-query';
+ import type { User } from '@supabase/supabase-js';
  import { supabase } from '@/integrations/supabase/client';
  import { toast } from 'sonner';
  import {
@@ -7,35 +8,47 @@
    parseGmailOAuthState,
    setPendingIntegrationView
  } from '@/lib/gmailOAuth';
- 
- export function useGmailOAuth(user: any, loading: boolean, setCurrentView: (view: string) => void) {
+
+const VALID_VIEWS = new Set([
+  'inbox', 'dashboard', 'contacts', 'reports', 'settings', 'integrations',
+  'omni-inbox', 'email-chat', 'pipeline', 'team-chat',
+]);
+const VALID_INTEGRATION_VIEWS = new Set(['gmail', 'whatsapp', 'calendar']);
+
+ export function useGmailOAuth(user: User | null, loading: boolean, setCurrentView: (view: string) => void) {
    const queryClient = useQueryClient();
    const handledRef = useRef(false);
- 
+
    useEffect(() => {
      if (loading || !user || handledRef.current) return;
- 
+
      const searchParams = new URLSearchParams(window.location.search);
      const code = searchParams.get('code');
      const oauthError = searchParams.get('error');
      const issuer = searchParams.get('iss');
      const oauthState = parseGmailOAuthState(searchParams.get('state'));
      const hasGmailOAuthParams = Boolean(code || oauthError || issuer === 'https://accounts.google.com');
- 
+
      if (!hasGmailOAuthParams) return;
- 
+
      handledRef.current = true;
- 
+
      const fallbackContext = consumeGmailOAuthReturnContext();
-     const returnView = oauthState?.view || fallbackContext.view;
-     const integrationView = oauthState?.integrationView || fallbackContext.integrationView;
- 
+     const rawView = oauthState?.view || fallbackContext.view;
+     const returnView = VALID_VIEWS.has(rawView) ? rawView : 'integrations';
+     const rawIntegration = oauthState?.integrationView || fallbackContext.integrationView;
+     const integrationView = rawIntegration && VALID_INTEGRATION_VIEWS.has(rawIntegration)
+       ? rawIntegration
+       : undefined;
+
      if (integrationView) {
        setPendingIntegrationView(integrationView);
      }
- 
+
      const returnToSavedView = () => {
-       window.history.replaceState(null, '', window.location.pathname);
+       const url = new URL(window.location.href);
+       ['code', 'state', 'scope', 'error', 'error_description', 'iss'].forEach(p => url.searchParams.delete(p));
+       window.history.replaceState(null, '', url.toString());
        setCurrentView(returnView);
      };
  

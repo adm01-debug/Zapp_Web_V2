@@ -118,6 +118,17 @@ Deno.serve(async (req) => {
         const gmailProfile = await getGmailProfile(tokens.access_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+        // Guard against account takeover: reject if this Gmail address is already linked to another user
+        const { data: existingAccount } = await supabase
+          .from("gmail_accounts")
+          .select("user_id")
+          .eq("email_address", gmailProfile.emailAddress)
+          .maybeSingle();
+
+        if (existingAccount && existingAccount.user_id !== user.id) {
+          return errorResponse("This Gmail address is already linked to another account", 409, req);
+        }
+
         const { data: account, error: upsertError } = await supabase
           .from("gmail_accounts")
           .upsert({
