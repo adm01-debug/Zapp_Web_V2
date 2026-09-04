@@ -6,9 +6,9 @@
     "sha256": "e336bae10b6cecc8b3b147a7c79500cfee5c3a4657903bf0aa1351eb8f8e7813"
   },
   "summary": {
-    "function_count": 61,
-    "source_file_count": 79,
-    "verify_jwt_true": 55,
+    "function_count": 62,
+    "source_file_count": 80,
+    "verify_jwt_true": 56,
     "verify_jwt_false": 6
   },
   "source_files": [
@@ -109,7 +109,7 @@
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
-      "bytes": 5048,
+      "bytes": 2391,
       "sha256": "2391e6fcc9f074cee3a42b01b75415ee55611214d070388d96fc350fa4f6af40"
     },
     {
@@ -171,6 +171,11 @@
       "path": "supabase/functions/chatbot-l1/index.ts",
       "bytes": 8122,
       "sha256": "0dc07d1dfa676da2d6b6b2240fa0d1d009dae5ed773119212d84d3bbfa6c5f07"
+    },
+    {
+      "path": "supabase/functions/check-account-lock/index.ts",
+      "bytes": 2376,
+      "sha256": "befa161eadaab78d7f3050a823a017791a667ebb64d559113a91f2016d8a8a98"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -592,6 +597,17 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/chatbot-l1/index.ts"
+      ]
+    },
+    {
+      "name": "check-account-lock",
+      "entrypoint": "supabase/functions/check-account-lock/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "1ee2453acc57af645cccfa4508eae7f0f73c35f7e6922878cebcfd98ce3d8cd6",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/check-account-lock/index.ts"
       ]
     },
     {
@@ -1162,5 +1178,5 @@
       ]
     }
   ],
-  "manifest_sha256": "52d30fd30bd78825f9bb4c699a7329dfba126155bae17449416600f59420ca62"
+  "manifest_sha256": "c59f30da4d195fe18d6994a4e97490f9a7d128dc7a6e3d86220cde02cda3903f"
 }
