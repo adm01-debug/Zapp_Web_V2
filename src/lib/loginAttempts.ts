@@ -9,8 +9,8 @@ interface LockStatus {
 }
 
 export async function checkAccountLock(email: string): Promise<LockStatus> {
-  const { data, error } = await supabase.rpc('is_account_locked', {
-    check_email: email
+  const { data, error } = await supabase.functions.invoke('check-account-lock', {
+    body: { email },
   });
 
   if (error) {
@@ -18,18 +18,17 @@ export async function checkAccountLock(email: string): Promise<LockStatus> {
     return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
   }
 
-  const result = data?.[0];
-  if (!result) {
+  if (!data) {
     return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
   }
 
-  const lockedUntil = result.locked_until ? new Date(result.locked_until) : null;
-  const remainingTime = lockedUntil ? Math.max(0, Math.floor((lockedUntil.getTime() - Date.now()) / 1000)) : 0;
+  const lockedUntil = data.lockedUntil ? new Date(data.lockedUntil) : null;
+  const remainingTime = data.remainingTime ?? 0;
 
   return {
-    isLocked: result.is_locked,
+    isLocked: data.isLocked,
     lockedUntil,
-    attempts: result.attempts,
+    attempts: data.attempts,
     remainingTime
   };
 }

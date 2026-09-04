@@ -3,13 +3,13 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "e336bae10b6cecc8b3b147a7c79500cfee5c3a4657903bf0aa1351eb8f8e7813"
+    "sha256": "11e966d7fefe01fbb0d749e3e8feae5f7892dbd1c493e5cfafdedb0538142299"
   },
   "summary": {
-    "function_count": 61,
-    "source_file_count": 79,
+    "function_count": 62,
+    "source_file_count": 80,
     "verify_jwt_true": 55,
-    "verify_jwt_false": 6
+    "verify_jwt_false": 7
   },
   "source_files": [
     {
@@ -34,8 +34,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 11055,
-      "sha256": "f708425c995142b424804ca805130ffcd0d3b3c14c84f037d849def31881c204"
+      "bytes": 11070,
+      "sha256": "7cf2f8ef1b4bd923d7755fdbfa7ec3100036ea067b3630914ca5dfb91ccb64da"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -173,6 +173,11 @@
       "sha256": "0dc07d1dfa676da2d6b6b2240fa0d1d009dae5ed773119212d84d3bbfa6c5f07"
     },
     {
+      "path": "supabase/functions/check-account-lock/index.ts",
+      "bytes": 2376,
+      "sha256": "befa161eadaab78d7f3050a823a017791a667ebb64d559113a91f2016d8a8a98"
+    },
+    {
       "path": "supabase/functions/classify-audio-meme/index.ts",
       "bytes": 2952,
       "sha256": "c5cfccb1b7e86335118f470474af98910d9e988866bbfad5fd2bc8fcf58cd4d4"
@@ -299,8 +304,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 9113,
-      "sha256": "8fe47a92637253ba9f0918d02f878c833a1313c831987227ccba9139a98f6293"
+      "bytes": 9148,
+      "sha256": "fdafa2ee8abf32fef7987cb0ede6ea45f426646b818751f01ce8f1c1dd8a1cab"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -595,6 +600,17 @@
       ]
     },
     {
+      "name": "check-account-lock",
+      "entrypoint": "supabase/functions/check-account-lock/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "ab04028a949a0ca3fc77e7e7127de6c2372315a7d916e4ad12ac50be88281cd1",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/check-account-lock/index.ts"
+      ]
+    },
+    {
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
@@ -787,7 +803,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "348f983f838a3637aa8808e3d16f4b53a6bd16bb1c2516481112b44dc40d5770",
+      "source_sha256": "e55ae0553e0b599c857c19c7c396d30cddea4d7e00d8fcd674ea7e56449dec63",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -903,7 +919,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "01a6f0a9078c603d07b4640308260b91f4cdc6c21f78ee31c2a3412c7ef3c626",
+      "source_sha256": "b2ad1cb184163ba1b29a84fd0906c331d235ec85ba95c1c5a5234e9eda181b9d",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1162,5 +1178,5 @@
       ]
     }
   ],
-  "manifest_sha256": "32a5fd7f158f966d3281082f14f19aec1c0c47bb321aef598ea187ddb9f24af6"
+  "manifest_sha256": "5f3f60b10a8b79f58535bbb2c7a6267cf5b409c8f5226d27b2df4f343977633a"
 }
