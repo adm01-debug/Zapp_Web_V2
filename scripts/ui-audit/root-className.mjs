@@ -58,6 +58,13 @@ export function extractRootClassNames(source) {
     if (!/^ {2}\S/.test(line)) continue;
     const m = line.match(/\breturn\s*[(<]/);
     if (!m) continue;
+    // `return () => ...` (cleanup de useEffect) casa com o regex acima e o
+    // openingTagAt acabaria pegando uma tag descendente. Se a seta aparece
+    // antes de qualquer '<' no resto da linha, o return nao e de JSX.
+    const rest = line.slice(m.index + m[0].length - 1);
+    const arrow = rest.indexOf('=>');
+    const jsx = rest.indexOf('<');
+    if (arrow !== -1 && (jsx === -1 || arrow < jsx)) continue;
     const tag = openingTagAt(body, lineStart + m.index);
     if (tag === null) continue;
     const cls = tag.match(CLASSNAME_RE);
