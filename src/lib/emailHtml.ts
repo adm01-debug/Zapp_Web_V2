@@ -1,14 +1,17 @@
 import DOMPurify from 'dompurify';
 
 /**
- * Pipeline único de sanitização de HTML de e-mail (run h538172).
+ * Pipeline único de sanitização de HTML de e-mail (run h538172 + hardening audit F1-F3).
  * Usado por: EmailChatBubble, EmailThreadView (legado) e EmailFullViewDialog.
  *
  * Política:
- * - Imagens permitidas (lazy, no-referrer) — antes eram removidas silenciosamente.
+ * - Imagens permitidas (lazy, no-referrer); data: URL > 32KB vira placeholder.
  * - Links sempre externos e seguros (target=_blank + rel=noopener noreferrer).
- * - Larguras fixas de remetente (width/min-width px em style) são neutralizadas
- *   para o container conter o layout (ver .email-html-body no components.css).
+ * - Larguras fixas px do remetente neutralizadas; comentários CSS removidos
+ *   antes do parse (F1) e QUALQUER declaração com url() descartada (F2) —
+ *   cobre cursor/mask-image/list-style-image/content/filter/etc.
+ * - Instância DOMPurify ISOLADA via factory (F3): removeAllHooks() chamado por
+ *   qualquer outro código do bundle não desarma este pipeline.
  * - <style> e <script> continuam proibidos (allowlist).
  */
 
@@ -23,15 +26,22 @@ const EMAIL_ALLOWED_ATTR = [
   'colspan','rowspan','align','valign','bgcolor','color','style','loading',
 ];
 
-let hooksInstalled = false;
+/** Props de style sempre proibidas (overlay/clickjacking/exfiltração). */
+const STYLE_BLOCKED_PROPS = new Set([
+  'position','visibility','z-index','top','left','right','bottom','inset','transform',
+  'background','background-image','list-style-image','cursor','mask-image',
+  '-webkit-mask-image','content','border-image-source','border-image','filter',
+  'animation','transition','behavior','-moz-binding',
+]);
 
-function installHooks(): void {
-  if (hooksInstalled) return;
-  hooksInstalled = true;
+type PurifyInstance = typeof DOMPurify;
 
+let purifier: PurifyInstance | null = null;
+
+function installHooks(p: PurifyInstance): void {
   // Links: sempre abrir em nova aba, isolados do opener.
   // Imagens: lazy + no-referrer; data: URL gigante (base64 de MBs) vira placeholder.
-  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  p.addHook('afterSanitizeAttributes', (node) => {
     if (!(node instanceof Element)) return;
     if (node.tagName === 'A' && node.getAttribute('href')) {
       node.setAttribute('target', '_blank');
@@ -48,28 +58,27 @@ function installHooks(): void {
     }
   });
 
-  // Estilos inline: remove larguras fixas do remetente (600px etc.) que estouram
-  // o bubble/chat; remove também propriedades hostis (clickjacking/exfiltração):
-  // position/visibility/z-index (overlay) e background-image com url() (tracker).
-  DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-    // Política de style aplicada a QUALQUER elemento (li/ul/h1/etc. inclusive):
-    // sem isso, background:url() de tracker sobreviveria fora do filtro.
+  // Estilos inline: remove larguras fixas do remetente (600px etc.), props hostis
+  // e QUALQUER declaração contendo url() (tracker). Comentários CSS são
+  // removidos ANTES do parse para não fragmentar propriedades (F1).
+  p.addHook('uponSanitizeElement', (node) => {
     if (!(node instanceof Element)) return;
     const style = node.getAttribute('style');
     if (!style) return;
     const cleaned = style
+      .replace(/\/\*[\s\S]*?\*\//g, '')
       .split(';')
       .filter((decl) => {
         const idx = decl.indexOf(':');
         if (idx === -1) return false; // declaração malformada/trailing ';' — descarta
         const prop = decl.slice(0, idx).trim().toLowerCase();
-        if (['position', 'visibility', 'z-index', 'top', 'left', 'right', 'bottom', 'background-image', 'background'].includes(prop)) {
-          return false;
-        }
+        const val = decl.slice(idx + 1);
+        if (STYLE_BLOCKED_PROPS.has(prop)) return false;
+        if (/url\s*\(/i.test(val)) return false; // F2: tracker em qualquer propriedade
         if (prop === 'width' || prop === 'min-width' || prop === 'max-width') {
-          const val = decl.slice(decl.indexOf(':') + 1).trim().toLowerCase();
+          const v = val.trim().toLowerCase();
           // Mantém larguras proporcionais (%, auto); remove px/cm fixos.
-          return val.endsWith('%') || val === 'auto';
+          return v.endsWith('%') || v === 'auto';
         }
         return true;
       })
@@ -79,15 +88,29 @@ function installHooks(): void {
   });
 }
 
-/** Remove declarações de largura fixa do atributo style (px/em/cm). */
+/** Instância isolada (F3): terceiros que mexam na instância default não afetam aqui. */
+function getPurifier(): PurifyInstance {
+  if (!purifier) {
+    try {
+      // DOMPurify é também factory: DOMPurify(window) devolve nova instância.
+      purifier = (DOMPurify as unknown as (w?: Window) => PurifyInstance)(
+        typeof window !== 'undefined' ? window : undefined,
+      );
+    } catch {
+      purifier = DOMPurify; // fallback: instância default (ambiente sem window)
+    }
+    if (typeof purifier.sanitize !== 'function') purifier = DOMPurify;
+    installHooks(purifier);
+  }
+  return purifier;
+}
+
+/** Sanitiza HTML de e-mail com a política única do módulo. */
 export function sanitizeEmailHtml(html: string): string {
-  installHooks();
-  return DOMPurify.sanitize(html, {
+  return getPurifier().sanitize(html, {
     ALLOWED_TAGS: EMAIL_ALLOWED_TAGS,
     ALLOWED_ATTR: EMAIL_ALLOWED_ATTR,
     FORCE_BODY: true,
-    // Estilos de e-mail usam attr width/height legado — deixa passar; o CSS
-    // de contenção (.email-html-body) refina a apresentação.
     KEEP_CONTENT: true,
   });
 }
