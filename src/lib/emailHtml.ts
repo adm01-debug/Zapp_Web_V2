@@ -61,7 +61,9 @@ function installHooks(): void {
     const cleaned = style
       .split(';')
       .filter((decl) => {
-        const prop = decl.slice(0, decl.indexOf(':')).trim().toLowerCase();
+        const idx = decl.indexOf(':');
+        if (idx === -1) return false; // declaração malformada/trailing ';' — descarta
+        const prop = decl.slice(0, idx).trim().toLowerCase();
         if (['position', 'visibility', 'z-index', 'top', 'left', 'right', 'bottom', 'background-image', 'background'].includes(prop)) {
           return false;
         }
@@ -91,17 +93,21 @@ export function sanitizeEmailHtml(html: string): string {
   });
 }
 
-/** Preview textual honesto: corta em palavra, não no meio; destrincha entities. */
-export function buildBodyPreview(text: string | null | undefined, maxChars = 300): string {
-  if (!text) return '';
-  const decoded = text
+/** Decodifica entities comuns sem double-decode (roda UMA vez, em texto já plano). */
+function decodeEntitiesOnce(text: string): string {
+  return text
     .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-  const flat = decoded.replace(/\s+/g, ' ').trim();
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&'); // por último: evita re-decodar o & das entities acima
+}
+
+/** Preview textual honesto: corta em palavra, não no meio; destrincha entities. */
+export function buildBodyPreview(text: string | null | undefined, maxChars = 300): string {
+  if (!text) return '';
+  const flat = decodeEntitiesOnce(text).replace(/\s+/g, ' ').trim();
   if (flat.length <= maxChars) return flat;
   const cut = flat.slice(0, maxChars);
   const lastSpace = cut.lastIndexOf(' ');

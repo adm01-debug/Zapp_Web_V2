@@ -129,11 +129,16 @@
 .email-html-body img { max-width: 100% !important; height: auto; }
 .email-html-body table { max-width: 100% !important; table-layout: fixed; border-collapse: collapse; }
 .email-html-body td, .email-html-body th { overflow-wrap: anywhere; }
-/* Neutraliza tipografia global (clamp) do app para o conteúdo do e-mail */
+/* Neutraliza tipografia global (clamp) do app para o conteúdo do e-mail.
+   Nota: all:revert-layer revertia as próprias props — por isso as props
+   explícitas vêm DEPOIS dele. */
 .email-html-body p, .email-html-body h1, .email-html-body h2, .email-html-body h3,
 .email-html-body h4, .email-html-body h5, .email-html-body h6,
 .email-html-body small, .email-html-body pre, .email-html-body code {
-  font-size: revert; line-height: 1.5; margin: 0.5em 0; all: revert-layer;
+  all: revert-layer;
+  font-size: revert;
+  line-height: 1.5;
+  margin: 0.5em 0;
 }
 .email-html-body a { text-decoration: underline; }
 /* Wrapper com scroll horizontal quando o conteúdo insiste em ser mais largo */
