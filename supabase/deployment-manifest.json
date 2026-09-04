@@ -39,8 +39,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
-      "bytes": 12425,
-      "sha256": "24c2796273f088c1f7fc4adb5375f114539f6386ef1dc50204cf703188b3c2cf"
+      "bytes": 12684,
+      "sha256": "26b22aed358551fc2850a9a04fe4708ecf2ecf84bb6e61d5bbef568903d6b221"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -814,7 +814,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "4847aeeae4d0496ec30c8d9959c5c7f40b04fa4662c11bd7266961c420476e77",
+      "source_sha256": "7f11328e0882052d9483ad4be43c6964050981eab7e4c32592eed55218b18aae",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "40c0a6237a75edc80d1059f0aaf57fee4096b54ad5c08637079c7a2c05b92e72"
+  "manifest_sha256": "52d30fd30bd78825f9bb4c699a7329dfba126155bae17449416600f59420ca62"
 }
