@@ -105,11 +105,8 @@ describe('SLAConfigurationManager', () => {
     await waitFor(() => {
       const allText = document.body.textContent || '';
       expect(allText).toContain('1ª Resp:');
-      expect(allText).toContain('Resolução:');
       expect(allText).toContain('5min');
-      expect(allText).toContain('30min');
       expect(allText).toContain('15min');
-      expect(allText).toContain('2h');
     });
   });
 

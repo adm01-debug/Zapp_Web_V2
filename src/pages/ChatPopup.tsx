@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { sendMessageToContact } from '@/hooks/realtime/messageSender';
 import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
@@ -70,6 +71,14 @@ export default function ChatPopup() {
     enabled: !!contactId,
   });
 
+  // SLA de 1a resposta: timestamp da primeira mensagem efetivamente enviada pelo atendente
+  const firstResponseAt = useMemo(() => {
+    const sent = (messages as unknown as Array<{ sender?: string; status?: string | null; created_at?: string }>)
+      .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
+      .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+    return sent[0]?.created_at ? new Date(sent[0].created_at) : null;
+  }, [messages]);
+
   useEffect(() => {
     if (!contactId) return;
     (async () => {
@@ -105,6 +114,7 @@ export default function ChatPopup() {
         priority: contact.ai_priority === 'high' ? 'high' : 'medium',
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
+        firstResponseAt,
         assignedTo: undefined,
       }
     : null;
@@ -116,12 +126,9 @@ export default function ChatPopup() {
   const handleSendMessage = useCallback(
     async (content: string) => {
       if (!contactId) return;
-      await supabase.from('messages').insert({
-        contact_id: contactId,
-        content,
-        sender: 'agent',
-        message_type: 'text',
-      });
+      // envia de verdade via Evolution API (antes: so gravava no banco —
+      // a mensagem nunca chegava ao cliente no WhatsApp)
+      await sendMessageToContact(contactId, content, 'text');
     },
     [contactId]
   );
@@ -141,13 +148,8 @@ export default function ChatPopup() {
           .from('whatsapp-media')
           .getPublicUrl(fileName);
 
-        await supabase.from('messages').insert({
-          contact_id: contactId,
-          content: '🎵 Mensagem de áudio',
-          sender: 'agent',
-          message_type: 'audio',
-          media_url: urlData.publicUrl,
-        });
+        // envia de verdade via Evolution API (antes: so gravava no banco)
+        await sendMessageToContact(contactId, '🎵 Mensagem de áudio', 'audio', urlData.publicUrl);
       } catch (err) {
         log.error('Failed to send audio from popup:', err);
       }

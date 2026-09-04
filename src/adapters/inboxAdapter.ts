@@ -45,6 +45,27 @@ export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?
 }
 
 export function mapRealtimeConversationToConversation(rc: ConversationWithMessages): Conversation {
+  // SLA de 1a resposta: prioridade para o canônico do banco (conversation_sla),
+  // que existe mesmo quando a janela de mensagens veio vazia; fallback no
+  // derivado da primeira mensagem do atendente efetivamente enviada.
+  const slaRows = (rc.contact as RealtimeContact & {
+    conversation_sla?: Array<{ first_response_at: string | null }> | null;
+  }).conversation_sla;
+  // canonico: se existe linha ABERTA (sem resposta), a pendencia esta viva e
+  // firstResponseAt DEVE ser null (cronometro conta). So usamos a linha
+  // respondida mais recente quando NAO ha linha aberta no banco.
+  const slaOpen = slaRows?.find(r => r.first_response_at == null) ?? null;
+  const slaAnswered = slaOpen
+    ? null
+    : [...(slaRows ?? [])]
+        .filter(r => r.first_response_at != null)
+        .sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? ''))
+        .pop() ?? null;
+
+  const firstAgentMessage = rc.messages
+    .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
+
   return {
     id: rc.contact.id,
     contact: mapRealtimeContactToContact(rc.contact),
@@ -55,6 +76,11 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
+    firstResponseAt: slaOpen
+      ? null // pendencia viva registrada no banco: cronometro continua
+      : slaAnswered?.first_response_at
+        ? new Date(slaAnswered.first_response_at)
+        : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
     assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
     sentiment: rc.contact.ai_sentiment,
   };

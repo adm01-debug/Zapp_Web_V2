@@ -30,7 +30,7 @@ export class RealtimeService {
     for (const idsChunk of chunkArray(uniqueIds, CONTACT_FETCH_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*')
+        .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
         .in('id', idsChunk);
         
       if (error) {
@@ -45,7 +45,7 @@ export class RealtimeService {
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('*')
+      .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       
@@ -87,19 +87,6 @@ export class RealtimeService {
     const messageContacts = await this.fetchContactsByIds(missingContactIds);
     
     return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages);
-  }
-
-  static subscribeToMessages(onInsert: (payload: any) => void, onUpdate: (payload: any) => void, channelName = 'messages-realtime') {
-    return supabase.channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, onInsert)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, onUpdate)
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          log.debug(`Realtime subscribed: ${channelName}`);
-        } else if (status === 'CHANNEL_ERROR') {
-          log.error(`Realtime channel error: ${channelName}`);
-        }
-      });
   }
 
   static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {

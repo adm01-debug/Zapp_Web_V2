@@ -7723,6 +7723,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_first_response: {
+        Args: { p_contact_id: string }
+        Returns: undefined
+      }
       mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
       mcp_exec_many: {
         Args: { max_rows?: number; statements: string[] }
@@ -7982,3 +7986,4 @@ export const Constants = {
     },
   },
 } as const
+

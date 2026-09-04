@@ -1,10 +1,12 @@
 const GMAIL_OAUTH_RETURN_VIEW_KEY = 'gmail-oauth-return-view';
 const GMAIL_OAUTH_RETURN_INTEGRATION_KEY = 'gmail-oauth-return-integration';
 const PENDING_INTEGRATION_VIEW_KEY = 'pending-integration-view';
+const GMAIL_OAUTH_NONCE_KEY = 'gmail-oauth-nonce';
 
 export interface GmailOAuthState {
   view: string;
   integrationView?: string;
+  nonce?: string;
 }
 
 function getSessionStorage() {
@@ -20,8 +22,11 @@ export function storeGmailOAuthReturnContext(view: string, integrationView = 'gm
   storage.setItem(GMAIL_OAUTH_RETURN_INTEGRATION_KEY, integrationView);
 }
 
-export function createGmailOAuthState(state: GmailOAuthState) {
-  return JSON.stringify(state);
+export function createGmailOAuthState(state: Omit<GmailOAuthState, 'nonce'>) {
+  const storage = getSessionStorage();
+  const nonce = crypto.randomUUID();
+  if (storage) storage.setItem(GMAIL_OAUTH_NONCE_KEY, nonce);
+  return JSON.stringify({ ...state, nonce });
 }
 
 export function parseGmailOAuthState(value: string | null): GmailOAuthState | null {
@@ -32,6 +37,16 @@ export function parseGmailOAuthState(value: string | null): GmailOAuthState | nu
 
     if (!parsed?.view) {
       return null;
+    }
+
+    // Verify CSRF nonce (RFC 6749 §10.12) — reject state without matching nonce
+    const storage = getSessionStorage();
+    const storedNonce = storage?.getItem(GMAIL_OAUTH_NONCE_KEY);
+    if (storedNonce) {
+      storage?.removeItem(GMAIL_OAUTH_NONCE_KEY);
+      if (!parsed.nonce || parsed.nonce !== storedNonce) {
+        return null;
+      }
     }
 
     return parsed;

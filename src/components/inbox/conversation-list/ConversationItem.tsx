@@ -15,6 +15,7 @@ import { openChatPopup } from '@/lib/popupManager';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export function ChannelBadge({ type }: { type?: string | null }) {
   const iconClass = 'w-2.5 h-2.5 text-primary-foreground';
@@ -49,9 +50,15 @@ interface ConversationItemProps {
   isSelected: boolean;
   onSelect: (conversation: Conversation) => void;
   compact?: boolean;
+  onResolve?: (conversation: Conversation) => void;
+  onTransfer?: (conversation: Conversation) => void;
+  onPin?: (conversation: Conversation) => void;
+  onFavorite?: (conversation: Conversation) => void;
+  onSnooze?: (conversation: Conversation) => void;
+  onArchive?: (conversation: Conversation) => void;
 }
 
-function ConversationItemBase({ conversation, isSelected, onSelect, compact = false }: ConversationItemProps) {
+function ConversationItemBase({ conversation, isSelected, onSelect, compact = false, onResolve, onTransfer, onPin, onFavorite, onSnooze, onArchive }: ConversationItemProps) {
   const StatusIcon = statusIcons[conversation.status];
   const sentiment: SentimentLevel | null = (conversation.sentiment as SentimentLevel | null) || 
     (conversation.sentimentScore !== undefined && conversation.sentimentScore !== null ? getSentimentFromScore(conversation.sentimentScore) : null);
@@ -157,16 +164,16 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
             </div>
             <div className="flex items-center gap-0.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
               <TooltipProvider delayDuration={200}>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"><CheckCircle2 className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Resolver</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"><UserCheck className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Transferir</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"><Pin className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-400/10 active:scale-90 transition-all duration-150"><Star className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Favoritar</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"><AlarmClock className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"><Archive className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Resolver conversa" onClick={(e) => { e.stopPropagation(); if (onResolve) onResolve(conversation); else toast.info('Resolver: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"><CheckCircle2 className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Resolver</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Transferir conversa" onClick={(e) => { e.stopPropagation(); if (onTransfer) onTransfer(conversation); else toast.info('Transferir: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"><UserCheck className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Transferir</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Fixar conversa" onClick={(e) => { e.stopPropagation(); if (onPin) onPin(conversation); else toast.info('Fixar: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"><Pin className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Favoritar conversa" onClick={(e) => { e.stopPropagation(); if (onFavorite) onFavorite(conversation); else toast.info('Favoritar: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-400/10 active:scale-90 transition-all duration-150"><Star className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Favoritar</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Adiar conversa" onClick={(e) => { e.stopPropagation(); if (onSnooze) onSnooze(conversation); else toast.info('Adiar: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"><AlarmClock className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><button aria-label="Arquivar conversa" onClick={(e) => { e.stopPropagation(); if (onArchive) onArchive(conversation); else toast.info('Arquivar: em breve'); }} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"><Archive className="w-3.5 h-3.5" /></button></TooltipTrigger><TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent></Tooltip>
               </TooltipProvider>
             </div>
             <div className="mt-1">
-              <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.status === 'resolved' ? conversation.updatedAt : null} resolvedAt={conversation.status === 'resolved' ? conversation.updatedAt : null} firstResponseMinutes={conversation.priority === 'high' ? 2 : 5} resolutionMinutes={conversation.priority === 'high' ? 30 : 60} compact />
+              <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.firstResponseAt ?? null} firstResponseMinutes={5} compact />
             </div>
             {conversation.tags.length > 0 && (
               <div className="flex items-center gap-1 mt-2 flex-wrap">

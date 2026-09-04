@@ -42,7 +42,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .pnpm-debug.log*
-node_modules/
+node_modules
 .pnp
 .pnp.js
 .yarn/install-state.gz

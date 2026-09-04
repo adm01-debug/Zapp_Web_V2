@@ -28,8 +28,7 @@ na Vercel (projeto `zapp_web_v2`, team `juca1`).
 
 ### 1.3 Edge Functions (Supabase)
 
-Deploy via workflow `deploy-functions.yml` (GitHub Actions) quando arquivos de
-`supabase/functions/` mudam na `main`. O manifest
+Deploy **manual** via workflow `deploy-functions.yml` (GitHub Actions → **Run workflow**, `workflow_dispatch`) — **não** é automático em push; só executa a partir de `refs/heads/main`. O manifest
 `supabase/deployment-manifest.json` trava o conteúdo (sha256 por function):
 
 - Mudou edge function → rodar `node scripts/edge-deploy/generate-manifest.mjs`

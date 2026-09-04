@@ -3,6 +3,7 @@ import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MediaType, MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB, getBucket } from './useMediaLibrary';
+import { convertAudioToMp3 } from '@/utils/audioToMp3';
 
 const log = getLogger('useMediaUpload');
 
@@ -45,10 +46,18 @@ export function useMediaUpload(type: MediaType, onComplete: () => void) {
     for (let i = 0; i < sizedFiles.length; i++) {
       const file = sizedFiles[i];
       try {
-        const ext = file.name.split('.').pop() || (type === 'audio_memes' ? 'mp3' : 'webp');
+        // Áudio: padroniza em MP3 antes do upload (reprodução universal).
+        const converted = type === 'audio_memes' ? await convertAudioToMp3(file, file.name) : null;
+        if (converted && converted.ok && converted.blob.size > MAX_UPLOAD_SIZE_BYTES) {
+          log.error(`Conversão MP3 de ${file.name} excede ${MAX_UPLOAD_SIZE_MB}MB — ignorado`);
+          continue;
+        }
+        const payload: File | Blob = converted?.ok ? converted.blob : file;
+        const contentType = converted?.ok ? 'audio/mpeg' : (file.type || 'application/octet-stream');
+        const ext = converted?.ok ? 'mp3' : (file.name.split('.').pop() || (type === 'audio_memes' ? 'mp3' : 'webp'));
         const storagePath = `bulk_${Date.now()}_${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage
-          .from(bucket).upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
+          .from(bucket).upload(storagePath, payload, { contentType, cacheControl: '31536000' });
         if (uploadError) { log.error(`Upload error for ${file.name}:`, uploadError); continue; }
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath);
         const name = file.name.replace(/\.[^.]+$/, '');

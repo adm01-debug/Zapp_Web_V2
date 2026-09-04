@@ -70,11 +70,12 @@ function str(v: unknown): string | undefined {
 // v2 leem id/remoteJid. Normaliza no lugar, preservando o que já estiver correto.
 function normalizeWaKey(k: unknown): Record<string, unknown> | undefined {
   if (!isRecord(k)) return undefined;
+  const fromMe = typeof k.fromMe === 'boolean' ? k.fromMe : typeof k.FromMe === 'boolean' ? k.FromMe : undefined;
   return {
     ...k,
     id: str(k.id) ?? str(k.ID),
     remoteJid: str(k.remoteJid) ?? str(k.remoteJID),
-    ...(typeof k.fromMe === 'boolean' ? { fromMe: k.fromMe } : {}),
+    ...(typeof fromMe === 'boolean' ? { fromMe } : {}),
     ...(str(k.participant) ? { participant: str(k.participant) } : {}),
   };
 }
@@ -167,7 +168,7 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
   if (v2Event === 'messages.update' && (rawEvent === 'receipt' || rawEvent === 'readreceipt')) {
     const rawState = str(payload.state as unknown) ?? str((data as Record<string, unknown>).Type as unknown) ?? '';
     const statusMap: Record<string, string> = {
-      read: 'READ', readself: 'DELIVERY_ACK',
+      read: 'READ', readself: 'READ',
       delivered: 'DELIVERY_ACK', delivery_ack: 'DELIVERY_ACK',
     };
     const v2Status = statusMap[rawState.toLowerCase()] ?? 'PLAYED';

@@ -12,10 +12,8 @@ interface SLABreachPayload {
   id: string;
   contact_id: string;
   first_response_breached: boolean;
-  resolution_breached: boolean;
   first_message_at: string;
   first_response_at: string | null;
-  resolved_at: string | null;
 }
 
 export const useSLANotifications = () => {
@@ -29,8 +27,8 @@ export const useSLANotifications = () => {
     log.debug('Setting up realtime subscription');
 
     const handleBreachNotification = async (
-      type: 'first_response' | 'resolution',
-      contactId: string
+      contactId: string,
+      slaRecordId: string
     ) => {
       // Fetch contact info
       const { data: contact } = await supabase
@@ -39,17 +37,11 @@ export const useSLANotifications = () => {
         .eq('id', contactId)
         .maybeSingle();
 
-      const title = type === 'first_response' 
-        ? '⚠️ SLA de Primeira Resposta Violado'
-        : '🚨 SLA de Resolução Violado';
-        
-      const description = contact 
-        ? type === 'first_response'
-          ? `O contato ${contact.name || contact.phone} não recebeu resposta no prazo.`
-          : `O atendimento do contato ${contact.name || contact.phone} excedeu o tempo de resolução.`
-        : type === 'first_response'
-          ? 'Um contato não recebeu resposta dentro do prazo de SLA.'
-          : 'Um atendimento excedeu o tempo de resolução de SLA.';
+      const title = '⚠️ SLA de Primeira Resposta Violado';
+
+      const description = contact
+        ? `O contato ${contact.name || contact.phone} não recebeu resposta no prazo.`
+        : 'Um contato não recebeu resposta dentro do prazo de SLA.';
 
       // Show toast
       toast({
@@ -66,7 +58,7 @@ export const useSLANotifications = () => {
       // Show browser notification if enabled
       if (settings.browserNotifications && settings.desktopAlerts) {
         showBrowserNotification(title, description, {
-          tag: `sla-breach-${type}`,
+          tag: `sla-breach-first-response-${slaRecordId}`,
         });
       }
     };
@@ -91,16 +83,7 @@ export const useSLANotifications = () => {
             const breachKey = `fr-${newRecord.id}`;
             if (!notifiedBreaches.current.has(breachKey)) {
               notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification('first_response', newRecord.contact_id);
-            }
-          }
-
-          // Check for new resolution breach
-          if (newRecord.resolution_breached && !oldRecord.resolution_breached) {
-            const breachKey = `res-${newRecord.id}`;
-            if (!notifiedBreaches.current.has(breachKey)) {
-              notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification('resolution', newRecord.contact_id);
+              await handleBreachNotification(newRecord.contact_id, newRecord.id);
             }
           }
         }
@@ -122,15 +105,7 @@ export const useSLANotifications = () => {
             const breachKey = `fr-${newRecord.id}`;
             if (!notifiedBreaches.current.has(breachKey)) {
               notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification('first_response', newRecord.contact_id);
-            }
-          }
-
-          if (newRecord.resolution_breached) {
-            const breachKey = `res-${newRecord.id}`;
-            if (!notifiedBreaches.current.has(breachKey)) {
-              notifiedBreaches.current.add(breachKey);
-              await handleBreachNotification('resolution', newRecord.contact_id);
+              await handleBreachNotification(newRecord.contact_id, newRecord.id);
             }
           }
         }
