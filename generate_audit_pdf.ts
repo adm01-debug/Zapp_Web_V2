@@ -56,5 +56,12 @@ evidence.forEach(line => {
   y += 10;
 });
 
+// Saida deterministica. Sem isto o jsPDF grava /CreationDate e /ID novos a cada
+// execucao: o PDF passa a diferir do commitado sem nenhuma mudanca de conteudo,
+// o job audit-report ve "drift" e reabre o PR automation/audit-report para sempre.
+// A data e a mesma ja impressa na capa do relatorio (14/05/2026).
+doc.setCreationDate(new Date(Date.UTC(2026, 4, 14)));
+doc.setFileId("5a415050574542415544495452455030");
+
  doc.save("docs/audit_report.pdf");
  console.log("PDF gerado em docs/audit_report.pdf");
