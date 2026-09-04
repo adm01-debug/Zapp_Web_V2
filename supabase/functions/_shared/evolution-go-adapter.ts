@@ -106,7 +106,9 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     const chat = str(info.Chat);
     const sender = str(info.Sender);
     const tsRaw = str(info.Timestamp);
-    const ts = tsRaw ? Math.floor(Date.parse(tsRaw) / 1000) : undefined;
+    const ts = typeof info.Timestamp === 'number'
+      ? info.Timestamp
+      : tsRaw ? Math.floor(Date.parse(tsRaw) / 1000) : undefined;
     // T2.1d: remover sufixo :device para comparar sender vs chat
     const senderBase = sender?.replace(/:\d+@/, '@');
     const msgNode = isRecord(data.Message) ? data.Message : {};
@@ -177,7 +179,7 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     const chat = str((data as Record<string, unknown>).Chat as unknown);
     const sender = str((data as Record<string, unknown>).Sender as unknown);
     out.data = { updates: ids.map((id: string) => ({
-      key: { id, remoteJid: chat, fromMe: chat === sender }, status: v2Status,
+      key: { id, remoteJid: chat, fromMe: chat !== undefined && chat === sender }, status: v2Status,
     })) };
   }
 
@@ -210,7 +212,8 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     for (const convRaw of conversations) {
       if (!isRecord(convRaw)) continue;
       const convJid = str(convRaw.id) ?? str(convRaw.ID);
-      const items = (Array.isArray(convRaw.messages) ? convRaw.messages : []) as unknown[];
+      const items = (Array.isArray(convRaw.messages) ? convRaw.messages
+        : Array.isArray(convRaw.Messages) ? convRaw.Messages : []) as unknown[];
       for (const itemRaw of items) {
         if (messages.length >= 500) break;
         if (!isRecord(itemRaw)) continue;
@@ -250,7 +253,7 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
   }
 
   // PushName {JID, NewPushName} → contacts.update {id, pushName}
-  if (rawEvent === 'pushname') {
+  if (rawEvent === 'pushname' || rawEvent === 'pushnamesetting') {
     out.data = { id: str(data.JID), pushName: str(data.NewPushName) };
   }
 
@@ -275,7 +278,7 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
 
   // LabelAssociationChat/Message {JID, LabelID, Action:{labeled}} →
   // labels.association {labelId, chatId, type}
-  if (rawEvent === 'labelassociationchat' || rawEvent === 'labelassociationmessage') {
+  if (rawEvent === 'labelassociation' || rawEvent === 'labelassociationchat' || rawEvent === 'labelassociationmessage') {
     const action = isRecord(data.Action) ? data.Action : {};
     out.data = {
       labelId: str(data.LabelID),
@@ -292,7 +295,7 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
     out.data = {
       from: str(data.From) ?? str(data.CallCreator),
       id: str(data.CallID),
-      isVideo: false,
+      isVideo: data.IsVideo === true || data.isVideo === true,
       status: 'ringing',
     };
   }
