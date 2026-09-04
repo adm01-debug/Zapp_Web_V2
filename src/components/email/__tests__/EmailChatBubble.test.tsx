@@ -64,6 +64,13 @@ describe('sanitizeEmailHtml (h538172)', () => {
     expect(out).toContain('color:blue');
   });
 
+  it('política de style vale para TODOS os elementos (li inclusive)', () => {
+    const out = sanitizeEmailHtml('<ul><li style="background:url(//tracker.exemplo/px);color:green">item</li></ul>');
+    expect(out).not.toContain('url(');
+    expect(out).toContain('color:green');
+    expect(out).toContain('item');
+  });
+
   it('img data: URL gigante vira placeholder sem src', () => {
     const bigData = 'data:image/png;base64,' + 'A'.repeat(40000);
     const out = sanitizeEmailHtml(`<img src="${bigData}" alt="foto">`);

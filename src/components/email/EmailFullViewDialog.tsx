@@ -48,7 +48,7 @@ export function EmailFullViewDialog({
         <div className="email-html-scroll rounded-md border border-border/40 bg-white text-neutral-900 overflow-y-auto" style={{ minHeight: height, maxHeight: '70vh' }}>
           <iframe
             title="Conteúdo do e-mail"
-            sandbox=""
+            sandbox="allow-popups allow-popups-to-escape-sandbox"
             srcDoc={doc}
             className="w-full border-0"
             style={{ height, display: 'block' }}

@@ -130,8 +130,12 @@ export function EmailThreadList({
           <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-thin">
             <Badge
               variant={labelFilter === 'all' ? 'default' : 'outline'}
-              className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10"
+              className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setLabelFilter('all')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter('all'); } }}
+              role="button"
+              tabIndex={0}
+              aria-pressed={labelFilter === 'all'}
             >
               Todos
             </Badge>
@@ -232,6 +236,8 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
     || thread.last_from_address
     || thread.contact?.email
     || 'Desconhecido';
+  // Mesma cadeia do nome para as iniciais (antes: só contact → "?)"
+  const initialsSource = thread.contact?.name || thread.contact?.email || thread.last_from_name || thread.last_from_address || undefined;
 
   return (
     <motion.button
@@ -250,7 +256,7 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
             'text-xs',
             thread.is_unread ? 'bg-primary/10 text-primary font-bold' : 'bg-muted'
           )}>
-            {getInitials(thread.contact?.name, thread.contact?.email)}
+            {getInitials(initialsSource, undefined)}
           </AvatarFallback>
         </Avatar>
         {thread.is_unread && (

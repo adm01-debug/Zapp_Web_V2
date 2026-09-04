@@ -52,9 +52,8 @@ function installHooks(): void {
   // o bubble/chat; remove também propriedades hostis (clickjacking/exfiltração):
   // position/visibility/z-index (overlay) e background-image com url() (tracker).
   DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-    if (data.tagName !== 'table' && data.tagName !== 'td' && data.tagName !== 'th'
-      && data.tagName !== 'div' && data.tagName !== 'img' && data.tagName !== 'span'
-      && data.tagName !== 'p' && data.tagName !== 'a' && data.tagName !== 'td') return;
+    // Política de style aplicada a QUALQUER elemento (li/ul/h1/etc. inclusive):
+    // sem isso, background:url() de tracker sobreviveria fora do filtro.
     if (!(node instanceof Element)) return;
     const style = node.getAttribute('style');
     if (!style) return;
