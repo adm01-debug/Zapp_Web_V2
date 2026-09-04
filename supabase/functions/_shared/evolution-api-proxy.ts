@@ -165,7 +165,7 @@ export async function proxyToEvolution(
           // Shape de erro do GO: {"error":"..."} — expõe a causa real
           friendlyMessage = `Erro na API Evolution: ${goError}`;
         }
-        return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage, details: data }), {
+        return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

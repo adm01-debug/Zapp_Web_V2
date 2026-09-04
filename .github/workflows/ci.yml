@@ -74,6 +74,9 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🎨 Layout guard (zero layout violations)
+        run: node scripts/ui-audit/layout-guard.mjs
+
   # ===========================================
   # JOB 2: Unit Tests
   # ===========================================
