@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
@@ -47,7 +47,12 @@ export function useConnectionsManager() {
   const [newConnection, setNewConnection] = useState({ name: '', phone_number: '' });
   const [isCreating, setIsCreating] = useState(false);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Espelhado em useLayoutEffect, nao no corpo do render: escrever em ref
+  // durante o render quebra em StrictMode/concurrent, onde o render pode ser
+  // descartado. Mesma convencao de useNavigationHistory.ts.
+  const qrCodeDialogRef = useRef<QrCodeDialogState>(INITIAL_QR_STATE);
+  useLayoutEffect(() => { qrCodeDialogRef.current = qrCodeDialog; }, [qrCodeDialog]);
 
   const {
     isLoading: evolutionLoading,
@@ -76,7 +81,7 @@ export function useConnectionsManager() {
                   : conn
               )
             );
-            if (qrCodeDialog.open && qrCodeDialog.connectionId === (payload.new as WhatsAppConnection).id) {
+            if (qrCodeDialogRef.current.open && qrCodeDialogRef.current.connectionId === (payload.new as WhatsAppConnection).id) {
               const newConn = payload.new as WhatsAppConnection;
               if (newConn.status === 'connected') {
                 setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
@@ -95,7 +100,7 @@ export function useConnectionsManager() {
 
     return () => {
       supabase.removeChannel(channel);
-      if (pollingInterval) clearInterval(pollingInterval);
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, []);
 
@@ -144,13 +149,13 @@ export function useConnectionsManager() {
   };
 
   const startStatusPolling = useCallback((instanceName: string, _connectionId: string) => {
-    if (pollingInterval) clearInterval(pollingInterval);
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     const interval = setInterval(async () => {
       try {
         const result = await getInstanceStatus(instanceName);
         if (result?.state === 'open' || result?.status === 'connected') {
           clearInterval(interval);
-          setPollingInterval(null);
+          pollingIntervalRef.current = null;
           setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
           toast({ title: 'Conectado!', description: 'WhatsApp conectado com sucesso.' });
         }
@@ -158,8 +163,8 @@ export function useConnectionsManager() {
         log.error('Status polling error:', error);
       }
     }, 3000);
-    setPollingInterval(interval);
-  }, [getInstanceStatus, pollingInterval]);
+    pollingIntervalRef.current = interval;
+  }, [getInstanceStatus]);
 
   const handleShowQrCode = async (connection: WhatsAppConnection) => {
     if (!connection.instance_id) {
@@ -242,7 +247,7 @@ export function useConnectionsManager() {
   };
 
   const closeQrDialog = () => {
-    if (pollingInterval) { clearInterval(pollingInterval); setPollingInterval(null); }
+    if (pollingIntervalRef.current) { clearInterval(pollingIntervalRef.current); pollingIntervalRef.current = null; }
     setQrCodeDialog(INITIAL_QR_STATE);
   };
 

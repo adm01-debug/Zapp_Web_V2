@@ -12,6 +12,7 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import { extractRootClassNames } from "./root-className.mjs";
 
 const ROOT = process.cwd();
 const SRC = path.join(ROOT, "src");
@@ -62,66 +63,6 @@ function* walkTsx(dir) {
   }
 }
 
-/**
- * Heuristic: find the root element's className in the LAST exported component's return.
- * The main view export is typically the last `export function` in the file.
- */
-function extractRootClassName(source) {
-  // Include default exports (export default function Foo)
-  const exportMatches = [...source.matchAll(/\bexport\s+(?:default\s+)?(?:function|const)\s+/g)];
-  if (exportMatches.length === 0) return null;
-
-  // Use the last export — usually the main view component
-  const lastExport = exportMatches[exportMatches.length - 1];
-  const fromLastExport = source.slice(lastExport.index);
-
-  // Find the return at function body depth 1 (not inside callbacks).
-  // Simple .search() matches the first return, which can be inside a useEffect
-  // callback at depth 2+. Track brace depth and match only at depth 1.
-  let depth = 0;
-  let returnIdx = -1;
-  for (let i = 0; i < fromLastExport.length; i++) {
-    const ch = fromLastExport[i];
-    if (ch === "'" || ch === '"' || ch === '`') {
-      const q = ch; i++;
-      while (i < fromLastExport.length && fromLastExport[i] !== q) {
-        if (fromLastExport[i] === '\\') i++;
-        i++;
-      }
-      continue;
-    }
-    if (ch === '{') { depth++; }
-    else if (ch === '}') { depth--; if (depth === 0) break; }
-    else if (depth === 1 && /^return\s*[\(<]/.test(fromLastExport.slice(i))) {
-      returnIdx = i; break;
-    }
-  }
-  if (returnIdx === -1) return null;
-
-  // Recorta APENAS a tag de abertura do primeiro elemento JSX retornado. Sem
-  // isso, um root com cn(...) faz o regex escorregar para o className de um
-  // descendente e o guard afere o elemento errado.
-  const after = fromLastExport.slice(returnIdx);
-  const tagStart = after.indexOf('<');
-  if (tagStart === -1) return null;
-
-  let tagDepth = 0;
-  let tagEnd = -1;
-  for (let i = tagStart; i < after.length; i += 1) {
-    const ch = after[i];
-    if (ch === '{') tagDepth += 1;
-    else if (ch === '}') tagDepth -= 1;
-    else if (ch === '>' && tagDepth === 0) { tagEnd = i; break; }
-  }
-  if (tagEnd === -1) return null;
-  const openTag = after.slice(tagStart, tagEnd + 1);
-
-  // Match className="..." or className={'...'} or className={`...`}
-  const m = openTag.match(/className=(?:["'`]([^"'`]+)["'`]|\{(?:cn\([^)]*?["'`]([^"'`]+)["'`]|\`([^`]+)\`|"([^"]+)"|\'([^\']+)\')\})/);
-  if (!m) return null;
-  return m[1] || m[2] || m[3] || m[4] || m[5] || "";
-}
-
 const ANTI_PATTERNS = [
   {
     name: "overflow-y-auto at root",
@@ -161,21 +102,30 @@ for (const file of AUDITED) {
   // Skip full-screen views
   if ([...FULL_SCREEN].some((name) =>
     source.includes(`export function ${name}`) ||
-    source.includes(`export const ${name}`)
+    source.includes(`export const ${name}`) ||
+    source.includes(`export default function ${name}`)
   )) continue;
 
-  const cn = extractRootClassName(source);
-  if (!cn) continue;
+  const roots = extractRootClassNames(source);
+  if (roots.length === 0) {
+    // Arquivo roteado que o extrator nao conseguiu ler nao pode passar calado:
+    // era assim que views com export default sumiam da auditoria.
+    console.error(`NAO AUDITAVEL: ${rel} — nenhuma raiz JSX no nivel do corpo do componente`);
+    violations++;
+    continue;
+  }
 
   checked++;
-  for (const { name, test, message } of ANTI_PATTERNS) {
-    if (test(cn)) {
-      console.error(`VIOLATION [${name}]`);
-      console.error(`  file: ${rel}`);
-      console.error(`  className: "${cn}"`);
-      console.error(`  ${message}`);
-      console.error();
-      violations++;
+  for (const cn of roots) {
+    for (const { name, test, message } of ANTI_PATTERNS) {
+      if (test(cn)) {
+        console.error(`VIOLATION [${name}]`);
+        console.error(`  file: ${rel}`);
+        console.error(`  className: "${cn}"`);
+        console.error(`  ${message}`);
+        console.error();
+        violations++;
+      }
     }
   }
 }

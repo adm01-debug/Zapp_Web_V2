@@ -68,8 +68,8 @@ export function ConnectionCard({
                   {connection.is_default && <Badge variant="secondary" className="text-xs"><Star className="w-3 h-3 mr-1" />Padrão</Badge>}
                   <Badge variant="outline" className={cn('text-xs',
                     connection.status === 'connected' && 'border-status-online text-status-online',
-                    !['connected', 'pending', 'qr_pending'].includes(connection.status) && 'border-status-offline text-status-offline',
-                    ['pending', 'qr_pending'].includes(connection.status) && 'border-status-away text-status-away'
+                    !['connected', 'connecting', 'pending', 'qr_pending'].includes(connection.status) && 'border-status-offline text-status-offline',
+                    ['connecting', 'pending', 'qr_pending'].includes(connection.status) && 'border-status-away text-status-away'
                   )}>
                     <StatusIcon className={cn('w-3 h-3 mr-1', connection.status === 'connecting' && 'animate-spin')} />
                     {status.label}

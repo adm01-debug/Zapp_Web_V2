@@ -88,6 +88,7 @@ export function useSendToContact(onSuccess: () => void) {
       }
 
       // Send images
+      let imageFailed = 0;
       for (const imgUrl of imageUrls) {
         const { data: dbResult } = await supabase.from('messages').insert({
           contact_id: contact.id,
@@ -113,11 +114,12 @@ export function useSendToContact(onSuccess: () => void) {
         if (dbResult?.id) {
           // Falha da API não pode deixar a mensagem em 'sending' para sempre
           if (apiError || apiResult?.error) {
+            imageFailed++;
             await supabase.from('messages').update({ status: 'failed' }).eq('id', dbResult.id);
           } else {
-            await supabase.from('messages')
-              .update({ external_id: externalId, status: 'sent' })
-              .eq('id', dbResult.id);
+            const imgUpdate: Record<string, unknown> = { status: 'sent' };
+            if (externalId) imgUpdate.external_id = externalId;
+            await supabase.from('messages').update(imgUpdate).eq('id', dbResult.id);
           }
         }
       }
@@ -142,17 +144,24 @@ export function useSendToContact(onSuccess: () => void) {
       });
 
       const textExternalId = textApiResult?.key?.id || null;
+      let textFailed = false;
       if (textDbResult?.id) {
         if (textApiError || textApiResult?.error) {
+          textFailed = true;
           await supabase.from('messages').update({ status: 'failed' }).eq('id', textDbResult.id);
         } else {
-          await supabase.from('messages')
-            .update({ external_id: textExternalId, status: 'sent' })
-            .eq('id', textDbResult.id);
+          const txtUpdate: Record<string, unknown> = { status: 'sent' };
+          if (textExternalId) txtUpdate.external_id = textExternalId;
+          await supabase.from('messages').update(txtUpdate).eq('id', textDbResult.id);
         }
       }
 
-      toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });
+      const totalFailed = imageFailed + (textFailed ? 1 : 0);
+      if (totalFailed > 0) {
+        toast({ title: 'Envio parcial', description: `${totalFailed} mensagem(ns) falharam para ${contact.name}`, variant: 'destructive' });
+      } else {
+        toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });
+      }
       onSuccess();
     } catch (err) {
       log.error('Error sending product:', err);

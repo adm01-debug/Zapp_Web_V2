@@ -18,6 +18,10 @@
 -- Aplicado em 2026-09-02 via db_transaction (direto em produção).
 
 -- 1. Corrige search_contacts: remove furo RLS, usa queue_members
+-- Nota (fora do corpo da funcao de proposito: o ledger guarda o corpo verbatim e
+-- o check-migration-drift compara dollar-quote byte a byte): o predicado de
+-- visibilidade abaixo esta alinhado a contacts_select_policy (E23) — queue
+-- membership em vez de assigned_to IS NULL.
 CREATE OR REPLACE FUNCTION public.search_contacts(
   search_term        text    DEFAULT ''::text,
   contact_type_filter text   DEFAULT NULL::text,
@@ -42,7 +46,6 @@ AS $function$
 DECLARE v_search text;
 BEGIN
   v_search := NULLIF(TRIM(search_term), '');
-
   RETURN QUERY
   SELECT
     c.id, c.name, c.nickname, c.surname, c.job_title, c.company,
@@ -65,7 +68,6 @@ BEGIN
     AND (job_title_filter    IS NULL OR c.job_title     = job_title_filter)
     AND (tag_filter          IS NULL OR tag_filter       = ANY(c.tags))
     AND (date_from           IS NULL OR c.created_at   >= date_from)
-    -- Alinhado à contacts_select_policy (E23): queue membership em vez de IS NULL
     AND (
       is_admin_or_supervisor(auth.uid())
       OR c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid()))

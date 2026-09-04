@@ -1,0 +1,15 @@
+DROP INDEX IF EXISTS public.idx_allowed_countries_code;
+DROP INDEX IF EXISTS public.idx_audio_meme_favorites_user;
+DROP INDEX IF EXISTS public.idx_blocked_countries_code;
+DROP INDEX IF EXISTS public.idx_blocked_ips_ip;
+DROP INDEX IF EXISTS public.idx_business_hours_connection;
+DROP INDEX IF EXISTS public.idx_campaign_contacts_campaign_id;
+DROP INDEX IF EXISTS public.idx_contact_custom_fields_contact;
+DROP INDEX IF EXISTS public.idx_conversation_analyses_contact_id;
+DROP INDEX IF EXISTS public.idx_email_labels_account;
+DROP INDEX IF EXISTS public.idx_versions_entity;
+DROP INDEX IF EXISTS public.idx_reputation_connection;
+DROP INDEX IF EXISTS public.idx_passkey_credentials_credential_id;
+DROP INDEX IF EXISTS public.idx_talkx_blacklist_contact;
+DROP INDEX IF EXISTS public.idx_talkx_recipients_campaign;
+DROP INDEX IF EXISTS public.idx_user_devices_user_id;

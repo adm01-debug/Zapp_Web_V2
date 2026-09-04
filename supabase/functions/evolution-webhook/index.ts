@@ -152,6 +152,7 @@ serve(async (req) => {
     // logs ou persistência. Fora do gate: vale também quando o HMAC e valido.
     delete (rawBody as Record<string, unknown>).instanceToken;
 
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
