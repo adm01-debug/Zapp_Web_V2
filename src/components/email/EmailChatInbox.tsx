@@ -57,7 +57,7 @@ export function EmailChatInbox() {
     <div className="flex h-full w-full">
       {/* Thread list */}
       <div className={cn(
-        'flex flex-col border-r border-border/30 w-full md:w-[320px] lg:w-[340px] shrink-0 bg-sidebar',
+        'flex flex-col border-r border-border/30 w-full md:w-[300px] xl:w-[340px] shrink-0 bg-sidebar',
         selectedThread ? 'hidden md:flex' : 'flex'
       )}>
         <EmailThreadList

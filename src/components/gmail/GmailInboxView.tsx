@@ -86,7 +86,7 @@ export default function GmailInboxView() {
       </Tabs>
 
       <div className="p-2 border-t flex items-center justify-between text-[10px] text-muted-foreground">
-        <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{activeAccount?.email_address}</span>
+        <span className="flex items-center gap-1 min-w-0"><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{activeAccount?.email_address}</span></span>
         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{activeAccount?.last_sync_at ? `Sync: ${new Date(activeAccount.last_sync_at).toLocaleString('pt-BR')}` : 'Nunca sincronizado'}</span>
       </div>
 

@@ -141,6 +141,7 @@ export function EmailThreadList({
                 variant={labelFilter === label.gmail_label_id ? 'default' : 'outline'}
                 className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10"
                 onClick={() => setLabelFilter(label.gmail_label_id)}
+                title={label.name}
               >
                 {label.name}
                 {label.unread_count > 0 && (
@@ -220,7 +221,13 @@ export function EmailThreadList({
 }
 
 function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSelected: boolean; onClick: () => void }) {
-  const name = thread.contact?.name || thread.snippet?.split(' ')[0] || 'Desconhecido';
+  // h538172: nunca mais "1ª palavra do snippet" como nome — usa o remetente
+  // real da thread (colunas last_from_* já existem no banco e chegam no select('*')).
+  const name = thread.contact?.name
+    || thread.last_from_name
+    || thread.last_from_address
+    || thread.contact?.email
+    || 'Desconhecido';
 
   return (
     <motion.button
@@ -228,7 +235,7 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
       animate={{ opacity: 1 }}
       onClick={onClick}
       className={cn(
-        'w-full text-left p-3 flex items-center gap-3 transition-all border-b border-border/10',
+        'w-full text-left p-3 flex items-center gap-3 transition-all border-b border-border/10 min-h-[64px]',
         isSelected ? 'bg-accent' : 'hover:bg-muted/50',
         thread.is_unread && 'font-medium'
       )}
@@ -250,17 +257,17 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
           <span className="text-sm truncate">{name}</span>
-          <span className="text-[10px] text-muted-foreground shrink-0">
+          <span className="text-[10px] text-muted-foreground shrink-0" title={thread.last_message_at ? new Date(thread.last_message_at).toLocaleString('pt-BR') : undefined}>
             {thread.last_message_at && formatDate(thread.last_message_at)}
           </span>
         </div>
         <p className={cn(
           'text-xs truncate',
-          thread.is_unread ? 'text-foreground' : 'text-muted-foreground'
+          thread.is_unread ? 'text-foreground font-medium' : 'text-muted-foreground'
         )}>
           {thread.subject || '(Sem assunto)'}
         </p>
-        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+        <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mt-0.5 text-left">
           {thread.snippet}
         </p>
       </div>

@@ -111,3 +111,27 @@
 .animate-coin-shine { animation: coin-shine 2s ease-in-out infinite; }
 .animate-level-up { animation: level-up 0.6s ease-out; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ===== EMAIL HTML RENDER (run h538172) =====
+   Contém o layout de e-mails HTML dentro do bubble do chat:
+   tabelas de 600px+, imagens e words longas não podem estourar o container. */
+.email-html-body {
+  color-scheme: light;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.email-html-body * { max-width: 100% !important; overflow-wrap: anywhere; }
+.email-html-body img { max-width: 100% !important; height: auto; }
+.email-html-body table { max-width: 100% !important; table-layout: fixed; border-collapse: collapse; }
+.email-html-body td, .email-html-body th { overflow-wrap: anywhere; }
+/* Neutraliza tipografia global (clamp) do app para o conteúdo do e-mail */
+.email-html-body p, .email-html-body h1, .email-html-body h2, .email-html-body h3,
+.email-html-body h4, .email-html-body h5, .email-html-body h6 {
+  font-size: revert; line-height: 1.5; margin: 0.5em 0; all: revert-layer;
+}
+.email-html-body a { text-decoration: underline; }
+/* Wrapper com scroll horizontal quando o conteúdo insiste em ser mais largo */
+.email-html-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Preview colapsado no bubble com fade para o botão "Ver e-mail completo" */
+.email-html-collapsed { max-height: 280px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); }
