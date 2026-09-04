@@ -34,8 +34,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 11070,
-      "sha256": "7cf2f8ef1b4bd923d7755fdbfa7ec3100036ea067b3630914ca5dfb91ccb64da"
+      "bytes": 11055,
+      "sha256": "f708425c995142b424804ca805130ffcd0d3b3c14c84f037d849def31881c204"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -299,8 +299,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 9148,
-      "sha256": "fdafa2ee8abf32fef7987cb0ede6ea45f426646b818751f01ce8f1c1dd8a1cab"
+      "bytes": 9113,
+      "sha256": "8fe47a92637253ba9f0918d02f878c833a1313c831987227ccba9139a98f6293"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -787,7 +787,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e55ae0553e0b599c857c19c7c396d30cddea4d7e00d8fcd674ea7e56449dec63",
+      "source_sha256": "348f983f838a3637aa8808e3d16f4b53a6bd16bb1c2516481112b44dc40d5770",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -903,7 +903,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b2ad1cb184163ba1b29a84fd0906c331d235ec85ba95c1c5a5234e9eda181b9d",
+      "source_sha256": "01a6f0a9078c603d07b4640308260b91f4cdc6c21f78ee31c2a3412c7ef3c626",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1162,5 +1162,5 @@
       ]
     }
   ],
-  "manifest_sha256": "52d30fd30bd78825f9bb4c699a7329dfba126155bae17449416600f59420ca62"
+  "manifest_sha256": "32a5fd7f158f966d3281082f14f19aec1c0c47bb321aef598ea187ddb9f24af6"
 }
