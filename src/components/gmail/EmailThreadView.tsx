@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import DOMPurify from 'dompurify';
+import { sanitizeEmailHtml } from '@/lib/emailHtml';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -109,10 +109,12 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
 
                 {/* Body */}
                 {message.body_html && showHtml ? (
-                  <div
-                    className="prose prose-sm max-w-none dark:prose-invert text-sm overflow-auto max-h-[400px] rounded border p-3 bg-background"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.body_html, { USE_PROFILES: { html: true } }) }}
-                  />
+                  <div className="email-html-scroll max-h-[400px] overflow-y-auto rounded border p-3 bg-background">
+                    <div
+                      className="email-html-body text-sm"
+                      dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(message.body_html) }}
+                    />
+                  </div>
                 ) : (
                   <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                     {message.body_text || message.snippet}

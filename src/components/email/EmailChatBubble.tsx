@@ -1,10 +1,11 @@
-import DOMPurify from 'dompurify';
 import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
+import { EmailFullViewDialog } from './EmailFullViewDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { Paperclip, ChevronDown, ChevronUp, Reply, ReplyAll, Forward, Star, Check, CheckCheck } from 'lucide-react';
+import { Paperclip, ChevronDown, Reply, ReplyAll, Forward, Star, Check, CheckCheck } from 'lucide-react';
 import type { EmailMessage } from '@/hooks/integrations/useGmail';
 
 interface EmailChatBubbleProps {
@@ -34,18 +35,18 @@ function formatFullDate(dateStr: string): string {
 
 export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, onReply, onReplyAll, onForward }: EmailChatBubbleProps) {
   const [expanded, setExpanded] = useState(isLast);
+  const [fullView, setFullView] = useState(false);
   const isSent = message.direction === 'outbound';
   const hasMultipleRecipients = (message.to_addresses?.length || 0) + (message.cc_addresses?.length || 0) > 1;
 
-  const bodyPreview = message.body_text?.slice(0, 300) || message.snippet || '';
-  const hasMore = (message.body_text?.length || 0) > 300;
-  // E37: sanitizar HTML para renderizacao segura
-  const sanitizedHtml = message.body_html && !message.body_text
-    ? DOMPurify.sanitize(message.body_html, {
-        ALLOWED_TAGS: ['p','br','strong','em','a','ul','ol','li','blockquote','span','div','table','tr','td','th','h1','h2','h3'],
-        ALLOWED_ATTR: ['href','target','style'],
-        FORCE_BODY: true,
-      })
+  const bodyText = message.body_text || message.snippet || '';
+  const bodyPreview = buildBodyPreview(bodyText);
+  const hasMore = bodyText.length > 300 || Boolean(message.body_html && message.body_html.length > 300);
+  // h538172: HTML sanitizado é a fonte visual da verdade quando existe;
+  // body_text vira fallback (antes o HTML só era usado quando body_text não
+  // existia — quase nunca — e a formatação se perdia no caso comum).
+  const sanitizedHtml = message.body_html
+    ? sanitizeEmailHtml(message.body_html)
     : null;
 
   return (
@@ -130,7 +131,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className={cn(
-              'rounded-2xl px-3.5 py-2.5 shadow-sm relative overflow-hidden',
+              'rounded-2xl px-3.5 py-2.5 shadow-sm relative',
               isSent
                 ? 'rounded-br-md bg-primary text-primary-foreground'
                 : 'rounded-bl-md bg-card border border-border/30 text-foreground'
@@ -147,26 +148,42 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             )}
 
             {/* Body */}
-            <div className="text-sm whitespace-pre-wrap leading-relaxed break-words">
-              {sanitizedHtml && expanded
-              ? <div className="email-html-body text-sm" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
-              : <span>{expanded ? (message.body_text || message.snippet) : bodyPreview}</span>}
+            <div className="text-sm leading-relaxed break-words">
+              {sanitizedHtml && expanded ? (
+                <div className="email-html-scroll">
+                  <div
+                    className={cn('email-html-body text-sm relative', !fullView && 'email-html-collapsed')}
+                    dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                  />
+                </div>
+              ) : (
+                <span className="whitespace-pre-wrap">{expanded ? bodyText : bodyPreview}</span>
+              )}
               {hasMore && !expanded && '…'}
             </div>
 
-            {hasMore && (
+            {hasMore && !fullView && (
               <button
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => (sanitizedHtml ? setFullView(true) : setExpanded(true))}
                 className={cn(
                   'text-[10px] mt-1 flex items-center gap-0.5 transition-colors',
                   isSent ? 'text-primary-foreground/70 hover:text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
-                aria-label={expanded ? 'Ver menos' : 'Ver mais'}
+                aria-label="Ver e-mail completo"
               >
-                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                {expanded ? 'Menos' : 'Mais'}
+                <ChevronDown className="w-3 h-3" />
+                Ver e-mail completo
               </button>
             )}
+
+            <EmailFullViewDialog
+              open={fullView}
+              onOpenChange={setFullView}
+              sanitizedHtml={sanitizedHtml || ''}
+              subject={message.subject}
+              fromName={message.from_name}
+              fromAddress={message.from_address}
+            />
 
             {/* Attachments */}
             {message.has_attachments && (

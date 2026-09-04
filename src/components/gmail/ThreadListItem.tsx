@@ -26,7 +26,12 @@ interface ThreadListItemProps {
 }
 
 export function ThreadListItem({ thread, isSelected, onClick }: ThreadListItemProps) {
-  const displayName = thread.contact?.name || thread.snippet?.split(' ')[0] || 'Desconhecido';
+  // h538172: remetente real em vez de "1ª palavra do snippet"
+  const displayName = thread.contact?.name
+    || thread.last_from_name
+    || thread.last_from_address
+    || thread.contact?.email
+    || 'Desconhecido';
 
   return (
     <motion.button

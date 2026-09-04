@@ -21,6 +21,8 @@ export interface EmailThread {
   is_starred: boolean;
   is_important: boolean;
   last_message_at: string;
+  last_from_name: string | null;
+  last_from_address: string | null;
   assigned_to: string | null;
   status: 'open' | 'pending' | 'resolved' | 'archived';
   priority: 'high' | 'medium' | 'low';
