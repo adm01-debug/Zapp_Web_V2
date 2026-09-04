@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockRpc = vi.fn();
+const mockInvoke = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: (...args: any[]) => mockRpc(...args),
+    functions: {
+      invoke: (...args: any[]) => mockInvoke(...args),
+    },
   },
 }));
 
@@ -21,8 +25,8 @@ describe('loginAttempts', () => {
 
   describe('checkAccountLock', () => {
     it('returns not locked for unknown email', async () => {
-      mockRpc.mockResolvedValue({
-        data: [{ is_locked: false, locked_until: null, attempts: 0 }],
+      mockInvoke.mockResolvedValue({
+        data: { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 },
         error: null,
       });
 
@@ -32,8 +36,8 @@ describe('loginAttempts', () => {
 
     it('returns locked with expiry time', async () => {
       const futureDate = new Date(Date.now() + 60000).toISOString();
-      mockRpc.mockResolvedValue({
-        data: [{ is_locked: true, locked_until: futureDate, attempts: 5 }],
+      mockInvoke.mockResolvedValue({
+        data: { isLocked: true, lockedUntil: futureDate, attempts: 5, remainingTime: 60 },
         error: null,
       });
 
@@ -43,7 +47,7 @@ describe('loginAttempts', () => {
     });
 
     it('handles RPC error gracefully', async () => {
-      mockRpc.mockResolvedValue({
+      mockInvoke.mockResolvedValue({
         data: null,
         error: new Error('Network failure'),
       });
@@ -53,8 +57,8 @@ describe('loginAttempts', () => {
     });
 
     it('handles empty result data', async () => {
-      mockRpc.mockResolvedValue({
-        data: [],
+      mockInvoke.mockResolvedValue({
+        data: null,
         error: null,
       });
 
