@@ -33,6 +33,7 @@ describe('loginAttempts', () => {
       });
 
       const result = await checkAccountLock('unknown@test.com');
+      expect(mockInvoke).toHaveBeenCalledWith('check-account-lock', { body: { email: 'unknown@test.com' } });
       expect(result.isLocked).toBe(false);
     });
 
@@ -44,11 +45,12 @@ describe('loginAttempts', () => {
       });
 
       const result = await checkAccountLock('locked@test.com');
+      expect(mockInvoke).toHaveBeenCalledWith('check-account-lock', { body: { email: 'locked@test.com' } });
       expect(result.isLocked).toBe(true);
       expect(result.lockedUntil).toBeTruthy();
     });
 
-    it('handles RPC error gracefully', async () => {
+    it('handles invoke error gracefully', async () => {
       mockInvoke.mockResolvedValue({
         data: null,
         error: new Error('Network failure'),
