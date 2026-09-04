@@ -83,12 +83,12 @@ export function AdminView() {
   );
 
   if (roleLoading) {
-    return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 rounded-full border-4 border-whatsapp border-t-transparent animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-whatsapp border-t-transparent animate-spin" /></div>;
   }
 
   if (!isSupervisor) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full w-full">
         <div className="text-center">
           <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Acesso Restrito</h2>
@@ -99,7 +99,7 @@ export function AdminView() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
 

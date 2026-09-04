@@ -55,7 +55,7 @@ export function AdvancedReportsView() {
   ];
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <div className="space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

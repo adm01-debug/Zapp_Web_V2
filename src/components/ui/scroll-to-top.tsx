@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface ScrollToTopButtonProps {
   /** The scrollable container ref to monitor */
-  scrollRef: RefObject<HTMLElement>;
+  scrollRef: RefObject<HTMLElement | null>;
   /** Scroll threshold in px before showing the button (default 400) */
   threshold?: number;
   className?: string;
@@ -54,26 +54,4 @@ export function ScrollToTopButton({ scrollRef, threshold = 400, className }: Scr
       )}
     </AnimatePresence>
   );
-}
-
-/**
- * Hook version for custom implementations
- */
-export function useScrollToTop(scrollRef: RefObject<HTMLElement>, threshold = 400) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const handleScroll = () => setVisible(el.scrollTop > threshold);
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, [scrollRef, threshold]);
-
-  const scrollToTop = useCallback(() => {
-    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [scrollRef]);
-
-  return { visible, scrollToTop };
 }

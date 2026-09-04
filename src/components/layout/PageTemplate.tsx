@@ -21,6 +21,8 @@ interface PageTemplateProps {
   padded?: boolean;
   /** Whether to use full-bleed (no max-width) */
   fullBleed?: boolean;
+  /** Constrain content to --layout-max-content width (for text-heavy views) */
+  constrained?: boolean;
 }
 
 const easeSmooth = [0.4, 0, 0.2, 1] as const;
@@ -57,6 +59,7 @@ export function PageTemplate({
   className,
   padded = true,
   fullBleed = false,
+  constrained = false,
 }: PageTemplateProps) {
   return (
     <motion.div
@@ -64,7 +67,7 @@ export function PageTemplate({
       initial="initial"
       animate="animate"
       className={cn(
-        'flex flex-col w-full h-full overflow-hidden',
+        'flex flex-col w-full min-w-0 min-h-full',
         !fullBleed && 'max-w-full'
       )}
     >
@@ -72,7 +75,7 @@ export function PageTemplate({
       <motion.header
         variants={childVariants}
         className={cn(
-          'flex flex-col gap-3 shrink-0 border-b border-border/40 bg-card',
+          'sticky top-0 z-20 flex flex-col gap-3 shrink-0 border-b border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80',
           padded ? 'px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4' : 'px-4 pt-4 pb-3'
         )}
       >
@@ -116,13 +119,14 @@ export function PageTemplate({
       <motion.div
         variants={childVariants}
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-hidden min-h-0',
+          'flex-1 overflow-x-hidden',
           padded && 'p-[var(--density-padding-x)] sm:p-[calc(var(--density-padding-x)*1.5)]',
           className
         )}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 500px' }}
       >
-        {children}
+        {constrained ? (
+          <div className="max-w-[var(--layout-max-content)] mx-auto w-full">{children}</div>
+        ) : children}
       </motion.div>
     </motion.div>
   );

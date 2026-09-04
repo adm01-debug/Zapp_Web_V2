@@ -15,17 +15,19 @@ export interface NavItem {
   label: string;
   roles?: AppRole[];
   permission?: string;
+  /** 'full' = view manages its own layout (no ViewContainer scroll wrapper) */
+  layout?: 'full' | 'scroll';
 }
 
 export class NavigationService {
   static getPrimaryNav(): NavItem[] {
     return [
-      { id: 'inbox', icon: MessageSquare, label: 'Chat' },
-      { id: 'team-chat', icon: MessagesSquare, label: 'Teams' },
-      { id: 'email-chat', icon: Mail, label: 'Email' },
+      { id: 'inbox', icon: MessageSquare, label: 'Chat', layout: 'full' },
+      { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full' },
+      { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full' },
       { id: 'contacts', icon: User, label: 'Contatos' },
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard' },
-      { id: 'pipeline', icon: Kanban, label: 'Pipeline' },
+      { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full' },
       { id: 'talkx', icon: Sparkles, label: 'Campanhas' },
       { id: 'settings', icon: Settings, label: 'Configurações' },
     ];
@@ -79,7 +81,7 @@ export class NavigationService {
         items: [
           { id: 'connections', icon: Link2, label: 'Conexões' },
           { id: 'integrations', icon: Plug, label: 'Integrações' },
-          { id: 'omni-inbox', icon: Inbox, label: 'Omnichannel' },
+          { id: 'omni-inbox', icon: Inbox, label: 'Omnichannel', layout: 'full' },
           { id: 'voip', icon: PhoneCall, label: 'VoIP' },
           { id: 'meta-capi', icon: Activity, label: 'Meta CAPI' },
           { id: 'google-calendar', icon: Calendar, label: 'Calendário' },

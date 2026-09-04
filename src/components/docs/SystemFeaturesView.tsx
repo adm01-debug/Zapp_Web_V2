@@ -30,7 +30,7 @@ export function SystemFeaturesView() {
     : sections;
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background w-full min-w-0">
       <div className="border-b border-border px-6 py-4 bg-card/50 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">
           <div>

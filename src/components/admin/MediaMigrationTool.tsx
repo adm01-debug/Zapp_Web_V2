@@ -58,7 +58,7 @@ export function MediaMigrationTool() {
   const progress = result ? (result.processed > 0 ? Math.round(((result.migrated + result.failed) / result.processed) * 100) : 100) : 0;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-primary/10">

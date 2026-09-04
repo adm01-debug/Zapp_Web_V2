@@ -55,7 +55,7 @@ export function DashboardView() {
 
   if (isLoading || !stats) {
     return (
-      <div className="p-6 space-y-6 overflow-y-auto h-full w-full relative bg-background">
+      <div className="space-y-6 relative bg-background w-full min-w-0">
         <AuroraBorealis />
         <FloatingParticles />
         <div className="space-y-6 relative z-10">
@@ -77,7 +77,7 @@ export function DashboardView() {
   );
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full w-full relative bg-background">
+    <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
 
