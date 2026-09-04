@@ -117,7 +117,11 @@
    tabelas de 600px+, imagens e words longas não podem estourar o container. */
 .email-html-body {
   color-scheme: light;
+  color: #111;
+  background: #fff;
   line-height: 1.5;
+  white-space: normal;
+  display: flow-root;
   overflow-wrap: anywhere;
   word-break: break-word;
 }

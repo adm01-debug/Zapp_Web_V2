@@ -30,10 +30,10 @@ function makeMessage(overrides: Partial<EmailMessage> = {}): EmailMessage {
 
 describe('sanitizeEmailHtml (h538172)', () => {
   it('remove width fixo px de table/td mas mantém cores', () => {
-    const out = sanitizeEmailHtml('<table style="width:600px;background:#fff"><tr><td style="width:300px;color:red">x</td></tr></table>');
+    const out = sanitizeEmailHtml('<table style="width:600px;color:#333"><tr><td style="width:300px;color:red">x</td></tr></table>');
     expect(out).not.toContain('width:600px');
     expect(out).not.toContain('width:300px');
-    expect(out).toContain('background:#fff');
+    expect(out).toContain('color:#333');
     expect(out).toContain('color:red');
   });
 
@@ -54,6 +54,21 @@ describe('sanitizeEmailHtml (h538172)', () => {
     const out = sanitizeEmailHtml('<p onclick="alert(1)">a</p><script>alert(2)</script>');
     expect(out).not.toContain('script');
     expect(out).not.toContain('onclick');
+  });
+
+  it('neutraliza style hostil (clickjacking/tracker) mas mantém cores', () => {
+    const out = sanitizeEmailHtml('<div style="position:fixed;inset:0;z-index:9999;background:url(//tracker.exemplo/x);color:blue">a</div>');
+    expect(out).not.toContain('position:fixed');
+    expect(out).not.toContain('z-index');
+    expect(out).not.toContain('url(');
+    expect(out).toContain('color:blue');
+  });
+
+  it('img data: URL gigante vira placeholder sem src', () => {
+    const bigData = 'data:image/png;base64,' + 'A'.repeat(40000);
+    const out = sanitizeEmailHtml(`<img src="${bigData}" alt="foto">`);
+    expect(out).not.toContain('data:image/png');
+    expect(out).toContain('foto');
   });
 
   it('mantém largura percentual e descarta px', () => {

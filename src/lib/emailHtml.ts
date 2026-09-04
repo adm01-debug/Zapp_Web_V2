@@ -30,6 +30,7 @@ function installHooks(): void {
   hooksInstalled = true;
 
   // Links: sempre abrir em nova aba, isolados do opener.
+  // Imagens: lazy + no-referrer; data: URL gigante (base64 de MBs) vira placeholder.
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (!(node instanceof Element)) return;
     if (node.tagName === 'A' && node.getAttribute('href')) {
@@ -39,15 +40,21 @@ function installHooks(): void {
     if (node.tagName === 'IMG') {
       node.setAttribute('loading', 'lazy');
       node.setAttribute('referrerpolicy', 'no-referrer');
-      // Imagens de rastreamento de 1px sem dimensão não ganham lazy repetido.
+      const src = node.getAttribute('src') || '';
+      if (src.startsWith('data:') && src.length > 32768) {
+        node.removeAttribute('src');
+        node.setAttribute('alt', node.getAttribute('alt') || '[imagem incorporada muito grande — ver e-mail completo]');
+      }
     }
   });
 
   // Estilos inline: remove larguras fixas do remetente (600px etc.) que estouram
-  // o bubble/chat; preserva cores, backgrounds e fontes do e-mail.
+  // o bubble/chat; remove também propriedades hostis (clickjacking/exfiltração):
+  // position/visibility/z-index (overlay) e background-image com url() (tracker).
   DOMPurify.addHook('uponSanitizeElement', (node, data) => {
     if (data.tagName !== 'table' && data.tagName !== 'td' && data.tagName !== 'th'
-      && data.tagName !== 'div' && data.tagName !== 'img' && data.tagName !== 'span') return;
+      && data.tagName !== 'div' && data.tagName !== 'img' && data.tagName !== 'span'
+      && data.tagName !== 'p' && data.tagName !== 'a' && data.tagName !== 'td') return;
     if (!(node instanceof Element)) return;
     const style = node.getAttribute('style');
     if (!style) return;
@@ -55,6 +62,9 @@ function installHooks(): void {
       .split(';')
       .filter((decl) => {
         const prop = decl.slice(0, decl.indexOf(':')).trim().toLowerCase();
+        if (['position', 'visibility', 'z-index', 'top', 'left', 'right', 'bottom', 'background-image', 'background'].includes(prop)) {
+          return false;
+        }
         if (prop === 'width' || prop === 'min-width' || prop === 'max-width') {
           const val = decl.slice(decl.indexOf(':') + 1).trim().toLowerCase();
           // Mantém larguras proporcionais (%, auto); remove px/cm fixos.

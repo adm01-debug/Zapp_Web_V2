@@ -96,7 +96,7 @@ export function EmailChatInbox() {
 
       {/* Contact details panel */}
       {selectedThread && showDetails && (
-        <div className="hidden lg:block shrink-0">
+        <div className="hidden xl:block shrink-0">
           <EmailContactPanel
             thread={selectedThread}
             onClose={() => setShowDetails(false)}

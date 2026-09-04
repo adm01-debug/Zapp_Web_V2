@@ -139,8 +139,12 @@ export function EmailThreadList({
               <Badge
                 key={label.id}
                 variant={labelFilter === label.gmail_label_id ? 'default' : 'outline'}
-                className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10"
+                className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => setLabelFilter(label.gmail_label_id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter(label.gmail_label_id); } }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={labelFilter === label.gmail_label_id}
                 title={label.name}
               >
                 {label.name}
