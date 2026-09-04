@@ -109,7 +109,7 @@
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
-      "bytes": 2391,
+      "bytes": 5048,
       "sha256": "2391e6fcc9f074cee3a42b01b75415ee55611214d070388d96fc350fa4f6af40"
     },
     {
