@@ -21,6 +21,7 @@ export function MessagesSettings({ settings, updateSettings }: MessagesSettingsP
         </CardHeader>
         <CardContent>
           <Textarea
+            aria-label="Mensagem de Boas-Vindas"
             value={settings.welcome_message}
             onChange={(e) => updateSettings({ welcome_message: e.target.value })}
             rows={4}
@@ -39,6 +40,7 @@ export function MessagesSettings({ settings, updateSettings }: MessagesSettingsP
         </CardHeader>
         <CardContent>
           <Textarea
+            aria-label="Mensagem de Ausência"
             value={settings.away_message}
             onChange={(e) => updateSettings({ away_message: e.target.value })}
             rows={4}
@@ -54,6 +56,7 @@ export function MessagesSettings({ settings, updateSettings }: MessagesSettingsP
         </CardHeader>
         <CardContent>
           <Textarea
+            aria-label="Mensagem de Encerramento"
             value={settings.closing_message}
             onChange={(e) => updateSettings({ closing_message: e.target.value })}
             rows={4}

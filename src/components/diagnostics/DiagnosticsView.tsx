@@ -87,7 +87,7 @@ export function DiagnosticsView() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full w-full">
         <div className="text-center space-y-3">
           <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
           <p className="text-sm text-muted-foreground">Carregando diagnósticos...</p>
@@ -97,7 +97,7 @@ export function DiagnosticsView() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background w-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
         <div>

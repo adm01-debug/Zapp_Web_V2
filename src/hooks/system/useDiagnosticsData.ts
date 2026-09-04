@@ -100,7 +100,7 @@ export function useDiagnosticsData() {
 
     const recentFailures = [];
     if (failures && failures.length > 0) {
-      const contactIds = Array.from(new Set(failures.map(f => f.contact_id).filter(Boolean)));
+      const contactIds = Array.from(new Set(failures.map(f => f.contact_id).filter((id): id is string => id !== null)));
       const { data: contacts } = await supabase
         .from('contacts')
         .select('id, name')

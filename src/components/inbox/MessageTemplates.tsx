@@ -60,7 +60,7 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Templates de Mensagem</DialogTitle>
           </DialogHeader>

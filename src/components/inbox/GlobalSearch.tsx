@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useGlobalSearchData, type SearchResult } from './useGlobalSearchData';
 import { GlobalSearchFilters } from './search/GlobalSearchFilters';
 import { GlobalSearchResults } from './search/GlobalSearchResults';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface QuickAction {
   id: string;
@@ -38,9 +39,9 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
   const quickActions: QuickAction[] = useMemo(() => [
     { id: 'new-conversation', title: 'Nova conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['nova', 'novo', 'conversa', 'chat', 'iniciar', 'criar'] },
-    { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#inbox'; }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
-    { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#dashboard'; }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
-    { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); window.location.hash = '#settings'; }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
+    { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('inbox'); }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
+    { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('dashboard'); }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
+    { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('settings'); }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
     { id: 'quick-reply', title: 'Respostas rápidas', description: 'Gerenciar templates de resposta', icon: <Zap className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['resposta', 'rápida', 'template', 'templates', 'atalho'] },
   ], [onOpenChange]);
 
@@ -91,7 +92,8 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Busca de mensagens</DialogTitle>
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -1,7 +1,9 @@
--- Dedup phantom echo rows (sender='contact', content='[Mensagem recebida]')
--- that were created when the agent's outbound message was echoed back as
--- an incoming webhook before the fromMe=true routing fix was deployed.
--- Keeps the agent row; deletes the phantom contact row for the same external_id.
+-- Migration retroativa: DDL aplicada em producao em 2026-09-02 via db_transaction
+-- (sessao paralela) e registrada no ledger sem arquivo no repo. Arquivo criado para
+-- fechar o drift (DB Live Guard); corpo abaixo e byte-identico ao ledger.
+
+-- Step 1: Null out external_id on older row for non-phantom duplicates
+-- (keeps the most recently created record's external_id intact)
 UPDATE public.messages
 SET external_id = NULL
 WHERE id IN (
@@ -17,6 +19,8 @@ WHERE id IN (
   ORDER BY external_id, created_at ASC
 );
 
+-- Step 2: Delete phantom contact rows echoed from outbound agent messages
+-- (sender='contact', content='[Mensagem recebida]' created before fromMe=true fix)
 DELETE FROM public.messages
 WHERE sender = 'contact'
   AND content = '[Mensagem recebida]'
@@ -27,7 +31,7 @@ WHERE sender = 'contact'
       AND m2.sender = 'agent'
   );
 
--- Null out external_id on older row for any remaining duplicates
+-- Step 3: For any remaining duplicates, null the older duplicate's external_id
 UPDATE public.messages
 SET external_id = NULL
 WHERE id IN (
@@ -42,7 +46,7 @@ WHERE id IN (
   ORDER BY external_id, created_at ASC
 );
 
--- UNIQUE partial index: prevents duplicate external_ids while allowing NULL (idempotent webhook retries)
+-- Step 4: Create UNIQUE partial index (only on non-NULL external_id)
 CREATE UNIQUE INDEX IF NOT EXISTS messages_external_id_uq
   ON public.messages (external_id)
   WHERE external_id IS NOT NULL;

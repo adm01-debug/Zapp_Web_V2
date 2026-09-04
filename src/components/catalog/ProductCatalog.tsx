@@ -121,7 +121,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] p-0">
+      <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[85vh] p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Package className="w-5 h-5 text-primary" />

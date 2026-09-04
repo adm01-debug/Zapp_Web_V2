@@ -29,7 +29,7 @@ export function SecurityView() {
   useSecurityPushNotifications();
 
   return (
-    <div className="h-full overflow-auto p-6">
+    <div className="w-full min-w-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

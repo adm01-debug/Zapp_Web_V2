@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
 import { VideoFullscreen } from './VideoFullscreen';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 function getFileIcon(fileName: string, mimeType?: string) {
   const extension = getFileExtension(fileName).toLowerCase();
@@ -32,19 +33,38 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPreviewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const extension = getFileExtension(fileName).toUpperCase();
+  // Resolve signed URL so documents remain accessible when the bucket is private.
+  const { url: resolvedUrl, isLoading: isResolvingUrl } = useResolvedStorageUrl(url);
 
   const handleDownload = async () => {
-    log.warn('[SECURITY] File download blocked by data protection policy');
-    const { toast: toastFn } = await import('sonner');
-    toastFn.error('🔒 Download bloqueado por política de segurança', {
-      description: 'O download de arquivos está desabilitado para proteção de dados.',
-    });
+    if (isDownloading || !resolvedUrl) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(resolvedUrl, { mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(objectUrl);
+      log.debug('File downloaded successfully', { fileName });
+    } catch (err) {
+      log.error('File download failed', err);
+      const { toast: toastFn } = await import('sonner');
+      toastFn.error('Erro ao baixar arquivo', {
+        description: 'Não foi possível baixar o arquivo. Tente novamente.',
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleOpen = () => {
-    import('sonner').then(({ toast }) => {
-      toast.error('🔒 Abertura externa bloqueada por política de segurança');
-    });
+    if (resolvedUrl) window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -68,7 +88,8 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       </div>
       <motion.button
         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-        onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+        onClick={(e) => { e.stopPropagation(); void handleDownload(); }}
+        disabled={isDownloading || isResolvingUrl || !resolvedUrl}
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
           isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary"
@@ -89,22 +110,25 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     const [isMuted, setIsMuted] = useState(true);
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(url);
 
     return (
       <div ref={ref}>
         <div className="space-y-2">
           <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => setShowFullscreen(true)}>
-            {!isLoaded && (
+            {(!isLoaded || isLoading) && (
               <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            <video
-              src={url} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted} loop playsInline
+            {resolvedUrl && <video
+              key={resolvedUrl}
+              src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted} loop playsInline
               onLoadedData={() => setIsLoaded(true)}
+              onError={() => { setIsLoaded(false); void refresh(); }}
               onMouseEnter={(e) => { e.currentTarget.play(); setIsPlaying(true); }}
               onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; setIsPlaying(false); }}
-            />
+            />}
             <AnimatePresence>
               {!isPlaying && isLoaded && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/30 flex items-center justify-center">
@@ -121,7 +145,7 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
           {caption && <p className={cn("text-sm", isSent ? "text-primary-foreground" : "text-foreground")}>{caption}</p>}
         </div>
         <AnimatePresence>
-          {showFullscreen && <VideoFullscreen url={url} onClose={() => setShowFullscreen(false)} />}
+          {showFullscreen && resolvedUrl && <VideoFullscreen url={resolvedUrl} onClose={() => setShowFullscreen(false)} />}
         </AnimatePresence>
       </div>
     );

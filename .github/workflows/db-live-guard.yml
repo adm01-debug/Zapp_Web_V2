@@ -1,0 +1,139 @@
+# ==================================================================
+# ZAPP-WEB · Guardas VIVOS do banco oficial
+# ==================================================================
+# SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele
+# executa scripts do repositorio com DESTINO_URL apenas depois de chegarem a
+# main, no agendamento da default branch ou em dispatch feito sobre main.
+# A protecao da branch main continua sendo parte obrigatoria do perimetro.
+# ==================================================================
+
+name: DB Live Guard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # segunda-feira 06:00 UTC (03:00 em Curitiba)
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-live-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+
+jobs:
+  live-contract:
+    name: Contrato DB vivo
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Exigir credencial do banco oficial
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente; os guardas vivos nao podem ser executados."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
+          NODE
+
+      - name: Comparar migrations com schema_migrations
+        run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Verificar ACL e contrato de mcp_exec
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-mcp-exec-acl.sql
+
+      - name: Verificar ACL da dead-letter queue de webhooks
+        run: >-
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
+
+      - name: Regenerar catalogo e comparar com o commitado
+        run: |
+          umask 077
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/catalog.sql > /tmp/fresh-catalog.json
+          test -s /tmp/fresh-catalog.json
+          node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
+
+      - name: Regenerar manifesto e comparar com o commitado
+        run: |
+          umask 077
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/manifest.sql > /tmp/fresh-manifest.json
+          test -s /tmp/fresh-manifest.json
+          node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
+
+      - name: Verificar frescor do types.ts
+        run: |
+          umask 077
+          bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts
+          test -s /tmp/types.fresh.ts
+          grep -v '^// ' /tmp/types.fresh.ts > /tmp/types.fresh.stripped
+          grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.repo.stripped
+          if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
+            echo "::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao."
+            diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true
+            exit 1
+          fi
+          echo "OK: types.ts em sincronia com o banco."
+
+      - name: Publicar evidencias estruturais
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: db-live-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            /tmp/fresh-catalog.json
+            /tmp/fresh-manifest.json
+          if-no-files-found: ignore
+          retention-days: 3

@@ -94,7 +94,7 @@ export function ChatbotFlowsView() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 space-y-6">
+    <div className="h-full flex flex-col space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -270,7 +270,7 @@ export function ChatbotFlowsView() {
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-primary" /> Novo Fluxo de Chatbot

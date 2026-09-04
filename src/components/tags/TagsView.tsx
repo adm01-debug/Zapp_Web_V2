@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { TagsEmptyState } from '@/components/ui/contextual-empty-states';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
@@ -35,6 +36,71 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTags, Tag as TagType } from '@/hooks/crm/useTags';
+
+function TagForm({ tag, setTag, onSubmit, onCancel, isEdit, isSubmitting }: {
+  tag: { name: string; color: string };
+  setTag: (tag: { name: string; color: string }) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  isEdit?: boolean;
+  isSubmitting?: boolean;
+}) {
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="space-y-2">
+        <Label htmlFor="tagName">Nome da etiqueta</Label>
+        <Input
+          id="tagName"
+          placeholder="Ex: VIP, Lead Quente..."
+          value={tag.name}
+          onChange={(e) => setTag({ ...tag, name: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Cor</Label>
+        <div className="flex flex-wrap gap-2">
+          {COLORS.map((color) => (
+            <motion.button
+              key={color}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setTag({ ...tag, color })}
+              className={cn(
+                'w-8 h-8 rounded-full transition-all',
+                tag.color === color && 'ring-2 ring-offset-2 ring-offset-background ring-primary'
+              )}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 pt-2">
+        <div
+          className="w-4 h-4 rounded-full"
+          style={{ backgroundColor: tag.color }}
+        />
+        <span className="text-sm font-medium">{tag.name || 'Preview'}</span>
+      </div>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button
+          onClick={onSubmit}
+          className="bg-whatsapp hover:bg-whatsapp-dark"
+          disabled={isSubmitting || !tag.name}
+        >
+          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {isEdit ? 'Salvar' : 'Adicionar'}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const COLORS = [
   '#ef4444', // red
@@ -80,76 +146,14 @@ export function TagsView() {
     await deleteTag(id);
   };
 
-  const TagForm = ({ tag, setTag, onSubmit, isEdit, isSubmitting }: {
-    tag: { name: string; color: string };
-    setTag: (tag: { name: string; color: string }) => void;
-    onSubmit: () => void;
-    isEdit?: boolean;
-    isSubmitting?: boolean;
-  }) => (
-    <div className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="tagName">Nome da etiqueta</Label>
-        <Input
-          id="tagName"
-          placeholder="Ex: VIP, Lead Quente..."
-          value={tag.name}
-          onChange={(e) => setTag({ ...tag, name: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Cor</Label>
-        <div className="flex flex-wrap gap-2">
-          {COLORS.map((color) => (
-            <motion.button
-              key={color}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setTag({ ...tag, color })}
-              className={cn(
-                'w-8 h-8 rounded-full transition-all',
-                tag.color === color && 'ring-2 ring-offset-2 ring-offset-background ring-primary'
-              )}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center gap-2 pt-2">
-        <div
-          className="w-4 h-4 rounded-full"
-          style={{ backgroundColor: tag.color }}
-        />
-        <span className="text-sm font-medium">{tag.name || 'Preview'}</span>
-      </div>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button
-          variant="outline"
-          onClick={() => (isEdit ? setEditingTag(null) : setIsAddDialogOpen(false))}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button 
-          onClick={onSubmit} 
-          className="bg-whatsapp hover:bg-whatsapp-dark"
-          disabled={isSubmitting || !tag.name}
-        >
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {isEdit ? 'Salvar' : 'Adicionar'}
-        </Button>
-      </div>
-    </div>
-  );
-
   const totalContacts = tags.reduce((sum, t) => sum + (t.contact_count || 0), 0);
   const mostUsedTag = [...tags].sort((a, b) => (b.contact_count || 0) - (a.contact_count || 0))[0];
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const layoutScrollRef = useLayoutScroll();
 
   return (
-    <div ref={scrollRef} className="p-6 space-y-6 overflow-y-auto h-full relative bg-background">
-      <ScrollToTopButton scrollRef={scrollRef} />
+    <div className="space-y-6 relative bg-background w-full min-w-0">
+      <ScrollToTopButton scrollRef={layoutScrollRef} />
       <AuroraBorealis />
       <FloatingParticles />
       {/* Header with Breadcrumbs */}
@@ -168,7 +172,7 @@ export function TagsView() {
                 Nova Etiqueta
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Criar Nova Etiqueta</DialogTitle>
               </DialogHeader>
@@ -176,6 +180,7 @@ export function TagsView() {
                 tag={newTag}
                 setTag={setNewTag}
                 onSubmit={handleAddTag}
+                onCancel={() => setIsAddDialogOpen(false)}
                 isSubmitting={isCreating}
               />
             </DialogContent>
@@ -185,7 +190,7 @@ export function TagsView() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTag} onOpenChange={() => setEditingTag(null)}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Editar Etiqueta</DialogTitle>
           </DialogHeader>
@@ -194,6 +199,7 @@ export function TagsView() {
               tag={editingTag}
               setTag={(tag) => setEditingTag({ ...editingTag, ...tag })}
               onSubmit={handleEditTag}
+              onCancel={() => setEditingTag(null)}
               isEdit
               isSubmitting={isUpdating}
             />

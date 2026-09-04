@@ -72,8 +72,17 @@ export function useKnowledgeBase() {
     const fileName = `kb/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, file);
     if (uploadError) { toast({ title: 'Erro no upload', description: uploadError.message, variant: 'destructive' }); return; }
-    const { data: signedData } = await supabase.storage.from('whatsapp-media').createSignedUrl(fileName, 86400);
-    await supabase.from('knowledge_base_files').insert({ file_name: file.name, file_url: signedData?.signedUrl || '', file_type: file.type, file_size: file.size });
+    const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+    if (!locatorData?.publicUrl) {
+      toast({ title: 'Erro', description: 'Não foi possível criar a referência durável do arquivo.', variant: 'destructive' });
+      return;
+    }
+    const { error: insertError } = await supabase.from('knowledge_base_files').insert({ file_name: file.name, file_url: locatorData.publicUrl, file_type: file.type, file_size: file.size });
+    if (insertError) {
+      await supabase.storage.from('whatsapp-media').remove([fileName]);
+      toast({ title: 'Erro', description: insertError.message, variant: 'destructive' });
+      return;
+    }
     toast({ title: 'Arquivo enviado!', description: file.name });
     fetchData();
   }, [fetchData]);

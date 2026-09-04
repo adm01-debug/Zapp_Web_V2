@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { GmailOAuthActionSchema, parseBody } from "../_shared/schemas.ts";
+import { GmailOAuthActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     if (authError || !user) return errorResponse("Unauthorized", 401, req);
 
     const parsed = parseBody(GmailOAuthActionSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { action, code, account_id, state } = parsed.data;
 
@@ -117,6 +117,17 @@ Deno.serve(async (req) => {
         const tokens = await exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
         const gmailProfile = await getGmailProfile(tokens.access_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
+        // Guard against account takeover: reject if this Gmail address is already linked to another user
+        const { data: existingAccount } = await supabase
+          .from("gmail_accounts")
+          .select("user_id")
+          .eq("email_address", gmailProfile.emailAddress)
+          .maybeSingle();
+
+        if (existingAccount && existingAccount.user_id !== user.id) {
+          return errorResponse("This Gmail address is already linked to another account", 409, req);
+        }
 
         const { data: account, error: upsertError } = await supabase
           .from("gmail_accounts")
@@ -169,9 +180,12 @@ Deno.serve(async (req) => {
               method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
             }).catch(() => {});
           } catch { /* tokens may not exist */ }
-          // Clear encrypted tokens and deactivate
-          await storeTokens(supabase, account.id, "", "");
-          await supabase.from("gmail_accounts").update({ is_active: false }).eq("id", account_id);
+          // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
+          await supabase.from("gmail_accounts").update({
+            is_active: false,
+            access_token_encrypted: null,
+            refresh_token_encrypted: null,
+          }).eq("id", account_id);
         }
 
         log.done(200, { action });
@@ -181,7 +195,7 @@ Deno.serve(async (req) => {
       case "list-accounts": {
         const { data: accounts } = await supabase
           .from("gmail_accounts")
-          .select("id, email_address, is_active, sync_status, last_sync_at, created_at")
+          .select("id, email_address, is_active, sync_status, last_sync_at, last_error, created_at")
           .eq("user_id", user.id)
           .eq("is_active", true);
 

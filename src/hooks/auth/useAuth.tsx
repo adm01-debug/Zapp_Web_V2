@@ -1,4 +1,6 @@
  import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
+ import { useQueryClient } from '@tanstack/react-query';
+import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService } from '@/services/auth.service';
  import { Profile } from '@/types';
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
+  const queryClient = useQueryClient();
 
   /**
    * BUG-6 FIX: wrap fetchProfile in try/catch so errors don't leave
@@ -104,15 +107,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         log.info('[AUTH] User signed in');
       } else if (event === 'SIGNED_OUT') {
         log.info('[AUTH] User signed out');
+        // O QueryClient e singleton e o app roda com refetchOnMount desligado:
+        // sem limpar, o proximo login na mesma aba le dados em cache do usuario
+        // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
+        queryClient.clear();
+        clearOfflineCache();
       }
     });
+
+    const recoverAfterSuspension = async () => {
+      if (!mounted || (typeof document !== 'undefined' && document.visibilityState !== 'visible')) return;
+      try {
+        const current = await AuthService.getSession();
+        if (!current?.expires_at) return;
+        const expiresWithinOneMinute = current.expires_at * 1000 <= Date.now() + 60_000;
+        if (expiresWithinOneMinute) await AuthService.refreshSession();
+      } catch (err) {
+        // Auth's own state listener will reconcile a terminal refresh failure.
+        // This guard only prevents requests and Realtime channels from racing a
+        // stale token when a suspended tab becomes active again.
+        log.warn('[AuthProvider] Session recovery after suspension failed', err);
+      }
+    };
+    const handleVisibility = () => { if (document.visibilityState === 'visible') void recoverAfterSuspension(); };
+    const handleOnline = () => { void recoverAfterSuspension(); };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('online', handleOnline);
 
     return () => {
       mounted = false;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('online', handleOnline);
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, queryClient]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -144,6 +173,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        setProfile(null);
        setSession(null);
        setUser(null);
+       // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
+       // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
+       // deixe dados do usuario anterior para tras.
+       queryClient.clear();
+       clearOfflineCache();
      }
    };
 

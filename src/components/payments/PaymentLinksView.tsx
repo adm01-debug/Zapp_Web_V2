@@ -109,7 +109,7 @@ export function PaymentLinksView() {
   const totalPaid = links.filter(l => l.status === 'paid').reduce((s, l) => s + l.amount, 0);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader
         title="Links de Pagamento"
         subtitle="Crie e gerencie links de pagamento para enviar no chat"
@@ -209,7 +209,7 @@ export function PaymentLinksView() {
 
       {/* Create Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Novo Link de Pagamento</DialogTitle>
           </DialogHeader>

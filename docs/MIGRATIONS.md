@@ -22,19 +22,21 @@ psql "$DESTINO_URL" -At -c \
   "SELECT md5(string_agg(version,'' ORDER BY version)) FROM supabase_migrations.schema_migrations"
 ```
 
-O job `migration-drift` do workflow `db-guard.yml` faz essa comparacao a cada push.
+O `db-guard.yml` valida nomes, conteudo local e versoes unicas sem credencial. A
+comparacao com o ledger real ocorre no `db-live-guard.yml`, somente em eventos
+confiaveis da `main`.
 
 ---
 
 ## 2. `supabase_apply_migration` esta bugado neste ambiente
 
-O MCP do Supabase self-hosted falha ao aplicar migration — referencia uma coluna
+O MCP do banco oficial falha ao aplicar migration — referencia uma coluna
 `executed_at` que nao existe em `supabase_migrations.schema_migrations`. O schema real e:
 
 ```
-version     text      NOT NULL
-statements  text[]    NULL
-name        text      NULL
+version      text      NOT NULL
+statements   text[]    NULL
+name         text      NULL
 ```
 
 ### Procedimento manual correto
@@ -57,6 +59,131 @@ VALUES ('20260827120100', 'nome_da_migration', ARRAY[
 reconciliacao o gerador capturou 126 statements em vez de 108, porque 18 indices
 preexistentes seguiam a mesma convencao de nome — um `db reset` quebraria neles.
 
+### Evidencia usada pelo guard
+
+`check-migration-drift.mjs` consulta `version`, `name` e `statements` e aplica as
+evidencias que o ledger realmente possui:
+
+- `name`, quando preenchido, deve corresponder ao nome depois do prefixo de 14 digitos;
+- SQL executavel preservado em `statements` e comparado ao arquivo com comentarios,
+  espacos e case de tokens nao quoted normalizados;
+- `-- file-sha256: <64 hex>` em `statements` valida os bytes exatos do arquivo;
+- `-- sql-sha256: <64 hex>` valida a forma SQL canonica calculada pelo guard.
+
+Registros historicos sem SQL/hash somente sao aceitos sem manifesto quando ainda nao
+foram revisados, com aviso explicito de evidencia limitada. Depois da revisao, use a
+categoria `ledger-only/name-and-file-pinned` descrita abaixo. **Nunca preencha hash,
+`name` ou `statements` retroativamente sem recuperar a fonte original**: calcular um
+hash do estado atual e chama-lo de historico apenas certificaria um possivel drift.
+
+Independentemente do banco, o guard falha para nome fora de
+`14_digitos_nome.sql`, versao duplicada, arquivo vazio/somente comentarios, byte NUL
+ou entrada nao regular. Arquivo vazio nunca e aceito. A unica excecao para um
+arquivo somente de comentarios e um stub historico descrito exatamente em
+`scripts/db-audit/migration-evidence.json`. O manifesto usa `schema_version=2`,
+campos estritos, hashes lowercase e entradas em ordem crescente de `version`.
+
+O tipo `ledger-only/comment-only` fixa `version`, `filename`, SHA-256 dos bytes,
+`ledger_name`, o hash do array integral de `statements` e a justificativa factual.
+Ele exige arquivo somente de comentarios e ledger sem SQL canonico. Uma mudanca de
+byte, nome ou statement invalida a excecao; entradas orfas ou duplicadas tambem
+falham. O manifesto nao autoriza reconstruir `statements` nem prova o DDL original.
+
+O tipo `ledger-only/name-and-file-pinned` cobre exclusivamente uma migration com SQL
+local cujo registro legado preserva nome/versao, mas nenhum SQL ou marker de hash. Ele
+fixa os bytes locais e o nome exato; exige SQL executavel no arquivo e ausencia total
+de SQL executavel ou marker de hash no ledger. Metadados textuais nao executaveis do
+ledger nao sao promovidos a evidencia e, portanto, nao recebem hash retrospectivo.
+O total aparece separadamente no resultado do guard e **nao** incrementa a contagem de
+conteudo historico verificado. O estado atual continua sendo provado de forma
+independente pelo manifesto estrutural completo no DB Live Guard.
+
+As seis entradas revisadas nessa categoria sao `20260827120000`, `20260827130000`,
+`20260827140000`, `20260827150000`, `20260827160000` e `20260828000000`. Qualquer
+mudanca de byte, nome, statements ou marker falha fechado; se SQL historico autentico
+for recuperado, a entrada precisa ser substituida por evidencia apropriada, nunca
+silenciosamente reinterpretada.
+
+O tipo `ledger-divergence/pinned-replay` existe somente para divergencias historicas
+revisadas. Ele fixa, ao mesmo tempo:
+
+- bytes e SQL canonico do arquivo (`file_sha256` e `file_sql_sha256`);
+- nome exato do ledger;
+- array integral de `statements` e sua forma SQL canonica
+  (`ledger_statements_sha256` e `ledger_sql_sha256`);
+- motivo fechado: `endpoint-literal-update`, `ledger-summary`, `safer-replay`,
+  `format-only` ou `version-collision`;
+- migration relacionada, obrigatoria apenas para colisao de versao;
+- justificativa factual com pelo menos 40 caracteres.
+
+O hash integral usa exatamente
+`sha256("zapp-migration-ledger-statements-v1\0" + JSON.stringify(statements))`.
+`ledger_sql_sha256` e apenas o hash de `canonicalStatements(statements)`: um texto
+que comeca como SQL pode ser somente um resumo historico, portanto esse hash **nao
+prova que o resumo seja SQL executavel**. Ainda assim, pinned replay exige forma
+canonica nao vazia, arquivo local executavel e correspondencia exata de todos os
+hashes. Nunca publique os `statements` brutos.
+
+Uma excecao pinned fica obsoleta e falha quando nome e SQL voltam a coincidir. Nome
+do ledger diferente do filename so e permitido para `version-collision`. Nesse
+caso, a migration relacionada deve ser posterior, executavel, ter nome correspondente
+ao ledger e hashes exatos; reuso, ciclos e cadeias sao rejeitados.
+
+Referencias textuais `source`/`arquivo` em comentarios do ledger tem menor forca que
+nome exato acompanhado por pelo menos uma prova de conteudo exata: SQL canonico,
+`file-sha256` ou `sql-sha256`. O marker precisa ser unico, bem-formado e corresponder
+ao arquivo atual; mera presenca nunca autoriza o replay. Sem essa prova, ou quando o
+nome diverge, a referencia continua fail-closed e somente uma excecao pinned que
+valide integralmente o ledger pode autorizar o replay. Markers malformados ou
+conflitantes sempre falham.
+
+### Proveniencia da reconciliacao de 29/08/2026
+
+Os hashes do manifesto v2 foram derivados dos registros exatos recuperados em modo
+somente leitura pelo run `33255655034` (`Migration Ledger Evidence`), no commit
+`650705780f8b91c017ffa4bce0fc8f24ba2f4962`. O envelope foi cifrado antes de virar
+artefato; nomes e hashes foram revisados sem publicar os `statements`. O coletor e o
+workflow eram de uso unico e foram removidos depois da verificacao. Nenhum registro
+do ledger ou objeto do banco foi alterado por essa reconciliacao.
+
+O run vivo `33256666088`, posterior a essa fotografia, observou temporariamente o
+registro `20260829020000` com nome `mcp_exec_functions_harden`. Durante a execucao
+concorrente de outro agente, a reconciliacao versionada `20260829060000` restaurou o
+nome historico `fix_reassign_absent_agents_last_seen_at`, corrigiu a referencia stale
+de `20260827130000` e registrou a propria operacao no ledger. O run `33257354121`
+confirmou esse estado com 293 registros. Por isso a excecao de colisao permanece
+fixada pelos hashes originais; o novo arquivo versionado espelha a operacao ja
+aplicada, sem uma segunda escrita no banco por este fluxo. O `UPDATE` de nome exige
+a assinatura estrutural e o SHA-256 domain-separated exato do array historico de
+`statements`; assim um replay limpo de `mcp_exec`, `statements` nulos, conteudo
+hibrido ou um corpo divergente permanecem intocados. Esse comportamento e a
+idempotencia sao simulados em PostgreSQL 17 pelo guard offline.
+Na referencia Gmail, a reconciliacao altera somente `statements[3]`; os demais
+elementos de evidencia permanecem intactos mesmo se divergirem do resumo esperado.
+
+Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
+precisa de evidencia propria e hashes exatos, revisados em PR.
+
+Em 31/08/2026, o run vivo `33383636827`, já na `main` e após validar o
+fingerprint do projeto oficial, confirmou paridade de versões `317/317` e
+detectou seis diferenças entre o replay local e a representação histórica do
+ledger (`20260829060000` a `20260829110000`). O guard reforçado publicou somente
+`ledger_name` e os hashes domain-separated/canônicos; nenhum elemento bruto de
+`statements` foi registrado. As seis evidências foram fixadas individualmente no
+manifesto: a `060000` como `safer-replay`, pois restaura os predicados do G-11,
+e as demais como `format-only`, sustentadas pelo histórico Git e pelos nomes
+idênticos do ledger.
+
+O mesmo run observou a versão `20260830170000` já registrada. Dez minutos antes,
+o run `33382898512` ainda media 316 registros e a apontava como única ausente.
+O dry-run controlado `33383664637` não foi a origem da escrita: ele encontrou
+`missing_count=0` e encerrou antes dos passos de runtime, dry-run do CLI e apply.
+Essa concorrência é preservada como evidência operacional; nenhum registro do
+ledger foi reescrito para mascará-la.
+
+Por isso o guard tambem deve ser executado sem `DESTINO_URL` nos checks offline;
+nesse modo apenas a consulta ao ledger e pulada.
+
 ---
 
 ## 3. `CREATE INDEX CONCURRENTLY` nao roda pelo gateway MCP
@@ -64,7 +191,7 @@ preexistentes seguiam a mesma convencao de nome — um `db reset` quebraria nele
 Erro `25001: CREATE INDEX CONCURRENTLY cannot run inside a transaction block`. O gateway
 envolve cada chamada numa transacao.
 
-- Tabela pequena: use `CREATE INDEX` simples. As 108 FKs de 27/08 rodaram em 278 ms
+- Tabela pequena: use `CREATE INDEX` simples. As 108 FKs de 27/08 rodaram em 278ms
   (maior tabela: 584 kB / 41 linhas).
 - Tabela grande: rode por `psql` direto, fora de transacao.
 
@@ -110,7 +237,7 @@ WHERE array_to_string(statements,' ') ILIKE '%CREATE TABLE%minha_tabela%';
 `VACUUM`, limpeza de bloat, backfill de uma vez — nada disso deve virar migration
 replicavel. Se precisar registrar, o arquivo deve conter **so** o que e seguro reaplicar.
 
-Exemplo real: `20260827130500_vacuum_maintenance_m05.sql`. O que foi executado incluia
+Exemplo real: `20260827130500_vacuum_autovacuum_threshold_reset_m05.sql`. O que foi executado incluia
 `ALTER TABLE ... SET (autovacuum_vacuum_threshold=0, autovacuum_vacuum_scale_factor=0)` e
 um `cron.schedule('one-time-vacuum-bloated-tables', '* * * * *', ...)`. O arquivo commitado
 emite apenas os `RESET` idempotentes. Reaplicar o original faria o autovacuum disparar a
@@ -124,9 +251,40 @@ registradas em `cron.job_run_details` (18:03 e 18:04 de 27/08/2026), saiu com
 
 ```sh
 node scripts/db-audit/check-migration-drift.mjs        # DESTINO_URL setado
+node --test scripts/db-audit/check-migration-drift.test.mjs  # fixtures + psql fake
 node scripts/db-audit/supabase-usage-guard.mjs         # offline
 ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d   # versao duplicada
 ```
 
 A ultima linha existe porque isso ja aconteceu: em 27/08/2026 duas sessoes criaram
 arquivos diferentes com o prefixo `20260827130500`.
+
+---
+
+## 7. Artefatos gerados automaticamente
+
+`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json` e
+`supabase/schema-manifest.json` sao regenerados pelo workflow `types-sync`
+(`.github/workflows/types-sync.yml`).
+
+**Nunca editar esses tres arquivos manualmente.** Qualquer edicao sera sobrescrita
+no proximo push de migration ou no cron semanal (segunda, 06:00 UTC).
+
+A regra de fechamento tripla foi simplificada:
+
+- ~~migration + registro no banco + catalog + manifesto + types~~ (anterior — manual, sujeita a drift)
+- **migration + registro no banco** (atual — maquina propoe catalogo, manifesto e types em PR)
+
+### Para sessoes Claude
+
+Nao incluir `types.ts`, `schema-catalog.json` nem `schema-manifest.json` em commits de migration.
+Ao adicionar uma tabela nova, o types sera atualizado automaticamente pelo bot.
+
+### Para diagnosticar drift manual
+
+Se o `types.ts` estiver desatualizado, dispare manualmente:
+`GitHub Actions > types-sync > Run workflow`
+
+O `db-live-guard.yml` tambem verifica o frescor dos tres artefatos contra o banco
+e falha se houver divergencia. Ele nao executa codigo de pull request nem expoe
+`DESTINO_URL` a eventos nao confiaveis.

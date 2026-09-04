@@ -64,7 +64,7 @@ export function ContactDialogs({
             Novo Contato
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Adicionar Contato</DialogTitle>
           </DialogHeader>
@@ -81,7 +81,7 @@ export function ContactDialogs({
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar Contato</DialogTitle>
           </DialogHeader>
@@ -100,7 +100,7 @@ export function ContactDialogs({
 
       {/* Success Dialog */}
       <Dialog open={!!showSuccess} onOpenChange={() => setShowSuccess(null)}>
-        <DialogContent className="max-w-sm text-center">
+        <DialogContent aria-describedby={undefined} className="max-w-sm text-center">
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-3">
               <motion.div

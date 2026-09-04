@@ -63,19 +63,31 @@ export class Logger {
   }
 }
 
+// Dominios exatos permitidos no CORS.
+// IMPORTANTE: ao adicionar um dominio de producao novo, adicionar aqui tambem
+// e redeployar todas as edges (supabase functions deploy --project-ref <ref>).
 const EXACT_ALLOWED_ORIGINS = new Set([
+  // Producao Vercel
+  'https://zapp-web-v2.vercel.app',
+  'https://zapp-web-v2-juca1.vercel.app',
+  'https://zapp-web-v2-git-main-juca1.vercel.app',
+  // Dominios Lovable legados (manter durante transicao)
   'https://pronto-talk-suite.lovable.app',
   'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
   'https://1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovableproject.com',
 ]);
 
-const LOCAL_ORIGIN_PATTERNS = [
+const ORIGIN_PATTERNS = [
+  // Previews de PR na Vercel: zapp-web-v2-<hash>-juca1.vercel.app
+  /^https:\/\/zapp-web-v2-[a-z0-9]+-juca1\.vercel\.app$/,
+  // Localhost para desenvolvimento
   /^http:\/\/localhost(?::\d{1,5})?$/,
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
 ];
 
 function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) || LOCAL_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
+  return EXACT_ALLOWED_ORIGINS.has(origin) ||
+    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
 }
 
 /** Security headers applied to all responses */
@@ -92,13 +104,13 @@ const SECURITY_HEADERS: Record<string, string> = {
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
   const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://pronto-talk-suite.lovable.app';
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
   return {
     ...SECURITY_HEADERS,
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature',
+      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };

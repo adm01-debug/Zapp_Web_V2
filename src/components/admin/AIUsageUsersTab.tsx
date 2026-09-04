@@ -32,7 +32,7 @@ export function AIUsageUsersTab({ userUsage, profileMap }: AIUsageUsersTabProps)
           </BarChart>
         </ResponsiveContainer>
 
-        <div className="mt-4 border rounded-lg overflow-hidden">
+        <div className="mt-4 border rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">

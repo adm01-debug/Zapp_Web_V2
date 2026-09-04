@@ -108,7 +108,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
   const uploadAudio = useCallback(async (blob: Blob, conversationId: string) => {
     const fileName = `${conversationId}/${Date.now()}.webm`;
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('audio-messages')
       .upload(fileName, blob, {
         contentType: 'audio/webm',
@@ -117,16 +117,18 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
     if (error) {
       throw error;
     }
-    
-    const { data: signedData, error: signError } = await supabase.storage
+
+    // A signed URL is a one-hour credential, not durable message data. Store
+    // the object locator and sign it at read/send time instead.
+    const { data: publicUrlData } = supabase.storage
       .from('audio-messages')
-      .createSignedUrl(fileName, 3600); // 1 hour expiry
-    
-    if (signError || !signedData?.signedUrl) {
-      throw signError || new Error('Failed to create signed URL');
+      .getPublicUrl(fileName);
+
+    if (!publicUrlData?.publicUrl) {
+      throw new Error('Failed to create audio object reference');
     }
-    
-    return signedData.signedUrl;
+
+    return publicUrlData.publicUrl;
   }, []);
 
   const formatDuration = useCallback((seconds: number) => {

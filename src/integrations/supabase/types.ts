@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       agent_achievements: {
@@ -1596,6 +1591,30 @@ export type Database = {
           },
         ]
       }
+      contact_identity_map: {
+        Row: {
+          first_seen: string
+          jid: string
+          last_seen: string
+          lid: string
+          source: string | null
+        }
+        Insert: {
+          first_seen?: string
+          jid: string
+          last_seen?: string
+          lid: string
+          source?: string | null
+        }
+        Update: {
+          first_seen?: string
+          jid?: string
+          last_seen?: string
+          lid?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       contact_notes: {
         Row: {
           author_id: string
@@ -1763,6 +1782,7 @@ export type Database = {
           ai_priority: string | null
           ai_sentiment: string | null
           assigned_to: string | null
+          avatar_fetch_attempted_at: string | null
           avatar_url: string | null
           channel_connection_id: string | null
           channel_type: string | null
@@ -1791,6 +1811,7 @@ export type Database = {
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
+          avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
@@ -1819,6 +1840,7 @@ export type Database = {
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
+          avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
@@ -2661,6 +2683,121 @@ export type Database = {
           },
         ]
       }
+      department_invitations: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          department_id: string
+          email: string
+          expires_at: string
+          id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          email?: string
+          expires_at: string
+          id?: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          whatsapp_api_key: string | null
+          whatsapp_instance_id: string | null
+          whatsapp_mode: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_instance_id?: string | null
+          whatsapp_mode?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_instance_id?: string | null
+          whatsapp_mode?: string
+        }
+        Relationships: []
+      }
+      email_attachments: {
+        Row: {
+          created_at: string
+          email_message_id: string
+          filename: string | null
+          gmail_attachment_id: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          email_message_id: string
+          filename?: string | null
+          gmail_attachment_id: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          email_message_id?: string
+          filename?: string | null
+          gmail_attachment_id?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_email_message_id_fkey"
+            columns: ["email_message_id"]
+            isOneToOne: false
+            referencedRelation: "email_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_labels: {
         Row: {
           color: string | null
@@ -2731,6 +2868,7 @@ export type Database = {
           is_read: boolean
           is_starred: boolean
           label_ids: string[]
+          message_id_header: string | null
           references_header: string | null
           reply_to_address: string | null
           snippet: string
@@ -2756,6 +2894,7 @@ export type Database = {
           is_read?: boolean
           is_starred?: boolean
           label_ids?: string[]
+          message_id_header?: string | null
           references_header?: string | null
           reply_to_address?: string | null
           snippet?: string
@@ -2781,6 +2920,7 @@ export type Database = {
           is_read?: boolean
           is_starred?: boolean
           label_ids?: string[]
+          message_id_header?: string | null
           references_header?: string | null
           reply_to_address?: string | null
           snippet?: string
@@ -2824,6 +2964,8 @@ export type Database = {
           is_starred: boolean
           is_unread: boolean
           label_ids: string[]
+          last_from_address: string | null
+          last_from_name: string | null
           last_message_at: string
           message_count: number
           priority: string
@@ -2844,6 +2986,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
@@ -2864,6 +3008,8 @@ export type Database = {
           is_starred?: boolean
           is_unread?: boolean
           label_ids?: string[]
+          last_from_address?: string | null
+          last_from_name?: string | null
           last_message_at?: string
           message_count?: number
           priority?: string
@@ -3186,6 +3332,7 @@ export type Database = {
           access_token_encrypted: string | null
           created_at: string
           email_address: string
+          history_id: string | null
           id: string
           is_active: boolean
           last_error: string | null
@@ -3195,11 +3342,13 @@ export type Database = {
           token_expires_at: string | null
           updated_at: string
           user_id: string
+          watch_expiration: string | null
         }
         Insert: {
           access_token_encrypted?: string | null
           created_at?: string
           email_address: string
+          history_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
@@ -3209,11 +3358,13 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id: string
+          watch_expiration?: string | null
         }
         Update: {
           access_token_encrypted?: string | null
           created_at?: string
           email_address?: string
+          history_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
@@ -3223,6 +3374,7 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
+          watch_expiration?: string | null
         }
         Relationships: []
       }
@@ -3411,6 +3563,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lid_audit_snapshot_20260902: {
+        Row: {
+          contact_id: string
+          created_at: string
+          first_message_at: string | null
+          last_message_at: string | null
+          message_count: number | null
+          phone: string
+          phone_length: number
+          snapshot_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at: string
+          first_message_at?: string | null
+          last_message_at?: string | null
+          message_count?: number | null
+          phone: string
+          phone_length: number
+          snapshot_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          first_message_at?: string | null
+          last_message_at?: string | null
+          message_count?: number | null
+          phone?: string
+          phone_length?: number
+          snapshot_at?: string
+        }
+        Relationships: []
       }
       link_preview_cache: {
         Row: {
@@ -4449,6 +4634,7 @@ export type Database = {
           can_download: boolean
           created_at: string
           department: string | null
+          department_id: string | null
           email: string | null
           id: string
           is_active: boolean | null
@@ -4471,6 +4657,7 @@ export type Database = {
           can_download?: boolean
           created_at?: string
           department?: string | null
+          department_id?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -4493,6 +4680,7 @@ export type Database = {
           can_download?: boolean
           created_at?: string
           department?: string | null
+          department_id?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -4508,7 +4696,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       query_telemetry: {
         Row: {
@@ -5868,7 +6064,9 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           created_by: string | null
+          department_id: string | null
           id: string
+          metadata: Json
           name: string | null
           type: string
           updated_at: string
@@ -5877,7 +6075,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           id?: string
+          metadata?: Json
           name?: string | null
           type?: string
           updated_at?: string
@@ -5886,7 +6086,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           id?: string
+          metadata?: Json
           name?: string | null
           type?: string
           updated_at?: string
@@ -5906,6 +6108,59 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "team_conversations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       team_messages: {
@@ -5920,6 +6175,7 @@ export type Database = {
           message_type: string
           reply_to_id: string | null
           sender_id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -5933,6 +6189,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           sender_id: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -5946,6 +6203,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           sender_id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -6401,6 +6659,48 @@ export type Database = {
           id?: string
           type?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      webhook_failures: {
+        Row: {
+          endpoint: string
+          error_at: string
+          error_message: string
+          event_type: string | null
+          id: string
+          instance: string | null
+          payload_sha256: string | null
+          payload_truncated: Json | null
+          resolved: boolean
+          resolved_at: string | null
+          retry_count: number
+        }
+        Insert: {
+          endpoint: string
+          error_at?: string
+          error_message: string
+          event_type?: string | null
+          id?: string
+          instance?: string | null
+          payload_sha256?: string | null
+          payload_truncated?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          retry_count?: number
+        }
+        Update: {
+          endpoint?: string
+          error_at?: string
+          error_message?: string
+          event_type?: string | null
+          id?: string
+          instance?: string | null
+          payload_sha256?: string | null
+          payload_truncated?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          retry_count?: number
         }
         Relationships: []
       }
@@ -7229,6 +7529,10 @@ export type Database = {
         }[]
       }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
+      effective_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
       fn_list_audio_meme_categories: {
         Args: never
@@ -7290,6 +7594,37 @@ export type Database = {
         Args: { _connection_id: string }
         Returns: string
       }
+      get_department_whatsapp_credentials: {
+        Args: { _department_id: string }
+        Returns: {
+          whatsapp_api_key: string
+          whatsapp_instance_id: string
+        }[]
+      }
+      get_gmail_tokens: {
+        Args: { p_account_id: string }
+        Returns: {
+          access_token: string
+          refresh_token: string
+        }[]
+      }
+      get_identity_matrix: {
+        Args: never
+        Returns: {
+          access_level: string
+          auth_user_id: string
+          created_at: string
+          display_name: string
+          effective_permissions: string
+          email: string
+          is_active: boolean
+          is_banned: boolean
+          last_sign_in_at: string
+          profile_id: string
+          profile_role_cached: string
+          user_roles_list: string
+        }[]
+      }
       get_own_gmail_accounts: {
         Args: never
         Returns: {
@@ -7312,30 +7647,6 @@ export type Database = {
           locked_until: string
         }[]
       }
-      get_own_reset_requests: {
-        Args: never
-        Returns: {
-          created_at: string
-          email: string
-          id: string
-          ip_address: string | null
-          reason: string | null
-          rejection_reason: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-          token_expires_at: string | null
-          updated_at: string
-          user_agent: string | null
-          user_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "password_reset_requests"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_profile_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_profile_role_for_check: {
         Args: { p_user_id: string }
@@ -7343,25 +7654,6 @@ export type Database = {
           access_level: string
           permissions: Json
           role: string
-        }[]
-      }
-      get_reset_requests_safe: {
-        Args: never
-        Returns: {
-          created_at: string
-          email: string
-          has_token: boolean
-          id: string
-          ip_address: string
-          reason: string
-          rejection_reason: string
-          reviewed_at: string
-          reviewed_by: string
-          status: string
-          token_expires_at: string
-          updated_at: string
-          user_agent: string
-          user_id: string
         }[]
       }
       get_team_profiles: {
@@ -7397,6 +7689,7 @@ export type Database = {
           locked_until: string
         }[]
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_supervisor: { Args: { _user_id: string }; Returns: boolean }
       is_contact_visible_to_user: {
         Args: { _contact_id: string; _user_id: string }
@@ -7430,6 +7723,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_first_response: {
+        Args: { p_contact_id: string }
+        Returns: undefined
+      }
+      mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
+      mcp_exec_many: {
+        Args: { max_rows?: number; statements: string[] }
+        Returns: Json
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
@@ -7442,6 +7744,14 @@ export type Database = {
           is_locked: boolean
           locked_until: string
         }[]
+      }
+      register_first_response_internal: {
+        Args: {
+          p_before_created_at?: string
+          p_contact_id: string
+          p_responded_at: string
+        }
+        Returns: undefined
       }
       search_contacts: {
         Args: {
@@ -7486,6 +7796,14 @@ export type Database = {
         }[]
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
+      store_gmail_tokens: {
+        Args: {
+          p_access_token: string
+          p_account_id: string
+          p_refresh_token?: string
+        }
+        Returns: undefined
+      }
       update_own_profile: {
         Args: {
           p_avatar_url?: string
@@ -7501,7 +7819,6 @@ export type Database = {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
-      validate_reset_token: { Args: { p_token: string }; Returns: string }
     }
     Enums: {
       ai_provider_type:
@@ -7677,3 +7994,4 @@ export const Constants = {
     },
   },
 } as const
+

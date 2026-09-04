@@ -76,7 +76,7 @@ export function AddMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border/30">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-card border-border/30">
         <DialogHeader>
           <DialogTitle className="text-foreground">Adicionar Atendente</DialogTitle>
         </DialogHeader>

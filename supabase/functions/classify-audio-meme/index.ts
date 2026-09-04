@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ClassifyAudioMemeSchema, parseBody } from "../_shared/schemas.ts";
+import { ClassifyAudioMemeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const AUDIO_CATEGORIES = [
   'risada', 'aplausos', 'suspense', 'vitória', 'falha',
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ClassifyAudioMemeSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { audio_url, file_name } = parsed.data;
 

@@ -200,7 +200,7 @@ export function PlaybooksManager() {
 
       {/* View Playbook Dialog */}
       <Dialog open={!!viewPlaybook} onOpenChange={() => setViewPlaybook(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-lg">
           {viewPlaybook && (
             <>
               <DialogHeader>
@@ -233,7 +233,7 @@ export function PlaybooksManager() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{selectedPlaybook ? 'Editar Playbook' : 'Novo Playbook'}</DialogTitle>
           </DialogHeader>

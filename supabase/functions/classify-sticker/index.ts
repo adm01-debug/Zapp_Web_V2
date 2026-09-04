@@ -1,5 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { ClassifyStickerSchema, parseBody } from "../_shared/schemas.ts";
+import { ClassifyStickerSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 const STICKER_CATEGORIES = [
   'comemoração', 'riso', 'chorando', 'amor', 'raiva',
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = parseBody(ClassifyStickerSchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { image_url } = parsed.data;
 

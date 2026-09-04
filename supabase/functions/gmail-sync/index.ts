@@ -5,7 +5,9 @@ import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../
 import { ensureValidToken, gmailFetch, syncLabels, syncMessages } from "../_shared/gmail-helpers.ts";
 
 const GmailSyncActionSchema = z.object({
-  action: z.enum(['sync-labels', 'sync-inbox', 'sync-incremental', 'get-thread', 'setup-watch']),
+  message_id: z.string().max(200).optional(),
+  attachment_id: z.string().max(200).optional(),
+  action: z.enum(['sync-labels', 'sync-inbox', 'sync-incremental', 'get-thread', 'setup-watch', 'get-attachment']),
   account_id: z.string().uuid("account_id must be a valid UUID"),
   query: z.string().max(500).optional(),
   maxResults: z.number().int().min(1).max(200).optional(),
@@ -90,19 +92,19 @@ serve(async (req) => {
         for (const record of historyData.history || []) {
           for (const added of record.messagesAdded || []) newMessageIds.add(added.message.id);
         }
-
+        // FIX E19: persistir mensagens novas via syncMessages
         let synced = 0;
-        for (const msgId of newMessageIds) {
-          try { await gmailFetch(accessToken, `/messages/${msgId}?format=full`); synced++; } catch { /* deleted */ }
+        if (newMessageIds.size > 0) {
+          const result = await syncMessages(supabase, account.id, accessToken, log, 'in:inbox', Math.min(newMessageIds.size + 5, 50));
+          synced = result.synced;
         }
-
         await supabase.from("gmail_accounts").update({
           history_id: historyData.historyId || account.history_id,
           last_sync_at: new Date().toISOString(),
+          last_error: null,
         }).eq("id", account.id);
-
-        log.done(200, { newMessages: newMessageIds.size });
-        return jsonResponse({ success: true, new_messages: newMessageIds.size }, 200, req);
+        log.done(200, { newMessages: newMessageIds.size, synced });
+        return jsonResponse({ success: true, new_messages: newMessageIds.size, synced }, 200, req);
       }
 
       case "get-thread": {
@@ -129,6 +131,13 @@ serve(async (req) => {
         return jsonResponse({ success: true, ...watchData }, 200, req);
       }
 
+      // FIX E40: get-attachment - download de anexo sob demanda
+      case "get-attachment": {
+        const { message_id, attachment_id } = body;
+        if (!message_id || !attachment_id) return errorResponse("Missing message_id or attachment_id", 400, req);
+        const data = await gmailFetch(accessToken, `/messages/${message_id}/attachments/${attachment_id}`);
+        log.done(200); return jsonResponse({ data: data.data, size: data.size }, 200, req);
+      }
       default:
         log.done(400);
         return errorResponse(`Unknown action: ${body.action}`, 400, req);

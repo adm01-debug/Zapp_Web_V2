@@ -62,7 +62,7 @@ describe('useServiceWorker', () => {
     expect(mockUnregister).toHaveBeenCalled();
   });
 
-  it('clears all caches on mount', async () => {
+  it('clears only caches owned by the retired PWA', async () => {
     mockCaches.keys.mockResolvedValueOnce(['whatsapp-crm-v2', 'other-cache']);
 
     const { useServiceWorker } = await import('@/hooks/system/useServiceWorker');
@@ -73,7 +73,7 @@ describe('useServiceWorker', () => {
     await Promise.resolve();
 
     expect(mockCaches.delete).toHaveBeenCalledWith('whatsapp-crm-v2');
-    expect(mockCaches.delete).toHaveBeenCalledWith('other-cache');
+    expect(mockCaches.delete).not.toHaveBeenCalledWith('other-cache');
   });
 
   it('does not crash when serviceWorker is unavailable', async () => {

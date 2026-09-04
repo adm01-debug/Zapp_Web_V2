@@ -127,18 +127,26 @@ export function RealtimeInboxView() {
                       showDetails={isMobile ? false : inbox.showDetails}
                       onToggleDetails={() => inbox.setShowDetails(!inbox.showDetails)}
                       onBack={isMobile ? () => {
-                        if (inbox.legacyConversation) {
-                          inbox.setPipContact({ name: inbox.legacyConversation.contact.name, avatar: inbox.legacyConversation.contact.avatar, lastMessage: inbox.legacyConversation.lastMessage?.content, contactId: inbox.legacyConversation.id });
-                        }
-                        inbox.setSelectedContactId(null);
-                      } : undefined}
+                          if (inbox.legacyConversation) {
+                            inbox.setPipContact({ name: inbox.legacyConversation.contact.name, avatar: inbox.legacyConversation.contact.avatar, lastMessage: inbox.legacyConversation.lastMessage?.content, contactId: inbox.legacyConversation.id });
+                          }
+                          inbox.setSelectedContactId(null);
+                        } : undefined}
                     />
                   </SectionErrorBoundary>
                 )}
               </div>
               {inbox.showDetails && (
                 <SectionErrorBoundary sectionName="Detalhes do Contato">
-                  <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} />
+                  {/*
+                    Suspense isolado — CRÍTICO: evita que o lazy-load de
+                    ContactDetailsResponsive suspenda o Suspense pai e desmonte
+                    o ChatPanel, causando React error #301 (too many re-renders).
+                    Sem este wrapper, cada toggle de showDetails crashava o Chat.
+                  */}
+                  <Suspense fallback={null}>
+                    <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} />
+                  </Suspense>
                 </SectionErrorBoundary>
               )}
             </>
@@ -147,7 +155,7 @@ export function RealtimeInboxView() {
       </div>
 
       {inbox.usingCache && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium">📡 Modo offline — exibindo dados em cache</div>
+        <div className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium">🚧 Modo offline — exibindo dados em cache</div>
       )}
 
       {isMobile && inbox.pipContact && !inbox.selectedContactId && (

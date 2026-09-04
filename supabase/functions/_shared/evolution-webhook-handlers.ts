@@ -16,12 +16,18 @@ export {
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
   const rawState = baseData.status as string;
-  const status = rawState === 'open' ? 'connected' :
+  const incoming = rawState === 'open' ? 'connected' :
     rawState === 'close' ? 'disconnected' :
     rawState === 'connecting' ? 'connecting' : 'qr_pending';
 
   const { data: prevConn } = await supabase.from('whatsapp_connections')
     .select('status, phone_number').eq('instance_id', instance).single();
+
+  // 'connecting' e transitorio: gravar por cima de 'connected' faz o proximo
+  // 'close' comparar com 'connecting' e o alerta critico de queda nao dispara
+  // (connection-health-check tambem pula estados transitorios).
+  const status = incoming === 'connecting' && prevConn?.status === 'connected'
+    ? 'connected' : incoming;
 
   // Evolution GO envia jid/pushName no Connected — aproveita para preencher
   // o número quando ainda não temos (paridade com o que o v2 preenchia).
@@ -76,10 +82,18 @@ export async function handleContactsUpsert(supabase: any, instance: string, data
 
     if (connection && pushName) {
       let permanentAvatarUrl: string | null = null;
-      if (profilePicUrl && profilePicUrl.includes('pps.whatsapp.net')) {
-        permanentAvatarUrl = await persistProfilePicture(supabase, phone, profilePicUrl);
-      } else if (profilePicUrl) {
-        permanentAvatarUrl = profilePicUrl;
+      if (typeof profilePicUrl === 'string' && profilePicUrl) {
+        // Comparacao por hostname para nao cair em bypass de path
+        // (e.g. evil.com/pps.whatsapp.net/...). URL invalida e descartada: o
+        // catch antes devolvia '' e o else gravava o valor malformado.
+        try {
+          const picHost = new URL(profilePicUrl).hostname.toLowerCase();
+          permanentAvatarUrl = picHost === 'pps.whatsapp.net'
+            ? await persistProfilePicture(supabase, phone, profilePicUrl)
+            : profilePicUrl;
+        } catch {
+          permanentAvatarUrl = null;
+        }
       }
 
       const existing = await getContactByPhone(supabase, phone, connection.id);

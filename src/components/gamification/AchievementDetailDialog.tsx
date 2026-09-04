@@ -41,7 +41,7 @@ export function AchievementDetailDialog({ achievement, onClose, onClaim }: Achie
 
   return (
     <Dialog open={!!achievement} onOpenChange={() => onClose()}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className={`p-2 rounded-lg ${rarity.color}/20`}>

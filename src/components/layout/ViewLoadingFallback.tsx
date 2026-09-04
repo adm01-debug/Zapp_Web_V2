@@ -1,9 +1,9 @@
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/skeleton';
 
-export function ViewLoadingFallback() {
+export function ViewLoadingFallback({ noPadding = false }: { noPadding?: boolean }) {
   return (
     <div
-      className="flex flex-col h-full p-6 gap-6 animate-fade-in"
+      className={`flex flex-col h-full w-full min-w-0 gap-6 animate-fade-in${noPadding ? '' : ' p-6'}`}
       role="status"
       aria-busy="true"
       aria-label="Carregando módulo"

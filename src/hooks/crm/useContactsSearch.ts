@@ -35,7 +35,7 @@ export function useContactsSearch() {
   const [filterDateRange, setFilterDateRange] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [page, setPage] = useState(0);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Debounce search input
   const handleSearchChange = useCallback((value: string) => {

@@ -38,7 +38,7 @@ export function usePrefetch<T>(
     cacheDuration = 5 * 60 * 1000, // 5 minutes
   } = options;
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const prefetch = useCallback(async (): Promise<T | null> => {
     // Check cache

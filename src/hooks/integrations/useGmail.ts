@@ -4,10 +4,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 import { callGmailFunction } from '../gmail/gmailApi';
+import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 import type { GmailAccount, EmailThread, EmailMessage, EmailLabel } from '../gmail/gmailTypes';
+
+/**
+ * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
+ * hash stays as a migration fallback for links minted before the switch.
+ * Skip-to-content anchors (RESERVED_HASHES) are not navigation views.
+ */
+function getOAuthReturnView(): string {
+  const viewParam = new URLSearchParams(window.location.search).get('view');
+  if (viewParam) return viewParam;
+  const hash = window.location.hash.replace('#', '');
+  if (hash && !RESERVED_HASHES.has(hash)) return hash;
+  return 'integrations';
+}
 
 export function useGmail(accountId?: string) {
   const queryClient = useQueryClient();
@@ -24,7 +38,8 @@ export function useGmail(accountId?: string) {
         if (error) throw error;
         return (data || []).map((a: Record<string, unknown>) => ({
           id: a.id, email_address: a.email_address, is_active: a.is_active,
-          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at, created_at: a.created_at,
+          sync_status: a.sync_status || 'pending', last_sync_at: a.last_sync_at,
+          last_error: a.last_error ?? null, created_at: a.created_at,
         })) as GmailAccount[];
       }
     },
@@ -34,12 +49,12 @@ export function useGmail(accountId?: string) {
 
   const connectGmail = useMutation({
     mutationFn: async () => {
-      const returnView = window.location.hash.replace('#', '') || 'integrations';
+      const returnView = getOAuthReturnView();
       const state = createGmailOAuthState({ view: returnView, integrationView: 'gmail' });
       const result = await callGmailFunction('gmail-oauth', { action: 'get-auth-url', state });
-      return result.url as string;
+      return { url: result.url as string, returnView };
     },
-    onSuccess: (url) => { const rv = window.location.hash.replace('#', '') || 'integrations'; storeGmailOAuthReturnContext(rv, 'gmail'); window.location.assign(url); },
+    onSuccess: ({ url, returnView }) => { storeGmailOAuthReturnContext(returnView, 'gmail'); window.location.assign(url); },
     onError: (error: Error) => { toast.error(`Erro ao conectar Gmail: ${error.message}`); },
   });
 
@@ -138,6 +153,14 @@ export function useGmail(accountId?: string) {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Email movido para lixeira'); },
   });
 
+  const trashThread = useMutation({
+    mutationFn: async (gmailThreadId: string) => {
+      if (!activeAccount) throw new Error('No active Gmail account');
+      return callGmailFunction('gmail-send', { action: 'trash-thread', account_id: activeAccount.id, thread_id: gmailThreadId });
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); toast.success('Thread movida para lixeira'); },
+  });
+
   const modifyLabels = useMutation({
     mutationFn: async (params: { message_id: string; add_labels?: string[]; remove_labels?: string[] }) => {
       if (!activeAccount) throw new Error('No active Gmail account');
@@ -159,7 +182,7 @@ export function useGmail(accountId?: string) {
     accounts, activeAccount, accountsLoading, connectGmail, exchangeCode, disconnectGmail,
     threads, threadsLoading, selectedThreadId, setSelectedThreadId, refetchThreads,
     threadMessages, messagesLoading, labels,
-    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, modifyLabels,
+    syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels,
     subscribeToThreads,
     unreadCount: threads.filter(t => t.is_unread).length,
     starredCount: threads.filter(t => t.is_starred).length,

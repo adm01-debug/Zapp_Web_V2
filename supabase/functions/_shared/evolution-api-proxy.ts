@@ -19,6 +19,11 @@ export function normalizeGoSendResponse(data: any): unknown {
 }
 
 // Normalizações GO→v2 dependentes da rota traduzida (goPath):
+// /instance/all → remove `token` de cada instância (credencial de instância
+//   do GO; o da instância padrão é o EVOLUTION_INSTANCE_TOKEN). A edge
+//   evolution-api é chamável por qualquer usuário logado e nenhum consumidor
+//   do front precisa desse campo — com token + URL pública da GO dá pra
+//   operar a instância fora do app ·
 // /label/list → [{id,name,color}] (o front espera o array v2) ·
 // /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
 // demais respostas: injeção aditiva de key/messageId nos envios.
@@ -36,6 +41,14 @@ export function normalizeGoResponse(goPath: string | null, data: any): unknown {
       exists: u.IsInWhatsapp === true, jid: u.JID ?? u.RemoteJID ?? null,
       number: u.Query ?? null, ...(u.VerifiedName ? { name: u.VerifiedName } : {}),
     }));
+  }
+  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
+    const instances = data.data.map((instance: Record<string, unknown>) => {
+      const safe = { ...instance };
+      delete safe.token;
+      return safe;
+    });
+    return { ...data, data: instances };
   }
   return normalizeGoSendResponse(data);
 }
@@ -62,6 +75,15 @@ export async function proxyToEvolution(
   if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
     const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
     const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      // Convencao do proxy: 200 com { error: true, message } — e o que o
+      // useEvolutionApiCore le para mostrar toast. Um 400 cru cairia no ramo de
+      // erro de rede. Sem corsHeaders o browser nem entrega o corpo.
+      return new Response(JSON.stringify({ error: true, message: go.invalid }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     if (go) {
       path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
       goPath = go.path;
@@ -169,22 +191,78 @@ export async function proxyToEvolution(
   });
 }
 
-// Helper to generate signed URLs for private storage buckets
-// deno-lint-ignore no-explicit-any
-export async function resolvePrivateBucketUrl(supabase: any, url: string, buckets: string[] = ['whatsapp-media', 'audio-messages']): Promise<string> {
-  if (typeof url !== 'string') return url;
-  for (const bucket of buckets) {
-    if (url.includes(`/storage/v1/object/public/${bucket}/`)) {
-      const storagePath = url.split(`/storage/v1/object/public/${bucket}/`)[1];
-      if (storagePath) {
-        const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 300);
-        if (signedData?.signedUrl) {
-          console.log(`[Evolution API] Using signed URL for private bucket ${bucket}`);
-          return signedData.signedUrl;
-        }
-      }
-      break;
-    }
+const PRIVATE_STORAGE_URL_PREFIXES = [
+  '/storage/v1/object/sign/',
+  '/storage/v1/object/public/',
+  '/storage/v1/object/authenticated/',
+];
+
+function parsePrivateStorageObject(url: string, buckets: string[], expectedOrigin?: string): { bucket: string; path: string } | null {
+  try {
+    const unsafeRawSegment = url.split(/[?#]/, 1)[0].split('/').some((rawSegment) => {
+      const decodedSegment = decodeURIComponent(decodeURIComponent(rawSegment));
+      return decodedSegment === '.' || decodedSegment === '..' ||
+        decodedSegment.includes('\\') || decodedSegment.includes('\0');
+    });
+    if (unsafeRawSegment) return null;
+
+    const parsedUrl = new URL(url);
+    if (expectedOrigin && parsedUrl.origin !== new URL(expectedOrigin).origin) return null;
+    const prefix = PRIVATE_STORAGE_URL_PREFIXES.find((candidate) =>
+      parsedUrl.pathname.startsWith(candidate)
+    );
+    if (!prefix) return null;
+
+    const encodedLocation = parsedUrl.pathname.slice(prefix.length);
+    const separatorIndex = encodedLocation.indexOf('/');
+    if (separatorIndex <= 0 || separatorIndex === encodedLocation.length - 1) return null;
+
+    const bucket = decodeURIComponent(encodedLocation.slice(0, separatorIndex));
+    const path = decodeURIComponent(encodedLocation.slice(separatorIndex + 1));
+    const safePath = Boolean(path) && !path.includes('\\') && !path.includes('\0') &&
+      path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..');
+
+    if (!buckets.includes(bucket) || !safePath) return null;
+    return { bucket, path };
+  } catch {
+    return null;
   }
-  return url;
+}
+
+// Generate a short-lived delivery URL from either a stable private-object
+// locator or a legacy (possibly expired) signed URL.
+interface PrivateStorageSigner {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresIn: number
+      ) => PromiseLike<{
+        data?: { signedUrl?: string } | null;
+        error?: unknown;
+      }>;
+    };
+  };
+}
+
+export async function resolvePrivateBucketUrl(
+  supabase: PrivateStorageSigner,
+  url: string,
+  buckets: string[] = ['whatsapp-media', 'audio-messages'],
+  expectedOrigin?: string
+): Promise<string> {
+  if (typeof url !== 'string') return url;
+  const objectReference = parsePrivateStorageObject(url, buckets, expectedOrigin);
+  if (!objectReference) return url;
+
+  const { data: signedData, error } = await supabase.storage
+    .from(objectReference.bucket)
+    .createSignedUrl(objectReference.path, 300);
+
+  if (error) throw error;
+  if (!signedData?.signedUrl) {
+    throw new Error(`Unable to sign private object from bucket ${objectReference.bucket}`);
+  }
+
+  return signedData.signedUrl;
 }

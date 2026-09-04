@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { log } from '@/lib/logger';
+import { reportClientError } from '@/lib/errorReporter';
 
 interface Props {
   children: ReactNode;
@@ -16,6 +17,47 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   prevResetKey?: string | number;
+}
+
+// sessionStorage key to throttle auto-reload -- avoids infinite loop
+// when a chunk is genuinely broken (not just stale).
+const CHUNK_RELOAD_KEY = 'zapp_chunk_reload_v1';
+
+// sessionStorage lanca quando o navegador bloqueia storage (private browsing,
+// cookies de terceiros, iframe sandbox). Sem estes wrappers, qualquer acesso
+// derruba o proprio boundary ou os botoes de recuperacao.
+function readReloadFlag(): { ok: boolean; value: string | null } {
+  try {
+    return { ok: true, value: sessionStorage.getItem(CHUNK_RELOAD_KEY) };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
+function writeReloadFlag(): boolean {
+  try {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearReloadFlag(): void {
+  try {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+  } catch {
+    // sem storage nao ha flag para limpar
+  }
+}
+
+function isChunkLoadError(error: Error): boolean {
+  return (
+    error.name === 'ChunkLoadError' ||
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Loading chunk') ||
+    error.message.includes('Loading CSS chunk')
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -38,19 +80,49 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     log.error('ErrorBoundary caught an error:', error, errorInfo);
+    reportClientError(error, {
+      source: 'ErrorBoundary',
+      componentStack: (errorInfo.componentStack ?? '').slice(0, 1500),
+    });
     this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
+
+    // Auto-reload on ChunkLoadError -- happens when the browser has a stale
+    // index.html referencing chunk hashes from a previous Vercel deployment.
+    // One reload per session to prevent infinite loops if the chunk is
+    // genuinely missing (not just stale).
+    if (isChunkLoadError(error)) {
+      const flag = readReloadFlag();
+      if (!flag.ok) {
+        // Sem storage nao da para registrar que ja recarregamos; recarregar aqui
+        // viraria loop infinito quando o chunk esta mesmo faltando.
+        log.warn('ChunkLoadError com sessionStorage indisponivel (leitura) -- mostrando UI de erro em vez de recarregar');
+      } else if (flag.value) {
+        log.warn('ChunkLoadError depois de ja ter recarregado -- chunk realmente ausente, mostrando UI de erro');
+      } else if (writeReloadFlag()) {
+        log.warn('ChunkLoadError detectado -- recarregando para pegar os assets do deploy novo');
+        window.location.reload();
+        return;
+      } else {
+        // Leitura passou mas escrita falhou (Safari em navegacao privada, quota
+        // estourada). Diagnostico proprio: nao e chunk ausente, e storage.
+        log.warn('ChunkLoadError com sessionStorage indisponivel (escrita) -- mostrando UI de erro em vez de recarregar');
+      }
+    }
   }
 
   private handleRetry = () => {
+    clearReloadFlag();
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   private handleGoHome = () => {
+    clearReloadFlag();
     window.location.href = '/';
   };
 
   private handleReload = () => {
+    clearReloadFlag();
     window.location.reload();
   };
 
@@ -85,8 +157,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <CardContent className="space-y-4">
               {/* BUG-5 FIX: use import.meta.env.DEV, not process.env.NODE_ENV
-                  process.env.NODE_ENV is not populated by Vite in browser builds,
-                  so this block would NEVER render in development with the old code. */}
+                    process.env.NODE_ENV is not populated by Vite in browser builds,
+                    so this block would NEVER render in development with the old code. */}
               {import.meta.env.DEV && this.state.error && (
                 <details className="text-sm bg-muted/50 rounded-lg p-3 border border-border">
                   <summary className="cursor-pointer font-medium text-foreground flex items-center gap-2">

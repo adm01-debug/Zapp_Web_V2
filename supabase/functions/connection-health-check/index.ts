@@ -45,8 +45,19 @@ Deno.serve(async (req) => {
             // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
             const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
             if (dbStatus === 'connected' || !isTransient) {
-              await supabase.from('whatsapp_connections').update({ status: dbStatus, updated_at: new Date().toISOString() }).eq('id', conn.id);
-              if (dbStatus === 'disconnected' && conn.status === 'connected') {
+              // .eq('status', conn.status): um webhook pode ter mudado a linha
+              // enquanto liamos o estado na GO. Sem isso, um qr_pending recem
+              // gravado viraria 'disconnected' e dispararia alerta falso.
+              // CAS pelo status lido. '.eq' com null nao casa linha nenhuma no
+              // PostgREST, entao conexao com status NULL precisa de 'is.null'.
+              const { data: updated } = await supabase.from('whatsapp_connections')
+                .update({ status: dbStatus, updated_at: new Date().toISOString() })
+                .eq('id', conn.id)
+                .or(conn.status === null || conn.status === undefined
+                  ? 'status.is.null'
+                  : `status.eq.${conn.status}`)
+                .select('id');
+              if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
                 alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
               }
             }

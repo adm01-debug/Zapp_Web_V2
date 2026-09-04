@@ -50,7 +50,7 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />Transferir Conversa
@@ -59,7 +59,7 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Selecione o atendente</label>
+            <p className="text-sm font-medium">Selecione o atendente</p>
             <ScrollArea className="h-48 border rounded-lg p-2">
               <div className="space-y-1">
                 {agents?.map((agent) => (
@@ -68,7 +68,7 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
                       selectedAgent === agent.id ? 'bg-primary/20 border border-primary' : 'hover:bg-muted')}>
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={agent.avatar_url || undefined} />
-                      <AvatarFallback>{agent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>{(agent.name ?? '?').substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <span className="flex-1 text-left text-sm">{agent.name}</span>
                     {selectedAgent === agent.id && <Check className="w-4 h-4 text-primary" />}
@@ -78,8 +78,8 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
             </ScrollArea>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Comentário (opcional)</label>
-            <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ex: Cliente precisa de suporte técnico" />
+            <label htmlFor="handoff-comment" className="text-sm font-medium">Comentário (opcional)</label>
+            <Input id="handoff-comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ex: Cliente precisa de suporte técnico" />
           </div>
         </div>
         <DialogFooter>

@@ -42,7 +42,7 @@ export const ProductManagement: React.FC = () => {
   } = useProductManagement();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ export const ProductManagement: React.FC = () => {
 
       {/* Product Form Dialog */}
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) closeForm(); }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
             <DialogDescription>{editingProduct ? 'Atualize as informações do produto' : 'Preencha as informações para criar um novo produto'}</DialogDescription>

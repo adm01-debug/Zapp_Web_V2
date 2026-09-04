@@ -1,10 +1,13 @@
 import { Construction } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCurrentModule } from '@/hooks/system/useCurrentModule';
 import { useDocumentTitle } from '@/hooks/ui/useDocumentTitle';
 import { useAriaAnnouncer } from '@/hooks/ui/useAriaAnnouncer';
 import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
+import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
+import { ViewContainer } from '@/components/layout/ViewContainer';
+import { NavigationService } from '@/services/navigation.service';
 
 import * as Views from './lazyViews';
 
@@ -19,22 +22,18 @@ interface ViewRouterProps {
   onNavigateTo?: (viewId: string) => void;
 }
 
-// Views that manage their own full-screen layout (no header)
-const FULL_SCREEN_VIEWS = new Set(['inbox', 'pipeline', 'omni-inbox', 'team-chat', 'email-chat']);
+// Derived from nav metadata — single source of truth for full-screen layout flag
+// Views que trazem o proprio scroller (usam PageTemplate). Nao sao full-screen:
+// continuam dentro do wrapper flat, so nao ganham o scroller compartilhado.
+const OWN_SCROLL_VIEWS = new Set(['settings']);
 
-interface WithHeaderProps {
-  viewId: string;
-  children: React.ReactNode;
-}
-
-function WithHeader({ viewId, children }: WithHeaderProps) {
-  if (FULL_SCREEN_VIEWS.has(viewId)) return <>{children}</>;
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0 overflow-auto p-6">{children}</div>
-    </div>
-  );
-}
+const FULL_SCREEN_VIEWS = new Set(
+  [
+    ...NavigationService.getPrimaryNav(),
+    ...NavigationService.getGroups().flatMap(g => g.items),
+    ...NavigationService.getAdvancedNav(),
+  ].filter(item => item.layout === 'full').map(item => item.id)
+);
 
 // Declarative route map — easier to maintain than switch/case
 const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, never>>>> = {
@@ -133,7 +132,11 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   }, [currentView, userId]);
 
   return (
-    <WithHeader viewId={currentView}>
+    <ViewContainer
+      fullScreen={FULL_SCREEN_VIEWS.has(currentView)}
+      ownScroll={OWN_SCROLL_VIEWS.has(currentView)}
+      viewId={currentView}
+    >
       {prefersReduced ? (
         <div key={currentView} className="h-full w-full">{content}</div>
       ) : (
@@ -144,17 +147,17 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            className="h-full w-full"
+            className="h-full w-full min-w-0"
           >
             {content}
           </motion.div>
         </AnimatePresence>
       )}
-    </WithHeader>
+    </ViewContainer>
   );
 }
 
-/** Per-view error boundary with automatic retry */
+/** Per-view error boundary with automatic retry and Suspense for lazy loading */
 function ErrorBoundaryView({ viewId, children }: { viewId: string; children: React.ReactNode }) {
   const mod = useCurrentModule(viewId);
   return (
@@ -163,7 +166,9 @@ function ErrorBoundaryView({ viewId, children }: { viewId: string; children: Rea
       moduleName={mod.label}
       maxAutoRetries={2}
     >
-      {children}
+      <Suspense fallback={<ViewLoadingFallback noPadding />}>
+        {children}
+      </Suspense>
     </ErrorBoundaryWithRetry>
   );
 }

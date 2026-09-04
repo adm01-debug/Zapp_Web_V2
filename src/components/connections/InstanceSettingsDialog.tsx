@@ -68,7 +68,7 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-primary" />Configurações — {connectionName}</DialogTitle>
           <DialogDescription>Gerencie configurações, perfil, privacidade e etiquetas da instância</DialogDescription>

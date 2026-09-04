@@ -28,7 +28,7 @@ export function ForwardMessageDialog({ open, onOpenChange, message, onForward }:
 
   return (
     <Dialog open={open} onOpenChange={fwd.handleClose}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2 border-b border-border">
           <DialogTitle className="flex items-center gap-2">
             <Forward className="w-5 h-5 text-primary" />

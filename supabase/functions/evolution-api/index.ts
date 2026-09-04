@@ -81,7 +81,9 @@ serve(async (req) => {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       const data = await response.json();
-      if (data?.data && data.state === undefined) data.state = (data.data.loggedIn ?? data.data.LoggedIn ?? data.data.State === 'open') ? 'open' : 'close';
+      // '||' e nao '??': loggedIn:false explicito nao pode curto-circuitar o
+      // fallback por State — a GO manda os dois e nem sempre concordam.
+      if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
         await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
@@ -100,12 +102,12 @@ serve(async (req) => {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        const records = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
-        // deno-lint-ignore no-explicit-any
-        const found = records.find((r: any) =>
+        const records: Record<string, unknown>[] =
+          Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+        const found = records.find((r) =>
           r?.name === name || r?.Name === name ||
           r?.instanceId === name || r?.InstanceID === name || r?.id === name || r?.ID === name);
-        return found?.instanceId ?? found?.InstanceID ?? found?.id ?? found?.ID ?? null;
+        return (found?.instanceId ?? found?.InstanceID ?? found?.id ?? found?.ID ?? null) as string | null;
       } catch {
         return null;
       }
@@ -156,7 +158,9 @@ serve(async (req) => {
       let audioSource = typeof rawAudio === 'string'
         ? rawAudio.trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
         : rawAudio;
-      if (typeof audioSource === 'string') audioSource = await resolvePrivateBucketUrl(supabase, audioSource);
+      if (typeof audioSource === 'string') {
+        audioSource = await resolvePrivateBucketUrl(supabase, audioSource, undefined, supabaseUrl);
+      }
       const audioPayload: Record<string, unknown> = { number: body.number, audio: audioSource };
       if (body.delay) audioPayload.delay = body.delay;
       if (body.quoted) audioPayload.quoted = body.quoted;
@@ -165,7 +169,14 @@ serve(async (req) => {
 
     if (action === 'send-sticker') {
       let finalStickerUrl = body.sticker || body.mediaUrl;
-      if (typeof finalStickerUrl === 'string') finalStickerUrl = await resolvePrivateBucketUrl(supabase, finalStickerUrl, ['whatsapp-media']);
+      if (typeof finalStickerUrl === 'string') {
+        finalStickerUrl = await resolvePrivateBucketUrl(
+          supabase,
+          finalStickerUrl,
+          ['whatsapp-media'],
+          supabaseUrl
+        );
+      }
       return await proxy(`/message/sendSticker/${instance}`, 'POST', { number: body.number, sticker: finalStickerUrl, quoted: body.quoted });
     }
 

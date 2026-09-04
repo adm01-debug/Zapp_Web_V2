@@ -109,7 +109,7 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitMerge className="w-5 h-5 text-primary" />

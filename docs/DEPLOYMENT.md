@@ -165,8 +165,11 @@ VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
 VITE_SUPABASE_ANON_KEY=xxx
 
 # Externo
-VITE_EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
-VITE_EXTERNAL_SUPABASE_ANON_KEY=xxx
+VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+VITE_CLIENTES_SUPABASE_ANON_KEY=xxx
+
+# Nota: VITE_CLIE5TES_* tem fallback hardcoded (anon key pública por design).
+# No Vercel, VITE_CLIENTES_* é opcional — o fallback já aponta para pgxfvjmuubtbowutlide.
 
 # Sentry
 VITE_SENTRY_DSN=xxx
@@ -178,6 +181,10 @@ VITE_SENTRY_DSN=xxx
 # WhatsApp
 EVOLUTION_API_URL=https://evolution.atomicabr.com.br
 EVOLUTION_API_KEY=xxx
+
+# Catálogo de produtos (usadas apenas pela edge promogifts-catalog — NÃO expostas ao front)
+PROMOGIFTS_SUPABASE_URL=https://doufsxqlfjyuvxuezpln.supabase.co
+PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=xxx
 
 # IA
 OPENAI_API_KEY=sk-xxx
@@ -272,7 +279,7 @@ supabase migration list
 - [ ] Edge Functions deployadas
 - [ ] Secrets configurados
 - [ ] Verificar logs após deploy
-- [ ] Testar fluxos críticos em produção
+- [ ] Testar fluxos crõticos em produção
 
 ---
 

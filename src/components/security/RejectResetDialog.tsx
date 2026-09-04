@@ -20,7 +20,7 @@ export function RejectResetDialog({ open, email, processing, onClose, onReject }
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Rejeitar Solicitação</DialogTitle>
           <DialogDescription>A solicitação de <strong>{email}</strong> será rejeitada.</DialogDescription>

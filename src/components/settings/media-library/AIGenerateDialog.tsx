@@ -53,7 +53,7 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { audioRef.current?.pause(); setGenPreviewUrl(null); } }}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Gerar Áudio com IA</DialogTitle>
           <DialogDescription>Descreva o efeito sonoro ou música que deseja gerar usando ElevenLabs</DialogDescription>

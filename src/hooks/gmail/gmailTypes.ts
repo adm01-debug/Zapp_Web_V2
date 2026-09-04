@@ -4,6 +4,7 @@ export interface GmailAccount {
   is_active: boolean;
   sync_status: 'pending' | 'syncing' | 'synced' | 'error';
   last_sync_at: string | null;
+  last_error: string | null;
   created_at: string;
 }
 

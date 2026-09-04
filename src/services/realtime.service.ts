@@ -30,7 +30,7 @@ export class RealtimeService {
     for (const idsChunk of chunkArray(uniqueIds, CONTACT_FETCH_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*')
+        .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
         .in('id', idsChunk);
         
       if (error) {
@@ -45,21 +45,39 @@ export class RealtimeService {
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('*')
+      .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       
     if (contactsError) throw contactsError;
     
+    // Filtra stubs (contact_id NULL e placeholders sem conteudo real).
+    // Esses registros sao artefatos do race condition no webhook handler
+    // e nao devem aparecer na inbox nem inflar o indice do virtualizer.
     const { data: recentMessages, error: messagesError } = await supabase
       .from('messages')
       .select('*')
+      .not('contact_id', 'is', null)
       .order('created_at', { ascending: false })
       .limit(RECENT_MESSAGES_LIMIT);
       
     if (messagesError) throw messagesError;
 
-    const normalizedMessages = ((recentMessages ?? []) as RealtimeMessage[]).map(normalizeMessage);
+    // Dedup por external_id: mantém a linha com mais conteúdo
+    const rawMessages = (recentMessages ?? []) as RealtimeMessage[];
+    const dedupedMessages = (() => {
+      const seen = new Map<string, RealtimeMessage>();
+      for (const m of rawMessages) {
+        const key = m.external_id ?? m.id;
+        const existing = seen.get(key);
+        if (!existing || (m.content?.length ?? 0) > (existing.content?.length ?? 0)) {
+          seen.set(key, m);
+        }
+      }
+      return Array.from(seen.values());
+    })();
+
+    const normalizedMessages = dedupedMessages.map(normalizeMessage);
     const seededContactRows = (seededContacts ?? []) as ConversationContact[];
     const seededContactIds = new Set(seededContactRows.map((c) => c.id));
     
@@ -69,19 +87,6 @@ export class RealtimeService {
     const messageContacts = await this.fetchContactsByIds(missingContactIds);
     
     return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages);
-  }
-
-  static subscribeToMessages(onInsert: (payload: any) => void, onUpdate: (payload: any) => void, channelName = 'messages-realtime') {
-    return supabase.channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, onInsert)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, onUpdate)
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          log.debug(`Realtime subscribed: ${channelName}`);
-        } else if (status === 'CHANNEL_ERROR') {
-          log.error(`Realtime channel error: ${channelName}`);
-        }
-      });
   }
 
   static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {

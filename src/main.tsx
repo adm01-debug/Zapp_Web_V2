@@ -6,20 +6,25 @@ import "./i18n"; // Initialize i18n
 import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
+import { reportClientError } from "./lib/errorReporter";
 
 const log = getLogger('App');
 if (window.performance && window.performance.mark) {
   performance.mark('main-init');
 }
-log.info('Initialized at', new Date().toISOString());
+log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });
+startDeploymentUpdateMonitor();
 
 // Global unhandled error handlers for resilience
 window.addEventListener('unhandledrejection', (event) => {
   log.error('Unhandled promise rejection:', event.reason);
+  reportClientError(event.reason, { source: 'unhandledrejection' });
 });
 
 window.addEventListener('error', (event) => {
   log.error('Unhandled error:', event.error || event.message);
+  reportClientError(event.error ?? event.message, { source: 'window.onerror' });
 });
 
 // Initialize Web Vitals monitoring

@@ -123,7 +123,7 @@ interface LongPressMenuProps {
 export function LongPressMenu({ children, items, delay = 500, className }: LongPressMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleItemClick = (item: LongPressMenuItem) => { haptics.selection(); item.onClick(); setIsOpen(false); };
 

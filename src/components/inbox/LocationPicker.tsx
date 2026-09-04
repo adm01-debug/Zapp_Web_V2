@@ -41,7 +41,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-lg p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2 border-b border-border">
           <DialogTitle className="flex items-center gap-2"><MapPin className="w-5 h-5 text-primary" />Compartilhar Localização</DialogTitle>
           <DialogDescription>Envie sua localização ou escolha um ponto no mapa</DialogDescription>

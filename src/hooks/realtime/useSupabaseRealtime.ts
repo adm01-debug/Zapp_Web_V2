@@ -1,94 +1,111 @@
- import { useEffect, useCallback } from 'react';
- import { supabase } from '@/integrations/supabase/client';
- import { RealtimePostgresChangesPayload, RealtimeChannel } from '@supabase/supabase-js';
- import { log } from '@/lib/logger';
- 
- interface RealtimeConfig<T extends { [key: string]: any }> {
-   channelName: string;
-   table: string;
-   filter?: string;
-   schema?: string;
-   onInsert?: (payload: RealtimePostgresChangesPayload<T>) => void;
-   onUpdate?: (payload: RealtimePostgresChangesPayload<T>) => void;
-   onDelete?: (payload: RealtimePostgresChangesPayload<T>) => void;
-   onAll?: (payload: RealtimePostgresChangesPayload<T>) => void;
-   enabled?: boolean;
- }
- 
- export function useSupabaseRealtime<T extends { [key: string]: any }>(config: RealtimeConfig<T>) {
-   const {
-     channelName,
-     table,
-     filter,
-     schema = 'public',
-     onInsert,
-     onUpdate,
-     onDelete,
-     onAll,
-     enabled = true
-   } = config;
- 
-   const handlePayload = useCallback((payload: RealtimePostgresChangesPayload<T>) => {
-     if (onAll) onAll(payload);
-     if (payload.eventType === 'INSERT' && onInsert) onInsert(payload);
-     if (payload.eventType === 'UPDATE' && onUpdate) onUpdate(payload);
-     if (payload.eventType === 'DELETE' && onDelete) onDelete(payload);
-   }, [onInsert, onUpdate, onDelete, onAll]);
- 
+import { useCallback, useEffect, useRef } from 'react';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { log } from '@/lib/logger';
+
+interface RealtimeConfig<T extends { [key: string]: any }> {
+  channelName: string;
+  table: string;
+  filter?: string;
+  schema?: string;
+  onInsert?: (payload: RealtimePostgresChangesPayload<T>) => void;
+  onUpdate?: (payload: RealtimePostgresChangesPayload<T>) => void;
+  onDelete?: (payload: RealtimePostgresChangesPayload<T>) => void;
+  onAll?: (payload: RealtimePostgresChangesPayload<T>) => void;
+  enabled?: boolean;
+}
+
+export function useSupabaseRealtime<T extends { [key: string]: any }>(config: RealtimeConfig<T>) {
+  const {
+    channelName,
+    table,
+    filter,
+    schema = 'public',
+    onInsert,
+    onUpdate,
+    onDelete,
+    onAll,
+    enabled = true,
+  } = config;
+
+  const handlersRef = useRef({ onInsert, onUpdate, onDelete, onAll });
+
+  useEffect(() => {
+    handlersRef.current = { onInsert, onUpdate, onDelete, onAll };
+  }, [onInsert, onUpdate, onDelete, onAll]);
+
+  const handlePayload = useCallback((payload: RealtimePostgresChangesPayload<T>) => {
+    const handlers = handlersRef.current;
+    handlers.onAll?.(payload);
+    if (payload.eventType === 'INSERT') handlers.onInsert?.(payload);
+    if (payload.eventType === 'UPDATE') handlers.onUpdate?.(payload);
+    if (payload.eventType === 'DELETE') handlers.onDelete?.(payload);
+  }, []);
+
   useEffect(() => {
     if (!enabled) return;
 
-    let channel: RealtimeChannel;
-    let retryTimeout: NodeJS.Timeout;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 5;
+    let channel: RealtimeChannel | null = null;
 
-    const subscribe = () => {
-      try {
-        channel = supabase
-          .channel(channelName)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema,
-              table,
-              // Omit filter entirely when undefined — passing filter:undefined
-              // causes a "mismatch between server and client bindings" error in
-              // Supabase Realtime because the server hashes the binding config
-              // including the filter key.
-              ...(filter !== undefined ? { filter } : {}),
-            },
-            handlePayload
-          )
-          .subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-              log.debug(`Realtime subscribed: ${channelName}`);
-              attempts = 0;
-            } else if (status === 'CHANNEL_ERROR') {
-              log.error(`Realtime channel error (${channelName}):`, err);
-              if (attempts < MAX_ATTEMPTS) {
-                attempts++;
-                const delay = Math.min(1000 * Math.pow(2, attempts), 10000);
-                log.warn(`Retrying realtime connection (${channelName}) in ${delay}ms... (Attempt ${attempts}/${MAX_ATTEMPTS})`);
-                retryTimeout = setTimeout(subscribe, delay);
-              }
-            } else if (status === 'CLOSED') {
-              log.debug(`Realtime channel closed: ${channelName}`);
-            }
-          });
-      } catch (err) {
-        log.error(`Failed to subscribe to realtime (${channelName}):`, err);
-      }
-    };
+    try {
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema,
+            table,
+            // Omitting an absent filter is part of the server binding contract.
+            ...(filter !== undefined ? { filter } : {}),
+          },
+          handlePayload
+        )
+        .subscribe((status, error) => {
+          if (status === 'SUBSCRIBED') {
+            log.debug(`Realtime subscribed: ${channelName}`);
+            return;
+          }
 
-    subscribe();
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            // RealtimeChannel already schedules channel rejoin and RealtimeClient
+            // already reconnects the shared socket. Removing/recreating each of
+            // the app's channels here races those native timers and amplifies a
+            // single socket close into a thundering herd.
+            log.warn(`Realtime temporarily unavailable (${channelName}); native retry active`, {
+              status,
+              error: error?.message,
+              online: typeof navigator === 'undefined' ? undefined : navigator.onLine,
+              visibility: typeof document === 'undefined' ? undefined : document.visibilityState,
+            });
+            return;
+          }
+
+          if (status === 'CLOSED') {
+            log.debug(`Realtime channel closed: ${channelName}`);
+          }
+        });
+    } catch (error) {
+      log.error(`Failed to subscribe to realtime (${channelName}):`, error);
+    }
 
     return () => {
-      if (retryTimeout) clearTimeout(retryTimeout);
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [enabled, channelName, schema, table, filter, handlePayload]);
- }
+
+  // Quando o JWT é renovado pelo Supabase Auth, atualiza o auth do WebSocket
+  // do Realtime para que as subscrições não caiam na expiração do token (~1h).
+  // Sem isso, o socket fecha ao expirar e todos os canais caem juntos.
+  // Guard defensivo: supabase.auth.onAuthStateChange pode não existir em mocks de teste.
+  useEffect(() => {
+    if (typeof supabase.auth?.onAuthStateChange !== 'function') return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        supabase.realtime.setAuth(session?.access_token ?? null);
+        log.debug('Realtime auth updated after TOKEN_REFRESHED');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+}

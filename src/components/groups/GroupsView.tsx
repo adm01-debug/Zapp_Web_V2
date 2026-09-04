@@ -60,7 +60,7 @@ export function GroupsView() {
   };
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-full relative bg-background">
+    <div className="space-y-4 sm:space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
       <FloatingParticles />
       <PageHeader
@@ -86,7 +86,7 @@ export function GroupsView() {
                   Adicionar Grupo
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                   <DialogTitle>Adicionar Grupo</DialogTitle>
                 </DialogHeader>
@@ -275,7 +275,7 @@ export function GroupsView() {
 
       {/* Broadcast Dialog */}
       <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-primary" />

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
-import { SicoobBridgeReplySchema, parseBody } from "../_shared/schemas.ts";
+import { SicoobBridgeReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     const parsed = parseBody(SicoobBridgeReplySchema, await req.json());
-    if (!parsed.success) return errorResponse(parsed.error, 400, req);
+    if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contact_id, content, message_id, agent_id, created_at } = parsed.data;
 
@@ -49,10 +49,10 @@ Deno.serve(async (req) => {
     if (agent_id) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('name')
         .eq('id', agent_id)
         .single();
-      if (profile?.full_name) agentName = profile.full_name;
+      if (profile?.name) agentName = profile.name;
     }
 
     // Forward to Sicoob Gifts

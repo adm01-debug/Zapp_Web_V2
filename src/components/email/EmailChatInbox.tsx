@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Mail } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
 import { EmailThreadList } from './EmailThreadList';
 import { EmailChatThread } from './EmailChatThread';
@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export function EmailChatInbox() {
   const {
-    activeAccount, threads, threadsLoading,
+    activeAccount, threads, threadsLoading, connectGmail,
     labels, syncInbox, syncLabels, unreadCount, subscribeToThreads
   } = useGmail();
 
@@ -33,7 +33,7 @@ export function EmailChatInbox() {
   // No account
   if (!activeAccount) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-16 px-6">
+      <div className="flex flex-col items-center justify-center h-full w-full py-16 px-6">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
           <Mail className="w-8 h-8 text-primary" />
         </div>
@@ -42,11 +42,12 @@ export function EmailChatInbox() {
           Conecte sua conta Gmail para gerenciar e-mails diretamente pela plataforma, com interface de chat.
         </p>
         <button
-          onClick={() => document.dispatchEvent(new CustomEvent('navigate-to', { detail: 'integrations' }))}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          onClick={() => connectGmail.mutate()}
+          disabled={connectGmail.isPending}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <Mail className="w-4 h-4" />
-          Conectar Gmail
+          {connectGmail.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+          {connectGmail.isPending ? 'Conectando…' : 'Conectar Gmail'}
         </button>
       </div>
     );

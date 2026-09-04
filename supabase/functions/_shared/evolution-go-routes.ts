@@ -12,6 +12,9 @@ export interface GoRoute {
   method: string;
   body?: unknown;
   auth: 'instance' | 'admin';
+  // Payload v2 invalido: a rota existe, mas falta dado obrigatorio. Diferente de
+  // 'null' (rota nao mapeada), que faz o wrapper repassar o path v2 original.
+  invalid?: string;
   // Content-Type alternativo (workaround do jid_validation_middleware do GO,
   // que corrompe arrays em application/json; o handler faz o bind normalmente).
   contentType?: string;
@@ -22,6 +25,21 @@ export interface GoRoute {
 // corretos (número puro perde o domínio e corrompe grupos e chats LID).
 const jidWithoutDevice = (jid?: string): string | undefined =>
   typeof jid === 'string' ? jid.replace(/:\d+(?=@)/, '') : undefined;
+
+
+// /user/avatar e /user/info do GO PENDURAM (sem resposta ate o timeout do caller)
+// quando number vem sem dominio; com JID completo respondem em ~1s. Validado ao
+// vivo em 28/08/2026 na instancia evolution-go-rxj2 (0.7.2).
+// LID (identificador interno do WhatsApp) tem >= 14 digitos e so resolve com @lid;
+// com @s.whatsapp.net a GO devolve 500 "no profile picture" e a foto se perde.
+// Telefone real (BR: 12-13 digitos) usa @s.whatsapp.net. Quem ja tem dominio
+// (@lid, @g.us) passa intacto. Confirmado ao vivo em 28/08: mesmo LID => 500 com
+// @s.whatsapp.net, 200 com @lid.
+const toUserJid = (n?: unknown): string | undefined => {
+  if (typeof n !== 'string' || !n) return undefined;
+  if (n.includes('@')) return n;
+  return /^\d{14,}$/.test(n) ? `${n}@lid` : `${n}@s.whatsapp.net`;
+};
 
 // presence v2 ('composing'|'recording'|'paused') → GO {state, isAudio}
 const presenceToGo = (presence: unknown, delay?: unknown) => ({
@@ -112,7 +130,7 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     return { path: '/send/status/media', method: 'POST', auth: 'instance', body: { url: b.content ?? b.media, type: b.type ?? 'image', ...(b.caption ? { caption: b.caption } : {}) } };
   }
   if (m(/^\/message\/sendReaction\/[^/]+$/)) {
-    if (!b.key?.remoteJid || !b.key?.id) return null;
+    if (!b.key?.remoteJid || !b.key?.id) return { path: '/message/react', method: 'POST', auth: 'instance', invalid: 'sendReaction requer key.remoteJid e key.id' };
     return { path: '/message/react', method: 'POST', auth: 'instance', body: {
       number: jidWithoutDevice(b.key.remoteJid), reaction: b.reaction, id: b.key.id,
       fromMe: b.key?.fromMe === true,
@@ -132,11 +150,12 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
       chat: b.remoteJid, messageId: b.id,
     }};
   if (m(/^\/chat\/markMessageAsRead\/[^/]+$/)) {
-    const msgs = Array.isArray(b.readMessages) ? b.readMessages : [];
-    if (msgs.length === 0 || !msgs[0]?.remoteJid) return null;
+    const msgs: Record<string, unknown>[] = Array.isArray(b.readMessages) ? b.readMessages : [];
+    const firstJid = typeof msgs[0]?.remoteJid === 'string' ? msgs[0].remoteJid : undefined;
+    if (!firstJid) return { path: '/message/markread', method: 'POST', auth: 'instance', invalid: 'markMessageAsRead requer readMessages[0].remoteJid' };
     return { path: '/message/markread', method: 'POST', auth: 'instance', body: {
-      id: msgs.map((x: any) => x?.id).filter(Boolean),
-      number: jidWithoutDevice(msgs[0].remoteJid),
+      id: msgs.map((x) => x?.id).filter(Boolean),
+      number: jidWithoutDevice(firstJid),
     }};
   }
   // GO exige o waE2E.Message com os nós de mídia (URL/mediaKey/directPath).
@@ -152,14 +171,14 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/chat\/updateBlockStatus\/[^/]+$/))
     return { path: b.status === 'unblock' ? '/user/unblock' : '/user/block', method: 'POST', auth: 'instance', body: { number: b.number } };
   if (m(/^\/chat\/fetchProfilePictureUrl\/[^/]+$/))
-    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: b.number, preview: false } };
+    return { path: '/user/avatar', method: 'POST', auth: 'instance', body: { number: toUserJid(b.number), preview: false } };
   if (m(/^\/(chat|message)\/archiveChat\/[^/]+$/))
     return { path: b.archive === false ? '/chat/unarchive' : '/chat/archive', method: 'POST', auth: 'instance', body: { chat: b.chat ?? b.lastMessage?.key?.remoteJid } };
   if (m(/^\/chat\/findContacts\/[^/]+$/))
     return { path: '/user/contacts', method: 'GET', auth: 'instance' };
   if (m(/^\/chat\/fetchProfile\/[^/]+$/))
     return { path: '/user/info', method: 'POST', auth: 'instance', body: {
-      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
     }};
 
   // ── Instância ──
@@ -239,11 +258,11 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
     return { path: '/user/profileStatus', method: 'POST', auth: 'instance', body: { status: b.status } };
   if (m(/^\/profile\/fetchProfilePicture\/[^/]+/))
     return { path: '/user/avatar', method: 'POST', auth: 'instance', body: {
-      number: b.number ?? q.get('number'), preview: false,
+      number: toUserJid(b.number ?? q.get('number')), preview: false,
     }};
   if (m(/^\/profile\/fetchBusinessProfile\/[^/]+$/))
     return { path: '/user/info', method: 'POST', auth: 'instance', body: {
-      number: Array.isArray(b.number) ? b.number : [b.number].filter(Boolean),
+      number: (Array.isArray(b.number) ? b.number : [b.number]).map(toUserJid).filter(Boolean),
     }};
   if (m(/^\/profile\/updatePrivacySettings\/[^/]+$/))
     // v2 lowercase → GO camelCase (valores PrivacySetting são os mesmos: all/contacts/none/…)
@@ -261,8 +280,11 @@ export function translateV2ToGo(fullPath: string, method: string, body: any): Go
   if (m(/^\/label\/findLabels\/[^/]+$/))
     return { path: '/label/list', method: 'GET', auth: 'instance' };
   if (m(/^\/label\/handleLabel\/[^/]+$/)) {
-    const raw = String(b.number ?? '');
-    const jid = raw.includes('@') ? raw : raw + '@s.whatsapp.net';
+    // Sem a heuristica de LID do toUserJid: alvo de rotulo e telefone, e numero
+    // internacional de 14-15 digitos cairia em @lid e a GO nao acharia o contato.
+    const rawNumber = typeof b.number === 'string' ? b.number.trim() : '';
+    if (!rawNumber) return { path: '/label/chat', method: 'POST', auth: 'instance', invalid: 'handleLabel requer number' };
+    const jid = rawNumber.includes('@') ? rawNumber : `${rawNumber}@s.whatsapp.net`;
     return { path: b.action === 'remove' ? '/unlabel/chat' : '/label/chat', method: 'POST', auth: 'instance', body: {
       jid, labelId: b.labelId,
     }};

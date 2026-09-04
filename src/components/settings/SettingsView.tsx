@@ -44,6 +44,7 @@ export function SettingsView() {
 
   return (
     <PageTemplate
+      constrained
       title="Configurações"
       subtitle="Configure o comportamento da plataforma"
       icon={<Settings className="w-5 h-5" />}

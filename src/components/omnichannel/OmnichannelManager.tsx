@@ -104,7 +104,7 @@ export function OmnichannelManager() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -121,7 +121,7 @@ export function OmnichannelManager() {
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" />Adicionar Canal</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Canal</DialogTitle>
                 </DialogHeader>

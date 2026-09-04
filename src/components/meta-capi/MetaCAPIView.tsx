@@ -111,7 +111,7 @@ export function MetaCAPIView() {
   }));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader
         title="Meta Conversions API"
         subtitle="Rastreie eventos de conversão para otimização de anúncios"
@@ -220,7 +220,7 @@ export function MetaCAPIView() {
 
       {/* Config Dialog */}
       <Dialog open={showConfig} onOpenChange={setShowConfig}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader><DialogTitle>Configurar Meta CAPI</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>

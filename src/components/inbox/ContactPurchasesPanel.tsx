@@ -130,7 +130,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-sm">
           <DialogHeader><DialogTitle>Nova Compra/Proposta</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título" />

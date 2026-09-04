@@ -36,7 +36,7 @@ export function CRM360ExplorerView() {
 
   if (!isExternalConfigured) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full w-full">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -49,7 +49,7 @@ export function CRM360ExplorerView() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 h-full flex flex-col">
+    <div className="space-y-4 h-full flex flex-col w-full min-w-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" />CRM 360° Explorer</h1>

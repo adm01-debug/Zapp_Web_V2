@@ -1,39 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { log } from '@/lib/logger';
+import { SERVICE_WORKER_ENABLED } from '@/config/service_worker';
 
 const LEGACY_CACHE_PREFIXES = ['whatsapp-crm-v'];
-const LEGACY_SW_RESET_FLAG = 'legacy-sw-reset-done';
-
-async function cleanupLegacyServiceWorker(): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || typeof caches === 'undefined') return false;
-
-  const cacheKeys = await caches.keys();
-  const legacyCacheKeys = cacheKeys.filter((key) =>
-    LEGACY_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))
-  );
-
-  if (legacyCacheKeys.length === 0) {
-    sessionStorage.removeItem(LEGACY_SW_RESET_FLAG);
-    return false;
-  }
-
-  log.info('[ServiceWorker] Cleaning legacy caches that can restore stale UI', legacyCacheKeys);
-
-  const registrations = navigator.serviceWorker.getRegistrations
-    ? await navigator.serviceWorker.getRegistrations()
-    : [];
-
-  await Promise.all(registrations.map((registration) => registration.unregister()));
-  await Promise.all(legacyCacheKeys.map((key) => caches.delete(key)));
-
-  if (sessionStorage.getItem(LEGACY_SW_RESET_FLAG) !== '1') {
-    sessionStorage.setItem(LEGACY_SW_RESET_FLAG, '1');
-    window.location.reload();
-    return true;
-  }
-
-  return false;
-}
 
 export function useServiceWorker() {
   const registeredRef = useRef(false);
@@ -42,6 +11,7 @@ export function useServiceWorker() {
     if (registeredRef.current) return;
     registeredRef.current = true;
 
+    if (SERVICE_WORKER_ENABLED) return;
     if (!('serviceWorker' in navigator)) return;
 
     const unregisterAll = async () => {
@@ -52,11 +22,16 @@ export function useServiceWorker() {
           log.info('[ServiceWorker] Unregistered existing worker');
         }
         
+        // Do not delete unrelated Cache Storage entries. Only caches created
+        // by the retired PWA implementation belong to this cleanup.
         if (typeof caches !== 'undefined') {
           const keys = await caches.keys();
-          for (const key of keys) {
+          const legacyKeys = keys.filter((key) =>
+            LEGACY_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))
+          );
+          for (const key of legacyKeys) {
             await caches.delete(key);
-            log.info('[ServiceWorker] Deleted cache:', key);
+            log.info('[ServiceWorker] Deleted legacy cache:', key);
           }
         }
       } catch (error) {

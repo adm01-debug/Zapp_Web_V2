@@ -134,7 +134,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setStep('configure'); resetContactSelection(); } }}>
-      <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0">
+      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0">
         {step === 'configure' && (
           <>
             <DialogHeader className="p-5 pb-3">
