@@ -58,6 +58,21 @@ const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
+const CB_FAILURE_THRESHOLD = 5;
+const CB_OPEN_DURATION_MS = 60_000;
+let cbFailures = 0;
+let cbOpenUntil = 0;
+function cbRecord(success: boolean): void {
+  if (success) { cbFailures = 0; return; }
+  cbFailures++;
+  if (cbFailures >= CB_FAILURE_THRESHOLD) cbOpenUntil = Date.now() + CB_OPEN_DURATION_MS;
+}
+function cbIsOpen(): boolean {
+  if (Date.now() < cbOpenUntil) return true;
+  if (cbOpenUntil > 0) { cbOpenUntil = 0; cbFailures = 0; }
+  return false;
+}
+
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function proxyToEvolution(
@@ -69,6 +84,12 @@ export async function proxyToEvolution(
   body?: unknown,
   instanceInPath?: string
 ): Promise<Response> {
+  if (cbIsOpen()) {
+    console.warn('[Evolution CB] circuit breaker aberto — rejeitando requisição');
+    return new Response(JSON.stringify({ error: true, status: 503, message: 'Evolution API temporariamente indisponível (circuit breaker aberto). Tente novamente em instantes.' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
   let apikey = evolutionApiKey;
   let goPath: string | null = null;
   let contentType = 'application/json';
@@ -165,11 +186,13 @@ export async function proxyToEvolution(
           // Shape de erro do GO: {"error":"..."} — expõe a causa real
           friendlyMessage = `Erro na API Evolution: ${goError}`;
         }
+        cbRecord(response.status >= 500);
         return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage, details: data }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
+      cbRecord(true);
       return new Response(JSON.stringify(normalizeGoResponse(goPath, data)), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -182,6 +205,7 @@ export async function proxyToEvolution(
     }
   }
 
+  cbRecord(false);
   return new Response(JSON.stringify({
     error: true, status: 504,
     message: `Falha ao conectar com a API Evolution: ${lastError?.message || 'Erro desconhecido'}`,
