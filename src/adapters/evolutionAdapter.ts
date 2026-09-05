@@ -155,6 +155,9 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     lead_score: 0,
     notes: null,
     risk_score: 0,
+    avatar_fetch_attempted_at: null,
+    conversation_status: 'open',
+    conversation_status_changed_at: null,
   };
 }
 
