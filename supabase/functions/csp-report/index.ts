@@ -1,7 +1,7 @@
-import { errorResponse, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
+import { errorResponse, handleCors, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 
 // Receptor de violacoes de CSP (report-uri em vercel.json). Sem auth (o navegador
-// envia sem JWT), sem CORS (report-uri nao passa por preflight), sem persistencia:
+// envia sem JWT), preflight so para o smoke de deploy, sem persistencia:
 // o objetivo e ter os relatorios nos logs da edge para calibrar a policy antes de
 // trocar Content-Security-Policy-Report-Only por Content-Security-Policy.
 const MAX_BODY = 8 * 1024;
@@ -90,6 +90,8 @@ function truncate(value: string, max: number): string {
 Deno.serve(async (req) => {
   const log = new Logger("csp-report");
 
+  const cors = handleCors(req);
+  if (cors) return cors;
   if (req.method !== "POST") return errorResponse("Method not allowed", 405, req);
 
   const ip = getClientIP(req);
