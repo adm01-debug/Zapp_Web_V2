@@ -1,4 +1,4 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
@@ -6,6 +6,13 @@ Deno.serve(async (req) => {
   if (cors) return cors;
 
   const log = new Logger("elevenlabs-tts-stream");
+
+  // JWT ja e validado pelo gateway (verify_jwt=true); aqui o usuario vira a
+  // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
+  const auth = await requireAuth(req);
+  if (auth instanceof Response) return auth;
+  const rl = await enforceRateLimit(`elevenlabs-tts-stream:${auth.userId}`, 30, 60_000);
+  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
     const parsed = parseBody(ElevenLabsTTSSchema, await req.json());

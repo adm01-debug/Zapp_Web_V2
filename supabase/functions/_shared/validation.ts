@@ -122,11 +122,20 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
 /** @deprecated Use getCorsHeaders(req) for origin-validated CORS. Kept for backward compat — do NOT use in new code. */
 export const corsHeaders = getCorsHeaders();
 
-/** Standard JSON error response (with origin-validated CORS) */
+/** Standard JSON error response (with origin-validated CORS).
+ * Em 5xx a mensagem original (frequentemente `err.message`, com nome de env
+ * var, host ou stack) fica so no log do servidor; o cliente recebe texto
+ * generico (CodeQL js/stack-trace-exposure). 4xx segue como esta: e a
+ * mensagem de validacao que o front exibe. */
 export function errorResponse(message: string, status = 400, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
+  let body = message;
+  if (status >= 500) {
+    console.error(`[edge] ${status}: ${message}`);
+    body = 'Internal server error';
+  }
   return new Response(
-    JSON.stringify({ error: message }),
+    JSON.stringify({ error: body }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
@@ -192,6 +201,63 @@ export function checkRateLimit(
   entry.count++;
   const remaining = Math.max(0, maxRequests - entry.count);
   return { allowed: entry.count <= maxRequests, remaining };
+}
+
+// Cliente service_role compartilhado pelo isolate (so para o limiter persistente).
+interface RateLimitRpcClient {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>
+  ) => PromiseLike<{ data: unknown; error: unknown }>;
+}
+let serviceClientPromise: Promise<RateLimitRpcClient> | null = null;
+function getServiceClient(): Promise<RateLimitRpcClient> {
+  if (!serviceClientPromise) {
+    serviceClientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1").then(({ createClient }) =>
+      createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+        auth: { persistSession: false },
+      })
+    ).catch((err) => {
+      serviceClientPromise = null;
+      throw err;
+    });
+  }
+  return serviceClientPromise;
+}
+
+/**
+ * Rate limit persistente (tabela edge_rate_limits + RPC consume_rate_limit,
+ * migration 20260905020000). O contador em memoria de checkRateLimit e so um
+ * pre-filtro: ele nao sobrevive a cold start nem e compartilhado entre
+ * isolates. Se o banco falhar, cai para o contador local (fail-open com log)
+ * em vez de derrubar a funcao.
+ */
+export async function enforceRateLimit(
+  key: string,
+  maxRequests = 30,
+  windowMs = 60_000
+): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
+  const local = checkRateLimit(key, maxRequests, windowMs);
+  if (!local.allowed) return { ...local, persistent: false };
+  try {
+    const client = await getServiceClient();
+    const { data, error } = await client.rpc("consume_rate_limit", {
+      p_key: key,
+      p_max: maxRequests,
+      p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),
+    });
+    if (error) throw error;
+    const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
+    if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
+    return {
+      allowed: row.allowed,
+      remaining: typeof row.remaining === "number" ? row.remaining : 0,
+      persistent: true,
+    };
+  } catch (err) {
+    console.warn("[rate-limit] limiter persistente indisponivel; usando contador local:", String(err));
+    return { ...local, persistent: false };
+  }
 }
 
 /** Extract client IP from request for rate limiting.

@@ -5,7 +5,7 @@ import {
   jsonResponse,
   requireEnv,
   Logger,
-  checkRateLimit,
+  enforceRateLimit,
   getClientIP,
   sanitizeString,
 } from "../_shared/validation.ts";
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const ip = getClientIP(req);
 
     // Strict IP rate limit: failed logins are high-risk — 10 per minute per IP
-    const ipRl = checkRateLimit(`record-failed:${ip}`, 10, 60_000);
+    const ipRl = await enforceRateLimit(`record-failed:${ip}`, 10, 60_000);
     if (!ipRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     let body: unknown;
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     if (!EMAIL_RE.test(email)) return errorResponse("invalid email", 400, req);
 
     // Per-email rate limit: prevents burst-locking a single account from multiple IPs
-    const emailRl = checkRateLimit(`record-failed-email:${email}`, 20, 60_000);
+    const emailRl = await enforceRateLimit(`record-failed-email:${email}`, 20, 60_000);
     if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const userAgent = sanitizeString((body as Record<string, unknown>)?.userAgent, 512) ?? null;
