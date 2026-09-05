@@ -129,7 +129,7 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
     }
 
     lastSyncedStatus.current = effectiveStatus;
-  }, [effectiveStatus, conversation.id, conversation.contact.phone, isConfigured, syncConversation, messageCount, agentName, conversation.contact.name, messages, sentiment]);
+  }, [effectiveStatus, conversation, isConfigured, syncConversation, messageCount, agentName, messages, sentiment]);
 
   return null; // Invisible component
 }

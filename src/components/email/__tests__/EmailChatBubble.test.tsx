@@ -129,11 +129,15 @@ describe('EmailChatBubble (h538172)', () => {
     expect(collapsed).not.toBeNull();
   });
 
-  it('sem HTML: botão expande para texto completo', () => {
+  it('sem HTML: botão alterna expandir/colapsar (B1 fix)', () => {
     const msg = makeMessage({ body_text: 'x'.repeat(500), body_html: '' });
-    render(<EmailChatBubble message={msg} isLast />);
+    render(<EmailChatBubble message={msg} isLast={false} />);
     const btn = screen.getByRole('button', { name: 'Ver e-mail completo' });
     fireEvent.click(btn);
     expect(screen.getByText('x'.repeat(500))).toBeInTheDocument();
+    const btnMenos = screen.getByRole('button', { name: 'Ver menos' });
+    fireEvent.click(btnMenos);
+    expect(screen.queryByText('x'.repeat(500))).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver e-mail completo' })).toBeInTheDocument();
   });
 });
