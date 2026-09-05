@@ -3,6 +3,7 @@ import { X, Reply, CornerDownRight, Image, Video, FileText, Music, MapPin, Stick
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 interface ReplyPreviewProps {
   message: Message;
@@ -26,7 +27,9 @@ export function ReplyPreview({ message, onCancel }: ReplyPreviewProps) {
   const isSent = message.sender === 'agent';
   const mediaInfo = getMediaInfo(message);
   const MediaIcon = mediaInfo?.icon;
-  
+  // whatsapp-media e bucket privado: o locator vira signed URL sob demanda.
+  const { url: thumbnailUrl } = useResolvedStorageUrl(message.mediaUrl ?? '');
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10, height: 0 }}
@@ -57,9 +60,9 @@ export function ReplyPreview({ message, onCancel }: ReplyPreviewProps) {
             </p>
           </div>
           {/* Show thumbnail for images */}
-          {message.mediaUrl && (message.type === 'image' || message.message_type === 'image') && (
+          {thumbnailUrl && (message.type === 'image' || message.message_type === 'image') && (
             <img
-              src={message.mediaUrl}
+              src={thumbnailUrl}
               alt="Preview"
               className="mt-1.5 w-12 h-12 rounded object-cover"
             />

@@ -6,6 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch } from "../_shared/evolution-send.ts";
+import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 
 function getGreeting(): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "numeric", hour12: false });
@@ -172,9 +173,11 @@ Deno.serve(async (req) => {
 
         if (hasMedia) {
           const mediaEndpoint = getMediaEndpoint(campaign.media_type);
+          // whatsapp-media e bucket privado: a GO so baixa via signed URL (5 min, por envio).
+          const mediaSource = await resolvePrivateBucketUrl(supabase, campaign.media_url, undefined, supabaseUrl);
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
-            { number: phone, mediatype: campaign.media_type, media: campaign.media_url, caption: personalizedMsg, delay: 0 },
+            { number: phone, mediatype: campaign.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },
             fetchWithRetry
           );
           sendResult = await sendResponse.json();

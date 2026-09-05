@@ -151,7 +151,14 @@ serve(async (req) => {
 
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
-    if (action === 'send-media') return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: body.mediaUrl || body.media, fileName: body.fileName, delay: body.delay, quoted: body.quoted });
+    if (action === 'send-media') {
+      // whatsapp-media e bucket privado: a GO precisa de uma signed URL para baixar o arquivo.
+      let mediaSource = body.mediaUrl || body.media;
+      if (typeof mediaSource === 'string') {
+        mediaSource = await resolvePrivateBucketUrl(supabase, mediaSource, undefined, supabaseUrl);
+      }
+      return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: mediaSource, fileName: body.fileName, delay: body.delay, quoted: body.quoted });
+    }
 
     if (action === 'send-audio') {
       const rawAudio = body.audio || body.audioUrl || body.mediaUrl;
@@ -307,7 +314,13 @@ serve(async (req) => {
     if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
     if (action === 'delete-template') return await proxy(`/template/delete/${instance}`, 'DELETE', body);
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
-    if (action === 'send-ptv') return await proxy(`/message/sendPtv/${instance}`, 'POST', { number: body.number, video: body.video || body.mediaUrl, delay: body.delay });
+    if (action === 'send-ptv') {
+      let videoSource = body.video || body.mediaUrl;
+      if (typeof videoSource === 'string') {
+        videoSource = await resolvePrivateBucketUrl(supabase, videoSource, undefined, supabaseUrl);
+      }
+      return await proxy(`/message/sendPtv/${instance}`, 'POST', { number: body.number, video: videoSource, delay: body.delay });
+    }
     if (action === 'offer-call') return await proxy(`/call/offerCall/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo ?? false, callDuration: body.callDuration ?? 5 });
     if (action === 'send-chat-presence') return await proxy(`/chat/sendPresence/${instance}`, 'POST', { number: body.number, presence: body.presence, delay: body.delay ?? 1200 });
     if (action === 'get-catalog') return await proxy(`/business/getCatalog/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
