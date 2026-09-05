@@ -16,7 +16,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright show-report",
     "typecheck": "tsc -b --force",
+    "implicit-any-check": "node scripts/ci/implicit-any-ratchet.mjs",
     "preview": "vite preview",
     "test:contracts": "vitest run --config vitest.contracts.config.ts",
     "prepare": "husky || true"
@@ -89,6 +92,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/dom": "^10.0.0",
     "@testing-library/jest-dom": "^6.9.1",
