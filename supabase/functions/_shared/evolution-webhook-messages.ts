@@ -12,6 +12,18 @@ import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMes
 // com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
 // download via API. Retorna a URL permanente no Storage ou null.
 // deno-lint-ignore no-explicit-any
+// Avatar apontando para o CDN do WhatsApp (URL expira) precisa ser re-buscado.
+// Compara o hostname parseado, nao substring (CodeQL js/incomplete-url-substring-sanitization).
+function isWhatsAppCdnUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === 'pps.whatsapp.net' || host.endsWith('.pps.whatsapp.net');
+  } catch {
+    return false;
+  }
+}
+
 async function persistIncomingMedia(
   supabase: any, instance: string, data: Record<string, unknown>,
   messageType: string, msgId: string, parsedUrl: string | null,
@@ -196,7 +208,7 @@ export async function handleIncomingMessage(
     } else {
       contact = newContact;
     }
-  } else if (!contact.avatar_url || contact.avatar_url.includes('pps.whatsapp.net')) {
+  } else if (!contact.avatar_url || isWhatsAppCdnUrl(contact.avatar_url)) {
     const picUrl = await fetchProfilePicFromApi(instance, phone);
     if (picUrl) {
       const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
