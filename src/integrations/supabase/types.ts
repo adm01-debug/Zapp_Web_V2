@@ -7842,6 +7842,10 @@ export type Database = {
           title: string
         }[]
       }
+      set_conversation_status: {
+        Args: { p_contact_id: string; p_next: string; p_reason?: string }
+        Returns: undefined
+      }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       store_gmail_tokens: {
         Args: {
