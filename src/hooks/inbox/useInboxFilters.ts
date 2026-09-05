@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
@@ -7,6 +7,7 @@ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
 import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { MainTab, SubTab } from '@/components/inbox/TicketTabs';
+import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
@@ -14,21 +15,17 @@ interface UseInboxFiltersProps {
 }
 
 export function useInboxFilters({ conversations, profileId }: UseInboxFiltersProps) {
+  const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
   const [mainTab, setMainTab] = useState<MainTab>('open');
   const [subTab, setSubTab] = useState<SubTab>('attending');
   const [showAll, setShowAll] = useState(false);
   const [selectedQueueId, setSelectedQueueId] = useState<string | null>(null);
-  const [selectedContactType, setSelectedContactType] = useState<string | null>(null);
+  const [selectedContactType, setSelectedContactType] = useState<string | null>(() => {
+    const typeFromUrl = new URLSearchParams(window.location.search).get('type');
+    return typeFromUrl && typeFromUrl !== 'all' ? typeFromUrl : null;
+  });
 
   const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
-
-  // Sync selectedContactType with URL
-  useEffect(() => {
-    const typeFromUrl = new URLSearchParams(window.location.search).get('type');
-    if (typeFromUrl && typeFromUrl !== 'all') {
-      setSelectedContactType(typeFromUrl);
-    }
-  }, []);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     setSelectedContactType(value);
@@ -90,19 +87,25 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
 
     // Tab-based filtering
     if (mainTab === 'open') {
-      result = result.filter(c => c.messages.length > 0);
+      result = fsmEnabled
+        ? result.filter(c => c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
+        : result.filter(c => c.messages.length > 0);
       if (subTab === 'attending') {
         if (!showAll) {
           result = result.filter(c => c.contact.assigned_to === profileId);
         }
       } else if (subTab === 'waiting') {
-        result = result.filter(c => !c.contact.assigned_to);
+        result = fsmEnabled
+          ? result.filter(c => c.contact.conversation_status === 'waiting')
+          : result.filter(c => !c.contact.assigned_to);
       }
       if (selectedQueueId) {
         result = result.filter(c => c.contact.queue_id === selectedQueueId);
       }
     } else if (mainTab === 'resolved') {
-      result = result.filter(c => c.messages.length === 0);
+      result = fsmEnabled
+        ? result.filter(c => c.contact.conversation_status === 'resolved')
+        : result.filter(c => c.messages.length === 0);
     }
 
     // Search
@@ -167,7 +170,7 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, showAll, selectedQueueId, selectedContactType, profileId, contactTagsMap]);
+  }, [conversations, search, filters, mainTab, subTab, showAll, selectedQueueId, selectedContactType, profileId, contactTagsMap, fsmEnabled]);
 
   return {
     mainTab, setMainTab,

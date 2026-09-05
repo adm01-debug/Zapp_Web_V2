@@ -157,14 +157,14 @@ export default function Auth() {
                         <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                         <div className="relative group">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                          <Input id="login-email" name="email" autoComplete="username" type="email" placeholder="seu@email.com" className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                          <Input id="login-email" name="email" autoComplete="username" type="email" placeholder="seu@email.com" maxLength={255} className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                         <AnimatePresence>{errors.email && <motion.p role="alert" aria-live="polite" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.email}</motion.p>}</AnimatePresence>
                       </motion.div>
                       
                       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="space-y-2">
                         <Label htmlFor="login-password" className="text-sm font-medium">Senha</Label>
-                        <PasswordInput id="login-password" name="password" autoComplete="current-password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                        <PasswordInput id="login-password" name="password" autoComplete="current-password" maxLength={200} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
                         <AnimatePresence>{errors.password && <motion.p role="alert" aria-live="polite" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.password}</motion.p>}</AnimatePresence>
                         <div className="flex justify-end">
                           <Link to="/forgot-password" className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors">Esqueci minha senha</Link>
@@ -228,7 +228,7 @@ export default function Auth() {
                         <Label htmlFor="signup-name" className="text-sm font-medium">Nome</Label>
                         <div className="relative group">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                          <Input id="signup-name" type="text" placeholder="Seu nome" className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                          <Input id="signup-name" type="text" placeholder="Seu nome" maxLength={100} className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                         </div>
                         <AnimatePresence>{errors.name && <motion.p role="alert" aria-live="polite" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.name}</motion.p>}</AnimatePresence>
                       </motion.div>
@@ -237,14 +237,14 @@ export default function Auth() {
                         <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
                         <div className="relative group">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                          <Input id="signup-email" type="email" placeholder="seu@email.com" className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                          <Input id="signup-email" type="email" placeholder="seu@email.com" maxLength={255} className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                         <AnimatePresence>{errors.email && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.email}</motion.p>}</AnimatePresence>
                       </motion.div>
                       
                       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className="space-y-2">
                         <Label htmlFor="signup-password" className="text-sm font-medium">Senha</Label>
-                        <PasswordInput id="signup-password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                        <PasswordInput id="signup-password" maxLength={200} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
                         <AnimatePresence><PasswordStrengthMeter password={formData.password} /></AnimatePresence>
                         <AnimatePresence>{errors.password && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.password}</motion.p>}</AnimatePresence>
                       </motion.div>

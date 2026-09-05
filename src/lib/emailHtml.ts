@@ -29,12 +29,27 @@ const EMAIL_ALLOWED_ATTR = [
 /** Props de style sempre proibidas (overlay/clickjacking/exfiltração). */
 const STYLE_BLOCKED_PROPS = new Set([
   'position','visibility','z-index','top','left','right','bottom','inset','transform',
-  'background','background-image','list-style-image','cursor','mask-image',
-  '-webkit-mask-image','content','border-image-source','border-image','filter',
-  'animation','transition','behavior','-moz-binding',
+  'transform-origin','translate','rotate','scale','perspective','offset','motion',
+  '-webkit-transform','-webkit-mask-image','-webkit-filter','-ms-transform','-moz-transform',
+  'background','background-image','list-style-image','cursor','mask-image','mask',
+  '-webkit-mask','content','border-image-source','border-image','filter','image-rendering',
+  'animation','transition','behavior','-moz-binding','pointer-events',
 ]);
 
 type PurifyInstance = typeof DOMPurify;
+
+/** Decodifica escapes CSS (A2-fix): "\\70 osition" → "position", "u\\72 l(" → "url(",
+ *  "\\⏎" (continuação de linha) removida antes do resto. */
+function cssUnescape(s: string): string {
+  return s
+    // continuação de linha: backslash + newline/CRLF/form-feed desaparece (CSS spec)
+    .replace(/\\(\r\n|\r|\n|\f|\u2028|\u2029)/g, '')
+    .replace(/\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\f])?/g, (_m, hex: string) => {
+      const cp = parseInt(hex, 16);
+      try { return cp > 0x10ffff || cp < 0 ? '' : String.fromCodePoint(cp); } catch { return ''; }
+    })
+    .replace(/\\(.)/g, '$1');
+}
 
 let purifier: PurifyInstance | null = null;
 
@@ -71,8 +86,10 @@ function installHooks(p: PurifyInstance): void {
       .filter((decl) => {
         const idx = decl.indexOf(':');
         if (idx === -1) return false; // declaração malformada/trailing ';' — descarta
-        const prop = decl.slice(0, idx).trim().toLowerCase();
-        const val = decl.slice(idx + 1);
+        // A2-fix: prop e valor decodificados de escapes CSS ANTES das checagens —
+        // "\\70 osition:fixed" e "mask:u\\72 l(...)" devem ser detectados.
+        const prop = cssUnescape(decl.slice(0, idx)).trim().toLowerCase();
+        const val = cssUnescape(decl.slice(idx + 1));
         if (STYLE_BLOCKED_PROPS.has(prop)) return false;
         if (/url\s*\(/i.test(val)) return false; // F2: tracker em qualquer propriedade
         if (prop === 'width' || prop === 'min-width' || prop === 'max-width') {
@@ -100,6 +117,11 @@ function getPurifier(): PurifyInstance {
       purifier = DOMPurify; // fallback: instância default (ambiente sem window)
     }
     if (typeof purifier.sanitize !== 'function') purifier = DOMPurify;
+    // A4-fix: guard fail-closed — se a instância não aceitar hooks (SSR/edge),
+    // não usar: sanitizar sem hooks é mais seguro do que crashar ou rodar sem política.
+    if (typeof purifier.addHook !== 'function') {
+      throw new Error('emailHtml: ambiente sem suporte a hooks DOMPurify — sanitização indisponível');
+    }
     installHooks(purifier);
   }
   return purifier;

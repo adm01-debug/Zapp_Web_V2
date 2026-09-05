@@ -60,6 +60,7 @@ export interface ConversationContact {
   contact_type?: string | null;
   group_category?: string | null;
   ai_sentiment?: string | null;
+  conversation_status?: string | null;
 }
 
 export interface AssignedAgentInfo {
