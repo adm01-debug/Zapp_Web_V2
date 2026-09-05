@@ -34,9 +34,9 @@ export default tseslint.config(
       "no-restricted-imports": [
         "warn",
         {
-          paths: [
+          patterns: [
             {
-              name: "@/integrations/supabase/client",
+              group: ["**/integrations/supabase/client"],
               message: "Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
             },
           ],

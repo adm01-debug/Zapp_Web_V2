@@ -61,7 +61,7 @@ arquivos↔ledger.
 
 ### 1.5 Checklist pré-merge
 
-- [ ] `bun run test` verde (2.5k+ testes)
+- [ ] `bun run test:coverage` verde (2.5k+ testes, piso de cobertura em src/lib + src/services)
 - [ ] `node scripts/ci/typecheck-ratchet.mjs` sem dívida nova
 - [ ] `node scripts/ci/lint-ratchet.mjs` sem dívida nova
 - [ ] Mexeu em edge → manifest regenerado (1.3)
