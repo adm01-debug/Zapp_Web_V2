@@ -33,13 +33,13 @@ Deno.serve(async (req) => {
     if (profileError || !profile) return errorResponse('User profile not found', 403, req);
     if (!profile.is_active) return errorResponse('User account is inactive', 403, req);
 
-    // Secret ausente e erro de configuracao, nao falha de runtime: responde 503
-    // com codigo estavel em vez de estourar 500 generico (requireEnv lancava).
+    // Secret ausente é erro de configuração, não falha de runtime: responde 503
+    // com código estável em vez de estourar 500 genérico (requireEnv lançava).
     const password = Deno.env.get('SIP_PASSWORD');
     if (!password) {
       log.error('SIP_PASSWORD is not configured');
       log.done(503);
-      return jsonResponse({ error: 'SIP nao configurado', code: 'SIP_NOT_CONFIGURED' }, 503, req);
+      return jsonResponse({ error: 'SIP não configurado', code: 'SIP_NOT_CONFIGURED' }, 503, req);
     }
     log.done(200);
     return jsonResponse({ password, profileId: profile.id }, 200, req);

@@ -37,7 +37,9 @@ const metricsBuffer = new Map<string, WebVitalMetric>();
 function onMetric(metric: WebVitalMetric) {
   metricsBuffer.set(metric.name, metric);
   const emoji = metric.rating === 'good' ? '🟢' : metric.rating === 'needs-improvement' ? '🟡' : '🔴';
-  log.info(`${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}ms (${metric.rating})`);
+  // CLS is dimensionless (0–1), not milliseconds.
+  const unit = metric.name === 'CLS' ? '' : 'ms';
+  log.info(`${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit} (${metric.rating})`);
 }
 
 export function initWebVitals() {
@@ -125,7 +127,8 @@ export function initWebVitals() {
       onMetric({ name: 'INP', value: inpMax, rating: getRating('INP', inpMax), delta: inpMax, id: `inp-${Date.now()}` });
     }
   };
-  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushAccumulated(); });
+  // visibilitychange fires on document per spec; attach directly to avoid relying on bubbling.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushAccumulated(); });
   addEventListener('pagehide', flushAccumulated, { once: true });
 
   // TTFB - Time to First Byte

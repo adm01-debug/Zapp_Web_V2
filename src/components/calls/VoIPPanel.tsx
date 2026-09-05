@@ -75,7 +75,14 @@ export function VoIPPanel() {
     const { data, error } = await supabase.functions.invoke('get-sip-password');
     const password = data?.password;
     if (error || !password) {
-      toast.error('Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.');
+      // FunctionsHttpError.context may be Response (status) or parsed body (code) depending on supabase-js version.
+      const ctx = (error as any)?.context;
+      const isMissingSecret = !password || ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED';
+      toast.error(
+        isMissingSecret
+          ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.'
+          : 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.'
+      );
       return;
     }
     sip.connect({ server: sipServer, user: sipUser, password, wsPort });
