@@ -134,8 +134,8 @@
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
-      "bytes": 9545,
-      "sha256": "513c826b5f846bc83a6b0d449706a564323a486f20d3516ebf2980314aaf96e4"
+      "bytes": 9574,
+      "sha256": "239dbfb0f92df892b72bee7c8ce22906fb309bb0b8da76bc5c51cad2455a5f6c"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
@@ -279,8 +279,8 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 8591,
-      "sha256": "c809d119680d48037cfdca1986f02e004d643cad6b5de4c2b31e85398d1916e1"
+      "bytes": 8611,
+      "sha256": "85169262336757b01313b6b8c371608d92a43133d046e19d37e88b91bf32c0e2"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
@@ -510,7 +510,7 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "66111daac9af5245b7b2ee4c1faad6078d6092ccb17b2951674ad7d3f140648f",
+      "source_sha256": "c6c89b1db29c8074316c64aee4f66c4d8062e2b1cf6608d2e20084d936309cdf",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-providers.ts",
@@ -872,7 +872,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ca78e458c8cdeb7b13244b36ac0d94e79251e3eca16a4e59daee82f1bdf7fd52",
+      "source_sha256": "711ffbf377922d82761a5505b832689f9c59df821ef3cf36f358755ad29efe8f",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1211,5 +1211,5 @@
       ]
     }
   ],
-  "manifest_sha256": "bdb858868b6a61f06b558fd9874c5ac123f51e930000845c5e20e14e2384033f"
+  "manifest_sha256": "d188ecb1591d1990b5a156ccb2e1b913689ce02c2f52d9cc93f052fa46eb1ed8"
 }

@@ -89,7 +89,7 @@ function dispatchProvider(
       if (!provider?.api_endpoint) throw new Error("Endpoint da API nao configurado para este provedor.");
       const secretName = provider.api_key_secret_name;
       const apiKey = secretName ? Deno.env.get(secretName) : null;
-      if (!apiKey) throw new Error("Chave de API '" + secretName + "' nao encontrada nos secrets.");
+      if (!apiKey) throw new Error("Chave de API do provedor nao encontrada nos secrets (ver api_key_secret_name do provedor).");
       return () => callOpenAICompatible({
         endpoint: provider.api_endpoint!, apiKey, messages: finalMessages,
         model: provider.model || undefined, tools, toolChoice, stream, config: provider.config || {},

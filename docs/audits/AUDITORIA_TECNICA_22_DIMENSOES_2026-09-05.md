@@ -471,3 +471,34 @@ Log da run 33901461641: `arquivos validos: 370 · registros: 375 · FALHA: drift
 
 ---
 *Gerado em 2026-09-05 ~03:30 UTC. Próxima re-auditoria sugerida após Quick Wins + Sprint 1.*
+
+---
+
+## ADENDO — EXECUÇÃO DO PLANO (2026-09-05, PR #222)
+
+Executado na mesma sessão da auditoria, cada item simulado contra código e banco antes de aplicar.
+Os números abaixo são medidos; a nota projetada é estimativa e só vira nota após re-auditoria em `main`.
+
+| Item | Estado | Evidência |
+|---|---|---|
+| P1 lockout + drift | ✅ código no PR; **apply pós-merge pendente só da 030000** | `record-failed-login` (edge) + `20260905010000_lockout_hardening` (lock vigente não estende, expirado limpa, escalonamento 2^(n-5) min); testado em prod com e-mail sintético (5ª falha → 1 min, 6ª → 2 min). Drift shim: só `20260905030000` sem registro (intencional, ver P2) |
+| P2 buckets privados | ✅ código; **`UPDATE storage.buckets` roda após deploy das edges** | `evolution-api` send-media/ptv e `talkx-send` assinam URL antes de mandar para a GO; `ReplyQuote` via `useResolvedStorageUrl` |
+| P3 first load | ✅ | 968 KB → **335.8 KB gz** (10 chunks); `mapbox-gl` lazy; `bundle-budget.mjs` bloqueante no CI (350 KB) |
+| P4 CORS/canonical | ✅ | regex `zappwebv2-[a-z0-9-]+-juca1`; canonical/og → `zapp-web-v2.vercel.app` |
+| P5 protocolo DDL | ✅ | `CLAUDE.md` regras 6 (arquivo → PR → apply) e 7 (ledger = SQL real) |
+| P6 CodeQL | ✅ 8 alertas + 3 novos no PR | randomness, stack trace, double-escape, hostname check, XSS em preview (preview de figurinha removido), nome de secret fora do erro do `ai-proxy` |
+| P7 xlsx/useImportData | ✅ | dep e hook removidos; `bun install --frozen-lockfile` volta a passar |
+| P8 RPC inbound | ✅ | `ingest_inbound_message` (20260905050000): 1 transação, 4 cenários validados em prod (inserted / updated / variante do 9º dígito / apagada preservada). A simulação pegou ambiguidade de coluna OUT × RETURNING antes de ir para o webhook |
+| P9 rate limit | ✅ | `edge_rate_limits` + `consume_rate_limit`; 10 edges de voz/mapa com `requireAuth` + cota por usuário |
+| P10 CI | ✅ | `audit-prod.mjs` bloqueante (0 bloqueios, 725 pacotes), husky, Node 24, ADR-004 |
+| S1 snapshot/COMMENT | ✅ | `lid_audit_snapshot_20260902` dropada; 20 tabelas core comentadas |
+| S1 skips/cobertura | ✅ | 32 `it.skip` → `it.todo`; piso v8 em `src/lib`+`src/services` (36/35/43/31; medido 37.7/36.1/44.9/32.7); CI roda `test:coverage` |
+| S1/S2 MFA admin | ✅ soft gate | `MfaAdminNudge` (2/2 admins sem TOTP); hard gate trancaria o mantenedor |
+| S1/S2 feature flags | ✅ | tabela `feature_flags` (20260905060000) + `useFeatureFlag` |
+| S1/S2 CSP | ✅ pré-requisito | edge `csp-report` + `report-uri`; enforce só depois de 1 semana sem violação legítima |
+| S1/S2 ESLint camadas | ✅ | `no-restricted-imports` do client em `components`/`pages` (166 legados congelados no baseline) |
+| S2 FSM / SLO | ✅ docs | ADR-005 (Proposed) e `docs/runbooks/slo.md` |
+
+**Não executado / não verificável nesta sessão:** valor de `EVOLUTION_WEBHOOK_ENFORCE` (só no Dashboard); VPS Hostinger (sem MCP na sessão); monitor externo de uptime (não existe ainda — passo 2 do runbook de SLO).
+
+**Nota projetada após merge + apply da 030000: ~8.0/10.** Sobe onde houve evidência mensurável (Autenticação, Segurança, Performance, CI/CD, Banco); fica onde só há proposta (Arquitetura/FSM, Observabilidade sem monitor externo). Vale o mesmo aviso da nota final: sem o protocolo de DDL obedecido, qualquer nota acima de 7 é frágil.

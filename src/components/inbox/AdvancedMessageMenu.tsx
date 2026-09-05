@@ -187,11 +187,6 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
                 placeholder="https://exemplo.com/sticker.webp"
               />
             </div>
-            {/^https:\/\/[^\s]+$/i.test(stickerUrl.trim()) && (
-              <div className="flex justify-center p-4 bg-muted/20 rounded-lg">
-                <img src={stickerUrl.trim()} alt="Preview" className="max-w-32 max-h-32 object-contain"  loading="lazy" decoding="async"/>
-              </div>
-            )}
             <Button onClick={handleSendSticker} disabled={isLoading || !stickerUrl.trim()} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Enviar
             </Button>
