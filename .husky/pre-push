@@ -1,4 +1,5 @@
 #!/bin/sh
 # Mesmos gates do job "Lint & TypeCheck" do CI, antes de sair da maquina.
+set -e
 node scripts/ci/typecheck-ratchet.mjs
 node scripts/ci/lint-ratchet.mjs

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
@@ -136,4 +137,20 @@ export function useMFA() {
     unenroll,
     getAssuranceLevel,
   };
+}
+
+// Leitura pura (react-query) para gates de UI: true/false quando carregou, undefined
+// enquanto carrega ou em erro — quem consome trata undefined como "nao incomodar".
+export function useHasVerifiedTotp(enabled = true) {
+  return useQuery({
+    queryKey: ['mfa-verified-totp'],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) throw error;
+      return (data?.totp ?? []).some((f) => f.status === 'verified');
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 }

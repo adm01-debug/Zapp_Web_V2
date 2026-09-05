@@ -27,8 +27,10 @@ export function ReplyPreview({ message, onCancel }: ReplyPreviewProps) {
   const isSent = message.sender === 'agent';
   const mediaInfo = getMediaInfo(message);
   const MediaIcon = mediaInfo?.icon;
-  // whatsapp-media e bucket privado: o locator vira signed URL sob demanda.
-  const { url: thumbnailUrl } = useResolvedStorageUrl(message.mediaUrl ?? '');
+  // whatsapp-media e bucket privado: o locator vira signed URL sob demanda —
+  // so quando a miniatura vai renderizar (imagem), para nao assinar a toa.
+  const isImage = (message.type || message.message_type) === 'image';
+  const { url: thumbnailUrl } = useResolvedStorageUrl(isImage ? message.mediaUrl ?? '' : '');
 
   return (
     <motion.div

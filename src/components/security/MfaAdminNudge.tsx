@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ShieldAlert, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { useHasVerifiedTotp } from '@/hooks/auth/useMFA';
 import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
-import { log } from '@/lib/logger';
 
 const DISMISS_KEY = 'zapp:mfa-nudge-dismissed-at';
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
@@ -17,30 +16,12 @@ interface MfaAdminNudgeProps {
 // cadastrados, um hard gate trancaria o proprio mantenedor para fora.
 export function MfaAdminNudge({ onNavigate }: MfaAdminNudgeProps) {
   const { isAdmin, loading } = useUserRole();
-  const [hasMfa, setHasMfa] = useState<boolean | null>(null);
   const [dismissed, setDismissed] = useState(() => {
     const at = Number(safeGetItem(DISMISS_KEY) ?? 0);
     return Number.isFinite(at) && Date.now() - at < DISMISS_TTL_MS;
   });
-
-  useEffect(() => {
-    if (loading || !isAdmin || dismissed) return;
-    let cancelled = false;
-    supabase.auth.mfa
-      .listFactors()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) throw error;
-        setHasMfa((data?.totp ?? []).some((f) => f.status === 'verified'));
-      })
-      .catch((err) => {
-        log.error('MfaAdminNudge: listFactors failed', err);
-        if (!cancelled) setHasMfa(true); // em duvida, nao incomoda
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdmin, loading, dismissed]);
+  // undefined (carregando ou erro) = nao incomoda; so false mostra o aviso.
+  const { data: hasMfa } = useHasVerifiedTotp(!loading && isAdmin && !dismissed);
 
   if (loading || !isAdmin || hasMfa !== false || dismissed) return null;
 
