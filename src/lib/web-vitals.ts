@@ -128,7 +128,15 @@ export function initWebVitals() {
     }
   };
   // visibilitychange fires on document per spec; attach directly to avoid relying on bubbling.
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushAccumulated(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushAccumulated();
+    } else {
+      // BFCache restore — reset accumulators so the next hide cycle reports fresh data.
+      clsValue = 0; clsReported = false;
+      inpMax = 0; inpReported = false;
+    }
+  });
   addEventListener('pagehide', flushAccumulated, { once: true });
 
   // TTFB - Time to First Byte
