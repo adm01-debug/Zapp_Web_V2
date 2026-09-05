@@ -1,0 +1,3 @@
+#!/bin/sh
+# Ratchet de lint (baseline em scripts/ci/eslint-baseline.json): falha so com divida NOVA.
+node scripts/ci/lint-ratchet.mjs

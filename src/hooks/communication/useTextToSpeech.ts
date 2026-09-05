@@ -1,8 +1,8 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/integrations/supabase/client';
+import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
-
 // Default voice: Custom voice from Voice Library
 const DEFAULT_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 
@@ -105,8 +105,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            ...(await edgeAuthHeaders()),
           },
           body: JSON.stringify({ 
             text: cleanText,

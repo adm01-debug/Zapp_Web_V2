@@ -24,6 +24,7 @@ const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').t
 const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.OfflineIndicator })));
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
 const EvolutionDisconnectBanner = lazy(() => import('@/components/alerts/EvolutionDisconnectBanner').then(m => ({ default: m.EvolutionDisconnectBanner })));
+const MfaAdminNudge = lazy(() => import('@/components/security/MfaAdminNudge').then(m => ({ default: m.MfaAdminNudge })));
 
 const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _ref) {
    const navigate = useNavigate();
@@ -126,6 +127,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           <OfflineIndicator />
           <ConnectionToast />
           <EvolutionDisconnectBanner />
+          <MfaAdminNudge onNavigate={setCurrentView} />
           <WelcomeModal
             isOpen={showWelcome}
             onClose={() => { setShowWelcome(false); completeOnboarding(); }}

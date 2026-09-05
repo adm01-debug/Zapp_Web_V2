@@ -1,4 +1,4 @@
-import { handleCors, errorResponse, getCorsHeaders, Logger, requireEnv } from "../_shared/validation.ts";
+import { handleCors, errorResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 
 const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   // Masculinas
@@ -35,6 +35,13 @@ Deno.serve(async (req) => {
   if (cors) return cors;
 
   const log = new Logger("voice-changer");
+
+  // JWT ja e validado pelo gateway (verify_jwt=true); aqui o usuario vira a
+  // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
+  const auth = await requireAuth(req);
+  if (auth instanceof Response) return auth;
+  const rl = await enforceRateLimit(`voice-changer:${auth.userId}`, 10, 60_000);
+  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
     const elevenlabsKey = requireEnv('ELEVENLABS_API_KEY');

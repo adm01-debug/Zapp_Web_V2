@@ -1,4 +1,4 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, requireAuth } from "../_shared/validation.ts";
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
@@ -7,8 +7,10 @@ Deno.serve(async (req) => {
 
   const log = new Logger("elevenlabs-tts");
 
-  const ip = getClientIP(req);
-  const rl = checkRateLimit(`tts:${ip}`, 20, 60_000);
+  // Cota paga (ElevenLabs) por usuario, nao por IP: o front manda o token da sessao.
+  const auth = await requireAuth(req);
+  if (auth instanceof Response) return auth;
+  const rl = await enforceRateLimit(`elevenlabs-tts:${auth.userId}`, 20, 60_000);
   if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   try {

@@ -18,6 +18,10 @@ An ADR is a short document (typically 1-3 pages) that records:
 |---|---|---|---|---|
 | 001 | [ADR-001-evolution-webhook-events-per-instance-tables.md](./ADR-001-evolution-webhook-events-per-instance-tables.md) | Per-Instance Webhook Event Tables Pattern | Accepted | 2026-06-12 |
 | 002 | [ADR-002-evolution-messages-data-rotation-strategy.md](./ADR-002-evolution-messages-data-rotation-strategy.md) | Data Rotation Strategy for evolution_messages_wpp2 | Proposed | 2026-06-12 |
+| 003 | [ADR-003-june-2026-db-audit-and-performance.md](./ADR-003-june-2026-db-audit-and-performance.md) | June 2026 DB Audit and Performance | Accepted | 2026-06-12 |
+| 004 | [ADR-004-branch-protection-solo-maintainer.md](./ADR-004-branch-protection-solo-maintainer.md) | Proteção da `main` com mantenedor único (approvals = 0) | Accepted | 2026-09-05 |
+| 005 | [ADR-005-conversation-state-machine.md](./ADR-005-conversation-state-machine.md) | Máquina de estados explícita para conversas | Proposed | 2026-09-05 |
+| 006 | [ADR-006-login-lockout-server-side.md](./ADR-006-login-lockout-server-side.md) | Lockout de login assistido pelo cliente — risco aceito e caminho server-side | Proposed | 2026-09-05 |
 
 ## Guidelines
 
@@ -47,4 +51,4 @@ Proposed → Accepted → (Deprecated | Superseded by ADR-NNN)
 
 ---
 
-*Last updated: 2026-06-12*
+*Last updated: 2026-09-05*
