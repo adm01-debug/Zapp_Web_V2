@@ -76,7 +76,7 @@ export function VoIPPanel() {
     const password = data?.password;
     if (error || !password) {
       // FunctionsHttpError.context may be Response (status) or parsed body (code) depending on supabase-js version.
-      const ctx = (error as any)?.context;
+      const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
       const isMissingSecret = !password || ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED';
       toast.error(
         isMissingSecret
