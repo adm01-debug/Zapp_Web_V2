@@ -93,6 +93,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       });
       map.current.on('load', () => {
         loaded = true;
+        setMapError(null);
         setIsMapLoaded(true);
         if (pendingMarker.current) {
           const [lng, lat] = pendingMarker.current;
@@ -105,8 +106,11 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       log.error('Error loading Mapbox:', err);
       if (!cancelled) setMapError(MAP_LOAD_ERROR);
     });
-    return () => { cancelled = true; pendingMarker.current = null; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
+    return () => { cancelled = true; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
   }, [mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
+
+  // Fechar o picker descarta a coordenada pendente; um retry do mapa a preserva.
+  useEffect(() => { if (!open) pendingMarker.current = null; }, [open]);
 
   const retryMap = useCallback(() => setMapAttempt((n) => n + 1), []);
 
