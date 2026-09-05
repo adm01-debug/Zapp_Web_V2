@@ -49,9 +49,21 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('VoIPPanel', () => {
-  // resetAllMocks also clears queued mockResolvedValueOnce values, preventing
-  // bleed between tests when the default mock is overridden mid-suite.
-  beforeEach(() => vi.resetAllMocks());
+  // vi.resetAllMocks() clears queued mockResolvedValueOnce values (preventing bleed between
+  // tests), but also wipes the vi.mock() factory implementations. We re-establish the
+  // baseline stubs immediately after so the component always has working defaults.
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    const { supabase } = await import('@/integrations/supabase/client');
+    supabase.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    });
+    supabase.functions.invoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
+  });
 
   it('renders the VoIP header', () => {
     renderWithProviders(<VoIPPanel />);
