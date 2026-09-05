@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // Secret ausente é erro de configuração, não falha de runtime: responde 503
     // com código estável em vez de estourar 500 genérico (requireEnv lançava).
     const password = Deno.env.get('SIP_PASSWORD');
-    if (!password) {
+    if (!password || password === 'undefined') {
       log.error('SIP_PASSWORD is not configured');
       log.done(503);
       return jsonResponse({ error: 'SIP não configurado', code: 'SIP_NOT_CONFIGURED' }, 503, req);

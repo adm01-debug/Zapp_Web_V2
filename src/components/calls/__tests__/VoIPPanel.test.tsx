@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// vi.hoisted ensures this reference is available inside the vi.mock() factory closure.
+const { mockSipConnect } = vi.hoisted(() => ({ mockSipConnect: vi.fn() }));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn().mockReturnValue({
@@ -13,7 +16,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       }),
     }),
     functions: {
-      invoke: vi.fn().mockResolvedValue({ data: { password: 'test-pass' } }),
+      invoke: vi.fn().mockResolvedValue({ data: { password: 'test-pass' }, error: null }),
     },
   },
 }));
@@ -29,7 +32,7 @@ vi.mock('@/hooks/communication/useSipClient', () => ({
     callDuration: 0,
     isMuted: false,
     currentNumber: '',
-    connect: vi.fn(),
+    connect: mockSipConnect,
     disconnect: vi.fn(),
     makeCall: vi.fn(),
     hangUp: vi.fn(),
@@ -46,7 +49,21 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('VoIPPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  // vi.resetAllMocks() clears queued mockResolvedValueOnce values (preventing bleed between
+  // tests), but also wipes the vi.mock() factory implementations. We re-establish the
+  // baseline stubs immediately after so the component always has working defaults.
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    const { supabase } = await import('@/integrations/supabase/client');
+    supabase.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    });
+    supabase.functions.invoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
+  });
 
   it('renders the VoIP header', () => {
     renderWithProviders(<VoIPPanel />);
@@ -68,7 +85,6 @@ describe('VoIPPanel', () => {
   it('can click history tab without crashing', () => {
     renderWithProviders(<VoIPPanel />);
     fireEvent.click(screen.getByText('Histórico'));
-    // Tab clicked without error
     expect(screen.getByText('Histórico')).toBeInTheDocument();
   });
 
@@ -93,12 +109,30 @@ describe('VoIPPanel', () => {
     expect(zeros.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('renders without crashing when supabase returns error', () => {
+  it('renders description text', () => {
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('VoIP & Chamadas')).toBeInTheDocument();
+    expect(screen.getByText('Click-to-call, histórico de chamadas e gravações')).toBeInTheDocument();
   });
 
-  it('shows config toast when invoke returns SIP_NOT_CONFIGURED (503)', async () => {
+  // --- handleSipConnect happy path ---
+  it('happy path: calls sip.connect with server/user/password when invoke succeeds', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: { password: 'secret123' },
+      error: null,
+    });
+    renderWithProviders(<VoIPPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
+    await waitFor(() => {
+      expect(mockSipConnect).toHaveBeenCalledOnce();
+      expect(mockSipConnect).toHaveBeenCalledWith(
+        expect.objectContaining({ password: 'secret123' }),
+      );
+    });
+  });
+
+  // --- SIP_NOT_CONFIGURED path (error + status 503) ---
+  it('shows SIP_PASSWORD config toast when invoke returns 503', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
     const { toast } = await import('sonner');
     (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -106,16 +140,15 @@ describe('VoIPPanel', () => {
       error: { context: { status: 503, code: 'SIP_NOT_CONFIGURED' } },
     });
     renderWithProviders(<VoIPPanel />);
-    const connectBtn = screen.getByRole('button', { name: /conectar/i });
-    fireEvent.click(connectBtn);
+    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining('SIP_PASSWORD'),
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
     });
+    expect(mockSipConnect).not.toHaveBeenCalled();
   });
 
-  it('shows generic toast for non-config invoke errors (401)', async () => {
+  // --- Generic auth/network error path (error + non-503 status) ---
+  it('shows generic session toast for non-config invoke errors (401)', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
     const { toast } = await import('sonner');
     (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -123,17 +156,26 @@ describe('VoIPPanel', () => {
       error: { context: { status: 401, code: 'UNAUTHORIZED' } },
     });
     renderWithProviders(<VoIPPanel />);
-    const connectBtn = screen.getByRole('button', { name: /conectar/i });
-    fireEvent.click(connectBtn);
+    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining('sessão'),
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('sessão'));
     });
+    expect(mockSipConnect).not.toHaveBeenCalled();
   });
 
-  it('renders description text', () => {
+  // --- Missing password with no error (else branch of ternary: isMissingSecret = true) ---
+  it('shows SIP_PASSWORD config toast when invoke returns no error but no password', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { toast } = await import('sonner');
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: null,
+      error: null,
+    });
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('Click-to-call, histórico de chamadas e gravações')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
+    });
+    expect(mockSipConnect).not.toHaveBeenCalled();
   });
 });

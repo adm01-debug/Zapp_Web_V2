@@ -34,6 +34,8 @@ function getRating(name: string, value: number): 'good' | 'needs-improvement' | 
 // One slot per metric name — at most 5 entries, no unbounded growth.
 const metricsBuffer = new Map<string, WebVitalMetric>();
 
+let _initialized = false;
+
 function onMetric(metric: WebVitalMetric) {
   metricsBuffer.set(metric.name, metric);
   const emoji = metric.rating === 'good' ? '🟢' : metric.rating === 'needs-improvement' ? '🟡' : '🔴';
@@ -44,6 +46,8 @@ function onMetric(metric: WebVitalMetric) {
 
 export function initWebVitals() {
   if (typeof window === 'undefined') return;
+  if (_initialized) return;
+  _initialized = true;
 
   // LCP - Largest Contentful Paint
   try {
@@ -139,12 +143,13 @@ export function initWebVitals() {
       inpReported = false;
     }
   });
-  addEventListener('pagehide', flushAccumulated, { once: true });
+  addEventListener('pagehide', flushAccumulated);
 
   // TTFB - Time to First Byte
   try {
     const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    if (navEntry) {
+    // responseStart === 0 means CORS timing restriction — skip to avoid negative TTFB.
+    if (navEntry && navEntry.responseStart > 0) {
       const ttfb = navEntry.responseStart - navEntry.requestStart;
       onMetric({
         name: 'TTFB',
