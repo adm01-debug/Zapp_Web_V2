@@ -3,13 +3,13 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "24b9e043b03e1a8a716777dfd3ae2113537a637143b63baf604ec6090e799389"
+    "sha256": "78570dceb92ed3cf1e4f274295c22a910a06a6495abfffc5ebd05138ad52e6d7"
   },
   "summary": {
-    "function_count": 64,
-    "source_file_count": 82,
+    "function_count": 65,
+    "source_file_count": 83,
     "verify_jwt_true": 55,
-    "verify_jwt_false": 9
+    "verify_jwt_false": 10
   },
   "source_files": [
     {
@@ -151,6 +151,11 @@
       "path": "supabase/functions/approve-password-reset/index.ts",
       "bytes": 4362,
       "sha256": "42fb51460b48735c58acf1fe11f6cd0e86c400cf9565e5dd08b9bfe20107e9c0"
+    },
+    {
+      "path": "supabase/functions/auth-login/index.ts",
+      "bytes": 4893,
+      "sha256": "03f4833387ccc438f073c73db89fe4a17ef0a379b1bc6f99e25d8e38cb261762"
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
@@ -558,6 +563,17 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/approve-password-reset/index.ts"
+      ]
+    },
+    {
+      "name": "auth-login",
+      "entrypoint": "supabase/functions/auth-login/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "4c65b90fbdfe1c82e755ef57b04fe4be57bfda1a06a103e9937ab0b3293b07d9",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/auth-login/index.ts"
       ]
     },
     {
@@ -1211,5 +1227,5 @@
       ]
     }
   ],
-  "manifest_sha256": "6d087cc3f653c464baa03d3415cd71875cc3fee024b9c037facf8cee7c70ff16"
+  "manifest_sha256": "c5d35f20eac4f140a4441eeb565a52fd0d7086c98196fd5a44ef4ca02ce60df0"
 }
