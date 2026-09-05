@@ -22,6 +22,7 @@ function getInitials(name?: string | null, email?: string): string {
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '';
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   if (diff < 86400000 && date.getDate() === now.getDate()) {

@@ -164,15 +164,15 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
             {hasMore && !fullView && (
               <button
-                onClick={() => (sanitizedHtml ? setFullView(true) : setExpanded(true))}
+                onClick={() => (sanitizedHtml ? setFullView(true) : setExpanded(!expanded))}
                 className={cn(
                   'text-[10px] mt-1 flex items-center gap-0.5 transition-colors',
                   isSent ? 'text-primary-foreground/70 hover:text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
-                aria-label="Ver e-mail completo"
+                aria-label={expanded && !sanitizedHtml ? 'Ver menos' : 'Ver e-mail completo'}
               >
-                <ChevronDown className="w-3 h-3" />
-                Ver e-mail completo
+                <ChevronDown className={cn('w-3 h-3 transition-transform', expanded && !sanitizedHtml && 'rotate-180')} />
+                {expanded && !sanitizedHtml ? 'Menos' : 'Ver e-mail completo'}
               </button>
             )}
 
