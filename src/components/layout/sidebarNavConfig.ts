@@ -10,4 +10,5 @@
  export const analyticsNav = sidebarGroups[2].items;
  export const connectionsNav = sidebarGroups[3].items;
  export const systemNav = sidebarGroups[4].items;
+ export const inDevelopmentNav = sidebarGroups[5].items;
  export const advancedNav = NavigationService.getAdvancedNav();

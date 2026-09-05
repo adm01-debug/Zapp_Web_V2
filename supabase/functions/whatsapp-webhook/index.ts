@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
+import { logWebhookAuthShadow } from "../_shared/hmac-validation.ts";
 
 const WhatsAppStatusSchema = z.object({
   id: z.string().max(500),
@@ -70,6 +71,13 @@ serve(async (req) => {
       const supabaseUrl = requireEnv('SUPABASE_URL');
       const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // [WEBHOOK_AUTH_SHADOW] Modo sombra: valida mas NUNCA bloqueia nesta etapa.
+      // Le o body via clone() para nao alterar o comportamento de req.json() abaixo.
+      // WHATSAPP_APP_SECRET ainda precisa ser confirmado/criado nos Secrets do
+      // Supabase (distinto de WHATSAPP_VERIFY_TOKEN, que so serve o handshake GET).
+      const rawBodyTextForAuthShadow = await req.clone().text();
+      await logWebhookAuthShadow('whatsapp-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('WHATSAPP_APP_SECRET'));
 
       const rawPayload = await req.json();
       const parsed = WhatsAppWebhookSchema.safeParse(rawPayload);
