@@ -2760,6 +2760,27 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_rate_limits: {
+        Row: {
+          hits: number
+          key: string
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          hits?: number
+          key: string
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          hits?: number
+          key?: string
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       email_attachments: {
         Row: {
           created_at: string
@@ -3587,39 +3608,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      lid_audit_snapshot_20260902: {
-        Row: {
-          contact_id: string
-          created_at: string
-          first_message_at: string | null
-          last_message_at: string | null
-          message_count: number | null
-          phone: string
-          phone_length: number
-          snapshot_at: string
-        }
-        Insert: {
-          contact_id: string
-          created_at: string
-          first_message_at?: string | null
-          last_message_at?: string | null
-          message_count?: number | null
-          phone: string
-          phone_length: number
-          snapshot_at?: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          first_message_at?: string | null
-          last_message_at?: string | null
-          message_count?: number | null
-          phone?: string
-          phone_length?: number
-          snapshot_at?: string
-        }
-        Relationships: []
       }
       link_preview_cache: {
         Row: {
@@ -7545,6 +7533,13 @@ export type Database = {
         }[]
       }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
+      consume_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_seconds: number }
+        Returns: {
+          allowed: boolean
+          remaining: number
+        }[]
+      }
       contacts_count_by_type: {
         Args: never
         Returns: {
@@ -7705,6 +7700,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      ingest_inbound_message: {
+        Args: {
+          p_connection_id: string
+          p_content: string
+          p_created_at: string
+          p_external_id: string
+          p_media_url: string
+          p_message_type: string
+          p_phone: string
+          p_push_name: string
+        }
+        Returns: {
+          assigned_to: string
+          avatar_url: string
+          contact_created: boolean
+          contact_id: string
+          contact_name: string
+          message_id: string
+          outcome: string
+        }[]
+      }
       is_account_locked: {
         Args: { check_email: string }
         Returns: {
@@ -7756,6 +7772,7 @@ export type Database = {
         Args: { max_rows?: number; statements: string[] }
         Returns: Json
       }
+      phone_variants: { Args: { p_phone: string }; Returns: string[] }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number

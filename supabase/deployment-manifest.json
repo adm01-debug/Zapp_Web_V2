@@ -209,8 +209,8 @@
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
-      "bytes": 4444,
-      "sha256": "87a6f329c73f62a000702f814ace5c75c2058c6d7c029152161cd61166ea77ad"
+      "bytes": 4503,
+      "sha256": "029925a360928bc6c4cc35934192a13ecd111f06903c1b2092f85127ac093040"
     },
     {
       "path": "supabase/functions/detect-new-device/index.ts",
@@ -695,7 +695,7 @@
       "name": "csp-report",
       "entrypoint": "supabase/functions/csp-report/index.ts",
       "verify_jwt": false,
-      "source_sha256": "666a0c785e7d6efcf782c6a283c31960c5cf3b1a1c402fc9159df7eae4121787",
+      "source_sha256": "5274c3cbed8691c0a9c2f9522cb005137ee0ae0f70a452bfe2e2166cfa8008a5",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1211,5 +1211,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3946ab6422e1752441c22912d132c1d47a606745655f1a9b89b286528e9a6a4c"
+  "manifest_sha256": "6d087cc3f653c464baa03d3415cd71875cc3fee024b9c037facf8cee7c70ff16"
 }
