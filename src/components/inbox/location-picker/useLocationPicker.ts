@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
-import mapboxgl from 'mapbox-gl';
+import type mapboxgl from 'mapbox-gl';
+import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
 
 interface SelectedLocation {
   lat: number;
@@ -15,6 +16,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
+  const mapboxRef = useRef<MapboxModule | null>(null);
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -32,7 +34,8 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, [open]);
 
   const updateMarker = useCallback((lng: number, lat: number) => {
-    if (!map.current) return;
+    const mapboxgl = mapboxRef.current;
+    if (!map.current || !mapboxgl) return;
     if (marker.current) {
       marker.current.setLngLat([lng, lat]);
     } else {
@@ -61,12 +64,17 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || !open || activeTab !== 'map') return;
-    mapboxgl.accessToken = mapboxToken;
-    map.current = new mapboxgl.Map({ container: mapContainer.current, style: 'mapbox://styles/mapbox/streets-v12', center: [-46.6333, -23.5505], zoom: 12 });
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.on('load', () => setIsMapLoaded(true));
-    map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
-    return () => { map.current?.remove(); map.current = null; setIsMapLoaded(false); };
+    let cancelled = false;
+    loadMapbox().then((mapboxgl) => {
+      if (cancelled || !mapContainer.current) return;
+      mapboxRef.current = mapboxgl;
+      mapboxgl.accessToken = mapboxToken;
+      map.current = new mapboxgl.Map({ container: mapContainer.current, style: 'mapbox://styles/mapbox/streets-v12', center: [-46.6333, -23.5505], zoom: 12 });
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current.on('load', () => setIsMapLoaded(true));
+      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
+    }).catch((err) => log.error('Error loading Mapbox:', err));
+    return () => { cancelled = true; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
   }, [mapboxToken, open, activeTab, updateMarker, reverseGeocode]);
 
   const getCurrentLocation = useCallback(() => {
