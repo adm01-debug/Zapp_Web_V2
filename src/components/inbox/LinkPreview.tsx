@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Play, Globe, X, Loader2 } from 'lucide-react';
+import { ExternalLink, Play, Globe, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   isImageUrl, isVideoUrl, isYouTubeUrl, getYouTubeThumbnail,
@@ -18,28 +18,20 @@ interface LinkPreviewProps {
   onRemove?: () => void;
 }
 
+const isSafeUrl = (u: string) => /^https?:\/\//i.test(u);
+
 export function LinkPreview({ url, className, compact = false, showRemove, onRemove }: LinkPreviewProps) {
-  const [metadata, setMetadata] = useState<LinkMetadata | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  useEffect(() => {
-    setIsLoading(true); setError(false);
+  const { metadata, error } = useMemo<{ metadata: LinkMetadata | null; error: boolean }>(() => {
+    if (!isSafeUrl(url)) return { metadata: null, error: true };
     try {
-      if (isImageUrl(url)) { setMetadata({ url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }); setIsLoading(false); return; }
-      if (isVideoUrl(url)) { setMetadata({ url, type: 'video', title: url.split('/').pop() || 'Video' }); setIsLoading(false); return; }
-      if (isYouTubeUrl(url)) { setMetadata({ url, type: 'video', title: 'YouTube Video', image: getYouTubeThumbnail(url) || undefined, siteName: 'YouTube', favicon: 'https://www.youtube.com/favicon.ico' }); setIsLoading(false); return; }
-      setMetadata({ url, type: 'website', title: getDomain(url), siteName: getDomain(url), favicon: getFavicon(url) });
-      setIsLoading(false);
-    } catch { setError(true); setIsLoading(false); }
+      if (isImageUrl(url)) return { metadata: { url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }, error: false };
+      if (isVideoUrl(url)) return { metadata: { url, type: 'video', title: url.split('/').pop() || 'Video' }, error: false };
+      if (isYouTubeUrl(url)) return { metadata: { url, type: 'video', title: 'YouTube Video', image: getYouTubeThumbnail(url) || undefined, siteName: 'YouTube', favicon: 'https://www.youtube.com/favicon.ico' }, error: false };
+      return { metadata: { url, type: 'website', title: getDomain(url), siteName: getDomain(url), favicon: getFavicon(url) }, error: false };
+    } catch { return { metadata: null, error: true }; }
   }, [url]);
-
-  if (isLoading) return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn("flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/50", className)}>
-      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /><span className="text-sm text-muted-foreground">Carregando preview...</span>
-    </motion.div>
-  );
 
   if (error || !metadata) return (
     <motion.a href={url} target="_blank" rel="noopener noreferrer" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}

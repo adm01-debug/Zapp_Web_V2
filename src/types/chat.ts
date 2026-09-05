@@ -1,5 +1,7 @@
 import type { Database } from '@/integrations/supabase/types';
 
+export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
+
 export type MessageRow = Database['public']['Tables']['messages']['Row'];
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];
 export type MessageUpdate = Database['public']['Tables']['messages']['Update'];
@@ -60,7 +62,7 @@ export interface ConversationContact {
   contact_type?: string | null;
   group_category?: string | null;
   ai_sentiment?: string | null;
-  conversation_status?: string | null;
+  conversation_status?: ConversationStatus | null;
 }
 
 export interface AssignedAgentInfo {

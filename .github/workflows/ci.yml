@@ -74,6 +74,12 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🚫 Run implicit-any ratchet
+        run: node scripts/ci/implicit-any-ratchet.mjs
+
+      - name: 🛡️ Run Supabase usage guard
+        run: node scripts/db-audit/supabase-usage-guard.mjs
+
   # ===========================================
   # JOB 2: Unit Tests
   # ===========================================
@@ -172,6 +178,7 @@ jobs:
     name: 🔒 Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -197,7 +204,7 @@ jobs:
       - name: 🔍 Check for secrets in code
         run: |
           echo "Checking for potential secrets..."
-          ! grep -rn "SUPABASE_SERVICE_ROLE_KEY\|sk_live_\|sk_test_\|password\s*=\s*[\"']" --include="*.ts" --include="*.tsx" --include="*.js" src/ || echo "⚠️ Potential secrets found - please review"
+          ! grep -rn "SUPABASE_SERVICE_ROLE_KEY\|sk_live_\|sk_test_\|password\s*=\s*[\"']" --include="*.ts" --include="*.tsx" --include="*.js" src/
 
   # ===========================================
   # JOB 5: Audit Report Generation

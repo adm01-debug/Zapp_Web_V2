@@ -102,6 +102,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Cache-Control': 'no-store',
+  'Content-Security-Policy-Report-Only':
+    "default-src 'none'; script-src 'none'; object-src 'none'; report-uri /csp-report",
 };
 
 /** Build CORS + security headers with origin validation */

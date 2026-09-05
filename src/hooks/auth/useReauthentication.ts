@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthService } from '@/services/auth.service';
 
 type SensitiveAction = 'change_password' | 'change_email' | 'configure_mfa' | 'admin_action' | 'delete_account';
 
@@ -25,13 +26,10 @@ export function useReauthentication() {
         return { success: false, error: 'Usuário não encontrado' };
       }
 
-      // Re-authenticate by signing in again
-      const { error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
+      // Re-authenticate through auth-login edge (lockout-aware, ADR-006)
+      const result = await AuthService.signIn(user.email, password);
 
-      if (error) {
+      if (result.error) {
         return { success: false, error: 'Senha incorreta' };
       }
 

@@ -9,7 +9,17 @@ Deno.serve(async (req) => {
   if (corsResponse) return corsResponse;
   const corsHeaders = getCorsHeaders(req);
   const secret = req.headers.get("x-cron-secret");
-  if (secret !== Deno.env.get("CRON_SECRET")) {
+  const expected = Deno.env.get("CRON_SECRET");
+  if (!expected) {
+    return new Response("Forbidden", { status: 403, headers: corsHeaders });
+  }
+  const enc = new TextEncoder();
+  const a = enc.encode(secret ?? "");
+  const b = enc.encode(expected);
+  let diff = a.length ^ b.length;
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  if (diff !== 0) {
     return new Response("Forbidden", { status: 403, headers: corsHeaders });
   }
   const log = new Logger("gmail-cron-sync");

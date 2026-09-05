@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
@@ -16,9 +16,10 @@ interface EmailChatBubbleProps {
   onForward?: (message: EmailMessage) => void;
 }
 
-function getInitials(name: string | null, email: string): string {
+function getInitials(name: string | null | undefined, email?: string): string {
   if (name) return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  return email[0]?.toUpperCase() || '?';
+  if (email) return email[0]?.toUpperCase() || '?';
+  return '?';
 }
 
 function formatTime(dateStr: string): string {
@@ -45,9 +46,10 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
   // h538172: HTML sanitizado é a fonte visual da verdade quando existe;
   // body_text vira fallback (antes o HTML só era usado quando body_text não
   // existia — quase nunca — e a formatação se perdia no caso comum).
-  const sanitizedHtml = message.body_html
-    ? sanitizeEmailHtml(message.body_html)
-    : null;
+  const sanitizedHtml = useMemo(
+    () => message.body_html ? sanitizeEmailHtml(message.body_html) : null,
+    [message.body_html]
+  );
 
   return (
     <TooltipProvider>

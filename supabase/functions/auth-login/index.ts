@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       const recRow = (Array.isArray(recData) ? recData[0] : recData) as LockRow | null;
       const lock = recRow ? lockPayload(recRow) : { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
       log.done(401, { isLocked: lock.isLocked, attempts: lock.attempts, status: signInError?.status });
-      return jsonResponse({ error: signInError?.message ?? "Invalid login credentials", ...lock }, 401, req);
+      return jsonResponse({ error: "Invalid login credentials", ...lock }, 401, req);
     }
 
     const { error: clearError } = await admin.rpc("clear_login_attempts", { p_email: email });

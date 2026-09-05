@@ -22,11 +22,10 @@ interface EmailThreadViewProps {
   onBack: () => void;
 }
 
-function getInitials(name: string | null, email: string): string {
-  if (name) {
-    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  }
-  return email[0]?.toUpperCase() || '?';
+function getInitials(name: string | null | undefined, email?: string): string {
+  if (name) return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  if (email) return email[0]?.toUpperCase() || '?';
+  return '?';
 }
 
 function formatDate(dateStr: string): string {
@@ -45,7 +44,13 @@ function formatDate(dateStr: string): string {
 
 function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: boolean }) {
   const [expanded, setExpanded] = useState(isLast);
-  const [showHtml, setShowHtml] = useState(false);
+  // HTML sanitizado é a fonte visual da verdade quando existe (mesma regra do
+  // EmailChatBubble): o legado abria em texto puro e perdia toda a formatação.
+  const [showHtml, setShowHtml] = useState(Boolean(message.body_html));
+  const sanitizedHtml = useMemo(
+    () => message.body_html && showHtml && expanded ? sanitizeEmailHtml(message.body_html) : null,
+    [message.body_html, showHtml, expanded]
+  );
 
   const isInbound = message.direction === 'inbound';
 
@@ -109,10 +114,10 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
 
                 {/* Body */}
                 {message.body_html && showHtml ? (
-                  <div className="email-html-scroll max-h-[400px] overflow-y-auto rounded border p-3 bg-background">
+                  <div className="max-h-[400px] overflow-y-auto email-html-scroll rounded border p-3 bg-background">
                     <div
                       className="email-html-body text-sm"
-                      dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(message.body_html) }}
+                      dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }}
                     />
                   </div>
                 ) : (

@@ -7,7 +7,8 @@ import DOMPurify from 'dompurify';
  * Política:
  * - Imagens permitidas (lazy, no-referrer); data: URL > 32KB vira placeholder.
  * - Links sempre externos e seguros (target=_blank + rel=noopener noreferrer).
- * - Larguras fixas px do remetente neutralizadas; comentários CSS removidos
+ * - Dimensões fixas do remetente neutralizadas (somente '%' e 'auto' permitidos;
+ *   px, em, rem, vh, vw, cm, calc etc. são todos removidos); comentários CSS removidos
  *   antes do parse (F1) e QUALQUER declaração com url() descartada (F2) —
  *   cobre cursor/mask-image/list-style-image/content/filter/etc.
  * - Instância DOMPurify ISOLADA via factory (F3): removeAllHooks() chamado por
@@ -26,7 +27,7 @@ const EMAIL_ALLOWED_ATTR = [
   'colspan','rowspan','align','valign','bgcolor','color','style','loading',
 ];
 
-/** Props de style sempre proibidas (overlay/clickjacking/exfiltração). */
+/** Props de style sempre proibidas (overlay/clickjacking/exfiltração/phishing). */
 const STYLE_BLOCKED_PROPS = new Set([
   'position','visibility','z-index','top','left','right','bottom','inset','transform',
   'transform-origin','translate','rotate','scale','perspective','offset','motion',
@@ -34,6 +35,7 @@ const STYLE_BLOCKED_PROPS = new Set([
   'background','background-image','list-style-image','cursor','mask-image','mask',
   '-webkit-mask','content','border-image-source','border-image','filter','image-rendering',
   'animation','transition','behavior','-moz-binding','pointer-events',
+  'opacity', // previne links/texto invisíveis (phishing)
 ]);
 
 type PurifyInstance = typeof DOMPurify;
@@ -92,9 +94,10 @@ function installHooks(p: PurifyInstance): void {
         const val = cssUnescape(decl.slice(idx + 1));
         if (STYLE_BLOCKED_PROPS.has(prop)) return false;
         if (/url\s*\(/i.test(val)) return false; // F2: tracker em qualquer propriedade
-        if (prop === 'width' || prop === 'min-width' || prop === 'max-width') {
+        if (prop === 'width' || prop === 'min-width' || prop === 'max-width' ||
+            prop === 'height' || prop === 'min-height' || prop === 'max-height') {
           const v = val.trim().toLowerCase();
-          // Mantém larguras proporcionais (%, auto); remove px/cm fixos.
+          // Permite somente '%' e 'auto'; qualquer outro valor (px, vh, vw, cm, …) é removido.
           return v.endsWith('%') || v === 'auto';
         }
         return true;
@@ -108,17 +111,18 @@ function installHooks(p: PurifyInstance): void {
 /** Instância isolada (F3): terceiros que mexam na instância default não afetam aqui. */
 function getPurifier(): PurifyInstance {
   if (!purifier) {
-    try {
-      // DOMPurify é também factory: DOMPurify(window) devolve nova instância.
-      purifier = (DOMPurify as unknown as (w?: Window) => PurifyInstance)(
-        typeof window !== 'undefined' ? window : undefined,
-      );
-    } catch {
-      purifier = DOMPurify; // fallback: instância default (ambiente sem window)
+    // DOMPurify é também factory: DOMPurify(window) devolve nova instância isolada (F3).
+    // Fail-closed: se a fábrica falhar não usar a instância global (vulnerável a
+    // removeAllHooks() de terceiros). Ambientes SSR/edge já são barrados pelo guard
+    // de addHook abaixo, que lança antes de sanitizar qualquer coisa.
+    purifier = (DOMPurify as unknown as (w?: Window) => PurifyInstance)(
+      typeof window !== 'undefined' ? window : undefined,
+    );
+    if (typeof purifier?.sanitize !== 'function') {
+      throw new Error('emailHtml: instância DOMPurify isolada inválida (sem sanitize)');
     }
-    if (typeof purifier.sanitize !== 'function') purifier = DOMPurify;
-    // A4-fix: guard fail-closed — se a instância não aceitar hooks (SSR/edge),
-    // não usar: sanitizar sem hooks é mais seguro do que crashar ou rodar sem política.
+    // A4-fix: guard fail-closed — se a instância não aceitar hooks (SSR/edge), aborta:
+    // rodar sem a política de hooks é mais perigoso do que não sanitizar.
     if (typeof purifier.addHook !== 'function') {
       throw new Error('emailHtml: ambiente sem suporte a hooks DOMPurify — sanitização indisponível');
     }
