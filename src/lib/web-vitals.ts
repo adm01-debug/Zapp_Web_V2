@@ -15,8 +15,6 @@ interface WebVitalMetric {
   id: string;
 }
 
-type MetricCallback = (metric: WebVitalMetric) => void;
-
 const thresholds = {
   LCP: { good: 2500, poor: 4000 },
   FID: { good: 100, poor: 300 },
@@ -33,11 +31,11 @@ function getRating(name: string, value: number): 'good' | 'needs-improvement' | 
   return 'poor';
 }
 
-const metricsBuffer: WebVitalMetric[] = [];
+// One slot per metric name — at most 5 entries, no unbounded growth.
+const metricsBuffer = new Map<string, WebVitalMetric>();
 
 function onMetric(metric: WebVitalMetric) {
-  metricsBuffer.push(metric);
-  
+  metricsBuffer.set(metric.name, metric);
   const emoji = metric.rating === 'good' ? '🟢' : metric.rating === 'needs-improvement' ? '🟡' : '🔴';
   log.info(`${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}ms (${metric.rating})`);
 }
@@ -85,45 +83,50 @@ export function initWebVitals() {
   } catch (e) { /* not supported */ }
 
   // CLS - Cumulative Layout Shift
+  // Accumulate across all batches; emit once on page hide, not per batch.
+  let clsValue = 0;
+  let clsReported = false;
   try {
     if (PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
-      let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
             clsValue += (entry as PerformanceEntry & { value: number }).value;
           }
         }
-        onMetric({
-          name: 'CLS',
-          value: clsValue,
-          rating: getRating('CLS', clsValue),
-          delta: clsValue,
-          id: `cls-${Date.now()}`,
-        });
       });
       clsObserver.observe({ type: 'layout-shift', buffered: true });
     }
   } catch (e) { /* not supported */ }
 
   // INP - Interaction to Next Paint
+  // Track max across all interactions; emit once on page hide, not per event.
+  let inpMax = 0;
+  let inpReported = false;
   try {
     if (PerformanceObserver.supportedEntryTypes.includes('event')) {
       const inpObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const duration = entry.duration;
-          onMetric({
-            name: 'INP',
-            value: duration,
-            rating: getRating('INP', duration),
-            delta: duration,
-            id: `inp-${Date.now()}`,
-          });
+          if (entry.duration > inpMax) inpMax = entry.duration;
         }
       });
       inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 40 } as PerformanceObserverInit);
     }
   } catch (e) { /* not supported */ }
+
+  // Flush CLS and INP once when page is unloaded or backgrounded.
+  const flushAccumulated = () => {
+    if (!clsReported && clsValue > 0) {
+      clsReported = true;
+      onMetric({ name: 'CLS', value: clsValue, rating: getRating('CLS', clsValue), delta: clsValue, id: `cls-${Date.now()}` });
+    }
+    if (!inpReported && inpMax > 0) {
+      inpReported = true;
+      onMetric({ name: 'INP', value: inpMax, rating: getRating('INP', inpMax), delta: inpMax, id: `inp-${Date.now()}` });
+    }
+  };
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushAccumulated(); });
+  addEventListener('pagehide', flushAccumulated, { once: true });
 
   // TTFB - Time to First Byte
   try {
@@ -142,5 +145,5 @@ export function initWebVitals() {
 }
 
 export function getWebVitalsReport(): WebVitalMetric[] {
-  return [...metricsBuffer];
+  return [...metricsBuffer.values()];
 }
