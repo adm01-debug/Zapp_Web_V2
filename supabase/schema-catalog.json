@@ -1564,7 +1564,7 @@
         "update_own_profile",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-04",
+    "generated_at": "2026-09-05",
     "format_version": 2,
     "database_identity": {
         "schema": "public",

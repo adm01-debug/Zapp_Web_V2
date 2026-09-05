@@ -74,22 +74,22 @@ describe('loginAttempts', () => {
 
   describe('recordFailedLogin', () => {
     it('records first failed attempt', async () => {
-      mockRpc.mockResolvedValue({
-        data: [{ is_locked: false, locked_until: null, attempts: 1 }],
+      mockInvoke.mockResolvedValue({
+        data: { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 },
         error: null,
       });
 
       const result = await recordFailedLogin('test@test.com');
-      expect(mockRpc).toHaveBeenCalledWith('record_failed_login', expect.objectContaining({
-        p_email: 'test@test.com',
+      expect(mockInvoke).toHaveBeenCalledWith('record-failed-login', expect.objectContaining({
+        body: expect.objectContaining({ email: 'test@test.com' }),
       }));
       expect(result.isLocked).toBe(false);
     });
 
     it('returns locked after max attempts', async () => {
       const futureDate = new Date(Date.now() + 60000).toISOString();
-      mockRpc.mockResolvedValue({
-        data: [{ is_locked: true, locked_until: futureDate, attempts: 5 }],
+      mockInvoke.mockResolvedValue({
+        data: { isLocked: true, lockedUntil: futureDate, attempts: 5, remainingTime: 60 },
         error: null,
       });
 
@@ -98,9 +98,9 @@ describe('loginAttempts', () => {
     });
 
     it('handles error gracefully', async () => {
-      mockRpc.mockResolvedValue({
+      mockInvoke.mockResolvedValue({
         data: null,
-        error: new Error('DB error'),
+        error: new Error('Network failure'),
       });
 
       const result = await recordFailedLogin('test@test.com');

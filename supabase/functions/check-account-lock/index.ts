@@ -63,13 +63,18 @@ Deno.serve(async (req) => {
       : 0;
 
     log.done(200, { isLocked: row.is_locked });
+    // Only expose attempts/lockedUntil when the account is actually locked.
+    // Returning attempt counts for unlocked accounts enables email enumeration
+    // (non-zero count confirms the email exists and has prior failures).
     return jsonResponse(
-      {
-        isLocked: row.is_locked,
-        lockedUntil: lockedUntil?.toISOString() ?? null,
-        attempts: row.attempts,
-        remainingTime,
-      },
+      row.is_locked
+        ? {
+            isLocked: true,
+            lockedUntil: lockedUntil?.toISOString() ?? null,
+            attempts: row.attempts,
+            remainingTime,
+          }
+        : { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 },
       200,
       req
     );
