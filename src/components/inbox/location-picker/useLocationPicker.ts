@@ -17,9 +17,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const mapboxRef = useRef<MapboxModule | null>(null);
+  // Coordenada que chegou (busca/GPS) antes do chunk do Mapbox resolver: aplicada no 'load'.
+  const pendingMarker = useRef<[number, number] | null>(null);
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapAttempt, setMapAttempt] = useState(0);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -35,7 +39,10 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
 
   const updateMarker = useCallback((lng: number, lat: number) => {
     const mapboxgl = mapboxRef.current;
-    if (!map.current || !mapboxgl) return;
+    if (!map.current || !mapboxgl) {
+      pendingMarker.current = [lng, lat];
+      return;
+    }
     if (marker.current) {
       marker.current.setLngLat([lng, lat]);
     } else {
@@ -65,17 +72,30 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || !open || activeTab !== 'map') return;
     let cancelled = false;
+    setMapError(null);
     loadMapbox().then((mapboxgl) => {
       if (cancelled || !mapContainer.current) return;
       mapboxRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
       map.current = new mapboxgl.Map({ container: mapContainer.current, style: 'mapbox://styles/mapbox/streets-v12', center: [-46.6333, -23.5505], zoom: 12 });
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      map.current.on('load', () => setIsMapLoaded(true));
+      map.current.on('load', () => {
+        setIsMapLoaded(true);
+        if (pendingMarker.current) {
+          const [lng, lat] = pendingMarker.current;
+          pendingMarker.current = null;
+          updateMarker(lng, lat);
+        }
+      });
       map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
-    }).catch((err) => log.error('Error loading Mapbox:', err));
+    }).catch((err) => {
+      log.error('Error loading Mapbox:', err);
+      if (!cancelled) setMapError('Não foi possível carregar o mapa.');
+    });
     return () => { cancelled = true; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
-  }, [mapboxToken, open, activeTab, updateMarker, reverseGeocode]);
+  }, [mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
+
+  const retryMap = useCallback(() => setMapAttempt((n) => n + 1), []);
 
   const getCurrentLocation = useCallback(() => {
     setIsLoadingLocation(true);
@@ -114,7 +134,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, []);
 
   return {
-    mapContainer, isMapLoaded, isLoadingLocation, searchQuery, setSearchQuery, isSearching,
+    mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching,
     selectedLocation, getCurrentLocation, searchLocation, reset,
   };
 }

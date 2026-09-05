@@ -1,4 +1,5 @@
 import { log } from '@/lib/logger';
+import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 
 export interface TtsPlayback {
   promise: Promise<void>;
@@ -137,16 +138,17 @@ export function playTtsAudio(
   const fetchChunkAudio = (chunkText: string) => {
     const timeout = setTimeout(() => controller.abort(), TTS_REQUEST_TIMEOUT_MS);
 
-    return fetch(`${supabaseUrl}/functions/v1/elevenlabs-tts-stream`, {
+    // A edge roda requireAuth: bearer = token da sessao (supabaseKey so como fallback).
+    return edgeAuthHeaders().then((auth) => fetch(`${supabaseUrl}/functions/v1/elevenlabs-tts-stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        ...auth,
+        apikey: auth.apikey || supabaseKey,
       },
       body: JSON.stringify({ text: chunkText }),
       signal: controller.signal,
-    })
+    }))
       .then(async (response) => {
         if (!response.ok) {
           const errorBody = await response.text().catch(() => '');

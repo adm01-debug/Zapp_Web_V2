@@ -125,15 +125,19 @@ export function useAuthForm() {
     }
 
     setLoading(true);
-    const currentLock = await checkAccountLock(credentials.email);
-    if (currentLock.isLocked) {
+    let error: { message: string } | null = null;
+    try {
+      const currentLock = await checkAccountLock(credentials.email);
+      if (currentLock.isLocked) {
+        setLockStatus(currentLock);
+        toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
+        return;
+      }
+      ({ error } = await signIn(credentials.email, credentials.password));
+    } finally {
+      // Qualquer excecao no caminho (rede, edge) nao pode deixar o botao travado.
       setLoading(false);
-      setLockStatus(currentLock);
-      toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
-      return;
     }
-    const { error } = await signIn(credentials.email, credentials.password);
-    setLoading(false);
 
     if (error) {
       const lockResult = await recordFailedLogin(credentials.email);

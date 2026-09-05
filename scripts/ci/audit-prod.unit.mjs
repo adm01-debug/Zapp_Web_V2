@@ -42,7 +42,8 @@ test("bloqueia so cadeias que comecam em dependencia de producao", () => {
   assert.deepEqual(blocking[0].chains, ["react-router-dom › react-router › @remix-run/router"]);
   // moderate so bloqueia se o nivel for moderate
   assert.deepEqual(evaluate(findings, prod, "moderate").map((b) => b.package), ["@remix-run/router", "dompurify"]);
-  // picomatch vem so de devDependencies (vite/tailwindcss): nunca bloqueia
+  // Se vite fosse dependencia de producao, picomatch bloquearia — main() filtra
+  // devDependencies antes de chamar evaluate, por isso no repo real ele nunca bloqueia.
   assert.deepEqual(evaluate(findings, ["vite"], "high").map((b) => b.package), ["picomatch"]);
 });
 
@@ -53,4 +54,17 @@ test("main le --input e falha/passa conforme package.json", () => {
   writeFileSync(path.join(dir, "dev.json"), JSON.stringify({ dependencies: { react: "^19" }, devDependencies: { vite: "^8", "react-router-dom": "^6" } }));
   assert.equal(main(["--input", "audit.txt", "--package-json", "prod.json"], dir), 1);
   assert.equal(main(["--input", "audit.txt", "--package-json", "dev.json"], dir), 0);
+});
+
+test("main falha fechado quando a saida nao e um relatorio e passa com 'No vulnerabilities found'", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "audit-prod-"));
+  try {
+    writeFileSync(path.join(dir, "package.json"), JSON.stringify({ dependencies: { react: "^19" } }));
+    writeFileSync(path.join(dir, "broken.txt"), "error: failed to fetch https://registry.npmjs.org/-/npm/v1/security/advisories/bulk\n");
+    writeFileSync(path.join(dir, "clean.txt"), "No vulnerabilities found\n");
+    assert.equal(main(["--level", "high", "--input", "broken.txt"], dir), 2);
+    assert.equal(main(["--level", "high", "--input", "clean.txt"], dir), 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

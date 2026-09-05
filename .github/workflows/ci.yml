@@ -186,12 +186,13 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
-        run: node scripts/ci/audit-prod.mjs --level high
-
+      # Um unico "bun audit": o relatorio completo (inclui devDependencies) sai sempre,
+      # e o gate bloqueante le o mesmo arquivo em vez de consultar o registry de novo.
       - name: 🔎 Audit completo (informativo, inclui devDependencies)
-        run: bun audit --audit-level=high
-        continue-on-error: true
+        run: bun audit --audit-level=low | tee audit-report.txt || true
+
+      - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
+        run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt
 
       - name: 🔍 Check for secrets in code
         run: |

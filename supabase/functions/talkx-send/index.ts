@@ -137,6 +137,16 @@ Deno.serve(async (req) => {
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
     const hasMedia = !!campaign.media_url && !!campaign.media_type;
+    // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
+    // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
+    // com typingDelay por envio passam do TTL.
+    let signedMedia: { url: string; at: number } | null = null;
+    const mediaForSend = async () => {
+      if (!signedMedia || Date.now() - signedMedia.at > 240_000) {
+        signedMedia = { url: await resolvePrivateBucketUrl(supabase, campaign.media_url, undefined, supabaseUrl), at: Date.now() };
+      }
+      return signedMedia.url;
+    };
 
     for (const recipient of eligibleRecipients) {
       // Check if campaign was paused/cancelled
@@ -173,8 +183,7 @@ Deno.serve(async (req) => {
 
         if (hasMedia) {
           const mediaEndpoint = getMediaEndpoint(campaign.media_type);
-          // whatsapp-media e bucket privado: a GO so baixa via signed URL (5 min, por envio).
-          const mediaSource = await resolvePrivateBucketUrl(supabase, campaign.media_url, undefined, supabaseUrl);
+          const mediaSource = await mediaForSend();
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
             { number: phone, mediatype: campaign.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },

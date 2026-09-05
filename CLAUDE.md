@@ -29,8 +29,13 @@
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
 5. `CREATE INDEX CONCURRENTLY` falha (gateway envolve em transação) — usar `CREATE INDEX` simples (tabelas são pequenas).
 6. **Ordem obrigatória: arquivo → PR → apply. Nunca DDL a partir de branch paralelo.**
-   Só aplique DDL em produção quando o arquivo da migration já está em `main` **ou** no PR
-   que você mesmo vai mergear no mesmo turno. Aplicar de um branch que fica aberto foi a
+   Só aplique DDL em produção **depois** do merge em `main` e do deploy do código que
+   depende dele. Única exceção: DDL **aditivo e compatível com o código atual de `main`**
+   (tabela/função/coluna nullable/índice novos, que nada em produção usa ainda) pode ser
+   aplicado antes do merge, e só porque o `supabase-usage-guard` precisa do catálogo
+   regenerado a partir do banco para o PR passar — o PR precisa estar verde e ser mergeado
+   no mesmo turno. `REVOKE`, `DROP`, rename ou mudança de contrato de função usada pelo
+   front/edges: **nunca** antes do deploy do código correspondente. Aplicar de um branch que fica aberto foi a
    causa dos dois drifts de setembro/2026 (2026-09-02: 2 migrations; 2026-09-04: 5 migrations
    dos PRs #213/#218) — o segundo quebrou o lockout de login em produção porque o `REVOKE`
    entrou no banco antes do código que o acompanhava. Se o PR não vai mergear agora, o DDL

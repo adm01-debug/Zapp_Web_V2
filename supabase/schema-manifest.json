@@ -3043,6 +3043,7 @@
         "queue_goals.update_queue_goals_updated_at": "e17cb88ac0a6b769d5988032ed808085",
         "sales_deals.update_sales_deals_updated_at": "446d2984a3f351273e4606a19afc453c",
         "email_messages.trg_sync_thread_last_sender": "29de3cf2ee41902e30c82b498182ada2",
+        "feature_flags.feature_flags_set_updated_at": "399e5452502b5b8d085041d5b97acb9c",
         "ai_providers.update_ai_providers_updated_at": "55f07b337e6d57f65ee36847f9d3dfa6",
         "password_reset_requests.trg_rate_limit_reset": "50081b6b47d68f669595ca8316f6bad6",
         "away_messages.update_away_messages_updated_at": "0b393fd364c9ba60f5208847f909215d",
@@ -3164,7 +3165,7 @@
         "f:log_audit_event(p_action text, p_entity_type text, p_entity_id text, p_details jsonb, p_user_agent text)": "3b391fb62d2cf6de4c8382b1b2d944a1",
         "f:update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)": "3028a81d2c0a319c88f1314029781ece",
         "f:register_first_response_internal(p_contact_id uuid, p_responded_at timestamp with time zone, p_before_created_at timestamp with time zone)": "206ebfebda94b3c8e7adc28a77d73b83",
-        "f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)": "079695fb30634defdffeb4a954cd0cc0",
+        "f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)": "fabbe79440a26765bee6f2608ccb5fa9",
         "f:search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer)": "f9898a2f075d047a1145fdc4ea0bd6b0"
     },
     "constraints": {
@@ -3342,6 +3343,7 @@
         "relation:chatbot_flows.chatbot_flows_created_by_fkey": "1c994b39642c309400295b1e29257380",
         "relation:contact_notes.contact_notes_contact_id_fkey": "daa413bd38a6f4cc2a809f23c72e6ce9",
         "relation:email_threads.email_threads_contact_id_fkey": "a0557a8a69c7a694624ee123d271d2f3",
+        "relation:feature_flags.feature_flags_updated_by_fkey": "7fb8e38813b741ce803f4c62f6a91b6c",
         "relation:payment_links.payment_links_contact_id_fkey": "a0557a8a69c7a694624ee123d271d2f3",
         "relation:payment_links.payment_links_created_by_fkey": "9823fd57c7f709aff1673b35159e2beb",
         "relation:queue_members.queue_members_profile_id_fkey": "c8240bab4cd139b23238ce74f85aed97",
@@ -3570,7 +3572,7 @@
         "e:public.service_account_type|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.service_account_type|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-05T04:48:00Z",
+    "generated_at": "2026-09-05T05:28:45Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",

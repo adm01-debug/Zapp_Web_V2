@@ -32,9 +32,12 @@ coisas diferentes; automações e relatórios não têm um campo confiável para
    (SECURITY DEFINER, valida a tabela de transições abaixo, grava
    `conversation_closures` quando `p_next = resolved` e faz o audit log). O front deixa de
    escrever status direto.
-3. **Reabertura automática:** `ingest_inbound_message` (migration 20260905050000) passa a
+3. **Reabertura automática:** uma **nova migration** (`CREATE OR REPLACE` de
+   `ingest_inbound_message`; as já aplicadas 20260905050000/070000 não se editam) passa a
    fazer `resolved | archived → open` quando chega mensagem do contato — é o único ponto de
-   entrada inbound, então a regra fica em um lugar.
+   entrada inbound, então a regra fica em um lugar. A RPC só reabre quando a flag
+   `inbox.status-fsm` está ligada (lê `feature_flags`), para o estado persistido não
+   divergir do derivado enquanto a UI ainda deriva.
 4. **Backfill:** `resolved` para contatos com linha em `conversation_closures` mais recente
    que a última mensagem; `waiting` para contatos com mensagem e sem `assigned_to`; `open`
    para o resto.
@@ -52,7 +55,8 @@ Transições permitidas:
 
 Atrás da flag `inbox.status-fsm` (tabela `feature_flags`, migration 20260905060000):
 
-1. migration + backfill + RPC (flag desligada: a UI continua derivando);
+1. migration + backfill + RPC (flag desligada: a UI continua derivando e a RPC não reabre —
+   persistido e derivado seguem independentes até o passo 3);
 2. `useInboxFilters` lê `conversation_status` quando a flag está ligada; comparar contagens
    das abas nos dois modos por uma semana;
 3. remover a derivação por `messages.length`, corrigir `useBulkActions` e `CRMAutoSync` para

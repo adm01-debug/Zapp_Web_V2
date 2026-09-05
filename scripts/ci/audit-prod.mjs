@@ -91,11 +91,20 @@ export function main(argv = process.argv.slice(2), root = process.cwd()) {
     text = readFileSync(path.resolve(root, args.input), "utf8");
   } else {
     const run = spawnSync("bun", ["audit", "--audit-level=low"], { cwd: root, encoding: "utf8" });
-    if (run.error) {
-      console.error(`ERRO: nao foi possivel executar bun audit: ${run.error.message}`);
+    if (run.error || run.signal) {
+      console.error(`ERRO: nao foi possivel executar bun audit: ${run.error?.message ?? `sinal ${run.signal}`}`);
       return 2;
     }
     text = `${run.stdout ?? ""}\n${run.stderr ?? ""}`;
+  }
+
+  // bun audit sai com 1 tanto para advisory quanto para falha de registry: o que
+  // distingue e o relatorio. Sem a linha de resumo ("N vulnerabilities" / "No
+  // vulnerabilities found") a saida nao e um audit e o gate falha fechado.
+  if (!/\bvulnerabilit(y|ies)\b/i.test(text)) {
+    console.error("ERRO: saida do bun audit nao reconhecida como relatorio (falha operacional?):");
+    console.error(text.trim().slice(0, 2000) || "(vazia)");
+    return 2;
   }
 
   const findings = parseAuditText(text);

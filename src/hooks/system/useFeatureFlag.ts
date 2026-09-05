@@ -27,14 +27,17 @@ export function useFeatureFlags() {
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
+    // Sessao longa recebe mudanca de flag sem reload.
+    refetchInterval: 5 * 60 * 1000,
   });
 }
 
 // fallback vale enquanto a query carrega ou falha: a flag nunca "pisca" para o
 // estado oposto ao que o codigo chamador considera seguro.
 export function useFeatureFlag(key: string, fallback = false): boolean {
-  const { data } = useFeatureFlags();
-  if (!data) return fallback;
+  const { data, isError } = useFeatureFlags();
+  // Erro (inclusive refetch que falhou) volta ao fallback, nao ao cache antigo.
+  if (isError || !data) return fallback;
   const flag = data.find((f) => f.key === key);
   return flag ? flag.enabled : fallback;
 }

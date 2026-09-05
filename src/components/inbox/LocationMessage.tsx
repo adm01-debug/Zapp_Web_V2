@@ -19,6 +19,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [mapError, setMapError] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -74,7 +75,10 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           setIsMapLoaded(true);
         });
       })
-      .catch((err) => log.error('Error loading Mapbox:', err));
+      .catch((err) => {
+        log.error('Error loading Mapbox:', err);
+        if (!cancelled) setMapError(true);
+      });
 
     return () => {
       cancelled = true;
@@ -125,9 +129,14 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           style={{ minWidth: '200px' }}
         />
         
-        {!isMapLoaded && (
+        {!isMapLoaded && !mapError && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        )}
+        {mapError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted px-2 text-center text-xs text-muted-foreground">
+            Mapa indisponível — abra a localização pelos botões abaixo.
           </div>
         )}
       </div>

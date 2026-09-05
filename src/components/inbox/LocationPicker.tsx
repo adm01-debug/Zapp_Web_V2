@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/ui/use-toast';
 import { LocationMessage } from '@/types/chat';
 import { useLocationPicker } from './location-picker/useLocationPicker';
-import 'mapbox-gl/dist/mapbox-gl.css';
+
 
 interface LocationPickerProps {
   open: boolean;
@@ -26,7 +26,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   const [liveDuration, setLiveDuration] = useState('15');
   const [activeTab, setActiveTab] = useState<'map' | 'current'>('current');
 
-  const { mapContainer, isMapLoaded, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
+  const { mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
 
   const handleSend = () => {
     if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
@@ -86,7 +86,13 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
             </div>
             <div className="relative">
               <div ref={mapContainer} className="w-full h-64 bg-muted" />
-              {!isMapLoaded && <div className="absolute inset-0 flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>}
+              {!isMapLoaded && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>}
+              {mapError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted text-sm text-muted-foreground">
+                  <span>{mapError}</span>
+                  <Button size="sm" variant="outline" onClick={retryMap}>Tentar novamente</Button>
+                </div>
+              )}
               <Button size="icon" variant="secondary" className="absolute bottom-3 right-3 shadow-lg" onClick={getCurrentLocation} disabled={isLoadingLocation}>
                 {isLoadingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
               </Button>

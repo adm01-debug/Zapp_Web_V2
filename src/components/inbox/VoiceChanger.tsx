@@ -1,4 +1,5 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
+import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -52,10 +53,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
         `${SUPABASE_URL}/functions/v1/elevenlabs-sts`,
         {
           method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          },
+          headers: await edgeAuthHeaders(),
           body: formData,
         }
       );

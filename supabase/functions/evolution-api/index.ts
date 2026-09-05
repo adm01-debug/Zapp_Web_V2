@@ -29,6 +29,12 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  // Midia privada e assinada com o JWT de quem chamou: as policies de SELECT em
+  // storage.objects (contato atribuido / admin / membro da conversa) decidem o que ele
+  // pode mandar para a GO — o service_role nao passa por cima da autorizacao por objeto.
+  const callerClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') || '', {
+    global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
+  });
 
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/').filter(Boolean);
@@ -155,7 +161,7 @@ serve(async (req) => {
       // whatsapp-media e bucket privado: a GO precisa de uma signed URL para baixar o arquivo.
       let mediaSource = body.mediaUrl || body.media;
       if (typeof mediaSource === 'string') {
-        mediaSource = await resolvePrivateBucketUrl(supabase, mediaSource, undefined, supabaseUrl);
+        mediaSource = await resolvePrivateBucketUrl(callerClient, mediaSource, undefined, supabaseUrl);
       }
       return await proxy(`/message/sendMedia/${instance}`, 'POST', { number: body.number, mediatype: body.mediaType || body.mediatype, mimetype: body.mimetype, caption: body.caption, media: mediaSource, fileName: body.fileName, delay: body.delay, quoted: body.quoted });
     }
@@ -166,7 +172,7 @@ serve(async (req) => {
         ? rawAudio.trim().replace(/^"+|"+$/g, '').replace(/\.supabase\.co"\//, '.supabase.co/')
         : rawAudio;
       if (typeof audioSource === 'string') {
-        audioSource = await resolvePrivateBucketUrl(supabase, audioSource, undefined, supabaseUrl);
+        audioSource = await resolvePrivateBucketUrl(callerClient, audioSource, undefined, supabaseUrl);
       }
       const audioPayload: Record<string, unknown> = { number: body.number, audio: audioSource };
       if (body.delay) audioPayload.delay = body.delay;
@@ -178,7 +184,7 @@ serve(async (req) => {
       let finalStickerUrl = body.sticker || body.mediaUrl;
       if (typeof finalStickerUrl === 'string') {
         finalStickerUrl = await resolvePrivateBucketUrl(
-          supabase,
+          callerClient,
           finalStickerUrl,
           ['whatsapp-media'],
           supabaseUrl
@@ -317,7 +323,7 @@ serve(async (req) => {
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
       if (typeof videoSource === 'string') {
-        videoSource = await resolvePrivateBucketUrl(supabase, videoSource, undefined, supabaseUrl);
+        videoSource = await resolvePrivateBucketUrl(callerClient, videoSource, undefined, supabaseUrl);
       }
       return await proxy(`/message/sendPtv/${instance}`, 'POST', { number: body.number, video: videoSource, delay: body.delay });
     }

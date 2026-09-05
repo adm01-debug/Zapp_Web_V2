@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import test from "node:test";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import test, { after } from "node:test";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -23,8 +23,12 @@ test("extrai somente script module, modulepreload e stylesheet", () => {
   });
 });
 
+const fixtureDirs = [];
+after(() => { for (const dir of fixtureDirs) rmSync(dir, { recursive: true, force: true }); });
+
 function fixture(sizeKB) {
   const dir = mkdtempSync(path.join(tmpdir(), "bundle-budget-"));
+  fixtureDirs.push(dir);
   mkdirSync(path.join(dir, "assets"));
   // Conteudo aleatorio nao comprime: gzip ~= tamanho bruto.
   const noise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => Math.floor(Math.random() * 256)));

@@ -131,7 +131,7 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
   let body = message;
   if (status >= 500) {
-    console.error(`[edge] ${status}: ${message}`);
+    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
     body = 'Internal server error';
   }
   return new Response(

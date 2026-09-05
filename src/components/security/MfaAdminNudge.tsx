@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ShieldAlert, X } from 'lucide-react';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useHasVerifiedTotp } from '@/hooks/auth/useMFA';
 import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
-const DISMISS_KEY = 'zapp:mfa-nudge-dismissed-at';
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+// Chave por usuario: dois admins no mesmo navegador nao dispensam um pelo outro.
+const dismissKey = (userId: string) => `zapp:mfa-nudge-dismissed-until:${userId}`;
+
+function readDismissedUntil(userId: string | undefined): number {
+  if (!userId) return 0;
+  const until = Number(safeGetItem(dismissKey(userId)) ?? 0);
+  return Number.isFinite(until) && until > Date.now() ? until : 0;
+}
 
 interface MfaAdminNudgeProps {
   onNavigate: (viewId: string) => void;
@@ -15,13 +25,23 @@ interface MfaAdminNudgeProps {
 // apontando para a tela de seguranca. Nao bloqueia — com 2 admins e 0 fatores
 // cadastrados, um hard gate trancaria o proprio mantenedor para fora.
 export function MfaAdminNudge({ onNavigate }: MfaAdminNudgeProps) {
+  const { user } = useAuth();
+  const userId = user?.id;
   const { isAdmin, loading } = useUserRole();
-  const [dismissed, setDismissed] = useState(() => {
-    const at = Number(safeGetItem(DISMISS_KEY) ?? 0);
-    return Number.isFinite(at) && Date.now() - at < DISMISS_TTL_MS;
-  });
+  // Troca de conta remonta a arvore (Index volta ao splash sem user), entao ler uma vez basta.
+  const [dismissedUntil, setDismissedUntil] = useState(() => readDismissedUntil(userId));
+
+  // O aviso volta sozinho quando as 24h vencem com a aba aberta.
+  useEffect(() => {
+    if (!dismissedUntil) return;
+    const wait = Math.min(Math.max(dismissedUntil - Date.now(), 0), MAX_TIMEOUT_MS);
+    const t = setTimeout(() => setDismissedUntil(0), wait);
+    return () => clearTimeout(t);
+  }, [dismissedUntil]);
+
+  const dismissed = dismissedUntil > 0;
   // undefined (carregando ou erro) = nao incomoda; so false mostra o aviso.
-  const { data: hasMfa } = useHasVerifiedTotp(!loading && isAdmin && !dismissed);
+  const { data: hasMfa } = useHasVerifiedTotp(!loading && isAdmin && !dismissed && !!userId);
 
   if (loading || !isAdmin || hasMfa !== false || dismissed) return null;
 
@@ -47,8 +67,9 @@ export function MfaAdminNudge({ onNavigate }: MfaAdminNudgeProps) {
           type="button"
           aria-label="Dispensar por 24 horas"
           onClick={() => {
-            safeSetItem(DISMISS_KEY, String(Date.now()));
-            setDismissed(true);
+            const until = Date.now() + DISMISS_TTL_MS;
+            if (userId) safeSetItem(dismissKey(userId), String(until));
+            setDismissedUntil(until);
           }}
           className="rounded-md p-1 hover:bg-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
         >
