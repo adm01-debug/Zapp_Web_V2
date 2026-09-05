@@ -38,9 +38,12 @@ const STYLE_BLOCKED_PROPS = new Set([
 
 type PurifyInstance = typeof DOMPurify;
 
-/** Decodifica escapes CSS (A2-fix): "\\70 osition" → "position", "u\\72 l(" → "url(". */
+/** Decodifica escapes CSS (A2-fix): "\\70 osition" → "position", "u\\72 l(" → "url(",
+ *  "\\⏎" (continuação de linha) removida antes do resto. */
 function cssUnescape(s: string): string {
   return s
+    // continuação de linha: backslash + newline/CRLF/form-feed desaparece (CSS spec)
+    .replace(/\\(\r\n|\r|\n|\f|\u2028|\u2029)/g, '')
     .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_m, hex: string) => {
       const cp = parseInt(hex, 16);
       try { return cp > 0x10ffff || cp < 0 ? '' : String.fromCodePoint(cp); } catch { return ''; }

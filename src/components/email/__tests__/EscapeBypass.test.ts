@@ -47,4 +47,18 @@ describe('A2-rodada2: escapes CSS não burlam mais a política', () => {
     const out = sanitizeEmailHtml('<div style="color:u\\72 l(x)">a</div>');
     expect(out).not.toContain('u\\72');
   });
+
+  it('continuação de linha CSS (backslash+newline) não esconde url(', () => {
+    const out = sanitizeEmailHtml('<div style="mask:u\\72 \n l(http://t.exemplo/x);color:blue">a</div>');
+    expect(out).not.toContain('t.exemplo');
+    expect(out).toContain('color:blue');
+  });
+
+  it('continuação de linha em CRLF e form-feed idem', () => {
+    for (const nl of ['\r\n', '\r', '\f']) {
+      const out = sanitizeEmailHtml(`<div style="\\70${nl}osition:fixed;color:red">a</div>`);
+      expect(out, JSON.stringify(nl)).not.toContain('fixed');
+      expect(out, JSON.stringify(nl)).toContain('color:red');
+    }
+  });
 });
