@@ -107,6 +107,7 @@ export function useGmail(accountId?: string) {
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-sync', { action: 'sync-inbox', account_id: activeAccount.id, ...options });
     },
+    retry: 1,
     onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); toast.success(`${data.synced} emails sincronizados`); },
     onError: (error: Error) => { toast.error(`Erro ao sincronizar: ${error.message}`); },
   });
@@ -116,6 +117,7 @@ export function useGmail(accountId?: string) {
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-sync', { action: 'sync-labels', account_id: activeAccount.id });
     },
+    retry: 1,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); },
   });
 
@@ -142,6 +144,7 @@ export function useGmail(accountId?: string) {
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'mark-read', account_id: activeAccount.id, message_ids: messageIds });
     },
+    retry: 1,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-threads'] }); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
   });
 

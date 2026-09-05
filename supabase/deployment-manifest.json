@@ -626,17 +626,6 @@
       ]
     },
     {
-      "name": "check-account-lock",
-      "entrypoint": "supabase/functions/check-account-lock/index.ts",
-      "verify_jwt": false,
-      "source_sha256": "47c4e654e1909f71e79218132772ff8771c9ef3bb037ddbd453504ac9f5c1a0d",
-      "source_files": [
-        "supabase/functions/_shared/hmac-validation.ts",
-        "supabase/functions/_shared/validation.ts",
-        "supabase/functions/check-account-lock/index.ts"
-      ]
-    },
-    {
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
@@ -1034,17 +1023,6 @@
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/public-api/index.ts"
-      ]
-    },
-    {
-      "name": "record-failed-login",
-      "entrypoint": "supabase/functions/record-failed-login/index.ts",
-      "verify_jwt": false,
-      "source_sha256": "2e3b05790978d0696006938150f604a4c15525a3f57e39a6b6ab5698a22900fb",
-      "source_files": [
-        "supabase/functions/_shared/hmac-validation.ts",
-        "supabase/functions/_shared/validation.ts",
-        "supabase/functions/record-failed-login/index.ts"
       ]
     },
     {

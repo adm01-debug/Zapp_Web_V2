@@ -1,6 +1,6 @@
 # ADR-005: Máquina de estados explícita para conversas
 
-- **Status:** Proposed
+- **Status:** Accepted (Step 1 applied — 2026-09-05)
 - **Data:** 2026-09-05
 - **Contexto:** auditoria técnica 2026-09-05 (dimensão Arquitetura, gap "estado de conversa implícito")
 
