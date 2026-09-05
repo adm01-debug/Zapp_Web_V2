@@ -473,6 +473,8 @@
         "contacts.lead_origin:text:nullable",
         "contacts.consent_status:text:nullable",
         "contacts.avatar_fetch_attempted_at:timestamp with time zone:nullable",
+        "contacts.conversation_status:text:not-null",
+        "contacts.conversation_status_changed_at:timestamp with time zone:nullable",
         "conversation_analyses.id:uuid:not-null",
         "conversation_analyses.contact_id:uuid:not-null",
         "conversation_analyses.analyzed_by:uuid:nullable",

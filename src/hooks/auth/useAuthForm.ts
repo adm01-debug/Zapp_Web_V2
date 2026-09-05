@@ -5,7 +5,7 @@ import { useWebAuthn } from '@/hooks/auth/useWebAuthn';
 import { toast } from '@/hooks/ui/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { checkAccountLock, recordFailedLogin, clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
+import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
 
 const passwordSchema = z.string()
   .min(8, 'Senha deve ter no mínimo 8 caracteres')
@@ -86,17 +86,6 @@ export function useAuthForm() {
     }
   }, [lockStatus.remainingTime]);
 
-  useEffect(() => {
-    const checkLock = async () => {
-      if (formData.email && formData.email.includes('@')) {
-        const status = await checkAccountLock(formData.email);
-        setLockStatus(status);
-      }
-    };
-    const debounce = setTimeout(checkLock, 500);
-    return () => clearTimeout(debounce);
-  }, [formData.email]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -127,36 +116,23 @@ export function useAuthForm() {
     setLoading(true);
     let error: { message: string } | null = null;
     let via: 'edge' | 'direct' = 'direct';
-    let lock: Awaited<ReturnType<typeof recordFailedLogin>> | null = null;
+    let lock: LockStatus | null = null;
     try {
-      const currentLock = await checkAccountLock(credentials.email);
-      if (currentLock.isLocked) {
-        setLockStatus(currentLock);
-        toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
-        return;
-      }
       ({ error, via, lock } = await signIn(credentials.email, credentials.password));
     } finally {
-      // Qualquer excecao no caminho (rede, edge) nao pode deixar o botao travado.
       setLoading(false);
     }
 
     if (error) {
-      // Pela edge auth-login a falha ja foi registrada no servidor (ADR-006).
-      const lockResult = lock ?? await recordFailedLogin(credentials.email);
-      setLockStatus(lockResult);
-      // BUG-F4 FIX: never keep the rejected password in memory after a
-      // failed attempt — forces the user to retype and avoids leaking it
-      // through React DevTools or accidental form-state serialization.
+      if (lock) setLockStatus(lock);
       setFormData((prev) => ({ ...prev, password: '' }));
-      if (lockResult.isLocked) {
-        toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lockResult.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lockResult.remainingTime)}.`, variant: 'destructive' });
+      if (lock?.isLocked) {
+        toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
-        const remainingAttempts = 5 - lockResult.attempts;
         toast({
           title: 'Erro ao entrar',
-          description: error.message === 'Invalid login credentials' 
-            ? `Email ou senha incorretos. ${remainingAttempts > 0 ? `${remainingAttempts} tentativa${remainingAttempts > 1 ? 's' : ''} restante${remainingAttempts > 1 ? 's' : ''}.` : ''}`
+          description: error.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos.'
             : error.message,
           variant: 'destructive',
         });
@@ -164,9 +140,6 @@ export function useAuthForm() {
     } else {
       if (via !== 'edge') await clearLoginAttempts(credentials.email);
       toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
-      // BUG-F2 FIX: rely on the single useEffect above that watches `user`
-      // to redirect, avoiding a double navigate (race between sync
-      // navigate + async onAuthStateChange → user → effect → navigate).
     }
   };
 
