@@ -24,7 +24,9 @@ export const queryClient = new QueryClient({
       networkMode: 'online',
     },
     mutations: {
-      retry: 1,
+      // Mutations nao sao idempotentes (insert de campanha/nota/agendamento):
+      // retry apos resposta perdida duplicaria a escrita. Quem precisar, opta por chamada.
+      retry: false,
       networkMode: 'online',
     },
   },

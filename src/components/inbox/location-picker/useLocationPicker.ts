@@ -5,6 +5,8 @@ import { toast } from '@/hooks/ui/use-toast';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
 
+const MAP_LOAD_ERROR = 'Não foi possível carregar o mapa.';
+
 interface SelectedLocation {
   lat: number;
   lng: number;
@@ -30,12 +32,15 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
 
   useEffect(() => {
-    if (open) {
-      supabase.functions.invoke('get-mapbox-token').then(({ data, error }) => {
-        if (!error && data?.token) setMapboxToken(data.token);
-      }).catch(err => log.error('Error fetching Mapbox token:', err));
-    }
-  }, [open]);
+    if (!open) return;
+    let cancelled = false;
+    supabase.functions.invoke('get-mapbox-token').then(({ data, error }) => {
+      if (cancelled) return;
+      if (!error && data?.token) setMapboxToken(data.token);
+      else setMapError(MAP_LOAD_ERROR);
+    }).catch(err => { log.error('Error fetching Mapbox token:', err); if (!cancelled) setMapError(MAP_LOAD_ERROR); });
+    return () => { cancelled = true; };
+  }, [open, mapAttempt]);
 
   const updateMarker = useCallback((lng: number, lat: number) => {
     const mapboxgl = mapboxRef.current;
@@ -72,6 +77,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || !open || activeTab !== 'map') return;
     let cancelled = false;
+    let loaded = false;
     setMapError(null);
     loadMapbox().then((mapboxgl) => {
       if (cancelled || !mapContainer.current) return;
@@ -79,7 +85,14 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       mapboxgl.accessToken = mapboxToken;
       map.current = new mapboxgl.Map({ container: mapContainer.current, style: 'mapbox://styles/mapbox/streets-v12', center: [-46.6333, -23.5505], zoom: 12 });
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Token invalido, estilo ou rede falham no 'error' do mapa, nao no loadMapbox().
+      map.current.on('error', (e) => {
+        if (loaded || cancelled) return;
+        log.error('Mapbox map error:', e.error);
+        setMapError(MAP_LOAD_ERROR);
+      });
       map.current.on('load', () => {
+        loaded = true;
         setIsMapLoaded(true);
         if (pendingMarker.current) {
           const [lng, lat] = pendingMarker.current;
@@ -90,9 +103,9 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
     }).catch((err) => {
       log.error('Error loading Mapbox:', err);
-      if (!cancelled) setMapError('Não foi possível carregar o mapa.');
+      if (!cancelled) setMapError(MAP_LOAD_ERROR);
     });
-    return () => { cancelled = true; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
+    return () => { cancelled = true; pendingMarker.current = null; map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
   }, [mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
 
   const retryMap = useCallback(() => setMapAttempt((n) => n + 1), []);
@@ -129,6 +142,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, [searchQuery, mapboxToken, updateMarker]);
 
   const reset = useCallback(() => {
+    pendingMarker.current = null;
     setSelectedLocation(null);
     setSearchQuery('');
   }, []);

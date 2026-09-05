@@ -83,7 +83,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
     return () => {
       cancelled = true;
       map.current?.remove();
-      map.current = null; marker.current = null; setIsMapLoaded(false);
+      map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(false);
     };
   }, [mapboxToken, location.latitude, location.longitude, location.isLive]);
 

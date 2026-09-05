@@ -60,5 +60,6 @@ test("main falha com exit 1 acima do budget e 0 dentro dele", () => {
 
 test("main retorna 2 sem dist", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "bundle-budget-empty-"));
+  fixtureDirs.push(dir);
   assert.equal(main(["--dist", dir], dir), 2);
 });

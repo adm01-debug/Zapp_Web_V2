@@ -28,7 +28,7 @@
 3. Toda mudança de DDL = arquivo em `supabase/migrations/` + registro no banco + `supabase/schema-catalog.json` atualizado + `scripts/db-audit/known-violations.json` se o guard mudar.
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
 5. `CREATE INDEX CONCURRENTLY` falha (gateway envolve em transação) — usar `CREATE INDEX` simples (tabelas são pequenas).
-6. **Ordem obrigatória: arquivo → PR → apply. Nunca DDL a partir de branch paralelo.**
+6. **Ordem obrigatória: arquivo → PR → merge em `main` → deploy → apply. Nunca DDL a partir de branch paralelo.**
    Só aplique DDL em produção **depois** do merge em `main` e do deploy do código que
    depende dele. Única exceção: DDL **aditivo e compatível com o código atual de `main`**
    (tabela/função/coluna nullable/índice novos, que nada em produção usa ainda) pode ser

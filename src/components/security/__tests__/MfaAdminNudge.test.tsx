@@ -61,10 +61,12 @@ describe('MfaAdminNudge', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar por 24 horas' }));
     expect(screen.queryByRole('status')).toBeNull();
     expect(storage.get('zapp:mfa-nudge-dismissed-until:admin-1')).toBeTruthy();
+    expect(useHasVerifiedTotp).toHaveBeenLastCalledWith(false);
 
     // Passadas as 24h com a aba aberta, o aviso volta sozinho.
     act(() => { vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1); });
     expect(screen.getByRole('status')).toBeTruthy();
+    expect(useHasVerifiedTotp).toHaveBeenLastCalledWith(true);
     unmount();
 
     // Outro admin no mesmo navegador nao herda a dispensa.

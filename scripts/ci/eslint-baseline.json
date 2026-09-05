@@ -586,11 +586,11 @@
     },
     {
       "path": "src/components/inbox/location-picker/useLocationPicker.ts",
-      "sha256": "e6fb38516e572d012a3e0e7801679576ee4d454e5e1cfc8ee4f793290ce59e11"
+      "sha256": "8435212193360261caaa6550b51586079d30c42cb9c39c601bbc19250bea4cee"
     },
     {
       "path": "src/components/inbox/LocationMessage.tsx",
-      "sha256": "07d0558885b04b3b575f1bf46990f14a6dabaca1ee90b1db61e13af525133080"
+      "sha256": "fa666984c8015cefc88b64279ade3b6c5d66c58542d0214fbae916ac98c4d6d1"
     },
     {
       "path": "src/components/inbox/LocationPicker.tsx",
@@ -658,7 +658,7 @@
     },
     {
       "path": "src/components/inbox/TextToAudioButton.tsx",
-      "sha256": "baa538e5a6baafab3c80b0b2af847c53dd9c7a9fb767db9b56f6093ee09f89d7"
+      "sha256": "a642980b079236286baaac75a830995b8736002b278fcbc81a69d9518669d8af"
     },
     {
       "path": "src/components/inbox/TransferDialog.tsx",
@@ -694,7 +694,7 @@
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
-      "sha256": "dc0b898aff538a8aec7f9121c9f9989a74478ed4e4c15766fda655ad6007f85e"
+      "sha256": "f928096df3ff393cd03ea82e6beb09b98a9a7f4c3eeff70cbee9b612a350d728"
     },
     {
       "path": "src/components/inbox/WhisperMode.tsx",
@@ -7473,14 +7473,14 @@
       "line": 1,
       "column": 1,
       "endLine": 1,
-      "endColumn": 82,
+      "endColumn": 63,
       "severity": 1,
       "ruleId": "no-restricted-imports",
       "messageId": "patternWithCustomMessage",
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "c449702ebb56535431db3a338d8bc2261d30ae6b63bd1910c6e508bb9ecbe4a3",
-      "lineHash": "c449702ebb56535431db3a338d8bc2261d30ae6b63bd1910c6e508bb9ecbe4a3",
-      "contextHash": "30edf43f60f8d9a82c28d033fb91351809193751f30e584d204de5e9d4b34185"
+      "spanHash": "39f30045fd114ff1a873cf09a99fa6858bf6006acf2b61ba4a7118d8561a3d59",
+      "lineHash": "39f30045fd114ff1a873cf09a99fa6858bf6006acf2b61ba4a7118d8561a3d59",
+      "contextHash": "f5be636ce8c4ddc72e487a9face92fb7eff99ad5e44bc2915b4fa579edd9900c"
     },
     {
       "file": "src/components/inbox/TransferDialog.tsx",
@@ -7669,20 +7669,20 @@
       "line": 1,
       "column": 1,
       "endLine": 1,
-      "endColumn": 82,
+      "endColumn": 63,
       "severity": 1,
       "ruleId": "no-restricted-imports",
       "messageId": "patternWithCustomMessage",
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "c449702ebb56535431db3a338d8bc2261d30ae6b63bd1910c6e508bb9ecbe4a3",
-      "lineHash": "c449702ebb56535431db3a338d8bc2261d30ae6b63bd1910c6e508bb9ecbe4a3",
-      "contextHash": "c46ae7e0ed3b45d30ae7318bd7c92f08ccd9e8d679c2d4cfcaba6101ec061b92"
+      "spanHash": "39f30045fd114ff1a873cf09a99fa6858bf6006acf2b61ba4a7118d8561a3d59",
+      "lineHash": "39f30045fd114ff1a873cf09a99fa6858bf6006acf2b61ba4a7118d8561a3d59",
+      "contextHash": "f5be636ce8c4ddc72e487a9face92fb7eff99ad5e44bc2915b4fa579edd9900c"
     },
     {
       "file": "src/components/inbox/VoiceSelector.tsx",
-      "line": 27,
+      "line": 28,
       "column": 14,
-      "endLine": 27,
+      "endLine": 28,
       "endColumn": 50,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
