@@ -1,7 +1,15 @@
 import { supabase } from '@/integrations/supabase/client';
+import { serverLogin, type ServerLoginLock } from '@/lib/serverLogin';
 import { Session } from '@supabase/supabase-js';
 import { log } from '@/lib/logger';
 import { Profile } from '@/types';
+
+export interface SignInResult {
+  error: Error | null;
+  /** 'edge' = lockout ja tratado no servidor; 'direct' = fallback, o cliente registra a falha. */
+  via: 'edge' | 'direct';
+  lock: ServerLoginLock | null;
+}
 
 export class AuthService {
   private static sessionPromise: Promise<Session | null> | null = null;
@@ -70,8 +78,26 @@ export class AuthService {
     }
   }
 
-  static async signIn(email: string, password: string) {
-    return supabase.auth.signInWithPassword({ email, password });
+  /**
+   * Login pela edge `auth-login` (lockout server-side, ADR-006). Se a edge nao
+   * responder (fora do ar, 5xx, 429), cai no signInWithPassword direto — o
+   * comportamento anterior — e o chamador registra a falha pelo cliente.
+   */
+  static async signIn(email: string, password: string): Promise<SignInResult> {
+    const result = await serverLogin(email, password);
+    if (result.ok) {
+      const { error } = await supabase.auth.setSession({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+      });
+      return { error, via: 'edge', lock: null };
+    }
+    if (!result.unavailable) {
+      return { error: new Error(result.error), via: 'edge', lock: result.lock };
+    }
+    log.warn('[AuthService] auth-login indisponivel, usando signInWithPassword direto', result.error);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error, via: 'direct', lock: null };
   }
 
   static async signUp(email: string, password: string, name: string) {

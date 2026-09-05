@@ -1,6 +1,6 @@
 # ADR-006: Lockout de login assistido pelo cliente — risco aceito e caminho server-side
 
-- **Status:** Proposed
+- **Status:** Accepted — implementado (edge `auth-login`, 2026-09-05)
 - **Data:** 2026-09-05
 - **Contexto:** review do PR #222 (cubic P1 em `supabase/config.toml`, CodeRabbit em
   `record-failed-login`, `useAuthForm.ts`, `20260904380000`)
@@ -39,7 +39,7 @@ Mitigações já em vigor: lock vigente não se estende com novas chamadas
 (`20260905010000`), e-mail precisa ser sintaticamente válido, limites por IP e por e-mail
 persistentes (`edge_rate_limits`).
 
-## Caminho server-side (próxima onda)
+## Caminho server-side (implementado em 2026-09-05)
 
 Edge `auth-login` (verify_jwt = false, rate limit por IP e por e-mail):
 
@@ -51,10 +51,24 @@ Edge `auth-login` (verify_jwt = false, rate limit por IP e por e-mail):
 5. em sucesso, chama `clear_login_attempts` e devolve `access_token`/`refresh_token`; o
    front faz `supabase.auth.setSession`.
 
-Com isso `record-failed-login` e `check-account-lock` deixam de existir como endpoints
-públicos, e o lockout passa a valer para qualquer cliente. Pontos a validar antes de
-implementar: MFA/AAL2 (o `setSession` precisa preservar o desafio TOTP), captcha do GoTrue
-se for ligado, e o comportamento do refresh token em `setSession`.
+Implementação: `supabase/functions/auth-login/index.ts` (verify_jwt = false, 10/min por IP e
+20/min por e-mail em `edge_rate_limits`), `src/lib/serverLogin.ts` (cliente) e
+`AuthService.signIn`. O front faz `supabase.auth.setSession({ access_token, refresh_token })`;
+a sessão nasce em AAL1 exatamente como no `signInWithPassword` direto, então o desafio TOTP
+(`TwoFactorAuth.tsx`) segue igual. Captcha do GoTrue está desligado neste projeto.
+
+**Fallback deliberado:** se a edge não responder (rede, 5xx, 429, corpo sem sessão) o cliente
+cai no `signInWithPassword` direto e volta a registrar a falha por `record-failed-login` — o
+comportamento anterior, para uma edge fora do ar não derrubar o login. Recusas legítimas
+(401/423) nunca caem no fallback.
+
+**Limite do GoTrue:** `/auth/v1/token` aceita 1800 req/h por IP (rajadas de 30). Todo login
+passa a sair do IP da edge; para a equipe atual isso é folga de ordens de grandeza, mas é o
+teto a lembrar se o volume crescer.
+
+`record-failed-login` e `check-account-lock` continuam publicados enquanto o fallback e o
+pré-check do formulário existirem; retirá-los é a etapa seguinte, depois de um ciclo sem
+fallback nos logs.
 
 ## Consequências
 

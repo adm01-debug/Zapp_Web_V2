@@ -126,6 +126,8 @@ export function useAuthForm() {
 
     setLoading(true);
     let error: { message: string } | null = null;
+    let via: 'edge' | 'direct' = 'direct';
+    let lock: Awaited<ReturnType<typeof recordFailedLogin>> | null = null;
     try {
       const currentLock = await checkAccountLock(credentials.email);
       if (currentLock.isLocked) {
@@ -133,14 +135,15 @@ export function useAuthForm() {
         toast({ title: 'Conta bloqueada', description: `Muitas tentativas. Aguarde ${formatLockTime(currentLock.remainingTime)}.`, variant: 'destructive' });
         return;
       }
-      ({ error } = await signIn(credentials.email, credentials.password));
+      ({ error, via, lock } = await signIn(credentials.email, credentials.password));
     } finally {
       // Qualquer excecao no caminho (rede, edge) nao pode deixar o botao travado.
       setLoading(false);
     }
 
     if (error) {
-      const lockResult = await recordFailedLogin(credentials.email);
+      // Pela edge auth-login a falha ja foi registrada no servidor (ADR-006).
+      const lockResult = lock ?? await recordFailedLogin(credentials.email);
       setLockStatus(lockResult);
       // BUG-F4 FIX: never keep the rejected password in memory after a
       // failed attempt — forces the user to retype and avoids leaking it
@@ -159,7 +162,7 @@ export function useAuthForm() {
         });
       }
     } else {
-      await clearLoginAttempts(credentials.email);
+      if (via !== 'edge') await clearLoginAttempts(credentials.email);
       toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
       // BUG-F2 FIX: rely on the single useEffect above that watches `user`
       // to redirect, avoiding a double navigate (race between sync
