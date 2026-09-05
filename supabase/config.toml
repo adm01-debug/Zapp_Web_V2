@@ -24,14 +24,6 @@ verify_jwt = false
 [functions.public-api]
 verify_jwt = false
 
-# Pre-login: chamado antes de existir sessao (verifica bloqueio de conta).
-[functions.check-account-lock]
-verify_jwt = false
-
-# Pre-login: registra tentativa falha antes de existir sessao.
-[functions.record-failed-login]
-verify_jwt = false
-
 # Login server-side (ADR-006): decide lockout antes/depois do GoTrue; nao existe sessao ainda.
 [functions.auth-login]
 verify_jwt = false

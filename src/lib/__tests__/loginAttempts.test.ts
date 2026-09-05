@@ -1,16 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockRpc, mockInvoke } = vi.hoisted(() => ({
+const { mockRpc } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
-  mockInvoke: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: mockRpc,
-    functions: {
-      invoke: mockInvoke,
-    },
   },
 }));
 
@@ -18,94 +14,11 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
-import { checkAccountLock, recordFailedLogin, clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
+import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
 
 describe('loginAttempts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('checkAccountLock', () => {
-    it('returns not locked for unknown email', async () => {
-      mockInvoke.mockResolvedValue({
-        data: { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 },
-        error: null,
-      });
-
-      const result = await checkAccountLock('unknown@test.com');
-      expect(mockInvoke).toHaveBeenCalledWith('check-account-lock', { body: { email: 'unknown@test.com' } });
-      expect(result.isLocked).toBe(false);
-    });
-
-    it('returns locked with expiry time', async () => {
-      const futureDate = new Date(Date.now() + 60000).toISOString();
-      mockInvoke.mockResolvedValue({
-        data: { isLocked: true, lockedUntil: futureDate, attempts: 5, remainingTime: 60 },
-        error: null,
-      });
-
-      const result = await checkAccountLock('locked@test.com');
-      expect(mockInvoke).toHaveBeenCalledWith('check-account-lock', { body: { email: 'locked@test.com' } });
-      expect(result.isLocked).toBe(true);
-      expect(result.lockedUntil).toBeTruthy();
-    });
-
-    it('handles invoke error gracefully', async () => {
-      mockInvoke.mockResolvedValue({
-        data: null,
-        error: new Error('Network failure'),
-      });
-
-      const result = await checkAccountLock('test@test.com');
-      expect(result.isLocked).toBe(false);
-    });
-
-    it('handles empty result data', async () => {
-      mockInvoke.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      const result = await checkAccountLock('test@test.com');
-      expect(result.isLocked).toBe(false);
-      expect(result.attempts).toBe(0);
-    });
-  });
-
-  describe('recordFailedLogin', () => {
-    it('records first failed attempt', async () => {
-      mockInvoke.mockResolvedValue({
-        data: { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 },
-        error: null,
-      });
-
-      const result = await recordFailedLogin('test@test.com');
-      expect(mockInvoke).toHaveBeenCalledWith('record-failed-login', expect.objectContaining({
-        body: expect.objectContaining({ email: 'test@test.com' }),
-      }));
-      expect(result.isLocked).toBe(false);
-    });
-
-    it('returns locked after max attempts', async () => {
-      const futureDate = new Date(Date.now() + 60000).toISOString();
-      mockInvoke.mockResolvedValue({
-        data: { isLocked: true, lockedUntil: futureDate, attempts: 5, remainingTime: 60 },
-        error: null,
-      });
-
-      const result = await recordFailedLogin('test@test.com');
-      expect(result.isLocked).toBe(true);
-    });
-
-    it('handles error gracefully', async () => {
-      mockInvoke.mockResolvedValue({
-        data: null,
-        error: new Error('Network failure'),
-      });
-
-      const result = await recordFailedLogin('test@test.com');
-      expect(result.isLocked).toBe(false);
-    });
   });
 
   describe('clearLoginAttempts', () => {

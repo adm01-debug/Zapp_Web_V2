@@ -18,6 +18,7 @@ import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
 import type { Conversation, Message } from '@/types/chat';
+import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface CRMAutoSyncProps {
   conversation: Conversation;
@@ -90,17 +91,24 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
   const lastSyncedId = useRef<string>('');
 
   const sentiment = useMemo(() => detectSentiment(messages), [messages]);
+  const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
+  const effectiveStatus = useMemo(
+    () => fsmEnabled
+      ? (conversation.contact.conversation_status ?? conversation.status)
+      : conversation.status,
+    [fsmEnabled, conversation.contact.conversation_status, conversation.status],
+  );
 
   useEffect(() => {
     if (!isConfigured) return;
     if (!conversation.contact.phone) return;
 
     const shouldSync =
-      conversation.status === 'resolved' &&
+      effectiveStatus === 'resolved' &&
       (lastSyncedStatus.current !== 'resolved' || lastSyncedId.current !== conversation.id);
 
     if (shouldSync) {
-      lastSyncedStatus.current = conversation.status;
+      lastSyncedStatus.current = effectiveStatus;
       lastSyncedId.current = conversation.id;
 
       const summary = buildSummary(conversation, messages);
@@ -120,8 +128,8 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
       log.info('CRM auto-sync triggered:', { id: conversation.id, sentiment });
     }
 
-    lastSyncedStatus.current = conversation.status;
-  }, [conversation.status, conversation.id, conversation.contact.phone, isConfigured, syncConversation, messageCount, agentName, conversation.contact.name, messages, sentiment]);
+    lastSyncedStatus.current = effectiveStatus;
+  }, [effectiveStatus, conversation, isConfigured, syncConversation, messageCount, agentName, messages, sentiment]);
 
   return null; // Invisible component
 }
