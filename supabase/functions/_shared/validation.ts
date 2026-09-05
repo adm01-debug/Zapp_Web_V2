@@ -67,10 +67,11 @@ export class Logger {
 // IMPORTANTE: ao adicionar um dominio de producao novo, adicionar aqui tambem
 // e redeployar todas as edges (supabase functions deploy --project-ref <ref>).
 const EXACT_ALLOWED_ORIGINS = new Set([
-  // Producao Vercel
+  // Producao Vercel (projeto `zapp_web_v2` -> aliases `zappwebv2-*`; o dominio
+  // principal `zapp-web-v2.vercel.app` e custom)
   'https://zapp-web-v2.vercel.app',
-  'https://zapp-web-v2-juca1.vercel.app',
-  'https://zapp-web-v2-git-main-juca1.vercel.app',
+  'https://zappwebv2-juca1.vercel.app',
+  'https://zappwebv2-git-main-juca1.vercel.app',
   // Dominios Lovable legados (manter durante transicao)
   'https://pronto-talk-suite.lovable.app',
   'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
@@ -78,8 +79,10 @@ const EXACT_ALLOWED_ORIGINS = new Set([
 ]);
 
 const ORIGIN_PATTERNS = [
-  // Previews de PR na Vercel: zapp-web-v2-<hash>-juca1.vercel.app
-  /^https:\/\/zapp-web-v2-[a-z0-9]+-juca1\.vercel\.app$/,
+  // Previews na Vercel: zappwebv2-<hash>-juca1.vercel.app (deploy) e
+  // zappwebv2-git-<branch>-juca1.vercel.app (alias de branch). Verificado na API
+  // da Vercel em 2026-09-05 — o padrao antigo `zapp-web-v2-<hash>` nunca casava.
+  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
   // Localhost para desenvolvimento
   /^http:\/\/localhost(?::\d{1,5})?$/,
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,

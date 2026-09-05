@@ -15,7 +15,9 @@ O deploy é automático: todo merge na `main` dispara build e deploy de produç�
 na Vercel (projeto `zapp_web_v2`, team `juca1`).
 
 - **Produção**: `https://zapp-web-v2.vercel.app`
-- **Preview**: cada PR ganha URL própria (`zapp-web-v2-<hash>-juca1.vercel.app`)
+- **Preview**: cada PR ganha URL própria (`zappwebv2-<hash>-juca1.vercel.app`; alias de
+  branch `zappwebv2-git-<branch>-juca1.vercel.app`). O CORS das edges aceita esse padrão
+  (`_shared/validation.ts`, `ORIGIN_PATTERNS`).
 - Nenhum passo manual. O merge só é possível com os 3 checks obrigatórios
   verdes (Lint & TypeCheck, Unit Tests, Build) + conversas resolvidas.
 
