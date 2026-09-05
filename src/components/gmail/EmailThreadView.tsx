@@ -45,7 +45,9 @@ function formatDate(dateStr: string): string {
 
 function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: boolean }) {
   const [expanded, setExpanded] = useState(isLast);
-  const [showHtml, setShowHtml] = useState(false);
+  // HTML sanitizado é a fonte visual da verdade quando existe (mesma regra do
+  // EmailChatBubble): o legado abria em texto puro e perdia toda a formatação.
+  const [showHtml, setShowHtml] = useState(Boolean(message.body_html));
 
   const isInbound = message.direction === 'inbound';
 
