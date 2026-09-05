@@ -106,13 +106,17 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // Don't notify if currently viewing this conversation
         if (!document.hidden && activeIdRef.current === msg.conversation_id) return;
 
-        // Check if user is a member of this conversation
-        const { data: membership } = await supabase
+        // Check if user is a member of this conversation. limit(1) em vez de
+        // single(): o listener recebe todo INSERT em team_messages sem
+        // filtro por conversa, então "não é membro" é o caso comum, não uma
+        // exceção — single() geraria 406 na maioria dos eventos.
+        const { data: membershipRows } = await supabase
           .from('team_conversation_members')
           .select('id, is_muted')
           .eq('conversation_id', msg.conversation_id)
           .eq('profile_id', profile.id)
-          .single();
+          .limit(1);
+        const membership = membershipRows?.[0] ?? null;
 
         if (!membership) return; // Not a member
         if (membership.is_muted) return; // Muted

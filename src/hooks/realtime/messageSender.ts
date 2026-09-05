@@ -19,12 +19,15 @@ async function resolveConnection(contactConnectionId: string | null) {
   let connection: { instance_id: string | null; status: string | null } | null = null;
 
   if (resolvedConnectionId) {
+    // limit(1) em vez de single(): a conexão referenciada pelo contato pode
+    // ter sido deletada pelo usuário (o fallback abaixo já trata esse
+    // caso), então 0 linhas é esperado — single() geraria 406 nesse cenário.
     const { data } = await supabase
       .from('whatsapp_connections')
       .select('instance_id, status')
       .eq('id', resolvedConnectionId)
-      .single();
-    connection = data;
+      .limit(1);
+    connection = data?.[0] ?? null;
   }
 
   if (!connection?.instance_id || connection.status !== 'connected') {

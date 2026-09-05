@@ -99,13 +99,18 @@ describe('smoke: conversation creation (send message)', () => {
         } as never;
       }
       if (table === 'whatsapp_connections') {
+        // limit(1) sem single(): resolve como array (formato usado por
+        // resolveConnection em messageSender.ts). maybeSingle() fica anexado
+        // ao resultado para servir a query de fallback, que ainda a usa.
+        const limitResult = Object.assign(
+          Promise.resolve({ data: [{ instance_id: 'inst', status: 'connected' }], error: null }),
+          { maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }
+        );
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           order: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { instance_id: 'inst', status: 'connected' }, error: null }),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          limit: vi.fn().mockReturnValue(limitResult),
         } as never;
       }
       if (table === 'messages') {
