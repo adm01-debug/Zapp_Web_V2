@@ -77,7 +77,9 @@ WITH columns_manifest AS (
            i.indisvalid::text,
            i.indisready::text,
            i.indislive::text,
-           pg_get_indexdef(i.indexrelid, 0, false)
+           -- pg_get_indexdef qualifica opclasses fora do search_path (extensions.gin_trgm_ops via
+           -- MCP, gin_trgm_ops via psql/CI). Normaliza para o hash nao depender do cliente.
+           regexp_replace(pg_get_indexdef(i.indexrelid, 0, false), '\mextensions\.', '', 'g')
          )) AS h
   FROM pg_index i
   JOIN pg_class idx ON idx.oid = i.indexrelid

@@ -2,7 +2,7 @@
  import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
- import { AuthService } from '@/services/auth.service';
+ import { AuthService, type SignInResult } from '@/services/auth.service';
  import { Profile } from '@/types';
  import { log } from '@/lib/logger';
 
@@ -11,7 +11,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -150,10 +150,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
     }
   }, [user, fetchProfile]);
 
-   const signIn = async (email: string, password: string) => {
-     const { error } = await AuthService.signIn(email, password);
-     return { error };
-   };
+   const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
 
    const signUp = async (email: string, password: string, name: string) => {
      const { error } = await AuthService.signUp(email, password, name);
