@@ -28,7 +28,14 @@ verify_jwt = false
 [functions.check-account-lock]
 verify_jwt = false
 
+# Pre-login: registra tentativa falha antes de existir sessao.
+[functions.record-failed-login]
+verify_jwt = false
+
 # Catálogo de produtos — edge-only; endpoint e service role via Supabase Secrets.
 # verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
 [functions.promogifts-catalog]
 verify_jwt = true
+
+[functions.csp-report]
+verify_jwt = false

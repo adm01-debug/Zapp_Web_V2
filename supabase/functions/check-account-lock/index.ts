@@ -5,7 +5,7 @@ import {
   jsonResponse,
   requireEnv,
   Logger,
-  checkRateLimit,
+  enforceRateLimit,
   getClientIP,
   sanitizeString,
 } from "../_shared/validation.ts";
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     if (req.method !== "POST") return errorResponse("Method not allowed", 405, req);
 
     const ip = getClientIP(req);
-    const rl = checkRateLimit(`check-lock:${ip}`, 20, 60_000);
+    const rl = await enforceRateLimit(`check-lock:${ip}`, 20, 60_000);
     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     let body: unknown;
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!email) return errorResponse("email required", 400, req);
 
     // Additional per-email rate limit to prevent enumeration abuse
-    const emailRl = checkRateLimit(`check-lock-email:${email.toLowerCase()}`, 10, 60_000);
+    const emailRl = await enforceRateLimit(`check-lock-email:${email.toLowerCase()}`, 10, 60_000);
     if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const supabase = createClient(
@@ -63,13 +63,18 @@ Deno.serve(async (req) => {
       : 0;
 
     log.done(200, { isLocked: row.is_locked });
+    // Only expose attempts/lockedUntil when the account is actually locked.
+    // Returning attempt counts for unlocked accounts enables email enumeration
+    // (non-zero count confirms the email exists and has prior failures).
     return jsonResponse(
-      {
-        isLocked: row.is_locked,
-        lockedUntil: lockedUntil?.toISOString() ?? null,
-        attempts: row.attempts,
-        remainingTime,
-      },
+      row.is_locked
+        ? {
+            isLocked: true,
+            lockedUntil: lockedUntil?.toISOString() ?? null,
+            attempts: row.attempts,
+            remainingTime,
+          }
+        : { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 },
       200,
       req
     );

@@ -11,8 +11,19 @@ interface LogContext {
   [key: string]: unknown;
 }
 
-// Session-level correlation ID for tracing across the app lifetime
-const sessionId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+// Session-level correlation ID for tracing across the app lifetime.
+// Fallback via getRandomValues (nao Math.random): o id vai para audit_logs
+// (client_error) e nao deve ser previsivel — CodeQL js/insecure-randomness.
+function createSessionId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const suffix = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${Date.now()}-${suffix}`;
+}
+const sessionId = createSessionId();
 
 // Per-request correlation ID generator
 let requestCounter = 0;

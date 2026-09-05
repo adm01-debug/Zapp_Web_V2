@@ -111,13 +111,15 @@ function isPublicHttpUrl(raw: string): URL | null {
 }
 
 function decodeEntities(s: string): string {
+  // `&amp;` por ultimo: decodificar primeiro transformava "&amp;lt;" em "<"
+  // (double-unescape, CodeQL js/double-escaping).
   return s
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
 }
 
 function extractMeta(html: string, names: string[]): string | undefined {
@@ -260,8 +262,11 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    // Detalhe fica no log do servidor; o cliente recebe so o codigo do erro
+    // (CodeQL js/stack-trace-exposure).
+    console.error('[fetch-link-preview] unexpected_error', err instanceof Error ? err.message : String(err));
     return new Response(
-      JSON.stringify({ error: 'unexpected_error', message: String(err) }),
+      JSON.stringify({ error: 'unexpected_error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }

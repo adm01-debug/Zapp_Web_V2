@@ -471,6 +471,32 @@
       "reason": "safer-replay",
       "related_migration": null,
       "justification": "Ledger guarda o REVOKE de anon em record_failed_login; o arquivo e no-op. A funcao e chamada pela tela de login antes de existir sessao (src/lib/loginAttempts.ts, como anon): sem EXECUTE o RPC falha, o erro e engolido e nenhuma conta trava. Num replay limpo o REVOKE abriria essa janela entre esta migration e a 20260903210000, que o desfaz. Estado final permitido e anon com EXECUTE (ver 20260903170000 e 20260903210000) — divergencia intencional segura."
+    },
+    {
+      "version": "20260904320000",
+      "filename": "20260904320000_fix_critical_security_functions.sql",
+      "file_sha256": "bdf8969f110c29e454202cd84c58ee727e24e181fa6ef184fe3d0c8815330a8e",
+      "file_sql_sha256": "5c32a3f2e03140b52c30db2b518c964264a8038a4273f3dc06b86c84689eefa6",
+      "ledger_name": "fix_critical_security_functions",
+      "ledger_sql_sha256": "96c1e654101fa2ac03761eeda956a3405504bbe14a0895336996890a19076af6",
+      "ledger_statements_sha256": "ee6c51813f3fbf6227f1be4747c7956a3003297c933d99ec5c4222f8bdc10df7",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Ledger registrou apenas resumo em prosa (\"CREATE OR REPLACE FUNCTION ... (add admin guard)\"), aplicado em 2026-09-04 por sessao paralela (PR #218). Arquivo pin carrega as definicoes SQL completas vigentes no banco: get_identity_matrix com guard is_admin_or_supervisor e contacts_count_by_type sem SECURITY DEFINER (conferido via pg_get_functiondef em 2026-09-05)."
+    },
+    {
+      "version": "20260904370000",
+      "filename": "20260904370000_fix_record_failed_login_race_and_revoke_grants.sql",
+      "file_sha256": "aade7e0ef284ebc94637b42c34c0ed25e6dd0a948a1a6161f78a0514beba79cf",
+      "file_sql_sha256": "b1ec28ff47ebad15a9c2b4815094e82f2549d71b6013dde3f21c91f52f2e51af",
+      "ledger_name": "fix_record_failed_login_race_and_revoke_grants",
+      "ledger_sql_sha256": "31545fe6e52685e3209a4e816edfe0587786a50298a50ef552147fecd0955381",
+      "ledger_statements_sha256": "fde672e730a1842ad20caf464fc22a45d8834467d6c0461b6565ef764010e702",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "Ledger registrou o CREATE FUNCTION de record_failed_login com corpo abreviado (\"...\"), aplicado em 2026-09-04 por sessao paralela (PR #218). Arquivo pin carrega o corpo completo vigente no banco (UPSERT atomico, cap 10000, CHECK login_attempts_attempt_count_max, REVOKEs) conferido via pg_get_functiondef e pg_constraint em 2026-09-05. A correcao do locked_until stale vem em 20260905010000."
     }
   ]
 }

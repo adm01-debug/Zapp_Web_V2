@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LocationMessage as LocationMessageType } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import type mapboxgl from 'mapbox-gl';
+import { loadMapbox } from '@/lib/mapboxLoader';
 
 interface LocationMessageDisplayProps {
   location: LocationMessageType;
@@ -19,6 +19,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [mapError, setMapError] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -39,37 +40,50 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    let cancelled = false;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [location.longitude, location.latitude],
-      zoom: 15,
-      interactive: false,
-    });
+    loadMapbox()
+      .then((mapboxgl) => {
+        if (cancelled || !mapContainer.current) return;
 
-    // Add marker
-    const el = document.createElement('div');
-    el.className = 'location-marker';
-    el.innerHTML = `
-      <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg ${location.isLive ? 'animate-pulse ring-4 ring-primary/30' : ''}">
-        <svg class="w-4 h-4 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </div>
-    `;
+        mapboxgl.accessToken = mapboxToken;
 
-    marker.current = new mapboxgl.Marker(el)
-      .setLngLat([location.longitude, location.latitude])
-      .addTo(map.current);
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [location.longitude, location.latitude],
+          zoom: 15,
+          interactive: false,
+        });
 
-    map.current.on('load', () => {
-      setIsMapLoaded(true);
-    });
+        // Add marker
+        const el = document.createElement('div');
+        el.className = 'location-marker';
+        el.innerHTML = `
+          <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg ${location.isLive ? 'animate-pulse ring-4 ring-primary/30' : ''}">
+            <svg class="w-4 h-4 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+        `;
+
+        marker.current = new mapboxgl.Marker(el)
+          .setLngLat([location.longitude, location.latitude])
+          .addTo(map.current);
+
+        map.current.on('load', () => {
+          setIsMapLoaded(true);
+        });
+      })
+      .catch((err) => {
+        log.error('Error loading Mapbox:', err);
+        if (!cancelled) setMapError(true);
+      });
 
     return () => {
+      cancelled = true;
       map.current?.remove();
+      map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(false);
     };
   }, [mapboxToken, location.latitude, location.longitude, location.isLive]);
 
@@ -115,9 +129,14 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           style={{ minWidth: '200px' }}
         />
         
-        {!isMapLoaded && (
+        {!isMapLoaded && !mapError && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        )}
+        {mapError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted px-2 text-center text-xs text-muted-foreground">
+            Mapa indisponível — abra a localização pelos botões abaixo.
           </div>
         )}
       </div>

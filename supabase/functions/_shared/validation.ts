@@ -67,10 +67,11 @@ export class Logger {
 // IMPORTANTE: ao adicionar um dominio de producao novo, adicionar aqui tambem
 // e redeployar todas as edges (supabase functions deploy --project-ref <ref>).
 const EXACT_ALLOWED_ORIGINS = new Set([
-  // Producao Vercel
+  // Producao Vercel (projeto `zapp_web_v2` -> aliases `zappwebv2-*`; o dominio
+  // principal `zapp-web-v2.vercel.app` e custom)
   'https://zapp-web-v2.vercel.app',
-  'https://zapp-web-v2-juca1.vercel.app',
-  'https://zapp-web-v2-git-main-juca1.vercel.app',
+  'https://zappwebv2-juca1.vercel.app',
+  'https://zappwebv2-git-main-juca1.vercel.app',
   // Dominios Lovable legados (manter durante transicao)
   'https://pronto-talk-suite.lovable.app',
   'https://id-preview--1d419c34-35ac-4a71-96a5-146ca1b3ebf2.lovable.app',
@@ -78,8 +79,10 @@ const EXACT_ALLOWED_ORIGINS = new Set([
 ]);
 
 const ORIGIN_PATTERNS = [
-  // Previews de PR na Vercel: zapp-web-v2-<hash>-juca1.vercel.app
-  /^https:\/\/zapp-web-v2-[a-z0-9]+-juca1\.vercel\.app$/,
+  // Previews na Vercel: zappwebv2-<hash>-juca1.vercel.app (deploy) e
+  // zappwebv2-git-<branch>-juca1.vercel.app (alias de branch). Verificado na API
+  // da Vercel em 2026-09-05 — o padrao antigo `zapp-web-v2-<hash>` nunca casava.
+  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
   // Localhost para desenvolvimento
   /^http:\/\/localhost(?::\d{1,5})?$/,
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
@@ -119,11 +122,20 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
 /** @deprecated Use getCorsHeaders(req) for origin-validated CORS. Kept for backward compat — do NOT use in new code. */
 export const corsHeaders = getCorsHeaders();
 
-/** Standard JSON error response (with origin-validated CORS) */
+/** Standard JSON error response (with origin-validated CORS).
+ * Em 5xx a mensagem original (frequentemente `err.message`, com nome de env
+ * var, host ou stack) fica so no log do servidor; o cliente recebe texto
+ * generico (CodeQL js/stack-trace-exposure). 4xx segue como esta: e a
+ * mensagem de validacao que o front exibe. */
 export function errorResponse(message: string, status = 400, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
+  let body = message;
+  if (status >= 500) {
+    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
+    body = 'Internal server error';
+  }
   return new Response(
-    JSON.stringify({ error: message }),
+    JSON.stringify({ error: body }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
@@ -191,13 +203,74 @@ export function checkRateLimit(
   return { allowed: entry.count <= maxRequests, remaining };
 }
 
-/** Extract client IP from request for rate limiting */
+// Cliente service_role compartilhado pelo isolate (so para o limiter persistente).
+interface RateLimitRpcClient {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>
+  ) => PromiseLike<{ data: unknown; error: unknown }>;
+}
+let serviceClientPromise: Promise<RateLimitRpcClient> | null = null;
+function getServiceClient(): Promise<RateLimitRpcClient> {
+  if (!serviceClientPromise) {
+    serviceClientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1").then(({ createClient }) =>
+      createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+        auth: { persistSession: false },
+      })
+    ).catch((err) => {
+      serviceClientPromise = null;
+      throw err;
+    });
+  }
+  return serviceClientPromise;
+}
+
+/**
+ * Rate limit persistente (tabela edge_rate_limits + RPC consume_rate_limit,
+ * migration 20260905020000). O contador em memoria de checkRateLimit e so um
+ * pre-filtro: ele nao sobrevive a cold start nem e compartilhado entre
+ * isolates. Se o banco falhar, cai para o contador local (fail-open com log)
+ * em vez de derrubar a funcao.
+ */
+export async function enforceRateLimit(
+  key: string,
+  maxRequests = 30,
+  windowMs = 60_000
+): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
+  const local = checkRateLimit(key, maxRequests, windowMs);
+  if (!local.allowed) return { ...local, persistent: false };
+  try {
+    const client = await getServiceClient();
+    const { data, error } = await client.rpc("consume_rate_limit", {
+      p_key: key,
+      p_max: maxRequests,
+      p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),
+    });
+    if (error) throw error;
+    const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
+    if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
+    return {
+      allowed: row.allowed,
+      remaining: typeof row.remaining === "number" ? row.remaining : 0,
+      persistent: true,
+    };
+  } catch (err) {
+    console.warn("[rate-limit] limiter persistente indisponivel; usando contador local:", String(err));
+    return { ...local, persistent: false };
+  }
+}
+
+/** Extract client IP from request for rate limiting.
+ * Uses the RIGHTMOST XFF value (set by the trusted Supabase edge proxy) to
+ * prevent attackers from spoofing the IP by prepending fake XFF entries. */
 export function getClientIP(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  const xff = req.headers.get('x-forwarded-for');
+  if (xff) {
+    const parts = xff.split(',');
+    const rightmost = parts[parts.length - 1]?.trim();
+    if (rightmost) return rightmost;
+  }
+  return req.headers.get('x-real-ip') || 'unknown';
 }
 
 /** Get required env var or throw */

@@ -34,10 +34,8 @@ export async function checkAccountLock(email: string): Promise<LockStatus> {
 }
 
 export async function recordFailedLogin(email: string): Promise<LockStatus> {
-  const { data, error } = await supabase.rpc('record_failed_login', {
-    p_email: email,
-    p_ip_address: undefined,
-    p_user_agent: navigator.userAgent
+  const { data, error } = await supabase.functions.invoke('record-failed-login', {
+    body: { email, userAgent: navigator.userAgent },
   });
 
   if (error) {
@@ -45,18 +43,17 @@ export async function recordFailedLogin(email: string): Promise<LockStatus> {
     return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
   }
 
-  const result = data?.[0];
-  if (!result) {
+  if (!data || typeof data.isLocked !== 'boolean') {
     return { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
   }
 
-  const lockedUntil = result.locked_until ? new Date(result.locked_until) : null;
-  const remainingTime = lockedUntil ? Math.max(0, Math.floor((lockedUntil.getTime() - Date.now()) / 1000)) : 0;
+  const lockedUntil = data.lockedUntil ? new Date(data.lockedUntil) : null;
+  const remainingTime = typeof data.remainingTime === 'number' ? data.remainingTime : 0;
 
   return {
-    isLocked: result.is_locked,
+    isLocked: data.isLocked,
     lockedUntil,
-    attempts: result.attempts,
+    attempts: typeof data.attempts === 'number' ? data.attempts : 1,
     remainingTime
   };
 }

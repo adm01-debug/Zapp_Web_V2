@@ -215,6 +215,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.error("Fatal error", { error: msg });
-    return errorResponse(msg, 500, req);
+    return errorResponse("Internal server error", 500, req);
   }
 });
