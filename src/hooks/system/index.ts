@@ -31,5 +31,6 @@ export * from './useSupabaseMutation';
 export * from './useUndoableAction';
 export * from './useUrlFilters';
 export * from './useUserRole';
+export * from './useFeatureFlag';
 export * from './useUserSettings';
 export * from './useVersions';

@@ -36,3 +36,6 @@ verify_jwt = false
 # verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
 [functions.promogifts-catalog]
 verify_jwt = true
+
+[functions.csp-report]
+verify_jwt = false
