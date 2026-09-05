@@ -98,6 +98,40 @@ describe('VoIPPanel', () => {
     expect(screen.getByText('VoIP & Chamadas')).toBeInTheDocument();
   });
 
+  it('shows config toast when invoke returns SIP_NOT_CONFIGURED (503)', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { toast } = await import('sonner');
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: null,
+      error: { context: { status: 503, code: 'SIP_NOT_CONFIGURED' } },
+    });
+    renderWithProviders(<VoIPPanel />);
+    const connectBtn = screen.getByRole('button', { name: /conectar/i });
+    fireEvent.click(connectBtn);
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining('SIP_PASSWORD'),
+      );
+    });
+  });
+
+  it('shows generic toast for non-config invoke errors (401)', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { toast } = await import('sonner');
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: null,
+      error: { context: { status: 401, code: 'UNAUTHORIZED' } },
+    });
+    renderWithProviders(<VoIPPanel />);
+    const connectBtn = screen.getByRole('button', { name: /conectar/i });
+    fireEvent.click(connectBtn);
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining('sessão'),
+      );
+    });
+  });
+
   it('renders description text', () => {
     renderWithProviders(<VoIPPanel />);
     expect(screen.getByText('Click-to-call, histórico de chamadas e gravações')).toBeInTheDocument();
