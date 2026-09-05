@@ -4,7 +4,6 @@ import { evoFetch, extractBase64Media } from './evolution-send.ts';
 import {
   isRecord, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
-  generatePhoneVariants,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 
@@ -186,84 +185,53 @@ export async function handleIncomingMessage(
   const connection = await getConnectionByInstance(supabase, instance);
   if (!connection) return;
 
-  let contact = await getContactByPhone(supabase, phone, connection.id);
-
-  if (!contact) {
-    let avatarUrl: string | null = null;
-    const picUrl = await fetchProfilePicFromApi(instance, phone);
-    if (picUrl) avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
-    const { data: newContact, error: insertErr } = await supabase.from('contacts').insert({
-      phone, name: (data.pushName as string) || phone, avatar_url: avatarUrl, whatsapp_connection_id: connection.id,
-    }).select('id, avatar_url, assigned_to, name').single();
-    if (insertErr && insertErr.code === '23505') {
-      // Duplicate phone — contact exists with another connection; fetch with 9th digit variants
-      const phonesVariants = generatePhoneVariants(phone);
-      const { data: existing } = await supabase.from('contacts').select('id, avatar_url, assigned_to, name')
-        .in('phone', phonesVariants).limit(1).maybeSingle();
-      if (existing) {
-        contact = existing;
-        await supabase.from('contacts').update({ whatsapp_connection_id: connection.id, updated_at: new Date().toISOString() }).eq('id', existing.id);
-        console.log(`[CONTACT] Relinked existing contact ${existing.id} to connection ${connection.id}`);
-      }
-    } else {
-      contact = newContact;
-    }
-  } else if (!contact.avatar_url || isWhatsAppCdnUrl(contact.avatar_url)) {
-    const picUrl = await fetchProfilePicFromApi(instance, phone);
-    if (picUrl) {
-      const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
-      if (avatarUrl) await supabase.from('contacts').update({ avatar_url: avatarUrl }).eq('id', contact.id);
-    }
-  }
-
-  if (!contact) return;
-
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
-  // real (ux_messages_dedup) -- ver comentario equivalente em
-  // handleOutgoingWhatsAppMessage.
-  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
-    .select('id, status, content').eq('whatsapp_connection_id', connection.id).eq('sender', 'contact').eq('external_id', key.id)
-    .order('created_at', { ascending: false }).limit(1).maybeSingle();
-  if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
-
-  if (existingMessage?.id) {
-    const preservedStatus = existingMessage.status && existingMessage.status !== 'received' ? existingMessage.status : 'received';
-    const preservedContent = existingMessage.status === 'deleted' ? (existingMessage.content || '[Mensagem apagada]') : content;
-    await supabase.from('messages').update({
-      contact_id: contact.id, whatsapp_connection_id: connection.id, content: preservedContent,
-      message_type: messageType, media_url: mediaUrl, sender: 'contact', created_at: messageCreatedAt, status: preservedStatus,
-    }).eq('id', existingMessage.id);
-    if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, existingMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  // Uma transacao (migration 20260905050000): find-or-create do contato com
+  // variantes do 9o digito e relink de conexao + upsert idempotente da mensagem
+  // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
+  // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
+  // sem mensagem ou relink parcial.
+  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
+    p_connection_id: connection.id,
+    p_phone: phone,
+    p_push_name: (data.pushName as string) || null,
+    p_content: content,
+    p_message_type: messageType,
+    p_media_url: mediaUrl,
+    p_external_id: key.id,
+    p_created_at: messageCreatedAt,
+  });
+  if (txError) {
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
+    return;
+  }
+  const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
+    contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
+    contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
+  } | null;
+  if (!tx?.contact_id) {
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone });
     return;
   }
 
-  // E08: upsert idempotente contra race condition de webhooks paralelos.
-  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
-  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
-  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
-  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
-  // conflito e inferivel. .maybeSingle() retorna null (sem erro) se
-  // DO NOTHING silenciou uma duplicata.
-  const { data: insertedMessage, error: msgError } = await supabase.from('messages').upsert({
-    contact_id: contact.id, whatsapp_connection_id: connection.id, content,
-    message_type: messageType, media_url: mediaUrl, sender: 'contact', external_id: key.id,
-    status: 'received', created_at: messageCreatedAt,
-  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true }).select('id').maybeSingle();
-
-  if (msgError) {
-    console.error('Error inserting message:', { msgError, externalId: key.id, bestJid, phone, messageType, content });
-    return;
+  // Avatar fica fora da transacao: chamada externa a Evolution GO.
+  if (tx.contact_created || !tx.avatar_url || isWhatsAppCdnUrl(tx.avatar_url)) {
+    const picUrl = await fetchProfilePicFromApi(instance, phone);
+    if (picUrl) {
+      const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
+      if (avatarUrl) await supabase.from('contacts').update({ avatar_url: avatarUrl }).eq('id', tx.contact_id);
+    }
   }
-  if (!insertedMessage) {
+
+  if (tx.outcome === 'duplicate' || !tx.message_id) {
     console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
     return;
   }
-  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, contact.id, insertedMessage.id, mediaUrl, supabaseUrl, supabaseServiceKey);
-  if (messageType === 'text' && insertedMessage?.id && content) {
-    void enrichIncomingLinkPreview(supabase, insertedMessage.id, content, supabaseUrl, supabaseServiceKey);
+  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (tx.outcome === 'inserted' && messageType === 'text' && content) {
+    void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
   }
 }
 

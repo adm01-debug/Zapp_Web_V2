@@ -99,6 +99,7 @@
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitest/coverage-v8": "4.1.11",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^7.1.1",

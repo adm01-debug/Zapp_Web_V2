@@ -28,7 +28,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 1. INPUT AREA — EDGE CASES
   // ═══════════════════════════════════════════
   describe('Input Area Edge Cases', () => {
-    it.skip('should not send empty/whitespace-only mey messages', () => {
+    it.todo('should not send empty/whitespace-only mey messages', () => {
       expect(panelSrc).toMatch(/text\.trim\(\)/);
       expect(panelSrc).toMatch(/if\s*\(\s*!trimmed/);
     });
@@ -48,25 +48,25 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(inputSrc).toMatch(/e\.key\s*===\s*'Enter'\s*&&\s*!e\.shiftKey/);
     });
 
-    it.skip('should clear draft on send', () => {
+    it.todo('should clear draft on send', () => {
       expect(inputSrc).toContain('localStorage.removeItem');
     });
 
-    it.skip('should restore draft on mount', () => {
+    it.todo('should restore draft on mount', () => {
       expect(inputSrc).toMatch(/localStorage\.getItem.*DRAFT_KEY_PREFIX/);
     });
 
-    it.skip('should debounce draft saving (not on every keystroke)', () => {
+    it.todo('should debounce draft saving (not on every keystroke)', () => {
       expect(inputSrc).toContain('setTimeout');
       expect(inputSrc).toMatch(/500/); // 500ms debounce
     });
 
-    it.skip('should handle clipboard paste for imagesmages', () => {
+    it.todo('should handle clipboard paste for imagesmages', () => {
       expect(inputSrc).toContain('handlePaste');
       expect(inputSrc).toMatch(/clipboardData/);
     });
 
-    it.skip('FIXED: paste image handler uploads to stto storage', () => {
+    it.todo('FIXED: paste image handler uploads to stto storage', () => {
       expect(inputSrc).not.toContain('TODO: handle paste image upload');
       expect(inputSrc).toContain('setPasteUploading');
       expect(inputSrc).toContain('team-chat-files');
@@ -144,13 +144,13 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(uploaderSrc).toMatch(/inputRef\.current.*value\s*=\s*''/);
     });
 
-    it.skip('should handle audio recording and uploadpload', () => {
+    it.todo('should handle audio recording and uploadpload', () => {
       expect(panelSrc).toContain('handleAudioSend');
       expect(panelSrc).toContain("'audio/webm'");
       expect(panelSrc).toContain('team-chat-files');
     });
 
-    it.skip('BUG: audio recording uses webm which may not play on Safari', () => {
+    it.todo('BUG: audio recording uses webm which may not play on Safari', () => {
       // WebM is not supported in Safari - should consider using mp4/m4a fallback
       const usesWebm = panelSrc.includes('.webm');
       expect(usesWebm).toBe(true); // Documenting this limitation
@@ -166,7 +166,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(inputSrc).toContain('border-l-2 border-primary');
     });
 
-    it.skip('should include reply_to_id in sent messamessage', () => {
+    it.todo('should include reply_to_id in sent messamessage', () => {
       expect(panelSrc).toMatch(/replyToId:\s*replyTo\?\.id/);
     });
 
@@ -179,7 +179,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toMatch(/repliedMsg\.sender\?\.name/);
     });
 
-    it.skip('should handle reply to deleted message gage gracefully', () => {
+    it.todo('should handle reply to deleted message gage gracefully', () => {
       // If replied message is deleted, find returns undefined
       expect(panelSrc).toMatch(/reply_to_id\s*\?\s*messages\.find/);
     });
@@ -207,7 +207,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toMatch(/replace\(\/\\\[.*?\\\]\/g/);
     });
 
-    it.skip('should show TTS in context menu', () => {
+    it.todo('should show TTS in context menu', () => {
       expect(panelSrc).toContain('Ouvir mensagem');
       expect(panelSrc).toContain('Parar áudio');
     });
@@ -217,20 +217,20 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toContain('animate-spin');
     });
 
-    it.skip('should track which message is playing TTng TTS', () => {
+    it.todo('should track which message is playing TTng TTS', () => {
       expect(panelSrc).toContain('ttsMessageId');
       expect(panelSrc).toContain('isThisTtsPlaying');
     });
 
-    it.skip('should have voice selector in headerr', () => {
+    it.todo('should have voice selector in headerr', () => {
       expect(headerSrc).toContain('VoiceSelector');
     });
 
-    it.skip('should have speed selector in headerr', () => {
+    it.todo('should have speed selector in headerr', () => {
       expect(headerSrc).toContain('SpeedSelector');
     });
 
-    it.skip('should persist TTS settings via useUserSUserSettings', () => {
+    it.todo('should persist TTS settings via useUserSUserSettings', () => {
       expect(panelSrc).toContain('useUserSettings');
       expect(panelSrc).toContain('tts_voice_id');
       expect(panelSrc).toContain('tts_speed');
@@ -241,7 +241,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 5. SEARCH
   // ═══════════════════════════════════════════
   describe('Message Search', () => {
-    it.skip('should filter messages by search queryery', () => {
+    it.todo('should filter messages by search queryery', () => {
       expect(panelSrc).toMatch(/messages\.filter.*searchQuery.*toLowerCase/);
     });
 
@@ -282,11 +282,11 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toContain('Responder');
     });
 
-    it.skip('should have Copy option', () => {
+    it.todo('should have Copy option', () => {
       expect(panelSrc).toContain('Copiar texto');
     });
 
-    it.skip('should have TTS option', () => {
+    it.todo('should have TTS option', () => {
       expect(panelSrc).toContain('Ouvir mensagem');
     });
 
@@ -440,7 +440,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(inputSrc).toMatch(/!isMobile\s*&&/);
     });
 
-    it.skip('should show minimal tools on mobile with expand on text', () => {
+    it.todo('should show minimal tools on mobile with expand on text', () => {
       expect(inputSrc).toMatch(/isMobile\s*&&\s*hasText/);
     });
   });
@@ -449,7 +449,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 10. SCROLL BEHAVIOR
   // ═══════════════════════════════════════════
   describe('Scroll Behavior', () => {
-    it.skip('should auto-scroll to bottom on new messages when near bottom', () => {
+    it.todo('should auto-scroll to bottom on new messages when near bottom', () => {
       expect(panelSrc).toContain('isNearBottomRef');
       expect(panelSrc).toMatch(/isNearBottomRef\.current\s*&&\s*scrollRef/);
     });
@@ -459,15 +459,15 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toContain('ArrowDown');
     });
 
-    it.skip('should use smooth scroll for manual scroll-to-bottom', () => {
+    it.todo('should use smooth scroll for manual scroll-to-bottom', () => {
       expect(panelSrc).toMatch(/behavior:\s*'smooth'/);
     });
 
-    it.skip('should reset scroll on conversation change', () => {
+    it.todo('should reset scroll on conversation change', () => {
       expect(panelSrc).toMatch(/conversation\.id.*scrollHeight/s);
     });
 
-    it.skip('should use 100px threshold for near-bottom detection', () => {
+    it.todo('should use 100px threshold for near-bottom detection', () => {
       expect(panelSrc).toContain('< 100');
     });
   });
@@ -501,7 +501,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 12. SECURITY
   // ═══════════════════════════════════════════
   describe('Security', () => {
-    it.skip('should use Supabase storage (not raw URLs)', () => {
+    it.todo('should use Supabase storage (not raw URLs)', () => {
       expect(panelSrc).toContain('supabase.storage');
       expect(uploaderSrc).toContain('supabase.storage');
     });
@@ -514,7 +514,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toContain('noopener noreferrer');
     });
 
-    it.skip('should handle localStorage errors gracefully (private mode)', () => {
+    it.todo('should handle localStorage errors gracefully (private mode)', () => {
       expect(inputSrc).toMatch(/catch\s*\{/);
     });
 
@@ -522,7 +522,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(uploaderSrc).toMatch(/file\.size\s*>\s*MAX_FILE_SIZE/);
     });
 
-    it.skip('should set proper content type on upload', () => {
+    it.todo('should set proper content type on upload', () => {
       expect(uploaderSrc).toContain('contentType: file.type');
       expect(panelSrc).toContain("contentType: 'audio/webm'");
     });
@@ -560,7 +560,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 14. ERROR HANDLING
   // ═══════════════════════════════════════════
   describe('Error Handling', () => {
-    it.skip('should handle audio upload errors', () => {
+    it.todo('should handle audio upload errors', () => {
       expect(panelSrc).toContain("toast.error('Erro ao enviar áudio')");
     });
 
@@ -568,11 +568,11 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(uploaderSrc).toContain("toast.error('Erro ao enviar arquivo')");
     });
 
-    it.skip('should handle copy-to-clipboard errors', () => {
+    it.todo('should handle copy-to-clipboard errors', () => {
       expect(panelSrc).toContain("toast.error('Erro ao copiar')");
     });
 
-    it.skip('should log errors with structured loggerogger', () => {
+    it.todo('should log errors with structured loggerogger', () => {
       expect(panelSrc).toContain('log.error');
       expect(uploaderSrc).toContain('log.error');
     });
@@ -639,12 +639,12 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 17. KNOWN GAPS (documenting for future)
   // ═══════════════════════════════════════════
   describe('Known Gaps & Future Work', () => {
-    it.skip('FIXED: clipboard image paste now uploadsloads to storage', () => {
+    it.todo('FIXED: clipboard image paste now uploadsloads to storage', () => {
       expect(inputSrc).not.toContain('TODO: handle paste image upload');
       expect(inputSrc).toContain('supabase.storage');
     });
 
-    it.skip('GAP: audio recording uses WebM (Safari incompatible)', () => {
+    it.todo('GAP: audio recording uses WebM (Safari incompatible)', () => {
       expect(panelSrc).toContain('.webm');
     });
 
@@ -684,7 +684,7 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(headerSrc).toMatch(/disabled.*Fixar conversa/s);
     });
 
-    it.skip('FIXED: TTS is now integrated (was a gap)', () => {
+    it.todo('FIXED: TTS is now integrated (was a gap)', () => {
       expect(panelSrc).toContain('useTextToSpeech');
       expect(panelSrc).toContain('speak');
       expect(panelSrc).toContain('stop');
