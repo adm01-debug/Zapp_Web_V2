@@ -1578,7 +1578,7 @@
         "chatbot_flows.chatbot_flows_pkey": "2707c5e60ab40c65e54cfcb035658011",
         "contact_notes.contact_notes_pkey": "b608dc84c771955e8aa8958124815263",
         "contacts.idx_contacts_created_at": "eba9fccc20f9935efa43fcaa20d59de3",
-        "contacts.idx_contacts_email_trgm": "4f516d33cfd0dc3a6c13140008649ef6",
+        "contacts.idx_contacts_email_trgm": "bdf74b26f7355bab5c8a5e3b1d8d8ef9",
         "contacts.idx_contacts_updated_at": "ca73da1274ade743f2649bae775d9b5c",
         "custom_emojis.custom_emojis_pkey": "53379be7c1a0f440ae5f96c051975a9e",
         "departments.departments_name_key": "5291e255c56c2ac127f8fa6db11fd026",
@@ -3572,7 +3572,7 @@
         "e:public.service_account_type|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.service_account_type|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-05T05:28:45Z",
+    "generated_at": "2026-09-05T06:19:59Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
