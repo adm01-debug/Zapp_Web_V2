@@ -185,9 +185,6 @@ export function ContactStatsCards({
                   </span>
                 )}
               </div>
-              {'suffix' in stat && stat.suffix && (
-                <p className="text-[10px] text-muted-foreground">{stat.suffix}</p>
-              )}
             </div>
             <div className={cn("rounded-lg p-2.5", stat.bg)}>
               <stat.icon className={cn("w-5 h-5", stat.color)} />
