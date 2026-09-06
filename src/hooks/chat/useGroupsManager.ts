@@ -22,14 +22,14 @@ export function useGroupsManager() {
     setIsLoading(true);
     const { data, error } = await supabase.from('whatsapp_groups').select('*').order('name', { ascending: true });
     if (error) { toast.error('Erro ao carregar grupos'); log.error('Error fetching groups:', error); }
-    else setGroups(data || []);
+    else setGroups((data || []) as WhatsAppGroup[]);
     setIsLoading(false);
   }, []);
 
   const fetchConnections = useCallback(async () => {
     const { data, error } = await supabase.from('whatsapp_connections').select('id, name, phone_number, instance_id').order('name', { ascending: true });
     if (error) log.error('Error fetching connections:', error);
-    else setConnections(data || []);
+    else setConnections((data || []) as WhatsAppConnection[]);
   }, []);
 
   useEffect(() => { fetchGroups(); fetchConnections(); }, [fetchGroups, fetchConnections]);

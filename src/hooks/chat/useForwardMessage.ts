@@ -46,7 +46,7 @@ export function useForwardMessage(
         .select('id, name, phone, avatar_url')
         .order('name');
       if (error) throw error;
-      setContacts(data || []);
+      setContacts((data || []) as Contact[]);
     } catch (error) {
       log.error('Error fetching contacts:', error);
     } finally {
@@ -61,7 +61,7 @@ export function useForwardMessage(
         .select('id, name, avatar_url, participant_count')
         .order('name');
       if (error) throw error;
-      setGroups(data || []);
+      setGroups((data || []) as Group[]);
     } catch (error) {
       log.error('Error fetching groups:', error);
     }

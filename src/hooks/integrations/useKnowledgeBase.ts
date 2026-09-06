@@ -43,8 +43,8 @@ export function useKnowledgeBase() {
       supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
       supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
     ]);
-    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })));
-    if (filesRes.data) setFiles(filesRes.data);
+    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
+    if (filesRes.data) setFiles(filesRes.data as KBFile[]);
     setLoading(false);
   }, []);
 

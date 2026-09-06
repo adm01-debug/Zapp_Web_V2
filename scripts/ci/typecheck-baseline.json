@@ -21,24 +21,6 @@
       "contextHash": "5d2bf1ea5b671480a6ffa320175bef49cec465e135d006b0d6a206194dca7f5f"
     },
     {
-      "file": "src/components/admin/AIUsageDashboard.tsx",
-      "line": 103,
-      "column": 97,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'Map<string, ProfileInfo>' is not assignable to type 'Map<string, { name?: string | undefined; email?: string | undefined; }>'. Type 'ProfileInfo' is not assignable to type '{ name?: string | undefined; email?: string | undefined; }'. Types of property 'name' are incompatible. Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "ba97df3af33f58f077e436ade4739229ac3a2d02e417f80cbd34992e8db493f1"
-    },
-    {
-      "file": "src/components/admin/AIUsageDashboard.tsx",
-      "line": 104,
-      "column": 109,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'Map<string, ProfileInfo>' is not assignable to type 'Map<string, { name?: string | undefined; email?: string | undefined; }>'. Type 'ProfileInfo' is not assignable to type '{ name?: string | undefined; email?: string | undefined; }'. Types of property 'name' are incompatible. Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "0c11e30c58b32cccbd4d8fe88430c2e2a92d8e55bdaa2423e8d769b9b7fc4ce2"
-    },
-    {
       "file": "src/components/admin/SicoobBridgeDashboard.tsx",
       "line": 48,
       "column": 50,
@@ -58,57 +40,12 @@
     },
     {
       "file": "src/components/catalog/SendProductDialog.tsx",
-      "line": 269,
-      "column": 13,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "b8a3b933e99fb08d6355e4cc07f604cd8567f59c7a6119b18bdf8faf9729b121"
-    },
-    {
-      "file": "src/components/catalog/SendProductDialog.tsx",
       "line": 167,
       "column": 46,
       "severity": "error",
       "code": "TS2345",
       "message": "Argument of type '(group: { colorName: string; images: string[]; colorHex?: string; variants: { stock_quantity: number; }[]; }) => React.JSX.Element' is not assignable to parameter of type '(value: VariantGroup, index: number, array: VariantGroup[]) => Element'. Types of parameters 'group' and 'value' are incompatible. Type 'VariantGroup' is not assignable to type '{ colorName: string; images: string[]; colorHex?: string | undefined; variants: { stock_quantity: number; }[]; }'. Types of property 'colorHex' are incompatible. Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
       "contextHash": "00b8b5f02a704280b9f2aeeb6aeb2753dbb4909fd9e28d2b5c754a9cb3dd141d"
-    },
-    {
-      "file": "src/components/connections/BusinessHoursIndicator.tsx",
-      "line": 61,
-      "column": 21,
-      "severity": "error",
-      "code": "TS18047",
-      "message": "'data.close_time' is possibly 'null'.",
-      "contextHash": "ccf70c8b057a1f4e28eb5ee27fab952f0942618e99723bc5fce35859533eec44"
-    },
-    {
-      "file": "src/components/connections/BusinessHoursIndicator.tsx",
-      "line": 60,
-      "column": 20,
-      "severity": "error",
-      "code": "TS18047",
-      "message": "'data.open_time' is possibly 'null'.",
-      "contextHash": "e3f2d764fd65fe2bf7f27d9d098dc4e508bd8b5e10998132b13b7d3e7f82bb57"
-    },
-    {
-      "file": "src/components/contacts/ContactContentArea.tsx",
-      "line": 129,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '(phone: string) => CRMBatchResult | null' is not assignable to type '(phone: string) => CRMBatchResult | undefined'. Type 'CRMBatchResult | null' is not assignable to type 'CRMBatchResult | undefined'. Type 'null' is not assignable to type 'CRMBatchResult | undefined'.",
-      "contextHash": "21535c563d54de4dbd8d83f1e661b345dcc4491427ca7cd025282f4b3ac0756f"
-    },
-    {
-      "file": "src/components/contacts/ContactContentArea.tsx",
-      "line": 97,
-      "column": 11,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '(phone: string) => CRMBatchResult | null' is not assignable to type '(phone: string) => CRMBatchResult | undefined'. Type 'CRMBatchResult | null' is not assignable to type 'CRMBatchResult | undefined'. Type 'null' is not assignable to type 'CRMBatchResult | undefined'.",
-      "contextHash": "21535c563d54de4dbd8d83f1e661b345dcc4491427ca7cd025282f4b3ac0756f"
     },
     {
       "file": "src/components/contacts/ContactsView.tsx",
@@ -127,24 +64,6 @@
       "code": "TS2353",
       "message": "Object literal may only specify known properties, and 'attachments' does not exist in type '{ thread_id: string; message_id: string; to: string | string[]; subject?: string | undefined; text_body?: string | undefined; html_body?: string | undefined; cc?: string[] | undefined; bcc?: string[] | undefined; }'.",
       "contextHash": "72031610b2ffdcc0afee78f49fbdc2412a640ac2e47e1f8a0a7f4555ae7d0023"
-    },
-    {
-      "file": "src/components/gamification/AchievementsPanel.tsx",
-      "line": 60,
-      "column": 37,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'AgentStats | null | undefined' is not assignable to type '{ level: number; xp: number; } | null'. Type 'undefined' is not assignable to type '{ level: number; xp: number; } | null'.",
-      "contextHash": "b59f2edf2196d76d67d17b7c9fc038fbe64dcb0a74a7bcab8c13a517f0f1650a"
-    },
-    {
-      "file": "src/components/gamification/AchievementsPanel.tsx",
-      "line": 64,
-      "column": 62,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'AgentStats | null | undefined' is not assignable to type '{ level: number; xp: number; } | null'. Type 'undefined' is not assignable to type '{ level: number; xp: number; } | null'.",
-      "contextHash": "aafac7bddd41c046ee9a18af81d66176df32351912944e6cb6da181568f52c3b"
     },
     {
       "file": "src/components/inbox/chat/ChatAssignedBar.tsx",
@@ -237,24 +156,6 @@
       "contextHash": "7dc15871551c7d97053c8ddabecd2045e1e53a8d1c47a8b7521550493ab76aab"
     },
     {
-      "file": "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
-      "line": 122,
-      "column": 14,
-      "severity": "error",
-      "code": "TS18048",
-      "message": "'button.title' is possibly 'undefined'.",
-      "contextHash": "bdc534b74fbf26cd06775d67220754647edcd9da032a6502dafd5fac170e7dcd"
-    },
-    {
-      "file": "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
-      "line": 126,
-      "column": 13,
-      "severity": "error",
-      "code": "TS18048",
-      "message": "'button.title' is possibly 'undefined'.",
-      "contextHash": "765c180e83cfc073b86ac3aa2fd0833c2e1ffed1851d86bac35d609e039d5c09"
-    },
-    {
       "file": "src/components/inbox/linkPreviewUtils.ts",
       "line": 23,
       "column": 5,
@@ -270,7 +171,7 @@
       "severity": "error",
       "code": "TS2322",
       "message": "Type 'string' is not assignable to type 'null'.",
-      "contextHash": "a81fe1ccbbc22188de061c04849e508906d0f320b00273a4a83cc1b3f4d4047b"
+      "contextHash": "9a195954fe3144f69edf88e295af91cea84e2e415922fc84cc3a544bad7eae82"
     },
     {
       "file": "src/components/inbox/RealtimeCollaboration.tsx",
@@ -309,15 +210,6 @@
       "contextHash": "893902014ef8a6447e0bdbabe809a945f3f0781442f9c6e67f1e6937da238ea0"
     },
     {
-      "file": "src/components/inbox/useGlobalSearchData.ts",
-      "line": 167,
-      "column": 79,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string[] | null' is not assignable to type 'string[] | undefined'. Type 'null' is not assignable to type 'string[] | undefined'.",
-      "contextHash": "38f063172b7d6e81341a3f94de9111452f00ee9b82ceb9611d047e1981586a18"
-    },
-    {
       "file": "src/components/meta-capi/MetaCAPIView.tsx",
       "line": 56,
       "column": 25,
@@ -325,24 +217,6 @@
       "code": "TS2345",
       "message": "Argument of type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }[]' is not assignable to parameter of type 'SetStateAction<CAPIEvent[]>'. Type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }[]' is not assignable to type 'CAPIEvent[]'. Type '{ action_source: string | null; contact_id: string | null; created_at: string | null; custom_data: Json; event_name: string; event_source_url: string | null; event_time: string | null; id: string; meta_response: Json; pixel_id: string | null; sent_to_meta: boolean | null; }' is not assignable to type 'CAPIEvent'. Types of property 'event_time' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
       "contextHash": "70e1e28b14b10b35798da7f9a2c0f14b902ed96858010217bb0c20f3f8d6e01b"
-    },
-    {
-      "file": "src/components/monitoring/hooks/useMonitoringData.ts",
-      "line": 78,
-      "column": 79,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ id: string; instance_id: string | null; phone_number: string; status: string | null; health_status: string | null; health_response_ms: number | null; last_health_check: string | null; updated_at: string; }[]' is not assignable to parameter of type 'ConnectionInfo[]'. Type '{ id: string; instance_id: string | null; phone_number: string; status: string | null; health_status: string | null; health_response_ms: number | null; last_health_check: string | null; updated_at: string; }' is not assignable to type 'ConnectionInfo'. Types of property 'instance_id' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "22d47a836d8e93308231c609d87ce4eb2e8bdd0cbbb3076397a081d01edcdae0"
-    },
-    {
-      "file": "src/components/monitoring/hooks/useMonitoringData.ts",
-      "line": 78,
-      "column": 42,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ id: string; instance_id: string | null; phone_number: string; status: string | null; health_status: string | null; health_response_ms: number | null; last_health_check: string | null; updated_at: string; }[]' is not assignable to parameter of type 'SetStateAction<ConnectionInfo[]>'. Type '{ id: string; instance_id: string | null; phone_number: string; status: string | null; health_status: string | null; health_response_ms: number | null; last_health_check: string | null; updated_at: string; }[]' is not assignable to type 'ConnectionInfo[]'. Type '{ id: string; instance_id: string | null; phone_number: string; status: string | null; health_status: string | null; health_response_ms: number | null; last_health_check: string | null; updated_at: string; }' is not assignable to type 'ConnectionInfo'. Types of property 'instance_id' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "22d47a836d8e93308231c609d87ce4eb2e8bdd0cbbb3076397a081d01edcdae0"
     },
     {
       "file": "src/components/payments/PaymentLinksView.tsx",
@@ -379,24 +253,6 @@
       "code": "TS2322",
       "message": "Type '(date: Date) => boolean | undefined' is not assignable to type 'Matcher | Matcher[] | undefined'. Type '(date: Date) => boolean | undefined' is not assignable to type '(date: Date) => boolean'. Type 'boolean | undefined' is not assignable to type 'boolean'. Type 'undefined' is not assignable to type 'boolean'.",
       "contextHash": "80af2d9100547ae9a2452c930c99e6d16096fa17a384ea8ad08548509f3e8d98"
-    },
-    {
-      "file": "src/components/reports/AbandonmentRate.tsx",
-      "line": 33,
-      "column": 52,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type 'string | null' is not assignable to parameter of type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "02634af150809419208ec38d1739762cea4f621376348cc626ca9be680fc52f1"
-    },
-    {
-      "file": "src/components/reports/AbandonmentRate.tsx",
-      "line": 34,
-      "column": 52,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type 'string | null' is not assignable to parameter of type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "0ad2c925782ed88c77354702b51dc9065e38a940bde88e96b226368876b3edb6"
     },
     {
       "file": "src/components/reports/ReportCharts.tsx",
@@ -454,15 +310,6 @@
     },
     {
       "file": "src/hooks/business/useClientWallet.ts",
-      "line": 38,
-      "column": 97,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '(string | null)[]' is not assignable to parameter of type 'readonly string[]'. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "d5c4cb17fdbd304493e753b47d0c2cac4901b5a3734dcbfe2ed30e142017549c"
-    },
-    {
-      "file": "src/hooks/business/useClientWallet.ts",
       "line": 41,
       "column": 16,
       "severity": "error",
@@ -516,42 +363,6 @@
       "contextHash": "f69a963aab6b28900ecf76c34fa6277b13a93cbfdaf5c8dd2182d923b54c0ef9"
     },
     {
-      "file": "src/hooks/chat/useForwardMessage.ts",
-      "line": 64,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ id: string; name: string; avatar_url: string | null; participant_count: number | null; }[]' is not assignable to parameter of type 'SetStateAction<Group[]>'. Type '{ id: string; name: string; avatar_url: string | null; participant_count: number | null; }[]' is not assignable to type 'Group[]'. Type '{ id: string; name: string; avatar_url: string | null; participant_count: number | null; }' is not assignable to type 'Group'. Types of property 'avatar_url' are incompatible. Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "290c2c239718392a332d09fe298088ad768d406721e0ed68b32108412a1a6bef"
-    },
-    {
-      "file": "src/hooks/chat/useForwardMessage.ts",
-      "line": 49,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ id: string; name: string; phone: string; avatar_url: string | null; }[]' is not assignable to parameter of type 'SetStateAction<Contact[]>'. Type '{ id: string; name: string; phone: string; avatar_url: string | null; }[]' is not assignable to type 'Contact[]'. Type '{ id: string; name: string; phone: string; avatar_url: string | null; }' is not assignable to type 'Contact'. Types of property 'avatar_url' are incompatible. Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "ed3e943094ab468a48b2e580a9f9d4e41fa447af236e2d64323c3a6e8a6c60cb"
-    },
-    {
-      "file": "src/hooks/chat/useGroupsManager.ts",
-      "line": 25,
-      "column": 20,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ avatar_url: string | null; category: string | null; created_at: string; description: string | null; group_id: string; id: string; is_admin: boolean | null; name: string; participant_count: number | null; updated_at: string; whatsapp_connection_id: string | null; }[]' is not assignable to parameter of type 'SetStateAction<WhatsAppGroup[]>'. Type '{ avatar_url: string | null; category: string | null; created_at: string; description: string | null; group_id: string; id: string; is_admin: boolean | null; name: string; participant_count: number | null; updated_at: string; whatsapp_connection_id: string | null; }[]' is not assignable to type 'WhatsAppGroup[]'. Type '{ avatar_url: string | null; category: string | null; created_at: string; description: string | null; group_id: string; id: string; is_admin: boolean | null; name: string; participant_count: number | null; updated_at: string; whatsapp_connection_id: string | null; }' is not assignable to type 'WhatsAppGroup'. Types of property 'participant_count' are incompatible. Type 'number | null' is not assignable to type 'number'. Type 'null' is not assignable to type 'number'.",
-      "contextHash": "78cd75f43555ab567922b4b537bd975a50985fc0b5aad80f07d25e9e40e9f372"
-    },
-    {
-      "file": "src/hooks/chat/useGroupsManager.ts",
-      "line": 32,
-      "column": 25,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ id: string; name: string; phone_number: string; instance_id: string | null; }[]' is not assignable to parameter of type 'SetStateAction<WhatsAppConnection[]>'. Type '{ id: string; name: string; phone_number: string; instance_id: string | null; }[]' is not assignable to type 'WhatsAppConnection[]'. Type '{ id: string; name: string; phone_number: string; instance_id: string | null; }' is not assignable to type 'WhatsAppConnection'. Types of property 'instance_id' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "e549f629f690f4bd308c08607e844871a22c7aa12f9f08b5fdeaf3f179a19c43"
-    },
-    {
       "file": "src/hooks/chat/useMessageReactions.ts",
       "line": 69,
       "column": 21,
@@ -593,8 +404,8 @@
       "column": 7,
       "severity": "error",
       "code": "TS2322",
-      "message": "Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "9e812abec8588c6615ca4fd69c3de3f04110078b505929f45c6a0a6d7cd5daaa"
+      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
+      "contextHash": "757bdf3b846721ea6adadc671fa2c18f994962d53b09f8637afbe38e941e3367"
     },
     {
       "file": "src/hooks/communication/useAudioMemes.ts",
@@ -602,26 +413,8 @@
       "column": 7,
       "severity": "error",
       "code": "TS2322",
-      "message": "Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "e1cd8fc4d8213237efcba3e5f3c4994ce8f8d5c316e0ebd655312ef6f272033c"
-    },
-    {
-      "file": "src/hooks/communication/useSpeechToText.ts",
-      "line": 81,
-      "column": 35,
-      "severity": "error",
-      "code": "TS2552",
-      "message": "Cannot find name 'SpeechRecognitionErrorEvent'. Did you mean 'SpeechRecognitionCtor'?",
-      "contextHash": "ce074d11300b7f04c02d07cf1cde5bc0897bb86c7b2820c3164a1b1ae2618394"
-    },
-    {
-      "file": "src/hooks/communication/useSpeechToText.ts",
-      "line": 55,
-      "column": 36,
-      "severity": "error",
-      "code": "TS2552",
-      "message": "Cannot find name 'SpeechRecognitionEvent'. Did you mean 'SpeechRecognitionCtor'?",
-      "contextHash": "82fbd5bc4b509105f73ebd3aa323e8de2b89e521a943aa96f984747efd749886"
+      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
+      "contextHash": "779876f78baab1e4a2f5f2db4f39ed3dcf98a08f591010376f54660daaae6395"
     },
     {
       "file": "src/hooks/crm/useTags.ts",
@@ -631,42 +424,6 @@
       "code": "TS2345",
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'. Type 'undefined' is not assignable to type 'string'.",
       "contextHash": "88fd587117384bb81dddb87984cac4cd300d55bd5cd1a47bab41c79e71d649c4"
-    },
-    {
-      "file": "src/hooks/inbox/useConnectionsManager.ts",
-      "line": 141,
-      "column": 34,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ battery_level: number | null; created_at: string; created_by: string | null; farewell_enabled: boolean | null; farewell_message: string | null; health_response_ms: number | null; ... 12 more ...; updated_at: string; }' is not assignable to parameter of type 'WhatsAppConnection'. Types of property 'status' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "1fec05017835f24c4f8f80694eb047dff566728ed5817765b9e3da5549d00957"
-    },
-    {
-      "file": "src/hooks/inbox/useConnectionsManager.ts",
-      "line": 113,
-      "column": 40,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ battery_level: number | null; created_at: string; created_by: string | null; farewell_enabled: boolean | null; farewell_message: string | null; health_response_ms: number | null; ... 12 more ...; updated_at: string; }[]' is not assignable to parameter of type 'SetStateAction<WhatsAppConnection[]>'. Type '{ battery_level: number | null; created_at: string; created_by: string | null; farewell_enabled: boolean | null; farewell_message: string | null; health_response_ms: number | null; ... 12 more ...; updated_at: string; }[]' is not assignable to type 'WhatsAppConnection[]'. Type '{ battery_level: number | null; created_at: string; created_by: string | null; farewell_enabled: boolean | null; farewell_message: string | null; health_response_ms: number | null; ... 12 more ...; updated_at: string; }' is not assignable to type 'WhatsAppConnection'. Types of property 'status' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "b40e2e0d452bce8fd64f7c9fe4c2233506a834fa2a4c86fa5a0eeff7f7f2c361"
-    },
-    {
-      "file": "src/hooks/integrations/useKnowledgeBase.ts",
-      "line": 47,
-      "column": 33,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ article_id: string | null; created_at: string | null; extracted_text: string | null; file_name: string; file_size: number | null; file_type: string | null; file_url: string; id: string; processing_status: string | null; }[]' is not assignable to parameter of type 'SetStateAction<KBFile[]>'. Type '{ article_id: string | null; created_at: string | null; extracted_text: string | null; file_name: string; file_size: number | null; file_type: string | null; file_url: string; id: string; processing_status: string | null; }[]' is not assignable to type 'KBFile[]'. Type '{ article_id: string | null; created_at: string | null; extracted_text: string | null; file_name: string; file_size: number | null; file_type: string | null; file_url: string; id: string; processing_status: string | null; }' is not assignable to type 'KBFile'. Types of property 'processing_status' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "636d54cb6c107c77274405956bbd35f47e9368712a637fa8660092e530cabc83"
-    },
-    {
-      "file": "src/hooks/integrations/useKnowledgeBase.ts",
-      "line": 46,
-      "column": 39,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }[]' is not assignable to parameter of type 'SetStateAction<Article[]>'. Type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }[]' is not assignable to type 'Article[]'. Type '{ tags: string[]; category: string | null; content: string; created_at: string | null; created_by: string | null; embedding_status: string | null; id: string; is_published: boolean | null; search_vector: unknown; title: string; updated_at: string | null; }' is not assignable to type 'Article'. Types of property 'category' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "fd4c1344361af8ffab708677da215325925b5b97cf099d1b0f4b3d5cd67f2f52"
     },
     {
       "file": "src/hooks/realtime/messageSender.ts",

@@ -41,9 +41,9 @@ export function useAudioMemes(open: boolean) {
     setLoading(true);
     // Uses the per-user RPC so `is_favorite` reflects the logged-in agent
     const { data, error } = await supabase.rpc('fn_list_audio_memes_for_user', {
-      p_category: null,
+      p_category: null as string | null,
       p_only_favs: false,
-      p_search: null,
+      p_search: null as string | null,
     });
     if (!error && data) setMemes(data as AudioMemeItem[]);
     else if (error) log.error('[AudioMeme] List error:', error);

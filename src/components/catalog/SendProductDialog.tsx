@@ -266,7 +266,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
         {step === 'selectContact' && (
           <ContactSelectionStep
             productName={fullProduct.name}
-            productImageUrl={fullProduct.primary_image_url}
+            productImageUrl={fullProduct.primary_image_url ?? undefined}
             selectedImagesCount={selectedImages.size}
             template={template}
             variantLabel={sendMode === 'variant' && activeGroup ? activeGroup.colorName : undefined}

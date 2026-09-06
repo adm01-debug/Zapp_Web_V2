@@ -57,8 +57,8 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<BusinessH
   }
 
   // Check if current time is within business hours
-  const openTime = data.open_time.slice(0, 5);
-  const closeTime = data.close_time.slice(0, 5);
+  const openTime = (data.open_time ?? '').slice(0, 5);
+  const closeTime = (data.close_time ?? '').slice(0, 5);
   const isWithinHours = currentTimeStr >= openTime && currentTimeStr <= closeTime;
 
   return { isOpen: isWithinHours, todayHours: `${openTime} - ${closeTime}` };

@@ -110,7 +110,7 @@ export function useConnectionsManager() {
       .from('whatsapp_connections')
       .select('*')
       .order('created_at', { ascending: false });
-    if (!error && data) setConnections(data);
+    if (!error && data) setConnections(data as WhatsAppConnection[]);
     setLoading(false);
   };
 
@@ -138,7 +138,7 @@ export function useConnectionsManager() {
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
-      if (data) handleShowQrCode(data);
+      if (data) handleShowQrCode(data as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);

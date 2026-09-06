@@ -75,7 +75,7 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         supabase.from('messages').select('sender, created_at').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
       ]);
 
-      if (connRes.data) { setConnections(connRes.data); onConnectionsUpdate?.(connRes.data); }
+      if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
       if (logsRes.data) {
         setHealthLogs(logsRes.data);
         setUptime(computeUptime(logsRes.data, now));

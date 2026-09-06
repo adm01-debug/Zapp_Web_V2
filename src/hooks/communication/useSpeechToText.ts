@@ -52,7 +52,7 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
     recognition.continuous = continuous;
     recognition.interimResults = true;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event) => {
       let finalTranscript = '';
       let interimTranscript = '';
 
@@ -78,7 +78,7 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
       onEndRef.current?.();
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event) => {
       log.warn('Speech recognition error:', event.error);
       setIsListening(false);
     };

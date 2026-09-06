@@ -30,8 +30,8 @@ export function AbandonmentRate() {
       const respondedSet = new Set<string>();
 
       contactMessages.forEach(m => {
-        if (m.sender === 'contact') contactSet.add(m.contact_id);
-        if (m.sender === 'agent') respondedSet.add(m.contact_id);
+        if (m.sender === 'contact' && m.contact_id) contactSet.add(m.contact_id);
+        if (m.sender === 'agent' && m.contact_id) respondedSet.add(m.contact_id);
       });
 
       const total = contactSet.size;
