@@ -71,7 +71,7 @@ export function ContactsView() {
       <PageHeader
         title="Contatos"
         subtitle={`Base de clientes e leads (${totalCount} contatos)`}
-        breadcrumbs={[{ label: 'Gestão' }, { label: 'Contatos' }]}
+        breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-2">
             {isExternalConfigured && (
@@ -176,6 +176,12 @@ export function ContactsView() {
           search={search}
           onSelectAll={handleSelectAll}
           allSelected={selectedIds.length === filteredContacts.length}
+          page={page}
+          pageSize={pageSize}
+          loadMore={loadMore}
+          loadPrevious={loadPrevious}
+          hasMore={hasMore}
+          loading={loading}
         />
       )}
 
