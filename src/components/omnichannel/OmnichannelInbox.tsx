@@ -94,8 +94,11 @@ export function OmnichannelInbox() {
   };
 
   useEffect(() => {
-    loadConnections();
-    loadUnifiedInbox();
+    const init = async () => {
+      await loadConnections();
+      await loadUnifiedInbox();
+    };
+    init();
   }, []);
 
   const filteredMessages = messages.filter(m => {
