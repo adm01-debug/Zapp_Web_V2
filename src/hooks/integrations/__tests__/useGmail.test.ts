@@ -90,18 +90,15 @@ function setupDefaultMocks(accounts = [MOCK_ACCOUNT], threads = [MOCK_THREAD]) {
     if (fn === 'gmail-send') return {};
     return {};
   });
-  vi.mocked(supabase.from).mockImplementation((table: string) =>
-    makeFromChain(table === 'email_threads' ? threads : []) as ReturnType<typeof makeFromChain> & any,
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vi.mocked(supabase.from).mockImplementation((table: string) => makeFromChain(table === 'email_threads' ? threads : []) as any);
 }
 
 describe('useGmail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(supabase.channel).mockReturnValue({
-      on: vi.fn().mockReturnThis(),
-      subscribe: vi.fn().mockReturnThis(),
-    } as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(supabase.channel).mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() } as any);
   });
 
   describe('accounts query', () => {
@@ -118,7 +115,9 @@ describe('useGmail', () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [{ id: 'acc2', email_address: 'b@c.com', is_active: true, sync_status: null, last_sync_at: null, last_error: null, created_at: '' }],
         error: null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
 
       const { result } = renderHook(() => useGmail(), { wrapper: createWrapper() });
@@ -131,7 +130,9 @@ describe('useGmail', () => {
 
     it('rpc error: query falha e accounts permanece []', async () => {
       vi.mocked(callGmailFunction).mockRejectedValue(new Error('network'));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('rpc fail') } as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
 
       const { result } = renderHook(() => useGmail(), { wrapper: createWrapper() });
@@ -150,6 +151,7 @@ describe('useGmail', () => {
 
     it('retorna undefined quando accounts está vazio', async () => {
       setupDefaultMocks([]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
       const { result } = renderHook(() => useGmail(), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.accountsLoading).toBe(false));
@@ -183,6 +185,7 @@ describe('useGmail', () => {
   describe('subscribeToThreads', () => {
     it('retorna função vazia quando não há activeAccount', async () => {
       setupDefaultMocks([]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
 
       const { result } = renderHook(() => useGmail(), { wrapper: createWrapper() });
@@ -196,6 +199,7 @@ describe('useGmail', () => {
     it('cria canal realtime com 2 listeners e retorna cleanup com removeChannel', async () => {
       setupDefaultMocks();
       const mockCh = { on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.channel).mockReturnValue(mockCh as any);
 
       const { result } = renderHook(() => useGmail(), { wrapper: createWrapper() });
@@ -213,6 +217,7 @@ describe('useGmail', () => {
 
   describe('connectGmail / getOAuthReturnView', () => {
     beforeEach(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
       vi.mocked(callGmailFunction).mockImplementation(async (_fn: string, opts: Record<string, unknown>) => {
         if (opts.action === 'list-accounts') return { accounts: [] };

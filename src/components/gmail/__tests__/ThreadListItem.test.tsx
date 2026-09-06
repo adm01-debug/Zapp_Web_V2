@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThreadListItem } from '../ThreadListItem';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
@@ -19,17 +20,17 @@ vi.mock('framer-motion', () => ({
 }));
 
 vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, className }: any) => <div className={className}>{children}</div>,
-  AvatarFallback: ({ children, className }: any) => <span data-testid="avatar-fallback" className={className}>{children}</span>,
+  Avatar: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  AvatarFallback: ({ children, className }: { children: ReactNode; className?: string }) => <span data-testid="avatar-fallback" className={className}>{children}</span>,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, className }: any) => <span data-testid="badge" className={className}>{children}</span>,
+  Badge: ({ children, className }: { children: ReactNode; className?: string }) => <span data-testid="badge" className={className}>{children}</span>,
 }));
 
 vi.mock('lucide-react', () => ({
-  Star: ({ className }: any) => <span data-testid="icon-star" className={className} />,
-  AlertCircle: ({ className }: any) => <span data-testid="icon-alert" className={className} />,
+  Star: ({ className }: { className?: string }) => <span data-testid="icon-star" className={className} />,
+  AlertCircle: ({ className }: { className?: string }) => <span data-testid="icon-alert" className={className} />,
 }));
 
 function makeThread(overrides: Partial<EmailThread> = {}): EmailThread {
@@ -66,7 +67,7 @@ describe('ThreadListItem', () => {
 
   it('displayName prioridade 1: contact.name sobrepõe last_from_name', () => {
     render(<ThreadListItem
-      thread={makeThread({ contact: { name: 'Contato CRM', email: 'crm@test.com' } as any, last_from_name: 'Outro Nome' })}
+      thread={makeThread({ contact: { id: 'c-crm', name: 'Contato CRM', email: 'crm@test.com', avatar_url: null }, last_from_name: 'Outro Nome' })}
       isSelected={false}
       onClick={vi.fn()}
     />);
@@ -76,7 +77,7 @@ describe('ThreadListItem', () => {
 
   it('displayName prioridade 2: last_from_name quando sem contact.name', () => {
     render(<ThreadListItem
-      thread={makeThread({ contact: null, last_from_name: 'Nome Remetente' })}
+      thread={makeThread({ contact: undefined, last_from_name: 'Nome Remetente' })}
       isSelected={false}
       onClick={vi.fn()}
     />);
@@ -85,7 +86,7 @@ describe('ThreadListItem', () => {
 
   it('displayName prioridade 3: last_from_address quando sem nome', () => {
     render(<ThreadListItem
-      thread={makeThread({ contact: null, last_from_name: null, last_from_address: 'addr@test.com' })}
+      thread={makeThread({ contact: undefined, last_from_name: null, last_from_address: 'addr@test.com' })}
       isSelected={false}
       onClick={vi.fn()}
     />);
@@ -94,7 +95,7 @@ describe('ThreadListItem', () => {
 
   it('displayName fallback "Desconhecido" quando sem dados de remetente', () => {
     render(<ThreadListItem
-      thread={makeThread({ contact: null, last_from_name: null, last_from_address: '' })}
+      thread={makeThread({ contact: undefined, last_from_name: null, last_from_address: '' })}
       isSelected={false}
       onClick={vi.fn()}
     />);

@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import type { EmailMessage } from '@/hooks/integrations/useGmail';
 
 const { sendMutateAsync, replyMutateAsync } = vi.hoisted(() => ({
@@ -18,10 +19,10 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({ getLogger: () => ({ error: vi.fn() }) }));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
-  DropdownMenu: ({ children }: any) => <>{children}</>,
-  DropdownMenuTrigger: ({ children }: any) => <>{children}</>,
-  DropdownMenuContent: ({ children }: any) => <div data-testid="dd-content">{children}</div>,
-  DropdownMenuItem: ({ children, onClick }: any) => (
+  DropdownMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
+  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => <div data-testid="dd-content">{children}</div>,
+  DropdownMenuItem: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
 }));
@@ -65,7 +66,7 @@ const defaultProps = {
   threadId: 'gmail-thread-1',
   lastMessage: INBOUND_MSG,
   accountEmail: 'user@example.com',
-  mode: 'reply' as const,
+  mode: 'reply' as 'reply' | 'reply-all' | 'forward' | 'new',
   onModeChange: vi.fn(),
   onSent: vi.fn(),
 };

@@ -1,27 +1,28 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
 vi.mock('@/components/ui/accordion', () => ({
-  Accordion: ({ children }: any) => <div data-testid="accordion">{children}</div>,
-  AccordionItem: ({ children }: any) => <div>{children}</div>,
-  AccordionTrigger: ({ children }: any) => <button type="button">{children}</button>,
-  AccordionContent: ({ children }: any) => <div>{children}</div>,
+  Accordion: ({ children }: { children: ReactNode }) => <div data-testid="accordion">{children}</div>,
+  AccordionItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AccordionTrigger: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+  AccordionContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: any) => <div>{children}</div>,
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children }: any) => <div data-testid="avatar">{children}</div>,
-  AvatarFallback: ({ children }: any) => (
+  Avatar: ({ children }: { children: ReactNode }) => <div data-testid="avatar">{children}</div>,
+  AvatarFallback: ({ children }: { children: ReactNode }) => (
     <span data-testid="avatar-fallback">{children}</span>
   ),
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
+  Badge: ({ children }: { children: ReactNode }) => <span data-testid="badge">{children}</span>,
 }));
 
 import { EmailContactPanel } from '../EmailContactPanel';
@@ -172,7 +173,7 @@ describe('EmailContactPanel', () => {
       expect(screen.queryByText('IMPORTANT')).toBeNull();
     });
 
-    it('nenhum label customizado: badges extras não contêm labels do sistema', () => {
+    it('nenhum label customizado: não renderiza badges extras de label', () => {
       const { container } = render(
         <EmailContactPanel
           thread={{ ...BASE_THREAD, label_ids: ['INBOX', 'UNREAD'] }}

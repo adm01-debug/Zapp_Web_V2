@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GmailInboxView from '../GmailInboxView';
-import type { EmailThread } from '@/hooks/integrations/useGmail';
+import type { EmailThread, GmailAccount } from '@/hooks/integrations/useGmail';
 
 // framer-motion: AnimatePresence passes through children, motion stubs strip animation props
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
@@ -19,50 +20,49 @@ vi.mock('framer-motion', () => ({
 
 // Select uses Radix portal — mock to avoid jsdom issues
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange }: any) => (
+  Select: ({ children, value }: { children: ReactNode; value?: string; onValueChange?: (v: string) => void }) => (
     <div data-testid="select" data-value={value}>
-      {typeof children === 'function' ? children : children}
+      {children}
     </div>
   ),
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value, onClick }: any) => <button onClick={onClick}>{children}</button>,
+  SelectTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+  SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectItem: ({ children, onClick }: { children: ReactNode; value?: string; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
 }));
 
 // ScrollArea: simple div wrapper
 vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: any) => <div>{children}</div>,
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-// Tabs: Radix portal event system doesn't work in jsdom — use context-based stub
-vi.mock('@/components/ui/tabs', () => {
-  const React = require('react');
-  const TabsCtx = React.createContext({ value: '', onChange: (_: string) => {} });
+// Tabs: Radix portal event system doesn't work in jsdom — use context-based async stub
+vi.mock('@/components/ui/tabs', async () => {
+  const { createContext, useContext, createElement: ce } = await import('react');
+  type TabsCtxType = { value: string; onChange: (v: string) => void };
+  const TabsCtx = createContext<TabsCtxType>({ value: '', onChange: () => {} });
   return {
-    Tabs: ({ value, onValueChange, children, ...rest }: any) =>
-      React.createElement(TabsCtx.Provider, { value: { value, onChange: onValueChange ?? (() => {}) } },
-        React.createElement('div', rest, children)),
-    TabsList: ({ children, ...rest }: any) =>
-      React.createElement('div', { role: 'tablist', ...rest }, children),
-    TabsTrigger: ({ value: tabValue, children, ...rest }: any) => {
-      const ctx = React.useContext(TabsCtx);
-      return React.createElement('button', {
+    Tabs: ({ value, onValueChange, children }: { value?: string; onValueChange?: (v: string) => void; children: ReactNode }) =>
+      ce(TabsCtx.Provider, { value: { value: value ?? '', onChange: onValueChange ?? (() => {}) } },
+        ce('div', {}, children)),
+    TabsList: ({ children }: { children: ReactNode }) =>
+      ce('div', { role: 'tablist' }, children),
+    TabsTrigger: ({ value: tabValue, children }: { value: string; children: ReactNode }) => {
+      const ctx = useContext(TabsCtx);
+      return ce('button', {
         role: 'tab',
         'aria-selected': ctx.value === tabValue,
         onClick: () => ctx.onChange(tabValue),
-        ...rest,
       }, children);
     },
-    TabsContent: ({ children, ...rest }: any) =>
-      React.createElement('div', rest, children),
+    TabsContent: ({ children }: { children: ReactNode }) =>
+      ce('div', {}, children),
   };
 });
 
 // Mock EmailThreadView, EmailComposer, ThreadListItem
-// Paths are relative to GmailInboxView.tsx (src/components/gmail/), not the test file
 vi.mock('@/components/gmail/EmailThreadView', () => ({
-  EmailThreadView: ({ thread, onBack }: any) => (
+  EmailThreadView: ({ thread, onBack }: { thread: EmailThread; onBack: () => void }) => (
     <div data-testid="thread-view" data-subject={thread.subject}>
       <button onClick={onBack}>Voltar</button>
     </div>
@@ -70,7 +70,7 @@ vi.mock('@/components/gmail/EmailThreadView', () => ({
 }));
 
 vi.mock('@/components/gmail/EmailComposer', () => ({
-  EmailComposer: ({ onClose }: any) => (
+  EmailComposer: ({ onClose }: { onClose?: () => void }) => (
     <div data-testid="composer">
       <button onClick={onClose}>Fechar</button>
     </div>
@@ -78,7 +78,7 @@ vi.mock('@/components/gmail/EmailComposer', () => ({
 }));
 
 vi.mock('@/components/gmail/ThreadListItem', () => ({
-  ThreadListItem: ({ thread, onClick }: any) => (
+  ThreadListItem: ({ thread, onClick }: { thread: EmailThread; onClick?: () => void }) => (
     <button data-testid="thread-item" data-subject={thread.subject} onClick={onClick}>
       {thread.subject || '(Sem assunto)'}
     </button>
@@ -87,14 +87,22 @@ vi.mock('@/components/gmail/ThreadListItem', () => ({
 
 // Mutable config to control mock values across tests
 const config: {
-  activeAccount: any;
+  activeAccount: GmailAccount | null;
   threads: EmailThread[];
   threadsLoading: boolean;
   unreadCount: number;
   starredCount: number;
   syncInboxPending: boolean;
 } = {
-  activeAccount: { email_address: 'eu@promobrindes.com.br', last_sync_at: null },
+  activeAccount: {
+    id: 'acc1',
+    email_address: 'eu@promobrindes.com.br',
+    is_active: true,
+    sync_status: 'synced',
+    last_sync_at: null,
+    last_error: null,
+    created_at: '2026-09-04T00:00:00Z',
+  },
   threads: [],
   threadsLoading: false,
   unreadCount: 0,
@@ -143,7 +151,15 @@ function makeThread(overrides: Partial<EmailThread> = {}): EmailThread {
 
 describe('GmailInboxView', () => {
   beforeEach(() => {
-    config.activeAccount = { email_address: 'eu@promobrindes.com.br', last_sync_at: null };
+    config.activeAccount = {
+      id: 'acc1',
+      email_address: 'eu@promobrindes.com.br',
+      is_active: true,
+      sync_status: 'synced',
+      last_sync_at: null,
+      last_error: null,
+      created_at: '2026-09-04T00:00:00Z',
+    };
     config.threads = [];
     config.threadsLoading = false;
     config.unreadCount = 0;

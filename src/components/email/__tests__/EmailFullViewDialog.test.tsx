@@ -1,13 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { EmailFullViewDialog } from '../EmailFullViewDialog';
 
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({ open, children }: any) => open ? <div data-testid="dialog">{children}</div> : null,
-  DialogContent: ({ children }: any) => <div>{children}</div>,
-  DialogHeader: ({ children }: any) => <div>{children}</div>,
-  DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
-  DialogDescription: ({ children }: any) => <p data-testid="dialog-desc">{children}</p>,
+  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: ReactNode }) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogDescription: ({ children }: { children: ReactNode }) => <p data-testid="dialog-desc">{children}</p>,
 }));
 
 const baseProps = {

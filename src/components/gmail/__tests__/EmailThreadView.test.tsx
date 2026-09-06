@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailThreadView } from '../EmailThreadView';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -17,21 +18,21 @@ vi.mock('framer-motion', () => ({
 }));
 
 vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: any) => <div>{children}</div>,
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, className }: any) => <div className={className}>{children}</div>,
-  AvatarFallback: ({ children, className }: any) => <span className={className}>{children}</span>,
+  Avatar: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  AvatarFallback: ({ children, className }: { children: ReactNode; className?: string }) => <span className={className}>{children}</span>,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: any) => <span>{children}</span>,
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('@/components/ui/separator', () => ({
@@ -39,18 +40,18 @@ vi.mock('@/components/ui/separator', () => ({
 }));
 
 vi.mock('@/components/ui/tooltip', () => ({
-  TooltipProvider: ({ children }: any) => <>{children}</>,
-  Tooltip: ({ children }: any) => <>{children}</>,
-  TooltipTrigger: ({ children, asChild }: any) => asChild ? children : <div>{children}</div>,
-  TooltipContent: ({ children }: any) => <div>{children}</div>,
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children, asChild }: { children: ReactNode; asChild?: boolean }) => asChild ? <>{children}</> : <div>{children}</div>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/ui/GenericEmptyState', () => ({
-  GenericEmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+  GenericEmptyState: ({ title }: { title: ReactNode }) => <div data-testid="empty-state">{title}</div>,
 }));
 
 vi.mock('@/components/gmail/EmailComposer', () => ({
-  EmailComposer: ({ mode, onClose }: any) => (
+  EmailComposer: ({ mode, onClose }: { mode?: string; onClose?: () => void }) => (
     <div data-testid="composer" data-mode={mode}>
       <button onClick={onClose}>Fechar compositor</button>
     </div>

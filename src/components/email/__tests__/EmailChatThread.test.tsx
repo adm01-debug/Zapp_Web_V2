@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { ReactNode } from 'react';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
 
 const mocks = vi.hoisted(() => ({
@@ -25,7 +26,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
 }));
 
 vi.mock('../EmailChatBubble', () => ({
-  EmailChatBubble: ({ message }: any) => (
+  EmailChatBubble: ({ message }: { message: EmailMessage }) => (
     <div data-testid={`bubble-${message.id}`}>{message.snippet}</div>
   ),
 }));
@@ -39,14 +40,14 @@ vi.mock('@/components/gmail/EmailComposer', () => ({
 }));
 
 vi.mock('@/components/ui/tooltip', () => ({
-  TooltipProvider: ({ children }: any) => <>{children}</>,
-  Tooltip: ({ children }: any) => <>{children}</>,
-  TooltipTrigger: ({ asChild: _, children }: any) => <>{children}</>,
-  TooltipContent: ({ children }: any) => <span>{children}</span>,
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ asChild: _, children }: { asChild?: boolean; children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: any) => <div>{children}</div>,
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 import { EmailChatThread } from '../EmailChatThread';
