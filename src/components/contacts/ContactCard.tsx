@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,39 +8,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Briefcase,
+  MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail, Building2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
-import { CompanyLogo } from './CompanyLogo';
 import { HighlightText } from './HighlightText';
 import type { ContactItemProps } from './types';
 
 export function ContactCard({
-  contact, isSelected, onToggleSelect, onOpenChat, onEdit, onDelete, index, companyLogo, companyName, searchQuery,
+  contact, isSelected, onToggleSelect, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
 }: ContactItemProps) {
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const avatarColors = getAvatarColor(contact.name);
+  const displayName = `${contact.name}${contact.surname ? ' ' + contact.surname : ''}`.trim();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, duration: 0.3 }}
+    <div
       className={cn(
-        "group relative rounded-2xl border border-border/40 bg-card hover:bg-muted/30",
-        "transition-all duration-200 cursor-pointer overflow-hidden",
-        "hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20",
-        isSelected && "ring-2 ring-primary/50 border-primary/30 bg-primary/5"
+        "group relative rounded-xl border bg-card cursor-pointer",
+        "transition-all duration-150 overflow-hidden",
+        "hover:border-primary/25 hover:shadow-md hover:shadow-black/10",
+        isSelected
+          ? "ring-2 ring-primary/40 border-primary/30 bg-primary/5"
+          : "border-border/40 hover:bg-muted/20"
       )}
       onClick={() => onOpenChat(contact.id)}
     >
-      {/* Top accent bar */}
-      <div className={cn("h-1 w-full", typeConfig.gradient)} />
+      {/* Left accent bar (thin, subtle) */}
+      <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", typeConfig.gradient)} />
 
       {/* Selection checkbox */}
       <div
@@ -54,130 +51,96 @@ export function ContactCard({
         <Checkbox
           checked={isSelected}
           onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
-          className="bg-background/80 backdrop-blur-sm"
+          className="bg-background/90"
         />
       </div>
 
       {/* Actions dropdown */}
       <div
-        className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-7 h-7 bg-background/60 backdrop-blur-sm hover:bg-background/90">
+            <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-muted">
               <MoreVertical className="w-3.5 h-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={() => onOpenChat(contact.id)}>
-              <MessageSquare className="w-4 h-4 mr-2" />Conversar
+              <MessageSquare className="w-3.5 h-3.5 mr-2" />Conversar
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(contact)}>
-              <Edit className="w-4 h-4 mr-2" />Editar
+              <Edit className="w-3.5 h-3.5 mr-2" />Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-              <Trash2 className="w-4 h-4 mr-2" />Excluir
+              <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      <div className="p-5 pt-4 space-y-4">
-        {/* Avatar + Name */}
-        <div className="flex items-start gap-3.5">
-          <div className="relative">
-            <Avatar className="w-12 h-12 ring-2 ring-background shadow-md">
-              <AvatarImage src={contact.avatar_url || undefined} />
-              <AvatarFallback className={cn('font-bold text-sm', avatarColors.bg, avatarColors.text)}>
-                {getInitials(contact.name)}
-              </AvatarFallback>
-            </Avatar>
-            {/* Type indicator dot */}
-            <div className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background flex items-center justify-center",
-              typeConfig.dotBg
-            )}>
-              <span className="text-[8px] text-primary-foreground">{typeConfig.icon}</span>
-            </div>
-            {/* Company logo overlay */}
-            {(companyLogo || contact.company) && (
-              <div className="absolute -top-1 -left-1">
-                <CompanyLogo
-                  logoUrl={companyLogo}
-                  companyName={companyName}
-                  fallbackCompanyName={contact.company}
-                  size="xs"
-                  className="ring-2 ring-background shadow-sm"
-                />
-              </div>
-            )}
-          </div>
+      <div className="pl-4 pr-3 pt-3 pb-3 space-y-2.5">
+        {/* Avatar + Name row */}
+        <div className="flex items-start gap-3">
+          <Avatar className="w-10 h-10 shrink-0 ring-1 ring-border/40">
+            <AvatarImage src={contact.avatar_url || undefined} />
+            <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
+              {getInitials(contact.name)}
+            </AvatarFallback>
+          </Avatar>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pt-0.5">
             <HighlightText
-              text={`${contact.name} ${contact.surname || ''}`.trim()}
+              text={displayName}
               highlight={searchQuery}
-              className="font-semibold text-sm text-foreground truncate leading-tight block"
+              className="font-semibold text-sm text-foreground leading-snug block truncate pr-6"
             />
-            {contact.nickname && (
-              <p className="text-xs text-muted-foreground truncate">({contact.nickname})</p>
-            )}
-            <Badge
-              variant="outline"
-              className={cn("mt-1 text-[10px] h-5 px-1.5 font-medium gap-1", typeConfig.badgeClass)}
-            >
-              {typeConfig.iconNode}
-              {typeConfig.label}
-            </Badge>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <Badge
+                variant="outline"
+                className={cn("text-[10px] h-4 px-1.5 font-medium gap-1 shrink-0", typeConfig.badgeClass)}
+              >
+                {typeConfig.iconNode}
+                {typeConfig.label}
+              </Badge>
+              {contact.nickname && (
+                <span className="text-[10px] text-muted-foreground truncate">({contact.nickname})</span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Company & Job */}
-        {(contact.company || contact.job_title) && (
-          <div className="bg-muted/40 rounded-xl p-2.5 space-y-1">
-            {contact.company && (
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                <CompanyLogo
-                  logoUrl={companyLogo}
-                  companyName={companyName}
-                  fallbackCompanyName={contact.company}
-                  size="sm"
-                />
-                <span className="truncate">{companyName || contact.company}</span>
-              </div>
-            )}
-            {contact.job_title && (
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <Briefcase className="w-3 h-3 shrink-0" />
-                <span className="truncate">{contact.job_title}</span>
-              </div>
-            )}
+        {/* Company */}
+        {(contact.company || companyName) && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Building2 className="w-3 h-3 shrink-0" />
+            <span className="truncate">{companyName || contact.company}</span>
           </div>
         )}
 
-        {/* Contact info with quick actions */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground group/phone" onClick={(e) => e.stopPropagation()}>
-            <Phone className="w-3.5 h-3.5 shrink-0" />
-            <a
-              href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-[11px] truncate hover:text-primary hover:underline transition-colors"
-              title="Abrir no WhatsApp"
-            >
-              {contact.phone}
-            </a>
-          </div>
+        {/* Contact info */}
+        <div className="space-y-1">
+          {contact.phone && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+              <Phone className="w-3 h-3 shrink-0" />
+              <a
+                href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-[11px] truncate hover:text-primary transition-colors"
+              >
+                {contact.phone}
+              </a>
+            </div>
+          )}
           {contact.email && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-              <Mail className="w-3.5 h-3.5 shrink-0" />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+              <Mail className="w-3 h-3 shrink-0" />
               <a
                 href={`mailto:${contact.email}`}
-                className="truncate text-[11px] hover:text-primary hover:underline transition-colors"
-                title="Enviar email"
+                className="truncate text-[11px] hover:text-primary transition-colors"
               >
                 {contact.email}
               </a>
@@ -188,29 +151,32 @@ export function ContactCard({
         {/* Tags */}
         {contact.tags && contact.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {contact.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5 rounded-md">
+            {contact.tags.slice(0, 2).map(tag => (
+              <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5 rounded">
                 {tag}
               </Badge>
             ))}
-            {contact.tags.length > 3 && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 rounded-md">
-                +{contact.tags.length - 3}
+            {contact.tags.length > 2 && (
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 rounded">
+                +{contact.tags.length - 2}
               </Badge>
             )}
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-1 border-t border-border/30">
-          <span className="text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-between pt-1.5 border-t border-border/20">
+          <span className="text-[10px] text-muted-foreground/70">
             {format(new Date(contact.created_at), "dd MMM yyyy", { locale: ptBR })}
           </span>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 hover:bg-primary/10 hover:text-primary"
+              className="w-6 h-6 hover:bg-primary/10 hover:text-primary"
               onClick={() => onOpenChat(contact.id)}
               title="Conversar"
             >
@@ -219,7 +185,7 @@ export function ContactCard({
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 hover:bg-muted"
+              className="w-6 h-6 hover:bg-muted"
               onClick={() => onEdit(contact)}
               title="Editar"
             >
@@ -228,6 +194,6 @@ export function ContactCard({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

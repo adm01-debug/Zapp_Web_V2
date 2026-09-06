@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -68,8 +67,8 @@ export function ContactToolbar({
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
 }: ContactToolbarProps) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
         <ContactSearchWithSuggestions
           value={searchInput}
           onChange={onSearchChange}
@@ -79,34 +78,35 @@ export function ContactToolbar({
         />
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px]">
-            <SortAsc className="w-4 h-4 mr-2" />
+          <SelectTrigger className="w-[160px] h-8 text-xs">
+            <SortAsc className="w-3.5 h-3.5 mr-1.5" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              <SelectItem key={option.value} value={option.value} className="text-xs">{option.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Button
           variant={showFilters ? "default" : "outline"}
+          size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className={cn(showFilters && "bg-primary hover:bg-primary/90")}
+          className={cn("h-8 text-xs gap-1.5", showFilters && "bg-primary hover:bg-primary/90")}
           aria-expanded={showFilters}
           aria-controls="contact-filters-panel"
         >
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-3.5 h-3.5" />
           Filtros
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-2 bg-background/20 text-xs">{activeFiltersCount}</Badge>
+            <Badge variant="secondary" className="ml-1 bg-background/20 text-[10px] h-4 px-1">{activeFiltersCount}</Badge>
           )}
         </Button>
 
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" onClick={clearFilters} size="sm" aria-label="Limpar todos os filtros">
-            <X className="w-4 h-4 mr-1" />Limpar
+          <Button variant="ghost" onClick={clearFilters} size="sm" className="h-8 text-xs" aria-label="Limpar todos os filtros">
+            <X className="w-3.5 h-3.5 mr-1" />Limpar
           </Button>
         )}
 
@@ -119,27 +119,27 @@ export function ContactToolbar({
           variant={groupByCompany ? "default" : "outline"}
           size="sm"
           onClick={() => setGroupByCompany(!groupByCompany)}
-          className="gap-1.5"
+          className="h-8 text-xs gap-1.5"
           aria-pressed={groupByCompany}
         >
-          <LayoutList className="w-4 h-4" />
+          <LayoutList className="w-3.5 h-3.5" />
           Agrupar
         </Button>
 
         {selectedIds.length >= 1 && (
           <>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={onBulkTag}>
-              <Tag className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={onBulkTag}>
+              <Tag className="w-3.5 h-3.5" />
               Tags ({selectedIds.length})
             </Button>
             {selectedIds.length >= 2 && (
               <>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={onCompare}>
-                  <GitCompareArrows className="w-4 h-4" />
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={onCompare}>
+                  <GitCompareArrows className="w-3.5 h-3.5" />
                   Comparar
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 border-primary/30 text-primary" onClick={onMerge}>
-                  <Merge className="w-4 h-4" />
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-primary/30 text-primary" onClick={onMerge}>
+                  <Merge className="w-3.5 h-3.5" />
                   Mesclar
                 </Button>
               </>
@@ -158,20 +158,18 @@ export function ContactToolbar({
       </div>
 
       {/* Advanced Filters Panel */}
-      <AnimatePresence>
-        {showFilters && (
-          <div id="contact-filters-panel" role="region" aria-label="Painel de filtros avançados">
-            <ContactAdvancedFilters
-              filterCompany={filterCompany} setFilterCompany={setFilterCompany}
-              filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
-              filterTag={filterTag} setFilterTag={setFilterTag}
-              filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
-              uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
-              onClearFilters={clearFilters} activeFiltersCount={activeFiltersCount}
-            />
-          </div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      {showFilters && (
+        <div id="contact-filters-panel" role="region" aria-label="Painel de filtros avançados">
+          <ContactAdvancedFilters
+            filterCompany={filterCompany} setFilterCompany={setFilterCompany}
+            filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
+            filterTag={filterTag} setFilterTag={setFilterTag}
+            filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
+            uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
+            onClearFilters={clearFilters} activeFiltersCount={activeFiltersCount}
+          />
+        </div>
+      )}
+    </div>
   );
 }

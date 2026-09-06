@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
-  UserPlus, Search, Upload, Users, Filter, Sparkles,
+  UserPlus, Search, Users, Filter, Sparkles,
 } from 'lucide-react';
 
 interface ContactEmptyStateProps {
@@ -11,12 +11,11 @@ interface ContactEmptyStateProps {
   onAddContact?: () => void;
   onClearSearch?: () => void;
   onClearFilters?: () => void;
-  onImport?: () => void;
 }
 
 export function ContactEmptyState({
   type, searchQuery, activeFilters = 0,
-  onAddContact, onClearSearch, onClearFilters, onImport,
+  onAddContact, onClearSearch, onClearFilters,
 }: ContactEmptyStateProps) {
   return (
     <motion.div
@@ -64,19 +63,13 @@ export function ContactEmptyState({
             Comece sua base de contatos
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-6 leading-relaxed">
-            Adicione seu primeiro contato manualmente ou importe uma planilha CSV com seus clientes e leads
+            Adicione seu primeiro contato manualmente para começar sua base de clientes e leads
           </p>
           <div className="flex items-center gap-3">
             {onAddContact && (
               <Button onClick={onAddContact} className="gap-2 shadow-lg shadow-primary/20">
                 <UserPlus className="w-4 h-4" />
                 Novo Contato
-              </Button>
-            )}
-            {onImport && (
-              <Button variant="outline" onClick={onImport} className="gap-2">
-                <Upload className="w-4 h-4" />
-                Importar CSV
               </Button>
             )}
           </div>

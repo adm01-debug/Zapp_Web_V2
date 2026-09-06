@@ -38,7 +38,6 @@ interface ContactContentAreaProps {
   onAddContact: () => void;
   onClearSearch?: () => void;
   onClearFilters?: () => void;
-  onImport: () => void;
   getCRMData: (phone: string) => CRMBatchResult | null;
 }
 
@@ -46,7 +45,7 @@ export function ContactContentArea({
   loading, contacts, viewMode, gridColumns, groupByCompany,
   selectedIds, search, activeFiltersCount,
   onToggleSelect, onContactClick, onEdit, onDelete, onSelectIds,
-  onAddContact, onClearSearch, onClearFilters, onImport, getCRMData,
+  onAddContact, onClearSearch, onClearFilters, getCRMData,
 }: ContactContentAreaProps) {
   if (loading) {
     return <ContactsSkeleton viewMode={viewMode} gridColumns={gridColumns} />;
@@ -62,7 +61,6 @@ export function ContactContentArea({
           onAddContact={onAddContact}
           onClearSearch={search ? onClearSearch : undefined}
           onClearFilters={activeFiltersCount > 0 ? onClearFilters : undefined}
-          onImport={onImport}
         />
       </CardContent></Card>
     );
@@ -70,7 +68,7 @@ export function ContactContentArea({
 
   if (viewMode === 'grid') {
     return (
-      <div className={cn("grid gap-4", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
+      <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {contacts.map((contact, index) => (
           <ContactCard
             key={contact.id} contact={contact}

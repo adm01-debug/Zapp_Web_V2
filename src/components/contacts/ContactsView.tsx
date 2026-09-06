@@ -1,27 +1,22 @@
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
-import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Upload, Users, Sparkles, FileSpreadsheet, RefreshCw,
+  Users, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { CONTACT_TYPE_ICONS } from './ContactsTable';
 import { ContactStatsCards } from './ContactStatsCards';
-import { ContactImportDialog } from './ContactImportDialog';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
-import { ContactBirthdayPanel } from './ContactBirthdayPanel';
 import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
 import { ContactPagination } from './ContactPagination';
@@ -38,7 +33,7 @@ export function ContactsView() {
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick, handleExportCSV,
+    handleContactClick,
   } = useContactsViewState();
 
   const {
@@ -70,10 +65,8 @@ export function ContactsView() {
   const layoutScrollRef = useLayoutScroll();
 
   return (
-    <div className="space-y-5 relative bg-background w-full min-w-0">
+    <div className="space-y-4 relative bg-background w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
-      <AuroraBorealis />
-      <FloatingParticles />
 
       <PageHeader
         title="Contatos"
@@ -88,12 +81,6 @@ export function ContactsView() {
             )}
             <Button variant="outline" onClick={() => refetch()} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Sincronizar
-            </Button>
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-2" />Importar
-            </Button>
-            <Button variant="outline" onClick={handleExportCSV} disabled={filteredContacts.length === 0}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />Exportar
             </Button>
             <ContactDialogs
               isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
@@ -111,7 +98,6 @@ export function ContactsView() {
         }
       />
 
-      <ContactImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} onImportComplete={refetch} />
       <ContactMergeDialog
         open={isMergeOpen} onOpenChange={setIsMergeOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
@@ -127,37 +113,37 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-        <div className="col-span-full lg:col-span-3">
-          <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
-        </div>
-        <div className="col-span-full xl:col-span-1">
-          <ContactBirthdayPanel
-            contacts={filteredContacts.map(c => ({ id: c.id, name: c.name, avatar_url: c.avatar_url, birthday: undefined }))}
-            onContactClick={openContactChat}
-          />
-        </div>
-      </div>
+      <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted/50 p-1 h-auto flex-wrap">
-            <TabsTrigger value="all" className="data-[state=active]:bg-background flex items-center gap-2">
-              <Users className="w-4 h-4" />Todos
-              <Badge variant="secondary" className="ml-1 text-xs">{contactCountByType['all'] || 0}</Badge>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="h-9 bg-muted/40 border border-border/30 p-0.5 gap-0.5 flex-wrap">
+          <TabsTrigger
+            value="all"
+            className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Todos
+            <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
+              {contactCountByType['all'] || 0}
+            </Badge>
+          </TabsTrigger>
+          {CONTACT_TYPES.map((type) => (
+            <TabsTrigger
+              key={type.value}
+              value={type.value}
+              className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
+            >
+              {CONTACT_TYPE_ICONS[type.value]}
+              {type.label}
+              {contactCountByType[type.value] > 0 && (
+                <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
+                  {contactCountByType[type.value]}
+                </Badge>
+              )}
             </TabsTrigger>
-            {CONTACT_TYPES.map((type) => (
-              <TabsTrigger key={type.value} value={type.value} className="data-[state=active]:bg-background flex items-center gap-2">
-                {CONTACT_TYPE_ICONS[type.value]}
-                {type.label}
-                {contactCountByType[type.value] > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-xs">{contactCountByType[type.value]}</Badge>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </motion.div>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <ContactToolbar
         searchInput={searchInput} onSearchChange={handleSearchChange}
@@ -210,8 +196,7 @@ export function ContactsView() {
         onAddContact={() => setIsAddDialogOpen(true)}
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
-        onImport={() => setIsImportOpen(true)}
-        getCRMData={(phone) => getCRMData(phone) ?? null}
+        getCRMData={getCRMData}
       />
 
       <ContactPagination
