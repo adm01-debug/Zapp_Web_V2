@@ -67,13 +67,17 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { data: newMessage, error: msgError } = await supabase.from('messages').insert({
+      // E08: upsert idempotente — dedup por external_id (message_id Sicoob).
+      // Race condition: dois webhooks simultâneos passam pelo check de linha 30,
+      // ambos tentam insert; ignoreDuplicates elimina o segundo silenciosamente.
+      const { data: newMessage, error: msgError } = await supabase.from('messages').upsert({
         contact_id: contactId, content, sender: 'contact', message_type: 'text',
         external_id: message_id, channel_type: 'internal_chat', is_read: false,
         status: 'delivered', created_at: created_at || new Date().toISOString(),
-      }).select('id').single();
+      }, { onConflict: 'external_id', ignoreDuplicates: true }).select('id').maybeSingle();
 
-      if (msgError) throw new Error(`Failed to create message: ${msgError.message}`);
+      // E09: 23505 = race condition resolvida pelo índice — mensagem já existe → ok
+      if (msgError && msgError.code !== '23505') throw new Error(`Failed to create message: ${msgError.message}`);
 
       await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contactId);
 

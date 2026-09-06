@@ -66,27 +66,28 @@ export function RateLimitRealtimeAlerts() {
 
     fetchAlerts();
 
-    // Subscribe to new alerts
-    const channel = supabase
-      .channel('security-alerts')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'security_alerts' },
-        (payload) => {
-          const newAlert = payload.new as SecurityAlert;
-          setAlerts(prev => [newAlert, ...prev].slice(0, 10));
+    // E62: security_alerts removida da publicação realtime (migration 20260905).
+    // Polling de 15s detecta novos alertas comparando com o snapshot anterior.
+    let lastKnownIds = new Set<string>(data?.map((a: SecurityAlert) => a.id) ?? []);
+    const interval = setInterval(async () => {
+      const { data: fresh } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('is_resolved', false)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!fresh) return;
+      const newAlerts = (fresh as SecurityAlert[]).filter(a => !lastKnownIds.has(a.id));
+      if (newAlerts.length > 0) {
+        setAlerts(fresh as SecurityAlert[]);
+        newAlerts.forEach(a => {
+          if (a.severity === 'critical' || a.severity === 'high') playAlertSound();
+        });
+        lastKnownIds = new Set((fresh as SecurityAlert[]).map(a => a.id));
+      }
+    }, 15_000);
 
-          // Play sound for critical alerts
-          if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
-            playAlertSound();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const handleDismiss = async (alertId: string) => {

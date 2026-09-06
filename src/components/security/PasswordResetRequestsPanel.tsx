@@ -31,10 +31,10 @@ export function PasswordResetRequestsPanel() {
 
   useEffect(() => {
     fetchRequests();
-    const channel = supabase.channel('password-reset-requests')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'password_reset_requests' }, () => fetchRequests())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    // E62: password_reset_requests removida da publicação realtime (migration 20260905).
+    // Polling de 30s garante atualização sem depender de realtime.
+    const interval = setInterval(fetchRequests, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {

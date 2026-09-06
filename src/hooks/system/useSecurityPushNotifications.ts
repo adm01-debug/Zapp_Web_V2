@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
@@ -68,35 +68,36 @@ export function useSecurityPushNotifications() {
     log.debug('Security notification sent:', alert.title);
   }, [permission, isSubscribed, showNotification]);
 
-  // Subscribe to realtime security alerts
+  // E62: security_alerts removida da publicação realtime (migration 20260905).
+  // Polling de 20s com filtro por user_id e timestamp de último check.
+  const lastCheckedRef = useRef<string>(new Date().toISOString());
+
   useEffect(() => {
     if (!user) return;
 
-    log.debug('Setting up security alerts subscription for user:', user.id);
+    log.debug('Setting up security alerts polling for user:', user.id);
 
-    const channel = supabase
-      .channel('security-alerts-push')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'security_alerts',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          log.debug('New security alert received:', payload);
-          const alert = payload.new as SecurityAlert;
-          sendSecurityNotification(alert);
-        }
-      )
-      .subscribe((status) => {
-        log.debug('Security alerts subscription status:', status);
-      });
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_resolved', false)
+        .gt('created_at', lastCheckedRef.current)
+        .order('created_at', { ascending: true });
+
+      if (error) { log.debug('Security alerts poll error:', error); return; }
+      lastCheckedRef.current = new Date().toISOString();
+
+      for (const alert of (data ?? []) as SecurityAlert[]) {
+        log.debug('New security alert via polling:', alert);
+        sendSecurityNotification(alert);
+      }
+    }, 20_000);
 
     return () => {
-      log.debug('Cleaning up security alerts subscription');
-      supabase.removeChannel(channel);
+      log.debug('Cleaning up security alerts polling');
+      clearInterval(interval);
     };
   }, [user, sendSecurityNotification]);
 
