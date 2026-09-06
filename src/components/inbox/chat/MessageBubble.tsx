@@ -108,7 +108,7 @@ export const MessageBubble = memo(function MessageBubble({
                 isSent={isSent}
                 instanceName={instanceName}
                 contactJid={contactJid}
-                externalId={message.external_id}
+                externalId={message.external_id ?? undefined}
                 senderType={message.sender}
                 refreshKey={message.updated_at}
                 disableRealtime
@@ -186,7 +186,7 @@ export const MessageBubble = memo(function MessageBubble({
 
                 {message.type === 'document' && message.mediaUrl && (
                   <div className="mb-1.5">
-                    <DocumentPreview url={message.mediaUrl} fileName={searchQuery && highlightedMessageIds?.has(message.id) && message.content ? undefined : (message.content || 'documento')} isSent={isSent} />
+                    <DocumentPreview url={message.mediaUrl} fileName={searchQuery && highlightedMessageIds?.has(message.id) && message.content ? '' : (message.content || 'documento')} isSent={isSent} />
                     <QuarantineBadge messageId={message.id} className="mt-1" />
                     {searchQuery && highlightedMessageIds?.has(message.id) && message.content && (
                       <p className="text-[12px] mt-1 px-1"><HighlightedText text={message.content} query={searchQuery} /></p>
@@ -256,7 +256,7 @@ export const MessageBubble = memo(function MessageBubble({
               isSent={isSent}
               instanceName={instanceName}
               contactJid={contactJid}
-              externalId={message.external_id}
+              externalId={message.external_id ?? undefined}
               senderType={message.sender}
               refreshKey={message.updated_at}
                 disableRealtime

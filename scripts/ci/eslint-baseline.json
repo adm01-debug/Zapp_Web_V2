@@ -470,7 +470,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "40c961263a87da9f55a2e188226a93c2619f33ba7f7cf8ea53670ae53e965f76"
+      "sha256": "e7761cf57f3b60522ed893bab248118d90e0c24c6eeb347f00626a89410a5239"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -538,7 +538,7 @@
     },
     {
       "path": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "sha256": "fd3eaae85b085e0f9491a7e52d6d8c01f268a2db8d939eec25ee4d220b64e35b"
+      "sha256": "6aba5dec9ee65affe6bfc5e5b888acd7779b16a7d40360651fdcef57afeade42"
     },
     {
       "path": "src/components/inbox/ConversationHistory.tsx",
@@ -1430,7 +1430,7 @@
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "sha256": "864920529245f439fad01c61e935d24d3fe45d486cf0cba0fdeaddca57c3b1d9"
+      "sha256": "23912a497433c1a1c3eef8a2dfdd2f5b2db205f3c2ed741f064dac80b0400e98"
     },
     {
       "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
@@ -14723,10 +14723,10 @@
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/usePerformanceOptimizations.ts:214:7 212 | const connection = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: Function; removeEventListener?: Function } }).connection; 213 | if (connection) { > 214 | setConnectionType(connection.effectiveType); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 215 | setIsSlowConnection( 216 | connection.saveData || 217 | connection.effectiveType === 'slow-2g' ||",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/usePerformanceOptimizations.ts:214:7 212 | const connection = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: Function; removeEventListener?: Function } }).connection; 213 | if (connection) { > 214 | setConnectionType(connection.effectiveType ?? ''); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 215 | setIsSlowConnection( 216 | connection.saveData || 217 | connection.effectiveType === 'slow-2g' ||",
       "spanHash": "53e2d5beea44f0aeb5333ae20fe49974c20de0fee8cf8a4203c160326090cb07",
-      "lineHash": "ed271933d997204ee6b1025060bdb5307fe377d6b690d0560663ce5bd153e16c",
-      "contextHash": "5af8e47ad14c90dd18102f6ffdd3cca0851dde11cd4a19cb049ec6583e8b6235"
+      "lineHash": "9e900e4cfc20a5d4cb369eef6517caa79b205bbe5936c2cbd9b79ea808efc816",
+      "contextHash": "45e31be8666f61d1747c888beede503c93d169e55e2e04582e90f55afce0a5cc"
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",

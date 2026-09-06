@@ -74,12 +74,12 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
           <div className="relative flex-shrink-0">
             <ChannelBadge type={conversation.contact.contact_type} />
             <Avatar className="w-8 h-8">
-              <AvatarImage src={conversation.contact.avatar} />
+              <AvatarImage src={conversation.contact.avatar ?? undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">{conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</AvatarFallback>
             </Avatar>
             {conversation.assignedTo ? (
               <Avatar className="absolute -bottom-0.5 -right-0.5 w-4 h-4 ring-1 ring-sidebar">
-                <AvatarImage src={conversation.assignedTo.avatar} />
+                <AvatarImage src={conversation.assignedTo.avatar ?? undefined} />
                 <AvatarFallback className="bg-secondary text-secondary-foreground text-[7px] font-bold">{conversation.assignedTo.name[0]}</AvatarFallback>
               </Avatar>
             ) : (
@@ -125,12 +125,12 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
           <div className="relative flex-shrink-0">
             <ChannelBadge type={conversation.contact.contact_type} />
             <Avatar className={cn("w-11 h-11 ring-2 transition-all", isSelected ? "ring-primary/40" : "ring-border/30")}>
-              <AvatarImage src={conversation.contact.avatar} />
+              <AvatarImage src={conversation.contact.avatar ?? undefined} />
               <AvatarFallback className="bg-primary/10 text-primary font-medium">{conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</AvatarFallback>
             </Avatar>
             {conversation.assignedTo ? (
               <Avatar className="absolute -bottom-1 -right-1 w-5 h-5 ring-2 ring-sidebar">
-                <AvatarImage src={conversation.assignedTo.avatar} />
+                <AvatarImage src={conversation.assignedTo.avatar ?? undefined} />
                 <AvatarFallback className="bg-secondary text-secondary-foreground text-[8px] font-bold">{conversation.assignedTo.name[0]}</AvatarFallback>
               </Avatar>
             ) : (
