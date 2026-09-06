@@ -15,12 +15,19 @@ function parseArgs(argv) {
 }
 
 export async function runGenerateManifest({ repoRoot, output, check }) {
-  const manifest = await buildDeploymentManifest({ repoRoot });
-  const serialized = serializeManifest(manifest);
   const outputPath = path.resolve(repoRoot, output);
+  const committed = await readFile(outputPath, 'utf8').catch(() => '');
+
+  let orphanAllowlist = [];
+  try {
+    const existing = JSON.parse(committed);
+    if (Array.isArray(existing.orphan_allowlist)) orphanAllowlist = existing.orphan_allowlist;
+  } catch { /* first run or invalid — proceed without */ }
+
+  const manifest = await buildDeploymentManifest({ repoRoot, orphanAllowlist });
+  const serialized = serializeManifest(manifest);
 
   if (check) {
-    const committed = await readFile(outputPath, 'utf8').catch(() => '');
     if (committed !== serialized) {
       throw new Error(`Deployment manifest is stale: ${output}. Run generate-manifest.mjs.`);
     }

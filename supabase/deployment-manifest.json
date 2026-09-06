@@ -11,6 +11,10 @@
     "verify_jwt_true": 55,
     "verify_jwt_false": 8
   },
+  "orphan_allowlist": [
+    "check-account-lock",
+    "record-failed-login"
+  ],
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-guards.ts",
@@ -1195,5 +1199,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d7b33c49f376e41b78f80ff8e244b16664283e3ce8136c2b3e5855f46da24e69"
+  "manifest_sha256": "6db96ecc363617ac445891388cf699b446583e3dc69aecc0a9e1b9a4dd913df7"
 }

@@ -126,3 +126,45 @@ test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functio
     /verify_jwt mismatch/,
   );
 });
+
+test('buildDeploymentAttestation accepts known orphans via orphan_allowlist', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifestBase = await buildDeploymentManifest({ repoRoot: root, orphanAllowlist: ['legacy-fn'] });
+  assert.deepEqual(manifestBase.orphan_allowlist, ['legacy-fn']);
+  assert.equal(verifyManifestDigest(manifestBase), true);
+
+  const base = {
+    manifest: manifestBase,
+    gitSha: 'b'.repeat(40),
+    runId: '456',
+    deploymentScope: 'all',
+    createdAt: '2026-09-06T00:00:00.000Z',
+  };
+  const remote = [
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true },
+    { id: '3', slug: 'legacy-fn', version: 1, status: 'ACTIVE', verify_jwt: true },
+  ];
+
+  // Known orphan must NOT throw
+  const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
+  assert.equal(attestation.function_count, 2);
+
+  // Unknown extra still throws
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: [...remote, { slug: 'unknown-orphan', verify_jwt: true }],
+    }),
+    /extra=\[unknown-orphan]/,
+  );
+});
+
+test('buildDeploymentManifest without orphanAllowlist produces no orphan_allowlist field', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifest = await buildDeploymentManifest({ repoRoot: root });
+  assert.equal(manifest.orphan_allowlist, undefined);
+  assert.equal(verifyManifestDigest(manifest), true);
+});
