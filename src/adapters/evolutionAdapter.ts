@@ -158,6 +158,7 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     avatar_fetch_attempted_at: null,
     conversation_status: 'open',
     conversation_status_changed_at: null,
+    is_lid_legacy: false,
   };
 }
 

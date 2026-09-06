@@ -22,6 +22,7 @@ export function mapRealtimeContactToContact(rc: RealtimeContact): ConversationCo
     avatar: rc.avatar_url || undefined,
     createdAt: new Date(rc.created_at),
     tags: rc.tags || [],
+    conversation_status: rc.conversation_status as ConversationContact['conversation_status'],
   };
 }
 
@@ -85,4 +86,3 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     sentiment: rc.contact.ai_sentiment,
   };
 }
-
