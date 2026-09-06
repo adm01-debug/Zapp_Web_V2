@@ -12,15 +12,6 @@
       "contextHash": "c3fdb04a8070a597105fb080f4d342b5ea79204ed9cbd1e3560bcc390035f0cb"
     },
     {
-      "file": "src/adapters/evolutionAdapter.ts",
-      "line": 131,
-      "column": 3,
-      "severity": "error",
-      "code": "TS2741",
-      "message": "Property 'avatar_fetch_attempted_at' is missing in type '{ id: string; name: string; surname: null; nickname: string | null; phone: string; email: null; avatar_url: null; tags: null; company: null; job_title: null; assigned_to: null; queue_id: null; created_at: string; ... 12 more ...; risk_score: number; }' but required in type '{ ai_priority: string | null; ai_sentiment: string | null; assigned_to: string | null; avatar_fetch_attempted_at: string | null; avatar_url: string | null; channel_connection_id: string | null; ... 20 more ...; whatsapp_connection_id: string | null; }'.",
-      "contextHash": "3d6e6f72da981626958411ffd249bab9add0a266749d67bab645e0079fab0c6e"
-    },
-    {
       "file": "src/App.tsx",
       "line": 88,
       "column": 9,
@@ -85,8 +76,8 @@
     },
     {
       "file": "src/components/connections/BusinessHoursIndicator.tsx",
-      "line": 73,
-      "column": 25,
+      "line": 61,
+      "column": 21,
       "severity": "error",
       "code": "TS18047",
       "message": "'data.close_time' is possibly 'null'.",
@@ -94,8 +85,8 @@
     },
     {
       "file": "src/components/connections/BusinessHoursIndicator.tsx",
-      "line": 72,
-      "column": 24,
+      "line": 60,
+      "column": 20,
       "severity": "error",
       "code": "TS18047",
       "message": "'data.open_time' is possibly 'null'.",
@@ -121,21 +112,12 @@
     },
     {
       "file": "src/components/contacts/ContactsView.tsx",
-      "line": 211,
+      "line": 213,
       "column": 9,
       "severity": "error",
       "code": "TS2322",
       "message": "Type '(phone: string) => CRMBatchResult | undefined' is not assignable to type '(phone: string) => CRMBatchResult | null'. Type 'CRMBatchResult | undefined' is not assignable to type 'CRMBatchResult | null'. Type 'undefined' is not assignable to type 'CRMBatchResult | null'.",
       "contextHash": "8ada2ef03d3b4d59fad13d44c724dfba156f307bf425e1f6706d6652d17182d3"
-    },
-    {
-      "file": "src/components/contacts/ContactsView.tsx",
-      "line": 71,
-      "column": 26,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLElement>'. Type 'HTMLDivElement | null' is not assignable to type 'HTMLElement'. Type 'null' is not assignable to type 'HTMLElement'.",
-      "contextHash": "bb778e0703ba248d700ad8049c728cd5229fddd8b68d149acf0d8e09993531bd"
     },
     {
       "file": "src/components/email/EmailChatReplyBar.tsx",
@@ -202,7 +184,7 @@
     },
     {
       "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 109,
+      "line": 111,
       "column": 17,
       "severity": "error",
       "code": "TS2322",
@@ -211,7 +193,7 @@
     },
     {
       "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 257,
+      "line": 259,
       "column": 15,
       "severity": "error",
       "code": "TS2322",
@@ -220,7 +202,7 @@
     },
     {
       "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 187,
+      "line": 189,
       "column": 61,
       "severity": "error",
       "code": "TS2322",
@@ -247,7 +229,7 @@
     },
     {
       "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 170,
+      "line": 169,
       "column": 8,
       "severity": "error",
       "code": "TS18049",
@@ -256,7 +238,7 @@
     },
     {
       "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 179,
+      "line": 178,
       "column": 135,
       "severity": "error",
       "code": "TS18049",
@@ -265,7 +247,7 @@
     },
     {
       "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 186,
+      "line": 185,
       "column": 8,
       "severity": "error",
       "code": "TS18049",
@@ -274,7 +256,7 @@
     },
     {
       "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 83,
+      "line": 82,
       "column": 17,
       "severity": "error",
       "code": "TS18049",
@@ -283,7 +265,7 @@
     },
     {
       "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 83,
+      "line": 82,
       "column": 71,
       "severity": "error",
       "code": "TS18049",
@@ -310,7 +292,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 120,
+      "line": 105,
       "column": 33,
       "severity": "error",
       "code": "TS2322",
@@ -319,7 +301,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 126,
+      "line": 111,
       "column": 11,
       "severity": "error",
       "code": "TS2322",
@@ -328,7 +310,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 135,
+      "line": 120,
       "column": 59,
       "severity": "error",
       "code": "TS2322",
@@ -337,7 +319,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 136,
+      "line": 121,
       "column": 29,
       "severity": "error",
       "code": "TS2322",
@@ -346,7 +328,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 148,
+      "line": 133,
       "column": 69,
       "severity": "error",
       "code": "TS2322",
@@ -355,7 +337,7 @@
     },
     {
       "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 149,
+      "line": 134,
       "column": 11,
       "severity": "error",
       "code": "TS2322",
@@ -658,15 +640,6 @@
       "code": "TS2322",
       "message": "Type 'boolean | null' is not assignable to type 'boolean | undefined'. Type 'null' is not assignable to type 'boolean | undefined'.",
       "contextHash": "13d1e5ce83bbb64754f0e99555ab033c607978560a95b8187fe302c58aeab81a"
-    },
-    {
-      "file": "src/components/tags/TagsView.tsx",
-      "line": 152,
-      "column": 26,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLElement>'. Type 'HTMLDivElement | null' is not assignable to type 'HTMLElement'. Type 'null' is not assignable to type 'HTMLElement'.",
-      "contextHash": "fe78c6b45a574d2d1a9a024679d069662f99e819fa927e247389fe4983a4621d"
     },
     {
       "file": "src/hooks/analytics/useAIStats.ts",
@@ -985,7 +958,7 @@
     },
     {
       "file": "src/hooks/inbox/useConnectionsManager.ts",
-      "line": 136,
+      "line": 141,
       "column": 34,
       "severity": "error",
       "code": "TS2345",
@@ -994,7 +967,7 @@
     },
     {
       "file": "src/hooks/inbox/useConnectionsManager.ts",
-      "line": 108,
+      "line": 113,
       "column": 40,
       "severity": "error",
       "code": "TS2345",
@@ -1021,7 +994,7 @@
     },
     {
       "file": "src/hooks/realtime/messageSender.ts",
-      "line": 110,
+      "line": 113,
       "column": 20,
       "severity": "error",
       "code": "TS2345",

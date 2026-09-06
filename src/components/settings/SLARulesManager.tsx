@@ -11,7 +11,7 @@ import { SLARuleScope } from '@/hooks/sla/useSLARules';
 
 export function SLARulesManager() {
   // Fetch rule counts per scope in a single query
-  const { data: ruleCounts = {} } = useQuery({
+  const { data: ruleCounts = {} as Record<SLARuleScope, number> } = useQuery({
     queryKey: ['sla-rules-counts'],
     queryFn: async () => {
       const { data, error } = await supabase.from('sla_rules').select('contact_id, company, job_title, contact_type, queue_id, agent_id');
