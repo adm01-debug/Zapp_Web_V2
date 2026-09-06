@@ -228,51 +228,6 @@
       "contextHash": "43df8b6b4e426be632c55abb918221e26690cd98411800a92bb0a0b4b3e701bd"
     },
     {
-      "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 169,
-      "column": 8,
-      "severity": "error",
-      "code": "TS18049",
-      "message": "'contact.tags' is possibly 'null' or 'undefined'.",
-      "contextHash": "4ba1d31a6ac58a3cb37261c6f59b054f15950a864f3714a1fe5bba4201439fd4"
-    },
-    {
-      "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 178,
-      "column": 135,
-      "severity": "error",
-      "code": "TS18049",
-      "message": "'contact.tags' is possibly 'null' or 'undefined'.",
-      "contextHash": "9e17fa583d42c2f9b44cb2e89b692fdff721d2f6a7b0756d2c8c9fe7dca9460c"
-    },
-    {
-      "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 185,
-      "column": 8,
-      "severity": "error",
-      "code": "TS18049",
-      "message": "'contact.tags' is possibly 'null' or 'undefined'.",
-      "contextHash": "8d39381095c903719dbc04f53068070cd9c84fd26daf4c4cefc23e2c627d7def"
-    },
-    {
-      "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 82,
-      "column": 17,
-      "severity": "error",
-      "code": "TS18049",
-      "message": "'contact.tags' is possibly 'null' or 'undefined'.",
-      "contextHash": "4f2d96e5ba9997857c83b56465f5d512a4419e29e231dc9228702c115517999a"
-    },
-    {
-      "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
-      "line": 82,
-      "column": 71,
-      "severity": "error",
-      "code": "TS18049",
-      "message": "'contact.tags' is possibly 'null' or 'undefined'.",
-      "contextHash": "4f2d96e5ba9997857c83b56465f5d512a4419e29e231dc9228702c115517999a"
-    },
-    {
       "file": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
       "line": 85,
       "column": 66,
@@ -289,60 +244,6 @@
       "code": "TS2345",
       "message": "Argument of type 'Date | undefined' is not assignable to parameter of type 'string | number | Date'. Type 'undefined' is not assignable to type 'string | number | Date'.",
       "contextHash": "871f35da4c02dc55a42a813558efe6fb3f20ae3a0b6b283132679b255d9eaa60"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 105,
-      "column": 33,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'ConversationContact' is not assignable to type '{ id: string; name: string; phone: string; avatar?: string | undefined; email?: string | undefined; }'. Types of property 'avatar' are incompatible. Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "77c5026decdd292c7a27c0ce80f16975ab4398c301c8474a15528fb07285ae96"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 111,
-      "column": 11,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'ConversationContact' is not assignable to type '{ id: string; name: string; phone: string; avatar?: string | undefined; email?: string | undefined; }'. Types of property 'avatar' are incompatible. Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "3dc1f5f9dc898f87d157ebb9104184ce6b22e964949c7f0b132973fd007a5cd6"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 120,
-      "column": 59,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'EnrichedContactData | null | undefined' is not assignable to type 'EnrichedContactData | null'. Type 'undefined' is not assignable to type 'EnrichedContactData | null'.",
-      "contextHash": "09410a215af97f9fa87b1adedf5a65eafe88d85a6153f6e1d25c96a8c5291766"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 121,
-      "column": 29,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'SLAInfo | null | undefined' is not assignable to type 'SLAInfo | null'. Type 'undefined' is not assignable to type 'SLAInfo | null'.",
-      "contextHash": "58f522512d7f782f986930d40b6793d2fd13465e725be422516218208aa24afd"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 133,
-      "column": 69,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "bae37d06ff8930b9bd09aa7e003db6f403124c63291891b98f95e5a13fbc8f67"
-    },
-    {
-      "file": "src/components/inbox/ContactDetails.tsx",
-      "line": 134,
-      "column": 11,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "3b34f11d16ff79641c57068365baf8b04e5b2b751e0a75e2babc0cbebe6eecf0"
     },
     {
       "file": "src/components/inbox/ContactPurchasesPanel.tsx",
@@ -712,60 +613,6 @@
       "code": "TS2722",
       "message": "Cannot invoke an object which is possibly 'undefined'.",
       "contextHash": "a3ab49e408b062da8f8d4708be6eaf073907e9abab6f80a33102243538cb1da2"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 24,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "a216c646b8bef9d0e66e733bcca127e5009941468d8c84bd49212de60efd7dab"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 25,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "4571010ed2aa4427111487c759545705cc99ed83a987eb320cf0c65efe9f34ce"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 26,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "3cfe254a25e4d826a7a4116393da255fae9553c6172489e1f23a4edd3252cf73"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 27,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "833342deb4fa3f782f83d4c9eb9be05f3c2a6f1272aff8d65ef9086bcea53438"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 28,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "954be5eb8f214ed36646c3144528a5d02977693fa7928ab4bb77e5a85bfad84c"
-    },
-    {
-      "file": "src/hooks/auth/useSecureProfile.ts",
-      "line": 29,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "0c166d4e7a18fcf61debe419c531bde74ae14be5b39c863f434fbe35338e2584"
     },
     {
       "file": "src/hooks/business/useClientWallet.ts",
