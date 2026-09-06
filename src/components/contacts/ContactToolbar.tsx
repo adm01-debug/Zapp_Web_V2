@@ -4,8 +4,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Tag, Filter, SortAsc, X,
-  GitCompareArrows, Merge, LayoutList,
+  GitCompareArrows, Merge, LayoutList, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ContactViewSwitcher, type ContactViewMode } from './ContactViewSwitcher';
@@ -115,17 +119,6 @@ export function ContactToolbar({
           onApplyPreset={onApplyPreset}
         />
 
-        <Button
-          variant={groupByCompany ? "default" : "outline"}
-          size="sm"
-          onClick={() => setGroupByCompany(!groupByCompany)}
-          className="h-8 text-xs gap-1.5"
-          aria-pressed={groupByCompany}
-        >
-          <LayoutList className="w-3.5 h-3.5" />
-          Agrupar
-        </Button>
-
         {selectedIds.length >= 1 && (
           <>
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={onBulkTag}>
@@ -147,7 +140,34 @@ export function ContactToolbar({
           </>
         )}
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={groupByCompany ? "default" : "outline"}
+                size="icon"
+                className="h-8 w-8"
+                title="Opções de agrupamento"
+                aria-label="Opções de agrupamento"
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="text-xs">Agrupamento</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setGroupByCompany(!groupByCompany)}
+                className="gap-2 text-xs"
+              >
+                <span className={cn("w-3.5 h-3.5 flex items-center justify-center", groupByCompany ? "text-primary" : "text-transparent")}>
+                  <Check className="w-3.5 h-3.5" />
+                </span>
+                Por empresa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <ContactViewSwitcher
             viewMode={viewMode}
             onViewModeChange={setViewMode}

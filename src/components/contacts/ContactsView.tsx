@@ -19,7 +19,6 @@ import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
 import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
-import { ContactPagination } from './ContactPagination';
 import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
@@ -71,7 +70,7 @@ export function ContactsView() {
       <PageHeader
         title="Contatos"
         subtitle={`Base de clientes e leads (${totalCount} contatos)`}
-        breadcrumbs={[{ label: 'Gestão' }, { label: 'Contatos' }]}
+        breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-2">
             {isExternalConfigured && (
@@ -176,6 +175,12 @@ export function ContactsView() {
           search={search}
           onSelectAll={handleSelectAll}
           allSelected={selectedIds.length === filteredContacts.length}
+          page={page}
+          pageSize={pageSize}
+          loadMore={loadMore}
+          loadPrevious={loadPrevious}
+          hasMore={hasMore}
+          loading={loading}
         />
       )}
 
@@ -197,12 +202,6 @@ export function ContactsView() {
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
-      />
-
-      <ContactPagination
-        totalCount={totalCount} pageSize={pageSize} page={page}
-        setPage={setPage} loadMore={loadMore} loadPrevious={loadPrevious}
-        hasMore={hasMore} loading={loading}
       />
 
       {detailContact && (

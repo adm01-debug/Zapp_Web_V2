@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail, Building2,
+  MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail, Building2, Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -37,10 +37,7 @@ export function ContactCard({
       )}
       onClick={() => onOpenChat(contact.id)}
     >
-      {/* Left accent bar (thin, subtle) */}
-      <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", typeConfig.gradient)} />
-
-      {/* Selection checkbox */}
+      {/* Selection checkbox - shows on hover or when selected */}
       <div
         className={cn(
           "absolute top-3 left-3 z-10 transition-opacity duration-150",
@@ -55,14 +52,14 @@ export function ContactCard({
         />
       </div>
 
-      {/* Actions dropdown */}
+      {/* Actions dropdown - always visible */}
       <div
-        className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        className="absolute top-2.5 right-2.5 z-10"
         onClick={(e) => e.stopPropagation()}
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-muted">
+            <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-muted">
               <MoreVertical className="w-3.5 h-3.5" />
             </Button>
           </DropdownMenuTrigger>
@@ -81,23 +78,23 @@ export function ContactCard({
         </DropdownMenu>
       </div>
 
-      <div className="pl-4 pr-3 pt-3 pb-3 space-y-2.5">
+      <div className="px-4 pt-4 pb-3 space-y-3">
         {/* Avatar + Name row */}
         <div className="flex items-start gap-3">
-          <Avatar className="w-10 h-10 shrink-0 ring-1 ring-border/40">
+          <Avatar className="w-14 h-14 shrink-0 ring-2 ring-border/30">
             <AvatarImage src={contact.avatar_url || undefined} />
-            <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
+            <AvatarFallback className={cn('font-bold text-sm', avatarColors.bg, avatarColors.text)}>
               {getInitials(contact.name)}
             </AvatarFallback>
           </Avatar>
 
-          <div className="min-w-0 flex-1 pt-0.5">
+          <div className="min-w-0 flex-1 pt-1">
             <HighlightText
               text={displayName}
               highlight={searchQuery}
-              className="font-semibold text-sm text-foreground leading-snug block truncate pr-6"
+              className="font-semibold text-sm text-foreground leading-snug block truncate pr-7"
             />
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <Badge
                 variant="outline"
                 className={cn("text-[10px] h-4 px-1.5 font-medium gap-1 shrink-0", typeConfig.badgeClass)}
@@ -165,12 +162,13 @@ export function ContactCard({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-1.5 border-t border-border/20">
-          <span className="text-[10px] text-muted-foreground/70">
-            {format(new Date(contact.created_at), "dd MMM yyyy", { locale: ptBR })}
-          </span>
+        <div className="flex items-center justify-between pt-2 border-t border-border/20">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
+            <Clock className="w-3 h-3 shrink-0" />
+            <span>Último contato em {format(new Date(contact.created_at), "dd MMM yyyy", { locale: ptBR })}</span>
+          </div>
           <div
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="flex items-center gap-0.5"
             onClick={(e) => e.stopPropagation()}
           >
             <Button
