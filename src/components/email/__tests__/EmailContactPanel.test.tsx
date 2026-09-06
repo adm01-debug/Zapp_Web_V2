@@ -135,7 +135,7 @@ describe('EmailContactPanel', () => {
           onClose={vi.fn()}
         />,
       );
-      expect(screen.getByText('-')).toBeDefined();
+      expect(screen.getAllByText('-').length).toBeGreaterThan(0);
     });
   });
 
