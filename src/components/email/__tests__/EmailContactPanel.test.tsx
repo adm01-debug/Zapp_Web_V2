@@ -70,7 +70,7 @@ describe('EmailContactPanel', () => {
 
     it('exibe email do contato', () => {
       render(<EmailContactPanel thread={BASE_THREAD} onClose={vi.fn()} />);
-      expect(screen.getByText('alice@example.com')).toBeDefined();
+      expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
     });
   });
 
