@@ -19,7 +19,6 @@ import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
 import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
-import { ContactPagination } from './ContactPagination';
 import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
@@ -203,12 +202,6 @@ export function ContactsView() {
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
-      />
-
-      <ContactPagination
-        totalCount={totalCount} pageSize={pageSize} page={page}
-        setPage={setPage} loadMore={loadMore} loadPrevious={loadPrevious}
-        hasMore={hasMore} loading={loading}
       />
 
       {detailContact && (

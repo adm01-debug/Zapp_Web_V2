@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,13 @@ interface ContactDetailPanelProps {
 export function ContactDetailPanel({
   contact, onClose, onOpenChat, onEdit, messageCount = 0, lastMessageAt,
 }: ContactDetailPanelProps) {
+  useEffect(() => {
+    if (!contact) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [contact, onClose]);
+
   if (!contact) return null;
 
   const avatarColors = getAvatarColor(contact.name);
@@ -62,6 +69,15 @@ export function ContactDetailPanel({
   return (
     <AnimatePresence>
       <motion.div
+        key="detail-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/20 z-40"
+        onClick={onClose}
+      />
+      <motion.div
+        key="detail-panel"
         initial={{ x: 400, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 400, opacity: 0 }}
