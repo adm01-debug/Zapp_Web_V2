@@ -101,7 +101,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
           updateMarker(lng, lat);
         }
       });
-      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
+      map.current.on('click', async (e: mapboxgl.MapMouseEvent) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
     }).catch((err) => {
       log.error('Error loading Mapbox:', err);
       if (!cancelled) setMapError(MAP_LOAD_ERROR);
