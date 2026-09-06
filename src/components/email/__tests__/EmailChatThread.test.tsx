@@ -106,6 +106,7 @@ describe('EmailChatThread', () => {
     vi.clearAllMocks();
     mocks.threadMessages = [];
     mocks.messagesLoading = false;
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
   describe('lifecycle: setSelectedThreadId', () => {
