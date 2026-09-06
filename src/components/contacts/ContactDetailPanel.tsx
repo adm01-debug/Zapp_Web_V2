@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap,
+  Calendar, Tag, Clock,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+
 interface ContactDetail {
   id: string;
   name: string;
