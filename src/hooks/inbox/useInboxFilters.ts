@@ -88,7 +88,12 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     // Tab-based filtering
     if (mainTab === 'open') {
       result = fsmEnabled
-        ? result.filter(c => c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
+        // Modo FSM: filtra por conversation_status E exige mensagens para não
+        // inflar a inbox com contacts históricos sem atividade
+        ? result.filter(c =>
+            (c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
+            && c.messages.length > 0
+          )
         : result.filter(c => c.messages.length > 0);
       if (subTab === 'attending') {
         if (!showAll) {
