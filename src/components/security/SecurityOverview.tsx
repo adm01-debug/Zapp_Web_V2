@@ -10,6 +10,7 @@ import { useDeviceDetection } from '@/hooks/ui/useDeviceDetection';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { SecurityAlertsPanel, SecurityDevicesPanel } from './SecurityPanels';
+import type { Device } from './SecurityPanels';
 
 interface SecurityScore {
   total: number;

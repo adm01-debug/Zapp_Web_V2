@@ -82,7 +82,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   if (isCompact) {
-    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName} firstName={firstName} />;
+    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={firstName} />;
   }
 
   return (

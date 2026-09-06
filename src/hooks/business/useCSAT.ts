@@ -82,7 +82,8 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     mutationFn: async (data) => {
       const { error } = await supabase.from('csat_surveys').insert({
         contact_id: data.contact_id,
-        agent_id: data.agent_id || null,
+        // agent_id is nullable in DB but Supabase generated type wrongly marks it as required
+        agent_id: (data.agent_id ?? null) as unknown as string,
         rating: data.rating,
         feedback: data.feedback || null,
         conversation_resolved_at: new Date().toISOString(),

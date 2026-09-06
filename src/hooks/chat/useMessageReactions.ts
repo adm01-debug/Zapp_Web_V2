@@ -60,7 +60,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
         .eq('message_id', messageId);
       if (error) throw error;
 
-      const userIds = data?.filter(r => r.user_id).map(r => r.user_id) || [];
+      const userIds = data?.filter(r => r.user_id).map(r => r.user_id as string) || [];
       let usersMap = new Map<string, string>();
       if (userIds.length > 0) {
         const { data: users } = await supabase

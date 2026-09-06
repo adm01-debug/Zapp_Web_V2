@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
       {
         name: "zapp-build-version",
         generateBundle() {
-          (this as import('vite').Rollup.PluginContext).emitFile({
+          (this as unknown as import('vite').Rollup.PluginContext).emitFile({
             type: "asset",
             fileName: "version.json",
             source: JSON.stringify({ buildId }),
