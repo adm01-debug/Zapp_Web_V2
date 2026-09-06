@@ -97,17 +97,22 @@ export function CloseConversationDialog({
         return;
       }
 
-      // 2. Atualizar conversation_status para 'resolved' (FSM: open -> resolved é válido)
-      const { error: updateError } = await supabase
+      // 2. Atualizar conversation_status para 'resolved'
+      // .select('id') permite detectar atualizacao sem linhas (RLS silencioso)
+      const { data: updatedContacts, error: updateError } = await supabase
         .from('contacts')
         .update({ conversation_status: 'resolved' })
-        .eq('id', contactId);
+        .eq('id', contactId)
+        .select('id');
 
-      if (updateError) {
-        // Não bloqueia o fluxo — closure já foi salvo
-        console.warn('[CloseConversationDialog] Falha ao atualizar conversation_status:', updateError);
+      if (updateError || updatedContacts?.length !== 1) {
+        // Nao bloqueia o fluxo — closure ja foi salvo
+        console.warn(
+          '[CloseConversationDialog] Falha ao atualizar conversation_status:',
+          updateError ?? `RLS filtrou a linha (0 linhas atualizadas)`
+        );
       } else {
-        // Notifica o useRealtimeMessages para atualizar in-memory sem refetch
+        // Patch otimista in-memory: contact sai da aba Abertos sem refetch
         window.dispatchEvent(
           new CustomEvent('zapp:contact-status-changed', {
             detail: { contactId, status: 'resolved' },
