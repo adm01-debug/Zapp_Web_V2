@@ -14,7 +14,7 @@ function makeMotionEl(tag: string) {
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: new Proxy({}, {
-    get: (_t: unknown, prop: string) => prop === 'div' ? makeMotionEl('div') : makeMotionEl('div'),
+    get: () => makeMotionEl('div'),
   }),
 }));
 

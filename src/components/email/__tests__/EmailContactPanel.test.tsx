@@ -190,11 +190,9 @@ describe('EmailContactPanel', () => {
   describe('botão fechar', () => {
     it('clique no X chama onClose', () => {
       const onClose = vi.fn();
-      const { container } = render(<EmailContactPanel thread={BASE_THREAD} onClose={onClose} />);
-      const header = container.querySelector('.border-b');
-      const closeBtn = header?.querySelector('button');
-      expect(closeBtn).not.toBeNull();
-      fireEvent.click(closeBtn!);
+      render(<EmailContactPanel thread={BASE_THREAD} onClose={onClose} />);
+      const closeBtn = screen.getByRole('button', { name: /fechar/i });
+      fireEvent.click(closeBtn);
       expect(onClose).toHaveBeenCalled();
     });
   });

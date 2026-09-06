@@ -38,7 +38,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
       {/* Header */}
       <div className="p-4 border-b border-border/30 flex items-center justify-between shrink-0">
         <h3 className="text-sm font-semibold text-foreground">Detalhes do Contato</h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar">
           <X className="w-4 h-4" />
         </Button>
       </div>
