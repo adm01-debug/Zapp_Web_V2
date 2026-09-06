@@ -2,6 +2,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
 
+interface WebhookRecord {
+  webhook?: string;
+  events?: string | string[];
+  url?: string;
+  webhookUrl?: string;
+  name?: string;
+  enabled?: boolean;
+}
+
 const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
 Deno.serve(async (req: Request) => {
@@ -70,8 +79,7 @@ Deno.serve(async (req: Request) => {
       // 2b. Check webhook configuration
       try {
         const expectedUrl = `${supabaseUrl}/functions/v1/evolution-webhook`;
-        // deno-lint-ignore no-explicit-any
-        let webhook: any = null;
+        let webhook: WebhookRecord | null = null;
         let currentUrl = '';
         let events: string[] = [];
         let goEnvManaged = false;

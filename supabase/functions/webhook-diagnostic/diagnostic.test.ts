@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Mock implementation of logic for testing without actual DB/API calls
 // In a real scenario, we'd use a test DB or mock the fetch
-function calculateHealthScore(connections: any[], webhooks: any[]) {
+function calculateHealthScore(connections: { status: string }[], webhooks: { configured: boolean }[]) {
   if (connections.length === 0) return 0;
   const activeCount = connections.filter(c => c.status === 'connected').length;
   const webhookOk = webhooks.every(w => w.configured);
@@ -37,7 +37,7 @@ Deno.test("Health Score Calculation - Webhook Missing", () => {
 });
 
 Deno.test("Health Score Calculation - No Connections", () => {
-  const connections: any[] = [];
+  const connections: { status: string }[] = [];
   const webhooks = [{ configured: true }];
   const score = calculateHealthScore(connections, webhooks);
   assertEquals(score, 0);
