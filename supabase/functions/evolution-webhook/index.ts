@@ -229,7 +229,7 @@ serve(async (req) => {
             (typeof keySource?.participantAlt === 'string' ? keySource.participantAlt : undefined),
         };
 
-        console.log(`[MSG_UPSERT] id=${externalId} fromMe=${key.fromMe} remoteJid=${key.remoteJid} hasReaction=${!!(entry.message as Record<string,unknown>)?.reactionMessage || !!(baseData.message as Record<string,unknown>)?.reactionMessage}`);
+        console.warn(`[MSG_UPSERT] id=${externalId} fromMe=${key.fromMe} remoteJid=${key.remoteJid ? key.remoteJid.substring(0, 6) + '...' : 'null'} hasReaction=${!!(entry.message as Record<string,unknown>)?.reactionMessage || !!(baseData.message as Record<string,unknown>)?.reactionMessage}`);
 
         const msg = (entry.message || baseData.message) as Record<string, unknown> | undefined;
         if (msg?.reactionMessage) {
@@ -259,12 +259,12 @@ serve(async (req) => {
       const groupData = isRecord(data) ? data : {};
       const groupJid = groupData.id as string;
       const subject = groupData.subject as string;
-      if (groupJid && subject) console.log(`Group update: ${groupJid} — ${subject}`);
+      if (groupJid && subject) console.warn(`Group update: ${groupJid.substring(0, 6)}... — ${subject.substring(0, 30)}`);
     }
 
     if (event === 'group.participants.update' || event === 'group-participants.update') {
       const participantData = isRecord(data) ? data : {};
-      console.log(`Group ${participantData.id} participants ${participantData.action}: ${(participantData.participants as string[])?.join(', ')}`);
+      console.warn(`Group ${participantData.id ? String(participantData.id).substring(0, 6) + '...' : ''} participants ${participantData.action}: ${(participantData.participants as string[])?.length ?? 0} members`);
     }
 
     if (event === 'labels.edit') await handleLabelsEdit(supabase, instance, data);
