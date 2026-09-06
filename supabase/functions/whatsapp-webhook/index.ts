@@ -51,7 +51,11 @@ serve(async (req) => {
     const token = url.searchParams.get('hub.verify_token');
     const challenge = url.searchParams.get('hub.challenge');
 
-    const verifyToken = Deno.env.get('WHATSAPP_VERIFY_TOKEN') || 'lovable_webhook_token';
+    const verifyToken = Deno.env.get('WHATSAPP_VERIFY_TOKEN');
+    if (!verifyToken) {
+      log.warn("WHATSAPP_VERIFY_TOKEN not configured");
+      return new Response('Forbidden', { status: 403, headers: getCorsHeaders(req) });
+    }
 
     if (mode === 'subscribe' && token === verifyToken) {
       log.info("Webhook verified successfully");
