@@ -138,6 +138,24 @@ export function useRealtimeMessages() {
     enabled: true
   });
 
+  // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
+  // e aplica patch otimista no array in-memory sem precisar de refetch.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { contactId, status } = (e as CustomEvent<{ contactId: string; status: string }>).detail;
+      const typedStatus = status as ConversationContact['conversation_status'];
+      commitConversations((prev): ConversationWithMessages[] =>
+        prev.map((c): ConversationWithMessages =>
+          c.contact.id === contactId
+            ? { ...c, contact: { ...c.contact, conversation_status: typedStatus } }
+            : c
+        )
+      );
+    };
+    window.addEventListener('zapp:contact-status-changed', handler);
+    return () => window.removeEventListener('zapp:contact-status-changed', handler);
+  }, [commitConversations]);
+
   const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string) => {
     return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload);
   };
