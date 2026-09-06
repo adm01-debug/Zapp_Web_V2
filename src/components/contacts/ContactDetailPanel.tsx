@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
-
 interface ContactDetail {
   id: string;
   name: string;
