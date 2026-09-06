@@ -68,9 +68,7 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
   it('modo forward: assunto = "Fwd: Orçamento", corpo inclui header de encaminhamento', () => {
     render(<EmailComposer mode="forward" replyTo={makeMessage()} onClose={vi.fn()} />);
     expect(screen.getByPlaceholderText('Assunto do email')).toHaveValue('Fwd: Orçamento');
-    expect(screen.getByPlaceholderText('Escreva sua mensagem...')).toHaveValue(
-      expect.stringContaining('Mensagem encaminhada')
-    );
+    expect((screen.getByPlaceholderText('Escreva sua mensagem...') as HTMLTextAreaElement).value).toContain('Mensagem encaminhada');
   });
 
   it('modo reply-all (inbound): Para inclui from + to exceto conta ativa; Cc inclui cc_addresses', () => {
@@ -131,10 +129,9 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
 
   it('Cc/Bcc toggle: campos ocultos por padrão, visíveis após clique', () => {
     render(<EmailComposer mode="new" onClose={vi.fn()} />);
-    expect(screen.queryByPlaceholderText('')).not.toHaveAttribute('value', expect.stringContaining('@'));
+    expect(screen.queryByText('Cc:')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /cc\/bcc/i }));
-    const ccLabel = screen.getByText('Cc:');
-    expect(ccLabel).toBeInTheDocument();
+    expect(screen.getByText('Cc:')).toBeInTheDocument();
   });
 
   it('Cc/Bcc já expandido quando cc vem preenchido (reply-all com cc_addresses)', () => {
