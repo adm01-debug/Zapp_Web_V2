@@ -12,22 +12,21 @@ interface ContactStatsCardsProps {
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
 };
 
-/** Generate a mini sparkline SVG from data points */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   if (data.length < 2) return null;
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
-  const w = 80;
-  const h = 28;
+  const w = 72;
+  const h = 36;
   const padding = 2;
 
   const points = data.map((v, i) => {
@@ -38,21 +37,22 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p}`).join(' ');
   const areaD = `${pathD} L${w - padding},${h} L${padding},${h} Z`;
+  const gradId = `sg-${color.replace(/[^a-z0-9]/g, '')}`;
 
   return (
-    <svg width={w} height={h} className="overflow-visible">
+    <svg width={w} height={h} className="overflow-visible shrink-0">
       <defs>
-        <linearGradient id={`spark-${color.replace(/[^a-z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
           <stop offset="100%" stopColor={color} stopOpacity="0.02" />
         </linearGradient>
       </defs>
-      <path d={areaD} fill={`url(#spark-${color.replace(/[^a-z0-9]/g, '')})`} />
+      <path d={areaD} fill={`url(#${gradId})`} />
       <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <circle
         cx={Number(points[points.length - 1].split(',')[0])}
         cy={Number(points[points.length - 1].split(',')[1])}
-        r="2"
+        r="2.5"
         fill={color}
       />
     </svg>
@@ -62,24 +62,15 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function getWeeklyGrowth(contacts: { created_at: string }[], weeks = 6): number[] {
   const now = new Date();
   const buckets: number[] = Array(weeks).fill(0);
-
   contacts.forEach(c => {
-    const created = new Date(c.created_at);
-    const weeksAgo = Math.floor((now.getTime() - created.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (weeksAgo >= 0 && weeksAgo < weeks) {
-      buckets[weeks - 1 - weeksAgo]++;
-    }
+    const weeksAgo = Math.floor((now.getTime() - new Date(c.created_at).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    if (weeksAgo >= 0 && weeksAgo < weeks) buckets[weeks - 1 - weeksAgo]++;
   });
-
   let running = contacts.filter(c => {
     const weeksAgo = Math.floor((now.getTime() - new Date(c.created_at).getTime()) / (7 * 24 * 60 * 60 * 1000));
     return weeksAgo >= weeks;
   }).length;
-
-  return buckets.map(count => {
-    running += count;
-    return running;
-  });
+  return buckets.map(count => { running += count; return running; });
 }
 
 function getWeeklyBuckets(
@@ -92,9 +83,7 @@ function getWeeklyBuckets(
   contacts.forEach(c => {
     if (filter && !filter(c)) return;
     const weeksAgo = Math.floor((now.getTime() - new Date(c.created_at).getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (weeksAgo >= 0 && weeksAgo < weeks) {
-      buckets[weeks - 1 - weeksAgo]++;
-    }
+    if (weeksAgo >= 0 && weeksAgo < weeks) buckets[weeks - 1 - weeksAgo]++;
   });
   return buckets;
 }
@@ -135,10 +124,8 @@ export function ContactStatsCards({
       label: 'Total de Contatos',
       value: totalCount,
       icon: Users,
-      color: 'text-primary',
-      bg: 'bg-primary/10',
-      border: 'border-primary/20',
-      sparkColor: 'hsl(var(--primary))',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+      sparkColor: '#3b82f6',
       sparkData,
       change: growthPct,
     },
@@ -146,10 +133,8 @@ export function ContactStatsCards({
       label: 'Novos (30 dias)',
       value: recentCount,
       icon: UserPlus,
-      color: 'text-[hsl(142_71%_45%)]',
-      bg: 'bg-[hsl(142_71%_45%)]/10',
-      border: 'border-[hsl(142_71%_45%)]/20',
-      sparkColor: 'hsl(142, 71%, 45%)',
+      gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+      sparkColor: '#22c55e',
       sparkData: sparkNew,
       change: newPct,
     },
@@ -157,10 +142,8 @@ export function ContactStatsCards({
       label: 'Empresas',
       value: uniqueCompanies.length,
       icon: Building,
-      color: 'text-[hsl(270_60%_60%)]',
-      bg: 'bg-[hsl(270_60%_60%)]/10',
-      border: 'border-[hsl(270_60%_60%)]/20',
-      sparkColor: 'hsl(270, 60%, 60%)',
+      gradient: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+      sparkColor: '#a855f7',
       sparkData: sparkCompanies,
       change: companiesPct,
     },
@@ -168,10 +151,8 @@ export function ContactStatsCards({
       label: 'Leads',
       value: contactCountByType['lead'] || 0,
       icon: TrendingUp,
-      color: 'text-[hsl(38_92%_50%)]',
-      bg: 'bg-[hsl(38_92%_50%)]/10',
-      border: 'border-[hsl(38_92%_50%)]/20',
-      sparkColor: 'hsl(38, 92%, 50%)',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      sparkColor: '#f59e0b',
       sparkData: sparkLeads,
       change: leadsPct,
     },
@@ -183,40 +164,42 @@ export function ContactStatsCards({
         <motion.div
           key={stat.label}
           variants={item}
-          className={cn(
-            "relative rounded-xl border bg-card p-4 overflow-hidden hover:shadow-sm transition-shadow duration-200",
-            stat.border
-          )}
+          className="relative rounded-xl border border-border/40 bg-card p-4 overflow-hidden hover:shadow-md transition-shadow duration-200"
         >
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold tracking-tight text-foreground">
+          <div className="flex items-center gap-3">
+            {/* Gradient icon box — LEFT */}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ background: stat.gradient }}
+            >
+              <stat.icon className="w-5 h-5 text-white" />
+            </div>
+
+            {/* Data — CENTER */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground truncate">{stat.label}</p>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <p className="text-2xl font-bold tracking-tight text-foreground leading-none">
                   {stat.value.toLocaleString('pt-BR')}
                 </p>
-                {stat.change !== null && stat.change !== 0 && (
+                {stat.change !== 0 && (
                   <span className={cn(
-                    "flex items-center gap-0.5 text-[10px] font-semibold",
-                    stat.change > 0 ? 'text-[hsl(142_71%_45%)]' : 'text-destructive'
+                    "inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                    stat.change > 0
+                      ? 'bg-emerald-500/10 text-emerald-500'
+                      : 'bg-red-500/10 text-red-500'
                   )}>
                     {stat.change > 0
-                      ? <TrendingUp className="w-3 h-3" />
-                      : <TrendingDown className="w-3 h-3" />
+                      ? <TrendingUp className="w-2.5 h-2.5" />
+                      : <TrendingDown className="w-2.5 h-2.5" />
                     }
                     {stat.change > 0 ? '+' : ''}{stat.change}%
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground/60">vs. período anterior</p>
             </div>
-            <div className={cn("rounded-lg p-2.5", stat.bg)}>
-              <stat.icon className={cn("w-5 h-5", stat.color)} />
-            </div>
-          </div>
 
-          {/* Sparkline */}
-          <div className="mt-2">
+            {/* Sparkline — RIGHT */}
             <Sparkline data={stat.sparkData} color={stat.sparkColor} />
           </div>
         </motion.div>
