@@ -6,7 +6,7 @@ import { WhatsAppStatusSection } from '../WhatsAppStatusSection';
 const mockRefresh = vi.fn();
 let mockData = {
   statusMessages: [] as any[],
-  presence: { isOnline: false, lastSeen: null, loading: false },
+  presence: { isOnline: false, lastSeen: null as string | null, loading: false },
   loading: false,
   error: null as string | null,
   refresh: mockRefresh,

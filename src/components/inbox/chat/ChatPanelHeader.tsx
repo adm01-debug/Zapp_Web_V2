@@ -62,7 +62,7 @@ function ChatPanelHeaderBase({
         )}
         <div className="relative shrink-0">
           <Avatar className="w-9 h-9 md:w-10 md:h-10">
-            <AvatarImage src={conversation.contact.avatar} />
+            <AvatarImage src={conversation.contact.avatar ?? undefined} />
             <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
               {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </AvatarFallback>

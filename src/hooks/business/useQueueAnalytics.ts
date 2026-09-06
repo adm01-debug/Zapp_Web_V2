@@ -94,7 +94,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       if (messagesError) throw messagesError;
 
       // Process daily data
-      const dailyAggregation = processDailyData(messages || [], contacts || [], dateRange);
+      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, contacts || [], dateRange);
       setDailyData(dailyAggregation);
 
       // Process hourly data (today only)

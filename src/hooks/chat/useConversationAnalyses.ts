@@ -55,7 +55,7 @@ export function useConversationAnalyses(contactId: string | null) {
     try {
       // Get current user's profile id
       const { data: { user } } = await supabase.auth.getUser();
-      let profileId = null;
+      let profileId: string | null = null;
       
       if (user) {
         const { data: profile } = await supabase

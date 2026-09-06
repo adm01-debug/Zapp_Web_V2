@@ -45,7 +45,7 @@ export function SicoobBridgeDashboard() {
       setMappings((mappingData || []) as SicoobMapping[]);
 
       // Load recent messages from Sicoob contacts
-      const contactIds = (mappingData || []).map((m: SicoobMapping) => m.contact_id);
+      const contactIds = (mappingData || []).map((m) => m.contact_id);
       if (contactIds.length > 0) {
         const { data: msgData } = await supabase
           .from('messages')

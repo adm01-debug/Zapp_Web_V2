@@ -17,7 +17,7 @@ export function isYouTubeUrl(url: string): boolean {
 }
 
 export function getYouTubeThumbnail(url: string): string | null {
-  let videoId = null;
+  let videoId: string | null = null;
   if (url.includes('youtube.com/watch')) {
     const urlParams = new URLSearchParams(url.split('?')[1]);
     videoId = urlParams.get('v');

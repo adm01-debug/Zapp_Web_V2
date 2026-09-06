@@ -63,7 +63,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
   const nomeTratamento = crmContact?.nome_tratamento || crmContact?.apelido;
   const firstName = contact.name.split(' ')[0];
-  const companyName = crmCompany?.nome_fantasia || enrichedData?.company;
+  const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
   const channelEmoji = enrichedData?.channel_type ? channelIcons[enrichedData.channel_type] || '💬' : null;
   const sentiment = enrichedData?.ai_sentiment;

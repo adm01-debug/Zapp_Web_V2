@@ -28,7 +28,7 @@ export function useMessageTemplates() {
         .select('*')
         .order('use_count', { ascending: false });
       if (error) throw error;
-      setTemplates(data || []);
+      setTemplates((data || []) as Template[]);
     } catch (err) {
       log.error('Error fetching templates:', err);
     } finally {

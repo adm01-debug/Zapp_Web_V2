@@ -42,7 +42,7 @@ export function useClientWallet() {
         ...rule,
         agent: agentsData?.find(a => a.id === rule.agent_id),
         connection: connectionsData?.find(c => c.id === rule.whatsapp_connection_id),
-      })));
+      })) as WalletRule[]);
     }
 
     const { data: allAgents } = await supabase.from('profiles').select('id, name').order('name');

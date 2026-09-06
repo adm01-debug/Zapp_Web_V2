@@ -186,7 +186,7 @@ export function useGlobalSearchData(open: boolean) {
                 id: `crm-${cr.contact_id}`, type: 'crm',
                 title: cr.full_name || cr.nome_tratamento || 'Sem nome',
                 preview: [cr.company_name, cr.phone_primary, cr.rfm_segment].filter(Boolean).join(' • '),
-                timestamp: new Date(), crmPhone: cr.phone_primary,
+                timestamp: new Date(), crmPhone: cr.phone_primary ?? undefined,
               });
             });
           }

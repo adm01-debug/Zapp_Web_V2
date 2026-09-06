@@ -211,7 +211,7 @@ export function ContactsView() {
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         onImport={() => setIsImportOpen(true)}
-        getCRMData={getCRMData}
+        getCRMData={(phone) => getCRMData(phone) ?? null}
       />
 
       <ContactPagination

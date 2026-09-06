@@ -55,7 +55,7 @@ export function AddMemberDialog({
         .order('name');
 
       if (error) throw error;
-      setProfiles(data || []);
+      setProfiles((data || []) as Profile[]);
     } catch (err) {
       log.error('Error fetching profiles:', err);
     } finally {

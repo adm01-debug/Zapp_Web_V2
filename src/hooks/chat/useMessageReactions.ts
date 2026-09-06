@@ -67,7 +67,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
           .from('profiles')
           .select('id, name')
           .in('id', userIds);
-        usersMap = new Map(users?.map(u => [u.id, u.name]) || []);
+        usersMap = new Map(users?.map(u => [u.id, u.name ?? '']) || []);
       }
 
       return (data || []).map(r => ({

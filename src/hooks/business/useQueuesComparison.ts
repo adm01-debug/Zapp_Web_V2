@@ -75,7 +75,7 @@ export function useQueuesComparison(dateRange: DateRange) {
           .lte('created_at', dateRange.to.toISOString());
 
         if (messagesError) throw messagesError;
-        messages = messagesData || [];
+        messages = (messagesData || []) as { contact_id: string; }[];
       }
 
       // Count messages per contact

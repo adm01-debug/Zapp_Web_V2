@@ -20,7 +20,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
     if (comment) {
       const { data: profile } = await supabase
         .from('profiles').select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
         .single();
       if (profile) {
         await supabase.from('contact_notes').insert({

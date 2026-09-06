@@ -314,7 +314,7 @@ export function SecurityOverview() {
       </motion.div>
 
       <SecurityAlertsPanel alerts={securityAlerts} loading={loadingAlerts} />
-      <SecurityDevicesPanel devices={devices} loading={devicesLoading} />
+      <SecurityDevicesPanel devices={devices as unknown as Device[]} loading={devicesLoading} />
     </div>
   );
 }

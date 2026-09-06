@@ -98,7 +98,7 @@ export function useDiagnosticsData() {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    const recentFailures = [];
+    const recentFailures: MessageDiagnostic['recentFailures'] = [];
     if (failures && failures.length > 0) {
       const contactIds = Array.from(new Set(failures.map(f => f.contact_id).filter((id): id is string => id !== null)));
       const { data: contacts } = await supabase

@@ -37,7 +37,7 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const addNoteMutation = useMutation({
     mutationFn: async (content: string) => {
       const { data: profile } = await supabase
-        .from('profiles').select('id').eq('user_id', user?.id).single();
+        .from('profiles').select('id').eq('user_id', user?.id ?? '').single();
       if (!profile) throw new Error('Profile not found');
       const { error } = await supabase.from('contact_notes').insert({
         contact_id: contactId, content, author_id: profile.id,

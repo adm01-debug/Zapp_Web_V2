@@ -214,7 +214,7 @@ export function FollowUpSequences() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Switch
-                      checked={seq.is_active}
+                      checked={seq.is_active ?? undefined}
                       onCheckedChange={checked => toggleMutation.mutate({ id: seq.id, isActive: checked })}
                     />
                     <div>

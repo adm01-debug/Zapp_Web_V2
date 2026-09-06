@@ -47,7 +47,7 @@ export function SalesPipelineView() {
       supabase.from('profiles').select('id, name').eq('is_active', true),
     ]);
     if (stagesRes.data) setStages(stagesRes.data);
-    if (dealsRes.data) setDeals(dealsRes.data.map((d) => ({ ...d, tags: d.tags || [], contact: d.contacts, assignee: d.profiles })));
+    if (dealsRes.data) setDeals(dealsRes.data.map((d) => ({ ...d, tags: d.tags || [], contact: d.contacts, assignee: d.profiles })) as Deal[]);
     if (contactsRes.data) setContacts(contactsRes.data);
     if (agentsRes.data) setAgents(agentsRes.data);
     setLoading(false);
