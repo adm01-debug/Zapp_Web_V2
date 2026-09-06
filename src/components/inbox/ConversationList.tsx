@@ -49,6 +49,7 @@ const statusIcons = {
   pending: Clock,
   resolved: CheckCircle2,
   waiting: Loader2,
+  closed: CheckCircle2,
 };
 
 const statusColors = {
@@ -56,6 +57,7 @@ const statusColors = {
   pending: 'bg-status-pending',
   resolved: 'bg-status-resolved',
   waiting: 'bg-status-waiting',
+  closed: 'bg-status-resolved',
 };
 
 export function ConversationList({
