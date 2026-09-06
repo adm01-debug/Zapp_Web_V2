@@ -85,7 +85,7 @@ const DeferredHooks = lazy(() =>
 function AppContent() {
   useEffect(() => {
     log.info('AppContent mounted');
-    if (window.performance?.mark) {
+    if (window.performance && typeof window.performance.mark === 'function') {
       performance.mark('app-content-mounted');
       const measure = performance.measure('total-load', undefined, 'app-content-mounted');
       log.info(`Total Load Time: ${measure.duration.toFixed(2)}ms`);

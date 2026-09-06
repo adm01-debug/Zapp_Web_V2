@@ -10,6 +10,7 @@ import { useDeviceDetection } from '@/hooks/ui/useDeviceDetection';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { SecurityAlertsPanel, SecurityDevicesPanel } from './SecurityPanels';
+import type { Device } from './SecurityPanels';
 
 interface SecurityScore {
   total: number;
@@ -314,7 +315,7 @@ export function SecurityOverview() {
       </motion.div>
 
       <SecurityAlertsPanel alerts={securityAlerts} loading={loadingAlerts} />
-      <SecurityDevicesPanel devices={devices} loading={devicesLoading} />
+      <SecurityDevicesPanel devices={devices as unknown as Device[]} loading={devicesLoading} />
     </div>
   );
 }

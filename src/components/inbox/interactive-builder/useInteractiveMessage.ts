@@ -119,11 +119,11 @@ export function useInteractiveMessage() {
         return false;
       }
       for (const button of buttons) {
-        if (!button.title.trim()) {
+        if (!button.title?.trim()) {
           toast({ title: 'Título obrigatório', description: 'Todos os botões precisam ter um título', variant: 'destructive' });
           return false;
         }
-        if (button.title.length > 20) {
+        if ((button.title?.length ?? 0) > 20) {
           toast({ title: 'Título muito longo', description: 'O título do botão deve ter no máximo 20 caracteres', variant: 'destructive' });
           return false;
         }

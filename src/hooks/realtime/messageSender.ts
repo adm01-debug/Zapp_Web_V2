@@ -110,7 +110,7 @@ export async function sendMessageToContact(
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
-    .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+    .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
     .single();
 
   const { data, error } = await supabase

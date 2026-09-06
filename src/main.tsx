@@ -10,7 +10,7 @@ import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-upd
 import { reportClientError } from "./lib/errorReporter";
 
 const log = getLogger('App');
-if (window.performance && window.performance.mark) {
+if (window.performance && typeof window.performance.mark === 'function') {
   performance.mark('main-init');
 }
 log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });

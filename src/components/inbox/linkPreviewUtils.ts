@@ -17,12 +17,12 @@ export function isYouTubeUrl(url: string): boolean {
 }
 
 export function getYouTubeThumbnail(url: string): string | null {
-  let videoId = null;
+  let videoId: string | null = null;
   if (url.includes('youtube.com/watch')) {
     const urlParams = new URLSearchParams(url.split('?')[1]);
     videoId = urlParams.get('v');
   } else if (url.includes('youtu.be/')) {
-    videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    videoId = url.split('youtu.be/')[1]?.split('?')[0] ?? null;
   }
   return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
 }

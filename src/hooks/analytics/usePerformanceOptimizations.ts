@@ -46,7 +46,7 @@ export function usePerformanceMetrics() {
     const clsObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries() as Array<PerformanceEntry & { hadRecentInput?: boolean; value?: number }>) {
         if (!entry.hadRecentInput) {
-          clsValue += entry.value;
+          clsValue += entry.value ?? 0;
           setMetrics((prev) => ({ ...prev, cls: clsValue }));
         }
       }
@@ -211,28 +211,28 @@ export function useNetworkStatus() {
     // Connection API
     const connection = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: Function; removeEventListener?: Function } }).connection;
     if (connection) {
-      setConnectionType(connection.effectiveType);
+      setConnectionType(connection.effectiveType ?? '');
       setIsSlowConnection(
-        connection.saveData || 
-        connection.effectiveType === 'slow-2g' || 
+        connection.saveData ||
+        connection.effectiveType === 'slow-2g' ||
         connection.effectiveType === '2g'
       );
 
       const handleChange = () => {
-        setConnectionType(connection.effectiveType);
+        setConnectionType(connection.effectiveType ?? '');
         setIsSlowConnection(
-          connection.saveData || 
-          connection.effectiveType === 'slow-2g' || 
+          connection.saveData ||
+          connection.effectiveType === 'slow-2g' ||
           connection.effectiveType === '2g'
         );
       };
 
-      connection.addEventListener('change', handleChange);
-      
+      connection.addEventListener?.('change', handleChange);
+
       return () => {
         window.removeEventListener('online', handleOnline);
         window.removeEventListener('offline', handleOffline);
-        connection.removeEventListener('change', handleChange);
+        connection.removeEventListener?.('change', handleChange);
       };
     }
 

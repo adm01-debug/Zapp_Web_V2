@@ -164,7 +164,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                       <div className="space-y-2">
                         <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Selecione a variação</span>
                         <div className="grid grid-cols-2 gap-2">
-                          {variantGroups.map((group: { colorName: string; images: string[]; colorHex?: string; variants: { stock_quantity: number }[] }) => {
+                          {variantGroups.map((group: { colorName: string; images: string[]; colorHex?: string | null; variants: { stock_quantity: number }[] }) => {
                             const isSelected = selectedColorGroup === group.colorName;
                             const groupStock = group.variants.reduce((s, v) => s + v.stock_quantity, 0);
                             return (
@@ -266,7 +266,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
         {step === 'selectContact' && (
           <ContactSelectionStep
             productName={fullProduct.name}
-            productImageUrl={fullProduct.primary_image_url}
+            productImageUrl={fullProduct.primary_image_url ?? undefined}
             selectedImagesCount={selectedImages.size}
             template={template}
             variantLabel={sendMode === 'variant' && activeGroup ? activeGroup.colorName : undefined}

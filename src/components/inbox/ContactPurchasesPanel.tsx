@@ -43,6 +43,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('purchase');
 
+  // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
   useEffect(() => { loadPurchases(); }, [contactId]);
 
   const loadPurchases = async () => {
@@ -52,7 +53,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       .select('*')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
-    if (data) setPurchases(data);
+    if (data) setPurchases(data as Purchase[]);
     setLoading(false);
   };
 

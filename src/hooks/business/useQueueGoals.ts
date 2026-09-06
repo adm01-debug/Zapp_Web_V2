@@ -52,7 +52,7 @@ export function useQueueGoals() {
 
       const goalsMap: Record<string, QueueGoal> = {};
       data?.forEach(goal => {
-        goalsMap[goal.queue_id] = goal;
+        goalsMap[goal.queue_id] = goal as unknown as QueueGoal;
       });
 
       setGoals(goalsMap);

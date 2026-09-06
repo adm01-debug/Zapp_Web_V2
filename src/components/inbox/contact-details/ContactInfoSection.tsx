@@ -154,7 +154,7 @@ export function ContactInfoSection({ contact, enrichedData }: ContactInfoSection
       {/* Client since */}
       <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-muted/10 rounded-lg p-2">
         <Calendar className="w-3.5 h-3.5 text-primary" />
-        <span>Cliente desde {format(contact.createdAt, "MMM 'de' yyyy", { locale: ptBR })}</span>
+        <span>Cliente desde {contact.createdAt ? format(contact.createdAt, "MMM 'de' yyyy", { locale: ptBR }) : '—'}</span>
       </div>
     </div>
   );

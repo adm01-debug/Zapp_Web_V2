@@ -128,7 +128,7 @@ export function RealtimeInboxView() {
                       onToggleDetails={() => inbox.setShowDetails(!inbox.showDetails)}
                       onBack={isMobile ? () => {
                           if (inbox.legacyConversation) {
-                            inbox.setPipContact({ name: inbox.legacyConversation.contact.name, avatar: inbox.legacyConversation.contact.avatar, lastMessage: inbox.legacyConversation.lastMessage?.content, contactId: inbox.legacyConversation.id });
+                            inbox.setPipContact({ name: inbox.legacyConversation.contact.name, avatar: inbox.legacyConversation.contact.avatar ?? undefined, lastMessage: inbox.legacyConversation.lastMessage?.content, contactId: inbox.legacyConversation.id });
                           }
                           inbox.setSelectedContactId(null);
                         } : undefined}

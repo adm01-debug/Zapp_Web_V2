@@ -63,7 +63,7 @@ export function DevicesPanel() {
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => (
-                <SessionCard key={session.id} session={session} device={devices.find(d => d.id === session.device_id)} isCurrentSession={session.device_id === currentDeviceId} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
+                <SessionCard key={session.id} session={{ ...session, device_id: session.device_id ?? '', ip_address: session.ip_address ?? '' }} device={(() => { const d = devices.find(d => d.id === session.device_id); return d ? { ...d, device_name: d.device_name ?? '', browser: d.browser ?? '', os: d.os ?? '' } : undefined; })()} isCurrentSession={session.device_id === currentDeviceId} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
               ))}
             </div>
           )}
@@ -83,7 +83,7 @@ export function DevicesPanel() {
           ) : (
             <div className="space-y-3">
               {devices.map((device) => (
-                <DeviceCard key={device.id} device={device} isCurrentDevice={device.id === currentDeviceId} isProcessing={processingDevice === device.id} onTrust={handleTrustDevice} onRemove={handleRemoveDevice} />
+                <DeviceCard key={device.id} device={{ ...device, device_name: device.device_name ?? '', browser: device.browser ?? '', os: device.os ?? '', ip_address: device.ip_address ?? '', is_trusted: device.is_trusted ?? false }} isCurrentDevice={device.id === currentDeviceId} isProcessing={processingDevice === device.id} onTrust={handleTrustDevice} onRemove={handleRemoveDevice} />
               ))}
             </div>
           )}

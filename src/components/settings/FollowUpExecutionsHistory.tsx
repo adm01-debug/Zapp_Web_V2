@@ -76,7 +76,7 @@ export function FollowUpExecutionsHistory() {
                       <span>•</span>
                       <span>Etapa {exec.current_step}</span>
                       <span>•</span>
-                      <span>{format(new Date(exec.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                      <span>{exec.created_at ? format(new Date(exec.created_at), "dd/MM HH:mm", { locale: ptBR }) : '—'}</span>
                     </div>
                   </div>
                 </div>

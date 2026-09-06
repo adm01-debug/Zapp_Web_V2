@@ -57,11 +57,11 @@ export function AchievementsPanel() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warning to-warning flex items-center justify-center shadow-lg shadow-warning/30"><Trophy className="w-5 h-5 text-primary-foreground" /></div>
             <div><CardTitle className="text-xl">Minhas Conquistas</CardTitle><p className="text-sm text-muted-foreground">{achievements.length} conquistas desbloqueadas</p></div>
           </div>
-          <AchievementsHeaderBadges stats={stats} />
+          {stats && <AchievementsHeaderBadges stats={stats} />}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <AchievementsStatsHeader achievements={achievements} stats={stats} />
+        {stats && <AchievementsStatsHeader achievements={achievements} stats={stats} />}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar conquistas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" /></div>

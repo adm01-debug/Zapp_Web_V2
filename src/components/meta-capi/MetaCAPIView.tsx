@@ -53,7 +53,7 @@ export function MetaCAPIView() {
       .select('*')
       .order('event_time', { ascending: false })
       .limit(100);
-    if (data) setEvents(data);
+    if (data) setEvents(data as CAPIEvent[]);
     setLoading(false);
   }, []);
 

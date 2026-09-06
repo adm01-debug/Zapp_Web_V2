@@ -46,7 +46,7 @@ export function PaymentLinksView() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase.from('payment_links').select('*').order('created_at', { ascending: false });
-    if (data) setLinks(data);
+    if (data) setLinks(data as PaymentLink[]);
     setLoading(false);
   }, []);
 

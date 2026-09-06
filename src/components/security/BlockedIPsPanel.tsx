@@ -25,7 +25,7 @@ export function BlockedIPsPanel() {
   const fetchBlockedIPs = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('blocked_ips').select('*').order('blocked_at', { ascending: false });
-    if (!error && data) setBlockedIPs(data);
+    if (!error && data) setBlockedIPs(data as BlockedIP[]);
     setLoading(false);
   };
 

@@ -92,7 +92,7 @@ export function ContactContentArea({
           contacts={contacts} selectedIds={selectedIds}
           onToggleSelect={onToggleSelect} onOpenChat={onContactClick}
           onEdit={onEdit} onDelete={onDelete}
-          getCRMData={getCRMData} searchQuery={search}
+          getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
         />
       );
     }
@@ -124,7 +124,7 @@ export function ContactContentArea({
         contacts={contacts} selectedIds={selectedIds}
         onSelectIds={onSelectIds} onOpenChat={onContactClick}
         onEdit={onEdit} onDelete={onDelete}
-        getCRMData={getCRMData} searchQuery={search}
+        getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
       />
     </CardContent></Card>
   );

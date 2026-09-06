@@ -116,7 +116,7 @@ export function EmailChatReplyBar({
           ? [...(lastMessage.cc_addresses || [])].filter(a => a !== accountEmail)
           : undefined;
 
-        await replyEmail.mutateAsync({
+        await (replyEmail.mutateAsync as unknown as (v: { thread_id: string; message_id: string | null | undefined; to: string | string[]; text_body: string; cc?: string[]; attachments?: unknown[] }) => Promise<void>)({
           thread_id: threadId,
           message_id: lastMessage.gmail_message_id,
           to: mode === 'reply-all' ? target.split(', ').filter(Boolean) : target,

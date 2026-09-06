@@ -42,9 +42,9 @@ function getDateRange(period: string) {
 
 function getGoalTarget(
   goalType: string, period: string,
-  customGoals?: Array<{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean }>
+  customGoals?: Array<{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean | null }>
 ): number {
-  const customGoal = customGoals?.find(g => g.goal_type === goalType && g.is_active);
+  const customGoal = customGoals?.find(g => g.goal_type === goalType && (g.is_active ?? false));
   if (customGoal) {
     switch (period) {
       case 'today': return customGoal.daily_target;

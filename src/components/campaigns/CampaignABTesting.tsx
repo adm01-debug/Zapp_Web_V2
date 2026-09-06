@@ -34,6 +34,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
   const [newName, setNewName] = useState('');
   const [newContent, setNewContent] = useState('');
 
+  // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
   useEffect(() => { loadVariants(); }, [campaignId]);
 
   const loadVariants = async () => {
@@ -43,7 +44,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
       .select('*')
       .eq('campaign_id', campaignId)
       .order('created_at');
-    if (data) setVariants(data);
+    if (data) setVariants(data as ABVariant[]);
     setLoading(false);
   };
 

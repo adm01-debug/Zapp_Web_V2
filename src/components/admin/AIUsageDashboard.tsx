@@ -100,8 +100,8 @@ export function AIUsageDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4"><AIUsageUsersTab userUsage={userUsage} profileMap={profileMap} /></TabsContent>
-        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsPage={logsPage} setLogsPage={setLogsPage} profileMap={profileMap} /></TabsContent>
+        <TabsContent value="users" className="space-y-4"><AIUsageUsersTab userUsage={userUsage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
+        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsPage={logsPage} setLogsPage={setLogsPage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
       </Tabs>
     </div>
   );

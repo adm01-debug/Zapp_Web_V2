@@ -15,7 +15,7 @@ interface SecurityAlert {
   is_resolved: boolean | null;
 }
 
-interface Device {
+export interface Device {
   id: string;
   device_name: string | null;
   browser: string | null;
