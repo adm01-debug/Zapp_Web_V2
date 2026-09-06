@@ -126,11 +126,17 @@ export function useRealtimeMessages() {
     } finally { setLoading(false); }
   }, [commitConversations]);
 
-  // Mesmo useEffect que já existia no baseline — mantido ANTES do listener
-  // para preservar o contextHash do lint-ratchet.
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
+
+  useSupabaseRealtime<RealtimeMessage>({
+    channelName: 'global-messages-realtime',
+    table: 'messages',
+    onInsert: handleNewMessage,
+    onUpdate: handleMessageUpdate,
+    enabled: true
+  });
 
   // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
   // e aplica patch otimista no array in-memory sem precisar de refetch.
@@ -148,14 +154,6 @@ export function useRealtimeMessages() {
     window.addEventListener('zapp:contact-status-changed', handler);
     return () => window.removeEventListener('zapp:contact-status-changed', handler);
   }, [commitConversations]);
-
-  useSupabaseRealtime<RealtimeMessage>({
-    channelName: 'global-messages-realtime',
-    table: 'messages',
-    onInsert: handleNewMessage,
-    onUpdate: handleMessageUpdate,
-    enabled: true
-  });
 
   const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string) => {
     return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload);
