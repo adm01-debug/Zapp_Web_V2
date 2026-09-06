@@ -126,7 +126,7 @@
     },
     {
       "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "sha256": "7d4e382cc7cfbe79e36be924f296594547471d7941cb75dfaa9c98abba22a8a3"
+      "sha256": "d388de219f209caed12f3ebd6e6af8221696e43a70066954e9dd59cd3412f551"
     },
     {
       "path": "src/components/calls/CallDialog.tsx",
@@ -134,7 +134,7 @@
     },
     {
       "path": "src/components/calls/VoIPPanel.tsx",
-      "sha256": "4c54062ab21224c23b94bc30dc913d714be2dc93525542fb9814c1db21926e0a"
+      "sha256": "8ff95138bc6cf41663d0d9178f881ef9cc656d22aac49fd79f6a4c280b4c7527"
     },
     {
       "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -370,7 +370,7 @@
     },
     {
       "path": "src/components/email/EmailThreadList.tsx",
-      "sha256": "6ea987d3a73edc36de8985cc96b741ce4f9ea1c8a442b057ac0a97ec1457fb8e"
+      "sha256": "4f24bb0d0757babad15ed577b6334f63b84ccd9dfcc85bc7cf4e6b697452f67f"
     },
     {
       "path": "src/components/ErrorBoundary.tsx",
@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/gmail/EmailThreadView.tsx",
-      "sha256": "d3844751dc7bd700c3d46ada73052919cfac87a34daaa200033aac3de0f8135c"
+      "sha256": "5f6c127f993183bdfc38c7e59de007855257f7e8a1b35edf142960ab5df65dcb"
     },
     {
       "path": "src/components/groups/__tests__/GroupsView.test.tsx",
@@ -565,10 +565,6 @@
       "sha256": "accbfc6fb45e41d0e0e0fdf14e0fcfee016a32b56c32963ee132f0ceebcfaa43"
     },
     {
-      "path": "src/components/inbox/CRMAutoSync.tsx",
-      "sha256": "fe8ec571a65179edeee44d7aa06d01c41e0319170f4d0c498749b2f7a98785a5"
-    },
-    {
       "path": "src/components/inbox/FileUploader.tsx",
       "sha256": "2c01ab3673cd3679512b6dfe2f5f26d8382b0030de995bc6d4d0df6afbbcd95f"
     },
@@ -578,7 +574,7 @@
     },
     {
       "path": "src/components/inbox/LinkPreview.tsx",
-      "sha256": "1be349dc267d2e609a6a3755d286c7f5c82230b8b8753974421e249f7824756c"
+      "sha256": "a4eadd2ebe18480fa8688f942244de32c229957efa0e03c93ebffbaf6d6c25c9"
     },
     {
       "path": "src/components/inbox/linkPreviewUtils.ts",
@@ -586,7 +582,7 @@
     },
     {
       "path": "src/components/inbox/location-picker/useLocationPicker.ts",
-      "sha256": "8435212193360261caaa6550b51586079d30c42cb9c39c601bbc19250bea4cee"
+      "sha256": "88896cf3c8eea8b9dca8ef3bff3388310dbd79be3e43aab19eb274a9408be439"
     },
     {
       "path": "src/components/inbox/LocationMessage.tsx",
@@ -1446,7 +1442,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "92670a56282d725ec8870538dd7aaefd70f9c3fd0b69a9a5a145e8247227339b"
+      "sha256": "699c52ee5df78eb04309879eb5244f53b70460de32cdede61b75eb249953964d"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -1569,10 +1565,6 @@
       "sha256": "795de621872ef17299afc6e7bd611ac9be994facac9cc2245d99380f3e631ee1"
     },
     {
-      "path": "src/hooks/inbox/useInboxFilters.ts",
-      "sha256": "e25ec72d79aba5e3e32f93605fc608fad8e880845ee53447467bf51b0eb898e7"
-    },
-    {
       "path": "src/hooks/inbox/useObjectionDetector.ts",
       "sha256": "a63f03bc305fa1b449118fada0e52ec723b26047023a05ca5ec7707eb849b852"
     },
@@ -1614,7 +1606,7 @@
     },
     {
       "path": "src/hooks/performance/useMonitoring.ts",
-      "sha256": "fc1d6e881f29e55bdfcf43a933adb363cfa788ca91bb1590306465f3253a769c"
+      "sha256": "dc67f2b6661408db027e6c95792e77edae7427ef74c5677801693d99ced52961"
     },
     {
       "path": "src/hooks/performance/useObservers.ts",
@@ -1754,7 +1746,7 @@
     },
     {
       "path": "src/pages/Auth.tsx",
-      "sha256": "b5b20dddf45601249bd73681f303833d7b7d21066a24697a12b44bc11e1d614e"
+      "sha256": "1dd8732a4ea262f07c7e8e4c2de322a6cff6ed73d8b3f4694723802e8a70b511"
     },
     {
       "path": "src/pages/ChatPopup.tsx",
@@ -1826,7 +1818,7 @@
     },
     {
       "path": "src/types/chat.ts",
-      "sha256": "e489aab8daab0de35679582a56cb34b4a98846f084b834f5591dfaabbf58bb62"
+      "sha256": "9432ec1baf3e3c098435f7a3da28ae478cee8b78dd96022a077696d6fa7b7361"
     },
     {
       "path": "src/types/queue.ts",
@@ -1838,7 +1830,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "sha256": "7cf2f8ef1b4bd923d7755fdbfa7ec3100036ea067b3630914ca5dfb91ccb64da"
+      "sha256": "573c751840d10dabb0237ddc6999068e643a5322009ae0e1f12dd61e7efb5efe"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1886,7 +1878,7 @@
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "5ac41adcedd4468f27546a8dc05d45d7fbbb7dd9493ebd6d56a00cd7f476107f"
+      "sha256": "03aa3a33cf64f9eced980b45b1ca2d77add9dbd895af9273e48cd450ab03b7f9"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -1898,7 +1890,7 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "sha256": "f0187dbe63d3bf8696e429e79d455f1a85e5de5a46830b08c93cec9993031491"
+      "sha256": "2b5ef0c7cdd6812e6047adea3c3cb71a4214460de6f1d680070857fb02692d27"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -4278,9 +4270,9 @@
     },
     {
       "file": "src/components/email/EmailThreadList.tsx",
-      "line": 64,
+      "line": 65,
       "column": 47,
-      "endLine": 64,
+      "endLine": 65,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "no-self-assign",
@@ -4474,9 +4466,9 @@
     },
     {
       "file": "src/components/gmail/EmailThreadView.tsx",
-      "line": 171,
+      "line": 176,
       "column": 6,
-      "endLine": 171,
+      "endLine": 176,
       "endColumn": 40,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -5943,20 +5935,6 @@
       "contextHash": "a992bb93572d3ce8496af9033fdf6c2dd87c841c32634ce77ebd3ec1256a6669"
     },
     {
-      "file": "src/components/inbox/CRMAutoSync.tsx",
-      "line": 124,
-      "column": 6,
-      "endLine": 124,
-      "endColumn": 177,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'conversation'. Either include it or remove the dependency array.",
-      "spanHash": "0ee294d056fd4dcaebcee3a05583f56a12e4cde661c2b7742a66cba11c55feec",
-      "lineHash": "142acfaf1c6f735e19fdef1a820e94ca3a1c1cd9ddafd4cdbb33164fcba7a981",
-      "contextHash": "2ac4977a111bac3fe9933e74f405351ab3459e08dbcaff56402eaf453e5813c9"
-    },
-    {
       "file": "src/components/inbox/FileUploader.tsx",
       "line": 104,
       "column": 144,
@@ -7061,20 +7039,6 @@
       "spanHash": "7b80288cd485867d4ea058ccf7eebb5abf567a605ba6a61ece6ec3e5264dd29b",
       "lineHash": "ff363a26e87498d8d0ea21bc15e65f07cbc681142a2a55db8e9af79333c89e76",
       "contextHash": "c2d4396aa55b0da43635a788dd0d322bfc6fafe9984a93dd89bb529154606aee"
-    },
-    {
-      "file": "src/components/inbox/LinkPreview.tsx",
-      "line": 28,
-      "column": 5,
-      "endLine": 28,
-      "endColumn": 17,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/LinkPreview.tsx:28:5 26 | 27 | useEffect(() => { > 28 | setIsLoading(true); setError(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 29 | try { 30 | if (isImageUrl(url)) { setMetadata({ url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }); setIsLoading(false); return; } 31 | if (isVideoUrl(url)) { setMetadata({ url, type: 'video', title: url.split('/').pop() || 'Video' }); setIsLoading(false); return; }",
-      "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
-      "lineHash": "092c97d970e5950e4b7240ddedd610a103b91b17972b3b423e1fd55bd1129fe0",
-      "contextHash": "02cf1986417e1c1215bd23b0e4191d3319df8261efb42c7f693c7e8ca6798503"
     },
     {
       "file": "src/components/inbox/linkPreviewUtils.ts",
@@ -14862,9 +14826,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 191,
+      "line": 188,
       "column": 17,
-      "endLine": 191,
+      "endLine": 188,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -15685,20 +15649,6 @@
       "spanHash": "ba370a39ac6cd76ab462e9c0c92eac0b8637c3d6f5d818821b14d8ee1a07b7d9",
       "lineHash": "1a93bb134d402ded48d31b9369763a25efdb620af3f4b3a82248f3eccfbc9da1",
       "contextHash": "de0c08aef6184557d7ad706268e81cc1a3a12be4ad99d7f22d38544d3bec9761"
-    },
-    {
-      "file": "src/hooks/inbox/useInboxFilters.ts",
-      "line": 29,
-      "column": 7,
-      "endLine": 29,
-      "endColumn": 29,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useInboxFilters.ts:29:7 27 | const typeFromUrl = new URLSearchParams(window.location.search).get('type'); 28 | if (typeFromUrl && typeFromUrl !== 'all') { > 29 | setSelectedContactType(typeFromUrl); | ^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 30 | } 31 | }, []); 32 |",
-      "spanHash": "6532604839f587fb5c7fd21d51fcb293cf21b249a6b368c1095fbf431d371415",
-      "lineHash": "cff3f48badeb0c6ded31a7f07e61f92b5290278e0eec67fb1f257303a2abe9f9",
-      "contextHash": "5eb12c43dc2fc22ddb62653eff80baa56d201a0f307278496b2c7b48b658e9c1"
     },
     {
       "file": "src/hooks/inbox/useObjectionDetector.ts",
@@ -17480,9 +17430,9 @@
     },
     {
       "file": "src/types/chat.ts",
-      "line": 74,
+      "line": 77,
       "column": 17,
-      "endLine": 74,
+      "endLine": 77,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17522,9 +17472,23 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 123,
+      "line": 117,
+      "column": 7,
+      "endLine": 117,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "no-console",
+      "messageId": "limited",
+      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
+      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
+      "lineHash": "0f1afa9985befa28506821ce8ae4d9b0c6c73a4642963ee1a49e1825cede8f26",
+      "contextHash": "b64d11211721dff1413b85c4f27d1a3aca77392abbcca50503545e1e049acecd"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
+      "line": 144,
       "column": 9,
-      "endLine": 123,
+      "endLine": 144,
       "endColumn": 20,
       "severity": 1,
       "ruleId": "no-console",
@@ -17536,9 +17500,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 127,
+      "line": 148,
       "column": 7,
-      "endLine": 127,
+      "endLine": 148,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -17550,9 +17514,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 152,
+      "line": 173,
       "column": 53,
-      "endLine": 152,
+      "endLine": 173,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17564,9 +17528,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 156,
+      "line": 177,
       "column": 64,
-      "endLine": 156,
+      "endLine": 177,
       "endColumn": 67,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17631,20 +17595,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a3043e3f41e7ca474ebec03b49ebbf3052f54197cf3bf5a7d54d734bcd6dfaeb",
       "contextHash": "795329cc897cbd312e965008bda76b83297cb594118bdd48aae5302c968bb822"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 96,
-      "column": 7,
-      "endLine": 96,
-      "endColumn": 18,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "0f1afa9985befa28506821ce8ae4d9b0c6c73a4642963ee1a49e1825cede8f26",
-      "contextHash": "b64d11211721dff1413b85c4f27d1a3aca77392abbcca50503545e1e049acecd"
     },
     {
       "file": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -18684,9 +18634,9 @@
     },
     {
       "file": "supabase/functions/_shared/validation.ts",
-      "line": 164,
+      "line": 169,
       "column": 33,
-      "endLine": 164,
+      "endLine": 169,
       "endColumn": 68,
       "severity": 2,
       "ruleId": "no-control-regex",
@@ -18782,20 +18732,6 @@
     },
     {
       "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 232,
-      "column": 9,
-      "endLine": 232,
-      "endColumn": 20,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "86a7eb32501e1b8e704463456f0e0b665389d0ac9a3dafc5dc604a333977ef76",
-      "contextHash": "6347f5d4a0cec96f0785e26edc98c0aaad1b202af4b98df1c396c4fb5436c8f8"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
       "line": 236,
       "column": 11,
       "endLine": 236,
@@ -18835,34 +18771,6 @@
       "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
       "lineHash": "14de75999f02199f4caa08c86f034f9c159e6e3008461debebfc2d2dba5c4ea4",
       "contextHash": "d0a29094f2ce0954498f335f123eb0ef2301a62637a05509cbf62645eafaaa43"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 262,
-      "column": 32,
-      "endLine": 262,
-      "endColumn": 43,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "271d5217936a4510093bd3af2b10a58291c1856d57f1c57211ea5679d72812d5",
-      "contextHash": "b08207f748e2655542621b9ce710fed3ca8988f55868dc7636ba15f3db83c4bf"
-    },
-    {
-      "file": "supabase/functions/evolution-webhook/index.ts",
-      "line": 267,
-      "column": 7,
-      "endLine": 267,
-      "endColumn": 18,
-      "severity": 1,
-      "ruleId": "no-console",
-      "messageId": "limited",
-      "message": "Unexpected console statement. Only these console methods are allowed: warn, error.",
-      "spanHash": "3b549ed051f07d14ca03241c68ed10f3e8647f5d0e18d315e47534f2ba5c1e3b",
-      "lineHash": "fecd002a70844ca21fc13b0d3d09cc48cf5fbe9fd5f125dd62259c270eacac68",
-      "contextHash": "0ed9ea982526684864521f6ee586bb9deeaa4ae795c61b9aedbcb545b62f7b2f"
     },
     {
       "file": "supabase/functions/external-db-bridge/index.ts",
