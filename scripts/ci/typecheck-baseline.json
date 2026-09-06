@@ -183,33 +183,6 @@
       "contextHash": "5a459b97e5cce43bee79087500c2f110904f671c294b6611bfff5d17a2c83167"
     },
     {
-      "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 111,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "78c328a9861fb1059ed52bcbb517f971b14c2712e6bed97470d1711c68040443"
-    },
-    {
-      "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 259,
-      "column": 15,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "78c328a9861fb1059ed52bcbb517f971b14c2712e6bed97470d1711c68040443"
-    },
-    {
-      "file": "src/components/inbox/chat/MessageBubble.tsx",
-      "line": 189,
-      "column": 61,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | undefined' is not assignable to type 'string'. Type 'undefined' is not assignable to type 'string'.",
-      "contextHash": "274e7ae68d31468ffc06cd3ca8b9e482efc60aafef824dbf7d5883cbc4af3001"
-    },
-    {
       "file": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
       "line": 40,
       "column": 54,
@@ -253,42 +226,6 @@
       "code": "TS2345",
       "message": "Argument of type '{ amount: number | null; contact_id: string; created_at: string; created_by: string | null; currency: string | null; deal_id: string | null; description: string | null; id: string; purchase_type: string | null; purchased_at: string | null; status: string | null; title: string; updated_at: string; }[]' is not assignable to parameter of type 'SetStateAction<Purchase[]>'. Type '{ amount: number | null; contact_id: string; created_at: string; created_by: string | null; currency: string | null; deal_id: string | null; description: string | null; id: string; purchase_type: string | null; purchased_at: string | null; status: string | null; title: string; updated_at: string; }[]' is not assignable to type 'Purchase[]'. Type '{ amount: number | null; contact_id: string; created_at: string; created_by: string | null; currency: string | null; deal_id: string | null; description: string | null; id: string; purchase_type: string | null; purchased_at: string | null; status: string | null; title: string; updated_at: string; }' is not assignable to type 'Purchase'. Types of property 'currency' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
       "contextHash": "df5161268576540f8c17face455b4a77dbedf75b00bcec991b310f76338228d6"
-    },
-    {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 128,
-      "column": 28,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "f83aec77ac97eb1c6dedc2cfb757f939e06318922080d373b3d84351e8b085c8"
-    },
-    {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 133,
-      "column": 30,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "0eea8a101454320c94d0b6646879b041f19c42a581500b0a18fb8809b01c66df"
-    },
-    {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 77,
-      "column": 28,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "7f09b176a296df763068f999b9fa21ae555748fe1b400dfa52c791c386129a22"
-    },
-    {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 82,
-      "column": 30,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'string | null | undefined' is not assignable to type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
-      "contextHash": "29238b3c84f8eb48dd51f3ee7541692d3f802a50e0faa3e76904074bdb707227"
     },
     {
       "file": "src/components/inbox/ConversationList.tsx",
@@ -480,33 +417,6 @@
       "contextHash": "4e18187d1cc91ffc2fa517c5583d3bdc591380379e0e6cddf79988e60a2f3373"
     },
     {
-      "file": "src/components/security/DevicesPanel.tsx",
-      "line": 66,
-      "column": 65,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'UserDevice | undefined' is not assignable to type '{ device_name: string; browser: string; os: string; } | null | undefined'. Type 'UserDevice' is not assignable to type '{ device_name: string; browser: string; os: string; }'. Types of property 'device_name' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "cbf3318ecdbc033daadd53b958c31e8bc960a5725e1e1e3f689ddec695b4aff3"
-    },
-    {
-      "file": "src/components/security/DevicesPanel.tsx",
-      "line": 86,
-      "column": 45,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'UserDevice' is not assignable to type '{ id: string; device_name: string; browser: string; os: string; ip_address: string; is_trusted: boolean; last_seen_at: string; }'. Types of property 'device_name' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "2bfde194f32787f1995f2eb619d585faa5db32d46390a0cbbea7b5a91bc99647"
-    },
-    {
-      "file": "src/components/security/DevicesPanel.tsx",
-      "line": 66,
-      "column": 47,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type 'UserSession' is not assignable to type '{ id: string; device_id: string; ip_address: string; started_at: string; }'. Types of property 'device_id' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
-      "contextHash": "cbf3318ecdbc033daadd53b958c31e8bc960a5725e1e1e3f689ddec695b4aff3"
-    },
-    {
       "file": "src/components/security/SecurityOverview.tsx",
       "line": 317,
       "column": 29,
@@ -541,78 +451,6 @@
       "code": "TS2532",
       "message": "Object is possibly 'undefined'.",
       "contextHash": "84fb1a718bc92e6ced4f95e6342a798aac7e8516721fae2d2445d2f62a094080"
-    },
-    {
-      "file": "src/hooks/analytics/useGoalsDashboard.ts",
-      "line": 163,
-      "column": 56,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }[]' is not assignable to parameter of type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }[]'. Type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }' is not assignable to type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }'. Types of property 'is_active' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "5333474ff77ffee1a3083499b7a992bb30ce8083369ac0cb0de2af9ce4cb6171"
-    },
-    {
-      "file": "src/hooks/analytics/useGoalsDashboard.ts",
-      "line": 168,
-      "column": 59,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }[]' is not assignable to parameter of type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }[]'. Type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }' is not assignable to type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }'. Types of property 'is_active' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "4d53500c4a4e7fc066ff383b9a9b5efc75cc4209a26286fde23939b167c9d1ba"
-    },
-    {
-      "file": "src/hooks/analytics/useGoalsDashboard.ts",
-      "line": 173,
-      "column": 58,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }[]' is not assignable to parameter of type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }[]'. Type '{ created_at: string; daily_target: number; goal_type: string; id: string; is_active: boolean | null; monthly_target: number; profile_id: string | null; queue_id: string | null; updated_at: string; weekly_target: number; }' is not assignable to type '{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean; }'. Types of property 'is_active' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "719f968eef1b596c0afe22dc7f2d96781bddc817026a7f57312ac1bdcca3b19b"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 49,
-      "column": 23,
-      "severity": "error",
-      "code": "TS18048",
-      "message": "'entry.value' is possibly 'undefined'.",
-      "contextHash": "192d8fc5ba562d094b4a771407f78d867af9bbde7e9c5d048759c369eef3ca5f"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 214,
-      "column": 25,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'. Type 'undefined' is not assignable to type 'SetStateAction<string>'.",
-      "contextHash": "5af8e47ad14c90dd18102f6ffdd3cca0851dde11cd4a19cb049ec6583e8b6235"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 222,
-      "column": 27,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'. Type 'undefined' is not assignable to type 'SetStateAction<string>'.",
-      "contextHash": "fd08598cde6724034e6f9afcdf1fb1d3bd406e80082ae0ac86412c8a09bf18a6"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 230,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2722",
-      "message": "Cannot invoke an object which is possibly 'undefined'.",
-      "contextHash": "6b37178fa6aac9d64c1ecf93b551b00490cb8105226242704c35117fd8cf9657"
-    },
-    {
-      "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
-      "line": 235,
-      "column": 9,
-      "severity": "error",
-      "code": "TS2722",
-      "message": "Cannot invoke an object which is possibly 'undefined'.",
-      "contextHash": "a3ab49e408b062da8f8d4708be6eaf073907e9abab6f80a33102243538cb1da2"
     },
     {
       "file": "src/hooks/business/useClientWallet.ts",
