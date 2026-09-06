@@ -1,0 +1,4 @@
+-- Migration registered in the DB ledger without SQL statements.
+-- The corresponding DDL (if any) was applied outside of this migration file
+-- and cannot be reconstructed. This file pins the name-only ledger record
+-- so the drift guard passes. Version: 20260906000001 name: e31_contacts_is_lid_legacy
