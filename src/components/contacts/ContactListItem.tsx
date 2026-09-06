@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,14 +9,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Briefcase,
+  Building2, Briefcase,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
-import { CompanyLogo } from './CompanyLogo';
 import { HighlightText } from './HighlightText';
 import type { ContactItemProps } from './types';
 
@@ -28,12 +26,9 @@ export function ContactListItem({
   const avatarColors = getAvatarColor(contact.name);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.02, duration: 0.25 }}
+    <div
       className={cn(
-        "group flex items-center gap-4 px-4 py-3 rounded-xl border border-border/30",
+        "group flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border/30",
         "hover:bg-muted/30 hover:border-primary/15 transition-all duration-150 cursor-pointer",
         isSelected && "bg-primary/5 border-primary/30"
       )}
@@ -47,29 +42,18 @@ export function ContactListItem({
         />
       </div>
 
-      {/* Avatar with company logo overlay */}
+      {/* Avatar */}
       <div className="relative shrink-0">
-        <Avatar className="w-11 h-11">
+        <Avatar className="w-9 h-9 ring-1 ring-border/40">
           <AvatarImage src={contact.avatar_url || undefined} />
-          <AvatarFallback className={cn('font-semibold text-sm', avatarColors.bg, avatarColors.text)}>
+          <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
             {getInitials(contact.name)}
           </AvatarFallback>
         </Avatar>
         <div className={cn(
-          "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background",
+          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
           typeConfig.dotBg
         )} />
-        {(companyLogo || contact.company) && (
-          <div className="absolute -top-0.5 -left-0.5">
-            <CompanyLogo
-              logoUrl={companyLogo}
-              companyName={companyName}
-              fallbackCompanyName={contact.company}
-              size="xs"
-              className="ring-1 ring-background"
-            />
-          </div>
-        )}
       </div>
 
       {/* Name & type */}
@@ -82,78 +66,73 @@ export function ContactListItem({
           />
           <Badge
             variant="outline"
-            className={cn("text-[10px] h-5 px-1.5 font-medium gap-1 shrink-0", typeConfig.badgeClass)}
+            className={cn("text-[10px] h-4 px-1.5 font-medium gap-1 shrink-0", typeConfig.badgeClass)}
           >
             {typeConfig.iconNode}
             {typeConfig.label}
           </Badge>
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
-          {contact.company && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CompanyLogo
-                logoUrl={companyLogo}
-                companyName={companyName}
-                fallbackCompanyName={contact.company}
-                size="xs"
-              />
-              <span className="truncate max-w-[120px]">{companyName || contact.company}</span>
-            </span>
-          )}
-          {contact.job_title && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Briefcase className="w-3 h-3" />
-              {contact.job_title}
-            </span>
-          )}
-        </div>
+        {(contact.company || companyName || contact.job_title) && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {(contact.company || companyName) && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Building2 className="w-3 h-3 shrink-0" />
+                <span className="truncate max-w-[120px]">{companyName || contact.company}</span>
+              </span>
+            )}
+            {contact.job_title && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Briefcase className="w-3 h-3 shrink-0" />
+                {contact.job_title}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Phone */}
-      <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-        <Phone className="w-3.5 h-3.5 shrink-0" />
-        <a
-          href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-mono text-[11px] hover:text-primary hover:underline transition-colors"
-          title="Abrir no WhatsApp"
-        >
-          {contact.phone}
-        </a>
-      </div>
+      {contact.phone && (
+        <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-[130px]" onClick={(e) => e.stopPropagation()}>
+          <Phone className="w-3 h-3 shrink-0" />
+          <a
+            href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[11px] hover:text-primary transition-colors truncate"
+          >
+            {contact.phone}
+          </a>
+        </div>
+      )}
 
       {/* Email */}
-      <div className="hidden xl:flex items-center gap-2 text-xs text-muted-foreground min-w-[180px]" onClick={(e) => e.stopPropagation()}>
-        {contact.email ? (
-          <>
-            <Mail className="w-3.5 h-3.5 shrink-0" />
-            <a
-              href={`mailto:${contact.email}`}
-              className="truncate text-[11px] hover:text-primary hover:underline transition-colors"
-              title="Enviar email"
-            >
-              {contact.email}
-            </a>
-          </>
-        ) : (
-          <span className="text-muted-foreground/40">—</span>
-        )}
-      </div>
+      {contact.email && (
+        <div className="hidden xl:flex items-center gap-1.5 text-xs text-muted-foreground min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+          <Mail className="w-3 h-3 shrink-0" />
+          <a
+            href={`mailto:${contact.email}`}
+            className="truncate text-[11px] hover:text-primary transition-colors"
+          >
+            {contact.email}
+          </a>
+        </div>
+      )}
 
       {/* Tags */}
-      <div className="hidden lg:flex items-center gap-1 min-w-[120px]">
-        {contact.tags?.slice(0, 2).map(tag => (
-          <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5">
-            {tag}
-          </Badge>
-        ))}
-        {(contact.tags?.length || 0) > 2 && (
-          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-            +{(contact.tags?.length || 0) - 2}
-          </Badge>
-        )}
-      </div>
+      {contact.tags && contact.tags.length > 0 && (
+        <div className="hidden lg:flex items-center gap-1 min-w-[100px]">
+          {contact.tags.slice(0, 2).map(tag => (
+            <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5">
+              {tag}
+            </Badge>
+          ))}
+          {contact.tags.length > 2 && (
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+              +{contact.tags.length - 2}
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Date */}
       <span className="hidden md:block text-[11px] text-muted-foreground shrink-0">
@@ -162,29 +141,29 @@ export function ContactListItem({
 
       {/* Actions */}
       <div
-        className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-primary/10 hover:text-primary" onClick={() => onOpenChat(contact.id)} title="Conversar">
+        <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-primary/10 hover:text-primary" onClick={() => onOpenChat(contact.id)} title="Conversar">
           <MessageSquare className="w-3.5 h-3.5" />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-7 h-7">
+            <Button variant="ghost" size="icon" className="w-6 h-6">
               <MoreVertical className="w-3.5 h-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={() => onEdit(contact)}>
-              <Edit className="w-4 h-4 mr-2" />Editar
+              <Edit className="w-3.5 h-3.5 mr-2" />Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-              <Trash2 className="w-4 h-4 mr-2" />Excluir
+              <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </motion.div>
+    </div>
   );
 }

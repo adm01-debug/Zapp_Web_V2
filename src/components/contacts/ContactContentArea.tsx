@@ -68,7 +68,7 @@ export function ContactContentArea({
 
   if (viewMode === 'grid') {
     return (
-      <div className={cn("grid gap-4", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
+      <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {contacts.map((contact, index) => (
           <ContactCard
             key={contact.id} contact={contact}
