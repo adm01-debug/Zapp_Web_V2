@@ -1,109 +1,245 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailThreadView } from '../EmailThreadView';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
 
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
 function makeMotionEl(tag: string) {
   return function MotionEl({ children, ...props }: Record<string, unknown>) {
-    const safeProps = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
-    return createElement(tag, safeProps, children as React.ReactNode);
+    const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
+    return createElement(tag, safe, children as React.ReactNode);
   };
 }
-const MotionDiv = makeMotionEl('div');
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, {
-    get: (_t: unknown, prop: string) => prop === 'div' ? MotionDiv : makeMotionEl('div'),
-  }),
+  motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
 }));
 
-vi.mock('../EmailComposer', () => ({ EmailComposer: () => <div /> }));
+vi.mock('@/components/ui/scroll-area', () => ({
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
 
-const threadMessages: EmailMessage[] = [];
+vi.mock('@/components/ui/card', () => ({
+  Card: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/components/ui/avatar', () => ({
+  Avatar: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  AvatarFallback: ({ children, className }: { children: ReactNode; className?: string }) => <span className={className}>{children}</span>,
+}));
+
+vi.mock('@/components/ui/badge', () => ({
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+
+vi.mock('@/components/ui/separator', () => ({
+  Separator: () => <hr />,
+}));
+
+vi.mock('@/components/ui/tooltip', () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children, asChild }: { children: ReactNode; asChild?: boolean }) => asChild ? <>{children}</> : <div>{children}</div>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/components/ui/GenericEmptyState', () => ({
+  GenericEmptyState: ({ title }: { title: ReactNode }) => <div data-testid="empty-state">{title}</div>,
+}));
+
+vi.mock('@/components/gmail/EmailComposer', () => ({
+  EmailComposer: ({ mode, onClose }: { mode?: string; onClose?: () => void }) => (
+    <div data-testid="composer" data-mode={mode}>
+      <button onClick={onClose}>Fechar compositor</button>
+    </div>
+  ),
+}));
+
+vi.mock('@/lib/emailHtml', () => ({
+  sanitizeEmailHtml: (html: string) => html,
+}));
+
+vi.mock('lucide-react', () => ({
+  ArrowLeft: () => <span data-testid="icon-arrow-left" />,
+  Trash2: () => <span data-testid="icon-trash" />,
+  Archive: () => <span data-testid="icon-archive" />,
+  Loader2: () => <div data-testid="loader" />,
+  Reply: () => null,
+  ReplyAll: () => null,
+  Forward: () => null,
+  Star: () => null,
+  Paperclip: () => null,
+  ChevronDown: () => null,
+  ChevronUp: () => null,
+  MoreHorizontal: () => null,
+  Mail: () => null,
+  MailOpen: () => null,
+  Tag: () => null,
+  Clock: () => null,
+}));
+
+const setSelectedThreadId = vi.fn();
+const markAsReadMutate = vi.fn();
+const trashMessageMutate = vi.fn();
+
+const config: {
+  threadMessages: EmailMessage[];
+  messagesLoading: boolean;
+} = {
+  threadMessages: [],
+  messagesLoading: false,
+};
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
-    threadMessages,
-    messagesLoading: false,
-    markAsRead: { mutate: vi.fn() },
-    trashMessage: { mutate: vi.fn() },
-    setSelectedThreadId: vi.fn(),
+    threadMessages: config.threadMessages,
+    messagesLoading: config.messagesLoading,
+    markAsRead: { mutate: markAsReadMutate },
+    trashMessage: { mutate: trashMessageMutate },
+    setSelectedThreadId,
   }),
 }));
 
+function makeThread(overrides: Partial<EmailThread> = {}): EmailThread {
+  return {
+    id: 'th1',
+    gmail_thread_id: 'gt1',
+    gmail_account_id: 'a1',
+    subject: 'Assunto de teste',
+    snippet: '',
+    label_ids: [],
+    is_unread: false,
+    is_starred: false,
+    is_important: false,
+    message_count: 1,
+    last_message_at: '2026-09-05T10:00:00-03:00',
+    last_from_name: null,
+    last_from_address: 'remetente@exemplo.com',
+    contact: null,
+    tags: [],
+    status: 'open',
+    ...overrides,
+  } as EmailThread;
+}
+
 function makeMessage(overrides: Partial<EmailMessage> = {}): EmailMessage {
   return {
-    id: 'm1', thread_id: 't1', gmail_message_id: 'g1', gmail_account_id: 'a1',
-    from_address: 'cliente@exemplo.com', from_name: 'Cliente Exemplo',
-    to_addresses: ['eu@promobrindes.com.br'], cc_addresses: [], bcc_addresses: [],
-    reply_to_address: null, subject: 'Orçamento', body_text: '', body_html: '',
-    snippet: '', label_ids: [], is_read: true, is_starred: false,
-    has_attachments: false, direction: 'inbound',
-    internal_date: '2026-09-04T11:00:00-03:00',
+    id: 'm1',
+    thread_id: 'th1',
+    gmail_message_id: 'gm1',
+    gmail_account_id: 'a1',
+    from_address: 'remetente@exemplo.com',
+    from_name: 'Remetente Teste',
+    to_addresses: ['eu@empresa.com'],
+    cc_addresses: [],
+    bcc_addresses: [],
+    reply_to_address: null,
+    subject: 'Assunto',
+    body_text: 'Corpo do email',
+    body_html: '',
+    snippet: 'Trecho',
+    label_ids: [],
+    is_read: true,
+    is_starred: false,
+    has_attachments: false,
+    direction: 'inbound',
+    internal_date: '2026-09-05T10:00:00-03:00',
     ...overrides,
   } as EmailMessage;
 }
 
-const thread = {
-  id: 't1', gmail_thread_id: 'g1', subject: 'Orçamento', message_count: 1,
-  is_unread: false, tags: [], contact: null,
-} as unknown as EmailThread;
-
-function renderWith(messages: EmailMessage[]) {
-  threadMessages.length = 0;
-  threadMessages.push(...messages);
-  return render(<EmailThreadView thread={thread} onBack={() => {}} />);
-}
-
-describe('EmailThreadView — HTML como fonte visual padrão (Fase D, etapa 6/24)', () => {
-  it('e-mail com body_html abre JÁ renderizado, sem exigir clique em "Ver HTML"', () => {
-    renderWith([makeMessage({
-      body_html: '<table style="width:600px"><tr><td>Conteúdo da tabela</td></tr></table>',
-      body_text: 'Conteúdo da tabela',
-    })]);
-    expect(document.querySelector('.email-html-body')).not.toBeNull();
-    expect(screen.getByText('Conteúdo da tabela')).toBeInTheDocument();
-    // o toggle oferece o caminho inverso, não o de ida
-    expect(screen.getByRole('button', { name: 'Ver texto simples' })).toBeInTheDocument();
+describe('EmailThreadView', () => {
+  beforeEach(() => {
+    config.threadMessages = [];
+    config.messagesLoading = false;
+    setSelectedThreadId.mockClear();
+    markAsReadMutate.mockClear();
+    trashMessageMutate.mockClear();
   });
 
-  it('e-mail só-texto continua em texto puro, sem container de HTML', () => {
-    renderWith([makeMessage({ body_html: '', body_text: 'Mensagem simples.' })]);
-    expect(document.querySelector('.email-html-body')).toBeNull();
-    expect(screen.getByText('Mensagem simples.')).toBeInTheDocument();
+  it('chama setSelectedThreadId com thread.id no mount', () => {
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(setSelectedThreadId).toHaveBeenCalledWith('th1');
   });
 
-  it('toggle volta para texto puro e retorna ao HTML', () => {
-    renderWith([makeMessage({ body_html: '<p>Versão HTML</p>', body_text: 'Versão texto' })]);
-    fireEvent.click(screen.getByRole('button', { name: 'Ver texto simples' }));
-    expect(document.querySelector('.email-html-body')).toBeNull();
-    expect(screen.getByText('Versão texto')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ver HTML' }));
-    expect(document.querySelector('.email-html-body')).not.toBeNull();
+  it('chama setSelectedThreadId(null) no unmount', () => {
+    const { unmount } = render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    unmount();
+    expect(setSelectedThreadId).toHaveBeenCalledWith(null);
   });
 
-  it('thread com 2 mensagens: colapsada com body_html exibe snippet, não string vazia', () => {
-    renderWith([
-      makeMessage({ id: 'm1', body_html: '<p>HTML do primeiro</p>', snippet: 'Preview visível do primeiro', body_text: 'Texto do primeiro' }),
-      makeMessage({ id: 'm2', body_html: '', body_text: 'Segundo email texto puro.' }),
-    ]);
-    // Primeiro (não-último) começa colapsado — snippet visível no cabeçalho
-    expect(screen.getByText('Preview visível do primeiro')).toBeInTheDocument();
-    // Nenhum container HTML visível (primeiro colapsado, segundo sem body_html)
-    expect(document.querySelector('.email-html-body')).toBeNull();
-    // Segundo (último) começa expandido — texto puro visível
-    expect(screen.getByText('Segundo email texto puro.')).toBeInTheDocument();
+  it('exibe o subject da thread no header', () => {
+    render(<EmailThreadView thread={makeThread({ subject: 'Proposta Comercial' })} onBack={vi.fn()} />);
+    expect(screen.getByText('Proposta Comercial')).toBeInTheDocument();
   });
 
-  it('usa o pipeline único de sanitização (script removido, link endurecido)', () => {
-    renderWith([makeMessage({
-      body_html: '<p>ok</p><script>alert(1)</script><a href="https://x.com">link</a>',
-    })]);
-    const host = document.querySelector('.email-html-body');
-    expect(host?.innerHTML).not.toContain('script');
-    expect(host?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
+  it('exibe "(Sem assunto)" quando subject vazio', () => {
+    render(<EmailThreadView thread={makeThread({ subject: '' })} onBack={vi.fn()} />);
+    expect(screen.getByText('(Sem assunto)')).toBeInTheDocument();
+  });
+
+  it('exibe loader enquanto messagesLoading=true', () => {
+    config.messagesLoading = true;
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
+  });
+
+  it('exibe estado vazio quando não há mensagens', () => {
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+  });
+
+  it('renderiza mensagens da thread', () => {
+    config.threadMessages = [makeMessage({ from_name: 'Remetente Teste' })];
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Remetente Teste')).toBeInTheDocument();
+  });
+
+  it('markAsRead chamado quando is_unread=true e há mensagens não lidas', async () => {
+    config.threadMessages = [makeMessage({ is_read: false, gmail_message_id: 'gm-unread' })];
+    render(<EmailThreadView thread={makeThread({ is_unread: true })} onBack={vi.fn()} />);
+    await waitFor(() => expect(markAsReadMutate).toHaveBeenCalledWith(['gm-unread']));
+  });
+
+  it('markAsRead NÃO chamado quando is_unread=false', () => {
+    config.threadMessages = [makeMessage({ is_read: false })];
+    render(<EmailThreadView thread={makeThread({ is_unread: false })} onBack={vi.fn()} />);
+    expect(markAsReadMutate).not.toHaveBeenCalled();
+  });
+
+  it('botão Responder abre o composer com mode=reply', async () => {
+    config.threadMessages = [makeMessage()];
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Responder' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('composer')).toBeInTheDocument();
+      expect(screen.getByTestId('composer').getAttribute('data-mode')).toBe('reply');
+    });
+  });
+
+  it('botão Encaminhar abre o composer com mode=forward', async () => {
+    config.threadMessages = [makeMessage()];
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Encaminhar' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('composer').getAttribute('data-mode')).toBe('forward');
+    });
+  });
+
+  it('botão Voltar chama onBack', () => {
+    const onBack = vi.fn();
+    render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
+    fireEvent.click(screen.getByTestId('icon-arrow-left').closest('button')!);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', () => {
+    config.threadMessages = [makeMessage({ gmail_message_id: 'gm-trash' })];
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
+    expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
   });
 });

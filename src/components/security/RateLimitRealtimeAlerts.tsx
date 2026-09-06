@@ -14,7 +14,7 @@ interface SecurityAlert {
   description: string | null;
   ip_address: string | null;
   created_at: string;
-  is_resolved: boolean;
+  is_resolved: boolean | null;
 }
 
 const ALERT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
@@ -61,32 +61,38 @@ export function RateLimitRealtimeAlerts() {
       }
       if (data) {
         setAlerts(data);
+        return data;
       }
+      return null;
     };
 
-    fetchAlerts();
+// E62: setTimeout(0) move o fetch inicial fora do body síncrono (set-state-in-effect).
+    // lastKnownIds inicia vazio e é populado após o primeiro fetch.
+    let lastKnownIds = new Set<string>();
+    const timer = setTimeout(() => void fetchAlerts().then(initial => {
+      if (initial) lastKnownIds = new Set(initial.map((a: SecurityAlert) => a.id));
+    }), 0);
 
-    // Subscribe to new alerts
-    const channel = supabase
-      .channel('security-alerts')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'security_alerts' },
-        (payload) => {
-          const newAlert = payload.new as SecurityAlert;
-          setAlerts(prev => [newAlert, ...prev].slice(0, 10));
+    // E62: Polling de 15s detecta novos alertas comparando com o snapshot anterior.
+    const interval = setInterval(async () => {
+      const { data: fresh } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('is_resolved', false)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!fresh) return;
+      const newAlerts = (fresh as SecurityAlert[]).filter(a => !lastKnownIds.has(a.id));
+      if (newAlerts.length > 0) {
+        setAlerts(fresh as SecurityAlert[]);
+        newAlerts.forEach(a => {
+          if (a.severity === 'critical' || a.severity === 'high') playAlertSound();
+        });
+        lastKnownIds = new Set((fresh as SecurityAlert[]).map(a => a.id));
+      }
+    }, 15_000);
 
-          // Play sound for critical alerts
-          if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
-            playAlertSound();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, []);
 
   const handleDismiss = async (alertId: string) => {

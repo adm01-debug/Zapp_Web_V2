@@ -149,7 +149,7 @@ export function useGlobalSearchData(open: boolean) {
       }
 
       if (types.has('contact')) {
-        let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags');
+        let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
         if (cleanQuery.length >= 2) contactQuery = contactQuery.or(`name.ilike.%${cleanQuery}%,surname.ilike.%${cleanQuery}%,phone.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%`);
 
         const { data: contacts } = await contactQuery.order('name', { ascending: true }).limit(10);

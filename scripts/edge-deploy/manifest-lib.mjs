@@ -136,7 +136,7 @@ function manifestDigest(manifestWithoutDigest) {
   return sha256(`zapp-edge-deployment-manifest-v1\0${JSON.stringify(manifestWithoutDigest)}`);
 }
 
-export async function buildDeploymentManifest({ repoRoot, legacyUnmanaged = [] }) {
+export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], legacyUnmanaged = [] }) {
   const absoluteRepoRoot = path.resolve(repoRoot);
   const functionsRoot = path.join(absoluteRepoRoot, 'supabase', 'functions');
   const configPath = path.join(absoluteRepoRoot, 'supabase', 'config.toml');
@@ -195,6 +195,7 @@ export async function buildDeploymentManifest({ repoRoot, legacyUnmanaged = [] }
   const sourceFiles = [...fileRecords.values()]
     .sort((left, right) => left.path.localeCompare(right.path))
     .map(({ content: _content, ...record }) => record);
+  const sortedOrphans = [...orphanAllowlist].sort();
   const manifestWithoutDigest = {
     schema_version: MANIFEST_SCHEMA_VERSION,
     project_ref: projectRef,
@@ -209,6 +210,7 @@ export async function buildDeploymentManifest({ repoRoot, legacyUnmanaged = [] }
       verify_jwt_true: functions.filter((fn) => fn.verify_jwt).length,
       verify_jwt_false: functions.filter((fn) => !fn.verify_jwt).length,
     },
+    ...(sortedOrphans.length > 0 ? { orphan_allowlist: sortedOrphans } : {}),
     source_files: sourceFiles,
     functions,
   };
@@ -260,9 +262,11 @@ export function buildDeploymentAttestation({
   const expectedNames = new Set(manifest.functions.map((fn) => fn.name));
   const legacyAllowed = new Set(Array.isArray(manifest.legacy_unmanaged_functions) ? manifest.legacy_unmanaged_functions : []);
   const missing = [...expectedNames].filter((name) => !remoteByName.has(name)).sort();
-  const extra = [...remoteByName.keys()].filter((name) => !expectedNames.has(name) && !legacyAllowed.has(name)).sort();
-  if (missing.length || extra.length) {
-    throw new Error(`Remote function set mismatch; missing=[${missing.join(',')}], extra=[${extra.join(',')}]`);
+  const extra = [...remoteByName.keys()].filter((name) => !expectedNames.has(name)).sort();
+  const orphanSet = new Set(manifest.orphan_allowlist ?? []);
+  const unexpectedExtra = extra.filter((name) => !legacyAllowed.has(name) && !orphanSet.has(name));
+  if (missing.length || unexpectedExtra.length) {
+    throw new Error(`Remote function set mismatch; missing=[${missing.join(',')}], extra=[${unexpectedExtra.join(',')}]`);
   }
 
   const functions = manifest.functions.map((expected) => {
