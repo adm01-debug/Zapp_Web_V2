@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "project_ref": "tnnnlkbymytvtqngbbqh",
+  "legacy_unmanaged_functions": [
+    "check-account-lock",
+    "record-failed-login"
+  ],
   "config": {
     "path": "supabase/config.toml",
     "sha256": "a25ecdbd721a67b020e3b2f34fce57e1b153ec0b226bca49ddf0c09fd4494155"
@@ -1195,5 +1199,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f916f9190bece4290d551b9a559473636f394fe8dcbb81d833bcc67f13fc675c"
+  "manifest_sha256": "ee74bbbfe8ea7aadda7119c9c7c0b25ca29003ba10ac5621c63c389e649be9ef"
 }

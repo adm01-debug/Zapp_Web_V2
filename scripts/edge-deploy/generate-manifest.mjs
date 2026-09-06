@@ -15,7 +15,18 @@ function parseArgs(argv) {
 }
 
 export async function runGenerateManifest({ repoRoot, output, check }) {
-  const manifest = await buildDeploymentManifest({ repoRoot });
+  let legacyUnmanaged = [];
+  try {
+    const legacyPath = path.resolve(repoRoot, 'scripts', 'edge-deploy', 'legacy-functions.json');
+    const parsed = JSON.parse(await readFile(legacyPath, 'utf8'));
+    if (!Array.isArray(parsed) || !parsed.every((n) => typeof n === 'string')) {
+      throw new Error('legacy-functions.json must be a JSON array of strings');
+    }
+    legacyUnmanaged = parsed;
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  const manifest = await buildDeploymentManifest({ repoRoot, legacyUnmanaged });
   const serialized = serializeManifest(manifest);
   const outputPath = path.resolve(repoRoot, output);
 

@@ -497,6 +497,41 @@
       "reason": "ledger-summary",
       "related_migration": null,
       "justification": "Ledger registrou o CREATE FUNCTION de record_failed_login com corpo abreviado (\"...\"), aplicado em 2026-09-04 por sessao paralela (PR #218). Arquivo pin carrega o corpo completo vigente no banco (UPSERT atomico, cap 10000, CHECK login_attempts_attempt_count_max, REVOKEs) conferido via pg_get_functiondef e pg_constraint em 2026-09-05. A correcao do locked_until stale vem em 20260905010000."
+    },
+    {
+      "version": "20260905080000",
+      "filename": "20260905080000_conversation_status_fsm.sql",
+      "file_sha256": "1315e2b073c4894711916949f464546eed1c24ac5d17c052205f2df58c4da3c2",
+      "file_sql_sha256": "1693da7795ca3007f8e2a008cb6a79bbf97725294113fbad7cee4a99b276f160",
+      "ledger_name": "conversation_status_fsm",
+      "ledger_statements_sha256": "2aa20755f4d1da26c3afeb9dc1697bb018173150b553be86b28b0f27075226d4",
+      "ledger_sql_sha256": "c1e1824acb6505d6c623670adbdc0eefd092997a59e1f5e7a50b55c66407d8c4",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL; ambas as formas canonicas ficam fixadas por hashes independentes."
+    },
+    {
+      "version": "20260906000001",
+      "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
+      "file_sha256": "4af3dd14634ccea3633b1e9beda81b3d34e343d4a83bb81d3aad27c413c28f49",
+      "ledger_name": "e31_contacts_is_lid_legacy",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "kind": "ledger-only/comment-only",
+      "justification": "O registro foi inserido no ledger sem statements SQL (null); o arquivo contem apenas comentarios que descrevem a situacao — sem SQL executavel. A pinagem e por file_sha256 e ledger_statements_sha256 apenas."
+    },
+    {
+      "version": "20260906090000",
+      "filename": "20260906090000_fix_secdef_search_path.sql",
+      "file_sha256": "bc9fef4f53fb271f029aed5f8c3ca3df1e70c04456b0486ba460b7a98f213612",
+      "file_sql_sha256": "62875ea190748359057d14fa3e60b96145d94d0a96da4362aaf1d35bf3a096ae",
+      "ledger_name": "fix_secdef_search_path",
+      "ledger_statements_sha256": "d0b96b3e5857fde0e55fb08598abf0561b5451452d0296fddc0a36ad912249c1",
+      "ledger_sql_sha256": "dc51397aeb5b6bc1b9f5b10c569cd8aa5f52b61029459f1bc5f2be9b87277642",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL da funcao set_conversation_status com SECURITY DEFINER e SET search_path; ambas as formas canonicas ficam fixadas por hashes independentes."
     }
   ]
 }
