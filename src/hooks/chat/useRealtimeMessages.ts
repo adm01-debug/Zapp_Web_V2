@@ -143,10 +143,11 @@ export function useRealtimeMessages() {
   useEffect(() => {
     const handler = (e: Event) => {
       const { contactId, status } = (e as CustomEvent<{ contactId: string; status: string }>).detail;
-      commitConversations(prev =>
-        prev.map(c =>
+      const typedStatus = status as ConversationContact['conversation_status'];
+      commitConversations((prev): ConversationWithMessages[] =>
+        prev.map((c): ConversationWithMessages =>
           c.contact.id === contactId
-            ? { ...c, contact: { ...c.contact, conversation_status: status } }
+            ? { ...c, contact: { ...c.contact, conversation_status: typedStatus } }
             : c
         )
       );
