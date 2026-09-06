@@ -9,6 +9,15 @@ Deno.serve(async (req) => {
   const log = new Logger("send-rate-limit-alert");
 
   try {
+    const internalSecret = Deno.env.get("INTERNAL_ALERT_SECRET");
+    if (internalSecret) {
+      const provided = req.headers.get("X-Internal-Secret");
+      if (provided !== internalSecret) {
+        log.warn("Unauthorized call to send-rate-limit-alert");
+        return errorResponse("Unauthorized", 401, req);
+      }
+    }
+
     const supabaseClient = createClient(
       requireEnv("SUPABASE_URL"),
       requireEnv("SUPABASE_SERVICE_ROLE_KEY")
