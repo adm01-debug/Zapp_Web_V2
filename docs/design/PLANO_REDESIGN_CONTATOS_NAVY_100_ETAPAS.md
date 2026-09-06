@@ -257,7 +257,7 @@ Formato: `[ ] N. Ação — arquivo — DoD (definição de pronto)`. Marque `[x
 - [ ] **5.** Crie `docs/design/REDESIGN_CONTATOS_STATUS.md` a partir do template do Apêndice F. Commit `chore(contatos): ledger do redesign navy`. — DoD: arquivo commitado.
 - [ ] **6.** Se `docs/design/contatos-reference.png` existir no repo, copie para `/workspace/qa/ref.png` e E.4 fica habilitado. Se **não** existir, registre `E.4: pulado (sem PNG no repo)` no ledger e siga — E.2 (geometria) e E.3 (cores) são os gates obrigatórios e não dependem do PNG. Não pare por isso. — DoD: linha no ledger.
 - [ ] **7.** Instale as ferramentas de QA **fora do repo**: `mkdir -p /workspace/qa && cd /workspace/qa && npm init -y && npm i playwright@1.56 pngjs pixelmatch && npx playwright install chromium`. Se `install chromium` falhar por dependência de sistema, tente `npx playwright install --with-deps chromium`; se ainda falhar, registre no ledger e use o Plano B da Fase 11 (browser MCP). — DoD: `node -e "require('playwright')"` sem erro **ou** bloqueio registrado.
-- [ ] **8.** Credencial de QA: `grep -E 'ZAPP_QA_(EMAIL|PASSWORD)' /root/.secrets/zapp-v2.env`. Se não existir, crie o usuário `qa.visual@promobrindes.com.br` via Supabase Admin (service_role do mesmo env, projeto `tnnnlkbymytvtqngbbqh`) com `email_confirm: true`, senha aleatória de 24 chars, e **anexe** `ZAPP_QA_EMAIL`/`ZAPP_QA_PASSWORD` ao env. Não destrutivo. Não use conta de pessoa real. — DoD: `curl` de login (`/auth/v1/token?grant_type=password`) retorna `access_token`.
+- [ ] **8.** Credencial de QA: `grep -E 'ZAPP_QA_(EMAIL|PASSWORD)' /workspace/.secrets/zapp-v2.env`. Já existe: usuário `qa.visual@promobrindes.com.br` (role `supervisor`, criado 06/09/2026, lê a base inteira via RLS) com `ZAPP_QA_EMAIL`, `ZAPP_QA_PASSWORD`, `ZAPP_SUPABASE_URL` e `ZAPP_SUPABASE_ANON_KEY` gravados em `/workspace/.secrets/zapp-v2.env` (volume persistente; `/root/.secrets` é só symlink). Não recrie o usuário. — DoD: `curl` de login (`/auth/v1/token?grant_type=password`) retorna `access_token`.
 - [ ] **9.** Baseline atual: `npm ci` (ou `bun install --frozen-lockfile`), depois `npm run typecheck && node scripts/ci/lint-ratchet.mjs && node scripts/ci/typecheck-ratchet.mjs && npm run implicit-any-check && npx vitest run src/components/contacts`. Tudo verde **antes** de mexer. — DoD: 5 comandos com exit 0, saída resumida no ledger.
 
 **CP0 — Ambiente pronto.** Gate: etapas 1–9 com evidência. Screenshot "ANTES": rode o Apêndice E.1 contra `https://zapp-web-v2.vercel.app` e salve `/workspace/qa/out/00-before.png`. Sem esse arquivo, CP0 não fecha.
@@ -605,7 +605,7 @@ Inativo: `text-muted-foreground hover:text-foreground hover:bg-muted/60`. Envolv
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 const [,, url = 'https://zapp-web-v2.vercel.app', out = 'out/shot.png', theme = 'dark', vw = '1672', vh = '941'] = process.argv;
-const env = Object.fromEntries(fs.readFileSync('/root/.secrets/zapp-v2.env','utf8').split('\n').filter(l=>l.includes('=')).map(l=>l.split('=').map(s=>s.trim())));
+const env = Object.fromEntries(fs.readFileSync('/workspace/.secrets/zapp-v2.env','utf8').split('\n').filter(l=>l.includes('=')).map(l=>l.split('=').map(s=>s.trim())));
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: +vw, height: +vh }, deviceScaleFactor: 1, locale: 'pt-BR' });
 await ctx.addInitScript((t) => { localStorage.removeItem('theme-custom-colors'); localStorage.setItem('theme', t); localStorage.removeItem('sidebar-collapsed'); }, theme);
