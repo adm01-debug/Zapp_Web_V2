@@ -14,7 +14,7 @@ interface SecurityAlert {
   description: string | null;
   ip_address: string | null;
   created_at: string;
-  is_resolved: boolean;
+  is_resolved: boolean | null;
 }
 
 const ALERT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
