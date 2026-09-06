@@ -90,13 +90,9 @@ export async function handleOutgoingWhatsAppMessage(
     .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
-  if (existingMessage) return;
-
-  const payloadKey = isRecord(data.key) ? data.key : null;
-  const bestJid = resolveEventJid(key, payloadKey, data);
 
   // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
-  // Isso permite que E34 resolva futuros LIDs sem criar contato duplicado.
+  // Executado antes do early-return de duplicata para garantir backfill mesmo em reprocessamentos.
   // Operação fire-and-forget: falha não impede o processamento da mensagem.
   void (async () => {
     try {
@@ -114,6 +110,11 @@ export async function handleOutgoingWhatsAppMessage(
       console.warn('[E32] contact_identity_map unexpected error:', e);
     }
   })();
+
+  if (existingMessage) return;
+
+  const payloadKey = isRecord(data.key) ? data.key : null;
+  const bestJid = resolveEventJid(key, payloadKey, data);
 
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
