@@ -10,14 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Upload, Users, Sparkles, FileSpreadsheet, RefreshCw,
+  Users, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { CONTACT_TYPE_ICONS } from './ContactsTable';
 import { ContactStatsCards } from './ContactStatsCards';
-import { ContactImportDialog } from './ContactImportDialog';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
@@ -34,11 +33,11 @@ import { useContactsViewState } from './useContactsViewState';
 export function ContactsView() {
   const {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
-    isImportOpen, setIsImportOpen, isMergeOpen, setIsMergeOpen,
+    isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick, handleExportCSV,
+    handleContactClick,
   } = useContactsViewState();
 
   const {
@@ -88,12 +87,6 @@ export function ContactsView() {
             <Button variant="outline" onClick={() => refetch()} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Sincronizar
             </Button>
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-2" />Importar
-            </Button>
-            <Button variant="outline" onClick={handleExportCSV} disabled={filteredContacts.length === 0}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />Exportar
-            </Button>
             <ContactDialogs
               isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
               newContact={newContact} handleNewContactChange={handleNewContactChange}
@@ -110,7 +103,6 @@ export function ContactsView() {
         }
       />
 
-      <ContactImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} onImportComplete={refetch} />
       <ContactMergeDialog
         open={isMergeOpen} onOpenChange={setIsMergeOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
@@ -209,7 +201,6 @@ export function ContactsView() {
         onAddContact={() => setIsAddDialogOpen(true)}
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
-        onImport={() => setIsImportOpen(true)}
         getCRMData={getCRMData}
       />
 
