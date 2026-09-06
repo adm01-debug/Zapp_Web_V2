@@ -12,12 +12,12 @@ interface ContactStatsCardsProps {
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 12, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1 },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 };
 
 /** Generate a mini sparkline SVG from data points */
@@ -146,8 +146,8 @@ export function ContactStatsCards({
       change: null,
     },
     {
-      label: topType ? TYPE_LABELS[topType[0]] || topType[0] : 'Tipo principal',
-      value: topType?.[1] || 0,
+      label: 'Leads',
+      value: contactCountByType['lead'] || 0,
       icon: TrendingUp,
       color: 'text-[hsl(38_92%_50%)]',
       bg: 'bg-[hsl(38_92%_50%)]/10',
@@ -155,7 +155,6 @@ export function ContactStatsCards({
       sparkColor: 'hsl(38, 92%, 50%)',
       sparkData: null,
       change: null,
-      suffix: topType ? 'contatos' : '',
     },
   ];
 
@@ -166,7 +165,7 @@ export function ContactStatsCards({
           key={stat.label}
           variants={item}
           className={cn(
-            "relative rounded-xl border bg-card p-4 overflow-hidden group hover:shadow-md transition-shadow duration-200",
+            "relative rounded-xl border bg-card p-4 overflow-hidden hover:shadow-sm transition-shadow duration-200",
             stat.border
           )}
         >
@@ -201,12 +200,6 @@ export function ContactStatsCards({
               <Sparkline data={stat.sparkData} color={stat.sparkColor} />
             </div>
           )}
-
-          {/* Decorative glow */}
-          <div className={cn(
-            "absolute -bottom-4 -right-4 w-20 h-20 rounded-full opacity-[0.07] blur-2xl",
-            stat.bg.replace('/10', '')
-          )} />
         </motion.div>
       ))}
     </motion.div>
