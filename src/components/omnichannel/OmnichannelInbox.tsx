@@ -46,17 +46,12 @@ export function OmnichannelInbox() {
   const [channelStats, setChannelStats] = useState<Record<string, number>>({});
   const [connections, setConnections] = useState<Record<string, unknown>[]>([]);
 
-  useEffect(() => {
-    loadConnections();
-    loadUnifiedInbox();
-  }, []);
-
   const loadConnections = async () => {
     const { data } = await supabase
       .from('channel_connections_safe')
       .select('*')
       .eq('is_active', true);
-    
+
     if (data) setConnections(data);
   };
 
@@ -97,6 +92,11 @@ export function OmnichannelInbox() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadConnections();
+    loadUnifiedInbox();
+  }, []);
 
   const filteredMessages = messages.filter(m => {
     if (activeChannel !== 'all' && m.channelType !== activeChannel) return false;
