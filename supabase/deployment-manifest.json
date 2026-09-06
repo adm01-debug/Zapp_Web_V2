@@ -374,8 +374,8 @@
     },
     {
       "path": "supabase/functions/sicoob-bridge/index.ts",
-      "bytes": 5280,
-      "sha256": "dc411e819aa34578eade1b3dfdba66ff01d312befd59b7f4cc32126cbc98613a"
+      "bytes": 5593,
+      "sha256": "840fed7638a0a27d9d3afdd8c6442ae6b3a41457b48608dbe270fc1317ac585e"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
@@ -1080,7 +1080,7 @@
       "name": "sicoob-bridge",
       "entrypoint": "supabase/functions/sicoob-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "77f6e1c4a5027df55c786c7ead61c47ab237d6f6588a52dd88d490b6d9cb6f17",
+      "source_sha256": "ce8e8d4d3d0d054f2ac505f68f797256858e475fb9461b1fbd620b14b92beb37",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1195,5 +1195,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3795db825b7e9203a3eae8f09b20bab54297e23512b602914e60203c92bdd2dc"
+  "manifest_sha256": "0dbf05ed3a49188072a3f75a00003aa1dcdfcd7cbb9005f9816e7a93e8932f2b"
 }
