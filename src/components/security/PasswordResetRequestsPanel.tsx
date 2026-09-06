@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw } from 'lucide-react';
@@ -29,15 +29,8 @@ export function PasswordResetRequestsPanel() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchRequests();
-    // E62: password_reset_requests removida da publicação realtime (migration 20260905).
-    // Polling de 30s garante atualização sem depender de realtime.
-    const interval = setInterval(fetchRequests, 30_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchRequests = async () => {
+  // fetchRequests declarada antes do useEffect para satisfazer react-hooks/immutability
+  const fetchRequests = useCallback(async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase.from('password_reset_requests_safe' as any).select('*').order('created_at', { ascending: false });
@@ -45,7 +38,15 @@ export function PasswordResetRequestsPanel() {
       setRequests((data || []) as unknown as ResetRequest[]);
     } catch (error) { log.error('Error fetching requests:', error); toast.error('Erro ao carregar solicitações'); }
     finally { setLoading(false); }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+    // E62: password_reset_requests removida da publicação realtime (migration 20260905).
+    // Polling de 30s garante atualização sem depender de realtime.
+    const interval = setInterval(fetchRequests, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchRequests]);
 
   const handleApprove = async (request: ResetRequest) => {
     setProcessing(true);
