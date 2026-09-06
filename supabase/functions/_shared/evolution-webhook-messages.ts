@@ -90,10 +90,32 @@ export async function handleOutgoingWhatsAppMessage(
     .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
+
+  // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
+  // Executado antes do early-return de duplicata para garantir backfill mesmo em reprocessamentos.
+  // Operação fire-and-forget: falha não impede o processamento da mensagem.
+  void (async () => {
+    try {
+      const rawLid = key.remoteJid ?? '';
+      const rawJid = key.remoteJidAlt;
+      const isLidFormat = (s: string) => s.includes('@lid') || /^\d{14,15}$/.test(s.replace(/@.*/, ''));
+      if (rawLid && rawJid && rawLid !== rawJid && isLidFormat(rawLid) && !isLidFormat(rawJid)) {
+        const { error: mapErr } = await supabase.from('contact_identity_map').upsert(
+          { lid: rawLid, jid: rawJid, last_seen: new Date().toISOString(), source: 'evolution-go' },
+          { onConflict: 'lid', ignoreDuplicates: false }
+        );
+        if (mapErr) console.warn('[E32] contact_identity_map upsert failed:', mapErr.code, mapErr.message);
+      }
+    } catch (e) {
+      console.warn('[E32] contact_identity_map unexpected error:', e);
+    }
+  })();
+
   if (existingMessage) return;
 
   const payloadKey = isRecord(data.key) ? data.key : null;
   const bestJid = resolveEventJid(key, payloadKey, data);
+
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
     console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
@@ -153,6 +175,27 @@ export async function handleIncomingMessage(
 ) {
   const payloadKey = isRecord(data.key) ? data.key : null;
   const bestJid = resolveEventJid(key, payloadKey, data);
+
+  // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
+  // Mensagens recebidas também carregam remoteJid/remoteJidAlt com LID e JID real.
+  // Operação fire-and-forget: falha não impede o processamento da mensagem.
+  void (async () => {
+    try {
+      const rawLid = key.remoteJid ?? '';
+      const rawJid = key.remoteJidAlt;
+      const isLidFormat = (s: string) => s.includes('@lid') || /^\d{14,15}$/.test(s.replace(/@.*/, ''));
+      if (rawLid && rawJid && rawLid !== rawJid && isLidFormat(rawLid) && !isLidFormat(rawJid)) {
+        const { error: mapErr } = await supabase.from('contact_identity_map').upsert(
+          { lid: rawLid, jid: rawJid, last_seen: new Date().toISOString(), source: 'evolution-go' },
+          { onConflict: 'lid', ignoreDuplicates: false }
+        );
+        if (mapErr) console.warn('[E32] contact_identity_map upsert failed:', mapErr.code, mapErr.message);
+      }
+    } catch (e) {
+      console.warn('[E32] contact_identity_map unexpected error:', e);
+    }
+  })();
+
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
     console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
