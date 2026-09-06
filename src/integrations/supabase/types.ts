@@ -1795,6 +1795,7 @@ export type Database = {
           email: string | null
           group_category: string | null
           id: string
+          is_lid_legacy: boolean
           job_title: string | null
           lead_origin: string | null
           lead_score: number | null

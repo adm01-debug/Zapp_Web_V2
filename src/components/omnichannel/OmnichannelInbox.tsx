@@ -66,6 +66,7 @@ export function OmnichannelInbox() {
       const { data: contacts, error } = await supabase
         .from('contacts')
         .select('id, name, phone, channel_type, updated_at, assigned_to')
+        .eq('is_lid_legacy', false)
         .order('updated_at', { ascending: false })
         .limit(200);
 
