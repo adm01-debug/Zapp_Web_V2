@@ -65,7 +65,8 @@ export function ContactsView() {
   } = crud;
 
   const contactPhones = useMemo(() => filteredContacts.map(c => c.phone), [filteredContacts]);
-  const { lookup: getCRMData } = useExternalContact360Batch(contactPhones);
+  const { lookup } = useExternalContact360Batch(contactPhones);
+  const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
 
   return (
