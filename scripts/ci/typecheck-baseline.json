@@ -355,7 +355,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 126,
+      "line": 128,
       "column": 28,
       "severity": "error",
       "code": "TS2322",
@@ -364,7 +364,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 131,
+      "line": 133,
       "column": 30,
       "severity": "error",
       "code": "TS2322",
@@ -373,7 +373,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 75,
+      "line": 77,
       "column": 28,
       "severity": "error",
       "code": "TS2322",
@@ -382,7 +382,7 @@
     },
     {
       "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 80,
+      "line": 82,
       "column": 30,
       "severity": "error",
       "code": "TS2322",
@@ -391,7 +391,7 @@
     },
     {
       "file": "src/components/inbox/ConversationList.tsx",
-      "line": 211,
+      "line": 213,
       "column": 40,
       "severity": "error",
       "code": "TS2322",
@@ -604,15 +604,6 @@
       "code": "TS2322",
       "message": "Type 'UserSession' is not assignable to type '{ id: string; device_id: string; ip_address: string; started_at: string; }'. Types of property 'device_id' are incompatible. Type 'string | null' is not assignable to type 'string'. Type 'null' is not assignable to type 'string'.",
       "contextHash": "cbf3318ecdbc033daadd53b958c31e8bc960a5725e1e1e3f689ddec695b4aff3"
-    },
-    {
-      "file": "src/components/security/RateLimitRealtimeAlerts.tsx",
-      "line": 63,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '{ alert_type: string; created_at: string; description: string | null; id: string; ip_address: string | null; is_resolved: boolean | null; metadata: Json; resolved_at: string | null; resolved_by: string | null; severity: string; title: string; user_id: string | null; }[]' is not assignable to parameter of type 'SetStateAction<SecurityAlert[]>'. Type '{ alert_type: string; created_at: string; description: string | null; id: string; ip_address: string | null; is_resolved: boolean | null; metadata: Json; resolved_at: string | null; resolved_by: string | null; severity: string; title: string; user_id: string | null; }[]' is not assignable to type 'SecurityAlert[]'. Type '{ alert_type: string; created_at: string; description: string | null; id: string; ip_address: string | null; is_resolved: boolean | null; metadata: Json; resolved_at: string | null; resolved_by: string | null; severity: string; title: string; user_id: string | null; }' is not assignable to type 'SecurityAlert'. Types of property 'is_resolved' are incompatible. Type 'boolean | null' is not assignable to type 'boolean'. Type 'null' is not assignable to type 'boolean'.",
-      "contextHash": "46e6d3b5fae12f7f7a32b10b120d986fcce3d50e2623915868240611930d7ab1"
     },
     {
       "file": "src/components/security/SecurityOverview.tsx",
