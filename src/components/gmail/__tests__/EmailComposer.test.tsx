@@ -139,4 +139,15 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     render(<EmailComposer mode="reply-all" replyTo={msg} onClose={vi.fn()} />);
     expect(screen.getByText('Cc:')).toBeInTheDocument();
   });
+
+  it('modo forward: handleSend chama sendEmail.mutateAsync (não replyEmail)', async () => {
+    const onClose = vi.fn();
+    render(<EmailComposer mode="forward" replyTo={makeMessage()} onClose={onClose} />);
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+    await waitFor(() => expect(sendEmailMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ to: ['dest@email.com'], subject: 'Fwd: Orçamento' })
+    ));
+    expect(replyEmailMutateAsync).not.toHaveBeenCalled();
+  });
 });
