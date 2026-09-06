@@ -61,14 +61,19 @@ export function RateLimitRealtimeAlerts() {
       }
       if (data) {
         setAlerts(data);
+        return data;
       }
+      return null;
     };
 
-    fetchAlerts();
+// E62: setTimeout(0) move o fetch inicial fora do body síncrono (set-state-in-effect).
+    // lastKnownIds inicia vazio e é populado após o primeiro fetch.
+    let lastKnownIds = new Set<string>();
+    const timer = setTimeout(() => void fetchAlerts().then(initial => {
+      if (initial) lastKnownIds = new Set(initial.map((a: SecurityAlert) => a.id));
+    }), 0);
 
-    // E62: security_alerts removida da publicação realtime (migration 20260905).
-    // Polling de 15s detecta novos alertas comparando com o snapshot anterior.
-    let lastKnownIds = new Set<string>(data?.map((a: SecurityAlert) => a.id) ?? []);
+    // E62: Polling de 15s detecta novos alertas comparando com o snapshot anterior.
     const interval = setInterval(async () => {
       const { data: fresh } = await supabase
         .from('security_alerts')
@@ -87,7 +92,7 @@ export function RateLimitRealtimeAlerts() {
       }
     }, 15_000);
 
-    return () => clearInterval(interval);
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, []);
 
   const handleDismiss = async (alertId: string) => {
