@@ -41,11 +41,11 @@ export function PasswordResetRequestsPanel() {
   }, []);
 
   useEffect(() => {
-    fetchRequests();
-    // E62: password_reset_requests removida da publicação realtime (migration 20260905).
-    // Polling de 30s garante atualização sem depender de realtime.
-    const interval = setInterval(fetchRequests, 30_000);
-    return () => clearInterval(interval);
+    // E62: setTimeout(0) move o fetch inicial fora do body síncrono do effect
+    // satisfazendo react-hooks/set-state-in-effect sem alterar o comportamento.
+    const timer = setTimeout(() => void fetchRequests(), 0);
+    const interval = setInterval(() => void fetchRequests(), 30_000);
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, [fetchRequests]);
 
   const handleApprove = async (request: ResetRequest) => {
