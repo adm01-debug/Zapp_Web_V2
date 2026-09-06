@@ -79,7 +79,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
       )}
 
       <Section index={3} value="tags" icon={<Tag className="w-3.5 h-3.5 text-primary" />} label="Tags"
-        badge={(contact.tags.length + conversation.tags.length) > 0 ? contact.tags.length + conversation.tags.length : undefined}>
+        badge={((contact.tags ?? []).length + conversation.tags.length) > 0 ? (contact.tags ?? []).length + conversation.tags.length : undefined}>
         <TagsContent contact={contact} conversation={conversation} />
       </Section>
 
@@ -166,7 +166,7 @@ function Section({ index, value, icon, label, badge, children }: {
 function TagsContent({ contact, conversation }: { contact: Contact; conversation: Conversation }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {contact.tags.map((tag, i) => (
+      {(contact.tags ?? []).map((tag, i) => (
         <motion.div key={`contact-${tag}`} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}>
           <Badge variant="secondary" className="flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground hover:bg-primary/20 hover:scale-105 transition-all cursor-default group/tag">
             <span className="w-1.5 h-1.5 rounded-full bg-primary" />{tag}
@@ -175,14 +175,14 @@ function TagsContent({ contact, conversation }: { contact: Contact; conversation
         </motion.div>
       ))}
       {conversation.tags.map((tag, i) => (
-        <motion.div key={`conv-${tag}`} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: (contact.tags.length + i) * 0.03 }}>
+        <motion.div key={`conv-${tag}`} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: ((contact.tags ?? []).length + i) * 0.03 }}>
           <Badge variant="outline" className="flex items-center gap-1 border-border/30 hover:border-primary/30 hover:scale-105 transition-all cursor-default group/tag">
             <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />{tag}
             <X className="w-3 h-3 cursor-pointer opacity-0 group-hover/tag:opacity-100 hover:text-destructive transition-all" />
           </Badge>
         </motion.div>
       ))}
-      {contact.tags.length === 0 && conversation.tags.length === 0 && (
+      {(contact.tags ?? []).length === 0 && conversation.tags.length === 0 && (
         <div className="flex flex-col items-center gap-1.5 w-full py-4 text-center">
           <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center"><TagsIcon className="w-5 h-5 text-muted-foreground/30" /></div>
           <p className="text-xs text-muted-foreground/60">Nenhuma tag adicionada</p>

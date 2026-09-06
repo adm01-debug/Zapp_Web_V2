@@ -21,12 +21,12 @@ export function useSecureProfileUpdate() {
   return useMutation({
     mutationFn: async (params: UpdateProfileParams) => {
       const { data, error } = await supabase.rpc('update_own_profile', {
-        p_display_name: params.display_name ?? null,
-        p_avatar_url: params.avatar_url ?? null,
-        p_phone: params.phone ?? null,
-        p_email: params.email ?? null,
-        p_signature: params.signature ?? null,
-        p_birthday: params.birthday ?? null,
+        p_display_name: params.display_name,
+        p_avatar_url: params.avatar_url,
+        p_phone: params.phone,
+        p_email: params.email,
+        p_signature: params.signature,
+        p_birthday: params.birthday,
       });
       if (error) throw error;
       return data;

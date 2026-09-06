@@ -102,13 +102,13 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
       <AnimatePresence>
         {showCompactHeader && (
-          <ContactHeaderSection contact={contact} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact />
+          <ContactHeaderSection contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact />
         )}
       </AnimatePresence>
 
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
         <ContactHeaderSection
-          contact={contact} enrichedData={enrichedData} conversation={conversation}
+          contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation}
           onQuickAction={handleQuickAction} hasExpandedSections={accordionValue.length > 0}
           onCollapseAll={() => { setAccordionValue([]); saveAccordionState([]); }}
         />
@@ -117,8 +117,8 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
         <Accordion type="multiple" value={accordionValue} onValueChange={handleAccordionChange} className="w-full">
           <ContactAccordionSections
-            contact={contact} conversation={conversation} enrichedData={enrichedData}
-            aiTags={aiTags} slaInfo={slaInfo} profileId={profileId}
+            contact={contact} conversation={conversation} enrichedData={enrichedData ?? null}
+            aiTags={aiTags} slaInfo={slaInfo ?? null} profileId={profileId}
           />
         </Accordion>
 
@@ -130,8 +130,8 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       <EditContactDialog
         open={editDialogOpen} onOpenChange={setEditDialogOpen}
         contact={{
-          id: contact.id, name: contact.name, phone: contact.phone, avatar: contact.avatar,
-          email: contact.email, nickname: enrichedData?.nickname ?? undefined,
+          id: contact.id, name: contact.name, phone: contact.phone, avatar: contact.avatar ?? undefined,
+          email: contact.email ?? undefined, nickname: enrichedData?.nickname ?? undefined,
           surname: enrichedData?.surname ?? undefined, job_title: enrichedData?.job_title ?? undefined,
           company: enrichedData?.company ?? undefined, contact_type: enrichedData?.contact_type,
         }}
