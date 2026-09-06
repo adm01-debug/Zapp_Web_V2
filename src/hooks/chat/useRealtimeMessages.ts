@@ -58,6 +58,23 @@ export function useRealtimeMessages() {
     []
   );
 
+  // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
+  // e aplica patch otimista no array in-memory sem precisar de refetch.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { contactId, status } = (e as CustomEvent<{ contactId: string; status: string }>).detail;
+      commitConversations(prev =>
+        prev.map(c =>
+          c.contact.id === contactId
+            ? { ...c, contact: { ...c.contact, conversation_status: status } }
+            : c
+        )
+      );
+    };
+    window.addEventListener('zapp:contact-status-changed', handler);
+    return () => window.removeEventListener('zapp:contact-status-changed', handler);
+  }, [commitConversations]);
+
   const hydrateConversationForMessage = useCallback(
     async (message: RealtimeMessage) => {
       if (!message.contact_id) return;

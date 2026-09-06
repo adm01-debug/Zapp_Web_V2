@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface CloseConversationDialogProps {
   open: boolean;
@@ -63,11 +64,14 @@ export function CloseConversationDialog({
   profileId,
   onClosed,
 }: CloseConversationDialogProps) {
+  const { profile } = useAuth();
   const [reason, setReason] = useState('');
   const [outcome, setOutcome] = useState('');
   const [classification, setClassification] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const resolvedProfileId = profileId ?? profile?.id ?? null;
 
   const handleClose = async () => {
     if (!reason) {
@@ -75,17 +79,42 @@ export function CloseConversationDialog({
       return;
     }
     setSaving(true);
-    const { error } = await supabase
-      .from('conversation_closures')
-      .insert({
-        contact_id: contactId,
-        closed_by: profileId,
-        close_reason: reason,
-        outcome: outcome || null,
-        classification: classification || null,
-        notes: notes || null,
-      });
-    if (!error) {
+    try {
+      // 1. Registrar encerramento
+      const { error: closureError } = await supabase
+        .from('conversation_closures')
+        .insert({
+          contact_id: contactId,
+          closed_by: resolvedProfileId,
+          close_reason: reason,
+          outcome: outcome || null,
+          classification: classification || null,
+          notes: notes || null,
+        });
+
+      if (closureError) {
+        toast.error('Erro ao registrar encerramento');
+        return;
+      }
+
+      // 2. Atualizar conversation_status para 'resolved' (FSM: open -> resolved é válido)
+      const { error: updateError } = await supabase
+        .from('contacts')
+        .update({ conversation_status: 'resolved' })
+        .eq('id', contactId);
+
+      if (updateError) {
+        // Não bloqueia o fluxo — closure já foi salvo
+        console.warn('[CloseConversationDialog] Falha ao atualizar conversation_status:', updateError);
+      } else {
+        // Notifica o useRealtimeMessages para atualizar in-memory sem refetch
+        window.dispatchEvent(
+          new CustomEvent('zapp:contact-status-changed', {
+            detail: { contactId, status: 'resolved' },
+          })
+        );
+      }
+
       toast.success('Conversa encerrada com registro');
       onOpenChange(false);
       setReason('');
@@ -93,10 +122,9 @@ export function CloseConversationDialog({
       setClassification('');
       setNotes('');
       onClosed?.();
-    } else {
-      toast.error('Erro ao registrar encerramento');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (
