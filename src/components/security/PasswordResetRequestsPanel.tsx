@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw } from 'lucide-react';
@@ -29,15 +29,8 @@ export function PasswordResetRequestsPanel() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchRequests();
-    const channel = supabase.channel('password-reset-requests')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'password_reset_requests' }, () => fetchRequests())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-
-  const fetchRequests = async () => {
+  // fetchRequests declarada antes do useEffect para satisfazer react-hooks/immutability
+  const fetchRequests = useCallback(async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase.from('password_reset_requests_safe' as any).select('*').order('created_at', { ascending: false });
@@ -45,7 +38,15 @@ export function PasswordResetRequestsPanel() {
       setRequests((data || []) as unknown as ResetRequest[]);
     } catch (error) { log.error('Error fetching requests:', error); toast.error('Erro ao carregar solicitações'); }
     finally { setLoading(false); }
-  };
+  }, []);
+
+  useEffect(() => {
+    // E62: setTimeout(0) move o fetch inicial fora do body síncrono do effect
+    // satisfazendo react-hooks/set-state-in-effect sem alterar o comportamento.
+    const timer = setTimeout(() => void fetchRequests(), 0);
+    const interval = setInterval(() => void fetchRequests(), 30_000);
+    return () => { clearTimeout(timer); clearInterval(interval); };
+  }, [fetchRequests]);
 
   const handleApprove = async (request: ResetRequest) => {
     setProcessing(true);

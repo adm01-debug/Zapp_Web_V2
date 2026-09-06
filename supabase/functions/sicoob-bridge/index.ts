@@ -67,18 +67,28 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { data: newMessage, error: msgError } = await supabase.from('messages').insert({
+      // E08: upsert idempotente — dedup por external_id (message_id Sicoob).
+      // Race condition: dois webhooks simultâneos passam pelo check de linha 30,
+      // ambos tentam insert; ignoreDuplicates elimina o segundo silenciosamente.
+      const { data: newMessage, error: msgError } = await supabase.from('messages').upsert({
         contact_id: contactId, content, sender: 'contact', message_type: 'text',
         external_id: message_id, channel_type: 'internal_chat', is_read: false,
         status: 'delivered', created_at: created_at || new Date().toISOString(),
-      }).select('id').single();
+      }, { onConflict: 'external_id', ignoreDuplicates: true }).select('id').maybeSingle();
 
-      if (msgError) throw new Error(`Failed to create message: ${msgError.message}`);
+      // E09: 23505 = race condition resolvida pelo índice — mensagem já existe → ok
+      if (msgError && msgError.code !== '23505') throw new Error(`Failed to create message: ${msgError.message}`);
+
+      // ignoreDuplicates=true retorna null quando silencia conflito (race condition rara).
+      // Nesse caso buscamos o id existente para manter a resposta consistente.
+      const messageId = newMessage?.id ?? (
+        await supabase.from('messages').select('id').eq('external_id', message_id).maybeSingle()
+      ).data?.id;
 
       await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contactId);
 
-      log.done(200, { contactId, messageId: newMessage.id });
-      return jsonResponse({ success: true, contact_id: contactId, message_id: newMessage.id }, 200, req);
+      log.done(200, { contactId, messageId });
+      return jsonResponse({ success: true, contact_id: contactId, message_id: messageId }, 200, req);
 
     } else if (action === 'mark_read') {
       const parsed = parseBody(SicoobBridgeMarkReadSchema, body);
