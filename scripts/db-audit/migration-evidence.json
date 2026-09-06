@@ -514,11 +514,10 @@
     {
       "version": "20260906000001",
       "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
-      "file_sha256": "4af3dd14634ccea3633b1e9beda81b3d34e343d4a83bb81d3aad27c413c28f49",
+      "file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
       "ledger_name": "e31_contacts_is_lid_legacy",
-      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
-      "kind": "ledger-only/comment-only",
-      "justification": "O registro foi inserido no ledger sem statements SQL (null); o arquivo contem apenas comentarios que descrevem a situacao — sem SQL executavel. A pinagem e por file_sha256 e ledger_statements_sha256 apenas."
+      "kind": "ledger-only/name-and-file-pinned",
+      "justification": "O ledger registrou o nome sem SQL capturado (statements null); o arquivo contem o DDL real (ADD COLUMN IF NOT EXISTS is_lid_legacy boolean NOT NULL DEFAULT false + indice + filtro OmnichannelInbox). Os bytes do replay ficam fixados sem reescrever o historico do ledger."
     },
     {
       "version": "20260906090000",
