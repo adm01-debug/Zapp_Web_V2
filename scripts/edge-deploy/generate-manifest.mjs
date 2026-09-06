@@ -15,6 +15,17 @@ function parseArgs(argv) {
 }
 
 export async function runGenerateManifest({ repoRoot, output, check }) {
+  let legacyUnmanaged = [];
+  try {
+    const legacyPath = path.resolve(repoRoot, 'scripts', 'edge-deploy', 'legacy-functions.json');
+    const parsed = JSON.parse(await readFile(legacyPath, 'utf8'));
+    if (!Array.isArray(parsed) || !parsed.every((n) => typeof n === 'string')) {
+      throw new Error('legacy-functions.json must be a JSON array of strings');
+    }
+    legacyUnmanaged = parsed;
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
   const outputPath = path.resolve(repoRoot, output);
   const committed = await readFile(outputPath, 'utf8').catch(() => '');
 
@@ -24,7 +35,7 @@ export async function runGenerateManifest({ repoRoot, output, check }) {
     if (Array.isArray(existing.orphan_allowlist)) orphanAllowlist = existing.orphan_allowlist;
   } catch { /* first run or invalid — proceed without */ }
 
-  const manifest = await buildDeploymentManifest({ repoRoot, orphanAllowlist });
+  const manifest = await buildDeploymentManifest({ repoRoot, legacyUnmanaged, orphanAllowlist });
   const serialized = serializeManifest(manifest);
 
   if (check) {

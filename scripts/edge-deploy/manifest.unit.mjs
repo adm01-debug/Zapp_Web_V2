@@ -86,6 +86,38 @@ test('buildDeploymentManifest rejects a function directory without index.ts', as
   );
 });
 
+test('buildDeploymentAttestation accepts extra functions listed in legacy_unmanaged_functions', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifest = await buildDeploymentManifest({ repoRoot: root, legacyUnmanaged: ['zombie'] });
+  assert.deepEqual(manifest.legacy_unmanaged_functions, ['zombie']);
+  assert.equal(verifyManifestDigest(manifest), true);
+
+  const base = {
+    manifest,
+    gitSha: 'a'.repeat(40),
+    runId: '123',
+    deploymentScope: 'all',
+    createdAt: '2026-08-31T00:00:00.000Z',
+  };
+  const remote = [
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true },
+    { id: '3', slug: 'zombie', version: 1, status: 'ACTIVE', verify_jwt: true },
+  ];
+
+  const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
+  assert.equal(attestation.function_count, 2);
+
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: [...remote, { slug: 'intruder', verify_jwt: true }],
+    }),
+    /extra=\[intruder]/,
+  );
+});
+
 test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functions', async (t) => {
   const root = await createFixture();
   t.after(() => rm(root, { recursive: true, force: true }));

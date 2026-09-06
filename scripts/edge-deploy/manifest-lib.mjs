@@ -136,7 +136,7 @@ function manifestDigest(manifestWithoutDigest) {
   return sha256(`zapp-edge-deployment-manifest-v1\0${JSON.stringify(manifestWithoutDigest)}`);
 }
 
-export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [] }) {
+export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [], legacyUnmanaged = [] }) {
   const absoluteRepoRoot = path.resolve(repoRoot);
   const functionsRoot = path.join(absoluteRepoRoot, 'supabase', 'functions');
   const configPath = path.join(absoluteRepoRoot, 'supabase', 'config.toml');
@@ -199,6 +199,7 @@ export async function buildDeploymentManifest({ repoRoot, orphanAllowlist = [] }
   const manifestWithoutDigest = {
     schema_version: MANIFEST_SCHEMA_VERSION,
     project_ref: projectRef,
+    legacy_unmanaged_functions: [...legacyUnmanaged].sort(),
     config: {
       path: 'supabase/config.toml',
       sha256: sha256(configSource),
@@ -259,10 +260,11 @@ export function buildDeploymentAttestation({
   }
 
   const expectedNames = new Set(manifest.functions.map((fn) => fn.name));
+  const legacyAllowed = new Set(Array.isArray(manifest.legacy_unmanaged_functions) ? manifest.legacy_unmanaged_functions : []);
   const missing = [...expectedNames].filter((name) => !remoteByName.has(name)).sort();
   const extra = [...remoteByName.keys()].filter((name) => !expectedNames.has(name)).sort();
-  const orphanAllowlist = new Set(manifest.orphan_allowlist ?? []);
-  const unexpectedExtra = extra.filter((name) => !orphanAllowlist.has(name));
+  const orphanSet = new Set(manifest.orphan_allowlist ?? []);
+  const unexpectedExtra = extra.filter((name) => !legacyAllowed.has(name) && !orphanSet.has(name));
   if (missing.length || unexpectedExtra.length) {
     throw new Error(`Remote function set mismatch; missing=[${missing.join(',')}], extra=[${unexpectedExtra.join(',')}]`);
   }
