@@ -408,13 +408,13 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "bytes": 9614,
-      "sha256": "8aa6d1cee5d754fd980feaf06508155dc6f3488a92972ddaf9c3d0c5117479dd"
+      "bytes": 9623,
+      "sha256": "bcc5fee4f8ef2119fb6e22449edc77901c9469b5c6ce8bedae48538c09ec004e"
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "bytes": 9471,
-      "sha256": "9e5a7acbe379944ab07869d6482c2cc5279910fa336cc43f9eefa61f16d8b9c6"
+      "bytes": 9600,
+      "sha256": "138836b34bbfece58fda4554e3f76159c02150b16bb89a2277dc29dc96f1df1f"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -1166,7 +1166,7 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6a5495d0448490ed5340802a551897fc4801b7422d25e020ce268322641fbb90",
+      "source_sha256": "955a596f5973b3f2bc49eaf7be932db191e5ff41cdc41702c55b8d22b61ecc14",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1178,7 +1178,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7b2915061a318bc3b901b3c038bba2abc7f85174844195e63d956bea0b282c4a",
+      "source_sha256": "3067e8157cf64a49f551548b7d69b23a45ba980ed31ce7ce4706eb73a64b8201",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1199,5 +1199,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d73d3e356c135eed2487ec50687c1dce2493f7f33ff5ff065f4044229d19c71b"
+  "manifest_sha256": "e71af7067fd3b81a1463e7a80f4de8f9007d1aa845df4496c10ce16cf2270e24"
 }
