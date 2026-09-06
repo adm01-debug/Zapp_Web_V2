@@ -73,6 +73,26 @@ Deno.serve(async (req) => {
     const evolutionKey = Deno.env.get("EVOLUTION_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Verify caller has admin or manager role
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["admin", "manager"])
+      .maybeSingle();
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+    }
+
     const { campaignId, action } = await req.json();
 
     if (!campaignId) {
