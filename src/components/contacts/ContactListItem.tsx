@@ -28,9 +28,9 @@ export function ContactListItem({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border/30",
-        "hover:bg-muted/30 hover:border-primary/15 transition-all duration-150 cursor-pointer",
-        isSelected && "bg-primary/5 border-primary/30"
+        "group flex items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
+        "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
+        isSelected && "bg-primary/5 border-primary/60"
       )}
       onClick={() => onOpenChat(contact.id)}
     >
@@ -44,7 +44,7 @@ export function ContactListItem({
 
       {/* Avatar */}
       <div className="relative shrink-0">
-        <Avatar className="w-9 h-9 ring-1 ring-border/40">
+        <Avatar className="w-10 h-10 ring-2 ring-border/70">
           <AvatarImage src={contact.avatar_url || undefined} />
           <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
             {getInitials(contact.name)}
@@ -66,7 +66,7 @@ export function ContactListItem({
           />
           <Badge
             variant="outline"
-            className={cn("text-[10px] h-4 px-1.5 font-medium gap-1 shrink-0", typeConfig.badgeClass)}
+            className={cn("h-6 px-2.5 rounded-full text-[12.5px] font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
           >
             {typeConfig.iconNode}
             {typeConfig.label}
@@ -144,13 +144,13 @@ export function ContactListItem({
         className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-primary/10 hover:text-primary" onClick={() => onOpenChat(contact.id)} title="Conversar">
-          <MessageSquare className="w-3.5 h-3.5" />
+        <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50" onClick={() => onOpenChat(contact.id)} title="Conversar">
+          <MessageSquare className="w-4 h-4" />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-6 h-6">
-              <MoreVertical className="w-3.5 h-3.5" />
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50">
+              <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
