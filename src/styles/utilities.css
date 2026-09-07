@@ -123,11 +123,6 @@
     box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04), 0 1px 1px hsl(var(--foreground) / 0.02);
 }
 
-.dark .page-glow {
-  background-image: var(--page-glow);
-  background-repeat: no-repeat;
-}
-
 /* ===== PROMO GIFTS SYSTEM — card-lift, card-glow ===== */
 .card-lift {
   transition:

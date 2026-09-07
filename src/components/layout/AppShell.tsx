@@ -17,6 +17,8 @@ import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
 import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
+import { useTheme } from '@/hooks/ui/useTheme';
+const StarBackground = lazy(() => import('@/components/layout/StarBackground'));
  import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
@@ -60,6 +62,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
 }, _ref) {
   const isMobile = useIsMobile();
   const { isZen, toggleZen } = useZenMode();
+  const { isDark } = useTheme();
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -140,10 +143,15 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           aria-label="Conteúdo principal"
           tabIndex={-1}
           className={cn(
-            'flex flex-1 items-stretch overflow-hidden relative min-w-0 min-h-0 focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px] page-glow',
+            'flex flex-1 items-stretch overflow-hidden relative min-w-0 min-h-0 focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px]',
             isMobile && 'pt-12 pb-[56px]'
           )}
         >
+           {isDark && (
+             <Suspense fallback={null}>
+               <StarBackground />
+             </Suspense>
+           )}
            {!isMobile && isInboxView && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
           {showChecklist && currentView === 'dashboard' && (
             <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
