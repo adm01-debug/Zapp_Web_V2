@@ -77,11 +77,13 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
                 <div className="h-3 w-24 rounded bg-muted/70 animate-shimmer" />
               </div>
             </div>
-            <div className="mt-3 space-y-1.5">
+            {/* space-y-1 matches ContactCard (was 1.5) */}
+            <div className="mt-3 space-y-1">
               <div className="h-3 w-32 rounded bg-muted/60 animate-shimmer" />
               <div className="h-3 w-40 rounded bg-muted/60 animate-shimmer" />
             </div>
-            <div className="mt-auto pt-3 flex items-center justify-between">
+            {/* pt-2 matches ContactCard (was pt-3) */}
+            <div className="mt-auto pt-2 flex items-center justify-between">
               <div className="h-3 w-24 rounded bg-muted/50 animate-shimmer" />
               <div className="flex items-center gap-1.5">
                 <div className="w-9 h-9 rounded-[10px] bg-muted animate-shimmer" />
