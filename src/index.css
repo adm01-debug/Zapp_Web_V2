@@ -23,7 +23,7 @@
 
 /* ===== FONT VARIABLES ===== */
 :root {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Outfit', system-ui, sans-serif;
 }
 
 /* ===== VIEWPORT LOCK — Allowed overflow on mobile for Auth page compatibility ===== */
