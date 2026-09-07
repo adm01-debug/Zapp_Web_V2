@@ -42,7 +42,7 @@ export function aggregateKpi(rows: Row[], now = new Date()) {
   const leads = rows.filter(r => r.contact_type === 'lead');
   const leads30 = leads.filter(r => inLast(r, 30)).length;
   const leadsPrev30 = leads.filter(r => between(r, 30, 60)).length;
-  const empresasDistinct = new Set(rows.map(r => r.company?.trim()).filter(Boolean)).size;
+  const empresasDistinct = new Set(rows.map(r => r.company?.toLowerCase().trim()).filter(Boolean)).size;
 
   const prevTotal = Math.max(rows.length - novos30, 1);
 

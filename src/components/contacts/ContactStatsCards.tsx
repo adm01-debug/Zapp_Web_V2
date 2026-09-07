@@ -12,7 +12,7 @@ export function ContactStatsCards({ totalAll, leadsAll }: ContactStatsCardsProps
 
   if (isLoading || !kpi) {
     return (
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="h-[84px] rounded-[14px] border border-border/70 bg-card animate-shimmer" />
         ))}
@@ -21,7 +21,7 @@ export function ContactStatsCards({ totalAll, leadsAll }: ContactStatsCardsProps
   }
 
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <ContactKpiCard
         label="Total de Contatos"
         value={totalAll}
