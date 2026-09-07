@@ -26,6 +26,11 @@ export function ContactCard({
   const displayName = `${contact.name}${contact.surname ? ' ' + contact.surname : ''}`.trim();
   const company = companyName || contact.company;
 
+  // "Último contato em" quando há mensagem real; fallback para data de cadastro
+  const footerLabel = contact.last_message_at
+    ? `Último contato em ${format(new Date(contact.last_message_at), 'dd MMM yyyy', { locale: ptBR })}`
+    : `Cadastrado em ${format(new Date(contact.created_at), 'dd MMM yyyy', { locale: ptBR })}`;
+
   return (
     <div
       data-testid="contact-card"
@@ -113,7 +118,7 @@ export function ContactCard({
         </div>
       </div>
 
-      {/* Contact info — space-y-1 (was 1.5) keeps card at 164px */}
+      {/* Contact info — space-y-1 mantém altura em 164px */}
       <div className="mt-3 space-y-1">
         {contact.phone && (
           <div className="flex items-center gap-2 text-[13.5px]" onClick={(e) => e.stopPropagation()}>
@@ -157,11 +162,11 @@ export function ContactCard({
         </div>
       )}
 
-      {/* Footer — pt-2 (was pt-3) */}
+      {/* Footer — pt-2 fecha o gap final */}
       <div className="mt-auto pt-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground/80 min-w-0">
           <Clock className="w-[14px] h-[14px] shrink-0" />
-          <span className="truncate">Cadastrado em {format(new Date(contact.created_at), "dd MMM yyyy", { locale: ptBR })}</span>
+          <span className="truncate">{footerLabel}</span>
         </div>
         <div
           className="flex items-center gap-1.5 shrink-0"
