@@ -40,6 +40,9 @@ export function usePaymentLinks() {
       if (error) throw error;
       return data as PaymentLink[];
     },
+    // O canal realtime existe apenas enquanto a tela está montada. Revalidar
+    // no retorno fecha a janela em que mudanças externas poderiam ficar em cache.
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {

@@ -43,5 +43,9 @@ export function useMetaCAPIData() {
       };
     },
     staleTime: 30_000,
+    // O QueryClient global desativa refetchOnMount. Esta tela não mantém um
+    // canal realtime ativo, então precisa revalidar mudanças feitas enquanto
+    // esteve desmontada.
+    refetchOnMount: 'always',
   });
 }
