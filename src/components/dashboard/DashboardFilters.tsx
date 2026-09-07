@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import {
   Popover,
   PopoverContent,
@@ -15,16 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
-import { 
-  Filter, 
-  Calendar as CalendarIcon, 
-  Users, 
-  Layers, 
-  X, 
+import {
+  Calendar as CalendarIcon,
   RefreshCw,
-  ChevronDown 
 } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useQueues } from '@/hooks/business/useQueues';
@@ -148,162 +141,114 @@ export function DashboardFilters({
     });
   };
 
-  const clearFilters = () => {
-    onFiltersChange(getDefaultFilters());
-  };
-
-  const activeFiltersCount = [
-    filters.period !== 'today',
-    filters.queueId !== null,
-    filters.agentId !== null,
-  ].filter(Boolean).length;
-
-  const selectedQueue = queues?.find(q => q.id === filters.queueId);
-  const selectedAgent = agents?.find(a => a.id === filters.agentId);
+  const periodLabel = PERIOD_OPTIONS.find(o => o.value === filters.period)?.label ?? 'Personalizado';
+  const rangeLabel = isSameDay(filters.dateRange.from, filters.dateRange.to)
+    ? format(filters.dateRange.from, "EEE, dd 'de' MMM 'de' yyyy", { locale: ptBR })
+    : `${format(filters.dateRange.from, 'dd/MM', { locale: ptBR })} – ${format(filters.dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-wrap items-center gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
-    >
-      {/* Period Selector */}
-      <div className="flex items-center gap-2">
-        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-        <Select value={filters.period} onValueChange={handlePeriodChange}>
-          <SelectTrigger className="w-[140px] h-9 bg-background/50">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
+    <div className="flex flex-wrap items-center gap-2.5">
+      {/* Período */}
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-testid="filter-period"
+            className="h-[34px] w-full md:w-[167px] rounded-lg bg-input border border-border px-3 flex items-center gap-2 text-left hover:border-border/80 transition-colors shrink-0"
+          >
+            <CalendarIcon className="w-4 h-4 text-foreground-secondary shrink-0" />
+            <span className="flex flex-col leading-tight min-w-0">
+              <span className="text-[12px] font-semibold text-foreground truncate">{periodLabel}</span>
+              <span className="text-[11px] text-muted-foreground truncate">{rangeLabel}</span>
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="p-1 w-40">
             {PERIOD_OPTIONS.map(option => (
-              <SelectItem key={option.value} value={option.value}>
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  handlePeriodChange(option.value);
+                  if (option.value !== 'custom') setIsCalendarOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-2 py-1.5 rounded-md text-[13px] transition-colors',
+                  filters.period === option.value ? 'bg-primary/15 text-primary font-medium' : 'hover:bg-muted/60 text-foreground',
+                )}
+              >
                 {option.label}
-              </SelectItem>
+              </button>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
+          </div>
+          {filters.period === 'custom' && (
+            <div className="border-t border-border">
+              <Calendar
+                mode="range"
+                selected={{
+                  from: filters.dateRange.from,
+                  to: filters.dateRange.to,
+                }}
+                onSelect={(range) => handleDateRangeChange(range || {})}
+                numberOfMonths={2}
+                locale={ptBR}
+              />
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
 
-      {/* Custom Date Range */}
-      <AnimatePresence>
-        {filters.period === 'custom' && (
-          <motion.div
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 'auto' }}
-            exit={{ opacity: 0, width: 0 }}
-          >
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="h-9 gap-2 bg-background/50"
-                >
-                  <span className="text-xs">
-                    {format(filters.dateRange.from, 'dd/MM', { locale: ptBR })} - {format(filters.dateRange.to, 'dd/MM', { locale: ptBR })}
-                  </span>
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={{
-                    from: filters.dateRange.from,
-                    to: filters.dateRange.to,
-                  }}
-                  onSelect={(range) => handleDateRangeChange(range || {})}
-                  numberOfMonths={2}
-                  locale={ptBR}
+      {/* Fila */}
+      <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
+        <SelectTrigger data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectValue placeholder="Todas as filas" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as filas</SelectItem>
+          {queues?.map(queue => (
+            <SelectItem key={queue.id} value={queue.id}>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: queue.color }}
                 />
-              </PopoverContent>
-            </Popover>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                {queue.name}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div className="h-6 w-px bg-border/50" />
+      {/* Agente */}
+      <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
+        <SelectTrigger data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectValue placeholder="Todos os agentes" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos os agentes</SelectItem>
+          {agents?.map(agent => (
+            <SelectItem key={agent.id} value={agent.id}>
+              {agent.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      {/* Queue Filter */}
-      <div className="flex items-center gap-2">
-        <Layers className="w-4 h-4 text-muted-foreground" />
-        <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
-          <SelectTrigger className="w-[160px] h-9 bg-background/50">
-            <SelectValue placeholder="Todas as filas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as filas</SelectItem>
-            {queues?.map(queue => (
-              <SelectItem key={queue.id} value={queue.id}>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: queue.color }}
-                  />
-                  {queue.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Agent Filter */}
-      <div className="flex items-center gap-2">
-        <Users className="w-4 h-4 text-muted-foreground" />
-        <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
-          <SelectTrigger className="w-[160px] h-9 bg-background/50">
-            <SelectValue placeholder="Todos os agentes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os agentes</SelectItem>
-            {agents?.map(agent => (
-              <SelectItem key={agent.id} value={agent.id}>
-                {agent.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Active Filters Badge */}
-      <AnimatePresence>
-        {activeFiltersCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-          >
-            <Badge 
-              variant="secondary" 
-              className="gap-1 cursor-pointer hover:bg-secondary/80"
-              onClick={clearFilters}
-            >
-              <Filter className="w-3 h-3" />
-              {activeFiltersCount} filtro{activeFiltersCount > 1 ? 's' : ''}
-              <X className="w-3 h-3 ml-1" />
-            </Badge>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Refresh Button */}
+      {/* Atualizar */}
       {onRefresh && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
+        <motion.button
+          type="button"
+          data-testid="filter-refresh"
+          whileTap={{ scale: 0.98 }}
           onClick={onRefresh}
           disabled={isRefreshing}
+          aria-label="Atualizar"
+          className="h-[34px] w-[38px] rounded-lg bg-primary/25 border border-primary/40 text-primary flex items-center justify-center shrink-0 disabled:opacity-60"
         >
-          <RefreshCw className={cn(
-            "w-4 h-4",
-            isRefreshing && "animate-spin"
-          )} />
-        </Button>
+          <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+        </motion.button>
       )}
-    </motion.div>
+    </div>
   );
 }

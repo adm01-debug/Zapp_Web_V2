@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   TrendingUp, BarChart3, Target, Clock, Brain, Award, Heart, Smile, FileText,
@@ -15,8 +16,11 @@ import { SatisfactionMetrics } from './SatisfactionMetrics';
 import { SentimentTrendChart } from './SentimentTrendChart';
 import { ScheduledReportsManager } from './ScheduledReportsManager';
 import { useDashboardData } from '@/hooks/analytics/useDashboardData';
+import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
+import { DashboardTopBar } from './overview/DashboardTopBar';
+import { DashboardHeader } from './overview/DashboardHeader';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -30,10 +34,21 @@ export function DashboardView() {
     queueId: filters.queueId,
     agentId: filters.agentId,
   });
+  // Instância única de useRealtimeDashboard (antecipada da Fase 5/etapa 46: o
+  // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
+  // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
+  const realtime = useRealtimeDashboard();
+  const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
+    // Chaves das hooks da Fase 5-7 (ainda não existem antes delas — invalidateQueries
+    // é um no-op seguro para queryKey sem cache correspondente).
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['queue-health'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-conversation-events'] });
+    queryClient.invalidateQueries({ queryKey: ['today-hourly-volume'] });
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -43,21 +58,18 @@ export function DashboardView() {
 
   return (
     <div className="w-full min-w-0">
-      {/* Faixa do topo (sino + usuário) — componente real chega na Fase 2.
-          Sem gap explícito para o header abaixo: a referência mede a faixa
-          e o header card como adjacentes (ritmo vertical medido no CP1). */}
-      <div data-testid="dash-topbar" className="min-h-7" />
+      {/* Sem gap explícito para o header abaixo: a referência mede a faixa
+          do topo e o header card como adjacentes (ritmo vertical do CP1). */}
+      <div data-testid="dash-topbar">
+        <DashboardTopBar unreadMessages={realtime.unreadMessages} />
+      </div>
 
       <div className="space-y-2.5">
-        {/* Header card (tile + título + filtros) — layout definitivo chega na Fase 2;
-            filtros já funcionais para não regredir período/fila/agente/refresh. */}
-        <div data-testid="dash-header" className="min-h-[70px] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-[-0.02em] text-foreground">Dashboard</h1>
-            <p className="text-[13px] text-foreground-secondary mt-1">Visão geral do atendimento em tempo real</p>
-          </div>
-          <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        </div>
+        <DashboardHeader
+          filters={(
+            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+          )}
+        />
 
         <Tabs value={tab} onValueChange={setTab}>
         <TabsList data-testid="dash-tabs" className="mb-0 bg-muted/50 border border-border/30 flex-wrap">
