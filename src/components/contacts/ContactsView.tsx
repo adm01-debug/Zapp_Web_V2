@@ -22,7 +22,6 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
-import { ContactsTopActions } from './ContactsTopActions';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
@@ -82,7 +81,6 @@ export function ContactsView() {
         title="Contatos"
         subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
-        topRight={<ContactsTopActions />}
         actions={
           <div className="flex items-center gap-3 flex-wrap">
             {isExternalConfigured && (

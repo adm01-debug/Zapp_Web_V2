@@ -83,7 +83,7 @@ export function GreetingBanner() {
 
           <div className="hidden lg:block w-px h-9 bg-border shrink-0" />
           <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 bg-[hsl(224_85%_29%)] text-[hsl(217_100%_80%)]">
+            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 bg-primary/15 text-primary-glow">
               <Zap className="w-3.5 h-3.5" />
               {stats.xp.toLocaleString('pt-BR')} XP
             </span>

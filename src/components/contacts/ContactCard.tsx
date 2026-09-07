@@ -35,9 +35,8 @@ export function ContactCard({
     <div
       data-testid="contact-card"
       className={cn(
-        "group relative flex flex-col min-h-[164px] rounded-[14px] border bg-card p-4 cursor-pointer",
+        "card-lift card-glow group relative flex flex-col min-h-[164px] rounded-[14px] bg-card p-4 cursor-pointer",
         "transition-[transform,border-color,box-shadow] duration-150",
-        "hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.35)]",
         isSelected
           ? "ring-1 ring-primary border-primary/60 bg-primary/5"
           : "border-border/70"

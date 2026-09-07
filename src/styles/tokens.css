@@ -294,14 +294,14 @@
     --layout-max-content: 72rem;
 
     /* ===== KPI TILES (Promo Gifts — charcoal dark) ===== */
-    --kpi-tile-blue: 221 83% 53%;
-    --kpi-tile-blue-fg: 221 95% 78%;
-    --kpi-tile-green: 142 71% 45%;
-    --kpi-tile-green-fg: 142 86% 68%;
-    --kpi-tile-purple: 258 90% 62%;
-    --kpi-tile-purple-fg: 258 95% 82%;
-    --kpi-tile-yellow: 38 92% 50%;
-    --kpi-tile-yellow-fg: 38 100% 74%;
+    --kpi-tile-blue: 221 83% 53% / 0.13;
+    --kpi-tile-blue-fg: 221 83% 72%;
+    --kpi-tile-green: 142 71% 45% / 0.13;
+    --kpi-tile-green-fg: 142 76% 55%;
+    --kpi-tile-purple: 258 90% 62% / 0.13;
+    --kpi-tile-purple-fg: 258 90% 72%;
+    --kpi-tile-yellow: 38 92% 50% / 0.13;
+    --kpi-tile-yellow-fg: 38 92% 62%;
 
     /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
     --foreground-secondary: 215 30% 78%;

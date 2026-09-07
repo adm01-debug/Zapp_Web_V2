@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,12 +39,17 @@ function writeStoredGroupState(label: string, isOpen: boolean) {
 
 export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, onViewChange, defaultOpen = false, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavGroupProps) {
   const hasActiveItem = items.some(item => item.id === currentView);
-  const [isOpen, setIsOpen] = useState(() => readStoredGroupsState()[label] ?? (defaultOpen || hasActiveItem));
+  // Derived: always show group open when it contains the active item
+  // isOpen tracks user's explicit toggle; hasActiveItem is auto-override
+  const [isOpen, setIsOpen] = useState(() => {
+    const stored = readStoredGroupsState()[label];
+    return stored !== undefined ? stored : (defaultOpen || hasActiveItem);
+  });
 
-  useEffect(() => {
-    if (hasActiveItem && !isOpen) setIsOpen(true);
-  }, [hasActiveItem]);
 
+
+
+  const effectiveOpen = isOpen || hasActiveItem;
   const handleToggle = () => {
     setIsOpen((prev) => {
       const next = !prev;
@@ -63,7 +68,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
           ? 'text-primary'
           : 'text-muted-foreground hover:text-foreground'
       )}
-      aria-expanded={isOpen}
+      aria-expanded={effectiveOpen}
       aria-label={`${label} — ${isOpen ? 'recolher' : 'expandir'}`}
     >
       <GroupIcon className={cn(
@@ -78,7 +83,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       <ChevronRight className={cn(
         'transition-transform duration-250 ease-out shrink-0',
         collapsed ? 'w-[8px] h-[8px]' : 'w-[11px] h-[11px] ml-auto opacity-60 group-hover/trigger:opacity-100',
-        isOpen && 'rotate-90'
+        effectiveOpen && 'rotate-90'
       )} />
     </button>
   );
@@ -97,7 +102,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       )}
 
       <AnimatePresence initial={false}>
-        {isOpen && (
+        {effectiveOpen && (
           <motion.nav
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
