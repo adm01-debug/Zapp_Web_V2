@@ -7,7 +7,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 ## CP0 Ambiente      [x] sha=3bf9a4e1 · worktree criado · node_modules symlinked de main checkout
   baseline: lint-ratchet=OK (1201 dívidas, 0 novas) · implicit-any=0 · typecheck=timeout (pré-existente no repo)
 
-## CP1 Paleta/Tipo   [ ] sha= · shot=pg-01-after.png · ΔE page=_ card=_ sidebar=_ · fonts PJS+Outfit=_ · light ok=_ · skin v5=_
+## CP1 Paleta/Tipo   [x] sha=9afd393b · tokens navy→charcoal (36 subs .dark), PJS/Outfit, radius 14, sidebar 256px, skin v5 · ΔE: bg≈0 (rgb(14,14,16)=#0e0e10) · primary 221 83% 53% ✓ · light=sem mudança sha= · shot=pg-01-after.png · ΔE page=_ card=_ sidebar=_ · fonts PJS+Outfit=_ · light ok=_ · skin v5=_
 
 ## CP2 Header        [x] sha=58d3714f · AppHeader.tsx, HeaderSectionAnchor.tsx, GlobalSearchTrigger.tsx, HeaderUserPill.tsx, RoleBadge.tsx · AppShell reestruturado em coluna flex (Sidebar | [AppHeader sticky + main]) · AgentProfilePopover refatorado: ProfileMenuContent extraído e reusado no HeaderUserPill · tsc 0 erros · eslint limpo · vite build ok
 
@@ -21,15 +21,19 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP7 Primitivos    [x] sha=49a0310a · button.tsx: +active:scale-[0.97] na base (variante success já existia) · input.tsx: já era h-10 rounded-xl, sem mudança · badge.tsx: já era rounded-full, sem mudança · tabs.tsx: data-[state=active] bg-background/text-foreground → bg-primary/text-primary-foreground (já era o padrão manualmente overridden em Auth.tsx/ConversationList.tsx/VirtualizedConversationList.tsx — confirma que o novo default é o comportamento pretendido) · fix necessário: OmnichannelInbox.tsx e GmailInboxView.tsx usam tabs estilo "underline" (border-b-2, sem bg próprio) — sem o data-[state=active]:bg-transparent explícito herdariam o novo bg-primary sólido; corrigido nos dois · demais consumers (DashboardTabs, SLARulesManager, ContactTypeTabs, AIToolsPopover) já tinham bg-* próprio, sem conflito · tsc/eslint/build ok
 
-## CP8 Contatos      [ ] pendente
+## CP8 Contatos      [x] sha=8998b93b · ContactCard +card-lift card-glow, sem hover manual · ContactKpiCard h-[96px] rounded-2xl +card-glow · kpi-tile→alpha/0.13 (charcoal tint) · toolbar h-11→h-10 · ContactsTopActions deletado · cherry-picks pulados (de0b8def squash já tem tudo)
 
-## CP9 Views         [ ] pendente
+## CP9 Views         [x] sha=8998b93b · GreetingBanner bg-[hsl(224_85%_29%)]→bg-primary/15 (único hardcoded navy restante) · Inbox/chat tokens OK (já em fase 1) · DashboardTopBar sem hardcoded
 
-## CP10 Motion/Perf  [ ] pendente
+## CP10 Motion/Perf  [x] sha=8998b93b · animations.css: ::view-transition-old/new 300ms fade + reduced-motion 0.001ms · SidebarNavGroup: effectiveOpen pattern (isOpen||hasActiveItem) sem useEffect/useRef · build 15s exit 0
 
-## CP11 Fidelidade   [ ] pendente
+## CP11 Fidelidade   [x] sha=abd1b838 · QA Playwright local 1440×900 — 10/10 gates OK:
+  bg=#0e0e10 ✓ primary=221 83% 53% ✓ background=240 6% 6% ✓
+  kpi=[96,96,96,96] ✓ cards=174px ✓ hasDark=true ✓
+  fontPJS=true ✓ noScroll=true ✓ card-lift=true ✓ header=56px ✓
+  consoleErrors: 2 pré-existentes (<button> nested no ContactResultsSummary — não introduzido)
 
-## CP12 Entrega      [ ] pendente
+## CP12 Entrega      [ ] sha= · PR=pendente · CI=pendente · merge=pendente
 
 ## Divergências plano × código (verificadas na simulação)
 - AppShell.main usa overflow-hidden; scroll real está em ViewContainer (overflow-y-auto).
