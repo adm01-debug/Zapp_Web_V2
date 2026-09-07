@@ -136,7 +136,7 @@ export function useContactsSearch() {
   // ─── Último contato: max(messages.created_at) por contato da página atual ───
   const contactIds = useMemo(() => contacts.map(c => c.id), [contacts]);
 
-  const { data: lastMsgMap } = useQuery({
+  const { data: lastMsgMap, isSuccess: lastMsgSuccess } = useQuery({
     queryKey: ['contacts-last-message', contactIds],
     queryFn: async () => {
       const { data, error } = await ContactService.getLastMessageDates(contactIds);
@@ -158,9 +158,10 @@ export function useContactsSearch() {
   const contactsEnriched = useMemo(() =>
     contacts.map(c => ({
       ...c,
-      last_message_at: lastMsgMap?.[c.id] ?? null,
+      // Se a query falhou (isSuccess=false), não sobrescreve com null — ContactCard usa created_at
+      ...(lastMsgSuccess && { last_message_at: lastMsgMap?.[c.id] ?? null }),
     })),
-    [contacts, lastMsgMap]
+    [contacts, lastMsgMap, lastMsgSuccess]
   );
   // ─────────────────────────────────────────────────────────────────────────────
 

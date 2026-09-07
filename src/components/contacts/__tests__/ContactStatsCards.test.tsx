@@ -65,6 +65,7 @@ describe('ContactStatsCards', () => {
     const empresasCard = screen.getByText('Empresas').closest('[data-testid="kpi-card"]') as HTMLElement;
     // Só o ícone do tile é um svg — sem o segundo svg (sparkline) quando a série é zerada.
     expect(empresasCard.querySelectorAll('svg')).toHaveLength(1);
-    expect(empresasCard.textContent).toContain('sem alteração');
+    // deltaPct=null (noData) → subtitle oculto, 'sem alteração' não aparece
+    expect(empresasCard.textContent).not.toContain('sem alteração');
   });
 });
