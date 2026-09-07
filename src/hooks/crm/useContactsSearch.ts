@@ -133,7 +133,7 @@ export function useContactsSearch() {
     return map;
   }, [typeCounts]);
 
-  // ─── Último contato: max(messages.created_at) por contato da página atual ───
+  // ─── Último contato: max(messages.created_at) por contato via RPC GROUP BY ───
   const contactIds = useMemo(() => contacts.map(c => c.id), [contacts]);
 
   const { data: lastMsgMap, isSuccess: lastMsgSuccess } = useQuery({
@@ -141,12 +141,10 @@ export function useContactsSearch() {
     queryFn: async () => {
       const { data, error } = await ContactService.getLastMessageDates(contactIds);
       if (error) throw error;
-      // Agrupa em memória: sort DESC já garante que o primeiro por contact_id é o mais recente
+      // RPC retorna exatamente 1 row por contact_id — sem truncação
       const map: Record<string, string> = {};
       (data ?? []).forEach((row) => {
-        if (!map[row.contact_id] || row.created_at > map[row.contact_id]) {
-          map[row.contact_id] = row.created_at;
-        }
+        map[row.contact_id] = row.last_message_at;
       });
       return map;
     },

@@ -46,24 +46,23 @@ export class ContactService {
 
   /**
    * Retorna a data da última mensagem para cada contact_id da lista.
-   * Usado pelo useContactsSearch para popular "Último contato em" — sem nova coluna no schema.
+   * Usa a RPC get_last_message_dates (GROUP BY contact_id, MAX created_at)
+   * para evitar truncação pelo limit padrão do PostgREST numa query plana.
    *
-   * Tipagem explícita necessária pois o early-return (array vazio) e o return do builder
-   * Supabase teriam shapes diferentes em um mesmo `async` — o cast normaliza os dois.
+   * A RPC retorna exatamente 1 row por contact_id — sem risco de dados
+   * incompletos independente do volume de mensagens (hoje: 17.642).
    */
   static async getLastMessageDates(
     contactIds: string[],
-  ): Promise<{ data: { contact_id: string; created_at: string }[] | null; error: unknown }> {
+  ): Promise<{ data: { contact_id: string; last_message_at: string }[] | null; error: unknown }> {
     if (!contactIds.length) return { data: [], error: null };
 
-    const { data, error } = await supabase
-      .from('messages')
-      .select('contact_id, created_at')
-      .in('contact_id', contactIds)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_last_message_dates', {
+      contact_ids: contactIds,
+    });
 
     return {
-      data: (data ?? null) as { contact_id: string; created_at: string }[] | null,
+      data: (data ?? null) as { contact_id: string; last_message_at: string }[] | null,
       error,
     };
   }
