@@ -280,7 +280,24 @@ const buildPreset = (p: PresetParams): ThemePreset => {
 
 // ──────────── PRESETS ────────────
 export const PRESETS: ThemePreset[] = [
-  buildPreset({ id: 'corporate', name: 'Padrão', description: 'Azul profissional', emoji: '💼', h: 221, s: 83, l: 53, gh: 230, sh: 215, ss: 70, sl: 55 }),
+  (() => {
+    const corporate = buildPreset({ id: 'corporate', name: 'Padrão', description: 'Azul profissional', emoji: '💼', h: 221, s: 83, l: 53, gh: 230, sh: 215, ss: 70, sl: 55 });
+    // Dark mode segue a paleta Navy Premium medida no redesign de Contatos (Apêndice A) — light mode inalterado.
+    corporate.dark.primary = '217 100% 54%';
+    corporate.dark['primary-glow'] = '217 100% 68%';
+    corporate.dark.secondary = '213 94% 62%';
+    corporate.dark.ring = '217 100% 54%';
+    corporate.dark['sidebar-primary'] = '217 100% 54%';
+    corporate.dark['sidebar-ring'] = '217 100% 54%';
+    corporate.dark['chat-bubble-sent'] = '217 100% 54%';
+    corporate.dark['status-open'] = '217 100% 54%';
+    corporate.dark['chart-1'] = '217 100% 54%';
+    corporate.dark.accent = '217 96% 21%';
+    corporate.dark['accent-foreground'] = '217 100% 85%';
+    corporate.dark['sidebar-accent'] = '217 96% 21%';
+    corporate.dark['sidebar-accent-foreground'] = '217 100% 85%';
+    return corporate;
+  })(),
   buildPreset({ id: 'purpure', name: 'Púrpure', description: 'Roxo vibrante original', emoji: '💜', h: 254, s: 92, l: 62, gh: 260, sh: 260, ss: 90, sl: 67 }),
   buildPreset({ id: 'emerald', name: 'Esmeralda', description: 'Verde sofisticado', emoji: '💎', h: 160, s: 84, l: 45, gh: 170, sh: 145, ss: 70, sl: 50 }),
   buildPreset({ id: 'sunset', name: 'Pôr do Sol', description: 'Quente e acolhedor', emoji: '🌅', h: 25, s: 95, l: 53, gh: 35, sh: 15, ss: 80, sl: 50 }),
