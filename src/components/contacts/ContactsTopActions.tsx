@@ -22,11 +22,11 @@ export function ContactsTopActions() {
           document.dispatchEvent(new CustomEvent('open-global-search'));
           (e.currentTarget as HTMLButtonElement).blur();
         }}
-        className="w-[220px] h-9 rounded-xl bg-input border border-border text-[13px] text-muted-foreground hover:border-border/80 transition-colors flex items-center gap-2 px-3"
+        className="w-9 sm:w-[220px] h-9 rounded-xl bg-input border border-border text-[13px] text-muted-foreground hover:border-border/80 transition-colors flex items-center justify-center sm:justify-start gap-2 px-0 sm:px-3"
         aria-label="Buscar no sistema"
       >
         <Search className="w-[15px] h-[15px] shrink-0" />
-        <span className="truncate">Buscar no sistema…</span>
+        <span className="hidden sm:inline truncate">Buscar no sistema…</span>
       </button>
 
       <button

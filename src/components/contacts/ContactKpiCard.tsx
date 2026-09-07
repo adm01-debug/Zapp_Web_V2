@@ -131,24 +131,24 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
 
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-medium text-muted-foreground truncate">{label}</p>
-        <div className="flex items-baseline gap-2 mt-0.5">
-          <p data-testid="kpi-value" className="text-[34px] font-bold tabular-nums leading-none text-foreground">
+        <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+          <p data-testid="kpi-value" className="text-[26px] sm:text-[34px] font-bold tabular-nums leading-none text-foreground">
             <CountUp value={value} />
           </p>
           {!noDelta && !flat && (
-            <span className={cn('flex items-center gap-0.5 text-[14px] font-semibold', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
+            <span className={cn('flex items-center gap-0.5 text-[14px] font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
             </span>
           )}
-          {flat && <span className="text-[14px] font-semibold text-muted-foreground">sem alteração</span>}
+          {flat && <span className="text-[14px] font-semibold text-muted-foreground shrink-0">sem alteração</span>}
         </div>
         <p className="text-[14px] text-muted-foreground/80 mt-0.5 truncate">
           {noDelta ? 'sem alteração' : 'vs. período anterior'}
         </p>
       </div>
 
-      <Sparkline series={series} chart={chart} className={cn('shrink-0 ml-auto', fg)} />
+      <Sparkline series={series} chart={chart} className={cn('shrink-0 ml-auto hidden sm:block', fg)} />
     </div>
   );
 }

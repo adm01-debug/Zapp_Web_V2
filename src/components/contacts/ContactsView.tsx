@@ -84,7 +84,7 @@ export function ContactsView() {
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         topRight={<ContactsTopActions />}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {isExternalConfigured && (
               <motion.div whileTap={tapAnimation}>
                 <Button
