@@ -4,7 +4,7 @@ Repo path (container): /workspace/repos/Zapp_Web_V2 · Playwright: ok (chromium 
 
 ## CP0 Ambiente        [x] sha=61d35bb955cbe999b0217477a202335efc52bc0e · before=/workspace/qa/out/00-before.png (produção, https://zapp-web-v2.vercel.app/?view=contacts, 1672x941) · gates baseline: typecheck=OK(0 erros) lint-ratchet=OK(baseline=1223 atual=1216 novas=0) tc-ratchet=OK(baseline=0 atual=0) implicit=OK(0, após fix) vitest=OK(24/24 em src/components/contacts)
 ## CP1 Paleta/Fonte    [x] sha=ffbb2d12d7ce19825adbb071c5a85c730defa1a7 · shot=/workspace/qa/out/01-after.png (preview local — ver divergência Vercel SSO) · colors (getComputedStyle :root): background=ΔE0.86 card=ΔE0.78 sidebar=ΔE0.91 input=ΔE0.78 primary=ΔE1.60 success=ΔE1.18 · fontInter=true
-## CP2 Shell           [x] sha=<pendente commit> · shot=/workspace/qa/out/02-after.png · sidebar=234±4 OK navItem=44±2 OK logo=44 (w-11 h-11, exato por classe) · dashboard=/workspace/qa/out/02-dashboard.png inbox=/workspace/qa/out/02-inbox.png ambos scrollW=innerW=1672 (sem overflow)
+## CP2 Shell           [x] sha=0dbc4a57d428e6ff279771b76f8fbbd26b6ee127 · shot=/workspace/qa/out/02-after.png · sidebar=234±4 OK navItem=44±2 OK logo=44 (w-11 h-11, exato por classe) · dashboard=/workspace/qa/out/02-dashboard.png inbox=/workspace/qa/out/02-inbox.png ambos scrollW=innerW=1672 (sem overflow)
 ## CP3 Header          [ ] sha= · shot=03-after.png · headerBtn=_ crmBtn=_ title=_ topSearch=_
 ## CP4 KPIs            [ ] sha= · shot=04-after.png · kpi=[_,_,_,_] tile=_ · total==todos: _ · lid_legacy filtro: sim|não (motivo)
 ## CP5 Tabs            [ ] sha= · shot=05-after.png · tabBar=_ tabActive=_ todosW=_
