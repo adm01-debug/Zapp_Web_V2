@@ -192,8 +192,8 @@ select:focus-visible {
 /* ===== DARK MODE: orbs de luz no fundo (body) ===== */
 .dark body {
   background-image:
-    radial-gradient(ellipse 1200px 750px at 15% -12%,  hsl(213 100% 54% / 0.17) 0%, transparent 65%),
-    radial-gradient(ellipse 550px  380px at 87%   7%,  hsl(245 80%  65% / 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 1200px 750px at 15% -12%, hsl(213 100% 54% / 0.17) 0%, transparent 65%),
+    radial-gradient(ellipse 550px  380px at 87%   7%, hsl(245 80%  65% / 0.08) 0%, transparent 55%),
     radial-gradient(ellipse 700px  450px at 50%  110%, hsl(213 100% 54% / 0.05) 0%, transparent 50%);
   background-attachment: fixed;
 }
