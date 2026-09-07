@@ -342,7 +342,7 @@
     --accent-foreground: 213 100% 85%;
     --destructive: 354 100% 68%;
     --destructive-foreground: 0 0% 100%;
-    --border: 213 26% 25%;
+    --border: 213 28% 10%;
     --input: 214 42% 13%;
     --ring: 213 100% 54%;
     --success: 161 70% 47%;
@@ -375,7 +375,7 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 214 49% 16%;
     --sidebar-accent-foreground: 213 100% 85%;
-    --sidebar-border: 213 26% 25%;
+    --sidebar-border: 213 26% 13%;
     --sidebar-ring: 213 100% 54%;
     --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;

@@ -87,3 +87,8 @@
 .gradient-animate { background-size: 200% 200%; animation: gradient-shift 5s ease infinite; }
 .parallax-float { animation: float 5s ease-in-out infinite; }
 .animate-ripple { animation: ripple 0.5s linear; }
+
+/* ===== DARK MODE: orb sutil no topo da sidebar ===== */
+.dark .sidebar-dreamschat {
+  background-image: radial-gradient(ellipse 220px 280px at 50% -8%, hsl(213 100% 54% / 0.22) 0%, transparent 70%);
+}

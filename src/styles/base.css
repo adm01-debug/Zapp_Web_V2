@@ -173,3 +173,34 @@ select:focus-visible {
   @apply outline-none border-primary;
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
 }
+
+/* ===== DARK MODE: bordas quase invisíveis ===== */
+.dark * {
+  border-color: hsl(var(--border) / 0.45);
+}
+
+/* Inputs e dialogs mantêm borda legível */
+.dark input,
+.dark textarea,
+.dark select,
+.dark [role="combobox"],
+.dark [role="dialog"] *,
+.dark [role="alertdialog"] * {
+  border-color: hsl(var(--border) / 0.85);
+}
+
+/* ===== DARK MODE: orbs de luz no fundo (body) ===== */
+.dark body {
+  background-image:
+    radial-gradient(ellipse 1200px 750px at 15% -12%,  hsl(213 100% 54% / 0.17) 0%, transparent 65%),
+    radial-gradient(ellipse 550px  380px at 87%   7%,  hsl(245 80%  65% / 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 700px  450px at 50%  110%, hsl(213 100% 54% / 0.05) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* ===== DARK MODE: orb na área de conteúdo (main-content) ===== */
+.dark #main-content {
+  background-image:
+    radial-gradient(ellipse 950px 650px at -5% -8%, hsl(213 100% 54% / 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 400px 280px at 107% 5%,  hsl(245 80%  65% / 0.06) 0%, transparent 55%);
+}
