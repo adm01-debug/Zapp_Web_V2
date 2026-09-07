@@ -11,7 +11,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP2 Header        [x] sha=58d3714f · AppHeader.tsx, HeaderSectionAnchor.tsx, GlobalSearchTrigger.tsx, HeaderUserPill.tsx, RoleBadge.tsx · AppShell reestruturado em coluna flex (Sidebar | [AppHeader sticky + main]) · AgentProfilePopover refatorado: ProfileMenuContent extraído e reusado no HeaderUserPill · tsc 0 erros · eslint limpo · vite build ok
 
-## CP3 Breadcrumb    [ ] pendente
+## CP3 Breadcrumb    [x] sha=ed0428e1 · BreadcrumbBar.tsx (sticky top-14 z-30, botão Teletransporte Zap sky-400 + trilha breadcrumbTrail) · LayoutContext.tsx (hasBreadcrumbBar) · PageHeader não renderiza breadcrumb próprio quando hasBreadcrumbBar=true · tsc/eslint/build ok
 
 ## CP4 Sidebar       [ ] pendente
 
