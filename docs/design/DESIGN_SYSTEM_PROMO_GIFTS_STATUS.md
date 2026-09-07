@@ -17,7 +17,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP5 Atalhos       [x] sha=83483895 · NavigationService.getPrimaryNav(): shortcut Alt+C/M/L/O/R/P/N/G nos 8 itens · useNavShortcuts.ts (hook standalone, usa e.code p/ evitar dead-keys do Option no macOS, ignora inputs/textarea/contentEditable) · wired em AppShell via handleViewChange · SidebarNavItem: kbd visível on-hover no modo expandido (SHORTCUT_MAP antigo ⌘1/⌘2 removido, superseded) · divergência: não reusei useGlobalKeyboardShortcuts/useCustomShortcuts (sistema de rotas legado com navigate('/') + toast, não integrado a setCurrentView) — hook novo dedicado é mais direto e sem side effects · tsc/eslint/build ok
 
-## CP6 Fundo         [ ] pendente
+## CP6 Fundo         [x] sha=736b675e · StarBackground.tsx (60 pontos, posição/tamanho/delay via Math.random() memoizado, animate-pulse + motion-reduce:animate-none, pointer-events-none, aria-hidden) · lazy(() => import(...)) + Suspense fallback=null · montado dentro de <main>, condicional isDark (useTheme) · limpeza: classe .page-glow morta removida do <main> e regra .dark .page-glow morta removida de utilities.css (referenciava --page-glow, já removido na Fase 1 — StarBackground assume o papel de ambientação dark) · tsc/eslint/build ok
 
 ## CP7 Primitivos    [ ] pendente
 
