@@ -31,6 +31,10 @@
     font-family: var(--font-display);
   }
 
+  h1, h2, h3, .font-display {
+    letter-spacing: -0.02em;
+  }
+
   /* ===== TEXT SELECTION — branded ===== */
   ::selection {
     background: hsl(var(--primary) / 0.2);

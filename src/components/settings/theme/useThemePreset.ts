@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import {
   PRESETS,
   CSS_VARS_TO_APPLY,
-  STORAGE_KEY,
+  STORAGE_KEY, STORAGE_VERSION,
   DEFAULT_PRESET_ID,
   normalizeStoredPresetId,
 } from './presets';
@@ -11,7 +11,7 @@ import type { ThemePreset, ThemeModeColors } from './presets';
 import { useTheme } from '@/hooks/ui/useTheme';
 
 interface ThemeConfig {
-  borderRadius?: number;
+  borderRadius?: number; v?: number;
   cacheMode?: 'light' | 'dark';
   cachePreset?: string;
   cssVarsCache?: Record<string, string>;
@@ -26,7 +26,7 @@ export function useThemePreset() {
   const save = useCallback((presetId: string, radius: number) => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ preset: normalizeStoredPresetId(presetId), borderRadius: radius }),
+      JSON.stringify({ v: STORAGE_VERSION, preset: normalizeStoredPresetId(presetId), borderRadius: radius }),
     );
   }, []);
 
@@ -75,6 +75,7 @@ export function useThemePreset() {
         if (preset) applyPresetColors(preset, resolvedTheme);
 
         if (
+          parsed.v !== STORAGE_VERSION ||
           parsed.preset !== presetId ||
           parsed.cssVarsCache ||
           parsed.cacheMode ||

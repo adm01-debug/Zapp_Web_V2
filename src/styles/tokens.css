@@ -46,8 +46,8 @@
     --neutral-950: 221 20% 6%;
 
     /* ===== FONTS ===== */
-    --font-sans: 'Outfit', system-ui, sans-serif;
-    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-display: 'Inter', system-ui, sans-serif;
 
     /* ===== TYPOGRAPHY SCALE (fluid clamp) ===== */
     --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem);
@@ -274,16 +274,27 @@
     --chart-sentiment-negative: 0 84% 60%;
 
     /* ===== LAYOUT SHELL TOKENS ===== */
-    --sidebar-w: 220px;
+    --sidebar-w: 234px;
     --sidebar-w-collapsed: 62px;
     --layout-header-h: 56px;
-    --layout-gutter: 1.5rem;
+    --layout-gutter: 2.25rem;
     --layout-max-content: 72rem;
+
+    /* ===== KPI TILES (Contatos Navy Premium) ===== */
+    --kpi-tile-blue: 217 98% 24%;
+    --kpi-tile-blue-fg: 217 100% 62%;
+    --kpi-tile-green: 168 86% 14%;
+    --kpi-tile-green-fg: 148 100% 45%;
+    --kpi-tile-purple: 244 51% 26%;
+    --kpi-tile-purple-fg: 258 90% 72%;
+    --kpi-tile-yellow: 48 40% 17%;
+    --kpi-tile-yellow-fg: 48 96% 53%;
+    --page-glow: radial-gradient(1100px 520px at 8% -8%, hsl(217 100% 54% / .14), transparent 60%);
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */
 .dark {
-    --background: 0 0% 4%;
+    --background: 216 58% 8%;
     /* ===== ELEVATION (dark) — sombras mais profundas ===== */
     --elev-0: none;
     --elev-1: 0 1px 2px hsl(0 0% 0% / 0.5);
@@ -314,31 +325,31 @@
     --neutral-800: 221 16% 88%;
     --neutral-900: 221 18% 94%;
     --neutral-950: 221 20% 98%;
-    --foreground: 0 0% 97%;
-    --card: 240 7% 11%;
-    --card-foreground: 0 0% 97%;
-    --card-elevated: 240 7% 16%;
-    --popover: 240 7% 13%;
-    --popover-foreground: 0 0% 97%;
-    --primary: 221 83% 53%;
+    --foreground: 210 40% 98%;
+    --card: 215 48% 10%;
+    --card-foreground: 210 40% 98%;
+    --card-elevated: 215 60% 12%;
+    --popover: 216 50% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 100% 54%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 230 86% 59%;
-    --secondary: 215 70% 55%;
+    --primary-glow: 217 100% 68%;
+    --secondary: 213 94% 62%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 240 8% 16%;
-    --muted-foreground: 220 20% 72%;
-    --accent: 221 60% 22%;
-    --accent-foreground: 221 83% 80%;
-    --destructive: 0 90% 60%;
+    --muted: 216 45% 14%;
+    --muted-foreground: 215 22% 66%;
+    --accent: 217 96% 21%;
+    --accent-foreground: 217 100% 85%;
+    --destructive: 0 90% 62%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 20%;
-    --input: 240 8% 16%;
-    --ring: 221 83% 53%;
-    --success: 155 80% 50%;
+    --border: 217 40% 16%;
+    --input: 216 56% 9%;
+    --ring: 217 100% 54%;
+    --success: 148 100% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 42 100% 58%;
+    --warning: 48 96% 53%;
     --warning-foreground: 0 0% 8%;
-    --info: 210 95% 62%;
+    --info: 213 94% 62%;
     --info-foreground: 0 0% 100%;
     --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
@@ -354,24 +365,24 @@
     --rank-bronze-foreground: 28 60% 95%;
     --whatsapp: 142 76% 50%;
     --whatsapp-dark: 142 76% 40%;
-    --online: 155 80% 50%;
+    --online: 148 100% 42%;
     --away: 42 100% 58%;
     --offline: 0 0% 45%;
     --unread: 0 90% 60%;
-    --sidebar-background: 240 8% 9%;
-    --sidebar-foreground: 0 0% 97%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-background: 216 51% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 100% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 221 50% 20%;
-    --sidebar-accent-foreground: 221 83% 80%;
-    --sidebar-border: 240 8% 18%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 217 96% 21%;
+    --sidebar-accent-foreground: 217 100% 85%;
+    --sidebar-border: 217 40% 16%;
+    --sidebar-ring: 217 100% 54%;
     --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;
-    --chat-bubble-received: 240 8% 16%;
+    --chat-bubble-received: 216 45% 14%;
     --chat-bubble-received-foreground: 0 0% 97%;
-    --chat-header: 240 7% 11%;
-    --chat-input-bg: 240 7% 13%;
+    --chat-header: 215 48% 10%;
+    --chat-input-bg: 216 50% 11%;
     --status-open: 221 83% 53%;
     --status-pending: 42 100% 58%;
     --status-resolved: 155 80% 50%;
@@ -384,8 +395,8 @@
     --gradient-success: linear-gradient(135deg, hsl(155 80% 50%), hsl(165 75% 55%));
     --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 78% 57%));
     --gradient-gold: linear-gradient(135deg, hsl(42 100% 58%), hsl(35 95% 52%));
-    --gradient-surface: linear-gradient(180deg, hsl(240 7% 11%), hsl(240 8% 7%));
-    --gradient-divider: linear-gradient(90deg, transparent, hsl(221 50% 35% / 0.5), transparent);
+    --gradient-surface: linear-gradient(180deg, hsl(215 48% 10%), hsl(216 58% 8%));
+    --gradient-divider: linear-gradient(90deg, transparent, hsl(217 40% 30% / .5), transparent);
     --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(210 95% 62%), hsl(230 78% 57%));
     --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%));
     --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.5);
@@ -393,16 +404,16 @@
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.6), 0 4px 6px -4px hsl(0 0% 0% / 0.5);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.7), 0 8px 10px -6px hsl(0 0% 0% / 0.6);
-    --shadow-glow-primary: 0 4px 24px hsl(221 83% 53% / 0.45);
+    --shadow-glow-primary: 0 8px 24px -8px hsl(217 100% 54% / .45);
     --shadow-glow-secondary: 0 4px 24px hsl(215 70% 55% / 0.4);
-    --shadow-glow-success: 0 4px 20px hsl(155 80% 50% / 0.4);
+    --shadow-glow-success: 0 8px 24px -10px hsl(148 100% 42% / .6);
     --shadow-glow-accent: 0 4px 24px hsl(230 78% 59% / 0.4);
     --shadow-glow-purple: 0 4px 24px hsl(221 83% 53% / 0.5);
     --shadow-header: 0 1px 3px hsl(0 0% 0% / 0.6);
-    --glass-bg: 240 7% 11% / 1;
-    --glass-border: 221 50% 30% / 1;
-    --elevated: 240 7% 16%;
-    --elevated-hover: 240 7% 20%;
+    --glass-bg: 215 48% 10% / 1;
+    --glass-border: 217 40% 22% / 1;
+    --elevated: 215 60% 12%;
+    --elevated-hover: 215 55% 15%;
     --chart-1: 221 83% 58%;
     --chart-2: 210 95% 64%;
     --chart-3: 155 80% 52%;
