@@ -72,9 +72,10 @@ export function ContactsView() {
   };
 
   return (
-    <div className="space-y-4 relative bg-background w-full min-w-0">
+    <div className="relative bg-background w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
 
+      <div className="space-y-4">
       <PageHeader
         variant="plain"
         title="Contatos"
@@ -159,7 +160,9 @@ export function ContactsView() {
         gridColumns={gridColumns} setGridColumns={setGridColumns}
         totalCount={totalCount}
       />
+      </div>
 
+      <div className="space-y-3 mt-3">
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
@@ -197,6 +200,7 @@ export function ContactsView() {
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
       />
+      </div>
 
       {detailContact && (
         <ContactDetailPanel

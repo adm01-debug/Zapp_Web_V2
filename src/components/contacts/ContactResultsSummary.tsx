@@ -31,17 +31,17 @@ export function ContactResultsSummary({
   const showPagination = totalCount > pageSize;
 
   return (
-    <div className="flex items-center justify-between text-sm text-muted-foreground">
+    <div className="h-9 flex items-center justify-between text-[14px] text-muted-foreground">
       <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={onSelectAll}>
+        <Button variant="ghost" size="sm" className="h-9 px-0 text-[14px] font-medium gap-2 hover:bg-transparent" onClick={onSelectAll}>
           <Checkbox
             checked={allSelected && filteredCount > 0}
             onCheckedChange={() => onSelectAll()}
-            className="w-3.5 h-3.5"
+            className="w-[18px] h-[18px] rounded-[5px] border-border"
           />
           {selectedCount > 0 ? `${selectedCount} selecionado${selectedCount !== 1 ? 's' : ''}` : 'Selecionar todos'}
         </Button>
-        <span className="text-muted-foreground/60">|</span>
+        <span className="h-4 w-px bg-border" />
         <span>
           Exibindo <span className="font-semibold text-foreground">{filteredCount}</span>
           {filteredCount < totalCount && <> de <span className="font-semibold text-foreground">{totalCount}</span></>}
@@ -59,30 +59,30 @@ export function ContactResultsSummary({
       </div>
 
       {showPagination && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[14px] font-medium text-muted-foreground">
             Página <span className="font-semibold text-foreground">{currentPage}</span> de{' '}
             <span className="font-semibold text-foreground">{totalPages}</span>
           </span>
           <Button
             variant="outline"
             size="icon"
-            className="w-6 h-6"
+            className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted disabled:opacity-40"
             onClick={loadPrevious}
             disabled={page === 0 || loading}
             aria-label="Página anterior"
           >
-            <ChevronLeft className="w-3 h-3" />
+            <ChevronLeft className="w-[18px] h-[18px]" />
           </Button>
           <Button
             variant="outline"
             size="icon"
-            className="w-6 h-6"
+            className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted disabled:opacity-40"
             onClick={loadMore}
             disabled={!hasMore || loading}
             aria-label="Próxima página"
           >
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-[18px] h-[18px]" />
           </Button>
         </div>
       )}
