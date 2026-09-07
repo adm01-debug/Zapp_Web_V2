@@ -29,6 +29,13 @@
 
   h1, h2, h3 {
     font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Halo azul do redesign navy — só no tema escuro, atrás do conteúdo principal */
+  .dark #main-content {
+    background-image: var(--page-glow);
+    background-repeat: no-repeat;
   }
 
   /* ===== TEXT SELECTION — branded ===== */

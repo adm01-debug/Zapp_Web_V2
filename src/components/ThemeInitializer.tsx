@@ -3,6 +3,7 @@ import {
   PRESETS,
   CSS_VARS_TO_APPLY,
   STORAGE_KEY,
+  STORAGE_VERSION,
   DEFAULT_PRESET_ID,
   normalizeStoredPresetId,
 } from '@/components/settings/theme/presets';
@@ -18,6 +19,7 @@ type StoredThemeConfig = {
   cachePreset?: string;
   cssVarsCache?: Record<string, string>;
   preset?: string;
+  v?: number;
 };
 
 /**
@@ -44,7 +46,10 @@ export function ThemeInitializer() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved) as StoredThemeConfig;
-            storedConfig = parsed;
+            // Cache de vars de outra versão da paleta é descartado; preset e raio do usuário são mantidos.
+            storedConfig = parsed.v === STORAGE_VERSION
+              ? parsed
+              : { preset: parsed.preset, borderRadius: parsed.borderRadius };
             presetId = normalizeStoredPresetId(parsed.preset);
             if (parsed.borderRadius != null) radius = parsed.borderRadius;
           } catch (e) {
@@ -75,6 +80,7 @@ export function ThemeInitializer() {
                 cachePreset: presetId,
                 cssVarsCache,
                 preset: presetId,
+                v: STORAGE_VERSION,
               }));
             } catch (err) {
               log.error('LocalStorage write failed:', err);

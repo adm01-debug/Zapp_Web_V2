@@ -45,6 +45,16 @@ export default {
       },
       colors: {
         border: "hsl(var(--border))",
+        kpi: {
+          blue: "hsl(var(--kpi-tile-blue))",
+          "blue-fg": "hsl(var(--kpi-tile-blue-fg))",
+          green: "hsl(var(--kpi-tile-green))",
+          "green-fg": "hsl(var(--kpi-tile-green-fg))",
+          purple: "hsl(var(--kpi-tile-purple))",
+          "purple-fg": "hsl(var(--kpi-tile-purple-fg))",
+          yellow: "hsl(var(--kpi-tile-yellow))",
+          "yellow-fg": "hsl(var(--kpi-tile-yellow-fg))",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",

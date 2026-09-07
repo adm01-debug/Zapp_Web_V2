@@ -4,6 +4,7 @@ import {
   PRESETS,
   CSS_VARS_TO_APPLY,
   STORAGE_KEY,
+  STORAGE_VERSION,
   DEFAULT_PRESET_ID,
   normalizeStoredPresetId,
 } from './presets';
@@ -16,6 +17,7 @@ interface ThemeConfig {
   cachePreset?: string;
   cssVarsCache?: Record<string, string>;
   preset?: string;
+  v?: number;
 }
 
 export function useThemePreset() {
@@ -26,7 +28,7 @@ export function useThemePreset() {
   const save = useCallback((presetId: string, radius: number) => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ preset: normalizeStoredPresetId(presetId), borderRadius: radius }),
+      JSON.stringify({ preset: normalizeStoredPresetId(presetId), borderRadius: radius, v: STORAGE_VERSION }),
     );
   }, []);
 
