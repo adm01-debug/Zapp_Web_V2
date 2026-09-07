@@ -20,6 +20,7 @@ import { useDashboardData } from '@/hooks/analytics/useDashboardData';
 import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
+import { GreetingBanner } from './overview/GreetingBanner';
 import { DashboardTopBar } from './overview/DashboardTopBar';
 import { DashboardHeader } from './overview/DashboardHeader';
 
@@ -89,9 +90,11 @@ export function DashboardView() {
 
         <TabsContent value="overview" className="space-y-2.5 mt-2.5">
           {/* Shell da Visão Geral — placeholders com altura-alvo para o CP1 medir o ritmo vertical.
-              Conteúdo real chega nas Fases 4-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
+              Conteúdo real chega nas Fases 5-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
               deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). */}
-          <div data-testid="dash-banner" className="min-h-[73px]" />
+          <div data-testid="dash-banner">
+            <GreetingBanner />
+          </div>
           <div data-testid="dash-kpis" className="min-h-[95px]" />
           <div data-testid="dash-row2" className="min-h-[259px]" />
           <div data-testid="dash-row3" className="min-h-[220px]" />
