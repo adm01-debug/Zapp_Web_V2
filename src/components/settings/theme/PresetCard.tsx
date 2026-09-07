@@ -26,7 +26,7 @@ export function PresetCard({ preset, isActive, onSelect }: PresetCardProps) {
         <CardContent className="p-3">
           {/* Color bar preview */}
           <div className="flex h-7 rounded-md overflow-hidden mb-2.5 ring-1 ring-border/30">
-            {preset.swatches.map((swatch, i) => (
+            {preset.swatches.map((swatch: string, i: number) => (
               <div
                 key={i}
                 className="flex-1"

@@ -104,4 +104,39 @@ describe('aggregateKpi', () => {
     expect(kpi.seriesEmpresasWeekly12.every(v => v === 0)).toBe(true);
     expect(kpi.seriesLeadsWeekly12.every(v => v === 0)).toBe(true);
   });
+
+
+  // ── Regressao: auditoria forense 2026-09-07 ──────────────────────────────────
+
+  it('deltaTotalPct null quando novos30=total (base nova sem historico anterior)', () => {
+    // 1.516 contatos todos nos ultimos 29 dias -- sem guard MIN_PREV seria +151500%
+    const rows = Array.from({ length: 1516 }, (_, i) => row(i % 29));
+    const kpi = aggregateKpi(rows, NOW);
+    expect(kpi.deltaTotalPct).toBeNull();
+    expect(kpi.deltaTotalPct === 151500).toBe(false);
+  });
+
+  it('empresasDistinct ignora capitalizacao (case-insensitive)', () => {
+    const rows = [
+      row(5, 'cliente', 'Empresa X'),
+      row(6, 'cliente', 'empresa x'),
+      row(7, 'cliente', 'EMPRESA X'),
+      row(8, 'cliente', 'Globex'),
+      row(9, 'cliente', null),
+    ];
+    const kpi = aggregateKpi(rows, NOW);
+    expect(kpi.empresasDistinct).toBe(2); // empresa x + globex
+  });
+
+  it('deltaTotalPct e numero quando prevTotal >= 50 (MIN_PREV)', () => {
+    // 100 antigos (31-60d) + 120 novos (1-29d) -> prevTotal = 220-120 = 100 >= 50
+    const rows = [
+      ...Array.from({ length: 100 }, (_, i) => row(31 + (i % 29))),
+      ...Array.from({ length: 120 }, (_, i) => row((i % 29) + 1)),
+    ];
+    const kpi = aggregateKpi(rows, NOW);
+    expect(typeof kpi.deltaTotalPct).toBe('number');
+    expect(kpi.deltaTotalPct).toBe(120); // pct(220, 100) = +120%
+  });
+
 });

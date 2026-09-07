@@ -164,7 +164,7 @@ export function useContactsCRUD() {
     await feedback.withFeedback(
       async () => {
         const { error } = await supabase.from('contacts').delete().eq('id', id);
-        if (error) throw error;
+        if (error) throw new Error(error.code === "23503" ? "Não é possível excluir: este contato está vinculado a conversas ou registros relacionados." : "Erro ao excluir contato. Tente novamente.");
       },
       {
         loadingMessage: 'Excluindo contato...',
