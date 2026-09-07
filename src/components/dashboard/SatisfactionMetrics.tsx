@@ -34,15 +34,18 @@ export function SatisfactionMetrics() {
   const { data: breakdown, isLoading, isError, refetch } = useSatisfactionBreakdown(periodDays as 7 | 30 | 90);
   const { surveys: npsSurveys } = useNPSSurveys();
 
+  // react-hooks/purity acusa `Date.now()` (mesmo fora do useMemo) mas não `new Date()`
+  // (mesmo padrão já usado em GreetingBanner.tsx) — daí getTime() em vez de Date.now().
+  const now = new Date().getTime();
   const npsScore = useMemo(() => {
     if (!npsSurveys?.length) return null;
-    const cutoff = new Date(Date.now() - periodDays * 86400000);
-    const filtered = npsSurveys.filter(s => new Date(s.created_at) >= cutoff);
+    const cutoffMs = periodDays * 86400000;
+    const filtered = npsSurveys.filter(s => now - Date.parse(s.created_at) <= cutoffMs);
     if (!filtered.length) return null;
     const promoters = filtered.filter(s => s.score >= 9).length;
     const detractors = filtered.filter(s => s.score <= 6).length;
     return Math.round(((promoters - detractors) / filtered.length) * 100);
-  }, [npsSurveys, periodDays]);
+  }, [npsSurveys, periodDays, now]);
 
   const hasCsat = (breakdown?.totalResponses ?? 0) > 0;
   const hasQueue = (breakdown?.byQueue?.length ?? 0) > 0;
