@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
@@ -66,6 +67,12 @@ export function ContactsView() {
   const layoutScrollRef = useLayoutScroll();
   const reduceMotion = useReducedMotion();
   const tapAnimation = reduceMotion ? undefined : { scale: 0.98 };
+  const queryClient = useQueryClient();
+  const handleSync = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
+  };
 
   return (
     <div className="space-y-4 relative bg-background w-full min-w-0">
@@ -91,7 +98,7 @@ export function ContactsView() {
             )}
             <motion.div whileTap={tapAnimation}>
               <Button
-                onClick={() => refetch()}
+                onClick={handleSync}
                 disabled={loading}
                 className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
               >
@@ -130,7 +137,7 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
+      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-9 bg-muted/40 border border-border/30 p-0.5 gap-0.5 flex-wrap">
