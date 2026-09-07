@@ -282,20 +282,20 @@ const buildPreset = (p: PresetParams): ThemePreset => {
 export const PRESETS: ThemePreset[] = [
   (() => {
     const corporate = buildPreset({ id: 'corporate', name: 'Padrão', description: 'Azul profissional', emoji: '💼', h: 221, s: 83, l: 53, gh: 230, sh: 215, ss: 70, sl: 55 });
-    // Dark mode segue a paleta Navy Premium medida no redesign de Contatos (Apêndice A) — light mode inalterado.
-    corporate.dark.primary = '217 100% 54%';
-    corporate.dark['primary-glow'] = '217 100% 68%';
+    // Dark mode segue a paleta DarkBlue Premium (design system v1.0) — light mode inalterado.
+    corporate.dark.primary = '213 100% 54%';
+    corporate.dark['primary-glow'] = '213 100% 68%';
     corporate.dark.secondary = '213 94% 62%';
-    corporate.dark.ring = '217 100% 54%';
-    corporate.dark['sidebar-primary'] = '217 100% 54%';
-    corporate.dark['sidebar-ring'] = '217 100% 54%';
-    corporate.dark['chat-bubble-sent'] = '217 100% 54%';
-    corporate.dark['status-open'] = '217 100% 54%';
-    corporate.dark['chart-1'] = '217 100% 54%';
-    corporate.dark.accent = '217 96% 21%';
-    corporate.dark['accent-foreground'] = '217 100% 85%';
-    corporate.dark['sidebar-accent'] = '217 96% 21%';
-    corporate.dark['sidebar-accent-foreground'] = '217 100% 85%';
+    corporate.dark.ring = '213 100% 54%';
+    corporate.dark['sidebar-primary'] = '213 100% 54%';
+    corporate.dark['sidebar-ring'] = '213 100% 54%';
+    corporate.dark['chat-bubble-sent'] = '213 100% 54%';
+    corporate.dark['status-open'] = '213 100% 54%';
+    corporate.dark['chart-1'] = '213 100% 54%';
+    corporate.dark.accent = '214 49% 14%';
+    corporate.dark['accent-foreground'] = '213 100% 85%';
+    corporate.dark['sidebar-accent'] = '214 49% 16%';
+    corporate.dark['sidebar-accent-foreground'] = '213 100% 85%';
     return corporate;
   })(),
   buildPreset({ id: 'purpure', name: 'Púrpure', description: 'Roxo vibrante original', emoji: '💜', h: 254, s: 92, l: 62, gh: 260, sh: 260, ss: 90, sl: 67 }),
