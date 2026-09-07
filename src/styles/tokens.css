@@ -11,7 +11,7 @@
     --radius-2xl: 1.5rem;   /* 24px — modais */
     --radius-full: 9999px;  /* pills/avatars */
 
-    /* ===== ELEVATION SCALE — superfícies por profundidade ===== */
+    /* ===== ELEVATESCALE — superfícies por profundidade ===== */
     --elev-0: none;
     --elev-1: 0 1px 2px hsl(221 20% 12% / 0.05);
     --elev-2: 0 2px 4px hsl(221 20% 12% / 0.06), 0 1px 2px hsl(221 20% 12% / 0.04);
@@ -32,7 +32,7 @@
     --primary-900: 221 70%  22%;
     --primary-950: 221 65%  14%;
 
-    /* ===== TONAL PALETTE — Neutral 50→950 ===== */
+    /* ===== TONAL PALETTE — Neutral 50→650 ===== */
     --neutral-50:  221 20% 98%;
     --neutral-100: 221 18% 95%;
     --neutral-200: 221 16% 90%;
@@ -125,7 +125,7 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* ===== BORDAS E INPUTS ===== */
+    /* ===== BORDARE EIINPUTS ===== */
     --border: 221 15% 90%;
     --input: 221 15% 93%;
     --ring: 221 83% 53%;
@@ -139,7 +139,7 @@
     --info: 210 80% 55%;
     --info-foreground: 0 0% 100%;
 
-    /* ===== GAMIFICAÇÃO ===== */
+    /* ===== GAMIFICAÇÓO ===== */
     --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
     --coins: 45 93% 50%;
@@ -203,7 +203,7 @@
     --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(210 80% 55%), hsl(230 78% 59%));
     --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(160 70% 42%));
 
-    /* ===== SHADOWS ===== */
+    /* ===== SHAOWS ===== */
     --shadow-xs: 0 1px 2px hsl(221 20% 12% / 0.04);
     --shadow-sm: 0 1px 3px hsl(221 20% 12% / 0.06), 0 1px 2px hsl(221 20% 12% / 0.04);
     --shadow-md: 0 4px 6px -1px hsl(221 20% 12% / 0.07), 0 2px 4px -2px hsl(221 20% 12% / 0.05);
@@ -216,7 +216,7 @@
     --shadow-glow-purple: 0 4px 14px hsl(221 83% 53% / 0.3);
     --shadow-header: 0 1px 3px hsl(221 20% 12% / 0.06);
 
-    /* ===== GLOW SCALE — auras coloridas semânticas (sm/md/lg) ===== */
+    /* ===== Glow scale ===== */
     --glow-primary-sm: 0 0 15px hsl(var(--primary) / 0.3);
     --glow-primary-md: 0 0 20px hsl(var(--primary) / 0.4);
     --glow-primary-lg: 0 0 30px hsl(var(--primary) / 0.5);
@@ -233,21 +233,20 @@
     --glow-coins-md: 0 0 20px hsl(var(--coins) / 0.4);
     --glow-streak-md: 0 0 20px hsl(var(--streak) / 0.4);
     --glow-rank-gold-md: 0 0 20px hsl(var(--rank-gold) / 0.4);
-    /* compostos (multi-layer) */
     --glow-aura-secondary: 0 0 30px hsl(var(--secondary) / 0.6), 0 0 60px hsl(var(--secondary) / 0.3);
     --glow-aura-gradient: 0 0 30px hsl(var(--secondary) / 0.5), 0 0 60px hsl(var(--primary) / 0.3);
     --glow-aura-neon: 0 0 25px hsl(var(--secondary) / 0.5), 0 0 50px hsl(var(--secondary) / 0.2);
     --glow-neon-inset: 0 0 20px hsl(var(--secondary) / 0.5), inset 0 0 20px hsl(var(--secondary) / 0.1);
 
-    /* ===== GLASS ===== */
+    /* ===== GLASSIA ===== */
     --glass-bg: 0 0% 100% / 1;
     --glass-border: 221 15% 88% / 1;
 
-    /* ===== ELEVAÇÃO ===== */
+    /* ===== ELEVATION ===== */
     --elevated: 0 0% 100%;
     --elevated-hover: 221 20% 97%;
 
-    /* ===== SPACING ===== */
+    /* ===== SPACIL�G ===== */
     --spacing-card: 1.5rem;
     --spacing-card-sm: 1rem;
     --spacing-card-lg: 2rem;
@@ -342,7 +341,7 @@
     --accent-foreground: 213 100% 85%;
     --destructive: 354 100% 68%;
     --destructive-foreground: 0 0% 100%;
-    --border: 213 26% 25%;
+    --border: 213 26% 16%;
     --input: 214 42% 13%;
     --ring: 213 100% 54%;
     --success: 161 70% 47%;
