@@ -71,7 +71,7 @@ export function PageHeader({
     )}>
       {/* Breadcrumbs row */}
       {(breadcrumbs.length > 0 || topRight) && (
-        <div className={cn('flex items-center justify-between gap-3', variant === 'plain' && 'h-14')}>
+        <div className={cn('flex items-center justify-between gap-3 flex-wrap', variant === 'plain' && 'sm:h-14')}>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

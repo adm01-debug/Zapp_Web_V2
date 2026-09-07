@@ -63,7 +63,7 @@ export function ContactViewSwitcher({
                 onClick={() => onViewModeChange(value)}
                 title={label}
                 className={cn(
-                  'relative h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
+                  'relative isolate h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
                   active ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
               >
@@ -79,7 +79,7 @@ export function ContactViewSwitcher({
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  'relative h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
+                  'relative isolate h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
                   isSecondaryActive ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
                 title="Mais visualizações"

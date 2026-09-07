@@ -1,0 +1,93 @@
+# Coleta forense manual e somente-leitura. O ledger e cifrado em memoria
+# antes de virar artifact; chave privada e statements nunca chegam aos logs.
+name: Targeted Ledger Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: '1-20 versions de migration, separadas por virgula'
+        required: true
+        type: string
+      public_key_base64:
+        description: 'Chave publica RSA PEM codificada em base64'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: targeted-ledger-evidence-main
+  cancel-in-progress: false
+
+jobs:
+  export-encrypted-evidence:
+    name: Exportar ledger alvo cifrado
+    if: github.ref == 'refs/heads/main'
+    environment: db-ledger-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Exigir banco oficial e TLS autenticado
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
+          NODE
+
+      - name: Consultar em read-only e cifrar antes de persistir
+        env:
+          TARGET_VERSIONS: ${{ inputs.versions }}
+          LEDGER_EVIDENCE_PUBLIC_KEY_BASE64: ${{ inputs.public_key_base64 }}
+          LEDGER_EVIDENCE_OUTPUT: /tmp/targeted-ledger-evidence.json
+        run: |
+          umask 077
+          node scripts/db-audit/export-targeted-ledger-evidence.mjs
+          test -s /tmp/targeted-ledger-evidence.json
+          test "$(stat -c '%a' /tmp/targeted-ledger-evidence.json)" = 600
+
+      - name: Publicar somente envelope cifrado
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: targeted-ledger-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/targeted-ledger-evidence.json
+          if-no-files-found: error
+          retention-days: 1

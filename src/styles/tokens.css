@@ -46,8 +46,8 @@
     --neutral-950: 221 20% 6%;
 
     /* ===== FONTS ===== */
-    --font-sans: 'Inter', system-ui, sans-serif;
-    --font-display: 'Inter', system-ui, sans-serif;
+    --font-sans: 'Outfit', system-ui, sans-serif;
+    --font-display: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
 
     /* ===== TYPOGRAPHY SCALE (fluid clamp) ===== */
     --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem);
@@ -274,7 +274,7 @@
     --chart-sentiment-negative: 0 84% 60%;
 
     /* ===== LAYOUT SHELL TOKENS ===== */
-    --sidebar-w: 234px;
+    --sidebar-w: 220px;
     --sidebar-w-collapsed: 62px;
     --layout-header-h: 56px;
     --layout-gutter: 2.25rem;
@@ -308,7 +308,7 @@
 
 /* ===== DARK MODE - Corporate Blue ===== */
 .dark {
-    --background: 216 58% 8%;
+    --background: 216 54% 5%;
     /* ===== ELEVATION (dark) — sombras mais profundas ===== */
     --elev-0: none;
     --elev-1: 0 1px 2px hsl(0 0% 0% / 0.5);
@@ -340,28 +340,28 @@
     --neutral-900: 221 18% 94%;
     --neutral-950: 221 20% 98%;
     --foreground: 210 40% 98%;
-    --card: 215 48% 10%;
+    --card: 215 50% 10%;
     --card-foreground: 210 40% 98%;
-    --card-elevated: 215 60% 12%;
-    --popover: 216 50% 11%;
+    --card-elevated: 215 52% 13%;
+    --popover: 214 52% 9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 100% 54%;
+    --primary: 213 100% 54%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 100% 68%;
+    --primary-glow: 213 100% 68%;
     --secondary: 213 94% 62%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 216 45% 14%;
-    --muted-foreground: 215 22% 66%;
-    --accent: 217 96% 21%;
-    --accent-foreground: 217 100% 85%;
-    --destructive: 0 90% 62%;
+    --muted: 214 49% 14%;
+    --muted-foreground: 215 16% 59%;
+    --accent: 214 49% 14%;
+    --accent-foreground: 213 100% 85%;
+    --destructive: 354 100% 68%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 40% 16%;
-    --input: 216 56% 9%;
-    --ring: 217 100% 54%;
-    --success: 148 100% 42%;
+    --border: 213 26% 25%;
+    --input: 214 42% 13%;
+    --ring: 213 100% 54%;
+    --success: 161 70% 47%;
     --success-foreground: 0 0% 100%;
-    --warning: 48 96% 53%;
+    --warning: 40 91% 60%;
     --warning-foreground: 0 0% 8%;
     --info: 213 94% 62%;
     --info-foreground: 0 0% 100%;
@@ -383,20 +383,20 @@
     --away: 42 100% 58%;
     --offline: 0 0% 45%;
     --unread: 0 90% 60%;
-    --sidebar-background: 216 51% 10%;
+    --sidebar-background: 215 52% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 100% 54%;
+    --sidebar-primary: 213 100% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 96% 21%;
-    --sidebar-accent-foreground: 217 100% 85%;
-    --sidebar-border: 217 40% 16%;
-    --sidebar-ring: 217 100% 54%;
+    --sidebar-accent: 214 49% 16%;
+    --sidebar-accent-foreground: 213 100% 85%;
+    --sidebar-border: 213 26% 25%;
+    --sidebar-ring: 213 100% 54%;
     --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;
-    --chat-bubble-received: 216 45% 14%;
+    --chat-bubble-received: 214 49% 14%;
     --chat-bubble-received-foreground: 0 0% 97%;
-    --chat-header: 215 48% 10%;
-    --chat-input-bg: 216 50% 11%;
+    --chat-header: 215 50% 10%;
+    --chat-input-bg: 214 52% 9%;
     --status-open: 221 83% 53%;
     --status-pending: 42 100% 58%;
     --status-resolved: 155 80% 50%;
@@ -426,8 +426,8 @@
     --shadow-header: 0 1px 3px hsl(0 0% 0% / 0.6);
     --glass-bg: 215 48% 10% / 1;
     --glass-border: 217 40% 22% / 1;
-    --elevated: 215 60% 12%;
-    --elevated-hover: 215 55% 15%;
+    --elevated: 215 52% 13%;
+    --elevated-hover: 215 50% 16%;
     --chart-1: 221 83% 58%;
     --chart-2: 210 95% 64%;
     --chart-3: 155 80% 52%;

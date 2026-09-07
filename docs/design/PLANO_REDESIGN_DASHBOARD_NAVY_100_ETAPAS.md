@@ -52,6 +52,7 @@
 14. **Shell global é compartilhado e já decidido pela branch base**: sidebar 234px, `--background 216 58% 8%`, `--card 215 48% 10%`, `--primary 217 100% 54%`. A referência do dashboard mede sidebar 193px e fundo `#0b0d12` (ΔE 8.2 do token). **NÃO altere tokens do shell nem a sidebar.** Um app, uma paleta. O gate de cor para tokens compartilhados é "= token" (informativo vs. referência); só os tokens `--dash-*` novos têm gate contra a referência.
 15. **Se o plano contradisser o código real, o código vence — registre a divergência no ledger antes de decidir.**
 16. **Não toque em `src/components/contacts/**`, `src/components/layout/Sidebar*.tsx`, `PageHeader.tsx`, `tokens.css .dark`** — são da branch de Contatos, ainda em movimento. Em `tokens.css` só **acrescente** linhas no fim do `:root` (Apêndice A).
+17. **Nunca `pkill -f` / `killall` com padrão genérico** (porta, `vite`, `node`, `claude`). O argv do próprio `claude -p` contém o prompt inteiro — `pkill -f "4174"` matou a sessão do dashboard em 07/09 (exit 144, processo vira zombie e o watchdog não vê). Para matar o preview: `kill $(cat /workspace/logs/<plano>-preview.pid)` ou `fuser -k <porta>/tcp`; ao relançar, `setsid nohup … &` e grave o PID no mesmo arquivo.
 
 ---
 

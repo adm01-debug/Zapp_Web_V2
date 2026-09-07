@@ -206,56 +206,56 @@ const buildPreset = (p: PresetParams): ThemePreset => {
   };
 
   const dark: ThemeModeColors = {
-    background: `216 58% 8%`,
+    background: `216 54% 5%`,
     foreground: `0 0% 97%`,
-    card: `215 48% 10%`,
+    card: `215 50% 10%`,
     'card-foreground': `0 0% 97%`,
-    'card-elevated': `215 60% 12%`,
-    popover: `216 50% 11%`,
+    'card-elevated': `215 52% 13%`,
+    popover: `214 52% 9%`,
     'popover-foreground': `0 0% 97%`,
     primary: `${h} ${s}% ${l}%`,
     'primary-foreground': '0 0% 100%',
     'primary-glow': `${gh} ${s + 3}% ${l + 6}%`,
     secondary: `${sh} ${ss}% ${sl}%`,
     'secondary-foreground': '0 0% 100%',
-    muted: `216 45% 14%`,
-    'muted-foreground': `215 22% 66%`,
+    muted: `214 49% 14%`,
+    'muted-foreground': `215 16% 59%`,
     accent: `${h} 60% 22%`,
     'accent-foreground': `${h} ${s}% 80%`,
-    border: `217 40% 16%`,
-    input: `216 56% 9%`,
+    border: `213 26% 25%`,
+    input: `214 42% 13%`,
     ring: `${h} ${s}% ${l}%`,
     xp: `${h} ${s}% ${l}%`,
     unread: `${h} ${s}% ${l}%`,
-    'sidebar-background': `216 51% 10%`,
+    'sidebar-background': `215 52% 8%`,
     'sidebar-foreground': `0 0% 97%`,
     'sidebar-primary': `${h} ${s}% ${l}%`,
     'sidebar-primary-foreground': '0 0% 100%',
     'sidebar-accent': `${h} 50% 20%`,
     'sidebar-accent-foreground': `${h} ${s}% 80%`,
-    'sidebar-border': `217 40% 16%`,
+    'sidebar-border': `213 26% 25%`,
     'sidebar-ring': `${h} ${s}% ${l}%`,
     'chat-bubble-sent': `${h} ${s}% ${l}%`,
     'chat-bubble-sent-foreground': '0 0% 100%',
-    'chat-bubble-received': `216 45% 14%`,
+    'chat-bubble-received': `214 49% 14%`,
     'chat-bubble-received-foreground': `0 0% 97%`,
-    'chat-header': `215 48% 10%`,
-    'chat-input-bg': `216 50% 11%`,
+    'chat-header': `215 50% 10%`,
+    'chat-input-bg': `214 52% 9%`,
     'status-open': `${h} ${s}% ${l}%`,
     'gradient-primary': `linear-gradient(135deg, hsl(${h} ${s}% ${l}%), hsl(${gh} ${s - 5}% ${l + 4}%))`,
     'gradient-secondary': `linear-gradient(135deg, hsl(${sh} ${ss}% ${sl}%), hsl(${gh} ${ss - 8}% ${sl + 5}%))`,
     'gradient-xp': `linear-gradient(90deg, hsl(${h} ${s}% ${l}%), hsl(${gh} ${s - 5}% ${l + 4}%))`,
     'gradient-vibrant': `linear-gradient(135deg, hsl(${h} ${s}% ${l}%), hsl(210 95% 62%), hsl(${gh} ${s - 5}% ${l + 4}%))`,
     'gradient-purple-green': `linear-gradient(135deg, hsl(${h} ${s}% ${l}%), hsl(155 80% 50%))`,
-    'gradient-surface': `linear-gradient(180deg, hsl(215 48% 10%), hsl(216 58% 8%))`,
+    'gradient-surface': `linear-gradient(180deg, hsl(215 50% 10%), hsl(216 54% 5%))`,
     'gradient-divider': `linear-gradient(90deg, transparent, hsl(${h} 50% 35% / 0.5), transparent)`,
     'shadow-glow-primary': `0 4px 24px hsl(${h} ${s}% ${l}% / 0.45)`,
     'shadow-glow-secondary': `0 4px 24px hsl(${sh} ${ss}% ${sl}% / 0.4)`,
     'shadow-glow-accent': `0 4px 24px hsl(${gh} ${s - 7}% ${l + 4}% / 0.4)`,
     'shadow-glow-purple': `0 4px 24px hsl(${h} ${s}% ${l}% / 0.5)`,
-    'glass-bg': `215 48% 10% / 1`,
+    'glass-bg': `215 50% 10% / 1`,
     'glass-border': `${h} 50% 30% / 1`,
-    elevated: `215 60% 12%`,
+    elevated: `215 52% 13%`,
     'elevated-hover': `215 55% 15%`,
     'chart-1': `${h} ${s}% ${l}%`,
     'chart-9': `${gh} ${s - 7}% ${sl}%`,
@@ -282,20 +282,20 @@ const buildPreset = (p: PresetParams): ThemePreset => {
 export const PRESETS: ThemePreset[] = [
   (() => {
     const corporate = buildPreset({ id: 'corporate', name: 'Padrão', description: 'Azul profissional', emoji: '💼', h: 221, s: 83, l: 53, gh: 230, sh: 215, ss: 70, sl: 55 });
-    // Dark mode segue a paleta Navy Premium medida no redesign de Contatos (Apêndice A) — light mode inalterado.
-    corporate.dark.primary = '217 100% 54%';
-    corporate.dark['primary-glow'] = '217 100% 68%';
+    // Dark mode segue a paleta DarkBlue Premium (design system v1.0) — light mode inalterado.
+    corporate.dark.primary = '213 100% 54%';
+    corporate.dark['primary-glow'] = '213 100% 68%';
     corporate.dark.secondary = '213 94% 62%';
-    corporate.dark.ring = '217 100% 54%';
-    corporate.dark['sidebar-primary'] = '217 100% 54%';
-    corporate.dark['sidebar-ring'] = '217 100% 54%';
-    corporate.dark['chat-bubble-sent'] = '217 100% 54%';
-    corporate.dark['status-open'] = '217 100% 54%';
-    corporate.dark['chart-1'] = '217 100% 54%';
-    corporate.dark.accent = '217 96% 21%';
-    corporate.dark['accent-foreground'] = '217 100% 85%';
-    corporate.dark['sidebar-accent'] = '217 96% 21%';
-    corporate.dark['sidebar-accent-foreground'] = '217 100% 85%';
+    corporate.dark.ring = '213 100% 54%';
+    corporate.dark['sidebar-primary'] = '213 100% 54%';
+    corporate.dark['sidebar-ring'] = '213 100% 54%';
+    corporate.dark['chat-bubble-sent'] = '213 100% 54%';
+    corporate.dark['status-open'] = '213 100% 54%';
+    corporate.dark['chart-1'] = '213 100% 54%';
+    corporate.dark.accent = '214 49% 14%';
+    corporate.dark['accent-foreground'] = '213 100% 85%';
+    corporate.dark['sidebar-accent'] = '214 49% 16%';
+    corporate.dark['sidebar-accent-foreground'] = '213 100% 85%';
     return corporate;
   })(),
   buildPreset({ id: 'purpure', name: 'Púrpure', description: 'Roxo vibrante original', emoji: '💜', h: 254, s: 92, l: 62, gh: 260, sh: 260, ss: 90, sl: 67 }),
@@ -384,7 +384,7 @@ export const PRESETS: ThemePreset[] = [
 ];
 
 export const STORAGE_KEY = 'theme-custom-colors';
-export const STORAGE_VERSION = 2;
+export const STORAGE_VERSION = 3;
 export const DEFAULT_PRESET_ID = 'corporate';
 
 const DEPRECATED_PRESET_IDS = new Set(['default', 'purpure']);
