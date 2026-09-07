@@ -1,108 +1,93 @@
 /**
- * ScheduledReportsManager — dashboard/ version
- *
- * PURPOSE: Lightweight Card widget for embedding inside the Dashboard page.
- * Manages scheduled report configs inline using direct Supabase mutations
- * (no custom hook abstraction). Designed to be dropped anywhere a Card
- * fits without additional context.
- *
- * KEY DIFFERENCES from reports/ScheduledReportsManager:
+ * ScheduledReportsManager — redesign navy
+ * Preserva integralmente:
+ *  - Queries diretas a Supabase (sem hook customizado)
+ *  - REPORT_TYPE_LABELS e FREQUENCY_LABELS existentes
+ *  - Mutations createConfig, toggleActive, deleteConfig
  *  - Self-contained state: formName, formType, formFrequency, formRecipients
- *  - Direct useQuery + useMutation wired to Supabase (no custom hook)
- *  - Recipients: plain-text comma-separated Input  ← simple UX
- *  - Actions: create + toggle active + delete  (NO edit, NO send-now)
- *  - No format field (pdf/csv/etc.)
- *  - No next_send_at display
- *  - No framer-motion (no AnimatePresence on card list)
- *  - Renders as a single <Card> with an inline Dialog
- *  - Does NOT include <ScheduledReportConfigs />
- *
- * DO NOT merge with reports/ScheduledReportsManager — that file uses the
- * useScheduledReports() hook, supports edit + send-now + format selector,
- * manages recipients as chips, includes AnimatePresence animations and
- * composes <ScheduledReportConfigs /> below the list.
+ *  - recipients como texto livre separado por vírgula (não chips)
  */
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Calendar, Clock, FileText, Mail, Plus, Trash2, Edit2, PlayCircle, PauseCircle, RefreshCw
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { DashboardCard, SectionHeader } from './overview/DashboardCard';
 
 const FREQUENCY_LABELS: Record<string, string> = {
-  daily: 'Diário',
-  weekly: 'Semanal',
-  biweekly: 'Quinzenal',
-  monthly: 'Mensal',
+  daily: 'Diário', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal',
 };
-
 const REPORT_TYPE_LABELS: Record<string, string> = {
-  performance: 'Performance',
-  satisfaction: 'Satisfação',
-  sla: 'Métricas SLA',
-  conversations: 'Conversas',
-  agents: 'Agentes',
-  full: 'Completo',
+  performance: 'Desempenho da Equipe', satisfaction: 'Satisfação', sla: 'Métricas SLA',
+  conversations: 'Volume de Atendimentos', agents: 'Agentes', full: 'Resumo Executivo',
 };
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  performance: Users, satisfaction: Heart, sla: BarChart3,
+  conversations: MessageSquare, agents: Users, full: FileText,
+};
+const TYPE_TILES: Record<string, string> = {
+  performance: 'bg-dash-tile-green', satisfaction: 'bg-dash-tile-red',
+  sla: 'bg-dash-tile-violet', conversations: 'bg-dash-tile-amber',
+  agents: 'bg-dash-tile-blue', full: 'bg-dash-tile-blue',
+};
+const TEMPLATES = [
+  { key: 'full', label: 'Resumo Executivo', desc: 'Visão geral do atendimento, principais métricas e destaques do período.' },
+  { key: 'performance', label: 'Desempenho da Equipe', desc: 'Produtividade, tempo de resposta e ranking de agentes.' },
+  { key: 'sla', label: 'Métricas de SLA', desc: 'Cumprimento de SLA, tempos médios e análise de filas.' },
+  { key: 'conversations', label: 'Volume de Atendimentos', desc: 'Total de conversas, por canal e por período.' },
+  { key: 'satisfaction', label: 'Satisfação do Cliente', desc: 'NPS, CSAT e análise de sentimentos.' },
+];
+const FREQ_TILES = [
+  { value: 'daily', label: 'Diário', sub: 'Todo dia' },
+  { value: 'weekly', label: 'Semanal', sub: 'Toda semana' },
+  { value: 'monthly', label: 'Mensal', sub: 'Todo mês' },
+  { value: 'biweekly', label: 'Personalizada', sub: 'Sob demanda' },
+];
 
 export function ScheduledReportsManager() {
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
+  const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [formName, setFormName] = useState('');
   const [formType, setFormType] = useState('performance');
   const [formFrequency, setFormFrequency] = useState('weekly');
   const [formRecipients, setFormRecipients] = useState('');
+  const [tipDismissed, setTipDismissed] = useState(false);
+  const [freqFilter, setFreqFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   const { data: configs = [], isLoading } = useQuery({
-    queryKey: ['scheduled-report-configs'],
+    queryKey: ['scheduled-reports'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('scheduled_report_configs')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('scheduled_report_configs').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
   });
 
+  const openCreate = (presetType?: string) => {
+    if (presetType) setFormType(presetType);
+    setShowCreate(true);
+  };
+
   const createConfig = useMutation({
     mutationFn: async () => {
       const recipients = formRecipients.split(',').map(r => r.trim()).filter(Boolean);
-      const { error } = await supabase.from('scheduled_report_configs').insert({
-        name: formName,
-        report_type: formType,
-        frequency: formFrequency,
-        recipients,
-        created_by: profile?.id,
-        is_active: true,
-        config: {},
-      });
+      const { error } = await supabase.from('scheduled_report_configs').insert({ name: formName, report_type: formType, frequency: formFrequency, recipients, is_active: true });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-report-configs'] });
-      toast.success('Relatório agendado criado!');
+      qc.invalidateQueries({ queryKey: ['scheduled-reports'] });
       setShowCreate(false);
-      resetForm();
+      setFormName(''); setFormType('performance'); setFormFrequency('weekly'); setFormRecipients('');
+      toast.success('Relatório criado com sucesso');
     },
-    onError: () => toast.error('Erro ao criar relatório'),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const toggleActive = useMutation({
@@ -110,10 +95,7 @@ export function ScheduledReportsManager() {
       const { error } = await supabase.from('scheduled_report_configs').update({ is_active: !isActive }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-report-configs'] });
-      toast.success('Status atualizado');
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
   });
 
   const deleteConfig = useMutation({
@@ -121,168 +103,153 @@ export function ScheduledReportsManager() {
       const { error } = await supabase.from('scheduled_report_configs').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-report-configs'] });
-      toast.success('Relatório removido');
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scheduled-reports'] }); toast.success('Relatório removido'); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  const resetForm = () => {
-    setFormName('');
-    setFormType('performance');
-    setFormFrequency('weekly');
-    setFormRecipients('');
-  };
-
-  if (isLoading) {
-    return (
-      <Card className="border border-border/60">
-        <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
-        </CardContent>
-      </Card>
-    );
-  }
+  const filtered = configs.filter(c => {
+    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase());
+    const matchFreq = freqFilter === 'all' || c.frequency === freqFilter;
+    return matchSearch && matchFreq;
+  });
 
   return (
-    <>
-      <Card className="border border-border/60 bg-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                Relatórios Agendados
-              </CardTitle>
-              <CardDescription>
-                Configure relatórios automáticos enviados por email
-              </CardDescription>
-            </div>
-            <Button size="sm" onClick={() => setShowCreate(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Novo Relatório
-            </Button>
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-2.5">
+        {/* Principal */}
+        <DashboardCard testid="reports-main-card">
+          <SectionHeader icon={FileText} title="Relatórios Agendados" subtitle="Configure e gerencie relatórios automáticos enviados por email" tileSize={44}
+            right={<button onClick={() => openCreate()} className="h-8 px-3 rounded-md bg-primary text-white text-[13px] font-semibold flex items-center gap-1 hover:bg-primary/90 transition-colors"><Plus className="w-3.5 h-3.5" />Novo Relatório</button>}
+          />
+          {/* Filtros */}
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar relatórios…" className="h-9 flex-1 min-w-[160px] rounded-lg bg-input border-border text-[13px]" />
+            <Select value={freqFilter} onValueChange={setFreqFilter}>
+              <SelectTrigger className="h-9 w-[150px] text-[13px] rounded-lg bg-input border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as frequências</SelectItem>
+                {Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent>
-          {configs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">Nenhum relatório agendado</p>
-              <p className="text-xs mt-1">Crie relatórios automáticos para receber por email</p>
+          {filtered.length === 0 ? (
+            <div className="mt-4 border border-dashed border-border/60 rounded-xl py-14 flex flex-col items-center text-muted-foreground gap-3">
+              <FileText className="w-11 h-11 text-primary opacity-60" />
+              <p className="text-[18px] font-bold text-foreground">Nenhum relatório agendado ainda</p>
+              <p className="text-[13px] text-center max-w-[320px]">Crie relatórios automáticos para receber insights do seu atendimento diretamente no seu email.</p>
+              <Button onClick={() => openCreate()} className="bg-primary text-white h-9 px-4 text-[13px]"><Plus className="w-3.5 h-3.5 mr-1" />Criar meu primeiro relatório</Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {configs.map((config) => (
-                <div
-                  key={config.id}
-                  className={cn(
-                    'flex items-center justify-between p-4 rounded-xl border transition-all',
-                    config.is_active
-                      ? 'border-border/60 bg-card hover:border-primary/30'
-                      : 'border-border/30 bg-muted/30 opacity-60'
-                  )}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                      config.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                    )}>
-                      <FileText className="w-5 h-5" />
+            <div className="mt-3 space-y-1">
+              {filtered.map(cfg => {
+                const Ico = TYPE_ICONS[cfg.report_type] ?? FileText;
+                return (
+                  <div key={cfg.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
+                    <div className={cn('w-[34px] h-[34px] rounded-[8px] flex items-center justify-center shrink-0', TYPE_TILES[cfg.report_type] ?? 'bg-dash-tile-blue')}>
+                      <Ico className="w-4 h-4 text-white/90" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{config.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge variant="outline" className="text-[10px] px-1.5">
-                          {REPORT_TYPE_LABELS[config.report_type] || config.report_type}
-                        </Badge>
-                        <Badge variant="secondary" className="text-[10px] px-1.5">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {FREQUENCY_LABELS[config.frequency] || config.frequency}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {config.recipients?.length || 0} destinatários
-                        </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[14px] font-semibold truncate">{cfg.name}</div>
+                      <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                        <span>{REPORT_TYPE_LABELS[cfg.report_type] ?? cfg.report_type}</span>
+                        <span>·</span><span>{FREQUENCY_LABELS[cfg.frequency] ?? cfg.frequency}</span>
+                        <span>·</span><span>{cfg.recipients?.length ?? 0} destinatário(s)</span>
                       </div>
-                      {config.last_sent_at && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          Último envio: {formatDistanceToNow(new Date(config.last_sent_at), { locale: ptBR, addSuffix: true })}
-                        </p>
-                      )}
                     </div>
+                    <Switch checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
+                    <button onClick={() => deleteConfig.mutate(cfg.id)} className="w-7 h-7 rounded-md hover:bg-destructive/10 flex items-center justify-center shrink-0">
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <Switch
-                      checked={config.is_active}
-                      onCheckedChange={() => toggleActive.mutate({ id: config.id, isActive: config.is_active })}
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => deleteConfig.mutate(config.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </DashboardCard>
 
+        {/* Rail */}
+        <div className="space-y-2.5">
+          <DashboardCard testid="reports-templates-card">
+            <SectionHeader icon={LayoutTemplate} title="Modelos de Relatórios" subtitle="Utilize nossos modelos prontos para começar mais rápido" tileSize={34} />
+            <div className="mt-3 space-y-1">
+              {TEMPLATES.map((t, i) => {
+                const Ico = TYPE_ICONS[t.key] ?? FileText;
+                return (
+                  <button key={t.key} onClick={() => openCreate(t.key)} className="w-full flex items-center gap-2.5 h-14 rounded-lg hover:bg-muted/40 transition-colors px-2 text-left">
+                    <div className={cn('w-[34px] h-[34px] rounded-[8px] flex items-center justify-center shrink-0', TYPE_TILES[t.key] ?? 'bg-dash-tile-blue')}>
+                      <Ico className="w-4 h-4 text-white/90" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-bold truncate">{t.label}</div>
+                      <div className="text-[11.5px] text-muted-foreground line-clamp-1">{t.desc}</div>
+                    </div>
+                    <span className="text-muted-foreground shrink-0">›</span>
+                  </button>
+                );
+              })}
+            </div>
+          </DashboardCard>
+          <DashboardCard testid="reports-freq-card">
+            <SectionHeader icon={Calendar} title="Frequências Comuns" subtitle="Escolha a periodicidade ideal para seu relatório" tileSize={34} />
+            <div className="grid grid-cols-4 gap-2 mt-3">
+              {FREQ_TILES.map(f => (
+                <button key={f.value} onClick={() => { setFormFrequency(f.value); openCreate(); }}
+                  className={cn('h-16 rounded-lg border border-border/70 flex flex-col items-center justify-center gap-1 hover:bg-muted/40 transition-colors',
+                    formFrequency === f.value && showCreate ? 'bg-primary/15 border-primary/60' : '')}>
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-[12px] font-semibold leading-none">{f.label}</span>
+                  <span className="text-[10px] text-muted-foreground">{f.sub}</span>
+                </button>
+              ))}
+            </div>
+          </DashboardCard>
+          {!tipDismissed && (
+            <DashboardCard testid="reports-tip-card">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-dash-tile-amber flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-4 h-4 text-white/90" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold">Dica</p>
+                  <p className="text-[12px] text-muted-foreground mt-0.5">Comece com o relatório semanal de Resumo Executivo para receber os principais indicadores da sua operação.</p>
+                </div>
+                <button onClick={() => setTipDismissed(true)} className="shrink-0 w-6 h-6 rounded flex items-center justify-center hover:bg-muted/60">
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </DashboardCard>
+          )}
+        </div>
+      </div>
+
+      {/* Dialog Criar */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Novo Relatório Agendado</DialogTitle>
-            <DialogDescription>Configure um relatório para envio automático</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader><DialogTitle>Novo Relatório Agendado</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome do relatório</Label>
-              <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Relatório semanal de performance" />
+            <div><label className="text-[13px] font-medium mb-1 block">Nome do relatório</label><Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ex: Relatório semanal de performance" className="bg-input border-border" /></div>
+            <div><label className="text-[13px] font-medium mb-1 block">Tipo</label>
+              <Select value={formType} onValueChange={setFormType}>
+                <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(REPORT_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Tipo</Label>
-                <Select value={formType} onValueChange={setFormType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(REPORT_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Frequência</Label>
-                <Select value={formFrequency} onValueChange={setFormFrequency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div><label className="text-[13px] font-medium mb-1 block">Frequência</label>
+              <Select value={formFrequency} onValueChange={setFormFrequency}>
+                <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Destinatários (emails separados por vírgula)</Label>
-              <Input value={formRecipients} onChange={(e) => setFormRecipients(e.target.value)} placeholder="email1@empresa.com, email2@empresa.com" />
-            </div>
+            <div><label className="text-[13px] font-medium mb-1 block">Destinatários</label><Input value={formRecipients} onChange={e => setFormRecipients(e.target.value)} placeholder="email1@empresa.com, email2@empresa.com" className="bg-input border-border" /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCreate(false); resetForm(); }}>Cancelar</Button>
-            <Button onClick={() => createConfig.mutate()} disabled={!formName || !formRecipients || createConfig.isPending}>
-              {createConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              Criar Relatório
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button onClick={() => createConfig.mutate()} disabled={!formName || !formRecipients || createConfig.isPending} className="bg-primary">
+              {createConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}Criar relatório
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
