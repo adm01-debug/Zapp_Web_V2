@@ -41,6 +41,7 @@ Existe ainda uma **armadilha que teria anulado até uma troca de tokens**: `inde
 13. **Máximo 3 iterações por loop visual.** Na 3ª, registre o resíduo no ledger e siga. Não entre em loop infinito de ajuste de 1px.
 14. **Shell dos containers é `dash`.** Sem `[[ ]]`, arrays, `source`. Sem `python3` no container — QA em Node.
 15. **Se algo do plano contradisser o código real, o código real vence — e você registra a divergência no ledger antes de decidir.**
+16. **Nunca `pkill -f` / `killall` com padrão genérico** (porta, `vite`, `node`, `claude`). O argv do próprio `claude -p` contém o prompt inteiro — `pkill -f "4174"` matou a sessão do dashboard em 07/09 (exit 144, processo vira zombie e o watchdog não vê). Para matar o preview: `kill $(cat /workspace/logs/<plano>-preview.pid)` ou `fuser -k <porta>/tcp`; ao relançar, `setsid nohup … &` e grave o PID no mesmo arquivo.
 
 ---
 
