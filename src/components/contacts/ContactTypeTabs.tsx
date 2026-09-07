@@ -63,14 +63,8 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <LayoutGroup id="contacts-tabs">
-        {/*
-          O div externo é o frame visual (border + bg).
-          O TabsList interno é transparente — só para semântica ARIA de tablist nos tipos visíveis.
-          O DropdownMenu fica fora do TabsList para não quebrar role="tablist" com filho inválido.
-        */}
         <div className="h-[52px] w-full rounded-[14px] border border-border/70 bg-card p-1.5 flex items-center gap-1">
           <TabsList className="flex h-10 items-center gap-1 bg-transparent border-none p-0 flex-1 justify-start overflow-x-auto flex-nowrap scrollbar-thin snap-x min-w-0">
-            {/* Todos */}
             <TabsTrigger
               value="all"
               className="relative isolate h-10 px-4 rounded-[10px] text-[15px] font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
@@ -81,7 +75,6 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
               <CountBadge count={contactCountByType['all'] || 0} active={activeTab === 'all'} />
             </TabsTrigger>
 
-            {/* Tipos visíveis (índices 0-5: cliente → parceiro) */}
             {visibleTypes.map((type) => {
               const count = contactCountByType[type.value] || 0;
               const active = activeTab === type.value;
@@ -100,13 +93,13 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
             })}
           </TabsList>
 
-          {/* Overflow dropdown — fora do TabsList para não quebrar role="tablist" */}
           {overflowTypes.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'relative isolate h-10 px-3 rounded-[10px] text-[15px] font-medium flex items-center gap-1.5 shrink-0 transition-colors select-none outline-none',
+                    /* focus-visible restored: ring equivalente ao dos TabsTrigger */
+                    'relative isolate h-10 px-3 rounded-[10px] text-[15px] font-medium flex items-center gap-1.5 shrink-0 transition-colors select-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                     overflowActive
                       ? 'text-foreground font-semibold'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
