@@ -106,12 +106,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
         <Sidebar
           currentView={currentView}
           onViewChange={handleViewChange}
-          currentAgent={{
-            name: profile?.name || userEmail || 'Usuário',
-            avatar: profile?.avatar_url || undefined,
-            status: 'online',
-          }}
-          onLogout={signOut}
           inboxBadge={unreadNotifications || undefined}
         />
       )}

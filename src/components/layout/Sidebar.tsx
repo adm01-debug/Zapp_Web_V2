@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Search, Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
+import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/ui/useTheme';
 import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
@@ -10,7 +10,6 @@ import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtect
 import { SoundMuteToggle } from '@/components/notifications/SoundMuteToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
-import { AgentProfilePopover } from './AgentProfilePopover';
  import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
  import { useUserRole } from '@/hooks/system/useUserRole';
  import { NavigationService } from '@/services/navigation.service';
@@ -18,23 +17,16 @@ import { AgentProfilePopover } from './AgentProfilePopover';
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
-  currentAgent?: { name: string; avatar?: string; status: 'online' | 'away' | 'offline' };
-  onLogout?: () => void;
   inboxBadge?: number;
-  onStatusChange?: (status: 'online' | 'away' | 'offline') => void;
 }
 
-export const Sidebar = React.memo(function Sidebar({ 
-  currentView, 
-  onViewChange, 
-  currentAgent, 
-  onLogout, 
-  inboxBadge, 
-  onStatusChange 
+export const Sidebar = React.memo(function Sidebar({
+  currentView,
+  onViewChange,
+  inboxBadge,
 }: SidebarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const [statusOpen, setStatusOpen] = useState(false);
   const { collapsed, toggle } = useSidebarCollapse();
    const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
    const { roles } = useUserRole();
@@ -107,18 +99,6 @@ export const Sidebar = React.memo(function Sidebar({
          </ul>
        </nav>
 
-      {/* Search */}
-      <div className={cn('flex my-1.5', collapsed ? 'justify-center px-[11px]' : 'px-2')}>
-        <Tooltip delayDuration={200}><TooltipTrigger asChild>
-          <button onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
-            className={cn('rounded-xl flex items-center gap-2 text-muted-foreground hover:text-foreground bg-input border border-border hover:border-border/80 transition-all', collapsed ? 'w-[40px] h-[30px] justify-center' : 'w-full h-11 px-3')} aria-label="Buscar módulo (Ctrl+K)">
-            <Search className="w-[14px] h-[14px] shrink-0" />
-            {!collapsed && <span className="text-xs text-muted-foreground">Buscar...</span>}
-            {!collapsed && <kbd className="ml-auto px-1 py-0.5 rounded bg-muted text-[9px] font-mono text-muted-foreground">⌘K</kbd>}
-          </button>
-        </TooltipTrigger>{collapsed && <TooltipContent side="right" sideOffset={8} className="text-xs">Buscar <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘K</kbd></TooltipContent>}</Tooltip>
-      </div>
-
       {/* Favorites */}
       {favoriteItems.length > 0 && (
         <>
@@ -166,8 +146,6 @@ export const Sidebar = React.memo(function Sidebar({
             </button>
           </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
         </div>
-
-        {currentAgent && <AgentProfilePopover agent={currentAgent} collapsed={collapsed} statusOpen={statusOpen} onStatusOpenChange={setStatusOpen} onStatusChange={onStatusChange} onViewChange={onViewChange} onLogout={onLogout} />}
       </div>
     </aside>
   );

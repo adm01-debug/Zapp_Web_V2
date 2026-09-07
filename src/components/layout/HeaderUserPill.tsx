@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronDown } from 'lucide-react';
-import { ProfileMenuContent } from './AgentProfilePopover';
+import { ProfileMenuContent } from './ProfileMenuContent';
 import { RoleBadge } from './RoleBadge';
 import { useUserRole } from '@/hooks/system/useUserRole';
 

@@ -46,11 +46,18 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       aria-label={badgeCount ? `${item.label} (${badgeCount} não lidas)` : item.label}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'relative rounded-full flex items-center gap-2.5 transition-all duration-200 ease-out group/item',
-        collapsed ? 'w-[38px] h-[38px] justify-center' : 'w-full h-11 px-3 gap-3 rounded-[10px] text-[15px] font-medium',
+        'relative flex items-center gap-2.5 transition-all duration-200 ease-out group/item',
+        collapsed
+          ? 'w-[38px] h-[38px] justify-center rounded-full'
+          : cn(
+              'w-full py-2 px-3 gap-3 rounded-xl text-[15px] font-medium',
+              "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:transition-colors before:duration-200 before:content-['']",
+              isActive ? 'before:bg-primary' : 'before:bg-transparent'
+            ),
         isActive
           ? 'text-sidebar-accent-foreground'
-          : 'text-sidebar-foreground/80 hover:bg-muted/60 hover:text-foreground active:scale-[0.97]'
+          : 'text-sidebar-foreground/80 hover:bg-muted/60 hover:text-foreground active:scale-[0.97]',
+        !collapsed && 'hover:translate-x-1'
       )}
     >
       {isActive && (
@@ -60,7 +67,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
               'absolute inset-0 transition-all duration-300 ease-out',
               collapsed
                 ? 'rounded-full bg-secondary/20 border border-secondary/30 shadow-glow-secondary-sm'
-                : 'rounded-[10px] bg-sidebar-accent border border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/.25),0_6px_18px_-8px_hsl(var(--primary)/.6)]'
+                : 'rounded-xl bg-sidebar-accent border border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/.25),0_6px_18px_-8px_hsl(var(--primary)/.6)]'
             )}
           />
           {/* Active indicator bar — highly visible in collapsed mode */}

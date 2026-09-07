@@ -17,17 +17,45 @@ interface SidebarNavGroupProps {
   isFavorite?: (id: string) => boolean;
 }
 
+const GROUPS_STORAGE_KEY = 'zapp-sidebar-groups';
+
+function readStoredGroupsState(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(GROUPS_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredGroupState(label: string, isOpen: boolean) {
+  try {
+    const state = readStoredGroupsState();
+    state[label] = isOpen;
+    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // localStorage indisponível (modo privado/quota) — estado só não persiste entre sessões
+  }
+}
+
 export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, onViewChange, defaultOpen = false, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavGroupProps) {
   const hasActiveItem = items.some(item => item.id === currentView);
-  const [isOpen, setIsOpen] = useState(defaultOpen || hasActiveItem);
+  const [isOpen, setIsOpen] = useState(() => readStoredGroupsState()[label] ?? (defaultOpen || hasActiveItem));
 
   useEffect(() => {
     if (hasActiveItem && !isOpen) setIsOpen(true);
   }, [hasActiveItem]);
 
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      writeStoredGroupState(label, next);
+      return next;
+    });
+  };
+
   const triggerButton = (
     <button
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={handleToggle}
       className={cn(
         'rounded-lg flex items-center transition-all duration-200 group/trigger',
         collapsed ? 'w-full h-[30px] justify-center gap-0.5' : 'w-full h-10 px-2.5 gap-2',
