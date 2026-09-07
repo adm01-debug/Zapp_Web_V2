@@ -69,8 +69,8 @@ export function FilterPresets({ onApplyPreset, currentFilters }: FilterPresetsPr
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-          <Bookmark className="w-3.5 h-3.5" />
+        <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border border-border text-[15px] font-medium gap-2">
+          <Bookmark className="w-[18px] h-[18px]" />
           Filtros Salvos
           {presets.length > 0 && (
             <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{presets.length}</Badge>
