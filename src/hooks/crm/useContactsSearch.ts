@@ -133,7 +133,39 @@ export function useContactsSearch() {
     return map;
   }, [typeCounts]);
 
-  // Unique values for filter dropdowns (from current results — lightweight)
+  // ─── Último contato: max(messages.created_at) por contato da página atual ───
+  const contactIds = useMemo(() => contacts.map(c => c.id), [contacts]);
+
+  const { data: lastMsgMap, isSuccess: lastMsgSuccess } = useQuery({
+    queryKey: ['contacts-last-message', contactIds],
+    queryFn: async () => {
+      const { data, error } = await ContactService.getLastMessageDates(contactIds);
+      if (error) throw error;
+      // Agrupa em memória: sort DESC já garante que o primeiro por contact_id é o mais recente
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((row) => {
+        if (!map[row.contact_id] || row.created_at > map[row.contact_id]) {
+          map[row.contact_id] = row.created_at;
+        }
+      });
+      return map;
+    },
+    enabled: contactIds.length > 0,
+    staleTime: 30_000,
+  });
+
+  // Mescla last_message_at nos contatos sem tocar no tipo original
+  const contactsEnriched = useMemo(() =>
+    contacts.map(c => ({
+      ...c,
+      // Se a query falhou (isSuccess=false), não sobrescreve com null — ContactCard usa created_at
+      ...(lastMsgSuccess && { last_message_at: lastMsgMap?.[c.id] ?? null }),
+    })),
+    [contacts, lastMsgMap, lastMsgSuccess]
+  );
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Unique values for filter dropdowns (from current results – lightweight)
   const uniqueCompanies = useMemo(() => [...new Set(contacts.map(c => c.company).filter(Boolean))] as string[], [contacts]);
   const uniqueJobTitles = useMemo(() => [...new Set(contacts.map(c => c.job_title).filter(Boolean))] as string[], [contacts]);
   const uniqueTags = useMemo(() => [...new Set(contacts.flatMap(c => c.tags || []))] as string[], [contacts]);
@@ -156,8 +188,8 @@ export function useContactsSearch() {
   }, []);
 
   return {
-    // Data
-    contacts,
+    // Data — contactsEnriched inclui last_message_at (null quando sem mensagens)
+    contacts: contactsEnriched,
     totalCount,
     loading: isLoading,
     error,

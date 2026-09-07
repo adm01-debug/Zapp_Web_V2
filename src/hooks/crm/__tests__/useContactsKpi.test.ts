@@ -19,19 +19,19 @@ describe('aggregateKpi', () => {
     const kpi = aggregateKpi(rows, NOW);
     expect(kpi.novos30).toBe(3);
     expect(kpi.novosPrev30).toBe(1);
-    expect(kpi.deltaNovosPct).toBe(200); // (3-1)/1 * 100
+    expect(kpi.deltaNovosPct).toBeNull(); // prev=1 < MIN_PREV 50 → null
   });
 
-  it('deltaNovosPct = 100 quando prev é 0 e atual > 0', () => {
+  it('deltaNovosPct = null quando prev < MIN_PREV 50', () => {
     const rows = [row(5)];
     const kpi = aggregateKpi(rows, NOW);
-    expect(kpi.deltaNovosPct).toBe(100);
+    expect(kpi.deltaNovosPct).toBeNull(); // prev=0 < 50 → null
   });
 
-  it('deltaNovosPct = 0 quando prev e atual são 0', () => {
+  it('deltaNovosPct = null quando não há registros em nenhuma janela e prev < 50', () => {
     const rows = [row(200)];
     const kpi = aggregateKpi(rows, NOW);
-    expect(kpi.deltaNovosPct).toBe(0);
+    expect(kpi.deltaNovosPct).toBeNull(); // prev=0 < 50 → null
   });
 
   it('conta empresas distintas ignorando vazio/duplicado', () => {
@@ -55,7 +55,7 @@ describe('aggregateKpi', () => {
     const kpi = aggregateKpi(rows, NOW);
     expect(kpi.leadsTotal).toBe(3);
     expect(kpi.leads30).toBe(2);
-    expect(kpi.deltaLeadsPct).toBe(100); // (2-1)/1 * 100
+    expect(kpi.deltaLeadsPct).toBeNull(); // prev=1 < MIN_PREV 50 → null
   });
 
   it('sparkline diária (7 buckets) soma 30 pontos sem perder registros', () => {
@@ -72,6 +72,28 @@ describe('aggregateKpi', () => {
     for (let i = 1; i < kpi.seriesTotalCumulative12w.length; i++) {
       expect(kpi.seriesTotalCumulative12w[i]).toBeGreaterThanOrEqual(kpi.seriesTotalCumulative12w[i - 1]);
     }
+  });
+
+  it('deltaNovosPct é número quando prev >= MIN_PREV (50)', () => {
+    const rows = [
+      // 50 no período anterior: dias 30..58 (janela [30,60))
+      ...Array.from({ length: 50 }, (_, i) => row(30 + (i % 29))),
+      // 60 recentes (0..29, janela [0,30))
+      ...Array.from({ length: 60 }, (_, i) => row(i % 29 + 1)),
+    ];
+    const kpi = aggregateKpi(rows, NOW);
+    // novosPrev30 = 50 >= MIN_PREV(50) → deve retornar número
+    expect(typeof kpi.deltaNovosPct).toBe('number');
+  });
+
+  it('deltaNovosPct é null quando prev = 49 (abaixo do mínimo)', () => {
+    // 49 registros todos dentro da janela [30,60): 30+(i%30) produz valores 30..59
+    const rows = [
+      ...Array.from({ length: 49 }, (_, i) => row(30 + (i % 30))),
+      row(5), // 1 recente
+    ];
+    const kpi = aggregateKpi(rows, NOW);
+    expect(kpi.deltaNovosPct).toBeNull(); // prev=49 < 50 → null
   });
 
   it('dataset vazio não quebra e retorna séries zeradas', () => {

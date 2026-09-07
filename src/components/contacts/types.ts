@@ -11,6 +11,8 @@ export interface Contact {
   tags: string[] | null;
   contact_type: string | null;
   created_at: string;
+  /** Data do último contato via mensagem — populado por useContactsSearch. Null = sem mensagens. */
+  last_message_at?: string | null;
 }
 
 export interface ContactItemProps {
