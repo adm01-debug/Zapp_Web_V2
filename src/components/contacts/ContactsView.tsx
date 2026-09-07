@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
@@ -72,6 +72,7 @@ export function ContactsView() {
   };
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="relative bg-background w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
 
@@ -226,5 +227,6 @@ export function ContactsView() {
         availableTags={uniqueTags}
       />
     </div>
+    </MotionConfig>
   );
 }
