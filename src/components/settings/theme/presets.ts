@@ -384,7 +384,7 @@ export const PRESETS: ThemePreset[] = [
 ];
 
 export const STORAGE_KEY = 'theme-custom-colors';
-export const STORAGE_VERSION = 3;
+export const STORAGE_VERSION = 4;
 export const DEFAULT_PRESET_ID = 'corporate';
 
 const DEPRECATED_PRESET_IDS = new Set(['default', 'purpure']);
