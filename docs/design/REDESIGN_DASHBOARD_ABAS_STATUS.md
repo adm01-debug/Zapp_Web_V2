@@ -108,7 +108,9 @@ Preview: `http://localhost:4175` (porta 4174 já ocupada pelo watchdog de `Zapp_
 -
 
 ## Pendências / resíduos
--
+- Coluna "SLA" no ranking de Equipe (FASE4) não incluída — dado existe em `useSLAMetrics`, cruzamento por `agentId` não foi feito nesta entrega (ver Blocos sem fonte, FASE4). Melhoria futura, não regressão.
+- Tile "Personalizada" em Frequências Comuns (FASE7) mapeia para `biweekly` por falta de valor "custom" no schema — pequena inconsistência de copy documentada.
+- `npm run lint` cru e `typecheck-ratchet`/`implicit-any-check` continuam com a mesma dívida pré-existente de `main` (ThemeCustomizer/PresetCard/presets.ts/contact.service.ts) — não tocada, não é desta entrega (Z.10).
 
 ## CP0 [x] sha=e051509f (branch antes de qualquer commit meu) · before=abas-00-before-{goals,ai,sla,team,satisfaction,sentiment,reports}.png (out/, 0 console errors) · gates:
   - `grep -c dash tailwind.config.ts` = 12 (≥12 ok, Z.1)
@@ -124,4 +126,4 @@ Preview: `http://localhost:4175` (porta 4174 já ocupada pelo watchdog de `Zapp_
 ## CP5 Satisfação     [x] sha=f4c905ae (+ fix RangeError desta sessão) · shot=abas-01-satisfaction.png (0 console errors após fix) · blocos em empty: evolução, distribuição CSAT, por fila, top agentes (sem dado real na base, conforme esperado) · CSATDashboard: **permanece abaixo, inalterado** (`DashboardView.tsx:179` continua `<SatisfactionMetrics/><CSATDashboard/>`) — confirmado renderizado no DOM (texto "Satisfação do Cliente (CSAT)" presente), fica abaixo da dobra numa área de scroll interna (por isso não aparece no screenshot 900px, checado via innerText) · gates 5/5
 ## CP6 Sentimento     [x] sha=f4c905ae (+ fixes desta sessão) · shot=abas-01-sentiment.png (0 console errors) · hook=useRealSentimentData (SentimentHelpers.tsx, confirmado) · componente real=SentimentTrendChart.tsx (não SentimentTabContent.tsx, ver Divergência FASE0) · gates 5/5
 ## CP7 Relatórios     [x] sha=f4c905ae (+ fix import restrito desta sessão) · shot=abas-01-reports.png (0 console errors) · CRUD: criar ✓ (dialog funcional) · ativar/desativar ✓ (Switch) · excluir ✓ · editar: **não existe** (mesmo comportamento da versão anterior, contrato FASE0 confirma "sem edit") · gates 5/5
-## CP8 Entrega        [ ] PR= · CI= · merge= · prod=abas-09-prod-*.png
+## CP8 Entrega        [x] build ok (334.8/350 KB JS inicial, budget ok) · reduced-motion: 0 transições >20ms nas 7 abas · responsivo 1920/1280/390 sem overflow (sla/team/reports) · light mode: legível nas 7 abas (tiles `--dash-*` continuam escuros no light — comportamento pré-existente da Visão Geral, Z.7, não é regressão) · QA funcional: sub-tabs Metas ok, busca+ordenar SLA ok, ordenar ranking Equipe ok, dialog Relatórios pelos 3 caminhos ok, trocar período Sentimento ok, 6 features IA presentes e clicáveis, "Ver ranking →" Metas→Equipe ok (Z.5), 0 console errors em todos os fluxos · `npx vitest run` completo: **2875 passed, 1 failed (MediaLibraryAdmin "100 items" — timeout conhecido, Z.9), 35 todo** de 2911 — falha pré-existente, não é desta entrega · PR=(abrindo) · CI= · merge=NÃO (proibido nesta entrega) · prod=(pendente merge)
