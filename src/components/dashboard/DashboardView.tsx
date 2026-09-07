@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import {
   TrendingUp, BarChart3, Target, Clock, Brain, Award, Heart, Smile, FileText,
 } from 'lucide-react';
+import { DashboardTabs, DashboardTabDef } from './overview/DashboardTabs';
 import { SLAMetricsDashboard } from './SLAMetricsDashboard';
 import { AIQuickAccess } from './AIQuickAccess';
 import { CSATDashboard } from '@/components/csat/CSATDashboard';
@@ -23,6 +24,18 @@ import { DashboardTopBar } from './overview/DashboardTopBar';
 import { DashboardHeader } from './overview/DashboardHeader';
 
 const OVERVIEW_TAB = 'overview';
+
+const DASHBOARD_TABS: DashboardTabDef[] = [
+  { value: 'overview', label: 'Visão Geral', icon: TrendingUp },
+  { value: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { value: 'goals', label: 'Metas', icon: Target },
+  { value: 'ai', label: 'Inteligência Artificial', icon: Brain },
+  { value: 'sla', label: 'Métricas SLA', icon: Clock },
+  { value: 'team', label: 'Equipe', icon: Award },
+  { value: 'satisfaction', label: 'Satisfação', icon: Heart },
+  { value: 'sentiment', label: 'Sentimento', icon: Smile },
+  { value: 'reports', label: 'Relatórios', icon: FileText },
+];
 
 export function DashboardView() {
   const [tab, setTab] = useState(OVERVIEW_TAB);
@@ -72,17 +85,7 @@ export function DashboardView() {
         />
 
         <Tabs value={tab} onValueChange={setTab}>
-        <TabsList data-testid="dash-tabs" className="mb-0 bg-muted/50 border border-border/30 flex-wrap">
-          <TabsTrigger value="overview" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Visão Geral</TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2"><Target className="w-4 h-4" />Metas</TabsTrigger>
-          <TabsTrigger value="ai" className="flex items-center gap-2"><Brain className="w-4 h-4" />Inteligência Artificial</TabsTrigger>
-          <TabsTrigger value="sla" className="flex items-center gap-2"><Clock className="w-4 h-4" />Métricas SLA</TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2"><Award className="w-4 h-4" />Equipe</TabsTrigger>
-          <TabsTrigger value="satisfaction" className="flex items-center gap-2"><Heart className="w-4 h-4" />Satisfação</TabsTrigger>
-          <TabsTrigger value="sentiment" className="flex items-center gap-2"><Smile className="w-4 h-4" />Sentimento</TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2"><FileText className="w-4 h-4" />Relatórios</TabsTrigger>
-        </TabsList>
+          <DashboardTabs tabs={DASHBOARD_TABS} activeTab={tab} />
 
         <TabsContent value="overview" className="space-y-2.5 mt-2.5">
           {/* Shell da Visão Geral — placeholders com altura-alvo para o CP1 medir o ritmo vertical.
