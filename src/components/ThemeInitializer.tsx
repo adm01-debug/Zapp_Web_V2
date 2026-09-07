@@ -3,6 +3,7 @@ import {
   PRESETS,
   CSS_VARS_TO_APPLY,
   STORAGE_KEY,
+  STORAGE_VERSION,
   DEFAULT_PRESET_ID,
   normalizeStoredPresetId,
 } from '@/components/settings/theme/presets';
@@ -13,6 +14,7 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('ThemeInitializer');
 
 type StoredThemeConfig = {
+  v?: number;
   borderRadius?: number;
   cacheMode?: 'light' | 'dark';
   cachePreset?: string;
@@ -44,9 +46,13 @@ export function ThemeInitializer() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved) as StoredThemeConfig;
-            storedConfig = parsed;
-            presetId = normalizeStoredPresetId(parsed.preset);
-            if (parsed.borderRadius != null) radius = parsed.borderRadius;
+            if (parsed.v === STORAGE_VERSION) {
+              storedConfig = parsed;
+              presetId = normalizeStoredPresetId(parsed.preset);
+              if (parsed.borderRadius != null) radius = parsed.borderRadius;
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
           } catch (e) {
             log.warn('Failed to parse saved theme config:', e);
           }
@@ -70,6 +76,7 @@ export function ThemeInitializer() {
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 ...storedConfig,
+                v: STORAGE_VERSION,
                 borderRadius: radius,
                 cacheMode: resolvedTheme,
                 cachePreset: presetId,

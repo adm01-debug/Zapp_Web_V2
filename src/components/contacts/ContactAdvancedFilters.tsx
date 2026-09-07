@@ -62,7 +62,7 @@ export function ContactAdvancedFilters({
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      className="bg-muted/30 rounded-xl p-5 border border-border/30 space-y-4"
+      className="bg-card rounded-[14px] p-4 border border-border/70 space-y-4"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function ContactAdvancedFilters({
             <Building className="w-3.5 h-3.5" />Empresa
           </Label>
           <Select value={filterCompany || '__all__'} onValueChange={(v) => setFilterCompany(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Todas" /></SelectTrigger>
+            <SelectTrigger className="h-10"><SelectValue placeholder="Todas" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todas as empresas</SelectItem>
               {uniqueCompanies.map((c) => (
@@ -103,7 +103,7 @@ export function ContactAdvancedFilters({
             <Briefcase className="w-3.5 h-3.5" />Cargo
           </Label>
           <Select value={filterJobTitle || '__all__'} onValueChange={(v) => setFilterJobTitle(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger className="h-10"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todos os cargos</SelectItem>
               {uniqueJobTitles.map((t) => (
@@ -119,7 +119,7 @@ export function ContactAdvancedFilters({
             <Tag className="w-3.5 h-3.5" />Etiqueta
           </Label>
           <Select value={filterTag || '__all__'} onValueChange={(v) => setFilterTag(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Todas" /></SelectTrigger>
+            <SelectTrigger className="h-10"><SelectValue placeholder="Todas" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todas as etiquetas</SelectItem>
               {uniqueTags.map((t) => (
@@ -135,7 +135,7 @@ export function ContactAdvancedFilters({
             <CalendarDays className="w-3.5 h-3.5" />Período
           </Label>
           <Select value={filterDateRange} onValueChange={setFilterDateRange}>
-            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
             <SelectContent>
               {DATE_FILTERS.map((f) => (
                 <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
@@ -154,7 +154,7 @@ export function ContactAdvancedFilters({
               <Heart className="w-3.5 h-3.5" />Sentimento (IA)
             </Label>
             <Select value={filterSentiment || '__all__'} onValueChange={(v) => setFilterSentiment(v === '__all__' ? '' : v)}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {SENTIMENT_OPTIONS.map((s) => (
                   <SelectItem key={s.value} value={s.value}>

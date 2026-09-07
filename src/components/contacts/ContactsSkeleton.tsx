@@ -66,20 +66,29 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
 
   if (viewMode === 'grid') {
     return (
-      <div className={cn("grid gap-4", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
+      <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.3 }}
-            className="rounded-2xl border border-border/30 p-5 space-y-4">
-            <div className="h-1 w-full rounded bg-muted/60 animate-pulse" />
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-                <div className="h-3 w-16 rounded bg-muted/60 animate-pulse" />
+          <div key={i} className="flex flex-col min-h-[164px] rounded-[14px] border border-border/70 bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-16 h-16 rounded-full bg-muted animate-shimmer shrink-0" />
+              <div className="flex-1 space-y-2 pt-0.5">
+                <div className="h-4 w-28 rounded bg-muted animate-shimmer" />
+                <div className="h-5 w-20 rounded-full bg-muted animate-shimmer" />
+                <div className="h-3 w-24 rounded bg-muted/70 animate-shimmer" />
               </div>
             </div>
-            <div className="h-12 rounded-xl bg-muted/40 animate-pulse" />
-          </motion.div>
+            <div className="mt-3 space-y-1.5">
+              <div className="h-3 w-32 rounded bg-muted/60 animate-shimmer" />
+              <div className="h-3 w-40 rounded bg-muted/60 animate-shimmer" />
+            </div>
+            <div className="mt-auto pt-3 flex items-center justify-between">
+              <div className="h-3 w-24 rounded bg-muted/50 animate-shimmer" />
+              <div className="flex items-center gap-1.5">
+                <div className="w-9 h-9 rounded-[10px] bg-muted animate-shimmer" />
+                <div className="w-9 h-9 rounded-[10px] bg-muted animate-shimmer" />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     );

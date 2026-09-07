@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
@@ -37,6 +38,10 @@ export function useContactsCRUD() {
   const { profile } = useAuth();
   const feedback = useActionFeedback();
   const searchHook = useContactsSearch();
+  const queryClient = useQueryClient();
+  const invalidateKpi = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
+  }, [queryClient]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
@@ -108,6 +113,7 @@ export function useContactsCRUD() {
           setIsAddDialogOpen(false);
           setShowSuccess({ name: contactName, protocol });
           searchHook.refetch();
+          invalidateKpi();
         },
       }
     );
@@ -147,6 +153,7 @@ export function useContactsCRUD() {
           setIsEditDialogOpen(false);
           setEditingContact(null);
           searchHook.refetch();
+          invalidateKpi();
         },
       }
     );
@@ -166,6 +173,7 @@ export function useContactsCRUD() {
         onSuccess: () => {
           setDeleteTarget(null);
           searchHook.refetch();
+          invalidateKpi();
         },
       }
     );

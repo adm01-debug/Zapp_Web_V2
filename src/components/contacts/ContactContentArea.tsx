@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ContactEmptyState } from './ContactEmptyState';
@@ -47,12 +49,19 @@ export function ContactContentArea({
   onToggleSelect, onContactClick, onEdit, onDelete, onSelectIds,
   onAddContact, onClearSearch, onClearFilters, getCRMData,
 }: ContactContentAreaProps) {
-  if (loading) {
-    return <ContactsSkeleton viewMode={viewMode} gridColumns={gridColumns} />;
-  }
+  // Cards entram com fade+slide só na primeira pintura da página — paginar/filtrar não re-anima.
+  const [isFirstMount, setIsFirstMount] = useState(true);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setIsFirstMount(false));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-  if (contacts.length === 0) {
-    return (
+  let content: React.ReactNode;
+
+  if (loading) {
+    content = <ContactsSkeleton viewMode={viewMode} gridColumns={gridColumns} />;
+  } else if (contacts.length === 0) {
+    content = (
       <Card><CardContent className="p-0">
         <ContactEmptyState
           type={search ? 'no-results' : activeFiltersCount > 0 ? 'filtered-empty' : 'no-contacts'}
@@ -64,39 +73,41 @@ export function ContactContentArea({
         />
       </CardContent></Card>
     );
-  }
-
-  if (viewMode === 'grid') {
-    return (
+  } else if (viewMode === 'grid') {
+    content = (
       <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {contacts.map((contact, index) => (
-          <ContactCard
-            key={contact.id} contact={contact}
-            isSelected={selectedIds.includes(contact.id)}
-            onToggleSelect={onToggleSelect}
-            onOpenChat={onContactClick}
-            onEdit={onEdit} onDelete={onDelete} index={index}
-            companyLogo={getCRMData(contact.phone)?.logo_url}
-            companyName={getCRMData(contact.phone)?.company_name}
-            searchQuery={search}
-          />
+          <motion.div
+            key={contact.id}
+            initial={isFirstMount ? { opacity: 0, y: 4 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}
+          >
+            <ContactCard
+              contact={contact}
+              isSelected={selectedIds.includes(contact.id)}
+              onToggleSelect={onToggleSelect}
+              onOpenChat={onContactClick}
+              onEdit={onEdit} onDelete={onDelete} index={index}
+              companyLogo={getCRMData(contact.phone)?.logo_url}
+              companyName={getCRMData(contact.phone)?.company_name}
+              searchQuery={search}
+            />
+          </motion.div>
         ))}
       </div>
     );
-  }
-
-  if (viewMode === 'list') {
-    if (groupByCompany) {
-      return (
-        <ContactGroupedList
-          contacts={contacts} selectedIds={selectedIds}
-          onToggleSelect={onToggleSelect} onOpenChat={onContactClick}
-          onEdit={onEdit} onDelete={onDelete}
-          getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
-        />
-      );
-    }
-    return (
+  } else if (viewMode === 'list' && groupByCompany) {
+    content = (
+      <ContactGroupedList
+        contacts={contacts} selectedIds={selectedIds}
+        onToggleSelect={onToggleSelect} onOpenChat={onContactClick}
+        onEdit={onEdit} onDelete={onDelete}
+        getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
+      />
+    );
+  } else if (viewMode === 'list') {
+    content = (
       <div className="space-y-2">
         {contacts.map((contact, index) => (
           <ContactListItem
@@ -112,20 +123,36 @@ export function ContactContentArea({
         ))}
       </div>
     );
+  } else if (viewMode === 'kanban') {
+    content = <ContactKanbanView contacts={contacts} onContactClick={onContactClick} />;
+  } else if (viewMode === 'map') {
+    content = <ContactMapView contacts={contacts} onContactClick={onContactClick} />;
+  } else if (viewMode === 'analytics') {
+    content = <ContactAnalyticsDashboard contacts={contacts} />;
+  } else {
+    content = (
+      <Card><CardContent className="p-0">
+        <ContactsTable
+          contacts={contacts} selectedIds={selectedIds}
+          onSelectIds={onSelectIds} onOpenChat={onContactClick}
+          onEdit={onEdit} onDelete={onDelete}
+          getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
+        />
+      </CardContent></Card>
+    );
   }
 
-  if (viewMode === 'kanban') return <ContactKanbanView contacts={contacts} onContactClick={onContactClick} />;
-  if (viewMode === 'map') return <ContactMapView contacts={contacts} onContactClick={onContactClick} />;
-  if (viewMode === 'analytics') return <ContactAnalyticsDashboard contacts={contacts} />;
-
   return (
-    <Card><CardContent className="p-0">
-      <ContactsTable
-        contacts={contacts} selectedIds={selectedIds}
-        onSelectIds={onSelectIds} onOpenChat={onContactClick}
-        onEdit={onEdit} onDelete={onDelete}
-        getCRMData={(phone) => getCRMData(phone) ?? undefined} searchQuery={search}
-      />
-    </CardContent></Card>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={viewMode}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.12 }}
+      >
+        {content}
+      </motion.div>
+    </AnimatePresence>
   );
 }

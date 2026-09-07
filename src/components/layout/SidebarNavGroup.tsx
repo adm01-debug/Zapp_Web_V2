@@ -30,7 +30,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       onClick={() => setIsOpen(!isOpen)}
       className={cn(
         'rounded-lg flex items-center transition-all duration-200 group/trigger',
-        collapsed ? 'w-full h-[30px] justify-center gap-0.5' : 'w-full h-[30px] px-2.5 gap-2',
+        collapsed ? 'w-full h-[30px] justify-center gap-0.5' : 'w-full h-10 px-2.5 gap-2',
         hasActiveItem
           ? 'text-primary'
           : 'text-muted-foreground hover:text-foreground'
@@ -43,7 +43,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
         'shrink-0 transition-colors duration-200'
       )} />
       {!collapsed && (
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] truncate select-none">
+        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground truncate select-none">
           {label}
         </span>
       )}

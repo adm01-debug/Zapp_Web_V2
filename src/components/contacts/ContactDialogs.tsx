@@ -32,6 +32,7 @@ interface ContactDialogsProps {
   handleAddContact: () => void;
   handleCancelForm: () => void;
   isSubmitting: boolean;
+  tapAnimation?: { scale: number };
   // Edit dialog
   isEditDialogOpen: boolean;
   setIsEditDialogOpen: (open: boolean) => void;
@@ -49,7 +50,7 @@ interface ContactDialogsProps {
 
 export function ContactDialogs({
   isAddDialogOpen, setIsAddDialogOpen, newContact, handleNewContactChange,
-  handleAddContact, handleCancelForm, isSubmitting,
+  handleAddContact, handleCancelForm, isSubmitting, tapAnimation,
   isEditDialogOpen, setIsEditDialogOpen, editingContact, handleEditContactChange, handleEditContact,
   showSuccess, setShowSuccess,
   deleteTarget, setDeleteTarget, handleDeleteContact,
@@ -59,10 +60,12 @@ export function ContactDialogs({
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Contato
-          </Button>
+          <motion.div whileTap={tapAnimation} className="inline-block">
+            <Button className="h-12 px-5 rounded-xl bg-success hover:bg-success/90 text-white font-semibold text-base gap-2 shadow-[0_8px_24px_-10px_hsl(var(--success)/.7)]">
+              <Plus className="w-[18px] h-[18px]" strokeWidth={2.5} />
+              Novo Contato
+            </Button>
+          </motion.div>
         </DialogTrigger>
         <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
@@ -131,7 +134,7 @@ export function ContactDialogs({
               </div>
             </DialogDescription>
           </DialogHeader>
-          <Button onClick={() => setShowSuccess(null)} className="w-full bg-whatsapp hover:bg-whatsapp-dark">
+          <Button onClick={() => setShowSuccess(null)} className="w-full bg-success hover:bg-success/90 text-white">
             Continuar
           </Button>
         </DialogContent>

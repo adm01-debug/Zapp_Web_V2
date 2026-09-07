@@ -93,16 +93,16 @@ export function ContactSearchWithSuggestions({
   };
 
   return (
-    <div ref={containerRef} className="relative flex-1 min-w-[240px] max-w-md">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+    <div ref={containerRef} className="relative flex-1 min-w-[320px]">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground z-10" />
       <Input
         ref={inputRef}
-        placeholder="Buscar por nome, telefone, email ou empresa..."
+        placeholder="Buscar por nome, telefone, email ou empresa…"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onKeyDown={handleKeyDown}
-        className={cn("pl-9 h-8 text-xs transition-all", focused && "ring-2 ring-primary/20")}
+        className={cn("h-11 pl-11 rounded-xl bg-input border-border text-[15px] transition-all", focused && "ring-2 ring-primary/20")}
       />
       {value && (
         <button

@@ -1,19 +1,18 @@
 import { useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { motion, useReducedMotion, MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Users, Sparkles, RefreshCw,
+  Sparkles, RefreshCw,
 } from 'lucide-react';
-import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
-import { CONTACT_TYPE_ICONS } from './ContactsTable';
 import { ContactStatsCards } from './ContactStatsCards';
+import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
@@ -23,6 +22,7 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
+import { ContactsTopActions } from './ContactsTopActions';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
@@ -62,25 +62,48 @@ export function ContactsView() {
   const { lookup } = useExternalContact360Batch(contactPhones);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
+  const reduceMotion = useReducedMotion();
+  const tapAnimation = reduceMotion ? undefined : { scale: 0.98 };
+  const queryClient = useQueryClient();
+  const handleSync = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['contacts-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['contacts-type-counts'] });
+  };
 
   return (
-    <div className="space-y-4 relative bg-background w-full min-w-0">
+    <MotionConfig reducedMotion="user">
+    <div className="relative bg-background w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
 
+      <div className="space-y-4">
       <PageHeader
+        variant="plain"
         title="Contatos"
-        subtitle={`Base de clientes e leads (${totalCount} contatos)`}
+        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
+        topRight={<ContactsTopActions />}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
             {isExternalConfigured && (
-              <Button variant="outline" onClick={() => setIsCRMSearchOpen(true)} className="border-primary/30 text-primary hover:bg-primary/10">
-                <Sparkles className="w-4 h-4 mr-2" />CRM 360°
-              </Button>
+              <motion.div whileTap={tapAnimation}>
+                <Button
+                  onClick={() => setIsCRMSearchOpen(true)}
+                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
+                >
+                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+                </Button>
+              </motion.div>
             )}
-            <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Sincronizar
-            </Button>
+            <motion.div whileTap={tapAnimation}>
+              <Button
+                onClick={handleSync}
+                disabled={loading}
+                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+              >
+                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
+              </Button>
+            </motion.div>
             <ContactDialogs
               isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
               newContact={newContact} handleNewContactChange={handleNewContactChange}
@@ -92,6 +115,7 @@ export function ContactsView() {
               showSuccess={showSuccess} setShowSuccess={setShowSuccess}
               deleteTarget={deleteTarget} setDeleteTarget={setDeleteTarget}
               handleDeleteContact={handleDeleteContact}
+              tapAnimation={tapAnimation}
             />
           </div>
         }
@@ -112,37 +136,9 @@ export function ContactsView() {
         onComplete={() => { setSelectedIds([]); refetch(); }}
       />
 
-      <ContactStatsCards totalCount={totalCount} contactCountByType={contactCountByType} uniqueCompanies={uniqueCompanies} contacts={filteredContacts} />
+      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="h-9 bg-muted/40 border border-border/30 p-0.5 gap-0.5 flex-wrap">
-          <TabsTrigger
-            value="all"
-            className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
-          >
-            <Users className="w-3.5 h-3.5" />
-            Todos
-            <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
-              {contactCountByType['all'] || 0}
-            </Badge>
-          </TabsTrigger>
-          {CONTACT_TYPES.map((type) => (
-            <TabsTrigger
-              key={type.value}
-              value={type.value}
-              className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
-            >
-              {CONTACT_TYPE_ICONS[type.value]}
-              {type.label}
-              {contactCountByType[type.value] > 0 && (
-                <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
-                  {contactCountByType[type.value]}
-                </Badge>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
 
       <ContactToolbar
         searchInput={searchInput} onSearchChange={handleSearchChange}
@@ -165,7 +161,9 @@ export function ContactsView() {
         gridColumns={gridColumns} setGridColumns={setGridColumns}
         totalCount={totalCount}
       />
+      </div>
 
+      <div className="space-y-3 mt-3">
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
@@ -203,6 +201,7 @@ export function ContactsView() {
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
       />
+      </div>
 
       {detailContact && (
         <ContactDetailPanel
@@ -228,5 +227,6 @@ export function ContactsView() {
         availableTags={uniqueTags}
       />
     </div>
+    </MotionConfig>
   );
 }

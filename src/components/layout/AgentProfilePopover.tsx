@@ -32,22 +32,22 @@ export function AgentProfilePopover({ agent, collapsed, statusOpen, onStatusOpen
           )}
           aria-label="Status e perfil"
         >
-          <Avatar className="w-[32px] h-[32px] ring-2 ring-transparent group-hover:ring-primary/30 transition-all shrink-0">
+          <Avatar className="w-9 h-9 ring-2 ring-transparent group-hover:ring-primary/30 transition-all shrink-0">
             <AvatarImage src={agent.avatar} alt={agent.name} />
             <AvatarFallback className="bg-primary/15 text-primary text-[11px] font-semibold">
               {agent.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </AvatarFallback>
           </Avatar>
           <span className={cn(
-            'absolute w-2.5 h-2.5 rounded-full border-2 border-sidebar',
-            collapsed ? '-bottom-0.5 -right-0.5' : 'bottom-1 left-[30px]',
-            agent.status === 'online' && 'bg-[hsl(var(--online))]',
+            'absolute w-2 h-2 rounded-full border-2 border-sidebar',
+            collapsed ? '-bottom-0.5 -right-0.5' : 'bottom-1 left-[26px]',
+            agent.status === 'online' && 'bg-success',
             agent.status === 'away' && 'bg-[hsl(var(--away))]',
             agent.status === 'offline' && 'bg-[hsl(var(--offline))]'
           )} />
           {!collapsed && (
             <div className="flex flex-col min-w-0 text-left">
-              <span className="text-xs font-medium text-foreground truncate leading-tight">{agent.name}</span>
+              <span className="text-[15px] font-semibold text-foreground truncate leading-tight">{agent.name}</span>
               <span className={cn(
                 'text-[10px] capitalize leading-tight',
                 agent.status === 'online' && 'text-[hsl(var(--online))]',

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
-  UserPlus, Search, Users, Filter, Sparkles,
+  UserPlus, Search, Users, Filter,
 } from 'lucide-react';
 
 interface ContactEmptyStateProps {
@@ -24,42 +24,17 @@ export function ContactEmptyState({
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="flex flex-col items-center justify-center py-16 px-8"
     >
-      {/* Animated illustration */}
-      <div className="relative w-32 h-32 mb-6">
-        <motion.div
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-32 h-32 rounded-3xl bg-primary/10 flex items-center justify-center"
-        >
-          {type === 'no-contacts' && <Users className="w-14 h-14 text-primary/50" />}
-          {type === 'no-results' && <Search className="w-14 h-14 text-primary/50" />}
-          {type === 'filtered-empty' && <Filter className="w-14 h-14 text-primary/50" />}
-        </motion.div>
-
-        {/* Floating decorative dots */}
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent/30"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
-          className="absolute -bottom-1 -left-3 w-4 h-4 rounded-full bg-primary/20"
-        />
-        <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          className="absolute top-1/2 -right-6 w-3 h-3"
-        >
-          <Sparkles className="w-3 h-3 text-primary/30" />
-        </motion.div>
+      {/* Icon tile */}
+      <div className="w-[60px] h-[60px] rounded-xl bg-kpi-blue flex items-center justify-center mb-6">
+        {type === 'no-contacts' && <Users className="w-[26px] h-[26px] text-kpi-blue-fg" />}
+        {type === 'no-results' && <Search className="w-[26px] h-[26px] text-kpi-blue-fg" />}
+        {type === 'filtered-empty' && <Filter className="w-[26px] h-[26px] text-kpi-blue-fg" />}
       </div>
 
       {/* Text content */}
       {type === 'no-contacts' && (
         <>
-          <h3 className="text-lg font-bold text-foreground mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Comece sua base de contatos
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-6 leading-relaxed">
@@ -67,7 +42,7 @@ export function ContactEmptyState({
           </p>
           <div className="flex items-center gap-3">
             {onAddContact && (
-              <Button onClick={onAddContact} className="gap-2 shadow-lg shadow-primary/20">
+              <Button onClick={onAddContact} className="gap-2 bg-success hover:bg-success/90 text-white">
                 <UserPlus className="w-4 h-4" />
                 Novo Contato
               </Button>

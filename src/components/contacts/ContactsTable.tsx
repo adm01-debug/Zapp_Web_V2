@@ -57,7 +57,7 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: {
   const isActive = sortField === field;
   return (
     <th
-      className="text-left p-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors group"
+      className="text-left p-3 text-[13px] font-semibold tracking-normal text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors group"
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -106,10 +106,10 @@ export function ContactsTable({
   }, [contacts, sortField, sortDir]);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border/30">
+    <div className="overflow-x-auto rounded-[14px] border border-border/70">
       <table className="w-full" role="grid" aria-label="Lista de contatos">
         <thead>
-          <tr className="border-b border-border/20 bg-muted/20">
+          <tr className="border-b border-border/60 bg-muted/40">
             <th className="p-3 w-10">
               <Checkbox
                 checked={selectedIds.length === contacts.length && contacts.length > 0}
@@ -123,8 +123,8 @@ export function ContactsTable({
             <SortableHeader label="Email" field="email" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Empresa" field="company" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Cargo" field="job_title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <th className="text-left p-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Etiquetas</th>
-            <th className="text-right p-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ações</th>
+            <th className="text-left p-3 text-[13px] font-semibold tracking-normal text-muted-foreground">Etiquetas</th>
+            <th className="text-right p-3 text-[13px] font-semibold tracking-normal text-muted-foreground">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -139,7 +139,7 @@ export function ContactsTable({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.015 }}
                 className={cn(
-                  "border-b border-border/10 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
+                  "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
                   selectedIds.includes(contact.id) && "bg-primary/5 border-l-2 border-l-primary"
                 )}
                 onClick={() => onOpenChat(contact.id)}
@@ -175,7 +175,7 @@ export function ContactsTable({
                 <td className="p-3">
                   <Badge
                     variant="outline"
-                    className={cn("text-[10px] h-5 px-1.5 font-medium gap-1", typeConfig.badgeClass)}
+                    className={cn("h-6 px-2.5 rounded-full text-[12.5px] font-medium gap-1.5", typeConfig.badgeClass)}
                   >
                     {typeConfig.iconNode}
                     {typeConfig.label}

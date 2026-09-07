@@ -4,12 +4,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Tag, Filter, SortAsc, X,
-  GitCompareArrows, Merge, LayoutList, Check,
+  Tag, Filter, ArrowUpDown, X,
+  GitCompareArrows, Merge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ContactViewSwitcher, type ContactViewMode } from './ContactViewSwitcher';
@@ -72,7 +68,7 @@ export function ContactToolbar({
 }: ContactToolbarProps) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap xl:flex-nowrap">
         <ContactSearchWithSuggestions
           value={searchInput}
           onChange={onSearchChange}
@@ -82,8 +78,8 @@ export function ContactToolbar({
         />
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[160px] h-8 text-xs">
-            <SortAsc className="w-3.5 h-3.5 mr-1.5" />
+          <SelectTrigger className="w-[150px] h-11 rounded-xl bg-input border-border text-[15px] font-medium gap-2 shrink-0">
+            <ArrowUpDown className="w-[18px] h-[18px]" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -94,14 +90,15 @@ export function ContactToolbar({
         </Select>
 
         <Button
-          variant={showFilters ? "default" : "outline"}
-          size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className={cn("h-8 text-xs gap-1.5", showFilters && "bg-primary hover:bg-primary/90")}
+          className={cn(
+            "h-11 px-4 rounded-xl text-[15px] font-medium gap-2 shrink-0",
+            showFilters ? "bg-primary text-white hover:bg-primary/90 border border-primary" : "bg-input border border-border text-foreground hover:bg-muted"
+          )}
           aria-expanded={showFilters}
           aria-controls="contact-filters-panel"
         >
-          <Filter className="w-3.5 h-3.5" />
+          <Filter className="w-[18px] h-[18px]" />
           Filtros
           {activeFiltersCount > 0 && (
             <Badge variant="secondary" className="ml-1 bg-background/20 text-[10px] h-4 px-1">{activeFiltersCount}</Badge>
@@ -109,8 +106,8 @@ export function ContactToolbar({
         </Button>
 
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" onClick={clearFilters} size="sm" className="h-8 text-xs" aria-label="Limpar todos os filtros">
-            <X className="w-3.5 h-3.5 mr-1" />Limpar
+          <Button variant="ghost" onClick={clearFilters} className="h-11 text-[15px] shrink-0" aria-label="Limpar todos os filtros">
+            <X className="w-4 h-4 mr-1" />Limpar
           </Button>
         )}
 
@@ -121,18 +118,18 @@ export function ContactToolbar({
 
         {selectedIds.length >= 1 && (
           <>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={onBulkTag}>
-              <Tag className="w-3.5 h-3.5" />
+            <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0" onClick={onBulkTag}>
+              <Tag className="w-[18px] h-[18px]" />
               Tags ({selectedIds.length})
             </Button>
             {selectedIds.length >= 2 && (
               <>
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={onCompare}>
-                  <GitCompareArrows className="w-3.5 h-3.5" />
+                <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0" onClick={onCompare}>
+                  <GitCompareArrows className="w-[18px] h-[18px]" />
                   Comparar
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-primary/30 text-primary" onClick={onMerge}>
-                  <Merge className="w-3.5 h-3.5" />
+                <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
+                  <Merge className="w-[18px] h-[18px]" />
                   Mesclar
                 </Button>
               </>
@@ -140,39 +137,14 @@ export function ContactToolbar({
           </>
         )}
 
-        <div className="ml-auto flex items-center gap-1.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={groupByCompany ? "default" : "outline"}
-                size="icon"
-                className="h-8 w-8"
-                title="Opções de agrupamento"
-                aria-label="Opções de agrupamento"
-              >
-                <LayoutList className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs">Agrupamento</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setGroupByCompany(!groupByCompany)}
-                className="gap-2 text-xs"
-              >
-                <span className={cn("w-3.5 h-3.5 flex items-center justify-center", groupByCompany ? "text-primary" : "text-transparent")}>
-                  <Check className="w-3.5 h-3.5" />
-                </span>
-                Por empresa
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <ContactViewSwitcher
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             gridColumns={gridColumns}
             onGridColumnsChange={setGridColumns}
+            groupByCompany={groupByCompany}
+            onGroupByCompanyChange={setGroupByCompany}
           />
         </div>
       </div>
