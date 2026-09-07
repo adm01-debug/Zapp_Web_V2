@@ -21,7 +21,7 @@ export function DashboardCard({ children, className, testid }: DashboardCardProp
     <section
       data-testid={testid}
       className={cn(
-        'rounded-xl bg-card border border-border/70 p-3.5 flex flex-col transition-all duration-150',
+        'min-w-0 rounded-xl bg-card border border-border/70 p-3.5 flex flex-col transition-all duration-150',
         'hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.35)]',
         className,
       )}
@@ -41,7 +41,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ icon: Icon, title, subtitle, tileSize, right }: SectionHeaderProps) {
   return (
-    <div className="flex items-center gap-2.5 mb-3">
+    <div className="flex items-center gap-2.5 mb-2">
       <div
         data-testid="section-tile"
         className={cn(

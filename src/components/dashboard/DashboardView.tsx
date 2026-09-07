@@ -20,6 +20,9 @@ import { useDashboardData } from '@/hooks/analytics/useDashboardData';
 import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
 import { useDashboardKpi } from '@/hooks/dashboard/useDashboardKpi';
 import { useQueueHealth } from '@/hooks/dashboard/useQueueHealth';
+import { useRecentConversationEvents } from '@/hooks/dashboard/useRecentConversationEvents';
+import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
+import { useSLAMetrics } from '@/hooks/sla/useSLAMetrics';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
 import { GreetingBanner } from './overview/GreetingBanner';
@@ -29,6 +32,9 @@ import { DashboardKpiRow } from './overview/DashboardKpiRow';
 import { VolumeChart } from './overview/VolumeChart';
 import { NowPanel } from './overview/NowPanel';
 import { DailyGoalsCard } from './overview/DailyGoalsCard';
+import { QueueHealthTable } from './overview/QueueHealthTable';
+import { RecentActivityCard } from './overview/RecentActivityCard';
+import { TeamHighlightCard } from './overview/TeamHighlightCard';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -59,7 +65,14 @@ export function DashboardView() {
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard();
   const { data: kpi } = useDashboardKpi();
-  const { busiestQueue } = useQueueHealth(contacts, queues);
+  const { rows: queueHealthRows, busiestQueue } = useQueueHealth(contacts, queues);
+  const { data: recentEvents } = useRecentConversationEvents(4);
+  const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
+  // Instância única de useSLAMetrics('today') — só Equipe em Destaque consome
+  // (etapa 68); "Agora" usa slaBreachedToday de useDashboardKpi (fallback já
+  // documentado no ledger, useApplicableSLA/useSLACalculation são por-contato).
+  const { data: slaMetrics } = useSLAMetrics('today');
+  const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
@@ -124,7 +137,16 @@ export function DashboardView() {
               }}
             />
           </div>
-          <div data-testid="dash-row3" className="min-h-[220px]" />
+          <div data-testid="dash-row3" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+            <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => setTab('sla')} />
+            <RecentActivityCard items={recentEvents?.items ?? []} />
+            <TeamHighlightCard
+              agents={leaderboardAgents}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+              slaRateByAgent={slaRateByAgent}
+            />
+          </div>
           <div data-testid="dash-row4" className="min-h-[173px]" />
           <div data-testid="dash-gamification" className="min-h-[40px]" />
         </TabsContent>
