@@ -49,6 +49,7 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "foreground-secondary": "hsl(var(--foreground-secondary))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -100,6 +101,19 @@ export default {
           "purple-fg": "hsl(var(--kpi-tile-purple-fg))",
           yellow: "hsl(var(--kpi-tile-yellow))",
           "yellow-fg": "hsl(var(--kpi-tile-yellow-fg))",
+        },
+        dash: {
+          "tile-blue": "hsl(var(--dash-tile-blue))",
+          "tile-red": "hsl(var(--dash-tile-red))",
+          "tile-green": "hsl(var(--dash-tile-green))",
+          "tile-violet": "hsl(var(--dash-tile-violet))",
+          "tile-amber": "hsl(var(--dash-tile-amber))",
+          blue: "hsl(var(--dash-blue))",
+          red: "hsl(var(--dash-red))",
+          green: "hsl(var(--dash-green))",
+          violet: "hsl(var(--dash-violet))",
+          amber: "hsl(var(--dash-amber))",
+          yellow: "hsl(var(--dash-yellow))",
         },
         xp: {
           DEFAULT: "hsl(var(--xp))",
