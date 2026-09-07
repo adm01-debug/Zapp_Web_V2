@@ -16,6 +16,7 @@ import { RouteLoadingBar } from '@/components/ui/route-loading-bar';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
+import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
  import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
@@ -69,6 +70,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
   const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: !isMobile && !isZen }), [isMobile, isZen]);
+  useNavShortcuts(handleViewChange);
 
   // Mobile edge-swipe navigation
   useSwipeNavigation({

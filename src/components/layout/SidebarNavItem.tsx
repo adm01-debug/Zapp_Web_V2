@@ -12,11 +12,6 @@ export interface NavItemConfig {
   badge?: number;
 }
 
-const SHORTCUT_MAP: Record<string, string> = {
-  inbox: '⌘1',
-  dashboard: '⌘2',
-};
-
 interface SidebarNavItemProps {
   item: NavItemConfig;
   currentView: string;
@@ -30,7 +25,7 @@ interface SidebarNavItemProps {
 export const SidebarNavItem = React.memo(function SidebarNavItem({ item, currentView, onViewChange, badge, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavItemProps) {
   const Icon = item.icon;
   const isActive = currentView === item.id;
-  const shortcut = item.shortcut || SHORTCUT_MAP[item.id];
+  const shortcut = item.shortcut;
   const badgeCount = badge ?? item.badge;
   const { prefetch } = usePrefetchOnHover();
 
@@ -95,12 +90,22 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
           <Star className={cn('w-3 h-3', isFavorite && 'fill-warning')} />
         </button>
       )}
+      {!collapsed && shortcut && !onToggleFavorite && (
+        <kbd
+          className={cn(
+            'relative z-10 shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity',
+            !badgeCount && 'ml-auto'
+          )}
+        >
+          {shortcut}
+        </kbd>
+      )}
       {badgeCount != null && badgeCount > 0 && (
         <span
           className={cn(
             'z-20 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center leading-none shadow-sm animate-scale-in',
             collapsed ? 'absolute -top-0.5 -right-0.5' : 'relative',
-            !collapsed && !onToggleFavorite && 'ml-auto'
+            !collapsed && !onToggleFavorite && !shortcut && 'ml-auto'
           )}
         >
           {badgeCount > 99 ? '99+' : badgeCount}

@@ -19,6 +19,8 @@ export interface NavItem {
   permission?: string;
   /** 'full' = view manages its own layout (no ViewContainer scroll wrapper) */
   layout?: 'full' | 'scroll';
+  /** Atalho global Alt+letra (ver useNavShortcuts) */
+  shortcut?: string;
 }
 
 export interface NavGroup {
@@ -30,14 +32,14 @@ export interface NavGroup {
 export class NavigationService {
   static getPrimaryNav(): NavItem[] {
     return [
-      { id: 'inbox', icon: MessageSquare, label: 'Chat', layout: 'full' },
-      { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full' },
-      { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full' },
-      { id: 'contacts', icon: User, label: 'Contatos' },
-      { id: 'dashboard', icon: BarChart3, label: 'Dashboard' },
-      { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full' },
-      { id: 'talkx', icon: Sparkles, label: 'Campanhas' },
-      { id: 'settings', icon: Settings, label: 'Configurações' },
+      { id: 'inbox', icon: MessageSquare, label: 'Chat', layout: 'full', shortcut: 'Alt+C' },
+      { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
+      { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
+      { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
+      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', shortcut: 'Alt+R' },
+      { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full', shortcut: 'Alt+P' },
+      { id: 'talkx', icon: Sparkles, label: 'Campanhas', shortcut: 'Alt+N' },
+      { id: 'settings', icon: Settings, label: 'Configurações', shortcut: 'Alt+G' },
     ];
   }
 
