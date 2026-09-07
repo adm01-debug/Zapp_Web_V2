@@ -46,8 +46,8 @@
     --neutral-950: 221 20% 6%;
 
     /* ===== FONTS ===== */
-    --font-sans: 'Outfit', system-ui, sans-serif;
-    --font-display: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-display: 'Outfit', system-ui, sans-serif;
 
     /* ===== TYPOGRAPHY SCALE (fluid clamp) ===== */
     --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem);
@@ -111,7 +111,7 @@
 
     /* ===== SECONDARY ===== */
     --secondary: 215 70% 55%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 210 40% 92%;
 
     /* ===== MUTED ===== */
     --muted: 221 15% 92%;
@@ -129,7 +129,7 @@
     --border: 221 15% 90%;
     --input: 221 15% 93%;
     --ring: 221 83% 53%;
-    --radius: 0.625rem;
+    --radius: 0.875rem; /* 14px — Promo Gifts default */
 
     /* ===== ESTADOS ===== */
     --success: 160 70% 42%;
@@ -246,7 +246,7 @@
     --elevated: 0 0% 100%;
     --elevated-hover: 221 20% 97%;
 
-    /* ===== SPACIL�G ===== */
+    /* ===== SPACIL�G ===== */
     --spacing-card: 1.5rem;
     --spacing-card-sm: 1rem;
     --spacing-card-lg: 2rem;
@@ -273,22 +273,35 @@
     --chart-sentiment-negative: 0 84% 60%;
 
     /* ===== LAYOUT SHELL TOKENS ===== */
-    --sidebar-w: 220px;
-    --sidebar-w-collapsed: 62px;
+    --sidebar-w: 256px;
+    --sidebar-w-collapsed: 64px;
     --layout-header-h: 56px;
     --layout-gutter: 2.25rem;
+    /* ===== PROMO GIFTS SYSTEM — surface, motion, focus ===== */
+    --surface: 240 5% 9%;
+    --surface-hover: 240 5% 12%;
+    --border-strong: 221 83% 53% / 0.55;
+    --divider: 240 4% 20%;
+    --primary-hover: 221 83% 48%;
+    --primary-active: 221 83% 43%;
+    --shadow-glow-focus: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.5);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
     --layout-max-content: 72rem;
 
-    /* ===== KPI TILES (Contatos Navy Premium) ===== */
-    --kpi-tile-blue: 217 98% 24%;
-    --kpi-tile-blue-fg: 217 100% 62%;
-    --kpi-tile-green: 168 86% 14%;
-    --kpi-tile-green-fg: 148 100% 45%;
-    --kpi-tile-purple: 244 51% 26%;
-    --kpi-tile-purple-fg: 258 90% 72%;
-    --kpi-tile-yellow: 48 40% 17%;
-    --kpi-tile-yellow-fg: 48 96% 53%;
-    --page-glow: radial-gradient(1100px 520px at 8% -8%, hsl(217 100% 54% / .14), transparent 60%);
+    /* ===== KPI TILES (Promo Gifts — charcoal dark) ===== */
+    --kpi-tile-blue: 221 83% 53%;
+    --kpi-tile-blue-fg: 221 95% 78%;
+    --kpi-tile-green: 142 71% 45%;
+    --kpi-tile-green-fg: 142 86% 68%;
+    --kpi-tile-purple: 258 90% 62%;
+    --kpi-tile-purple-fg: 258 95% 82%;
+    --kpi-tile-yellow: 38 92% 50%;
+    --kpi-tile-yellow-fg: 38 100% 74%;
 
     /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
     --foreground-secondary: 215 30% 78%;
@@ -307,7 +320,7 @@
 
 /* ===== DARK MODE - Corporate Blue ===== */
 .dark {
-    --background: 216 54% 5%;
+    --background: 240 6% 6%;
     /* ===== ELEVATION (dark) — sombras mais profundas ===== */
     --elev-0: none;
     --elev-1: 0 1px 2px hsl(0 0% 0% / 0.5);
@@ -339,26 +352,26 @@
     --neutral-900: 221 18% 94%;
     --neutral-950: 221 20% 98%;
     --foreground: 210 40% 98%;
-    --card: 215 50% 10%;
+    --card: 240 5% 10%;
     --card-foreground: 210 40% 98%;
-    --card-elevated: 215 52% 13%;
-    --popover: 214 52% 9%;
+    --card-elevated: 240 5% 13%;
+    --popover: 240 5% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 213 100% 54%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 213 100% 68%;
-    --secondary: 213 94% 62%;
+    --primary-glow: 230 83% 63%;
+    --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 214 49% 14%;
-    --muted-foreground: 215 16% 59%;
-    --accent: 214 49% 14%;
-    --accent-foreground: 213 100% 85%;
+    --muted: 240 4% 18%;
+    --muted-foreground: 215 20% 75%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 354 100% 68%;
     --destructive-foreground: 0 0% 100%;
-    --border: 213 26% 16%;
-    --input: 214 42% 13%;
-    --ring: 213 100% 54%;
-    --success: 161 70% 47%;
+    --border: 240 4% 18%;
+    --input: 240 5% 14%;
+    --ring: 221 83% 53%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 40 91% 60%;
     --warning-foreground: 0 0% 8%;
@@ -382,20 +395,20 @@
     --away: 42 100% 58%;
     --offline: 0 0% 45%;
     --unread: 0 90% 60%;
-    --sidebar-background: 215 52% 8%;
+    --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 213 100% 54%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 49% 16%;
-    --sidebar-accent-foreground: 213 100% 85%;
-    --sidebar-border: 213 26% 25%;
-    --sidebar-ring: 213 100% 54%;
+    --sidebar-accent: 240 5% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 221 83% 53%;
     --chat-bubble-sent: 221 83% 53%;
     --chat-bubble-sent-foreground: 0 0% 100%;
-    --chat-bubble-received: 214 49% 14%;
+    --chat-bubble-received: 240 4% 18%;
     --chat-bubble-received-foreground: 0 0% 97%;
-    --chat-header: 215 50% 10%;
-    --chat-input-bg: 214 52% 9%;
+    --chat-header: 240 5% 10%;
+    --chat-input-bg: 240 5% 9%;
     --status-open: 221 83% 53%;
     --status-pending: 42 100% 58%;
     --status-resolved: 155 80% 50%;
@@ -408,25 +421,25 @@
     --gradient-success: linear-gradient(135deg, hsl(155 80% 50%), hsl(165 75% 55%));
     --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 78% 57%));
     --gradient-gold: linear-gradient(135deg, hsl(42 100% 58%), hsl(35 95% 52%));
-    --gradient-surface: linear-gradient(180deg, hsl(215 48% 10%), hsl(216 58% 8%));
-    --gradient-divider: linear-gradient(90deg, transparent, hsl(217 40% 30% / .5), transparent);
+    --gradient-surface: linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%));
+    --gradient-divider: linear-gradient(90deg, transparent, hsl(221 50% 40% / 0.15), transparent);
     --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(210 95% 62%), hsl(230 78% 57%));
     --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%));
     --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.5);
     --shadow-sm: 0 1px 3px hsl(0 0% 0% / 0.6), 0 1px 2px hsl(0 0% 0% / 0.5);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.6), 0 4px 6px -4px hsl(0 0% 0% / 0.5);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.7), 0 8px 10px -6px hsl(0 0% 0% / 0.6);
-    --shadow-glow-primary: 0 8px 24px -8px hsl(217 100% 54% / .45);
+    --shadow-lg: 0 10px 15px -3px hsl(225 20% 2% / 0.7), 0 4px 6px -4px hsl(225 20% 2% / 0.5), 0 0 20px hsl(221 83% 53% / 0.04);
+    --shadow-xl: 0 20px 25px -5px hsl(225 20% 2% / 0.8), 0 8px 10px -6px hsl(225 20% 2% / 0.6), 0 0 30px hsl(221 83% 53% / 0.06);
+    --shadow-glow-primary: 0 0 30px hsl(221 83% 53% / 0.4), 0 0 60px hsl(221 83% 53% / 0.15);
     --shadow-glow-secondary: 0 4px 24px hsl(215 70% 55% / 0.4);
-    --shadow-glow-success: 0 8px 24px -10px hsl(148 100% 42% / .6);
+    --shadow-glow-success: 0 0 25px hsl(142 71% 45% / 0.35);
     --shadow-glow-accent: 0 4px 24px hsl(230 78% 59% / 0.4);
     --shadow-glow-purple: 0 4px 24px hsl(221 83% 53% / 0.5);
-    --shadow-header: 0 1px 3px hsl(0 0% 0% / 0.6);
-    --glass-bg: 215 48% 10% / 1;
-    --glass-border: 217 40% 22% / 1;
-    --elevated: 215 52% 13%;
-    --elevated-hover: 215 50% 16%;
+    --shadow-header: 0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 53% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3);
+    --glass-bg: 240 6% 8% / 0.85;
+    --glass-border: 221 30% 30% / 0.15;
+    --elevated: 240 5% 12%;
+    --elevated-hover: 240 5% 15%;
     --chart-1: 221 83% 58%;
     --chart-2: 210 95% 64%;
     --chart-3: 155 80% 52%;
