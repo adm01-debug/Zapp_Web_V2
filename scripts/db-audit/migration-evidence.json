@@ -525,12 +525,25 @@
       "file_sha256": "bc9fef4f53fb271f029aed5f8c3ca3df1e70c04456b0486ba460b7a98f213612",
       "file_sql_sha256": "62875ea190748359057d14fa3e60b96145d94d0a96da4362aaf1d35bf3a096ae",
       "ledger_name": "fix_secdef_search_path",
-      "ledger_statements_sha256": "d0b96b3e5857fde0e55fb08598abf0561b5451452d0296fddc0a36ad912249c1",
-      "ledger_sql_sha256": "dc51397aeb5b6bc1b9f5b10c569cd8aa5f52b61029459f1bc5f2be9b87277642",
+      "ledger_statements_sha256": "556117658b1ef7ad1d5803e945e0f0b97e5a1dd39089afdd32daedc076fa14ab",
+      "ledger_sql_sha256": "db1f140e14d4f3d5d3abb5d5f2301984147b72f7cf119bae1fd42cad9abf0229",
       "kind": "ledger-divergence/pinned-replay",
       "reason": "format-only",
       "related_migration": null,
-      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL da funcao set_conversation_status com SECURITY DEFINER e SET search_path; ambas as formas canonicas ficam fixadas por hashes independentes."
+      "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger foi novamente serializado a partir da forma canonica anterior. A coleta cifrada read-only do run 34137899939 confirmou o mesmo conjunto estrutural da funcao set_conversation_status com SECURITY DEFINER e SET search_path; ambas as formas ficam fixadas por hashes independentes."
+    },
+    {
+      "version": "20260906140000",
+      "filename": "20260906140000_fix_contacts_update_policy_queue_members.sql",
+      "file_sha256": "7853497f2d21d45adf17242177476ae1120c0f98e5a06ad67cf929fc59f9e509",
+      "file_sql_sha256": "8d3f5ef0c5a341dc8a3bac204595fb55a6bd9c710878ba0f4c769135018939c0",
+      "ledger_name": "fix_contacts_update_policy_queue_members",
+      "ledger_statements_sha256": "ba2881aa413d589703c717d38110e9b154a7c86fb0ab5072f86c67bd39df9db8",
+      "ledger_sql_sha256": "eeb49bd20c1913be4f5b21f5f92f399f263ce5ecdf77390a4276b77583daa071",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "A coleta cifrada read-only do run 34137899939 confirmou os mesmos dois DDLs DROP/CREATE POLICY e os mesmos predicados de agente visivel, administrador, fila, perfil e membro ativo. O ledger preserva a forma do deparser, com tabela sem public, parenteses extras e alias automatico AS get_visible_agent_ids; o replay mantem SQL legivel e semanticamente equivalente."
     }
   ]
 }

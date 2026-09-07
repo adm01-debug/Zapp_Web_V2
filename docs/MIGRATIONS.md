@@ -137,6 +137,21 @@ nome diverge, a referencia continua fail-closed e somente uma excecao pinned que
 valide integralmente o ledger pode autorizar o replay. Markers malformados ou
 conflitantes sempre falham.
 
+### Coleta direcionada de evidencia cifrada
+
+O workflow manual `Targeted Ledger Evidence` permite revisar uma lista explicita de
+1 a 20 versoes sem publicar SQL. Ele roda exclusivamente sobre a `main`, valida o
+fingerprint do banco oficial, exige TLS `verify-full` com a CA Supabase pinada e
+forca a sessao PostgreSQL para `default_transaction_read_only=on`. O array integral
+de `statements` e cifrado em memoria com AES-256-GCM; a chave de conteudo e envolvida
+com RSA-OAEP-SHA256 e somente o envelope cifrado vira artifact por um dia. A chave
+privada pertence ao solicitante e nunca deve ser enviada ao GitHub.
+
+Em 07/09/2026, o run `34137899939` coletou somente `20260906090000` e
+`20260906140000`. A descriptografia local autenticada confirmou a cardinalidade e o
+hash do plaintext antes da classificacao. Nenhum statement bruto foi registrado em
+logs ou versionado.
+
 ### Proveniencia da reconciliacao de 29/08/2026
 
 Os hashes do manifesto v2 foram derivados dos registros exatos recuperados em modo
