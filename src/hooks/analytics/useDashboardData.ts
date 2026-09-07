@@ -49,7 +49,9 @@
      };
    }, [agents, contacts, queues, sla]);
  
-   return { stats, isLoading, error, refetch };
+   // contacts/queues crus expostos para useQueueHealth (Fase 6) — mesmos dados já
+   // carregados por useDashboardStats, sem query nova.
+   return { stats, contacts, queues, isLoading, error, refetch };
  };
  
  export const formatResponseTime = (seconds: number | null): string => {

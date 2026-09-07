@@ -19,12 +19,16 @@ import { ScheduledReportsManager } from './ScheduledReportsManager';
 import { useDashboardData } from '@/hooks/analytics/useDashboardData';
 import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
 import { useDashboardKpi } from '@/hooks/dashboard/useDashboardKpi';
+import { useQueueHealth } from '@/hooks/dashboard/useQueueHealth';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
 import { GreetingBanner } from './overview/GreetingBanner';
 import { DashboardTopBar } from './overview/DashboardTopBar';
 import { DashboardHeader } from './overview/DashboardHeader';
 import { DashboardKpiRow } from './overview/DashboardKpiRow';
+import { VolumeChart } from './overview/VolumeChart';
+import { NowPanel } from './overview/NowPanel';
+import { DailyGoalsCard } from './overview/DailyGoalsCard';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -45,7 +49,7 @@ export function DashboardView() {
   const [filters, setFilters] = useState<DashboardFiltersState>(getDefaultFilters());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { stats, isLoading, refetch } = useDashboardData({
+  const { stats, contacts, queues, isLoading, refetch } = useDashboardData({
     dateRange: filters.dateRange,
     queueId: filters.queueId,
     agentId: filters.agentId,
@@ -55,6 +59,7 @@ export function DashboardView() {
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard();
   const { data: kpi } = useDashboardKpi();
+  const { busiestQueue } = useQueueHealth(contacts, queues);
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
@@ -101,7 +106,24 @@ export function DashboardView() {
           <div data-testid="dash-kpis">
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} />
           </div>
-          <div data-testid="dash-row2" className="min-h-[259px]" />
+          <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
+            <VolumeChart />
+            <NowPanel
+              realtime={realtime}
+              pendingConversations={stats.pendingConversations}
+              slaBreachedToday={kpi?.slaBreachedToday}
+              busiestQueue={busiestQueue}
+            />
+            <DailyGoalsCard
+              onSeeAll={() => setTab('goals')}
+              stats={{
+                totalConversations: stats.totalConversations,
+                resolvedToday: kpi?.resolvedToday ?? stats.resolvedToday,
+                avgResponseTime: stats.avgResponseTime,
+                pendingConversations: stats.pendingConversations,
+              }}
+            />
+          </div>
           <div data-testid="dash-row3" className="min-h-[220px]" />
           <div data-testid="dash-row4" className="min-h-[173px]" />
           <div data-testid="dash-gamification" className="min-h-[40px]" />
