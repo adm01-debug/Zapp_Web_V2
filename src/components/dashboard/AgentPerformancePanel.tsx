@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Trophy, Medal, Star, MessageSquare, Clock, Heart, User, Users, ChevronRight, PieChart as PieIcon, Target } from 'lucide-react';
+import { Trophy, Medal, Star, MessageSquare, Clock, Heart, User, Users, PieChart as PieIcon, Target } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
 
@@ -18,8 +18,7 @@ function statusDot(online: boolean) {
 }
 
 export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
-  const { agents, isLoading, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
-  
+  const { agents, isLoading, timeRange, setTimeRange } = useLeaderboard();
 
   const onlineCount = agents.filter(a => a.isOnline).length;
   const offlineCount = agents.filter(a => !a.isOnline).length;
@@ -46,7 +45,9 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
           <SectionHeader icon={Trophy} title="Ranking de Performance" subtitle="Desempenho da equipe em tempo real" tileSize={44}
             right={<CardSelect value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)} options={TIME_OPTIONS.map(o => ({ value: o.value, label: o.label }))} />}
           />
-          {agents.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center text-muted-foreground py-10 text-sm">Carregando ranking…</div>
+          ) : agents.length === 0 ? (
             <div className="flex flex-col items-center py-10 text-muted-foreground gap-2">
               <Users className="w-10 h-10 opacity-30" />
               <p className="text-sm">Nenhum dado de performance disponível</p>
@@ -59,6 +60,8 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                     <th className="text-left pb-2 pl-1 w-8">#</th>
                     <th className="text-left pb-2 px-2">Agente</th>
                     <th className="text-right pb-2 px-2">Resolvidas</th>
+                    <th className="text-right pb-2 px-2">Mensagens</th>
+                    <th className="text-right pb-2 px-2">Tempo de resposta</th>
                     <th className="text-right pb-2 px-2">XP</th>
                     <th className="text-left pb-2 px-2">Nível</th>
                   </tr>
@@ -84,6 +87,8 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                           </div>
                         </td>
                         <td className="text-right px-2 font-bold text-[15px]">{a.conversationsResolved.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-2 text-muted-foreground">{a.messagesHandled.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-2 text-muted-foreground">{formatShortDuration(a.avgResponseTime)}</td>
                         <td className="text-right px-2 text-muted-foreground">{a.xp.toLocaleString('pt-BR')}</td>
                         <td className="px-2"><span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary-foreground border border-primary/30">Nvl. {a.level}</span></td>
                       </tr>

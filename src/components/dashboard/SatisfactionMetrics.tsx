@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MessageCircle, Users, Crown, TrendingUp, BarChart3, Star, Layers, X, Lightbulb } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSatisfactionBreakdown } from '@/hooks/business/useCSAT';
 import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
@@ -51,8 +49,10 @@ export function SatisfactionMetrics() {
   const hasQueue = (breakdown?.byQueue?.length ?? 0) > 0;
   const hasTimeline = breakdown?.timeline?.some(t => t.csatPercent !== null) ?? false;
 
+  // `t.date` já vem formatado ('dd/MM') de useSatisfactionBreakdown — não é ISO,
+  // reformatar com date-fns aqui lança RangeError (Invalid time value).
   const timelineData = (breakdown?.timeline ?? []).map(t => ({
-    date: format(new Date(t.date ?? '1970-01-01'), 'dd MMM', { locale: ptBR }),
+    date: t.date,
     CSAT: t.csatPercent != null ? Math.round(t.csatPercent) : null,
   }));
 
