@@ -62,9 +62,14 @@ Preview: `http://localhost:4175` (porta 4174 já ocupada pelo watchdog de `Zapp_
 - **Gate `typecheck-ratchet`**: script sai com `ERRO` (exit 2, não `FALHA` exit 1) por causa de `tsc -b` retornar status 2 nesta config de project-references — comportamento idêntico em `origin/main`/`7bb4c869` sem nenhuma mudança minha (confirmado via `git diff --stat 7bb4c869 HEAD` = só o apêndice). Baseline desta entrega = mesmo `ERRO`, mesmos 6 erros em `ThemeCustomizer.tsx`/`PresetCard.tsx`(×3)/`presets.ts`/`contact.service.ts` (bate com Z.10).
 - **Gate `implicit-any-check`**: baseline interno do script é `0`, mas rodando sem tocar em nada (mesmo HEAD) aparecem 2 erros em `PresetCard.tsx:29` (mesmo cluster de dívida do `ThemeCustomizer`/tema, não mencionado explicitamente em Z.10 mas mesma causa raiz — `swatches`/`i` implícitos por `ThemePreset` não ter a propriedade `swatches`). Não vou tocar nesses arquivos de tema; meu gate por fase = **continuar em exatamente 2**, não zero.
 - **Vitest do dashboard**: `npx vitest run src/components/dashboard` deu **47 testes em 13 arquivos** na FASE 0 (Z.9 dizia "68 testes"). Uso 47/13 como baseline real; gate por fase = não diminuir esse número (só crescer com os testes novos que eu adicionar, se adicionar).
+- **`DashboardKpiCard` altura real (FASE 1)**: Z.4 diz "altura atual, 84px" para `compact` — a altura real no código antes da minha edição é **`h-[95px]`**, não 84px. Mantive `compact` = 95px (comportamento 100% inalterado) e defini `tall` = **122px** (95+27, espaço para uma linha de barra+legenda). Gate de altura desta entrega: `compact` 95±6, `tall` 122±6 (não 84±6/108±6 como o apêndice presumia).
+- **`GreetingBanner.tsx` (shell congelado, regra 0.3.6)**: para a FASE 1 reaproveitar as frases motivacionais sem duplicar lógica (exigência do corpo do plano, linha "Card motivacional"), extraí `MOTIVATION_PHRASES`/`dayOfYear` para um novo módulo `overview/motivationPhrases.ts` e troquei o import dentro de `GreetingBanner.tsx` (era definição local, virou import) — **zero mudança de comportamento/output visual**, só a origem da constante. Tentei primeiro só adicionar `export` nas constantes locais; isso quebrou o lint-ratchet (regra `react-refresh/only-export-components`, 2 ocorrências novas) porque um arquivo de componente não pode exportar não-componentes. A extração para módulo próprio resolveu e manteve `GreetingBanner.tsx` só exportando o componente.
 
 ## Blocos sem fonte de dado (empty state honesto)
-- (a preencher por fase conforme cada bloco do mockup é confrontado com o hook real)
+### FASE 1 — Metas
+- **Delta do KPI "Progresso Geral"**: o plano pede "+NN% delta"; `useGoalsDashboard` não guarda snapshot de período anterior (só o período atual). Renderizado como `delta=null` (—), sem inventar tendência.
+- **Sparkline/bars dos 4 KPIs de Metas**: o plano insinua barras coloridas; não há série histórica diária por meta no hook. `bars=null` em todos os 4 (placeholder vazio), não preenchido com valor derivado fingindo histórico.
+- **Coluna "Ações" (kebab) da tabela "Metas do dia"**: omitida. O plano condiciona a "o menu atual, se existir" — não existe nenhum menu de ações por meta no `GoalsDashboard` atual nem em `GoalsConfigDialog`. Não criei um menu novo.
 
 ## Iterações do loop visual (máx 3 por fase)
 -
@@ -79,7 +84,7 @@ Preview: `http://localhost:4175` (porta 4174 já ocupada pelo watchdog de `Zapp_
   - `node scripts/ci/typecheck-ratchet.mjs` → ERRO (exit 2, pré-existente, ver Divergências)
   - `npm run implicit-any-check` → 2 erros (baseline script=0) — pré-existente, ver Divergências
   - `npx vitest run src/components/dashboard` → **47 passed (13 files)** — baseline real (Z.9 previa 68)
-## CP1 Metas          [ ] sha= · shot= · KPIs=[_,_,_,_] · empty states: _ · gates 5/5
+## CP1 Metas          [x] sha=(próximo commit) · shot=abas-01-goals.png (0 console errors, sem overflow em 1583) · KPIs=[Progresso Geral 0%, Metas Concluídas 0, Em Andamento 0, Em Risco 0] (conta QA sem metas hoje — empty state real) · empty states: tabela "Nenhuma meta ativa" · gates: typecheck sem diff · lint 0 novas · implicit-any 2/2 (baseline) · vitest 47/13 (baseline) · build ok
 ## CP2 IA             [ ] sha= · shot= · features=6 · insights fonte=sim|não · gates 5/5
 ## CP3 SLA            [ ] sha= · shot= · export=ligado|omitido(motivo) · switch=mutation|disabled(motivo) · gates 5/5
 ## CP4 Equipe         [ ] sha= · shot= · ranking rows=_ · donut fonte=_ · gates 5/5
