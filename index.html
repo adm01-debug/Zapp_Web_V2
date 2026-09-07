@@ -81,7 +81,7 @@
           var skin = localStorage.getItem('theme-custom-colors');
           if (skin) {
             var c = JSON.parse(skin);
-            if (c.v === 2) {
+            if (c.v === 3) {
               var root = document.documentElement;
               if (c.cssVarsCache) {
                 for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
