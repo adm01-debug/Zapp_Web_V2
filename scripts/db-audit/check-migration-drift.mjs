@@ -652,7 +652,10 @@ function compare(migrations, records, exceptionsByVersion) {
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
-        errors.push(`ledger_statements_sha256 divergente do manifesto em ${migration.version}`);
+        errors.push(
+          `ledger_statements_sha256 divergente do manifesto em ${migration.version}: `
+          + `esperado=${exception.ledger_statements_sha256}; ledger=${statementsHash}`,
+        );
       }
       if (ledgerSql) {
         errors.push(`excecao comment-only exige ledger sem SQL canonico em ${migration.version}`);
@@ -707,10 +710,16 @@ function compare(migrations, records, exceptionsByVersion) {
         );
       }
       if (statementsHash !== exception.ledger_statements_sha256) {
-        errors.push(`ledger_statements_sha256 divergente do manifesto em ${migration.version}`);
+        errors.push(
+          `ledger_statements_sha256 divergente do manifesto em ${migration.version}: `
+          + `esperado=${exception.ledger_statements_sha256}; ledger=${statementsHash}`,
+        );
       }
       if (ledgerSqlHash !== exception.ledger_sql_sha256) {
-        errors.push(`ledger_sql_sha256 divergente do manifesto em ${migration.version}`);
+        errors.push(
+          `ledger_sql_sha256 divergente do manifesto em ${migration.version}: `
+          + `esperado=${exception.ledger_sql_sha256}; ledger=${ledgerSqlHash}`,
+        );
       }
       if (!ledgerSql) {
         errors.push(`excecao pinned-replay exige ledgerSql canonico nao vazio em ${migration.version}`);
