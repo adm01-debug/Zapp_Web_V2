@@ -13,13 +13,15 @@ interface ViewContainerProps {
    * sobrariam dois scrollers verticais aninhados e o padding dobrado.
    */
   ownScroll?: boolean;
+  /** Views com grade densa (ex.: dashboard) usam gutter compacto em vez do --layout-gutter padrão. */
+  compactGutter?: boolean;
 }
 
 /**
  * Single scroll owner for all standard views.
  * Views rendered inside must be w-full min-w-0 flat containers — no overflow-y-auto at root.
  */
-export function ViewContainer({ children, fullScreen, viewId, ownScroll }: ViewContainerProps) {
+export function ViewContainer({ children, fullScreen, viewId, ownScroll, compactGutter }: ViewContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // O div rolavel sobrevive a troca de view (so o conteudo e remontado),
@@ -43,7 +45,7 @@ export function ViewContainer({ children, fullScreen, viewId, ownScroll }: ViewC
       <div className="flex flex-col h-full w-full min-w-0 flex-1">
         <div
           ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto p-[var(--layout-gutter)]"
+          className={compactGutter ? 'flex-1 min-h-0 overflow-y-auto pt-2 px-4 pb-4' : 'flex-1 min-h-0 overflow-y-auto p-[var(--layout-gutter)]'}
         >
           {children}
         </div>

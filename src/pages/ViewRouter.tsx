@@ -27,6 +27,9 @@ interface ViewRouterProps {
 // continuam dentro do wrapper flat, so nao ganham o scroller compartilhado.
 const OWN_SCROLL_VIEWS = new Set(['settings']);
 
+// Dashboard usa grade densa (Navy Operational) — gutter compacto em vez do padrão de 36px.
+const COMPACT_GUTTER_VIEWS = new Set(['dashboard']);
+
 const FULL_SCREEN_VIEWS = new Set(
   [
     ...NavigationService.getPrimaryNav(),
@@ -135,6 +138,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
     <ViewContainer
       fullScreen={FULL_SCREEN_VIEWS.has(currentView)}
       ownScroll={OWN_SCROLL_VIEWS.has(currentView)}
+      compactGutter={COMPACT_GUTTER_VIEWS.has(currentView)}
       viewId={currentView}
     >
       {prefersReduced ? (
