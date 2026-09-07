@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { toast } from '@/hooks/ui/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -11,30 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Plus, DollarSign, Link2, Copy, Trash2, CheckCircle, Clock, XCircle,
-  CreditCard, QrCode, ExternalLink, Send
+  CreditCard, QrCode, ExternalLink, Send, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface PaymentLink {
-  id: string;
-  title: string;
-  description: string | null;
-  amount: number;
-  currency: string;
-  status: string;
-  payment_method: string;
-  payment_url: string | null;
-  contact_id: string | null;
-  paid_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-}
+import { usePaymentLinks } from '@/hooks/payments/usePaymentLinks';
 
 export function PaymentLinksView() {
-  const [links, setLinks] = useState<PaymentLink[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { links, isLoading: loading, isError, createLink, deleteLink } = usePaymentLinks();
   const [showDialog, setShowDialog] = useState(false);
 
   // Form
@@ -43,24 +28,7 @@ export function PaymentLinksView() {
   const [formAmount, setFormAmount] = useState('');
   const [formMethod, setFormMethod] = useState('pix');
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase.from('payment_links').select('*').order('created_at', { ascending: false });
-    if (data) setLinks(data as PaymentLink[]);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('payment-links-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_links' }, () => fetchData())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchData]);
-
-  const createLink = async () => {
+  const handleCreateLink = async () => {
     if (!formTitle.trim() || !formAmount) return;
     const amount = parseFloat(formAmount);
     if (isNaN(amount) || amount <= 0) return;
@@ -68,34 +36,52 @@ export function PaymentLinksView() {
     // Generate a simple payment URL (in production would integrate with Stripe/payment provider)
     const paymentUrl = `${window.location.origin}/pay/${crypto.randomUUID().slice(0, 8)}`;
 
-    const { error } = await supabase.from('payment_links').insert({
-      title: formTitle,
-      description: formDescription || null,
-      amount,
-      payment_method: formMethod,
-      payment_url: paymentUrl,
-    });
-
-    if (error) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    try {
+      await createLink({
+        title: formTitle.trim(),
+        description: formDescription.trim() || null,
+        amount,
+        paymentMethod: formMethod,
+        paymentUrl,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Não foi possível criar o link.',
+        variant: 'destructive',
+      });
       return;
     }
 
     toast({ title: 'Link de pagamento criado!' });
     setShowDialog(false);
     setFormTitle(''); setFormDescription(''); setFormAmount(''); setFormMethod('pix');
-    fetchData();
   };
 
-  const copyLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({ title: 'Link copiado!' });
+  const copyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copiado!' });
+    } catch {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível copiar o link.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const deleteLink = async (id: string) => {
-    await supabase.from('payment_links').delete().eq('id', id);
-    toast({ title: 'Link removido' });
-    fetchData();
+  const handleDeleteLink = async (id: string) => {
+    try {
+      await deleteLink(id);
+      toast({ title: 'Link removido' });
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Não foi possível remover o link.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const statusConfig: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
@@ -119,6 +105,25 @@ export function PaymentLinksView() {
           </Button>
         }
       />
+
+      <div className="px-6 pt-4">
+        <Alert className="border-warning/30 bg-warning/10">
+          <FlaskConical className="h-4 w-4 !text-warning" />
+          <AlertTitle className="text-warning">Checkout ainda não está disponível</AlertTitle>
+          <AlertDescription>
+            A criação de links funciona normalmente e fica salva no sistema, mas a página de pagamento (/pay/&lt;id&gt;) ainda não está conectada a nenhum provedor — o link não processa cobranças reais. Em desenvolvimento.
+          </AlertDescription>
+        </Alert>
+      </div>
+
+      {isError && (
+        <div className="px-6 pt-4">
+          <Alert variant="destructive">
+            <AlertTitle>Não foi possível carregar os links</AlertTitle>
+            <AlertDescription>Tente novamente em instantes ou confirme suas permissões de acesso.</AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 pb-4">
@@ -183,11 +188,11 @@ export function PaymentLinksView() {
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {link.payment_url && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyLink(link.payment_url!)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void copyLink(link.payment_url!)}>
                           <Copy className="w-3.5 h-3.5" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteLink(link.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => void handleDeleteLink(link.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -242,7 +247,7 @@ export function PaymentLinksView() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancelar</Button>
-            <Button onClick={createLink}>Criar Link</Button>
+            <Button onClick={() => void handleCreateLink()}>Criar Link</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
