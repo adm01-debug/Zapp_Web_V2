@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLayoutContext } from '@/contexts/LayoutContext';
 
 export interface BreadcrumbItem {
   label: string;
@@ -46,6 +47,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { hasBreadcrumbBar } = useLayoutContext();
 
   const handleBack = () => {
     if (onBack) {
@@ -69,54 +71,56 @@ export function PageHeader({
         : 'flex flex-col gap-2 px-6 py-4 border-b border-border/50 bg-card',
       className
     )}>
-      {/* Breadcrumbs row */}
-      {(breadcrumbs.length > 0 || topRight) && (
+      {/* Breadcrumbs row — omitido quando o BreadcrumbBar global (AppShell) já cobre a trilha */}
+      {((!hasBreadcrumbBar && breadcrumbs.length > 0) || topRight) && (
         <div className={cn('flex items-center justify-between gap-3 flex-wrap', variant === 'plain' && 'sm:h-14')}>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  href="/"
-                  onClick={(e) => {
-                    if (homeCrumb?.onClick) {
-                      e.preventDefault();
-                      homeCrumb.onClick();
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Home className="w-3.5 h-3.5" />
-                  {hasExplicitHome ? <span>Início</span> : <span className="sr-only">Início</span>}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
+          {!hasBreadcrumbBar && breadcrumbs.length > 0 && (
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink
+                    href="/"
+                    onClick={(e) => {
+                      if (homeCrumb?.onClick) {
+                        e.preventDefault();
+                        homeCrumb.onClick();
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    {hasExplicitHome ? <span>Início</span> : <span className="sr-only">Início</span>}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
 
-              {restCrumbs.map((crumb, index) => {
-                const isLast = index === restCrumbs.length - 1;
+                {restCrumbs.map((crumb, index) => {
+                  const isLast = index === restCrumbs.length - 1;
 
-                return (
-                  <BreadcrumbItem key={crumb.label}>
-                    <BreadcrumbSeparator />
-                    {isLast ? (
-                      <BreadcrumbPage className="font-semibold text-foreground">{crumb.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink
-                        href={crumb.href}
-                        onClick={(e) => {
-                          if (crumb.onClick) {
-                            e.preventDefault();
-                            crumb.onClick();
-                          }
-                        }}
-                        className="hover:text-foreground transition-colors"
-                      >
-                        {crumb.label}
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                );
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
+                  return (
+                    <BreadcrumbItem key={crumb.label}>
+                      <BreadcrumbSeparator />
+                      {isLast ? (
+                        <BreadcrumbPage className="font-semibold text-foreground">{crumb.label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink
+                          href={crumb.href}
+                          onClick={(e) => {
+                            if (crumb.onClick) {
+                              e.preventDefault();
+                              crumb.onClick();
+                            }
+                          }}
+                          className="hover:text-foreground transition-colors"
+                        >
+                          {crumb.label}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  );
+                })}
+              </BreadcrumbList>
+            </Breadcrumb>
+          )}
 
           {topRight && <div className="shrink-0">{topRight}</div>}
         </div>

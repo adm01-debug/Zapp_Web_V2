@@ -2,6 +2,8 @@
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { BreadcrumbBar } from '@/components/layout/BreadcrumbBar';
+import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
 import { cn } from '@/lib/utils';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -66,6 +68,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
+  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: !isMobile && !isZen }), [isMobile, isZen]);
 
   // Mobile edge-swipe navigation
   useSwipeNavigation({
@@ -113,16 +116,26 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
         />
       )}
 
+      <LayoutProvider value={layoutContextValue}>
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         {!isMobile && !isZen && (
-          <AppHeader
-            className="sticky top-0 z-40 shrink-0"
-            currentView={currentView}
-            profile={profile}
-            userEmail={userEmail}
-            signOut={signOut}
-            onViewChange={handleViewChange}
-          />
+          <>
+            <AppHeader
+              className="sticky top-0 z-40 shrink-0"
+              currentView={currentView}
+              profile={profile}
+              userEmail={userEmail}
+              signOut={signOut}
+              onViewChange={handleViewChange}
+            />
+            <BreadcrumbBar
+              className="sticky top-14 z-30 shrink-0"
+              breadcrumbTrail={breadcrumbTrail}
+              currentView={currentView}
+              canGoBack={canGoBack}
+              goBack={goBack}
+            />
+          </>
         )}
 
         <main
@@ -156,6 +169,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           </Suspense>
         </main>
       </div>
+      </LayoutProvider>
 
        {!isMobile && <VoiceCopilotFAB onClick={() => setVoiceOpen(true)} />}
 
