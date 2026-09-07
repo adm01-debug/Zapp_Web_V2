@@ -11,6 +11,7 @@ export interface LeaderboardAgent {
   level: number;
   streak: number;
   messagesHandled: number;
+  conversationsResolved: number;
   avgResponseTime: number;
   satisfaction: number;
   rank: number;
@@ -59,6 +60,7 @@ export function useLeaderboard() {
           name: profile?.name || 'Agente', avatar: profile?.avatar_url || undefined,
           xp: stat.xp, level: stat.level, streak: stat.current_streak,
           messagesHandled: stat.messages_sent + stat.messages_received,
+          conversationsResolved: stat.conversations_resolved,
           avgResponseTime: stat.avg_response_time_seconds || 0,
           satisfaction: Number(stat.customer_satisfaction_score) * 100 || 0,
           rank: index + 1, previousRank: index + 1,

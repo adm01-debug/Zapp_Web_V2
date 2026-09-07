@@ -289,6 +289,20 @@
     --kpi-tile-yellow: 48 40% 17%;
     --kpi-tile-yellow-fg: 48 96% 53%;
     --page-glow: radial-gradient(1100px 520px at 8% -8%, hsl(217 100% 54% / .14), transparent 60%);
+
+    /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
+    --foreground-secondary: 215 30% 78%;
+    --dash-tile-blue: 221 88% 29%;
+    --dash-tile-red: 349 62% 30%;
+    --dash-tile-green: 156 73% 18%;
+    --dash-tile-violet: 260 69% 37%;
+    --dash-tile-amber: 43 80% 24%;
+    --dash-blue: 210 100% 57%;
+    --dash-red: 357 94% 63%;
+    --dash-green: 153 90% 42%;
+    --dash-violet: 282 95% 66%;
+    --dash-amber: 45 90% 51%;
+    --dash-yellow: 52 58% 56%;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */

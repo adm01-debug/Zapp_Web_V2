@@ -1,13 +1,10 @@
 import { useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from '@/components/ui/motion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQueryClient } from '@tanstack/react-query';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import {
   TrendingUp, BarChart3, Target, Clock, Brain, Award, Heart, Smile, FileText,
 } from 'lucide-react';
-import { AnimatedBadge, LevelProgress } from './GamificationEffects';
-import { FloatingParticles } from './FloatingParticles';
-import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
+import { DashboardTabs, DashboardTabDef } from './overview/DashboardTabs';
 import { SLAMetricsDashboard } from './SLAMetricsDashboard';
 import { AIQuickAccess } from './AIQuickAccess';
 import { CSATDashboard } from '@/components/csat/CSATDashboard';
@@ -15,146 +12,157 @@ import { GoalsDashboard } from './GoalsDashboard';
 import { DemandPrediction } from './DemandPrediction';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import ConversationHeatmap from './ConversationHeatmap';
-import { RealtimeMetricsPanel } from './RealtimeMetricsPanel';
 import { AgentPerformancePanel } from './AgentPerformancePanel';
 import { SatisfactionMetrics } from './SatisfactionMetrics';
 import { SentimentTrendChart } from './SentimentTrendChart';
 import { ScheduledReportsManager } from './ScheduledReportsManager';
 import { useDashboardData } from '@/hooks/analytics/useDashboardData';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useDashboardWidgets, DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';
-import { ProgressiveDisclosureDashboard } from './ProgressiveDisclosureDashboard';
+import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
+import { useDashboardKpi } from '@/hooks/dashboard/useDashboardKpi';
+import { useQueueHealth } from '@/hooks/dashboard/useQueueHealth';
+import { useRecentConversationEvents } from '@/hooks/dashboard/useRecentConversationEvents';
+import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
+import { useSLAMetrics } from '@/hooks/sla/useSLAMetrics';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
-import { ParallaxContainer } from '@/components/effects/ParallaxContainer';
-import { DashboardWidgetRenderer } from './DashboardWidgetRenderer';
+import { OverviewSkeleton } from './overview/OverviewSkeleton';
+import { GreetingBanner } from './overview/GreetingBanner';
+import { DashboardTopBar } from './overview/DashboardTopBar';
+import { DashboardHeader } from './overview/DashboardHeader';
+import { DashboardKpiRow } from './overview/DashboardKpiRow';
+import { VolumeChart } from './overview/VolumeChart';
+import { NowPanel } from './overview/NowPanel';
+import { DailyGoalsCard } from './overview/DailyGoalsCard';
+import { QueueHealthTable } from './overview/QueueHealthTable';
+import { RecentActivityCard } from './overview/RecentActivityCard';
+import { TeamHighlightCard } from './overview/TeamHighlightCard';
+import { AIToolsCard } from './overview/AIToolsCard';
+import { CsatCard } from './overview/CsatCard';
+import { SentimentTrendCard } from './overview/SentimentTrendCard';
+import { GamificationSection } from './overview/GamificationSection';
+
+const OVERVIEW_TAB = 'overview';
+
+const DASHBOARD_TABS: DashboardTabDef[] = [
+  { value: 'overview', label: 'Visão Geral', icon: TrendingUp },
+  { value: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { value: 'goals', label: 'Metas', icon: Target },
+  { value: 'ai', label: 'Inteligência Artificial', icon: Brain },
+  { value: 'sla', label: 'Métricas SLA', icon: Clock },
+  { value: 'team', label: 'Equipe', icon: Award },
+  { value: 'satisfaction', label: 'Satisfação', icon: Heart },
+  { value: 'sentiment', label: 'Sentimento', icon: Smile },
+  { value: 'reports', label: 'Relatórios', icon: FileText },
+];
 
 export function DashboardView() {
+  const [tab, setTab] = useState(OVERVIEW_TAB);
   const [filters, setFilters] = useState<DashboardFiltersState>(getDefaultFilters());
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { profile } = useAuth();
+  const [csatPeriod, setCsatPeriod] = useState<'today' | 'week' | 'month'>('month');
 
-  const hour = new Date().getHours();
-  const greetingText = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  const userName = profile?.name?.split(' ')[0] || '';
-  const greeting = userName ? `${greetingText}, ${userName}! 👋` : `${greetingText}! 👋`;
-
-  const { stats, isLoading, refetch } = useDashboardData({
+  const { stats, contacts, queues, isLoading, refetch } = useDashboardData({
     dateRange: filters.dateRange,
     queueId: filters.queueId,
     agentId: filters.agentId,
   });
-  const {
-    level1Widgets, level2Widgets, level3Widgets,
-  } = useDashboardWidgets();
+  // Instância única de useRealtimeDashboard (antecipada da Fase 5/etapa 46: o
+  // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
+  // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
+  const realtime = useRealtimeDashboard();
+  const { data: kpi } = useDashboardKpi();
+  const { rows: queueHealthRows, busiestQueue } = useQueueHealth(contacts, queues);
+  const { data: recentEvents } = useRecentConversationEvents(4);
+  const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
+  // Instância única de useSLAMetrics('today') — só Equipe em Destaque consome
+  // (etapa 68); "Agora" usa slaBreachedToday de useDashboardKpi (fallback já
+  // documentado no ledger, useApplicableSLA/useSLACalculation são por-contato).
+  const { data: slaMetrics } = useSLAMetrics('today');
+  const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
+  const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
+    // Chaves das hooks da Fase 5-7 (ainda não existem antes delas — invalidateQueries
+    // é um no-op seguro para queryKey sem cache correspondente).
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['queue-health'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-conversation-events'] });
+    queryClient.invalidateQueries({ queryKey: ['today-hourly-volume'] });
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
   if (isLoading || !stats) {
-    return (
-      <div className="space-y-6 relative bg-background w-full min-w-0">
-        <AuroraBorealis />
-        <FloatingParticles />
-        <div className="space-y-6 relative z-10">
-          <Skeleton className="h-16 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 w-full" />)}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-64 lg:col-span-2" />
-            <Skeleton className="h-64" />
-          </div>
-        </div>
-      </div>
-    );
+    return <OverviewSkeleton />;
   }
 
-  const renderWidget = (widget: DashboardWidget) => (
-    <DashboardWidgetRenderer widget={widget} stats={stats} />
-  );
-
   return (
-    <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis />
-      <FloatingParticles />
+    <div className="w-full min-w-0">
+      {/* Sem gap explícito para o header abaixo: a referência mede a faixa
+          do topo e o header card como adjacentes (ritmo vertical do CP1). */}
+      <div data-testid="dash-topbar">
+        <DashboardTopBar unreadMessages={realtime.unreadMessages} />
+      </div>
 
-      <ParallaxContainer speed={0.3} direction="up" className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -left-24 w-64 h-64 bg-primary/8 rounded-full blur-3xl" />
-      </ParallaxContainer>
+      <div className="space-y-2.5">
+        <DashboardHeader
+          filters={(
+            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+          )}
+        />
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10"
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-12 h-12 rounded-xl flex items-center justify-center relative overflow-hidden glow-gradient-pulse"
-              style={{ background: 'var(--gradient-primary)' }}
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <TrendingUp className="w-6 h-6 text-primary-foreground relative z-10" />
-            </motion.div>
-            <div>
-              <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground neon-underline">
-                {greeting}
-              </motion.h1>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }} className="text-muted-foreground text-sm">
-                Visão geral do atendimento em tempo real
-              </motion.p>
-            </div>
+        <Tabs value={tab} onValueChange={setTab}>
+          <DashboardTabs tabs={DASHBOARD_TABS} activeTab={tab} />
+
+        <TabsContent value="overview" className="space-y-2.5 mt-2.5">
+          {/* Shell da Visão Geral — placeholders com altura-alvo para o CP1 medir o ritmo vertical.
+              Conteúdo real chega nas Fases 5-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
+              deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). */}
+          <div data-testid="dash-banner">
+            <GreetingBanner />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <AnimatedBadge value="1.250" label="XP" variant="xp" size="md" />
-            <AnimatedBadge value="89" variant="coins" size="md" />
-            <AnimatedBadge value="7" variant="streak" size="md" />
+          <div data-testid="dash-kpis">
+            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} />
           </div>
-        </div>
-        <div className="mt-4">
-          <LevelProgress currentXP={1250} requiredXP={2000} level={12} />
-        </div>
-      </motion.div>
-
-      <div className="relative z-10 border-t border-border/20" />
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} className="relative z-10">
-        <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-      </motion.div>
-
-      <Tabs defaultValue="overview" className="relative z-10">
-        <TabsList className="mb-4 bg-muted/50 border border-border/30 flex-wrap">
-          <TabsTrigger value="overview" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Visão Geral</TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2"><Target className="w-4 h-4" />Metas</TabsTrigger>
-          <TabsTrigger value="ai" className="flex items-center gap-2"><Brain className="w-4 h-4" />Inteligência Artificial</TabsTrigger>
-          <TabsTrigger value="sla" className="flex items-center gap-2"><Clock className="w-4 h-4" />Métricas SLA</TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2"><Award className="w-4 h-4" />Equipe</TabsTrigger>
-          <TabsTrigger value="satisfaction" className="flex items-center gap-2"><Heart className="w-4 h-4" />Satisfação</TabsTrigger>
-          <TabsTrigger value="sentiment" className="flex items-center gap-2"><Smile className="w-4 h-4" />Sentimento</TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2"><FileText className="w-4 h-4" />Relatórios</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <RealtimeMetricsPanel />
-          <ProgressiveDisclosureDashboard
-            level1Widgets={level1Widgets}
-            level2Widgets={level2Widgets}
-            level3Widgets={level3Widgets}
-            renderWidget={renderWidget}
-          />
+          <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
+            <VolumeChart />
+            <NowPanel
+              realtime={realtime}
+              pendingConversations={stats.pendingConversations}
+              slaBreachedToday={kpi?.slaBreachedToday}
+              busiestQueue={busiestQueue}
+            />
+            <DailyGoalsCard
+              onSeeAll={() => setTab('goals')}
+              stats={{
+                totalConversations: stats.totalConversations,
+                resolvedToday: kpi?.resolvedToday ?? stats.resolvedToday,
+                avgResponseTime: stats.avgResponseTime,
+                pendingConversations: stats.pendingConversations,
+              }}
+            />
+          </div>
+          <div data-testid="dash-row3" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+            <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => setTab('sla')} />
+            <RecentActivityCard items={recentEvents?.items ?? []} />
+            <TeamHighlightCard
+              agents={leaderboardAgents}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+              slaRateByAgent={slaRateByAgent}
+            />
+          </div>
+          <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+            <AIToolsCard onSeeAll={() => setTab('ai')} />
+            <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
+            <SentimentTrendCard />
+          </div>
+          <div data-testid="dash-gamification">
+            <GamificationSection stats={stats} />
+          </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-2.5">
           <DemandPrediction />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ConversationHeatmap />
@@ -162,14 +170,15 @@ export function DashboardView() {
           </div>
         </TabsContent>
 
-        <TabsContent value="goals" className="space-y-6"><GoalsDashboard /></TabsContent>
-        <TabsContent value="ai" className="space-y-6"><AIQuickAccess /><CSATDashboard /></TabsContent>
+        <TabsContent value="goals" className="space-y-2.5"><GoalsDashboard /></TabsContent>
+        <TabsContent value="ai" className="space-y-2.5"><AIQuickAccess /></TabsContent>
         <TabsContent value="sla"><SLAMetricsDashboard /></TabsContent>
-        <TabsContent value="team" className="space-y-6"><AgentPerformancePanel /></TabsContent>
-        <TabsContent value="satisfaction" className="space-y-6"><SatisfactionMetrics /></TabsContent>
-        <TabsContent value="sentiment" className="space-y-6"><SentimentTrendChart /></TabsContent>
-        <TabsContent value="reports" className="space-y-6"><ScheduledReportsManager /></TabsContent>
-      </Tabs>
+        <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel /></TabsContent>
+        <TabsContent value="satisfaction" className="space-y-2.5"><SatisfactionMetrics /><CSATDashboard /></TabsContent>
+        <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart /></TabsContent>
+        <TabsContent value="reports" className="space-y-2.5"><ScheduledReportsManager /></TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

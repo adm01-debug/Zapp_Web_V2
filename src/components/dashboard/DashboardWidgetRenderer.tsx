@@ -21,7 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatResponseTime } from '@/hooks/analytics/useDashboardData';
 
-interface DashboardStats {
+export interface DashboardStats {
   openConversations: number;
   totalConversations: number;
   avgResponseTime: number | null;
