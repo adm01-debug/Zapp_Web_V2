@@ -97,6 +97,9 @@ const ALL_COLOR_KEYS: (keyof ThemeModeColors)[] = [
   'elevated', 'elevated-hover',
 ];
 
+// Exported alias — consumed by ThemeInitializer.tsx and useThemePreset.ts
+export const CSS_VARS_TO_APPLY = ALL_COLOR_KEYS;
+
 // ─── Preset factory ─────────────────────────────────────────────────────────
 
 function buildPreset(id: string, label: string, h: number): ThemePreset {
