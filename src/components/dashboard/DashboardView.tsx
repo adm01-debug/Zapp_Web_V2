@@ -18,11 +18,13 @@ import { SentimentTrendChart } from './SentimentTrendChart';
 import { ScheduledReportsManager } from './ScheduledReportsManager';
 import { useDashboardData } from '@/hooks/analytics/useDashboardData';
 import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
+import { useDashboardKpi } from '@/hooks/dashboard/useDashboardKpi';
 import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
 import { GreetingBanner } from './overview/GreetingBanner';
 import { DashboardTopBar } from './overview/DashboardTopBar';
 import { DashboardHeader } from './overview/DashboardHeader';
+import { DashboardKpiRow } from './overview/DashboardKpiRow';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -52,6 +54,7 @@ export function DashboardView() {
   // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard();
+  const { data: kpi } = useDashboardKpi();
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
@@ -95,7 +98,9 @@ export function DashboardView() {
           <div data-testid="dash-banner">
             <GreetingBanner />
           </div>
-          <div data-testid="dash-kpis" className="min-h-[95px]" />
+          <div data-testid="dash-kpis">
+            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} />
+          </div>
           <div data-testid="dash-row2" className="min-h-[259px]" />
           <div data-testid="dash-row3" className="min-h-[220px]" />
           <div data-testid="dash-row4" className="min-h-[173px]" />
