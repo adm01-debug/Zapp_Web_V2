@@ -9,7 +9,15 @@ import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, VerTodasButton } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
 
-const BADGE_LABEL: Record<string, string> = { Popular: 'Popular', Novo: 'Novo' };
+/** Copy de UI do link de cada card — feature.action/route são chaves internas de navegação, não texto de exibição. */
+const FEATURE_CTA: Record<string, string> = {
+  suggestions: 'Ver sugestões',
+  analysis: 'Analisar conversa',
+  sentiment: 'Ver alertas',
+  summary: 'Gerar resumo',
+  transcription: 'Transcrever áudio',
+  trends: 'Ver tendências',
+};
 
 export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const navigate = useNavigate();
@@ -64,7 +72,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
             className="cursor-pointer hover:border-primary/40 transition-colors"
             onClick={() => handleFeatureClick(feature)}>
             <div className="flex items-start justify-between mb-2">
-              <div className={cn('w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0', feature.gradient ?? 'bg-dash-tile-blue')}>
+              <div className={cn('w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0 bg-gradient-to-br', feature.gradient)}>
                 <feature.icon className="w-5 h-5 text-white/90" />
               </div>
               {feature.badge && (
@@ -77,7 +85,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
             <h3 className="font-bold text-[15px] mb-1">{feature.title}</h3>
             <p className="text-[12.5px] text-muted-foreground line-clamp-2 mb-3">{feature.description}</p>
             <div className="flex items-center justify-between mt-auto">
-              <span className="text-[13px] font-semibold text-primary-glow">{feature.action} →</span>
+              <span className="text-[13px] font-semibold text-primary-glow">{FEATURE_CTA[feature.id] ?? 'Acessar'} →</span>
               <div className="w-9 h-9 rounded-full bg-muted/60 hover:bg-primary/20 flex items-center justify-center transition-colors">
                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
               </div>
