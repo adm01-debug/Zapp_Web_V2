@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Preload critical fonts for faster LCP -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" as="style" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <script>
       (function() {
         try {
@@ -21,7 +21,7 @@
           var skin = localStorage.getItem('theme-custom-colors');
           if (skin) {
             var c = JSON.parse(skin);
-            if (c.v === 4) {
+            if (c.v === 5) {
               var root = document.documentElement;
               if (c.cssVarsCache) {
                 for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
@@ -57,7 +57,7 @@
             var root = document.getElementById('root');
             if (!root) return;
             root.innerHTML = ''
-            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:Outfit,system-ui,sans-serif;padding:24px;overflow:auto;">'
+            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:system-ui,sans-serif;padding:24px;overflow:auto;">'
             + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">&#9888;&#65039; Falha ao inicializar o app</h1>'
             + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React n\u00e3o montou em 8s. Detalhes abaixo:</p>'
             + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'

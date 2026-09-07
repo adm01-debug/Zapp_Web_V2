@@ -54,7 +54,7 @@ export function ContactViewSwitcher({
     <div className="flex items-center gap-2">
       {/* Segmented view mode toggles */}
       <LayoutGroup id="contacts-view">
-        <div className="h-11 rounded-xl border border-border bg-card p-1 flex items-center gap-1">
+        <div className="h-10 rounded-xl border border-border bg-card p-1 flex items-center gap-1">
           {PRIMARY_MODES.map(({ value, label, icon: Icon }) => {
             const active = viewMode === value;
             return (
@@ -116,7 +116,7 @@ export function ContactViewSwitcher({
       {/* Colunas + Agrupamento */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border-border text-[15px] font-medium gap-2">
+          <Button variant="outline" className="h-10 px-4 rounded-xl bg-input border-border text-[15px] font-medium gap-2">
             <Settings2 className="w-[18px] h-[18px]" />
             <span className="hidden sm:inline">Colunas</span>
           </Button>

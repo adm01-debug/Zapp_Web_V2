@@ -126,11 +126,11 @@ export function OmnichannelInbox() {
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'channels' | 'email')} className="flex flex-col h-full">
         <div className="border-b px-4">
           <TabsList className="h-10 bg-transparent">
-            <TabsTrigger value="channels" className="gap-1.5 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="channels" className="gap-1.5 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
               <Globe className="w-4 h-4" />
               Canais
             </TabsTrigger>
-            <TabsTrigger value="email" className="gap-1.5 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="email" className="gap-1.5 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
               <Mail className="w-4 h-4" />
               Email Chat
             </TabsTrigger>

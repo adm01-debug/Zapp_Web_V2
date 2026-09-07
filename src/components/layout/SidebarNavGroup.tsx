@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,17 +17,50 @@ interface SidebarNavGroupProps {
   isFavorite?: (id: string) => boolean;
 }
 
+const GROUPS_STORAGE_KEY = 'zapp-sidebar-groups';
+
+function readStoredGroupsState(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(GROUPS_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredGroupState(label: string, isOpen: boolean) {
+  try {
+    const state = readStoredGroupsState();
+    state[label] = isOpen;
+    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // localStorage indisponível (modo privado/quota) — estado só não persiste entre sessões
+  }
+}
+
 export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, onViewChange, defaultOpen = false, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavGroupProps) {
   const hasActiveItem = items.some(item => item.id === currentView);
-  const [isOpen, setIsOpen] = useState(defaultOpen || hasActiveItem);
+  // Derived: always show group open when it contains the active item
+  // isOpen tracks user's explicit toggle; hasActiveItem is auto-override
+  const [isOpen, setIsOpen] = useState(() => {
+    const stored = readStoredGroupsState()[label];
+    return stored !== undefined ? stored : (defaultOpen || hasActiveItem);
+  });
 
-  useEffect(() => {
-    if (hasActiveItem && !isOpen) setIsOpen(true);
-  }, [hasActiveItem]);
+
+
+
+  const effectiveOpen = isOpen || hasActiveItem;
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      writeStoredGroupState(label, next);
+      return next;
+    });
+  };
 
   const triggerButton = (
     <button
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={handleToggle}
       className={cn(
         'rounded-lg flex items-center transition-all duration-200 group/trigger',
         collapsed ? 'w-full h-[30px] justify-center gap-0.5' : 'w-full h-10 px-2.5 gap-2',
@@ -35,7 +68,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
           ? 'text-primary'
           : 'text-muted-foreground hover:text-foreground'
       )}
-      aria-expanded={isOpen}
+      aria-expanded={effectiveOpen}
       aria-label={`${label} — ${isOpen ? 'recolher' : 'expandir'}`}
     >
       <GroupIcon className={cn(
@@ -50,7 +83,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       <ChevronRight className={cn(
         'transition-transform duration-250 ease-out shrink-0',
         collapsed ? 'w-[8px] h-[8px]' : 'w-[11px] h-[11px] ml-auto opacity-60 group-hover/trigger:opacity-100',
-        isOpen && 'rotate-90'
+        effectiveOpen && 'rotate-90'
       )} />
     </button>
   );
@@ -69,7 +102,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       )}
 
       <AnimatePresence initial={false}>
-        {isOpen && (
+        {effectiveOpen && (
           <motion.nav
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}

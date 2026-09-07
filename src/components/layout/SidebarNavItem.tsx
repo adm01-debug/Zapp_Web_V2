@@ -12,11 +12,6 @@ export interface NavItemConfig {
   badge?: number;
 }
 
-const SHORTCUT_MAP: Record<string, string> = {
-  inbox: '⌘1',
-  dashboard: '⌘2',
-};
-
 interface SidebarNavItemProps {
   item: NavItemConfig;
   currentView: string;
@@ -30,7 +25,7 @@ interface SidebarNavItemProps {
 export const SidebarNavItem = React.memo(function SidebarNavItem({ item, currentView, onViewChange, badge, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavItemProps) {
   const Icon = item.icon;
   const isActive = currentView === item.id;
-  const shortcut = item.shortcut || SHORTCUT_MAP[item.id];
+  const shortcut = item.shortcut;
   const badgeCount = badge ?? item.badge;
   const { prefetch } = usePrefetchOnHover();
 
@@ -46,11 +41,18 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       aria-label={badgeCount ? `${item.label} (${badgeCount} não lidas)` : item.label}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'relative rounded-full flex items-center gap-2.5 transition-all duration-200 ease-out group/item',
-        collapsed ? 'w-[38px] h-[38px] justify-center' : 'w-full h-11 px-3 gap-3 rounded-[10px] text-[15px] font-medium',
+        'relative flex items-center gap-2.5 transition-all duration-200 ease-out group/item',
+        collapsed
+          ? 'w-[38px] h-[38px] justify-center rounded-full'
+          : cn(
+              'w-full py-2 px-3 gap-3 rounded-xl text-[15px] font-medium',
+              "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:transition-colors before:duration-200 before:content-['']",
+              isActive ? 'before:bg-primary' : 'before:bg-transparent'
+            ),
         isActive
           ? 'text-sidebar-accent-foreground'
-          : 'text-sidebar-foreground/80 hover:bg-muted/60 hover:text-foreground active:scale-[0.97]'
+          : 'text-sidebar-foreground/80 hover:bg-muted/60 hover:text-foreground active:scale-[0.97]',
+        !collapsed && 'hover:translate-x-1'
       )}
     >
       {isActive && (
@@ -60,7 +62,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
               'absolute inset-0 transition-all duration-300 ease-out',
               collapsed
                 ? 'rounded-full bg-secondary/20 border border-secondary/30 shadow-glow-secondary-sm'
-                : 'rounded-[10px] bg-sidebar-accent border border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/.25),0_6px_18px_-8px_hsl(var(--primary)/.6)]'
+                : 'rounded-xl bg-sidebar-accent border border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/.25),0_6px_18px_-8px_hsl(var(--primary)/.6)]'
             )}
           />
           {/* Active indicator bar — highly visible in collapsed mode */}
@@ -88,12 +90,22 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
           <Star className={cn('w-3 h-3', isFavorite && 'fill-warning')} />
         </button>
       )}
+      {!collapsed && shortcut && !onToggleFavorite && (
+        <kbd
+          className={cn(
+            'relative z-10 shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity',
+            !badgeCount && 'ml-auto'
+          )}
+        >
+          {shortcut}
+        </kbd>
+      )}
       {badgeCount != null && badgeCount > 0 && (
         <span
           className={cn(
             'z-20 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center leading-none shadow-sm animate-scale-in',
             collapsed ? 'absolute -top-0.5 -right-0.5' : 'relative',
-            !collapsed && !onToggleFavorite && 'ml-auto'
+            !collapsed && !onToggleFavorite && !shortcut && 'ml-auto'
           )}
         >
           {badgeCount > 99 ? '99+' : badgeCount}

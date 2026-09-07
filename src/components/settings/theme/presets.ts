@@ -157,56 +157,56 @@ function buildPreset(id: string, label: string, h: number): ThemePreset {
   };
 
   const dark: ThemeModeColors = {
-    background: `216 54% 5%`,
+    background: `240 6% 6%`,
     foreground: `210 40% 98%`,
-    card: `215 50% 10%`,
+    card: `240 5% 10%`,
     'card-foreground': `210 40% 98%`,
-    'card-elevated': `215 52% 13%`,
-    popover: `214 52% 9%`,
+    'card-elevated': `240 5% 13%`,
+    popover: `240 5% 10%`,
     'popover-foreground': `210 40% 98%`,
-    primary: `213 100% 54%`,
+    primary: `221 83% 53%`,
     'primary-foreground': `0 0% 100%`,
-    'primary-glow': `213 100% 68%`,
-    secondary: `213 94% 62%`,
+    'primary-glow': `230 83% 63%`,
+    secondary: `240 5% 16%`,
     'secondary-foreground': `0 0% 100%`,
-    muted: `214 49% 14%`,
-    'muted-foreground': `215 16% 59%`,
-    accent: `214 49% 14%`,
-    'accent-foreground': `213 100% 85%`,
+    muted: `240 4% 18%`,
+    'muted-foreground': `215 20% 75%`,
+    accent: `240 5% 16%`,
+    'accent-foreground': `210 40% 98%`,
     destructive: `354 100% 68%`,
     'destructive-foreground': `0 0% 100%`,
-    border: `213 26% 25%`,
-    input: `214 42% 13%`,
-    ring: `213 100% 54%`,
-    success: `161 70% 47%`,
+    border: `240 4% 18%`,
+    input: `240 5% 14%`,
+    ring: `221 83% 53%`,
+    success: `142 71% 45%`,
     'success-foreground': `0 0% 100%`,
     warning: `40 91% 60%`,
     'warning-foreground': `0 0% 8%`,
     info: `213 94% 62%`,
     'info-foreground': `0 0% 100%`,
-    'sidebar-background': `215 52% 8%`,
+    'sidebar-background': `240 6% 5%`,
     'sidebar-foreground': `210 40% 98%`,
-    'sidebar-primary': `213 100% 54%`,
+    'sidebar-primary': `221 83% 53%`,
     'sidebar-primary-foreground': `0 0% 100%`,
-    'sidebar-accent': `214 49% 16%`,
-    'sidebar-accent-foreground': `213 100% 85%`,
-    'sidebar-border': `213 26% 25%`,
-    'sidebar-ring': `213 100% 54%`,
-    'chat-bubble-sent': `213 100% 54%`,
+    'sidebar-accent': `240 5% 12%`,
+    'sidebar-accent-foreground': `210 40% 98%`,
+    'sidebar-border': `240 4% 14%`,
+    'sidebar-ring': `221 83% 53%`,
+    'chat-bubble-sent': `221 83% 53%`,
     'chat-bubble-sent-foreground': `0 0% 100%`,
-    'chat-bubble-received': `214 49% 14%`,
+    'chat-bubble-received': `240 4% 18%`,
     'chat-bubble-received-foreground': `0 0% 97%`,
-    'chat-header': `215 50% 10%`,
-    'chat-input-bg': `214 52% 9%`,
-    'status-open': `213 100% 54%`,
+    'chat-header': `240 5% 10%`,
+    'chat-input-bg': `240 5% 9%`,
+    'status-open': `221 83% 53%`,
     'status-pending': `40 91% 60%`,
     'status-resolved': `155 80% 50%`,
     'status-waiting': `213 94% 62%`,
-    'gradient-primary': `linear-gradient(135deg, hsl(213 100% 54%), hsl(220 94% 60%))`,
-    'gradient-surface': `linear-gradient(180deg, hsl(215 50% 10%), hsl(216 54% 5%))`,
-    'glass-bg': `215 50% 10% / 1`,
-    elevated: `215 52% 13%`,
-    'elevated-hover': `215 50% 16%`,
+    'gradient-primary': `linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%))`,
+    'gradient-surface': `linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%))`,
+    'glass-bg': `240 6% 8% / 0.85`,
+    elevated: `240 5% 12%`,
+    'elevated-hover': `240 5% 15%`,
   };
 
   return { id, label, hue: h, light, dark };
@@ -217,14 +217,14 @@ function buildPreset(id: string, label: string, h: number): ThemePreset {
 export const PRESETS: ThemePreset[] = [
   (() => {
     const corporate = buildPreset('corporate', 'Corporativo', 221);
-    corporate.dark.primary = '213 100% 54%';
-    corporate.dark['primary-glow'] = '213 100% 68%';
-    corporate.dark.secondary = '213 94% 62%';
-    corporate.dark.ring = '213 100% 54%';
-    corporate.dark['sidebar-primary'] = '213 100% 54%';
-    corporate.dark['sidebar-ring'] = '213 100% 54%';
-    corporate.dark['chat-bubble-sent'] = '213 100% 54%';
-    corporate.dark['status-open'] = '213 100% 54%';
+    corporate.dark.primary = '221 83% 53%';
+    corporate.dark['primary-glow'] = '230 83% 63%';
+    corporate.dark.secondary = '240 5% 16%';
+    corporate.dark.ring = '221 83% 53%';
+    corporate.dark['sidebar-primary'] = '221 83% 53%';
+    corporate.dark['sidebar-ring'] = '221 83% 53%';
+    corporate.dark['chat-bubble-sent'] = '221 83% 53%';
+    corporate.dark['status-open'] = '221 83% 53%';
     return corporate;
   })(),
   buildPreset('ocean', 'Oceano', 200),
@@ -237,7 +237,7 @@ export const PRESETS: ThemePreset[] = [
 ];
 
 export const STORAGE_KEY = 'theme-custom-colors';
-export const STORAGE_VERSION = 4;
+export const STORAGE_VERSION = 5;
 export const DEFAULT_PRESET_ID = 'corporate';
 
 const DEPRECATED_PRESET_IDS = new Set(['default', 'purpure']);
