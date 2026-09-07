@@ -122,20 +122,20 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
   return (
     <div
       data-testid="kpi-card"
-      className="h-[96px] rounded-2xl border border-border/60 card-glow py-3 px-4 flex items-center gap-3"
+      className="h-[108px] rounded-[14px] border border-border/70 card-glow py-3 px-4 flex items-center gap-4"
     >
-      <div data-testid="kpi-tile" className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', bg)}>
-        <Icon className={cn('w-[22px] h-[22px]', fg)} />
+      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl flex items-center justify-center shrink-0', bg)}>
+        <Icon className={cn('w-[26px] h-[26px]', fg)} />
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-medium text-muted-foreground truncate leading-tight">{label}</p>
+        <p className="text-[14px] font-medium text-muted-foreground truncate leading-tight">{label}</p>
         <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
-          <p data-testid="kpi-value" className="text-[26px] font-bold tabular-nums leading-none text-foreground">
+          <p data-testid="kpi-value" className="text-[30px] font-bold tabular-nums leading-none text-foreground">
             <CountUp value={value} />
           </p>
           {!noData && !flat && (
-            <span className={cn('flex items-center gap-0.5 text-[13px] font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
+            <span className={cn('flex items-center gap-0.5 text-[14px] font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
             </span>
@@ -143,7 +143,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
           {flat && <span className="text-[13px] font-semibold text-muted-foreground shrink-0">sem alteração</span>}
         </div>
         {!noData && (
-          <p className="text-[12px] text-muted-foreground/70 mt-0.5 truncate hidden xl:block">vs. período anterior</p>
+          <p className="text-[13px] text-muted-foreground/70 mt-0.5 truncate hidden xl:block">vs. período anterior</p>
         )}
       </div>
 

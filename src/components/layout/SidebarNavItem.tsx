@@ -45,7 +45,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         collapsed
           ? 'w-[38px] h-[38px] justify-center rounded-full'
           : cn(
-              'w-full py-2 px-3 gap-3 rounded-xl text-[15px] font-medium',
+              'w-full py-2 px-3 gap-3 rounded-xl text-[15px] font-medium min-h-[44px] items-center',
               "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:transition-colors before:duration-200 before:content-['']",
               isActive ? 'before:bg-primary' : 'before:bg-transparent'
             ),
