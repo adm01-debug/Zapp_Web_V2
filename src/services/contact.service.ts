@@ -44,6 +44,23 @@ export class ContactService {
     return supabase.from('contacts').update(updates).eq('id', id).select().single();
   }
 
+  /**
+   * Retorna a data da última mensagem para cada contact_id na lista.
+   * Usado para popular "Último contato em" no card — sem nova coluna no schema.
+   * A query busca mensagens dos contatos da página atual (≤ 50 IDs).
+   * O sort DESC garante que o primeiro resultado por contact_id é o mais recente.
+   */
+  static async getLastMessageDates(contactIds: string[]) {
+    if (!contactIds.length) {
+      return { data: [] as { contact_id: string; created_at: string }[], error: null };
+    }
+    return supabase
+      .from('messages')
+      .select('contact_id, created_at')
+      .in('contact_id', contactIds)
+      .order('created_at', { ascending: false });
+  }
+
   static async fetchNotes(contactId: string) {
     const { data, error } = await supabase
       .from('contact_notes')
