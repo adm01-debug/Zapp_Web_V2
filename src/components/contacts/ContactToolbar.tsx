@@ -78,7 +78,7 @@ export function ContactToolbar({
         />
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[150px] h-10 rounded-xl bg-input border-border text-[15px] font-medium gap-2 shrink-0">
+          <SelectTrigger className="w-[150px] h-11 rounded-xl bg-input border-border text-[15px] font-medium gap-2 shrink-0">
             <ArrowUpDown className="w-[18px] h-[18px]" />
             <SelectValue />
           </SelectTrigger>
@@ -106,7 +106,7 @@ export function ContactToolbar({
         </Button>
 
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" onClick={clearFilters} className="h-10 text-[15px] shrink-0" aria-label="Limpar todos os filtros">
+          <Button variant="ghost" onClick={clearFilters} className="h-11 text-[15px] shrink-0" aria-label="Limpar todos os filtros">
             <X className="w-4 h-4 mr-1" />Limpar
           </Button>
         )}
@@ -118,17 +118,17 @@ export function ContactToolbar({
 
         {selectedIds.length >= 1 && (
           <>
-            <Button variant="outline" className="h-10 rounded-xl text-[15px] gap-2 shrink-0" onClick={onBulkTag}>
+            <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0" onClick={onBulkTag}>
               <Tag className="w-[18px] h-[18px]" />
               Tags ({selectedIds.length})
             </Button>
             {selectedIds.length >= 2 && (
               <>
-                <Button variant="outline" className="h-10 rounded-xl text-[15px] gap-2 shrink-0" onClick={onCompare}>
+                <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0" onClick={onCompare}>
                   <GitCompareArrows className="w-[18px] h-[18px]" />
                   Comparar
                 </Button>
-                <Button variant="outline" className="h-10 rounded-xl text-[15px] gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
+                <Button variant="outline" className="h-11 rounded-xl text-[15px] gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
                   <Merge className="w-[18px] h-[18px]" />
                   Mesclar
                 </Button>
