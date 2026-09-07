@@ -67,11 +67,11 @@ export const Sidebar = React.memo(function Sidebar({
       className={cn('flex flex-col h-screen supports-[height:100dvh]:h-[100dvh] border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[var(--sidebar-w-collapsed)]' : 'w-[var(--sidebar-w)]')}>
 
       {/* Logo + Toggle */}
-      <div className={cn('flex items-center h-[56px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
-        <button onClick={() => onViewChange('inbox')} className="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
+      <div className={cn('flex items-center h-[64px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
+        <button onClick={() => onViewChange('inbox')} className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
           <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
         </button>
-        {!collapsed && <span className="text-sm font-bold text-foreground tracking-tight ml-2 mr-auto">ZAPP</span>}
+        {!collapsed && <span className="text-lg font-bold text-foreground tracking-[-0.02em] ml-2 mr-auto">ZAPP</span>}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
@@ -111,7 +111,7 @@ export const Sidebar = React.memo(function Sidebar({
       <div className={cn('flex my-1.5', collapsed ? 'justify-center px-[11px]' : 'px-2')}>
         <Tooltip delayDuration={200}><TooltipTrigger asChild>
           <button onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
-            className={cn('rounded-lg flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-dashed border-border/60 hover:border-border', collapsed ? 'w-[40px] h-[30px] justify-center' : 'w-full h-[32px] px-3')} aria-label="Buscar módulo (Ctrl+K)">
+            className={cn('rounded-xl flex items-center gap-2 text-muted-foreground hover:text-foreground bg-input border border-border hover:border-border/80 transition-all', collapsed ? 'w-[40px] h-[30px] justify-center' : 'w-full h-11 px-3')} aria-label="Buscar módulo (Ctrl+K)">
             <Search className="w-[14px] h-[14px] shrink-0" />
             {!collapsed && <span className="text-xs text-muted-foreground">Buscar...</span>}
             {!collapsed && <kbd className="ml-auto px-1 py-0.5 rounded bg-muted text-[9px] font-mono text-muted-foreground">⌘K</kbd>}
