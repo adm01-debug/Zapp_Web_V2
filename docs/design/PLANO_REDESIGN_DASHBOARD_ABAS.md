@@ -408,3 +408,90 @@ Preview: <url/porta> · PID: <arquivo>
 ## Pendências / resíduos
 -
 ```
+
+---
+
+# APÊNDICE Z — CORREÇÕES PÓS-VALIDAÇÃO (07/09/2026, gerado por auditoria do código real)
+
+**Z.0 Precedência:** onde este apêndice divergir do corpo do plano, **o apêndice vence**. Ele foi escrito
+depois de ler o código real; o corpo foi escrito antes. Não re-investigue o que está confirmado aqui.
+
+**Z.1 Base mudou.** O PR #273 (`7bb4c869`) foi mergeado em `main` e restaurou o bloco `dash: { ... }` em
+`tailwind.config.ts`, perdido no merge do #272 — sem ele, `bg-dash-tile-blue`/`text-dash-green` **não
+compilavam** e os tiles saíam transparentes em produção. Base desta entrega = `origin/main` @ `7bb4c869`.
+`grep -c dash tailwind.config.ts` deve ser ≥ 12 **antes e depois** do seu trabalho. Se cair, você quebrou.
+
+**Z.2 Worktree isolado (obrigatório).** Trabalhe **somente** em `/workspace/repos/Zapp_Web_V2-abas`
+(branch `redesign/dashboard-abas-navy`). **Nunca** entre em `/workspace/repos/Zapp_Web_V2-dashboard` — há
+um processo externo (watchdog) commitando lá — nem em `Zapp_Web_V2` nem em `Zapp_Web_V2-promogifts`.
+Se `git status` mostrar algo que você não fez, pare e registre antes de qualquer comando destrutivo.
+
+**Z.3 Primitivos que JÁ existem em `overview/DashboardCard.tsx` — use, não recrie:**
+`DashboardCard` · `SectionHeader({icon,title,subtitle,tileSize,right})` · `VerTodasButton({onClick})` ·
+`StatusChip({label,tone,pulse})` · `CardSelect({value,onValueChange,options,testid})`.
+Todo select dentro de card = `CardSelect`. Todo badge de status = `StatusChip`. Todo "Ver todas →" =
+`VerTodasButton`. Criar equivalente novo é violação da regra 0.3.4.
+
+**Z.4 `DashboardKpiCard` — o que ele faz hoje e as ÚNICAS extensões autorizadas.**
+Hoje: `{ index, label, value, delta, tile, icon, bars, barsColor }`; `bars` são barras 55×28;
+`barsColor ∈ blue|red|green|violet`; **não existe sparkline de linha, não existe cor âmbar, não existe rodapé**.
+Extensões autorizadas (todas aditivas, default = comportamento atual, **feitas de uma só vez na FASE 1**):
+- `chart?: 'bars' | 'line'` — default `'bars'`; `'line'` desenha path suave 55×28 com `pathLength` 0→1 (respeitar `useReducedMotion`).
+- `barsColor` ganha `'amber'` (`bg-dash-amber`).
+- `footer?: ReactNode` — default `undefined`; renderiza abaixo do valor (barra de progresso, sublegenda, "N de M conversas").
+- `size?: 'compact' | 'tall'` — default `'compact'` (altura atual, 84px); `'tall'` ≈ 108px, só para KPI com `footer`.
+Depois da FASE 1 o arquivo **não é mais editado**. Gate de altura: `compact` 84±6, `tall` 108±6
+(o corpo do plano dizia "altura da Visão Geral ±6" — vale só para `compact`).
+
+**Z.5 Navegação entre abas não existe** — `tab` é `useState` local do `DashboardView`. Adicione:
+em `DashboardView`, `const goToTab = (v: string) => setTab(v);` e passe `onNavigateTab?: (tab: string) => void`
+(prop **opcional**, default `undefined`) para `GoalsDashboard`, `AIQuickAccess`, `AgentPerformancePanel` e o
+componente da aba Sentimento. Se a prop não vier, o link simplesmente não é renderizado.
+Para sair do dashboard continue usando `navigateToView` de `@/hooks/system/useNavigationHistory`
+(`settings`, `inbox`, `audit-logs`) — é o mecanismo real, já usado por `DashboardTopBar`, `RecentActivityCard` e `aiFeatures.ts`.
+
+**Z.6 Shapes confirmados (não re-investigue):**
+- `useLeaderboard()` → `{ agents: LeaderboardAgent[], isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh }`.
+  As colunas do ranking (FASE 4) são **só as que existirem em `LeaderboardAgent`**. Campo inexistente
+  (ex.: mensagens, tempo de resposta) → **a coluna não é renderizada** e entra em "Blocos sem fonte" no ledger.
+  Proibido preencher com `0`, `—` ou valor derivado fingindo dado.
+- `useSLAMetrics(range)` → `{ data: { overall: { overallRate, ... }, byAgent: AgentSLAMetric[] }, loading }`
+  — **`loading`, não `isLoading`**.
+- `useSLAConfigurations()` → `{ saveMutation, toggleMutation, deleteMutation, openEdit, openCreate, ... }` +
+  `PRIORITY_CONFIG` exportado. O `Switch` de "Configurações Globais de SLA" **usa `toggleMutation`** — existe,
+  não renderize desabilitado. `PRIORITY_CONFIG` já traz label+cor por prioridade: use, não redefina.
+- `useAIStats()` → `{ totalAnalyses, avgSentimentScore, trends: { analyses, sentiment }, ... }`, onde
+  `TrendData = { direction: 'up'|'down'|'stable', change, percentage }`. Deltas da FASE 2 vêm de `trends.*.percentage`.
+- `useRealSentimentData(days)` → `SentimentData[] | null`, agregado por dia (`positive`, `negative`, `neutral`,
+  `total`, `alerts`). `null` = sem dado → empty state, nunca zeros.
+- `useGoalsDashboard()` → leia o `return` (≈ linha 210) antes de escrever. Use `getProgressColor`,
+  `getProgressBgColor` e `PERIOD_OPTIONS` que o próprio arquivo já exporta; não recrie a escala de cor de progresso.
+
+**Z.7 Os tokens `--dash-*` estão em `:root`, não em `.dark`** — valem também no tema claro, então os tiles
+continuam escuros no light mode. Isso **já é o comportamento da Visão Geral**; não corrija nesta entrega.
+Só registre no ledger se o gate de light mode (FASE 8.4) mostrar texto ilegível.
+
+**Z.8 Ordem de execução revisada por risco** (o número da fase não muda, a ordem sim):
+`FASE 1 Metas → FASE 3 SLA → FASE 4 Equipe → FASE 2 IA → FASE 6 Sentimento → FASE 7 Relatórios → FASE 5 Satisfação`.
+Metas primeiro porque carrega a extensão do `DashboardKpiCard` (Z.4) que as outras consomem;
+Satisfação por último porque é quase toda empty state e não bloqueia ninguém.
+
+**Z.9 Economia de execução.** Por fase rode `npx vitest run src/components/dashboard` (68 testes, determinístico).
+A suíte inteira (`npx vitest run`, 2909 testes) **só na FASE 8** — ela tem flakiness conhecida de timeout/mock
+(`GroupsView`, `MediaLibraryAdmin`, `useTheme`) que não é regressão sua.
+
+**Z.10 Dívida pré-existente conhecida — não é sua, não tente consertar:**
+`npm run lint` cru ≈ 1201 problemas (edge functions `no-explicit-any`, `tailwind.config.ts` `no-require-imports`);
+`typecheck-ratchet` falha por `ThemeCustomizer.tsx`/`PresetCard.tsx`/`presets.ts`/`contact.service.ts`;
+check de CI "Contrato DB offline" falha por `.rpc('get_last_message_dates')` em `contact.service.ts:60`.
+Os três **já falham em `main`**. Seu gate é *comparação com o baseline da FASE 0*, não zero absoluto.
+Se o lint-ratchet acusar dívida nova só por deslocamento de linha (armadilha do `contextHash`), mova sua
+inserção para depois do trecho legado; só use `--update-baseline` com o diff conferido linha a linha e justificado no ledger.
+
+**Z.11 PR e merge.** Abra o PR ao fim da FASE 8 (`gh` não autentica neste container por falta de scope
+`read:org`; use o token `x-access-token` de `/workspace/.git-credentials` via `curl` na API REST, método já
+validado no PR #273 — nunca imprima o token). **Não mergeie.** Entregue o PR com o resumo do ledger e pare.
+
+**Z.12 Proibido loop de watchdog.** Se algo bloquear (PR aguardando merge, ferramenta indisponível), escreva
+o bloqueio **uma única vez** no ledger e **encerre a sessão**. Não relance, não "reconfirme", não commite
+"retomada geração N" — o histórico deste repo tem 6 gerações de reconfirmação sem nenhum trabalho novo.
