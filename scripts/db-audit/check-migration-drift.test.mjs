@@ -617,6 +617,8 @@ test('comment-only fixa o array integral do ledger e rejeita SQL canonico', () =
   });
   assert.equal(changedStatements.status, 1);
   assert.match(changedStatements.stderr, /ledger_statements_sha256 divergente/);
+  assert.match(changedStatements.stderr, /esperado=[a-f0-9]{64}; ledger=[a-f0-9]{64}/);
+  assert.doesNotMatch(changedStatements.stderr, /comentario novo/);
 
   const executableLedger = [SQL.trim()];
   const hasSql = runGuard({
@@ -664,6 +666,8 @@ test('pinned-replay falha para adulteracao independente de statements, SQL e nom
   });
   assert.equal(changedStatements.status, 1);
   assert.match(changedStatements.stderr, /ledger_statements_sha256 divergente/);
+  assert.match(changedStatements.stderr, /esperado=[a-f0-9]{64}; ledger=[a-f0-9]{64}/);
+  assert.doesNotMatch(changedStatements.stderr, /comentario novo/);
 
   const changedSql = runGuard({
     ledger: [ledgerRecord({ statements: [SQL.trim()] })],
@@ -671,6 +675,8 @@ test('pinned-replay falha para adulteracao independente de statements, SQL e nom
   });
   assert.equal(changedSql.status, 1);
   assert.match(changedSql.stderr, /ledger_(statements|sql)_sha256 divergente/);
+  assert.match(changedSql.stderr, /esperado=[a-f0-9]{64}; ledger=[a-f0-9]{64}/);
+  assert.doesNotMatch(changedSql.stderr, new RegExp(SQL.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
   const changedName = runGuard({
     ledger: [ledgerRecord({ name: 'create_demo_changed', statements })],

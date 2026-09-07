@@ -30,14 +30,22 @@ export function useRealtimeInbox() {
   const conversations = USE_EXTERNAL_DB ? externalData.conversations : localRealtime.conversations;
   const loading = USE_EXTERNAL_DB ? externalData.loading : localRealtime.loading;
   const error = USE_EXTERNAL_DB ? externalData.error : localRealtime.error;
-  const refetch = USE_EXTERNAL_DB ? (() => { externalData.refetch(); }) : localRealtime.refetch;
+  const externalRefetch = externalData.refetch;
+  const localRefetch = localRealtime.refetch;
+  const refetch = useCallback(() => {
+    if (USE_EXTERNAL_DB) return externalRefetch();
+    return localRefetch();
+  }, [externalRefetch, localRefetch]);
 
   // These features only available on local for now
   const { sendMessage, markAsRead } = localRealtime;
    const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
    const uiState = useInboxUIState();
    const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
-   const [selectedContactFallback, setSelectedContactFallback] = useState<ConversationContact | null>(null);
+   const [selectedContactFallback, setSelectedContactFallback] = useState<{
+     contactId: string;
+     contact: ConversationContact;
+   } | null>(null);
    const [isOnline, setIsOnline] = useState(true);
   const { profile } = useAuth();
 
@@ -52,7 +60,6 @@ export function useRealtimeInbox() {
     enabled: !USE_EXTERNAL_DB && Boolean(selectedContactId),
   });
 
-  const selectedMessages = USE_EXTERNAL_DB ? externalMsgs.messages : localMsgs.messages;
   const selectedMessagesLoading = USE_EXTERNAL_DB ? externalMsgs.loading : localMsgs.loading;
   const refetchSelectedMessages = USE_EXTERNAL_DB ? externalMsgs.refetch : localMsgs.refetch;
 
@@ -72,7 +79,7 @@ export function useRealtimeInbox() {
     };
     window.addEventListener('open-contact-chat', handler);
     return () => window.removeEventListener('open-contact-chat', handler);
-  }, []);
+  }, [setPendingContactId]);
 
   // Load fallback contact
   const selectedConversation = useMemo(
@@ -81,8 +88,7 @@ export function useRealtimeInbox() {
   );
 
   useEffect(() => {
-    if (!selectedContactId) { setSelectedContactFallback(null); return; }
-    if (selectedConversation) { setSelectedContactFallback(null); return; }
+    if (!selectedContactId || selectedConversation) return;
     let cancelled = false;
     const loadSelectedContact = async () => {
       const { data, error } = await supabase
@@ -91,18 +97,22 @@ export function useRealtimeInbox() {
         .eq('id', selectedContactId)
         .maybeSingle();
       if (cancelled) return;
-      if (error) { log.error('Error loading selected fallback contact:', error); setSelectedContactFallback(null); return; }
-      setSelectedContactFallback(data || null);
+      if (error) { log.error('Error loading selected fallback contact:', error); return; }
+      if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: data });
     };
     loadSelectedContact();
     return () => { cancelled = true; };
   }, [selectedContactId, selectedConversation]);
 
+  const fallbackContact = selectedContactFallback?.contactId === selectedContactId
+    ? selectedContactFallback.contact
+    : null;
+
   const resolvedSelectedConversation = useMemo<ConversationWithMessages | null>(() => {
     if (selectedConversation) return selectedConversation;
-    if (!selectedContactFallback) return null;
-    return { contact: selectedContactFallback, messages: [], unreadCount: 0, lastMessage: null };
-  }, [selectedConversation, selectedContactFallback]);
+    if (!fallbackContact) return null;
+    return { contact: fallbackContact, messages: [], unreadCount: 0, lastMessage: null };
+  }, [selectedConversation, fallbackContact]);
 
   // Online status
   useEffect(() => {
@@ -118,7 +128,7 @@ export function useRealtimeInbox() {
     setSelectedContactId(contactId);
     setSelectedContact(contactId);
     markAsRead(contactId);
-  }, [setSelectedContact, markAsRead]);
+  }, [setSelectedContactId, setSelectedContact, markAsRead]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
@@ -168,11 +178,23 @@ export function useRealtimeInbox() {
     [resolvedSelectedConversation]
   );
 
-  const messageSource = selectedContactId ? selectedMessages : resolvedSelectedConversation?.messages || [];
-  const legacyMessages: Message[] = useMemo(() => 
-    messageSource.map((m) => mapRealtimeMessageToMessage(m, selectedContactId || resolvedSelectedConversation?.contact.id)),
-    [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id]
-  );
+  const legacyMessages: Message[] = useMemo(() => {
+    if (!selectedContactId) {
+      return (resolvedSelectedConversation?.messages || [])
+        .map((message) => mapRealtimeMessageToMessage(message, resolvedSelectedConversation?.contact.id));
+    }
+
+    // The local hook already returns the legacy UI model. Only Evolution and
+    // conversation snapshots still expose raw database rows that need adapting.
+    if (!USE_EXTERNAL_DB) return localMsgs.messages;
+    return externalMsgs.messages
+      .map((message) => mapRealtimeMessageToMessage(message, selectedContactId));
+  }, [
+    selectedContactId,
+    resolvedSelectedConversation,
+    localMsgs.messages,
+    externalMsgs.messages,
+  ]);
 
    return {
      ...uiState,
