@@ -122,11 +122,11 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
   return (
     <div
       data-testid="kpi-card"
-      className="h-[108px] rounded-[14px] border border-border/70 p-4 flex items-center gap-4"
+      className="h-[84px] rounded-[14px] border border-border/70 p-4 flex items-center gap-4"
       style={{ backgroundImage: 'linear-gradient(135deg, hsl(var(--card-elevated)), hsl(var(--card)))' }}
     >
-      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl flex items-center justify-center shrink-0', bg)}>
-        <Icon className={cn('w-[26px] h-[26px]', fg)} />
+      <div data-testid="kpi-tile" className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', bg)}>
+        <Icon className={cn('w-[22px] h-[22px]', fg)} />
       </div>
 
       <div className="min-w-0 flex-1">
