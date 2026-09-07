@@ -9,7 +9,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP1 Paleta/Tipo   [ ] sha= · shot=pg-01-after.png · ΔE page=_ card=_ sidebar=_ · fonts PJS+Outfit=_ · light ok=_ · skin v5=_
 
-## CP2 Header        [ ] pendente
+## CP2 Header        [x] sha=58d3714f · AppHeader.tsx, HeaderSectionAnchor.tsx, GlobalSearchTrigger.tsx, HeaderUserPill.tsx, RoleBadge.tsx · AppShell reestruturado em coluna flex (Sidebar | [AppHeader sticky + main]) · AgentProfilePopover refatorado: ProfileMenuContent extraído e reusado no HeaderUserPill · tsc 0 erros · eslint limpo · vite build ok
 
 ## CP3 Breadcrumb    [ ] pendente
 
