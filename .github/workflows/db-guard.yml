@@ -9,24 +9,12 @@
 name: DB Guard (offline)
 
 on:
+  # Sem filtro de paths: o nome do check precisa existir em todo PR para poder
+  # ser exigido pela branch protection sem bloquear diffs apenas de docs.
   push:
     branches: [main, develop]
-    paths:
-      - 'src/**'
-      - 'supabase/**'
-      - 'scripts/db-audit/**'
-      - '.github/workflows/db-guard.yml'
-      - '.github/workflows/db-live-guard.yml'
-      - '.github/workflows/types-sync.yml'
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'src/**'
-      - 'supabase/**'
-      - 'scripts/db-audit/**'
-      - '.github/workflows/db-guard.yml'
-      - '.github/workflows/db-live-guard.yml'
-      - '.github/workflows/types-sync.yml'
   workflow_dispatch:
 
 permissions:
