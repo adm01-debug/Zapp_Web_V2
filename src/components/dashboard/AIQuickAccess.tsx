@@ -4,95 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import {
   Brain,
-  Sparkles,
   MessageSquare,
-  TrendingUp,
-  AlertTriangle,
-  FileText,
-  Mic,
   ArrowRight,
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface AIFeature {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  route?: string;
-  action?: string;
-  gradient: string;
-  badge?: string;
-}
-
-const aiFeatures: AIFeature[] = [
-  {
-    id: 'suggestions',
-    title: 'Sugestões de Resposta',
-    description: 'IA gera respostas personalizadas para cada conversa',
-    icon: Sparkles,
-    action: 'inbox',
-    gradient: 'from-primary to-warning',
-    badge: 'Popular',
-  },
-  {
-    id: 'analysis',
-    title: 'Análise de Conversa',
-    description: 'Resumo, sentimento e pontos-chave automáticos',
-    icon: Brain,
-    action: 'inbox',
-    gradient: 'from-secondary to-primary',
-  },
-  {
-    id: 'sentiment',
-    title: 'Alertas de Sentimento',
-    description: 'Monitore conversas com sentimento negativo',
-    icon: AlertTriangle,
-    route: '/sentiment-alerts',
-    gradient: 'from-warning to-warning',
-    badge: 'Novo',
-  },
-  {
-    id: 'summary',
-    title: 'Resumo Automático',
-    description: 'Gere resumos de conversas longas instantaneamente',
-    icon: FileText,
-    action: 'inbox',
-    gradient: 'from-info to-info',
-  },
-  {
-    id: 'transcription',
-    title: 'Transcrição de Áudio',
-    description: 'Converta mensagens de áudio em texto',
-    icon: Mic,
-    action: 'inbox',
-    gradient: 'from-success to-success',
-  },
-  {
-    id: 'trends',
-    title: 'Tendências de Sentimento',
-    description: 'Acompanhe a evolução do sentimento dos clientes',
-    icon: TrendingUp,
-    route: '/sentiment-alerts',
-    gradient: 'from-coins to-warning',
-  },
-];
+import { AI_FEATURES, useAIFeatureNavigation } from './aiFeatures';
 
 export function AIQuickAccess() {
   const navigate = useNavigate();
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
-
-  const handleFeatureClick = (feature: AIFeature) => {
-    if (feature.route) {
-      navigate(feature.route);
-    } else if (feature.action === 'inbox') {
-      navigateToView('inbox');
-    }
-  };
+  const handleFeatureClick = useAIFeatureNavigation();
 
   return (
     <Card className="border-secondary/20 overflow-hidden bg-card hover:border-secondary/40 transition-all duration-300">
@@ -129,7 +53,7 @@ export function AIQuickAccess() {
       
       <CardContent className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {aiFeatures.map((feature, index) => (
+          {AI_FEATURES.map((feature, index) => (
             <motion.div
               key={feature.id}
               initial={{ opacity: 0, y: 20 }}

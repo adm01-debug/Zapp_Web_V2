@@ -35,6 +35,9 @@ import { DailyGoalsCard } from './overview/DailyGoalsCard';
 import { QueueHealthTable } from './overview/QueueHealthTable';
 import { RecentActivityCard } from './overview/RecentActivityCard';
 import { TeamHighlightCard } from './overview/TeamHighlightCard';
+import { AIToolsCard } from './overview/AIToolsCard';
+import { CsatCard } from './overview/CsatCard';
+import { SentimentTrendCard } from './overview/SentimentTrendCard';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -54,6 +57,7 @@ export function DashboardView() {
   const [tab, setTab] = useState(OVERVIEW_TAB);
   const [filters, setFilters] = useState<DashboardFiltersState>(getDefaultFilters());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [csatPeriod, setCsatPeriod] = useState<'today' | 'week' | 'month'>('month');
 
   const { stats, contacts, queues, isLoading, refetch } = useDashboardData({
     dateRange: filters.dateRange,
@@ -147,7 +151,11 @@ export function DashboardView() {
               slaRateByAgent={slaRateByAgent}
             />
           </div>
-          <div data-testid="dash-row4" className="min-h-[173px]" />
+          <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+            <AIToolsCard onSeeAll={() => setTab('ai')} />
+            <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
+            <SentimentTrendCard />
+          </div>
           <div data-testid="dash-gamification" className="min-h-[40px]" />
         </TabsContent>
 
