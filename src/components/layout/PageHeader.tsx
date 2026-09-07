@@ -25,6 +25,8 @@ interface PageHeaderProps {
   onBack?: () => void;
   actions?: React.ReactNode;
   className?: string;
+  variant?: 'card' | 'plain';
+  topRight?: React.ReactNode;
 }
 
 /**
@@ -39,6 +41,8 @@ export function PageHeader({
   onBack,
   actions,
   className,
+  variant = 'card',
+  topRight,
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,52 +55,71 @@ export function PageHeader({
     }
   };
 
+  // Um único item "Início": se o chamador já o passa como primeiro breadcrumb,
+  // ele vira o próprio link Home (ícone + texto visível) em vez de duplicar
+  // com o sr-only do link genérico abaixo.
+  const hasExplicitHome = breadcrumbs[0]?.label === 'Início';
+  const homeCrumb = hasExplicitHome ? breadcrumbs[0] : undefined;
+  const restCrumbs = hasExplicitHome ? breadcrumbs.slice(1) : breadcrumbs;
+
   return (
     <header className={cn(
-      'flex flex-col gap-2 px-6 py-4 border-b border-border/50 bg-card',
+      variant === 'plain'
+        ? 'flex flex-col gap-2 px-0 pt-0 pb-2'
+        : 'flex flex-col gap-2 px-6 py-4 border-b border-border/50 bg-card',
       className
     )}>
       {/* Breadcrumbs row */}
-      {breadcrumbs.length > 0 && (
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink 
-                href="/" 
-                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span className="sr-only">Início</span>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+      {(breadcrumbs.length > 0 || topRight) && (
+        <div className={cn('flex items-center justify-between gap-3', variant === 'plain' && 'h-14')}>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  href="/"
+                  onClick={(e) => {
+                    if (homeCrumb?.onClick) {
+                      e.preventDefault();
+                      homeCrumb.onClick();
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  {hasExplicitHome ? <span>Início</span> : <span className="sr-only">Início</span>}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
 
-            {breadcrumbs.map((crumb, index) => {
-              const isLast = index === breadcrumbs.length - 1;
-              
-              return (
-                <BreadcrumbItem key={crumb.label}>
-                  <BreadcrumbSeparator />
-                  {isLast ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      href={crumb.href}
-                      onClick={(e) => {
-                        if (crumb.onClick) {
-                          e.preventDefault();
-                          crumb.onClick();
-                        }
-                      }}
-                      className="hover:text-foreground transition-colors"
-                    >
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              );
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
+              {restCrumbs.map((crumb, index) => {
+                const isLast = index === restCrumbs.length - 1;
+
+                return (
+                  <BreadcrumbItem key={crumb.label}>
+                    <BreadcrumbSeparator />
+                    {isLast ? (
+                      <BreadcrumbPage className="font-semibold text-foreground">{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        href={crumb.href}
+                        onClick={(e) => {
+                          if (crumb.onClick) {
+                            e.preventDefault();
+                            crumb.onClick();
+                          }
+                        }}
+                        className="hover:text-foreground transition-colors"
+                      >
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                );
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          {topRight && <div className="shrink-0">{topRight}</div>}
+        </div>
       )}
 
       {/* Title row with actions */}
@@ -115,9 +138,15 @@ export function PageHeader({
           )}
 
           <div className="min-w-0">
-            <h1 className="text-xl font-display font-bold text-foreground truncate">{title}</h1>
+            <h1 className={cn(
+              variant === 'plain'
+                ? 'text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate'
+                : 'text-xl font-display font-bold text-foreground truncate'
+            )}>{title}</h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
+              <p className={cn(
+                variant === 'plain' ? 'text-lg text-muted-foreground mt-2 truncate' : 'text-sm text-muted-foreground truncate'
+              )}>{subtitle}</p>
             )}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
@@ -23,6 +24,7 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
+import { ContactsTopActions } from './ContactsTopActions';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
@@ -62,25 +64,40 @@ export function ContactsView() {
   const { lookup } = useExternalContact360Batch(contactPhones);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
+  const reduceMotion = useReducedMotion();
+  const tapAnimation = reduceMotion ? undefined : { scale: 0.98 };
 
   return (
     <div className="space-y-4 relative bg-background w-full min-w-0">
       <ScrollToTopButton scrollRef={layoutScrollRef} />
 
       <PageHeader
+        variant="plain"
         title="Contatos"
-        subtitle={`Base de clientes e leads (${totalCount} contatos)`}
+        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
+        topRight={<ContactsTopActions />}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {isExternalConfigured && (
-              <Button variant="outline" onClick={() => setIsCRMSearchOpen(true)} className="border-primary/30 text-primary hover:bg-primary/10">
-                <Sparkles className="w-4 h-4 mr-2" />CRM 360°
-              </Button>
+              <motion.div whileTap={tapAnimation}>
+                <Button
+                  onClick={() => setIsCRMSearchOpen(true)}
+                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
+                >
+                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+                </Button>
+              </motion.div>
             )}
-            <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Sincronizar
-            </Button>
+            <motion.div whileTap={tapAnimation}>
+              <Button
+                onClick={() => refetch()}
+                disabled={loading}
+                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+              >
+                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
+              </Button>
+            </motion.div>
             <ContactDialogs
               isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
               newContact={newContact} handleNewContactChange={handleNewContactChange}
@@ -92,6 +109,7 @@ export function ContactsView() {
               showSuccess={showSuccess} setShowSuccess={setShowSuccess}
               deleteTarget={deleteTarget} setDeleteTarget={setDeleteTarget}
               handleDeleteContact={handleDeleteContact}
+              tapAnimation={tapAnimation}
             />
           </div>
         }
