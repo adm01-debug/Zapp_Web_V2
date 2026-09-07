@@ -45,20 +45,27 @@ export class ContactService {
   }
 
   /**
-   * Retorna a data da última mensagem para cada contact_id na lista.
-   * Usado para popular "Último contato em" no card — sem nova coluna no schema.
-   * A query busca mensagens dos contatos da página atual (≤ 50 IDs).
-   * O sort DESC garante que o primeiro resultado por contact_id é o mais recente.
+   * Retorna a data da última mensagem para cada contact_id da lista.
+   * Usado pelo useContactsSearch para popular "Último contato em" — sem nova coluna no schema.
+   *
+   * Tipagem explícita necessária pois o early-return (array vazio) e o return do builder
+   * Supabase teriam shapes diferentes em um mesmo `async` — o cast normaliza os dois.
    */
-  static async getLastMessageDates(contactIds: string[]) {
-    if (!contactIds.length) {
-      return { data: [] as { contact_id: string; created_at: string }[], error: null };
-    }
-    return supabase
+  static async getLastMessageDates(
+    contactIds: string[],
+  ): Promise<{ data: { contact_id: string; created_at: string }[] | null; error: unknown }> {
+    if (!contactIds.length) return { data: [], error: null };
+
+    const { data, error } = await supabase
       .from('messages')
       .select('contact_id, created_at')
       .in('contact_id', contactIds)
       .order('created_at', { ascending: false });
+
+    return {
+      data: (data ?? null) as { contact_id: string; created_at: string }[] | null,
+      error,
+    };
   }
 
   static async fetchNotes(contactId: string) {
