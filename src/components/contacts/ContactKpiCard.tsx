@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 type Tile = 'blue' | 'green' | 'purple' | 'yellow';
 
 const TILE_CLASSES: Record<Tile, { bg: string; fg: string }> = {
-  blue: { bg: 'bg-kpi-blue', fg: 'text-kpi-blue-fg' },
-  green: { bg: 'bg-kpi-green', fg: 'text-kpi-green-fg' },
+  blue:   { bg: 'bg-kpi-blue',   fg: 'text-kpi-blue-fg'   },
+  green:  { bg: 'bg-kpi-green',  fg: 'text-kpi-green-fg'  },
   purple: { bg: 'bg-kpi-purple', fg: 'text-kpi-purple-fg' },
   yellow: { bg: 'bg-kpi-yellow', fg: 'text-kpi-yellow-fg' },
 };
@@ -116,7 +116,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
 
 export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, series, chart }: ContactKpiCardProps) {
   const { bg, fg } = TILE_CLASSES[tile];
-  const noDelta = deltaPct === null;
+  const noData = deltaPct === null;
   const flat = deltaPct === 0;
 
   return (
@@ -135,7 +135,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
           <p data-testid="kpi-value" className="text-[26px] sm:text-[34px] font-bold tabular-nums leading-none text-foreground">
             <CountUp value={value} />
           </p>
-          {!noDelta && !flat && (
+          {!noData && !flat && (
             <span className={cn('flex items-center gap-0.5 text-[14px] font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
@@ -143,9 +143,13 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
           )}
           {flat && <span className="text-[14px] font-semibold text-muted-foreground shrink-0">sem alteração</span>}
         </div>
-        <p className="text-[14px] text-muted-foreground/80 mt-0.5 truncate">
-          {noDelta ? 'sem alteração' : 'vs. período anterior'}
-        </p>
+        {/*
+          Subtitle oculta quando noData (deltaPct === null = período anterior < 50 registros).
+          Evita "sem alteração" enganoso quando na verdade não há dados comparáveis.
+        */}
+        {!noData && (
+          <p className="text-[14px] text-muted-foreground/80 mt-0.5 truncate">vs. período anterior</p>
+        )}
       </div>
 
       <Sparkline series={series} chart={chart} className={cn('shrink-0 ml-auto hidden sm:block', fg)} />
