@@ -23,6 +23,7 @@ export function DashboardKpiRow({ stats, realtime, kpi }: DashboardKpiRowProps) 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5">
       <DashboardKpiCard
+        index={0}
         label="Conversas Abertas"
         value={String(stats.openConversations)}
         delta={null}
@@ -32,6 +33,7 @@ export function DashboardKpiRow({ stats, realtime, kpi }: DashboardKpiRowProps) 
         barsColor="blue"
       />
       <DashboardKpiCard
+        index={1}
         label="Não Lidas"
         value={String(realtime.unreadMessages)}
         delta={null}
@@ -41,6 +43,7 @@ export function DashboardKpiRow({ stats, realtime, kpi }: DashboardKpiRowProps) 
         barsColor="red"
       />
       <DashboardKpiCard
+        index={2}
         label="Tempo Médio de Resposta"
         value={kpi?.avgResponseToday != null ? formatShortDuration(kpi.avgResponseToday) : '—'}
         delta={kpi?.deltaResponsePct != null ? { pct: kpi.deltaResponsePct, invert: true } : null}
@@ -50,6 +53,7 @@ export function DashboardKpiRow({ stats, realtime, kpi }: DashboardKpiRowProps) 
         barsColor="green"
       />
       <DashboardKpiCard
+        index={3}
         label="Atendentes Online"
         value={`${stats.onlineAgents}/${stats.totalAgents}`}
         delta={{ text: `● ${onlinePct}% online`, tone: 'success' }}
@@ -59,6 +63,7 @@ export function DashboardKpiRow({ stats, realtime, kpi }: DashboardKpiRowProps) 
         barsColor="violet"
       />
       <DashboardKpiCard
+        index={4}
         label="Resolvidas Hoje"
         value={String(kpi?.resolvedToday ?? 0)}
         delta={kpi?.deltaResolvedPct != null ? { pct: kpi.deltaResolvedPct } : null}

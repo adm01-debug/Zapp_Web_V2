@@ -42,7 +42,7 @@ export function QueueHealthTable({ rows, isConnected, onSeeAll }: QueueHealthTab
         tileSize={44}
         right={(
           <div className="flex items-center gap-2 ml-auto">
-            <StatusChip label="Tempo real" tone={isConnected ? 'success' : 'muted'} pulse={isConnected} />
+            <StatusChip label="Tempo real" tone={isConnected ? 'success' : 'muted'} />
             <VerTodasButton onClick={onSeeAll} />
           </div>
         )}

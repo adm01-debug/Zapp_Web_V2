@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Select,
   SelectContent,
@@ -14,20 +15,26 @@ interface DashboardCardProps {
   children: ReactNode;
   className?: string;
   testid?: string;
+  /** Posição na grade — só usada para o pequeno stagger do fade de entrada (máx 12 itens). */
+  index?: number;
 }
 
-export function DashboardCard({ children, className, testid }: DashboardCardProps) {
+export function DashboardCard({ children, className, testid, index = 0 }: DashboardCardProps) {
+  const reducedMotion = useReducedMotion();
   return (
-    <section
+    <motion.section
       data-testid={testid}
       className={cn(
         'min-w-0 rounded-xl bg-card border border-border/70 p-3.5 flex flex-col transition-all duration-150',
         'hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.35)]',
         className,
       )}
+      initial={reducedMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}
     >
       {children}
-    </section>
+    </motion.section>
   );
 }
 
@@ -85,6 +92,7 @@ interface StatusChipProps {
 }
 
 export function StatusChip({ label, tone, pulse }: StatusChipProps) {
+  const reducedMotion = useReducedMotion();
   return (
     <span
       className={cn(
@@ -93,8 +101,13 @@ export function StatusChip({ label, tone, pulse }: StatusChipProps) {
       )}
     >
       <span className="relative flex w-1.5 h-1.5">
-        {pulse && tone === 'success' && (
-          <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-60 animate-ping" />
+        {pulse && tone === 'success' && !reducedMotion && (
+          <motion.span
+            className="absolute inline-flex h-full w-full rounded-full bg-success"
+            initial={{ scale: 1, opacity: 0.6 }}
+            animate={{ scale: 1.6, opacity: 0 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+          />
         )}
         <span className={cn('relative inline-flex rounded-full w-1.5 h-1.5', tone === 'success' ? 'bg-success' : 'bg-muted-foreground')} />
       </span>

@@ -83,6 +83,8 @@ interface DashboardKpiCardProps {
   bars: number[] | null;
   barsColor: keyof typeof barsColorClass;
   testid?: string;
+  /** Posição na grade — só usada para o pequeno stagger do fade de entrada. */
+  index?: number;
 }
 
 function DeltaLine({ delta }: { delta: KpiDelta }) {
@@ -108,9 +110,16 @@ function DeltaLine({ delta }: { delta: KpiDelta }) {
   );
 }
 
-export function DashboardKpiCard({ label, value, delta, tile, icon: Icon, bars, barsColor, testid }: DashboardKpiCardProps) {
+export function DashboardKpiCard({ label, value, delta, tile, icon: Icon, bars, barsColor, testid, index = 0 }: DashboardKpiCardProps) {
+  const reducedMotion = useReducedMotion();
   return (
-    <div data-testid={testid ?? 'kpi-card'} className="h-[95px] rounded-xl bg-card border border-border/70 p-3 flex gap-3">
+    <motion.div
+      data-testid={testid ?? 'kpi-card'}
+      className="h-[95px] rounded-xl bg-card border border-border/70 p-3 flex gap-3"
+      initial={reducedMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}
+    >
       <div data-testid="kpi-tile" className={cn('w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0', tileColorClass[tile])}>
         <Icon className="w-[18px] h-[18px] text-white/90" />
       </div>
@@ -122,6 +131,6 @@ export function DashboardKpiCard({ label, value, delta, tile, icon: Icon, bars, 
         <DeltaLine delta={delta} />
       </div>
       <KpiBars bars={bars} color={barsColor} />
-    </div>
+    </motion.div>
   );
 }
