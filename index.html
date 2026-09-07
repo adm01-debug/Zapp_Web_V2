@@ -1,78 +1,18 @@
-<!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<!doctype html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5" />
-
-    <!-- Security Headers (Simplified for Preview) -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    
-    <!-- Primary Meta Tags -->
-    <title>ZAPP Web - Plataforma de Multiatendimento</title>
-    <meta name="description" content="Plataforma completa de multiatendimento WhatsApp para equipes comerciais. Inbox unificada, gestão de filas, dashboard com métricas e muito mais.">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://zapp-web-v2.vercel.app/" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    
-    <!-- PWA -->
-    <meta name="theme-color" content="#25d366" />
-
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="ZAPP Web" />
-    
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://zapp-web-v2.vercel.app/" />
-    
-    
-    <meta property="og:image" content="https://zapp-web-v2.vercel.app/apple-touch-icon.png">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    
-    
-    <meta name="twitter:image" content="https://zapp-web-v2.vercel.app/apple-touch-icon.png">
-    
-    <!-- Resource Hints -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ZAPP WEB</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Preconnect to Google Fonts for faster font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://tnnnlkbymytvtqngbbqh.supabase.co" />
-    <link rel="dns-prefetch" href="https://api.elevenlabs.io" />
-    
     <!-- Preload critical fonts for faster LCP -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" as="style" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="/src/index.css" as="style" />
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "ZAPP Web",
-      "description": "Plataforma completa de multiatendimento WhatsApp para equipes comerciais.",
-      "url": "https://zapp-web-v2.vercel.app",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "BRL"
-      }
-    }
-    </script>
-
     <script>
-      (function(){
+      (function() {
         try {
           var t = localStorage.getItem('theme');
           var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -81,7 +21,7 @@
           var skin = localStorage.getItem('theme-custom-colors');
           if (skin) {
             var c = JSON.parse(skin);
-            if (c.v === 3) {
+            if (c.v === 4) {
               var root = document.documentElement;
               if (c.cssVarsCache) {
                 for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
@@ -104,62 +44,47 @@
     <script>
       // Boot diagnostic – captures any error before React mounts and surfaces
       // a visible reason if mount doesn't happen within the timeout.
-      (function(){
-        window.__ZAPP_BOOT_ERRORS__ = [];
-        var mounted = false;
-        window.__ZAPP_MARK_APP_MOUNTED__ = function(){ mounted = true; };
-        function record(label, err){
-          try {
-            window.__ZAPP_BOOT_ERRORS__.push({
-              label: label,
-              message: (err && (err.message || err.reason && err.reason.message)) || String(err),
-              stack: (err && err.stack) || (err && err.reason && err.reason.stack) || null,
-              at: new Date().toISOString()
-            });
-          } catch(e) {}
-        }
-        window.addEventListener('error', function(e){ record('window.error', e.error || e); });
-        window.addEventListener('unhandledrejection', function(e){ record('unhandledrejection', e.reason || e); });
-        setTimeout(function(){
-          if (mounted) return;
-          var root = document.getElementById('root');
-          if (!root) return;
-          var errs = window.__ZAPP_BOOT_ERRORS__ || [];
-          var html = ''
+      (function() {
+        var deadline = Date.now() + 8000;
+        var interval = setInterval(function() {
+          if (document.getElementById('root') && document.getElementById('root').firstChild) {
+            clearInterval(interval);
+            return;
+          }
+          if (Date.now() > deadline) {
+            clearInterval(interval);
+            var errs = (window.__bootErrors || []).map(function(e) { return e; }).join('\n');
+            var root = document.getElementById('root');
+            if (!root) return;
+            root.innerHTML = ''
             + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:Outfit,system-ui,sans-serif;padding:24px;overflow:auto;">'
-            + '<div style="max-width:880px;margin:0 auto;">'
-            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">⚠️ Falha ao inicializar o app</h1>'
-            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React não montou em 8s. Detalhes abaixo:</p>'
+            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">&#9888;&#65039; Falha ao inicializar o app</h1>'
+            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React n\u00e3o montou em 8s. Detalhes abaixo:</p>'
             + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'
-            + (errs.length
-                ? errs.map(function(e){
-                    return '['+e.label+'] '+e.at+'\n'+e.message+(e.stack?('\n\n'+e.stack):'');
-                  }).join('\n\n---\n\n')
-                : 'Nenhum erro JS foi capturado. Possíveis causas:\n• Bundle não carregou (verifique aba Network)\n• Variáveis de ambiente VITE_SUPABASE_* ausentes\n• Loop infinito ou import circular no boot')
+            + (errs || '(sem erros capturados — verifique o console)')
             + '</div>'
             + '<button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Recarregar</button>'
-            + '</div></div>';
-          root.innerHTML = html;
-        }, 8000);
+            + '</div>';
+          }
+        }, 500);
+
+        window.__bootErrors = window.__bootErrors || [];
+        window.onerror = function(msg, src, line, col, err) {
+          window.__bootErrors.push(
+            '[JS] ' + msg + (src ? ' @ ' + src + ':' + line : '')
+          );
+        };
+        window.addEventListener('unhandledrejection', function(ev) {
+          var reason = ev.reason;
+          window.__bootErrors.push(
+            '[Promise] ' + (reason && reason.stack ? reason.stack : String(reason))
+          );
+        });
       })();
     </script>
-    
-  
-  
-  
-  <meta property="og:title" content="ZAPP Web - Plataforma de Multiatendimento">
-  <meta name="twitter:title" content="ZAPP Web - Plataforma de Multiatendimento">
-  <meta property="og:description" content="Plataforma completa de multiatendimento WhatsApp para equipes comerciais. Inbox unificada, gestão de filas, dashboard com métricas e muito mais.">
-  <meta name="twitter:description" content="Plataforma completa de multiatendimento WhatsApp para equipes comerciais. Inbox unificada, gestão de filas, dashboard com métricas e muito mais.">
-</head>
-
-  <body class="bg-background antialiased selection:bg-primary/20">
-    <div id="root">
-      <div style="min-height:100vh;background:#030712;display:flex;align-items:center;justify-content:center;font-family:Outfit,system-ui,sans-serif;">
-        <div style="width:38px;height:38px;border:3px solid rgba(37,99,235,.25);border-top-color:#2563eb;border-radius:50%;animation:zappSpin .8s linear infinite;"></div>
-      </div>
-      <style>@keyframes zappSpin{to{transform:rotate(360deg)}}body{margin:0;padding:0}</style>
-    </div>
+  </head>
+  <body>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
