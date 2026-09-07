@@ -15,7 +15,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP4 Sidebar       [x] sha=e6ec3e2f · SidebarNavItem: barra before:3px + hover:translate-x-1 + rounded-xl (expandido); collapsed inalterado · SidebarNavGroup: mantido padrão AnimatePresence existente (já era colapsável) + persistência localStorage['zapp-sidebar-groups'] por label — NÃO trocado para Radix Collapsible (divergência: ledger dizia "sem colapsável" mas o componente já animava abrir/fechar; trocar o motor por Radix seria puro churn sem ganho) · Sidebar: campo de busca removido (GlobalSearchTrigger no header cobre) + AgentProfilePopover removido do rodapé (HeaderUserPill cobre) · AgentProfilePopover.tsx deletado, conteúdo do menu virou ProfileMenuContent.tsx (reusado por HeaderUserPill) · lint: 6 erros pré-existentes confirmados via git stash (0 novos) · tsc/build ok
 
-## CP5 Atalhos       [ ] pendente
+## CP5 Atalhos       [x] sha=83483895 · NavigationService.getPrimaryNav(): shortcut Alt+C/M/L/O/R/P/N/G nos 8 itens · useNavShortcuts.ts (hook standalone, usa e.code p/ evitar dead-keys do Option no macOS, ignora inputs/textarea/contentEditable) · wired em AppShell via handleViewChange · SidebarNavItem: kbd visível on-hover no modo expandido (SHORTCUT_MAP antigo ⌘1/⌘2 removido, superseded) · divergência: não reusei useGlobalKeyboardShortcuts/useCustomShortcuts (sistema de rotas legado com navigate('/') + toast, não integrado a setCurrentView) — hook novo dedicado é mais direto e sem side effects · tsc/eslint/build ok
 
 ## CP6 Fundo         [ ] pendente
 
