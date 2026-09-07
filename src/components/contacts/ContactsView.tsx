@@ -6,16 +6,13 @@ import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Users, Sparkles, RefreshCw,
+  Sparkles, RefreshCw,
 } from 'lucide-react';
-import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
-import { CONTACT_TYPE_ICONS } from './ContactsTable';
 import { ContactStatsCards } from './ContactStatsCards';
+import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
 import { ContactBulkTagDialog } from './ContactBulkTagDialog';
@@ -139,35 +136,7 @@ export function ContactsView() {
 
       <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="h-9 bg-muted/40 border border-border/30 p-0.5 gap-0.5 flex-wrap">
-          <TabsTrigger
-            value="all"
-            className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
-          >
-            <Users className="w-3.5 h-3.5" />
-            Todos
-            <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
-              {contactCountByType['all'] || 0}
-            </Badge>
-          </TabsTrigger>
-          {CONTACT_TYPES.map((type) => (
-            <TabsTrigger
-              key={type.value}
-              value={type.value}
-              className="h-8 px-3 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-1.5"
-            >
-              {CONTACT_TYPE_ICONS[type.value]}
-              {type.label}
-              {contactCountByType[type.value] > 0 && (
-                <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1 min-w-[18px] justify-center">
-                  {contactCountByType[type.value]}
-                </Badge>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
 
       <ContactToolbar
         searchInput={searchInput} onSearchChange={handleSearchChange}
