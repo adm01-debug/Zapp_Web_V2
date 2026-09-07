@@ -19,7 +19,7 @@ Playwright: ok (qa existente) · QA user: ZAPP_QA_EMAIL em /workspace/.secrets/z
 
 ## CP6 Fundo         [x] sha=736b675e · StarBackground.tsx (60 pontos, posição/tamanho/delay via Math.random() memoizado, animate-pulse + motion-reduce:animate-none, pointer-events-none, aria-hidden) · lazy(() => import(...)) + Suspense fallback=null · montado dentro de <main>, condicional isDark (useTheme) · limpeza: classe .page-glow morta removida do <main> e regra .dark .page-glow morta removida de utilities.css (referenciava --page-glow, já removido na Fase 1 — StarBackground assume o papel de ambientação dark) · tsc/eslint/build ok
 
-## CP7 Primitivos    [ ] pendente
+## CP7 Primitivos    [x] sha=49a0310a · button.tsx: +active:scale-[0.97] na base (variante success já existia) · input.tsx: já era h-10 rounded-xl, sem mudança · badge.tsx: já era rounded-full, sem mudança · tabs.tsx: data-[state=active] bg-background/text-foreground → bg-primary/text-primary-foreground (já era o padrão manualmente overridden em Auth.tsx/ConversationList.tsx/VirtualizedConversationList.tsx — confirma que o novo default é o comportamento pretendido) · fix necessário: OmnichannelInbox.tsx e GmailInboxView.tsx usam tabs estilo "underline" (border-b-2, sem bg próprio) — sem o data-[state=active]:bg-transparent explícito herdariam o novo bg-primary sólido; corrigido nos dois · demais consumers (DashboardTabs, SLARulesManager, ContactTypeTabs, AIToolsPopover) já tinham bg-* próprio, sem conflito · tsc/eslint/build ok
 
 ## CP8 Contatos      [ ] pendente
 
