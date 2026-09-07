@@ -38,6 +38,7 @@ import { TeamHighlightCard } from './overview/TeamHighlightCard';
 import { AIToolsCard } from './overview/AIToolsCard';
 import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
+import { GamificationSection } from './overview/GamificationSection';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -156,10 +157,12 @@ export function DashboardView() {
             <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
             <SentimentTrendCard />
           </div>
-          <div data-testid="dash-gamification" className="min-h-[40px]" />
+          <div data-testid="dash-gamification">
+            <GamificationSection stats={stats} />
+          </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-2.5">
           <DemandPrediction />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ConversationHeatmap />
@@ -167,13 +170,13 @@ export function DashboardView() {
           </div>
         </TabsContent>
 
-        <TabsContent value="goals" className="space-y-6"><GoalsDashboard /></TabsContent>
-        <TabsContent value="ai" className="space-y-6"><AIQuickAccess /><CSATDashboard /></TabsContent>
+        <TabsContent value="goals" className="space-y-2.5"><GoalsDashboard /></TabsContent>
+        <TabsContent value="ai" className="space-y-2.5"><AIQuickAccess /></TabsContent>
         <TabsContent value="sla"><SLAMetricsDashboard /></TabsContent>
-        <TabsContent value="team" className="space-y-6"><AgentPerformancePanel /></TabsContent>
-        <TabsContent value="satisfaction" className="space-y-6"><SatisfactionMetrics /></TabsContent>
-        <TabsContent value="sentiment" className="space-y-6"><SentimentTrendChart /></TabsContent>
-        <TabsContent value="reports" className="space-y-6"><ScheduledReportsManager /></TabsContent>
+        <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel /></TabsContent>
+        <TabsContent value="satisfaction" className="space-y-2.5"><SatisfactionMetrics /><CSATDashboard /></TabsContent>
+        <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart /></TabsContent>
+        <TabsContent value="reports" className="space-y-2.5"><ScheduledReportsManager /></TabsContent>
         </Tabs>
       </div>
     </div>
