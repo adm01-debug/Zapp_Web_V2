@@ -8,9 +8,6 @@
  *  - recipients como texto livre separado por vírgula (não chips)
  */
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -19,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { DashboardCard, SectionHeader } from './overview/DashboardCard';
+import { useScheduledReportConfigs } from '@/hooks/dashboard/useScheduledReportConfigs';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Diário', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal',
@@ -51,7 +49,7 @@ const FREQ_TILES = [
 ];
 
 export function ScheduledReportsManager() {
-  const qc = useQueryClient();
+  const { configs, isLoading, createConfig, toggleActive, deleteConfig } = useScheduledReportConfigs();
   const [showCreate, setShowCreate] = useState(false);
   const [formName, setFormName] = useState('');
   const [formType, setFormType] = useState('performance');
@@ -61,51 +59,20 @@ export function ScheduledReportsManager() {
   const [freqFilter, setFreqFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
 
-  const { data: configs = [], isLoading } = useQuery({
-    queryKey: ['scheduled-reports'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('scheduled_report_configs').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
   const openCreate = (presetType?: string) => {
     if (presetType) setFormType(presetType);
     setShowCreate(true);
   };
 
-  const createConfig = useMutation({
-    mutationFn: async () => {
-      const recipients = formRecipients.split(',').map(r => r.trim()).filter(Boolean);
-      const { error } = await supabase.from('scheduled_report_configs').insert({ name: formName, report_type: formType, frequency: formFrequency, recipients, is_active: true });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['scheduled-reports'] });
-      setShowCreate(false);
-      setFormName(''); setFormType('performance'); setFormFrequency('weekly'); setFormRecipients('');
-      toast.success('Relatório criado com sucesso');
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const toggleActive = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase.from('scheduled_report_configs').update({ is_active: !isActive }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
-  });
-
-  const deleteConfig = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('scheduled_report_configs').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scheduled-reports'] }); toast.success('Relatório removido'); },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const handleCreate = () => {
+    const recipients = formRecipients.split(',').map(r => r.trim()).filter(Boolean);
+    createConfig.mutate({ name: formName, report_type: formType, frequency: formFrequency, recipients }, {
+      onSuccess: () => {
+        setShowCreate(false);
+        setFormName(''); setFormType('performance'); setFormFrequency('weekly'); setFormRecipients('');
+      },
+    });
+  };
 
   const filtered = configs.filter(c => {
     const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase());
@@ -244,7 +211,7 @@ export function ScheduledReportsManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={() => createConfig.mutate()} disabled={!formName || !formRecipients || createConfig.isPending} className="bg-primary">
+            <Button onClick={handleCreate} disabled={!formName || !formRecipients || createConfig.isPending} className="bg-primary">
               {createConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}Criar relatório
             </Button>
           </DialogFooter>
