@@ -1,6 +1,7 @@
  import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
+import { AppHeader } from '@/components/layout/AppHeader';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
 import { cn } from '@/lib/utils';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -112,36 +113,49 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
         />
       )}
 
-      <main
-        id="main-content"
-        role="main"
-        aria-label="Conteúdo principal"
-        tabIndex={-1}
-        className={cn(
-          'flex flex-1 items-stretch overflow-hidden relative min-w-0 min-h-0 h-full max-h-full focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px] page-glow',
-          isMobile && 'pt-12 pb-[56px]'
-        )}
-      >
-         {!isMobile && isInboxView && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
-        {showChecklist && currentView === 'dashboard' && (
-          <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
-            <OnboardingChecklist onNavigate={handleViewChange} />
-          </div>
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {!isMobile && !isZen && (
+          <AppHeader
+            className="sticky top-0 z-40 shrink-0"
+            currentView={currentView}
+            profile={profile}
+            userEmail={userEmail}
+            signOut={signOut}
+            onViewChange={handleViewChange}
+          />
         )}
 
-        <Suspense fallback={<ViewLoadingFallback />}>
-              <ViewRouter
-                currentView={currentView}
-                userId={userId}
-                canGoBack={canGoBack}
-                canGoForward={canGoForward}
-                onGoBack={goBack}
-                onGoForward={goForward}
-                breadcrumbTrail={breadcrumbTrail}
-                onNavigateTo={handleViewChange}
-              />
-        </Suspense>
-      </main>
+        <main
+          id="main-content"
+          role="main"
+          aria-label="Conteúdo principal"
+          tabIndex={-1}
+          className={cn(
+            'flex flex-1 items-stretch overflow-hidden relative min-w-0 min-h-0 focus:outline-2 focus:outline-primary/40 focus:outline-offset-[-2px] page-glow',
+            isMobile && 'pt-12 pb-[56px]'
+          )}
+        >
+           {!isMobile && isInboxView && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
+          {showChecklist && currentView === 'dashboard' && (
+            <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
+              <OnboardingChecklist onNavigate={handleViewChange} />
+            </div>
+          )}
+
+          <Suspense fallback={<ViewLoadingFallback />}>
+                <ViewRouter
+                  currentView={currentView}
+                  userId={userId}
+                  canGoBack={canGoBack}
+                  canGoForward={canGoForward}
+                  onGoBack={goBack}
+                  onGoForward={goForward}
+                  breadcrumbTrail={breadcrumbTrail}
+                  onNavigateTo={handleViewChange}
+                />
+          </Suspense>
+        </main>
+      </div>
 
        {!isMobile && <VoiceCopilotFAB onClick={() => setVoiceOpen(true)} />}
 

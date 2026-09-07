@@ -142,4 +142,13 @@ export class NavigationService {
       return true;
     });
   }
+
+  static getViewLabel(viewId: string): string {
+    const all = [
+      ...this.getPrimaryNav(),
+      ...this.getGroups().flatMap(g => g.items),
+      ...this.getAdvancedNav(),
+    ];
+    return all.find(item => item.id === viewId)?.label ?? viewId;
+  }
 }
