@@ -49,7 +49,7 @@ export function useThemePreset() {
     setActivePreset(presetId);
     if (notify) {
       save(presetId, borderRadius);
-      toast.success(`Tema "${preset.name}" aplicado!`);
+      toast.success(`Tema "${preset.label}" aplicado!`);
     }
 
     setTimeout(() => root.classList.remove('theme-transitioning'), 350);

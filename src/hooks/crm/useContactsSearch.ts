@@ -1,17 +1,6 @@
- import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
- import { useQuery } from '@tanstack/react-query';
- import { ContactService, Contact } from '@/services/contact.service';
-
-interface SearchFilters {
-  searchTerm: string;
-  contactType: string | null;
-  company: string | null;
-  jobTitle: string | null;
-  tag: string | null;
-  dateFrom: string | null;
-  sortField: string;
-  sortDirection: string;
-}
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ContactService, Contact } from '@/services/contact.service';
 
 const PAGE_SIZE = 50;
 
@@ -37,13 +26,12 @@ export function useContactsSearch() {
   const [page, setPage] = useState(0);
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // Debounce search input
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedSearch(value);
-      setPage(0); // Reset page on new search
+      setPage(0);
     }, 400);
   }, []);
 
@@ -51,7 +39,6 @@ export function useContactsSearch() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
-  // Reset page when filters change
   const handleTabChange = useCallback((v: string) => { setActiveTab(v); setPage(0); }, []);
   const handleCompanyChange = useCallback((v: string) => { setFilterCompany(v); setPage(0); }, []);
   const handleJobTitleChange = useCallback((v: string) => { setFilterJobTitle(v); setPage(0); }, []);
@@ -59,7 +46,6 @@ export function useContactsSearch() {
   const handleDateRangeChange = useCallback((v: string) => { setFilterDateRange(v); setPage(0); }, []);
   const handleSortChange = useCallback((v: string) => { setSortBy(v); setPage(0); }, []);
 
-  // Compute date_from from filterDateRange
   const dateFrom = useMemo(() => {
     const now = new Date();
     switch (filterDateRange) {
@@ -87,40 +73,39 @@ export function useContactsSearch() {
     page,
   ];
 
-   const { data, isLoading, error, refetch } = useQuery({
-     queryKey,
-     queryFn: async () => {
-       const { data, error } = await ContactService.searchContacts({
-         search_term: debouncedSearch,
-         contact_type_filter: activeTab === 'all' ? null : activeTab,
-         company_filter: filterCompany,
-         job_title_filter: filterJobTitle,
-         tag_filter: filterTag,
-         date_from: dateFrom,
-         sort_field: sortField,
-         sort_direction: sortDirection,
-         page_size: PAGE_SIZE,
-         page_offset: page * PAGE_SIZE,
-       });
-       if (error) throw error;
-       return data as (Contact & { total_count: number })[];
-     },
-   });
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const { data, error } = await ContactService.searchContacts({
+        search_term: debouncedSearch,
+        contact_type_filter: activeTab === 'all' ? null : activeTab,
+        company_filter: filterCompany,
+        job_title_filter: filterJobTitle,
+        tag_filter: filterTag,
+        date_from: dateFrom,
+        sort_field: sortField,
+        sort_direction: sortDirection,
+        page_size: PAGE_SIZE,
+        page_offset: page * PAGE_SIZE,
+      });
+      if (error) throw error;
+      return data as (Contact & { total_count: number })[];
+    },
+  });
 
   const contacts = useMemo(() => data ?? [], [data]);
   const totalCount = contacts.length > 0 ? Number(contacts[0].total_count) : 0;
   const hasMore = (page + 1) * PAGE_SIZE < totalCount;
 
-  // Fetch counts by type (lightweight separate query)
-   const { data: typeCounts } = useQuery({
-     queryKey: ['contacts-type-counts'],
-     queryFn: async () => {
-       const { data, error } = await ContactService.getCountsByType();
-       if (error) throw error;
-       return (data as { contact_type: string; count: number }[]) ?? [];
-     },
-     staleTime: 30000,
-   });
+  const { data: typeCounts } = useQuery({
+    queryKey: ['contacts-type-counts'],
+    queryFn: async () => {
+      const { data, error } = await ContactService.getCountsByType();
+      if (error) throw error;
+      return (data as { contact_type: string; count: number }[]) ?? [];
+    },
+    staleTime: 30000,
+  });
 
   const contactCountByType = useMemo(() => {
     const map: Record<string, number> = {};
@@ -133,7 +118,7 @@ export function useContactsSearch() {
     return map;
   }, [typeCounts]);
 
-  // ─── Último contato: max(messages.created_at) por contato via RPC GROUP BY ───
+  // ─── Último contato: RPC get_last_message_dates (GROUP BY contact_id) ───
   const contactIds = useMemo(() => contacts.map(c => c.id), [contacts]);
 
   const { data: lastMsgMap, isSuccess: lastMsgSuccess } = useQuery({
@@ -141,7 +126,6 @@ export function useContactsSearch() {
     queryFn: async () => {
       const { data, error } = await ContactService.getLastMessageDates(contactIds);
       if (error) throw error;
-      // RPC retorna exatamente 1 row por contact_id — sem truncação
       const map: Record<string, string> = {};
       (data ?? []).forEach((row) => {
         map[row.contact_id] = row.last_message_at;
@@ -152,18 +136,15 @@ export function useContactsSearch() {
     staleTime: 30_000,
   });
 
-  // Mescla last_message_at nos contatos sem tocar no tipo original
   const contactsEnriched = useMemo(() =>
     contacts.map(c => ({
       ...c,
-      // Se a query falhou (isSuccess=false), não sobrescreve com null — ContactCard usa created_at
       ...(lastMsgSuccess && { last_message_at: lastMsgMap?.[c.id] ?? null }),
     })),
     [contacts, lastMsgMap, lastMsgSuccess]
   );
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
 
-  // Unique values for filter dropdowns (from current results – lightweight)
   const uniqueCompanies = useMemo(() => [...new Set(contacts.map(c => c.company).filter(Boolean))] as string[], [contacts]);
   const uniqueJobTitles = useMemo(() => [...new Set(contacts.map(c => c.job_title).filter(Boolean))] as string[], [contacts]);
   const uniqueTags = useMemo(() => [...new Set(contacts.flatMap(c => c.tags || []))] as string[], [contacts]);
@@ -186,7 +167,6 @@ export function useContactsSearch() {
   }, []);
 
   return {
-    // Data — contactsEnriched inclui last_message_at (null quando sem mensagens)
     contacts: contactsEnriched,
     totalCount,
     loading: isLoading,
@@ -196,14 +176,10 @@ export function useContactsSearch() {
     uniqueCompanies,
     uniqueJobTitles,
     uniqueTags,
-
-    // Search
     searchInput,
     debouncedSearch,
     handleSearchChange,
     clearSearch,
-
-    // Filters
     activeTab,
     setActiveTab: handleTabChange,
     filterCompany,
@@ -218,15 +194,11 @@ export function useContactsSearch() {
     setSortBy: handleSortChange,
     activeFiltersCount,
     clearFilters,
-
-    // Pagination
     page,
     setPage,
     pageSize: PAGE_SIZE,
     loadMore: () => setPage(p => p + 1),
     loadPrevious: () => setPage(p => Math.max(0, p - 1)),
-
-    // Actions
     refetch,
   };
 }
