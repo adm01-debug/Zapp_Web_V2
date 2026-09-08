@@ -10,10 +10,27 @@ cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null
-for _ in $(seq 1 60); do
-  docker exec "$container_name" pg_isready -U postgres >/dev/null 2>&1 && break
+postgres_ready=false
+for _ in $(seq 1 90); do
+  # The official image briefly exposes a temporary bootstrap server before
+  # restarting PostgreSQL. A single pg_isready can therefore race with that
+  # shutdown. Require the final (second) readiness marker and a live query.
+  ready_markers="$(docker logs "$container_name" 2>&1 \
+    | grep -c 'database system is ready to accept connections' || true)"
+  if [ "$ready_markers" -ge 2 ] \
+    && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' \
+      >/dev/null 2>&1; then
+    postgres_ready=true
+    break
+  fi
   sleep 1
 done
+
+if [ "$postgres_ready" != true ]; then
+  echo "PostgreSQL test container did not reach final readiness." >&2
+  docker logs --tail 100 "$container_name" >&2 || true
+  exit 1
+fi
 
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
