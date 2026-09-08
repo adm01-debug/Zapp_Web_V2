@@ -3,9 +3,45 @@
 > **Executor:** Claude Code (container `claude-code`, VPS AtomicaBR) · **Worktree:** `/workspace/repos/Zapp_Web_V2-inbox` · **Branch:** `feat/inbox-360` (base `origin/main` @ `249501ae`, já contém o commit `a03541b0` com `ConversationTabs`/`ConversationTabContent`/`useConversationTabCounts`)
 > **Deploy:** Vercel `zapp_web_v2` (`prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp`, team `juca1`) — preview automático por branch. Push **sempre** com `git push --no-verify origin feat/inbox-360` (o hook pre-push trava a sessão).
 > **Tela alvo:** `https://zapp-web-v2.vercel.app/?view=inbox` com uma conversa aberta.
-> **Referências visuais (6 JPEG 1672×941, LEIA TODAS com a ferramenta Read antes de codar):** `/workspace/qa/ref/inbox/01-crm360.jpg` · `02-arquivos.jpg` · `03-ia.jpg` · `04-notas.jpg` · `05-tarefas.jpg` · `06-historico.jpg`
+> **Referências visuais (7 JPEG 1672×941, LEIA TODAS com a ferramenta Read antes de codar):** `/workspace/qa/ref/inbox/01-crm360.jpg` · `02-arquivos.jpg` · `03-ia.jpg` · `04-notas.jpg` · `05-tarefas.jpg` · `06-historico.jpg` · `07-chat.jpg` (aba Chat: banner IA + aba Pedidos)
 > **Ledger obrigatório:** `docs/design/INBOX_360_STATUS.md` (template no Apêndice F)
 > **Instrução literal de Joaquim:** *"MANTENHA AS CORES CARVÃO RECÉM CRIADA E IMPLEMENTE O RESTANTE."*
+
+---
+
+## ⚠️ REESCOPO 08/09/2026 — PREVALECE SOBRE TUDO ABAIXO
+
+Instrução literal de Joaquim (08/09/2026, com 7 prints): **"FAÇA UMA ANÁLISE EXAUSTIVA NAS IMAGENS EM ANEXO E IMPLEMENTE ESSAS MELHORIAS NO SISTEMA — MANTENHA O DESIGN SYSTEM ATUAL CARVÃO — IMPLEMENTE APENAS OS SUB MÓDULOS."**
+
+**Sub-módulos = a barra de abas da conversa e o conteúdo de cada aba.** Nada mais.
+
+### R.1 O que ENTRA (escopo desta execução)
+- Fase 3 reduzida: etapas **22, 23, 24** + as novas **23a** e **23b** abaixo. A etapa 21 (chat header) **sai**.
+- Fases **4, 5, 6** integrais, **exceto a etapa 35** (Insights da IA no painel direito — sai; o card "Risco / sentimento" da aba IA já cobre os fatos derivados).
+- Fase 8 e Fase 9 com os ajustes da R.4.
+- **23a. Banner "Assistente IA" no topo da aba Chat** (`07-chat.jpg`): renderizado por `ConversationTabContent` **acima** de `children` (o chat), só quando `activeTab === 'chat'`: `rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3` · tile `Sparkles` 32 `bg-primary text-white` · "Assistente IA" 14/600 + "Sugestões de resposta, identificação de intenção e próximos passos." 13 muted · direita: botão **"Ver sugestões"** `h-9 bg-primary text-primary-foreground` → `onTabChange('ia')` · `X` fecha e grava `localStorage['inbox-ai-banner-dismissed']='1'` (por navegador, não por contato). Sem chamada a edge function — é só atalho. `data-testid="chat-ai-banner"`. DoD: aparece na aba Chat, some ao fechar, "Ver sugestões" abre a aba IA.
+- **23b. Aba "Pedidos"** (`07-chat.jpg` mostra `Pedidos 3` entre CRM 360° e Tarefas): `ConversationTabs` ganha `{ id: 'orders', label: 'Pedidos', icon: ShoppingBag }` na posição 4 (Chat · IA · CRM 360° · **Pedidos** · Tarefas · Notas · Arquivos · Histórico); tipo `ConversationTab` inclui `'orders'`. Conteúdo = novo `tabs/OrdersTab.tsx`: cabeçalho ("Pedidos" 18/700 + "Compras e propostas deste contato." 13 muted) + o **`ContactPurchasesPanel` existente** (reaproveitado, sem duplicar) + lista "Propostas em aberto" do `useContactCrm360` (mesmo bloco da aba CRM, extraído para um subcomponente compartilhado `tabs/OpenDealsList.tsx` para não duplicar). Badge da aba = `contact_purchases` count do `useContactCrm360` (client-side; **a RPC `get_conversation_tab_counts` não muda**) — para isso `ConversationTabs` aceita `extraCounts?: { orders?: number }` opcional (default nada). Empty state honesto "Nenhum pedido registrado". `data-testid="conversation-tab-orders"`. DoD: aba renderiza, badge some quando 0, sem query duplicada.
+- Da `07-chat.jpg`, **NÃO replicar**: barra de ações com rótulos acima do composer (Resposta Rápida/Assistente IA/Anexar/Agendar/Transferir/Mais) — as mesmas ações já existem como ícones em `InputExtraTools`/`ChatInputToolbars` e `ChatInputArea` é congelado; card de produto dentro da bolha (não existe tipo de mensagem "produto" em `messages` — só o fluxo de envio `onSendProduct`); placeholder do input (já é igual); painel direito da imagem 1 (Dados principais / Resumo comercial / Última atividade / Intenções detectadas) — painel está fora do escopo. Registrar os 3 primeiros em "Pendências / resíduos" do ledger.
+
+### R.2 O que SAI (não tocar nesta execução)
+- **Fase 2 inteira** (coluna de conversas): `ConversationListSidebar.tsx`, `ConversationList.tsx`, `VirtualizedConversationList.tsx`, `VirtualizedRealtimeList.tsx`, `InboxFilters.tsx`, `TicketTabs.tsx`, `ContactTypeFilter.tsx`, `src/hooks/inbox/useInboxFilters.ts` — **zero diff**. (Um começo de Fase 2 foi descartado com `git checkout --` em 08/09; o worktree está limpo.)
+- **Etapa 21** (chat header): `chat/ChatHeader.tsx`, `ChatPanelHeader.tsx`, `ChatHeaderToolbar.tsx`, `CrmBadges.tsx` — zero diff.
+- **Fase 7 inteira** (painel direito): `ContactDetails.tsx`, `contact-details/*`, `contactDetailSections.ts`, `ContactDetailsResponsive` — zero diff. Etapa 35 sai junto.
+- `RealtimeInboxView.tsx`: **sem mudar larguras**; só se for imprescindível passar `onUseSuggestion`/`onTabChange` até `ConversationTabContent` (diff de poucas linhas). Estado de aba continua ancorado no `contactId`.
+- As referências continuam valendo **só para o miolo** (barra de abas + conteúdo). Ignore lista, header e painel ao ler as imagens.
+
+### R.3 Estado de partida (não refaça)
+- CP0 e CP1 **fechados** no ledger: commits `a250b8b8` (fase 0) e `2d54c038` (fase 1 — hooks `useContactMedia`, `useContactNotes`, `useConversationTasks`, `useContactCrm360`, `useConversationHistoryTimeline`, `useNextBestAction`, 21 testes). Não recrie hooks; consuma-os.
+- Baselines do CP0 valem: typecheck = 6 erros herdados em `settings/theme`; `typecheck-ratchet.mjs` tem bug pré-existente (exit 2 do tsc) — registre e siga, não "conserte" o script.
+- **Comece na Fase 3 (etapa 22).** Ordem: 3 → 4 → 5 (sem 35) → 6 → 8 → 9.
+
+### R.4 Ajustes de QA e entrega
+- E.1: screenshots só das **8 abas do centro** (`chat`, `ia`, `crm`, `orders`, `tasks`, `notes`, `files`, `history`) → `out/inbox-11-<aba>.png`; o argumento `<panelTab>` fica sem uso.
+- E.2: asserts válidos = `tabBar 48±2 · tabActive 36±2 · kpiStrip 84±6 · scrollW ≤ innerW` + reduced-motion. Os de lista/header/painel (`listCol`, `chip`, `search`, `listItem`, `listAvatar`, `chatHeader`, `headerBtn`, `rightCol`, `rightAvatar`, `actionTile`) **não se aplicam** — registre "fora de escopo".
+- E.3: manter as 6 amostras (fundo, coluna esquerda, card do centro, painel direito, chip ativo, botão primário) — coluna e painel devem sair **iguais ao `00-before`** (prova de zero diff).
+- E.4: checks válidos = 1, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22 + novos **23** (banner IA: "Ver sugestões" abre aba IA; X esconde) e **24** (aba Pedidos renderiza e badge some com 0). Os checks 2, 4, 5, 19, 20, 21 viram "não regrediu": lista carrega e painel abre/fecha como antes. Total: **18 checks**.
+- Fase 9: PR `feat(inbox): sub-módulos da conversa — Chat/IA/CRM 360°/Pedidos/Tarefas/Notas/Arquivos/Histórico (paleta carvão mantida)`. Corpo lista explicitamente o que ficou de fora (Fase 2, etapa 21, Fase 7, etapa 35, resíduos da R.1).
+- Ledger: CP2 e CP7 já estão marcados `FORA DE ESCOPO`. Não os reabra.
 
 ---
 
