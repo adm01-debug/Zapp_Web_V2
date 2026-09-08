@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useContactMedia } from '@/hooks/chat/useContactMedia';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MediaItem, getMediaType, getFilename, notifyDownloadBlocked } from './media-gallery/mediaUtils';
+import { MediaItem, notifyDownloadBlocked } from './media-gallery/mediaUtils';
 import { MediaCard } from './media-gallery/MediaCard';
 import { MediaPreviewDialog } from './media-gallery/MediaPreviewDialog';
 
@@ -52,35 +51,9 @@ export function MediaGalleryContent({ contactId }: MediaGalleryContentProps) {
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const { data: messages, isLoading } = useQuery({
-    queryKey: ['media-gallery', contactId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id, media_url, message_type, media_filename, caption, content, created_at')
-        .eq('contact_id', contactId)
-        .not('media_url', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!contactId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: media, isLoading } = useContactMedia(contactId);
 
-  const mediaItems = useMemo((): MediaItem[] => {
-    if (!messages) return [];
-    return messages.filter(m => m.media_url).map(m => ({
-      id: m.id,
-      url: m.media_url!,
-      type: getMediaType(m.media_url!, m.message_type),
-      filename: m.media_filename || getFilename(m.media_url!),
-      created_at: m.created_at,
-      // useFileUploadLogic grava a legenda em 'content', nao em 'caption'
-      caption: m.caption ?? m.content ?? null,
-    }));
-  }, [messages]);
+  const mediaItems = useMemo((): MediaItem[] => media?.items ?? [], [media]);
 
   const filteredItems = useMemo(() => mediaItems.filter(item => {
     const matchesFilter = filter === 'all' || item.type === filter;

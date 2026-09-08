@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { useConversationTasks, type ConversationTask } from '@/hooks/chat/useConversationTasks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,22 +12,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Calendar, Trash2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  priority: string;
-  status: string;
-  due_date: string | null;
-  assigned_to: string | null;
-  completed_at: string | null;
-  created_at: string;
-}
+type Task = ConversationTask;
 
 interface ConversationTasksPanelProps {
   contactId: string;
@@ -41,69 +30,23 @@ const priorityConfig: Record<string, { label: string; color: string; icon: typeo
 };
 
 export function ConversationTasksPanel({ contactId, profileId }: ConversationTasksPanelProps) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { open: pendingTasks, completed: completedTasks, isLoading: loading, createTask, toggleTask: toggleTaskMutation, deleteTask: deleteTaskMutation, isCreating: adding } = useConversationTasks(contactId);
   const [newTitle, setNewTitle] = useState('');
   const [newPriority, setNewPriority] = useState('medium');
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
-
-  useEffect(() => {
-    loadTasks();
-  }, [contactId]);
-
-  const loadTasks = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('conversation_tasks')
-      .select('*')
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: false });
-    if (data) setTasks(data);
-    setLoading(false);
-  };
 
   const addTask = async () => {
     if (!newTitle.trim()) return;
-    setAdding(true);
-    const { error } = await supabase
-      .from('conversation_tasks')
-      .insert({
-        contact_id: contactId,
-        title: newTitle.trim(),
-        priority: newPriority,
-        created_by: profileId,
-        assigned_to: profileId,
-      });
-    if (!error) {
-      setNewTitle('');
-      toast.success('Tarefa criada');
-      loadTasks();
-    } else {
-      toast.error('Erro ao criar tarefa');
-    }
-    setAdding(false);
+    await createTask({ title: newTitle.trim(), priority: newPriority, createdBy: profileId, assignedTo: profileId });
+    setNewTitle('');
   };
 
   const toggleTask = async (task: Task) => {
-    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    await supabase
-      .from('conversation_tasks')
-      .update({
-        status: newStatus,
-        completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
-      })
-      .eq('id', task.id);
-    loadTasks();
+    await toggleTaskMutation(task);
   };
 
   const deleteTask = async (taskId: string) => {
-    await supabase.from('conversation_tasks').delete().eq('id', taskId);
-    toast.success('Tarefa removida');
-    loadTasks();
+    await deleteTaskMutation(taskId);
   };
-
-  const pendingTasks = tasks.filter(t => t.status !== 'completed');
-  const completedTasks = tasks.filter(t => t.status === 'completed');
 
   return (
     <div className="space-y-3">
