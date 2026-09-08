@@ -32,7 +32,7 @@ Instrução literal de Joaquim (08/09/2026, com 7 prints): **"FAÇA UMA ANÁLISE
 
 ### R.3 Estado de partida (não refaça)
 - CP0 e CP1 **fechados** no ledger: commits `a250b8b8` (fase 0) e `2d54c038` (fase 1 — hooks `useContactMedia`, `useContactNotes`, `useConversationTasks`, `useContactCrm360`, `useConversationHistoryTimeline`, `useNextBestAction`, 21 testes). Não recrie hooks; consuma-os.
-- Baselines do CP0 valem: typecheck = 6 erros herdados em `settings/theme`; `typecheck-ratchet.mjs` tem bug pré-existente (exit 2 do tsc) — registre e siga, não "conserte" o script.
+- **Baseline atualizada em 08/09 (merge `84916f94` de `origin/main`, que inclui o PR #281 "zera os 5 erros TS pré-existentes"):** `npm run typecheck` deve dar **0 erros** e `node scripts/ci/typecheck-ratchet.mjs` deve passar. Rode os dois como primeira ação da Fase 3 e registre no ledger; se não der 0, registre a divergência (não é sua para consertar) e use o número como baseline. A regra 6 abaixo ("baseline = 6") está obsoleta.
 - **Comece na Fase 3 (etapa 22).** Ordem: 3 → 4 → 5 (sem 35) → 6 → 8 → 9.
 
 ### R.4 Ajustes de QA e entrega
