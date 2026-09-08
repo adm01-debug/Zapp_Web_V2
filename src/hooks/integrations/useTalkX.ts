@@ -27,6 +27,18 @@ export interface TalkXCampaign {
   media_url: string | null;
   media_type: string | null;
   scheduled_at: string | null;
+  // migration 20260908120000 — wizard / agendamento / supressão
+  description?: string | null;
+  objective?: string;
+  audience_source?: 'contacts' | 'segment' | 'crm360';
+  audience_filters?: Record<string, unknown>;
+  segment_id?: string | null;
+  template_id?: string | null;
+  send_window_start?: string | null;
+  send_window_end?: string | null;
+  business_hours_only?: boolean;
+  speed_profile?: 'slow' | 'moderate' | 'fast';
+  paused_at?: string | null;
 }
 
 export interface TalkXRecipient {
