@@ -8,16 +8,16 @@ import { TabBanner } from '../tabs/TabBanner';
 
 const AIConversationAssistant = lazy(() =>
   import('../AIConversationAssistant').then((m) => ({ default: m.AIConversationAssistant })));
-const ContactPurchasesPanel = lazy(() =>
-  import('../ContactPurchasesPanel').then((m) => ({ default: m.ContactPurchasesPanel })));
+const Crm360Tab = lazy(() =>
+  import('../tabs/Crm360Tab').then((m) => ({ default: m.Crm360Tab })));
 const OrdersTab = lazy(() =>
   import('../tabs/OrdersTab').then((m) => ({ default: m.OrdersTab })));
 const ConversationTasksPanel = lazy(() =>
   import('../ConversationTasksPanel').then((m) => ({ default: m.ConversationTasksPanel })));
 const PrivateNotes = lazy(() =>
   import('../PrivateNotes').then((m) => ({ default: m.PrivateNotes })));
-const MediaGalleryContent = lazy(() =>
-  import('../MediaGallery').then((m) => ({ default: m.MediaGalleryContent })));
+const FilesTab = lazy(() =>
+  import('../tabs/FilesTab').then((m) => ({ default: m.FilesTab })));
 const ConversationHistory = lazy(() =>
   import('../ConversationHistory').then((m) => ({ default: m.ConversationHistory })));
 
@@ -103,7 +103,7 @@ export function ConversationTabContent({
 
       {activeTab === 'crm' && (
         <Panel name="CRM 360°">
-          <ContactPurchasesPanel contactId={contactId} />
+          <Crm360Tab conversation={conversation} messages={messages} onTabChange={onTabChange} />
         </Panel>
       )}
 
@@ -127,7 +127,7 @@ export function ConversationTabContent({
 
       {activeTab === 'files' && (
         <Panel name="Arquivos">
-          <MediaGalleryContent contactId={contactId} />
+          <FilesTab contactId={contactId} contactName={conversation.contact.name} />
         </Panel>
       )}
 

@@ -12,11 +12,22 @@ function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const
 }
 
 describe('ConversationTabs', () => {
-  it('renderiza as 7 abas do painel central', () => {
+  it('renderiza as 8 abas do painel central', () => {
     setup();
-    ['chat', 'ia', 'crm', 'tasks', 'notes', 'files', 'history'].forEach((id) => {
+    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history'].forEach((id) => {
       expect(screen.getByTestId(`conversation-tab-${id}`)).toBeInTheDocument();
     });
+  });
+
+  it('exibe o badge de Pedidos via extraCounts (client-side, fora da RPC)', () => {
+    const onTabChange = vi.fn();
+    render(<ConversationTabs activeTab="chat" onTabChange={onTabChange} counts={ZERO} extraCounts={{ orders: 3 }} />);
+    expect(screen.getByTestId('conversation-tab-count-orders')).toHaveTextContent('3');
+  });
+
+  it('omite o badge de Pedidos quando extraCounts.orders é 0 ou ausente', () => {
+    setup();
+    expect(screen.queryByTestId('conversation-tab-count-orders')).not.toBeInTheDocument();
   });
 
   it('marca apenas a aba ativa com aria-selected', () => {

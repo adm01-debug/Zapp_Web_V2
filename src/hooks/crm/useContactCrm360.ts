@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Crm360Purchase {
@@ -220,5 +220,42 @@ export function useContactCrm360(contactId: string | null | undefined) {
     },
     enabled: !!contactId,
     staleTime: 60_000,
+  });
+}
+
+/** lead_score/risk_score crus de `contacts` — não fazem parte da agregação pura (sem I/O) acima. */
+export function useContactLeadScore(contactId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['contact-lead-score', contactId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('lead_score, risk_score')
+        .eq('id', contactId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contactId,
+    staleTime: 60_000,
+  });
+}
+
+/** Avança um deal aberto para a próxima etapa do funil — mesma mutação usada pelo Pipeline (moveDeal). */
+export function useAdvanceDealStage(contactId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dealId, nextStageId, nextStageName }: { dealId: string; nextStageId: string; nextStageName: string }) => {
+      const { error } = await supabase.from('sales_deals').update({ stage_id: nextStageId }).eq('id', dealId);
+      if (error) throw error;
+      await supabase.from('deal_activities').insert({
+        deal_id: dealId,
+        activity_type: 'stage_change',
+        description: `Movido para ${nextStageName}`,
+      });
+    },
+    onSuccess: () => {
+      if (contactId) queryClient.invalidateQueries({ queryKey: contactCrm360Key(contactId) });
+    },
   });
 }
