@@ -49,7 +49,7 @@ export function ThemeInitializer() {
             if (parsed.v === STORAGE_VERSION) {
               storedConfig = parsed;
               presetId = normalizeStoredPresetId(parsed.preset);
-              if (parsed.borderRadius != null) radius = parsed.borderRadius;
+              if (parsed.borderRadius != null) radius = Math.max(parsed.borderRadius, 14); // min 14 = 0.875rem (design token)
             } else {
               localStorage.removeItem(STORAGE_KEY);
             }
