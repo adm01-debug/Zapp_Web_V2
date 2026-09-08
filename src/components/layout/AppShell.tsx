@@ -18,7 +18,6 @@ import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
 import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
 import { useTheme } from '@/hooks/ui/useTheme';
-const StarBackground = lazy(() => import('@/components/layout/StarBackground'));
  import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
@@ -147,11 +146,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
             isMobile && 'pt-12 pb-[56px]'
           )}
         >
-           {isDark && (
-             <Suspense fallback={null}>
-               <StarBackground />
-             </Suspense>
-           )}
            {!isMobile && isInboxView && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} />}
           {showChecklist && currentView === 'dashboard' && (
             <div className="absolute top-4 right-4 z-20 w-96 max-w-[calc(100%-2rem)]">
