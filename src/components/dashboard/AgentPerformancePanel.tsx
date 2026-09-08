@@ -51,15 +51,17 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
   const { data: slaData } = useSLAMetrics('week');
   const [sortKey, setSortKey] = useState<SortKey>('resolved');
 
-  // SLA real por agente (useSLAMetrics.byAgent) cruzado por id/profile_id, fallback por nome. Sem match → '—'.
+  // SLA real por agente — cruzamento confirmado no schema:
+  //   useSLAMetrics.byAgent[].agentId  = contacts.assigned_to  = profiles.id
+  //   useLeaderboard.agents[].profile_id = agent_stats.profile_id = profiles.id
+  //   Portanto: agentId === profile_id (match direto, sem fallback por nome).
   const slaByAgent = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of slaData?.byAgent ?? []) {
-      map.set(row.agentId, row.overallRate);
-      map.set(row.agentName.trim().toLowerCase(), row.overallRate);
+      map.set(row.agentId, row.overallRate); // agentId == profiles.id
     }
     return (a: LeaderboardAgent): number | null =>
-      map.get(a.id) ?? map.get(a.profile_id) ?? map.get(a.name.trim().toLowerCase()) ?? null;
+      map.get(a.profile_id) ?? null; // profile_id == profiles.id
   }, [slaData]);
 
   const sorted = useMemo(() => {

@@ -67,9 +67,14 @@ export interface ThemeModeColors {
 export interface ThemePreset {
   id: string;
   label: string;
+  /** alias de label para PresetCard/ThemeCustomizer */
+  name: string;
   hue: number;
   light: ThemeModeColors;
   dark: ThemeModeColors;
+  emoji: string;
+  description: string;
+  swatches: string[];
 }
 
 const ALL_COLOR_KEYS: (keyof ThemeModeColors)[] = [
@@ -209,7 +214,9 @@ function buildPreset(id: string, label: string, h: number): ThemePreset {
     'elevated-hover': `240 5% 15%`,
   };
 
-  return { id, label, hue: h, light, dark };
+  const emoji=h<50?'🌅':h<100?'🌿':h<180?'🌊':h<230?'💙':h<290?'💜':h<350?'🌸':'🌅';
+  const swatches=[dark.background,dark.primary,dark['primary-glow'],dark.card].map(c=>`hsl(${c})`);
+  return { id, label, name: label, hue: h, light, dark, emoji, description: `Tema ${label}`, swatches };
 }
 
 // ─── Built-in presets ─────────────────────────────────────────────────────────
@@ -277,5 +284,5 @@ export function buildCustomPreset(
   customColors: Partial<ThemeModeColors>,
   mode: 'light' | 'dark'
 ): ThemeModeColors {
-  return { ...basePreset[mode], ...customColors };
+  return { ...basePreset[mode], ...customColors } as ThemeModeColors;
 }
