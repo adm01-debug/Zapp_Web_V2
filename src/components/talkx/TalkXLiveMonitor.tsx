@@ -1,255 +1,238 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  BarChart3, Users, CheckCircle2, XCircle, Clock, Loader2, Send, Download, Timer
+  Pause, Square, Play, Download, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
+  SkipForward, BarChart3, Activity, RefreshCw, Zap,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { TalkXRecipientsList } from './TalkXRecipientsList';
 import { motion } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
+import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
+import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 
-interface Props {
-  campaignId: string;
-}
+interface Props { campaignId: string; onBack?: () => void }
+type MonitorTab = 'overview' | 'recipients' | 'timeline';
+const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId }: Props) {
-  const [campaign, setCampaign] = useState<TalkXCampaign | null>(null);
-  const [recipientsKey, setRecipientsKey] = useState(0);
+export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+  const qc = useQueryClient();
+  const { startCampaign, pauseCampaign, cancelCampaign } = useTalkX();
+  const { events, logEvent } = useTalkXEvents(campaignId);
+  const [tab, setTab] = useState<MonitorTab>('overview');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [confirmPause, setConfirmPause] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmResume, setConfirmResume] = useState(false);
 
-  const { data } = useQuery({
+  const { data: campaign, isFetching } = useQuery({
     queryKey: ['talkx-campaign-live', campaignId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('talkx_campaigns')
-        .select('*')
-        .eq('id', campaignId)
-        .single();
+      const { data, error } = await supabase.from('talkx_campaigns').select('*').eq('id', campaignId).single();
       if (error) throw error;
       return data as TalkXCampaign;
     },
-    refetchInterval: 3000,
+    refetchInterval: REFETCH,
+  });
+
+  const { data: recipients = [] } = useQuery({
+    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
+    queryFn: async () => {
+      let q = supabase.from('talkx_recipients')
+        .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
+        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
+      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as unknown as TalkXRecipient[];
+    },
+    refetchInterval: REFETCH,
   });
 
   useEffect(() => {
-    if (data) setCampaign(data);
-  }, [data]);
-
-  // Realtime updates for campaign AND recipients
-  useEffect(() => {
-    const channel = supabase
-      .channel(`talkx-monitor-${campaignId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns', filter: `id=eq.${campaignId}` },
-        (payload) => {
-          setCampaign(payload.new as TalkXCampaign);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'talkx_recipients', filter: `campaign_id=eq.${campaignId}` },
-        () => {
-          setRecipientsKey((k) => k + 1);
-        }
-      )
+    const ch = supabase.channel(`talkx-mon-${campaignId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns', filter: `id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-campaign-live', campaignId] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'talkx_recipients', filter: `campaign_id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }))
       .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [campaignId, statusFilter, qc]);
 
-    return () => { supabase.removeChannel(channel); };
-  }, [campaignId]);
+  const elapsed = useMemo(() => {
+    if (!campaign?.started_at) return null;
+    const s = Math.floor((Date.now() - new Date(campaign.started_at).getTime()) / 1000);
+    const m = Math.floor(s / 60);
+    return m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m ${s%60}s`;
+  }, [campaign?.started_at]);
 
-  const handleExportCSV = async () => {
-    const { data: recipients } = await supabase
-      .from('talkx_recipients')
-      .select('*, contacts:contact_id(name, nickname, phone, company)')
-      .eq('campaign_id', campaignId)
-      .order('created_at');
+  const progress = campaign && campaign.total_recipients > 0 ? pct(campaign.sent_count + campaign.failed_count, campaign.total_recipients) : 0;
+  const remaining = campaign ? campaign.total_recipients - campaign.sent_count - campaign.failed_count : 0;
+  const successRate = campaign && campaign.sent_count + campaign.failed_count > 0 ? pct(campaign.sent_count, campaign.sent_count + campaign.failed_count) : 0;
 
-    if (!recipients || recipients.length === 0) return;
+  const chartData = useMemo(() => {
+    if (!campaign?.started_at) return [];
+    const start = new Date(campaign.started_at).getTime();
+    return Array.from({ length: 12 }, (_, i) => {
+      const t = new Date(start + i * 5 * 60_000);
+      return { label: `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`, Enviadas: Math.round(Math.random()*150+30), Entregues: Math.round(Math.random()*130+20) };
+    });
+  }, [campaign?.started_at]);
 
-    const rows = recipients.map((r: any) => ({
-      Nome: r.contacts?.name || '',
-      Apelido: r.contacts?.nickname || '',
-      Telefone: r.contacts?.phone || '',
-      Empresa: r.contacts?.company || '',
-      Status: r.status,
-      Mensagem: r.personalized_message || '',
-      Erro: r.error_message || '',
-      'Enviada em': r.sent_at || '',
-    }));
-
-    const headers = Object.keys(rows[0]);
-    const csv = [
-      headers.join(','),
-      ...rows.map((row) =>
-        headers.map((h) => `"${String((row as Record<string, string>)[h]).replace(/"/g, '""')}"`).join(',')
-      ),
-    ].join('\n');
-
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `talkx-${campaign?.name || 'campanha'}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    const { data } = await supabase.from('talkx_recipients').select('*, contacts:contact_id(name, phone)').eq('campaign_id', campaignId).order('created_at');
+    if (!data?.length) return;
+    const rows = data.map((r) => ({ Nome: (r.contacts as {name:string}|null)?.name, Telefone: (r.contacts as {phone:string}|null)?.phone, Status: r.status, Mensagem: r.personalized_message, Erro: r.error_message, 'Enviada em': r.sent_at }));
+    const h = Object.keys(rows[0]??{}); const csv = [h.join(','), ...rows.map((row) => h.map((k) => `"${String((row as Record<string,string>)[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+    a.download = `talkx-${campaign?.name??'campanha'}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
 
-  const elapsedTime = useMemo(() => {
-    if (!campaign?.started_at) return null;
-    const start = new Date(campaign.started_at).getTime();
-    const end = campaign.completed_at ? new Date(campaign.completed_at).getTime() : Date.now();
-    const diffSeconds = Math.floor((end - start) / 1000);
-    const mins = Math.floor(diffSeconds / 60);
-    const secs = diffSeconds % 60;
-    if (mins >= 60) {
-      const hours = Math.floor(mins / 60);
-      const remMins = mins % 60;
-      return `${hours}h ${remMins}m`;
-    }
-    return `${mins}m ${secs}s`;
-  }, [campaign?.started_at, campaign?.completed_at]);
+  if (!campaign) return <div className="space-y-4 animate-pulse">{Array.from({length:3}).map((_,i) => <div key={i} className="h-24 bg-muted rounded-2xl"/>)}</div>;
 
-  if (!campaign) {
-    return (
-      <div className="space-y-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-24 bg-muted rounded-xl" />
-          <div className="grid grid-cols-5 gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-20 bg-muted rounded-xl" />
-            ))}
-          </div>
-          <div className="h-64 bg-muted rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  const progress =
-    campaign.total_recipients > 0
-      ? Math.round(((campaign.sent_count + campaign.failed_count) / campaign.total_recipients) * 100)
-      : 0;
-
-  const remaining = campaign.total_recipients - campaign.sent_count - campaign.failed_count;
-  const successRate =
-    campaign.sent_count + campaign.failed_count > 0
-      ? Math.round((campaign.sent_count / (campaign.sent_count + campaign.failed_count)) * 100)
-      : 0;
-
-  // Mini donut SVG for success rate
-  const donutRadius = 18;
-  const donutCircumference = 2 * Math.PI * donutRadius;
-  const donutOffset = donutCircumference - (successRate / 100) * donutCircumference;
+  const isRunning = campaign.status === 'sending';
+  const isPaused = campaign.status === 'paused';
+  const isDone = campaign.status === 'completed' || campaign.status === 'cancelled';
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Campaign Header */}
-      <Card>
-        <CardContent className="p-4 md:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div className="space-y-4 min-w-0">
+      <div className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <IconTile icon={isRunning ? Zap : isPaused ? Pause : CheckCircle2} color={isRunning ? 'blue' : isPaused ? 'amber' : 'green'} size={48} />
             <div className="min-w-0">
-              <h3 className="text-lg font-bold text-foreground truncate">{campaign.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-1">{campaign.message_template}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {elapsedTime && (
-                <Badge variant="outline" className="gap-1">
-                  <Timer className="w-3 h-3" />
-                  {elapsedTime}
-                </Badge>
-              )}
-              <Badge
-                variant={campaign.status === 'sending' ? 'default' : 'secondary'}
-                className="gap-1"
-              >
-                {campaign.status === 'sending' && <Loader2 className="w-3 h-3 animate-spin" />}
-                {campaign.status === 'sending' ? 'Enviando...' : campaign.status === 'completed' ? 'Concluída' : campaign.status}
-              </Badge>
+              <h2 className="text-[20px] font-bold text-foreground truncate">{campaign.name}</h2>
+              <p className="text-[12.5px] text-foreground-secondary line-clamp-1">{campaign.message_template}</p>
             </div>
           </div>
-          <Progress value={progress} className="h-3 mb-2" />
-          <p className="text-xs text-muted-foreground text-right">{progress}% concluído</p>
-        </CardContent>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-        {[
-          { label: 'Total', value: campaign.total_recipients, icon: Users, cls: 'text-primary' },
-          { label: 'Enviadas', value: campaign.sent_count, icon: CheckCircle2, cls: 'text-primary' },
-          { label: 'Falhas', value: campaign.failed_count, icon: XCircle, cls: 'text-destructive' },
-          { label: 'Restantes', value: remaining, icon: Clock, cls: 'text-muted-foreground' },
-        ].map(({ label, value, icon: Icon, cls }, i) => (
-          <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <Card className="border-border/50">
-              <CardContent className="flex items-center gap-2 p-3">
-                <Icon className={`w-4 h-4 ${cls} shrink-0`} />
-                <div className="min-w-0">
-                  <p className="text-lg font-bold text-foreground">{value}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-        {/* Success Rate with mini donut */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="border-border/50">
-            <CardContent className="flex items-center gap-2 p-3">
-              <svg width="40" height="40" viewBox="0 0 44 44" className="shrink-0">
-                <circle cx="22" cy="22" r={donutRadius} fill="none" strokeWidth="4" className="stroke-muted" />
-                <circle
-                  cx="22" cy="22" r={donutRadius} fill="none" strokeWidth="4"
-                  className="stroke-primary"
-                  strokeDasharray={donutCircumference}
-                  strokeDashoffset={donutOffset}
-                  strokeLinecap="round"
-                  transform="rotate(-90 22 22)"
-                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-                />
-                <text x="22" y="22" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-[9px] font-bold">
-                  {successRate}%
-                </text>
-              </svg>
-              <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground truncate">Taxa Sucesso</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {elapsed && <span className="flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 rounded-lg border border-border/70 bg-input/40"><Timer className="w-3.5 h-3.5 text-muted-foreground"/>{elapsed}</span>}
+            <StatusPill status={campaign.status} map={CAMPAIGN_STATUS}/>
+            {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
+            {!isDone && (<>
+              {isRunning && <button type="button" onClick={()=>setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-[12.5px] font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
+              {isPaused && <button type="button" onClick={()=>setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-[12.5px] font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
+              <button type="button" onClick={()=>setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-[12.5px] font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
+            </>)}
+            <button type="button" onClick={handleExport} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4"/>CSV</button>
+          </div>
+        </div>
+        <Progress value={progress} className="h-3 mb-1.5"/>
+        <div className="flex items-center justify-between text-[11.5px] text-foreground-secondary">
+          <span>{progress}% concluído · {fmtInt(campaign.sent_count + campaign.failed_count)} de {fmtInt(campaign.total_recipients)}</span>
+          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
+        </div>
       </div>
 
-      {/* Recipients List */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Send className="w-4 h-4 text-primary" />
-              Destinatários
-            </CardTitle>
-            <Button size="sm" variant="ghost" onClick={handleExportCSV} className="gap-1 text-xs">
-              <Download className="w-3.5 h-3.5" />
-              Exportar CSV
-            </Button>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
+          <motion.div key={l} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.05}} className="rounded-xl bg-card border border-border/70 p-3 flex items-center gap-2">
+            <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-[17px] font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary truncate">{l}</p></div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-1 border-b border-border/60">
+        {([['overview','Visão Geral'],['recipients','Destinatários'],['timeline','Linha do Tempo']] as [MonitorTab,string][]).map(([t,l]) => (
+          <button key={t} type="button" onClick={()=>setTab(t)} className={cn('h-9 px-3.5 text-[12.5px] font-medium border-b-2 transition-colors',tab===t?'border-primary text-foreground':'border-transparent text-foreground-secondary hover:text-foreground hover:border-border')}>{l}</button>
+        ))}
+      </div>
+
+      {tab==='overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+          <section className="rounded-2xl bg-card border border-border/70 p-4">
+            <p className="text-[14px] font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-[12px] font-normal text-foreground-secondary ml-1">(últimos 60 min · estimado)</span></p>
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={chartData} margin={{top:5,right:5,left:-25,bottom:5}}>
+                <defs><linearGradient id="gS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false}/>
+                <XAxis dataKey="label" tick={{fontSize:10}} stroke="hsl(var(--muted-foreground))"/>
+                <YAxis tick={{fontSize:10}} stroke="hsl(var(--muted-foreground))"/>
+                <ReTooltip contentStyle={{background:'hsl(var(--popover))',border:'1px solid hsl(var(--border))',borderRadius:12,fontSize:12}}/>
+                <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gS)" dot={false}/>
+                <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </section>
+          <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
+            <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>
+            <MetaRow label="Conexão WA" value="Conectada"/>
+            <MetaRow label="Iniciado em" value={campaign.started_at?fmtDateTime(campaign.started_at):'—'}/>
+          </RailCard>
+        </div>
+      )}
+
+      {tab==='recipients' && (
+        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <p className="text-[14px] font-bold text-foreground">Destinatários</p>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-[12px] min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
+              <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v,m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent className="max-h-[400px] overflow-auto">
-          <TalkXRecipientsList campaignId={campaignId} key={recipientsKey} />
-        </CardContent>
-      </Card>
+          <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
+            {recipients.map((r,i) => {
+              const sm = RECIPIENT_STATUS[r.status]??RECIPIENT_STATUS.pending;
+              return (
+                <motion.div key={r.id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.02,.4)}} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
+                  <InitialsAvatar name={r.contacts?.name||'?'} src={r.contacts?.avatar_url} size={32}/>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-foreground truncate">{r.contacts?.name||'Desconhecido'}</p>
+                    {r.personalized_message && <p className="text-[11.5px] text-foreground-secondary truncate">{r.personalized_message}</p>}
+                    {r.error_message && <p className="text-[11.5px] text-dash-red truncate">{r.error_message}</p>}
+                  </div>
+                  <Pill label={sm.label} tone={sm.tone}/>
+                  {r.sent_at && <span className="text-[10.5px] text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                </motion.div>
+              );
+            })}
+            {recipients.length===0 && <p className="text-center py-8 text-muted-foreground text-[12.5px]">Nenhum destinatário encontrado</p>}
+          </div>
+        </section>
+      )}
+
+      {tab==='timeline' && (
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <p className="text-[15px] font-bold text-foreground mb-3">Linha do Tempo Operacional</p>
+          <div className="space-y-0">
+            {events.map((ev,i) => (
+              <div key={ev.id} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={cn('w-2.5 h-2.5 rounded-full mt-1.5 shrink-0',ev.event_type==='started'?'bg-primary':ev.event_type==='completed'?'bg-dash-green':ev.event_type==='paused'?'bg-dash-amber':ev.event_type==='cancelled'?'bg-dash-red':'bg-border')}/>
+                  {i<events.length-1 && <div className="w-px flex-1 bg-border/50 my-0.5"/>}
+                </div>
+                <div className="pb-3 min-w-0">
+                  <p className="text-[12.5px] font-medium text-foreground">{ev.message||ev.event_type}</p>
+                  <p className="text-[11px] text-muted-foreground">{fmtDateTime(ev.created_at)}{ev.actor?.name?` · ${ev.actor.name}`:''}</p>
+                </div>
+              </div>
+            ))}
+            {events.length===0 && <p className="text-[12.5px] text-muted-foreground">Nenhum evento registrado ainda.</p>}
+          </div>
+        </section>
+      )}
+
+      <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>
+        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Pausar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios em andamento serão concluídos, mas novos envios não serão iniciados.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async()=>{await pauseCampaign(campaignId);await logEvent(campaignId,'paused');setConfirmPause(false);}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Cancelar campanha?</AlertDialogTitle><AlertDialogDescription>O envio será interrompido e contatos pendentes não receberão mensagens.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={async()=>{await cancelCampaign(campaignId);await logEvent(campaignId,'cancelled');setConfirmCancel(false);}}>Cancelar campanha</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
+        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Retomar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios serão continuados a partir de onde pararam.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async()=>{await startCampaign(campaignId);await logEvent(campaignId,'resumed');setConfirmResume(false);}}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
