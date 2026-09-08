@@ -28,7 +28,7 @@ interface ViewRouterProps {
 const OWN_SCROLL_VIEWS = new Set(['settings']);
 
 // Dashboard usa grade densa (Navy Operational) — gutter compacto em vez do padrão de 36px.
-const COMPACT_GUTTER_VIEWS = new Set(['dashboard']);
+const COMPACT_GUTTER_VIEWS = new Set(['dashboard', 'talkx']);
 
 const FULL_SCREEN_VIEWS = new Set(
   [
