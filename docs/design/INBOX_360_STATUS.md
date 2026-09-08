@@ -1,6 +1,6 @@
 # Inbox 360° — STATUS
 Branch: feat/inbox-360 · Base: 249501ae · Worktree: /workspace/repos/Zapp_Web_V2-inbox · Preview: (pendente)
-## CP0 Ambiente   [ ] sha= · before=out/inbox-00-before.png · gates baseline: typecheck=6 herdados (settings/theme) lint-ratchet=_ tc-ratchet=_ implicit=_ vitest=_
+## CP0 Ambiente   [x] sha=38080bf4 (a03541b0 sobre 249501ae, confirmado) · before=/workspace/qa/out/inbox-00-before.png (via inbox-shot.mjs, corrigido para fechar WelcomeModal "Pular tour" + clicar #show-all + role=button do item de conversa) · gates baseline: typecheck=6 herdados (settings/theme, confirmado via `tsc -b --force` direto) lint-ratchet=OK (baseline 1216, atual 1197, novas 0) tc-ratchet=SCRIPT COM BUG PRÉ-EXISTENTE (assume tsc -b exit 1 em erro; nesta versão do TS sai com exit 2 — falha "ERRO no typecheck ratchet" mesmo em checkout limpo sem nenhuma mudança do inbox; typecheck direto confirma 0 erros novos) implicit=OK (0, baseline 0) vitest=OK (12 arquivos, 159 testes)
 ## CP1 Hooks      [ ] sha= · testes novos: _ · event_type reais: [...]
 ## CP2 Lista      [ ] sha= · shot=02-after.png · listCol=_ chip=_ search=_ listItem=_ listAvatar=_
 ## CP3 Header/Abas[ ] sha= · shot=03-after.png · chatHeader=_ headerBtn=_ tabBar=_ tabActive=_
@@ -11,7 +11,11 @@ Branch: feat/inbox-360 · Base: 249501ae · Worktree: /workspace/repos/Zapp_Web_
 ## CP8 QA         [ ] shots=11-*.png · geometria _/_ · cores _/6 carvão · func _/22 · mobile _ · light _ · reduced-motion _
 ## CP9 Entrega    [ ] PR=_ · CI=_ · bundle Δ=_ KB gz · aguardando revisão de Joaquim
 ## Divergências plano × código
--
+- `graphify-out/GRAPH_REPORT.md` não existe neste worktree — etapa 1 (graphify explain) pulada, sem grafo para consultar.
+- `git status`/`git log` mostravam "diverged" vs `origin/main` (esperado — branch de feature), mas `origin/feat/inbox-360` == HEAD local (0 commits de diferença nos dois sentidos) — sem retrabalho de sync necessário.
+- Plano cita `VirtualizedConversationList.tsx`; o arquivo real é `VirtualizedRealtimeList.tsx` (mesma função). Itens de conversa usam `role="button"` (div, não `<button>` nativo, comentário no código explica: evita aninhamento de elementos interativos), não `role="option"`/`listitem`. `data-testid="conversation-item"` ainda não existe — será adicionado na Fase 2 (etapa 18); os scripts de QA usam `[role="button"]` como fallback até lá.
+- `scripts/ci/typecheck-ratchet.mjs` está quebrado independente do inbox: `runTsc()` só aceita exit 0 ou 1 de `tsc -b --force`, mas esta instalação do TypeScript retorna exit 2 quando há erros de tipo — reproduzido em checkout limpo antes de qualquer mudança da Fase 0. Contornado validando o typecheck real (`tsc -b --force` direto) a cada gate; erro registrado, não corrigido (fora do escopo do plano — não é um arquivo do inbox).
+- App mostra um `WelcomeModal` ("Pular tour") no primeiro load da conta QA que intercepta cliques; não é `.fixed.inset-0` fechável por Escape sozinho — os scripts de QA agora clicam em "Pular tour" antes do loop de Escape.
 ## Iterações do loop visual (máx 3 por fase)
 -
 ## Pendências / resíduos (honestos)

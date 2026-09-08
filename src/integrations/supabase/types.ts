@@ -1618,26 +1618,35 @@ export type Database = {
       contact_notes: {
         Row: {
           author_id: string
+          category: string
           contact_id: string
           content: string
           created_at: string
+          due_date: string | null
           id: string
+          is_done: boolean
           updated_at: string
         }
         Insert: {
           author_id: string
+          category?: string
           contact_id: string
           content: string
           created_at?: string
+          due_date?: string | null
           id?: string
+          is_done?: boolean
           updated_at?: string
         }
         Update: {
           author_id?: string
+          category?: string
           contact_id?: string
           content?: string
           created_at?: string
+          due_date?: string | null
           id?: string
+          is_done?: boolean
           updated_at?: string
         }
         Relationships: [
