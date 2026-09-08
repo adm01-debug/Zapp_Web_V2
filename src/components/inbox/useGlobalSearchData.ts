@@ -225,12 +225,14 @@ export function useGlobalSearchData(open: boolean) {
   }, [addToHistory, allTags, isSupervisor]);
 
   const handleSearch = useCallback((query: string) => {
+    searchRequestId.current += 1;
     setSearch(query);
     setSelectedIndex(0);
   }, []);
 
   useEffect(() => {
     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
+      searchRequestId.current += 1;
       const timer = window.setTimeout(() => {
         void performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
       }, 300);
