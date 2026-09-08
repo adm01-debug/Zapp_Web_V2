@@ -2488,6 +2488,145 @@ export type Database = {
           },
         ]
       }
+      crm_contact_links: {
+        Row: {
+          external_company_id: string | null
+          external_contact_id: string
+          id: string
+          link_source: string
+          linked_at: string
+          linked_by: string | null
+          normalized_phone: string | null
+          verified_at: string | null
+          zapp_contact_id: string
+        }
+        Insert: {
+          external_company_id?: string | null
+          external_contact_id: string
+          id?: string
+          link_source?: string
+          linked_at?: string
+          linked_by?: string | null
+          normalized_phone?: string | null
+          verified_at?: string | null
+          zapp_contact_id: string
+        }
+        Update: {
+          external_company_id?: string | null
+          external_contact_id?: string
+          id?: string
+          link_source?: string
+          linked_at?: string
+          linked_by?: string | null
+          normalized_phone?: string | null
+          verified_at?: string | null
+          zapp_contact_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contact_links_linked_by_fkey"
+            columns: ["linked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contact_links_linked_by_fkey"
+            columns: ["linked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contact_links_zapp_contact_id_fkey"
+            columns: ["zapp_contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_sync_outbox: {
+        Row: {
+          attempt_count: number
+          available_at: string
+          closure_id: string | null
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          external_company_id: string | null
+          external_contact_id: string | null
+          external_interaction_id: string | null
+          id: string
+          idempotency_key: string
+          last_error_code: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          normalized_phone: string
+          payload: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          available_at?: string
+          closure_id?: string | null
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          external_company_id?: string | null
+          external_contact_id?: string | null
+          external_interaction_id?: string | null
+          id?: string
+          idempotency_key: string
+          last_error_code?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          normalized_phone: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          available_at?: string
+          closure_id?: string | null
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          external_company_id?: string | null
+          external_contact_id?: string | null
+          external_interaction_id?: string | null
+          id?: string
+          idempotency_key?: string
+          last_error_code?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          normalized_phone?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_sync_outbox_closure_id_fkey"
+            columns: ["closure_id"]
+            isOneToOne: true
+            referencedRelation: "conversation_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_sync_outbox_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       csat_auto_config: {
         Row: {
           created_at: string | null
@@ -5825,23 +5964,29 @@ export type Database = {
       talkx_blacklist: {
         Row: {
           blocked_by: string | null
+          campaign_id: string | null
           contact_id: string
           created_at: string
           id: string
+          origin: string
           reason: string | null
         }
         Insert: {
           blocked_by?: string | null
+          campaign_id?: string | null
           contact_id: string
           created_at?: string
           id?: string
+          origin?: string
           reason?: string | null
         }
         Update: {
           blocked_by?: string | null
+          campaign_id?: string | null
           contact_id?: string
           created_at?: string
           id?: string
+          origin?: string
           reason?: string | null
         }
         Relationships: [
@@ -5857,6 +6002,13 @@ export type Database = {
             columns: ["blocked_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -5868,24 +6020,84 @@ export type Database = {
           },
         ]
       }
+      talkx_campaign_events: {
+        Row: {
+          actor_id: string | null
+          campaign_id: string
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          campaign_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          campaign_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_campaign_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_campaigns: {
         Row: {
+          audience_filters: Json
+          audience_source: string
+          business_hours_only: boolean
           completed_at: string | null
           created_at: string
           created_by: string | null
           delivered_count: number
+          description: string | null
           failed_count: number
           id: string
           media_type: string | null
           media_url: string | null
           message_template: string
           name: string
+          objective: string
+          paused_at: string | null
           scheduled_at: string | null
+          segment_id: string | null
           send_interval_max: number
           send_interval_min: number
+          send_window_end: string | null
+          send_window_start: string | null
           sent_count: number
+          speed_profile: string
           started_at: string | null
           status: string
+          template_id: string | null
           total_recipients: number
           typing_delay_max: number
           typing_delay_min: number
@@ -5894,22 +6106,33 @@ export type Database = {
           whatsapp_connection_id: string | null
         }
         Insert: {
+          audience_filters?: Json
+          audience_source?: string
+          business_hours_only?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           delivered_count?: number
+          description?: string | null
           failed_count?: number
           id?: string
           media_type?: string | null
           media_url?: string | null
           message_template: string
           name: string
+          objective?: string
+          paused_at?: string | null
           scheduled_at?: string | null
+          segment_id?: string | null
           send_interval_max?: number
           send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
           sent_count?: number
+          speed_profile?: string
           started_at?: string | null
           status?: string
+          template_id?: string | null
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
@@ -5918,22 +6141,33 @@ export type Database = {
           whatsapp_connection_id?: string | null
         }
         Update: {
+          audience_filters?: Json
+          audience_source?: string
+          business_hours_only?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           delivered_count?: number
+          description?: string | null
           failed_count?: number
           id?: string
           media_type?: string | null
           media_url?: string | null
           message_template?: string
           name?: string
+          objective?: string
+          paused_at?: string | null
           scheduled_at?: string | null
+          segment_id?: string | null
           send_interval_max?: number
           send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
           sent_count?: number
+          speed_profile?: string
           started_at?: string | null
           status?: string
+          template_id?: string | null
           total_recipients?: number
           typing_delay_max?: number
           typing_delay_min?: number
@@ -5954,6 +6188,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_templates"
             referencedColumns: ["id"]
           },
           {
@@ -6036,6 +6284,129 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_count: number
+          id: string
+          is_favorite: boolean
+          last_used_at: string | null
+          name: string
+          origin: string
+          rules: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_count?: number
+          id?: string
+          is_favorite?: boolean
+          last_used_at?: string | null
+          name: string
+          origin?: string
+          rules?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_count?: number
+          id?: string
+          is_favorite?: boolean
+          last_used_at?: string | null
+          name?: string
+          origin?: string
+          rules?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_segments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_segments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          name: string
+          status: string
+          tags: string[]
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -7540,6 +7911,66 @@ export type Database = {
     }
     Functions: {
       calculate_level: { Args: { xp_amount: number }; Returns: number }
+      claim_crm_sync_outbox: {
+        Args: { p_limit?: number; p_worker: string }
+        Returns: {
+          attempt_count: number
+          available_at: string
+          closure_id: string | null
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          external_company_id: string | null
+          external_contact_id: string | null
+          external_interaction_id: string | null
+          id: string
+          idempotency_key: string
+          last_error_code: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          normalized_phone: string
+          payload: Json
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "crm_sync_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_crm_sync_outbox_by_id: {
+        Args: { p_id: string; p_worker: string }
+        Returns: {
+          attempt_count: number
+          available_at: string
+          closure_id: string | null
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          external_company_id: string | null
+          external_contact_id: string | null
+          external_interaction_id: string | null
+          id: string
+          idempotency_key: string
+          last_error_code: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          normalized_phone: string
+          payload: Json
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "crm_sync_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_expired_challenges: { Args: never; Returns: undefined }
       cleanup_link_preview_cache: {
         Args: never
@@ -7551,6 +7982,15 @@ export type Database = {
         }[]
       }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
+      complete_crm_sync_outbox: {
+        Args: {
+          p_company_id: string
+          p_contact_id: string
+          p_id: string
+          p_interaction_id: string
+        }
+        Returns: undefined
+      }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
         Returns: {
@@ -7565,27 +8005,16 @@ export type Database = {
           count: number
         }[]
       }
-      get_conversation_tab_counts: {
-        Args: { p_contact_id: string }
-        Returns: {
-          tasks_open: number
-          notes_total: number
-          files_total: number
-        }[]
-      }
-      get_last_message_dates: {
-        Args: { contact_ids: string[] }
-        Returns: {
-          contact_id: string
-          last_message_at: string
-        }[]
-      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       effective_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
+      fail_crm_sync_outbox: {
+        Args: { p_error_code: string; p_id: string }
+        Returns: undefined
+      }
       fn_list_audio_meme_categories: {
         Args: never
         Returns: {
@@ -7646,6 +8075,15 @@ export type Database = {
         Args: { _connection_id: string }
         Returns: string
       }
+      get_conversation_tab_counts: {
+        Args: { p_contact_id: string }
+        Returns: {
+          files_total: number
+          notes_total: number
+          tasks_open: number
+        }[]
+      }
+      get_crm_sync_health: { Args: never; Returns: Json }
       get_department_whatsapp_credentials: {
         Args: { _department_id: string }
         Returns: {
@@ -7675,6 +8113,13 @@ export type Database = {
           profile_id: string
           profile_role_cached: string
           user_roles_list: string
+        }[]
+      }
+      get_last_message_dates: {
+        Args: { contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_at: string
         }[]
       }
       get_own_gmail_accounts: {
