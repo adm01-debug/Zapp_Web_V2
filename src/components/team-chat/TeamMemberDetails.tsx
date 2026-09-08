@@ -99,7 +99,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                   return (
                     <div key={member.id} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="relative">
-                        <Avatar className="h-9 w-9"><AvatarImage src={member.avatar_url || undefined} /><AvatarFallback className="text-xs bg-muted">{member.name?.charAt(0) || '?'}</AvatarFallback></Avatar>
+                        <Avatar className="h-9 w-9"><AvatarImage src={member.avatar_url || undefined} alt={member.name || 'Membro'} /><AvatarFallback className="text-xs bg-muted">{member.name?.charAt(0) || '?'}</AvatarFallback></Avatar>
                         {member.is_active && <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-card" />}
                         {mBirthday?.isToday && <div className="absolute -top-1 -right-1 text-xs">🎂</div>}
                       </div>

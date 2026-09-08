@@ -130,7 +130,7 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
                   <Card key={contact.id} className={cn("border", idx === 0 ? "border-primary/30" : "border-border/50")}>
                     <CardContent className="flex items-center gap-3 p-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={contact.avatar_url || undefined} />
+                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
                         <AvatarFallback className={cn(colors.bg, colors.text, 'text-sm font-bold')}>
                           {getInitials(contact.name)}
                         </AvatarFallback>

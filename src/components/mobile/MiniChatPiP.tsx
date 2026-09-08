@@ -84,7 +84,7 @@ export function MiniChatPiP({
           >
             <div className="relative">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={contactAvatar} />
+                <AvatarImage src={contactAvatar} alt="Avatar do contato" />
                 <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-semibold">
                   {initials}
                 </AvatarFallback>

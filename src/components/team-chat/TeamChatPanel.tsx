@@ -131,7 +131,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                   <div id={`msg-${msg.id}`} className="scroll-mt-20">
                     {showDate && <div className="flex justify-center py-4"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/30 px-4 py-1.5 rounded-full border border-border/10">{formatDateSep(msg.created_at)}</span></div>}
                     <div className={cn("flex gap-3 py-1 group", isMine ? "flex-row-reverse" : "flex-row")}>
-                      {!isMine && <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm"><AvatarImage src={msg.sender?.avatar_url || undefined} /><AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{msg.sender?.name?.charAt(0) || '?'}</AvatarFallback></Avatar>}
+                      {!isMine && <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm"><AvatarImage src={msg.sender?.avatar_url || undefined} alt={msg.sender?.name || 'Remetente'} /><AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{msg.sender?.name?.charAt(0) || '?'}</AvatarFallback></Avatar>}
                       <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300", 
                         isMine ? "bg-primary text-primary-foreground rounded-tr-none border border-primary/20" : "bg-card border border-border/50 text-foreground rounded-tl-none")}>
                         {!isMine && conversation.type === 'group' && <p className="text-[10px] font-bold mb-1 text-primary/80 uppercase tracking-tighter">{msg.sender?.name}</p>}

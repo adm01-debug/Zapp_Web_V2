@@ -87,7 +87,7 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="w-8 shrink-0">
               {isLastInGroup && (
                 <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm">
-                  <AvatarImage src={contactAvatar} />
+                  <AvatarImage src={contactAvatar} alt="Avatar do contato" />
                   <AvatarFallback className="bg-gradient-to-br from-accent to-accent/60 text-accent-foreground text-[10px] font-bold">
                     {senderName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -268,7 +268,7 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="w-8 shrink-0">
               {isLastInGroup && (
                 <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
                   <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/10 text-primary text-[10px] font-bold">
                     {agentInitials}
                   </AvatarFallback>

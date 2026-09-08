@@ -59,7 +59,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                 className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
               >
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={agent.avatarUrl} />
+                  <AvatarImage src={agent.avatarUrl} alt={agent.name || 'Agente'} />
                   <AvatarFallback>{agent.agentName.split(' ').map(n => n[0]).join('').slice(0, 2)}</AvatarFallback>
                 </Avatar>
 

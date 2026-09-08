@@ -136,7 +136,7 @@ export function AdminView() {
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-4 mb-6">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={editAvatarFile ? URL.createObjectURL(editAvatarFile) : (editingUser.avatar_url || undefined)} />
+                  <AvatarImage src={editAvatarFile ? URL.createObjectURL(editAvatarFile) : (editingUser.avatar_url || undefined)} alt={editingUser.name || 'Usuário'} />
                   <AvatarFallback className="text-lg">{editingUser.name?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>

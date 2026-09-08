@@ -69,7 +69,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
                   {activeMembers.slice(0, 4).map((member) => (
                     <div key={member.id} className="relative group">
                       <Avatar className="w-8 h-8 border-2 border-card ring-1 ring-border/30">
-                        <AvatarImage src={member.profile?.avatar_url || undefined} />
+                        <AvatarImage src={member.profile?.avatar_url || undefined} alt={member.profile?.name || 'Membro'} />
                         <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.profile?.name?.[0] || '?'}</AvatarFallback>
                       </Avatar>
                       <button onClick={() => onRemoveMember(queue.id, member.profile_id)} className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

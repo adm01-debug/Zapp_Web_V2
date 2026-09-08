@@ -140,7 +140,7 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
                       )}
                     >
                       <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarImage src={t.avatar_url || undefined} />
+                        <AvatarImage src={t.avatar_url || undefined} alt={t.name || 'Membro'} />
                         <AvatarFallback className="text-xs bg-muted">{t.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 text-left min-w-0">

@@ -156,7 +156,7 @@ export function ContactsTable({
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <Avatar className="w-9 h-9">
-                        <AvatarImage src={contact.avatar_url || undefined} />
+                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
                         <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
                           {getInitials(contact.name)}
                         </AvatarFallback>

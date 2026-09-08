@@ -130,7 +130,7 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                   <motion.div key={data.agent.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}
                     className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-1 w-6 text-sm font-bold text-muted-foreground">#{index + 1}</div>
-                    <Avatar className="h-10 w-10"><AvatarImage src={data.agent.avatar_url || undefined} /><AvatarFallback>{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                    <Avatar className="h-10 w-10"><AvatarImage src={data.agent.avatar_url || undefined} alt={data.agent.name || 'Agente'} /><AvatarFallback>{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{data.agent.name}</p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -161,7 +161,7 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                 <div key={data.agent.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6"><AvatarImage src={data.agent.avatar_url || undefined} /><AvatarFallback className="text-[10px]">{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                      <Avatar className="h-6 w-6"><AvatarImage src={data.agent.avatar_url || undefined} alt={data.agent.name || 'Agente'} /><AvatarFallback className="text-[10px]">{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                       <span className="text-sm font-medium truncate max-w-[120px]">{data.agent.name}</span>
                     </div>
                     <span className={`text-sm font-bold ${getSentimentColor(data.avgScore)}`}>{data.avgScore}%</span>

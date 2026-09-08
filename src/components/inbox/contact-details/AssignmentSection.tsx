@@ -31,7 +31,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
         <div className="flex items-center gap-2.5 bg-primary/5 rounded-lg p-2.5 border border-primary/10">
           <div className="relative">
             <Avatar className="w-8 h-8 ring-1 ring-primary/20">
-              <AvatarImage src={currentAgent.avatar_url || undefined} />
+              <AvatarImage src={currentAgent.avatar_url || undefined} alt={currentAgent.name || 'Agente'} />
               <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                 {currentAgent.name[0]}
               </AvatarFallback>
@@ -69,7 +69,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Avatar className="w-5 h-5 ring-1 ring-border/30">
-                        <AvatarImage src={agent.avatar_url || undefined} />
+                        <AvatarImage src={agent.avatar_url || undefined} alt={agent.name || 'Agente'} />
                         <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                           {agent.name[0]}
                         </AvatarFallback>

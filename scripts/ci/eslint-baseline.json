@@ -242,7 +242,7 @@
     },
     {
       "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "0543d254a8feafc36d8c0ab5ff17fd9fc26c45b00d3056fc77ddd6422a863e2f"
+      "sha256": "5c4bd6219c95d2daea837d585746671db976cc763e05d6237c2f7b1d18888545"
     },
     {
       "path": "src/components/contacts/ContactMergeDialog.tsx",
@@ -274,7 +274,7 @@
     },
     {
       "path": "src/components/contacts/useContactsCRUD.ts",
-      "sha256": "f51b7e856411aac3756fb8ee94d40f40c086a451ab966d2b82898a2c008374d2"
+      "sha256": "2e4c73a6c608351689b592063fa5d4df938a76c19f2a43213d9a2e2841bbe7c5"
     },
     {
       "path": "src/components/crm360/CompanyFormDialog.tsx",
@@ -289,10 +289,6 @@
       "sha256": "00fa7a908a1294a9a803452abc45f9dbc3ca0cb362b1cc0e6915dc97b3218a7a"
     },
     {
-      "path": "src/components/dashboard/AgentPerformancePanel.tsx",
-      "sha256": "320a0fc657701495b3fecbfb916984189086924acda76f8ac437c5bb78b58dd1"
-    },
-    {
       "path": "src/components/dashboard/ConversationHeatmap.tsx",
       "sha256": "b2f4c290c66292c5a9bfff2cb398c1171327ef1965e76300addbe02e0260ae8f"
     },
@@ -302,7 +298,7 @@
     },
     {
       "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
-      "sha256": "e95c1624d01ca5ea833da67636c849a38f12450e4731b57cdfa45d03ec363855"
+      "sha256": "d7f38d6fde87f7cadd5b8f1659065914a2a7c5bb8e433bbca75e3390d4e855b3"
     },
     {
       "path": "src/components/dashboard/DemandPrediction.tsx",
@@ -319,10 +315,6 @@
     {
       "path": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
       "sha256": "0b2294c8b9646b1965010f944fa11a0b59cba228b716a9bd7bc5164574be5cf7"
-    },
-    {
-      "path": "src/components/dashboard/ScheduledReportsManager.tsx",
-      "sha256": "d22fc9740a9e69c17fe8fb44d714c85355a03a7d388512a4169cb3968c8253ba"
     },
     {
       "path": "src/components/dashboard/SentimentHelpers.tsx",
@@ -694,19 +686,11 @@
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "a51392b5665e0568df7c5a51921e20fcaec118c6f5dfea09102ca3bb017c21b0"
-    },
-    {
-      "path": "src/components/layout/SidebarNavGroup.tsx",
-      "sha256": "bc039610d94ecf4df44168bb446f3d4363aee28f3ab66da5dc623cf0e00d4ff3"
+      "sha256": "1ea68b078164e536ecc68665aef1096a15b083a2e9d045ffc5ae3eeb11c90604"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
       "sha256": "81fb38d72bdad993a31f98a992e3b35f862a5da85436380d466304091d836984"
-    },
-    {
-      "path": "src/components/meta-capi/MetaCAPIView.tsx",
-      "sha256": "738bd1597bb8fab3c5d9052dd71ea32094fb1e48c50e317c9d9aea9c5e0f98cf"
     },
     {
       "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -735,10 +719,6 @@
     {
       "path": "src/components/mobile/InAppNotificationProvider.tsx",
       "sha256": "7a6822d47c01de5d8fb501653b08d41c939ff81fa4f7601f85c35bac1127e116"
-    },
-    {
-      "path": "src/components/mobile/MobileDrawerMenu.tsx",
-      "sha256": "2968b027a7317cdb50ef7f936e37eb260fc27576ff1b8686558af0b4a5f8d2b5"
     },
     {
       "path": "src/components/mobile/MobileNavigation.tsx",
@@ -786,7 +766,7 @@
     },
     {
       "path": "src/components/omnichannel/OmnichannelInbox.tsx",
-      "sha256": "3285397bea18398ebf240282f7b14bf37b9f5708d8504cc37be2306f8e788598"
+      "sha256": "23d172471c17f8f5110988cdbeddfa70e73b5cec79853efb1993514cb8887b95"
     },
     {
       "path": "src/components/omnichannel/OmnichannelManager.tsx",
@@ -807,10 +787,6 @@
     {
       "path": "src/components/onboarding/OnboardingTour.tsx",
       "sha256": "066e3caa337f58ae0f87adad74073c1e64c68466aa47f8e5f1a25f75b2c1649b"
-    },
-    {
-      "path": "src/components/payments/PaymentLinksView.tsx",
-      "sha256": "fdac031da3183718f0317db6269fb27b92915e0292b18913a08c250a61fe1c99"
     },
     {
       "path": "src/components/performance/__tests__/PerformanceMonitor.test.tsx",
@@ -1006,7 +982,7 @@
     },
     {
       "path": "src/components/settings/theme/useThemePreset.ts",
-      "sha256": "6bbd7c0e01f7fbb98b78122b714b653331712799ed835ac1d2368892ac35229b"
+      "sha256": "b190657cc867b8095f64a40462c93ec1a00529bd54c7486bb5f612d24cc36fce"
     },
     {
       "path": "src/components/sla/SLACharts.tsx",
@@ -1086,7 +1062,7 @@
     },
     {
       "path": "src/components/ui/button.tsx",
-      "sha256": "06755830456c2611ea7fa54e1bd2e4a8949a4a34c398196210b8d66fedce8bd3"
+      "sha256": "f953f4a9dc2d26f0b7ed0b30bd8b508e81e7ad4977ad8df764b40febe61dd957"
     },
     {
       "path": "src/components/ui/card.tsx",
@@ -1102,7 +1078,7 @@
     },
     {
       "path": "src/components/ui/dialog.tsx",
-      "sha256": "dbdfcb2084ca7ab4ed20974d30962705925d57af1a1a3acf6dd3ab270fe3947d"
+      "sha256": "bdff926b7b40e2e24eeb56e2d56c214c5a032930ccab8cdf102a521b6130d6b6"
     },
     {
       "path": "src/components/ui/form.tsx",
@@ -1557,10 +1533,6 @@
       "sha256": "a63f03bc305fa1b449118fada0e52ec723b26047023a05ca5ec7707eb849b852"
     },
     {
-      "path": "src/hooks/inbox/useRealtimeInbox.ts",
-      "sha256": "1ba88adf1761b3b6a76e853ca48f2ccd51e6344eaae92bf6be43bfbf3bcaad6c"
-    },
-    {
       "path": "src/hooks/integrations/useCustomEmojis.ts",
       "sha256": "01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3"
     },
@@ -1619,10 +1591,6 @@
     {
       "path": "src/hooks/sticker-picker/useStickerPicker.ts",
       "sha256": "d1483da8e1cd907da05d74c3174b2ced188202bf530b1f66643d956305a762b9"
-    },
-    {
-      "path": "src/hooks/system/useCurrentModule.ts",
-      "sha256": "7c1674a39bf0e0a7f14168e620b96b83ecbced73a9f6754c591c20bd5a3f82eb"
     },
     {
       "path": "src/hooks/system/useDiagnosticsData.ts",
@@ -1783,10 +1751,6 @@
     {
       "path": "src/services/evolution.service.ts",
       "sha256": "96be56e40846555ff84bed8b63cf146d6dae2855bbc1f3d76322e0cd2d8d4adc"
-    },
-    {
-      "path": "src/services/navigation.service.ts",
-      "sha256": "7363446c45af6369653c32a12d64d61c5c5ae3701a675d72a06d08f893523290"
     },
     {
       "path": "src/services/realtime.service.ts",
@@ -3769,20 +3733,6 @@
       "contextHash": "befe84cb46995a114e0676d817e5cd4606bf927d98f7f62156cdba4302c13b5b"
     },
     {
-      "file": "src/components/dashboard/AgentPerformancePanel.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "f395e618eeef47a04dd2b288918d0015efe46ee7cb581c5c011bb3afb8a54ae0"
-    },
-    {
       "file": "src/components/dashboard/ConversationHeatmap.tsx",
       "line": 118,
       "column": 9,
@@ -3907,20 +3857,6 @@
       "spanHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
       "lineHash": "44b27b2d9a3c033413007415e5bdcbf7fa4aa21f2b1a7dca5d5e74895024ca11",
       "contextHash": "06f893bbd230c09e8443563849b7dbf4800372e9c2447ad658b3e7a403545511"
-    },
-    {
-      "file": "src/components/dashboard/ScheduledReportsManager.tsx",
-      "line": 27,
-      "column": 1,
-      "endLine": 27,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "b6c5b2744677567781b5e90abb002b088586074ccb9c8fa8b693e05a33761195"
     },
     {
       "file": "src/components/dashboard/SentimentHelpers.tsx",
@@ -7578,9 +7514,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 144,
+      "line": 124,
       "column": 38,
-      "endLine": 144,
+      "endLine": 124,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -7592,9 +7528,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 43,
+      "line": 35,
       "column": 53,
-      "endLine": 43,
+      "endLine": 35,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -7606,9 +7542,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 50,
+      "line": 42,
       "column": 63,
-      "endLine": 50,
+      "endLine": 42,
       "endColumn": 66,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -7620,9 +7556,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 99,
+      "line": 91,
       "column": 32,
-      "endLine": 99,
+      "endLine": 91,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -7631,34 +7567,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "185b3d9f9274534b8d5b57b129995f217b3afe9fb9fcef961aeb15eab8121313",
       "contextHash": "98d03fe7a27e370fad7057a21f8be3fadb4e6b121f36baabb9e0fa7d5e128f72"
-    },
-    {
-      "file": "src/components/layout/SidebarNavGroup.tsx",
-      "line": 25,
-      "column": 35,
-      "endLine": 25,
-      "endColumn": 44,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/layout/SidebarNavGroup.tsx:25:35 23 | 24 | useEffect(() => { > 25 | if (hasActiveItem && !isOpen) setIsOpen(true); | ^^^^^^^^^ Avoid calling setState() directly within an effect 26 | }, [hasActiveItem]); 27 | 28 | const triggerButton = (",
-      "spanHash": "6441a58faa9de7dea4fe79776710fce1e610d5280f4bfcb390940f75a4fb7ae7",
-      "lineHash": "c3e485e8a80ed20a74a40aa0bd819d359c98444bd83e2db0f51088ba66e23cc4",
-      "contextHash": "528f120f095dabaad47afbd5142bd2e60b7ce3c7e8441e3f21cee512d9bbfd72"
-    },
-    {
-      "file": "src/components/layout/SidebarNavGroup.tsx",
-      "line": 26,
-      "column": 6,
-      "endLine": 26,
-      "endColumn": 21,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'isOpen'. Either include it or remove the dependency array.",
-      "spanHash": "9ad60c4452f23e007299aeef9ae2565d2c3133f7117fcbf62ace823ca7faee7e",
-      "lineHash": "f2fb392d0820a5d587ff41386b3f38c7a237182f6f187800a630e6a497a07284",
-      "contextHash": "21a5b48154514051c976719f62ad5ffd7b24ed33ea37454ea1adb8097acdb3be"
     },
     {
       "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -7771,34 +7679,6 @@
       "spanHash": "70e9d248688717df77bfb739b2384e84959ac43eb35ff5df19415eb1ca72c7be",
       "lineHash": "204176da87e13a5ef6ec557a072adaa9455e6023204fb6c8a14a75cc1bf9710e",
       "contextHash": "e49f6d8c9bef1494a3d6d2929bff7ff676dc8d13a61602350cbf3a55253b7d7b"
-    },
-    {
-      "file": "src/components/meta-capi/MetaCAPIView.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "9a1267bb0ac2d2bcb314ae3f61ef885aa66983a9d75c0527d78608c666cbf7f1"
-    },
-    {
-      "file": "src/components/meta-capi/MetaCAPIView.tsx",
-      "line": 60,
-      "column": 21,
-      "endLine": 60,
-      "endColumn": 32,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/meta-capi/MetaCAPIView.tsx:60:21 58 | }, []); 59 | > 60 | useEffect(() => { fetchEvents(); }, [fetchEvents]); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 61 | 62 | // Load config from global_settings 63 | useEffect(() => {",
-      "spanHash": "21e2faf8aca57eb6997510d25a91e20eb49c57aa27706962c75e7a576037ad4b",
-      "lineHash": "36cd4ed4822c4f6365c19b28c080124b7ccdef85552d39b71a3b5ef6ef599b65",
-      "contextHash": "20f9e2ef382be1be042d6f545062cfa8b62e82b865abadb0b9dd8938ff76ef83"
     },
     {
       "file": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -8081,20 +7961,6 @@
       "contextHash": "15f0c88dfb924c9b86743d35986f87019f8933e5b586bebf49c5847d0748666b"
     },
     {
-      "file": "src/components/mobile/MobileDrawerMenu.tsx",
-      "line": 101,
-      "column": 29,
-      "endLine": 101,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "react-hooks/use-memo",
-      "messageId": null,
-      "message": "Error: Expected the first argument to be an inline function expression Expected the first argument to be an inline function expression. <ROOT>/src/components/mobile/MobileDrawerMenu.tsx:101:29 99 | }, [search]); 100 | > 101 | const recentIds = useMemo(getRecents, [isOpen]); | ^^^^^^^^^^ Expected the first argument to be an inline function expression 102 | const recentItems = useMemo(() => recentIds.map(id => allItems.find(i => i.id === id)).filter(Boolean) as typeof allItems, [recentIds]); 103 | 104 | const handleNav = (id: string) => {",
-      "spanHash": "ee323deaaf604905b298776172421c67058bac35719330313ba31fe8379c6eea",
-      "lineHash": "53e05bbeb02df06ede7d606f0871c3180d1f8108affe941ef51ed3ce94235fe5",
-      "contextHash": "33037698e30eb2576535704eb6ef0a0bcca2d8f1d460eb986e59dee6120e492a"
-    },
-    {
       "file": "src/components/mobile/MobileNavigation.tsx",
       "line": 63,
       "column": 14,
@@ -8373,34 +8239,6 @@
       "spanHash": "b0aa8092516269c436110fcc31f74c5413dbab1bddbcbaafdd5d5e6c94230412",
       "lineHash": "56820f89d1fa65de0037bde2a864396c6bdef215325392dc5ad6326f326274e7",
       "contextHash": "ef4f023d3add7808e27324aa1adffc3096ed97ea2260b38d4a7c01de3a7e4f20"
-    },
-    {
-      "file": "src/components/payments/PaymentLinksView.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "091fd7d4fae8c0f6971eea4fa609856cf5567df6ae353221cb5eea5e6a6a4880"
-    },
-    {
-      "file": "src/components/payments/PaymentLinksView.tsx",
-      "line": 53,
-      "column": 21,
-      "endLine": 53,
-      "endColumn": 30,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/payments/PaymentLinksView.tsx:53:21 51 | }, []); 52 | > 53 | useEffect(() => { fetchData(); }, [fetchData]); | ^^^^^^^^^ Avoid calling setState() directly within an effect 54 | 55 | useEffect(() => { 56 | const channel = supabase",
-      "spanHash": "9f1d76c025605bd3eae6e38282899b99ba7785a23050d8b5f9c02906e10b92d6",
-      "lineHash": "855add5d2d50f654756aaf12012be84056314dd32640ca0f7becdcfab1ec8589",
-      "contextHash": "4e5502003274e54337e2e704a627a6a7b44a269216c1f30734b8858aff638431"
     },
     {
       "file": "src/components/performance/__tests__/PerformanceMonitor.test.tsx",
@@ -15515,104 +15353,6 @@
       "contextHash": "89a771932a6c0e43977b8e37d9d74d9ef45c3b04aa7a9a10e1c1d6638bdcc79f"
     },
     {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 121,
-      "column": 6,
-      "endLine": 121,
-      "endColumn": 38,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useCallback has a missing dependency: 'setSelectedContactId'. Either include it or remove the dependency array.",
-      "spanHash": "1da57ec8492ee58492dbb645d91a76139d4feeddf074d4635368c184176c454b",
-      "lineHash": "44be2840f67be661d13882e335a32bb28afda3ff122b4772f8d49a7eb99f5474",
-      "contextHash": "46edb8399fd4742b96a4676a8f82d71a9c32d0252c11bb52e5928850e67de41c"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 171,
-      "column": 9,
-      "endLine": 171,
-      "endColumn": 108,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "The 'messageSource' conditional could make the dependencies of useMemo Hook (at line 174) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'messageSource' in its own useMemo() Hook.",
-      "spanHash": "8cf86ba40649716799191325a575521b27656d917c22cbff0e75a7329756d911",
-      "lineHash": "d5ece0d9d923f3ee657d5ac6579b13877453ebd08ce1e0b41fb4cac853eae07d",
-      "contextHash": "b1a9df61ecb67c6ecc1e4ffedfd03f455de145733112ed4d0373eff9dbb5853c"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 172,
-      "column": 45,
-      "endLine": 173,
-      "endColumn": 124,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `resolvedSelectedConversation?.contact`, but the source dependencies were [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id]. Inferred less specific property than source. <ROOT>/src/hooks/inbox/useRealtimeInbox.ts:172:45 170 | 171 | const messageSource = selectedContactId ? selectedMessages : resolvedSelectedConversation?.messages || []; > 172 | const legacyMessages: Message[] = useMemo(() => | ^^^^^^ > 173 | messageSource.map((m) => mapRealtimeMessageToMessage(m, selectedContactId || resolvedSelectedConversation?.contact.id)), | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing manual memoization 174 | [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id] 175 | ); 176 |",
-      "spanHash": "b1231959ff05d94ec35a39c902bd8336022b71e6eb4b0beafd1ebc9c9a3d36a0",
-      "lineHash": "bb036300d31cd34c432497267d7c279e87377b41635ec95489f21abfa064c36d",
-      "contextHash": "f9c4ee131775af9994acb5b6cad967c5e5b600dc7e2673a62a16f95060190603"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 172,
-      "column": 45,
-      "endLine": 173,
-      "endColumn": 124,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `resolvedSelectedConversation?.contact`, but the source dependencies were [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id]. Inferred less specific property than source. <ROOT>/src/hooks/inbox/useRealtimeInbox.ts:172:45 170 | 171 | const messageSource = selectedContactId ? selectedMessages : resolvedSelectedConversation?.messages || []; > 172 | const legacyMessages: Message[] = useMemo(() => | ^^^^^^ > 173 | messageSource.map((m) => mapRealtimeMessageToMessage(m, selectedContactId || resolvedSelectedConversation?.contact.id)), | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing manual memoization 174 | [messageSource, selectedContactId, resolvedSelectedConversation?.contact.id] 175 | ); 176 |",
-      "spanHash": "b1231959ff05d94ec35a39c902bd8336022b71e6eb4b0beafd1ebc9c9a3d36a0",
-      "lineHash": "bb036300d31cd34c432497267d7c279e87377b41635ec95489f21abfa064c36d",
-      "contextHash": "f9c4ee131775af9994acb5b6cad967c5e5b600dc7e2673a62a16f95060190603"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 33,
-      "column": 9,
-      "endLine": 33,
-      "endColumn": 96,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "The 'refetch' conditional could make the dependencies of useCallback Hook (at line 138) change on every render. To fix this, wrap the initialization of 'refetch' in its own useMemo() Hook.",
-      "spanHash": "a89658d2265ae3b24e2253d9fb448b7ec76c33e7d6f23b5c5578e67cc0858c2c",
-      "lineHash": "ce7b2f7902e10acd3ec565dd5e3a0800844a35a848ff04d7768dc79e377ae4ab",
-      "contextHash": "a1596338f6602aefe28ef5d21b7d1363e82f8596bf96460f65da5456ff252655"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 75,
-      "column": 6,
-      "endLine": 75,
-      "endColumn": 8,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'setPendingContactId'. Either include it or remove the dependency array.",
-      "spanHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "lineHash": "27c7e19d1e112eeabf093062e0e24babd319cebac309a618f8cf7a9aa324b972",
-      "contextHash": "ebe5eb64172f3436199b681adf05e37145018c3768191e222832eeb03fda4251"
-    },
-    {
-      "file": "src/hooks/inbox/useRealtimeInbox.ts",
-      "line": 84,
-      "column": 31,
-      "endLine": 84,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/inbox/useRealtimeInbox.ts:84:31 82 | 83 | useEffect(() => { > 84 | if (!selectedContactId) { setSelectedContactFallback(null); return; } | ^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 85 | if (selectedConversation) { setSelectedContactFallback(null); return; } 86 | let cancelled = false; 87 | const loadSelectedContact = async () => {",
-      "spanHash": "8c983477fbe96dc418c79901f621ac602b3f5d618a854ed955c9426290d554e5",
-      "lineHash": "4845414d91012b8c0a373b5fa41d4b10ca7258b3b85503a70591066122078862",
-      "contextHash": "7399d54c3a925ad8ab674e41b80394c3a474f547b507c3186b3f2c0766a48782"
-    },
-    {
       "file": "src/hooks/integrations/useCustomEmojis.ts",
       "line": 47,
       "column": 15,
@@ -15919,34 +15659,6 @@
       "spanHash": "29e600020cfb4e09c170f1ce73d6a3c45f26d37a2db0223c1133db647af17cd5",
       "lineHash": "ff0b935fd164c0944d6072c57c9097fd1e91839d714279db90a9a0596220247a",
       "contextHash": "e017707c0270fe9620cfc94250decfea5dba4bf7a0a94d6b6ad1a79dd9bfd178"
-    },
-    {
-      "file": "src/hooks/system/useCurrentModule.ts",
-      "line": 16,
-      "column": 10,
-      "endLine": 29,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output. <ROOT>/src/hooks/system/useCurrentModule.ts:16:10 14 | 15 | export function useCurrentModule(viewId: string) { > 16 | return useMemo(() => { | ^^^^^^^^^^^^^^^ > 17 | for (const group of allGroups) { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 18 | const item = group.items.find((i) => i.id === viewId); … > 27 | } | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 28 | return { id: viewId, label: viewId, icon: null, group: null }; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 29 | }, [viewId]); | ^^^^^^^^^^^^^^^ Could not preserve existing memoization 30 | } 31 |",
-      "spanHash": "5ff0cb86e5b50755e7ff556950269e0516dadbdf4792a26bc9ce67310f0f590a",
-      "lineHash": "34302a4609e809172d27dd124e147251b1b6337b138a068016c213f189e1e369",
-      "contextHash": "b8190d732a7172d2754afe5858a7e35cfe1a25c57ece80e48ee6b39524f71407"
-    },
-    {
-      "file": "src/hooks/system/useCurrentModule.ts",
-      "line": 16,
-      "column": 10,
-      "endLine": 29,
-      "endColumn": 15,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output. <ROOT>/src/hooks/system/useCurrentModule.ts:16:10 14 | 15 | export function useCurrentModule(viewId: string) { > 16 | return useMemo(() => { | ^^^^^^^^^^^^^^^ > 17 | for (const group of allGroups) { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 18 | const item = group.items.find((i) => i.id === viewId); … > 27 | } | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 28 | return { id: viewId, label: viewId, icon: null, group: null }; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 29 | }, [viewId]); | ^^^^^^^^^^^^^^^ Could not preserve existing memoization 30 | } 31 |",
-      "spanHash": "5ff0cb86e5b50755e7ff556950269e0516dadbdf4792a26bc9ce67310f0f590a",
-      "lineHash": "34302a4609e809172d27dd124e147251b1b6337b138a068016c213f189e1e369",
-      "contextHash": "b8190d732a7172d2754afe5858a7e35cfe1a25c57ece80e48ee6b39524f71407"
     },
     {
       "file": "src/hooks/system/useDiagnosticsData.ts",
@@ -17025,20 +16737,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "087bb03b99fa8098a99bca6852cfd52be611635aa180e076a9b8ba6a9f4cfe6e",
       "contextHash": "1bd7d529a0c57c027a1765b253b2c243cc24a2a9f30c9d04cdd809cd57bab924"
-    },
-    {
-      "file": "src/services/navigation.service.ts",
-      "line": 14,
-      "column": 9,
-      "endLine": 14,
-      "endColumn": 12,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "d57d6a09ba1544c1ad451aac82fa8c9513c65e6e2218bf5fe6be5e0f0e356c65",
-      "contextHash": "7f7fc17dad50f7d83ed482c51a2f1416652367bedf3449fa267dab170e34ac95"
     },
     {
       "file": "src/services/realtime.service.ts",

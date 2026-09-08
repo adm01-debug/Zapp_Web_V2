@@ -210,7 +210,7 @@ export function ConversationList({
                           "w-11 h-11 ring-2 transition-all",
                           isSelected ? "ring-primary/40" : "ring-border/30"
                         )}>
-                          <AvatarImage src={conversation.contact.avatar ?? undefined} />
+                          <AvatarImage src={conversation.contact.avatar ?? undefined} alt={conversation.contact.name || 'Avatar'} />
                           <AvatarFallback className="bg-primary/10 text-primary font-medium">
                             {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                           </AvatarFallback>

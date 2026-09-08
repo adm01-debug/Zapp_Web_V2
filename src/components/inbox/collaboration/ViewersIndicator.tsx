@@ -81,7 +81,7 @@ export function ViewersIndicator({ contactId }: { contactId: string }) {
           <div className="flex -space-x-2">
             {viewers.slice(0, 3).map((viewer) => (
               <Avatar key={viewer.id} className="w-6 h-6 border-2 border-background">
-                <AvatarImage src={viewer.avatar_url || undefined} />
+                <AvatarImage src={viewer.avatar_url || undefined} alt={viewer.name || 'Usuário'} />
                 <AvatarFallback className="text-xs bg-primary/20">
                   {viewer.name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
@@ -105,7 +105,7 @@ export function ViewersIndicator({ contactId }: { contactId: string }) {
             {viewers.map((viewer) => (
               <div key={viewer.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={viewer.avatar_url || undefined} />
+                  <AvatarImage src={viewer.avatar_url || undefined} alt={viewer.name || 'Usuário'} />
                   <AvatarFallback className="text-xs">{viewer.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
