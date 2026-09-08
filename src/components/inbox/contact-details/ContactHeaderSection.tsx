@@ -98,7 +98,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                 strokeDasharray={2 * Math.PI * 50} initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
                 animate={{ strokeDashoffset: ((100 - engagementScore) / 100) * 2 * Math.PI * 50 }} transition={{ duration: 1, ease: 'easeOut' }} />
             </svg>
-            <Avatar className="w-24 h-24 ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
+            <Avatar data-testid="contact-avatar" className="w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
               onClick={() => contact.avatar && setShowAvatarPreview(true)}>
               <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
               <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
