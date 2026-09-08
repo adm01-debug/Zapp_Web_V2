@@ -6,7 +6,7 @@ import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
 import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
-import { MainTab, SubTab } from '@/components/inbox/TicketTabs';
+import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface UseInboxFiltersProps {
@@ -16,8 +16,17 @@ interface UseInboxFiltersProps {
 
 export function useInboxFilters({ conversations, profileId }: UseInboxFiltersProps) {
   const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
+  const [chipTab, setChipTabState] = useState<ChipTab>('attending');
   const [mainTab, setMainTab] = useState<MainTab>('open');
-  const [subTab, setSubTab] = useState<SubTab>('attending');
+  const [subTab, setSubTab] = useState<SubTab | null>('attending');
+  // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
+  // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
+  // de contato pendente, fora do ciclo de vida dos chips.
+  const setChipTab = useCallback((tab: ChipTab) => {
+    setChipTabState(tab);
+    setMainTab(tab === 'resolved' ? 'resolved' : 'open');
+    setSubTab(tab === 'attending' ? 'attending' : tab === 'waiting' ? 'waiting' : null);
+  }, []);
   const [showAll, setShowAll] = useState(false);
   const [selectedQueueId, setSelectedQueueId] = useState<string | null>(null);
   const [selectedContactType, setSelectedContactType] = useState<string | null>(() => {
@@ -113,6 +122,15 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
         : result.filter(c => c.messages.length === 0);
     }
 
+    if (chipTab === 'unread') {
+      result = result.filter(c => {
+        const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
+        return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
+      });
+    }
+    // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
+    // attending e waiting já são tratados pelo subTab derivado
+
     // Search
     if (search.trim()) {
       const searchLower = search.toLowerCase();
@@ -175,9 +193,10 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, showAll, selectedQueueId, selectedContactType, profileId, contactTagsMap, fsmEnabled]);
+  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, contactTagsMap, fsmEnabled]);
 
   return {
+    chipTab, setChipTab,
     mainTab, setMainTab,
     subTab, setSubTab,
     showAll, setShowAll,
