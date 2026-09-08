@@ -41,7 +41,7 @@ function OptionPill({ active, label, onClick }: { active: boolean; label: string
 /* ------------------------------------------------------------------ */
 
 export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
-  const minLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const [minLocal] = useState<string>(() => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
   return (
     <>
       <Section icon={CalendarDays} title="Configurações de agendamento" subtitle="Defina quando, como e em que condições a campanha será enviada."
@@ -132,6 +132,18 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
 /* Passo 4 — Revisão final                                            */
 /* ------------------------------------------------------------------ */
 
+const Row = ({ icon, label, value, sub, ok, step, ed }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3; ed: WizardState }) => (
+    <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
+      <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11.5px] text-foreground-secondary">{label}</p>
+        <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
+        {sub && <p className={cn('text-[11.5px]', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
+      </div>
+      <button type="button" onClick={() => ed.setStep(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
+    </div>
+  );
+
 export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,31 +166,20 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
     }
   };
 
-  const Row = ({ icon, label, value, sub, ok, step }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3 }) => (
-    <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
-      <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] text-foreground-secondary">{label}</p>
-        <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
-        {sub && <p className={cn('text-[11.5px]', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
-      </div>
-      <button type="button" onClick={() => ed.setStep(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
-    </div>
-  );
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr_0.9fr] gap-4 min-w-0">
       <Section icon={FileText} title="Resumo da campanha" subtitle="Verifique se todas as informações estão corretas.">
-        <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} />
-        <Row icon={Target} label="Objetivo" value={objective} sub={ed.description || undefined} step={1} />
-        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmento selecionado' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={`${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} />
-        <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} />
-        <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} />
-        <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} />
-        <Row icon={Gauge} label="Velocidade de entrega" value={SPEED_PROFILES.find((p) => p.value === ed.speedProfile)?.label ?? ed.speedProfile} sub={`~${ed.messagesPerMinute} mensagens/min`} step={3} />
-        <Row icon={CalendarDays} label="Agendamento" value={ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato ao lançar'} sub={ed.sendWindowEnabled ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ' · horário comercial' : ''}` : ed.businessHoursOnly ? 'Somente horário comercial' : 'Sem janela de envio'} step={3} />
-        <Row icon={Smartphone} label="Conexão WhatsApp" value={connection ? `${connection.name} (${connection.phone_number || 'sem número'})` : 'Nenhuma conexão'} sub={connection ? 'Conectada e pronta' : 'Selecione uma conexão ativa'} ok={waOk} step={1} />
-        <Row icon={ShieldCheck} label="Conformidade" value="LGPD e políticas do WhatsApp" sub={ed.respectSuppression && ed.confirmConsent ? 'Verificações confirmadas' : 'Confirme as verificações abaixo'} ok={ed.respectSuppression && ed.confirmConsent} step={3} />
+        <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} ed={ed} />
+        <Row icon={Target} label="Objetivo" value={objective} sub={ed.description || undefined} step={1} ed={ed} />
+        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmento selecionado' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={`${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} ed={ed} />
+        <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} ed={ed} />
+        <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} ed={ed} />
+        <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} ed={ed} />
+        <Row icon={Gauge} label="Velocidade de entrega" value={SPEED_PROFILES.find((p) => p.value === ed.speedProfile)?.label ?? ed.speedProfile} sub={`~${ed.messagesPerMinute} mensagens/min`} step={3} ed={ed} />
+        <Row icon={CalendarDays} label="Agendamento" value={ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato ao lançar'} sub={ed.sendWindowEnabled ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ' · horário comercial' : ''}` : ed.businessHoursOnly ? 'Somente horário comercial' : 'Sem janela de envio'} step={3} ed={ed} />
+        <Row icon={Smartphone} label="Conexão WhatsApp" value={connection ? `${connection.name} (${connection.phone_number || 'sem número'})` : 'Nenhuma conexão'} sub={connection ? 'Conectada e pronta' : 'Selecione uma conexão ativa'} ok={waOk} step={1} ed={ed} />
+        <Row icon={ShieldCheck} label="Conformidade" value="LGPD e políticas do WhatsApp" sub={ed.respectSuppression && ed.confirmConsent ? 'Verificações confirmadas' : 'Confirme as verificações abaixo'} ok={ed.respectSuppression && ed.confirmConsent} step={3} ed={ed} />
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">

@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap } from 'lucide-react';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
@@ -17,7 +19,9 @@ const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export function TalkXAnalytics({ campaigns }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
   const days = DAYS[period];
-  const cutoff = useMemo(() => new Date(Date.now() - days * 86_400_000), [days]);
+  // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
+  const [pageLoadTime] = useState<number>(() => Date.now());
+  const cutoff = useMemo(() => new Date(pageLoadTime - days * 86_400_000), [pageLoadTime, days]);
   const filtered = useMemo(() => campaigns.filter((c) => !c.started_at || new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
 
   const stats = useMemo(() => {
@@ -31,7 +35,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
   const { data: hourlyData } = useQuery({
     queryKey: ['talkx-hourly-stats', period],
     queryFn: async () => {
-      const { data } = await supabase.from('talkx_recipients')
+      const { data } = await fromTable('talkx_recipients')
         .select('sent_at, status').eq('status', 'sent')
         .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
       const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
