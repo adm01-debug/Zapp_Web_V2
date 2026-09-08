@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo, startTransition } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation, Message } from '@/types/chat';
@@ -130,8 +130,12 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
   useEffect(() => { initResolve(); }, [conversation.contact.id]);
   useEffect(() => { messagesAreaRef.current?.scrollToBottom(); }, [messages.length, isContactTyping]);
+  // Resets UI-only state when conversation changes; startTransition avoids
+  // calling setState synchronously in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    setActiveTool(null); setHighlightedMessageIds(new Set()); setActiveHighlightId(null); setSearchQuery('');
+    startTransition(() => {
+      setActiveTool(null); setHighlightedMessageIds(new Set()); setActiveHighlightId(null); setSearchQuery('');
+    });
   }, [conversation.id]);
 
   useEffect(() => {
