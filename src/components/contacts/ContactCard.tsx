@@ -117,8 +117,8 @@ export function ContactCard({
         </div>
       </div>
 
-      {/* Contact info — space-y-1 mantém altura em 164px */}
-      <div className="mt-3 space-y-1">
+      {/* Contact info — space-y-1.5 per Navy plan spec */}
+      <div className="mt-3 space-y-1.5">
         {contact.phone && (
           <div className="flex items-center gap-2 text-[13.5px]" onClick={(e) => e.stopPropagation()}>
             <Phone className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />

@@ -131,7 +131,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-medium text-muted-foreground truncate leading-tight">{label}</p>
         <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
-          <p data-testid="kpi-value" className="text-[30px] font-bold tabular-nums leading-none text-foreground">
+          <p data-testid="kpi-value" className="text-[34px] font-bold tabular-nums leading-none text-foreground">
             <CountUp value={value} />
           </p>
           {!noData && !flat && (
