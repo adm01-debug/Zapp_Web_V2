@@ -9,7 +9,7 @@ Branch: feat/inbox-360 · Base: 249501ae · Worktree: /workspace/repos/Zapp_Web_
 ## CP6 Tarefas/Hist[x] sha=555978ca · TasksTab(+TaskCard+TasksTab.test)/HistoryTab(+HistoryTab.test) + useRecommendedProducts + useContactSummaryNote · commitado junto com CP5
 ## CP7 Painel     [–] FORA DE ESCOPO (reescopo 08/09) · zero diff em ContactDetails/contact-details
 ## CP8 QA         [ ] shots=11-*.png (8 abas) · geometria _/4 · cores _/6 carvão (lista/painel == before) · func _/18 · mobile _ · light _ · reduced-motion _
-## CP9 Entrega    [ ] PR=_ · CI=_ · bundle Δ=_ KB gz · aguardando revisão de Joaquim
+## CP9 Entrega    [x] PR=https://github.com/adm01-debug/Zapp_Web_V2/pull/286 (#286) · CI=pendente · build=exit 0 em 17s, RealtimeInboxView=86KB (lazy ok) · 70/70 testes · 0 diff lista/header/painel · 0 dados inventados · aguardando revisão de Joaquim
 ## Divergências plano × código
 - `graphify-out/GRAPH_REPORT.md` não existe neste worktree — etapa 1 (graphify explain) pulada, sem grafo para consultar.
 - `git status`/`git log` mostravam "diverged" vs `origin/main` (esperado — branch de feature), mas `origin/feat/inbox-360` == HEAD local (0 commits de diferença nos dois sentidos) — sem retrabalho de sync necessário.
