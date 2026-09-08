@@ -2,10 +2,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const migration = await readFile(
+const foundation = await readFile(
   new URL('../../supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql', import.meta.url),
   'utf8',
 );
+const hardening = await readFile(
+  new URL('../../supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql', import.meta.url),
+  'utf8',
+);
+const migration = `${foundation}\n${hardening}`;
 
 test('outbox is idempotent per closure and uses stable external identity links', () => {
   assert.match(migration, /idempotency_key text NOT NULL UNIQUE/i);
@@ -19,6 +24,9 @@ test('claim is concurrent-safe and recovers stale locks', () => {
   assert.match(migration, /status = 'processing' AND locked_at < now\(\) - interval '5 minutes'/i);
   assert.match(migration, /locked_at < now\(\) - interval '5 minutes'/i);
   assert.match(migration, /attempt_count < max_attempts/i);
+  assert.match(hardening, /lease_token = gen_random_uuid\(\)/i);
+  assert.doesNotMatch(hardening, /attempt_count < (?:q\.)?max_attempts OR (?:q\.)?status = 'processing'/i);
+  assert.match(hardening, /LEASE_EXPIRED_MAX_ATTEMPTS/i);
 });
 
 test('failures back off and eventually enter dead letter', () => {
@@ -28,8 +36,9 @@ test('failures back off and eventually enter dead letter', () => {
 });
 
 test('completion and failure reject lost state transitions', () => {
-  assert.equal((migration.match(/GET DIAGNOSTICS v_rows = ROW_COUNT/gi) || []).length, 2);
-  assert.equal((migration.match(/RAISE EXCEPTION 'crm_sync_outbox_not_processing'/gi) || []).length, 2);
+  assert.equal((hardening.match(/GET DIAGNOSTICS v_rows = ROW_COUNT/gi) || []).length, 2);
+  assert.equal((hardening.match(/lease_token = p_lease_token/gi) || []).length, 2);
+  assert.equal((hardening.match(/RAISE EXCEPTION 'crm_sync_outbox_lease_lost'/gi) || []).length, 2);
 });
 
 test('queue mutation RPCs are service-role only', () => {
@@ -47,10 +56,18 @@ test('health metrics are aggregate-only and admin/service protected', () => {
   assert.match(migration, /'dead_letter'/i);
   assert.match(migration, /'oldest_ready_age_seconds'/i);
   assert.match(migration, /'succeeded_without_link'/i);
-  assert.doesNotMatch(migration, /get_crm_sync_health\(\)[\s\S]*?RETURNS SETOF/i);
+  assert.match(hardening, /FUNCTION public\.get_crm_sync_health\(\)\s*RETURNS jsonb/i);
 });
 
 test('closure trigger stores no full message transcript', () => {
   assert.match(migration, /AFTER INSERT ON public\.conversation_closures/i);
   assert.doesNotMatch(migration, /FROM public\.messages/i);
+});
+
+test('hardening preserves audit rows and fails closed on missing claims', () => {
+  assert.match(hardening, /ON DELETE SET NULL/i);
+  assert.match(hardening, /COALESCE\(auth\.role\(\), ''\) <> 'service_role'/i);
+  assert.match(hardening, /COALESCE\(public\.is_admin_or_supervisor\(auth\.uid\(\)\), false\) IS NOT TRUE/i);
+  assert.match(hardening, /status = 'dead_letter'.+last_error_code/s);
+  assert.match(hardening, /octet_length\(payload::text\) <= 20000/i);
 });
