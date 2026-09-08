@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
-import { useDebounce } from '@/hooks/system/useDebounce';
+import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { subDays, subMonths, startOfDay } from 'date-fns';
 
 export interface SearchResult {
@@ -38,12 +39,13 @@ function getDateFilterStart(filter: DateFilter): Date | null {
 }
 
 export function useGlobalSearchData(open: boolean) {
+  const { isSupervisor } = useUserRole();
+  const searchRequestId = useRef(0);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [allTags, setAllTags] = useState<TagSuggestion[]>([]);
-  const [tagSuggestions, setTagSuggestions] = useState<TagSuggestion[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTypes, setActiveTypes] = useState<Set<ResultType>>(new Set(['message', 'transcription', 'contact', 'action', 'crm']));
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -60,15 +62,16 @@ export function useGlobalSearchData(open: boolean) {
     }
   }, [open]);
 
-  useEffect(() => {
+  const tagSuggestions = useMemo(() => {
     if (search.startsWith('#') || search.includes(' #')) {
       const tagQuery = search.includes(' #')
         ? search.split(' #').pop()?.toLowerCase() || ''
         : search.slice(1).toLowerCase();
-      setTagSuggestions(allTags.filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id)).slice(0, 5));
-    } else {
-      setTagSuggestions([]);
+      return allTags
+        .filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id))
+        .slice(0, 5);
     }
+    return [];
   }, [search, allTags, selectedTags]);
 
   const toggleType = useCallback((type: ResultType) => {
@@ -80,8 +83,13 @@ export function useGlobalSearchData(open: boolean) {
   }, []);
 
   const performSearch = useCallback(async (query: string, types: Set<ResultType>, dateRange: DateFilter, tags: string[], mediaType: MediaTypeFilter = 'all') => {
+    const requestId = ++searchRequestId.current;
     const cleanQuery = query.replace(/#\w*/g, '').trim();
-    if (cleanQuery.length < 2 && tags.length === 0 && mediaType === 'all') { setResults([]); return; }
+    if (cleanQuery.length < 2 && tags.length === 0 && mediaType === 'all') {
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
 
     const isLinkSearch = mediaType === 'link';
     setIsLoading(true);
@@ -170,23 +178,34 @@ export function useGlobalSearchData(open: boolean) {
         }
       }
 
-      if (types.has('crm') && isExternalConfigured && cleanQuery.length >= 3) {
+      if (types.has('crm') && isSupervisor && isExternalConfigured && cleanQuery.length >= 3) {
         try {
-          const { data: crmData } = await getExternalSupabase().rpc('search_contacts_advanced', {
-            p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
-            p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
-            p_sort_by: 'relevance', p_page: 0, p_page_size: 8,
+          const { data: crmData } = await callCRMIntegration<{ results?: Record<string, string | null>[] }>('rpc', {
+            rpc: 'search_contacts_advanced',
+            params: { p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
+              p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
+              p_sort_by: 'relevance', p_page: 0, p_page_size: 8 },
           });
           if (crmData?.results) {
+            const externalIds = crmData.results
+              .map((result) => result.contact_id)
+              .filter((id): id is string => typeof id === 'string' && id.length > 0);
+            const { data: links } = externalIds.length
+              ? await supabase.from('crm_contact_links')
+                .select('zapp_contact_id,external_contact_id').in('external_contact_id', externalIds)
+              : { data: [] };
+            const localByExternalId = new Map((links || []).map((link) => [link.external_contact_id, link.zapp_contact_id]));
             const localPhones = new Set(searchResults.filter(r => r.type === 'contact').map(r => r.preview.replace(/\D/g, '')));
             crmData.results.forEach((cr: Record<string, string | null>) => {
               const phone = cr.phone_primary?.replace(/\D/g, '') || '';
               if (phone && localPhones.has(phone)) return;
+              const contactId = cr.contact_id ? localByExternalId.get(cr.contact_id) : undefined;
+              if (!contactId) return;
               searchResults.push({
                 id: `crm-${cr.contact_id}`, type: 'crm',
                 title: cr.full_name || cr.nome_tratamento || 'Sem nome',
                 preview: [cr.company_name, cr.phone_primary, cr.rfm_segment].filter(Boolean).join(' • '),
-                timestamp: new Date(), crmPhone: cr.phone_primary ?? undefined,
+                timestamp: new Date(), contactId, crmPhone: cr.phone_primary ?? undefined,
               });
             });
           }
@@ -194,36 +213,48 @@ export function useGlobalSearchData(open: boolean) {
       }
 
       searchResults.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      if (requestId !== searchRequestId.current) return;
       setResults(searchResults);
       if (cleanQuery.length >= 2) addToHistory(cleanQuery, searchResults.length);
     } catch (error) {
       log.error('Search error:', error);
-      setResults([]);
+      if (requestId === searchRequestId.current) setResults([]);
     } finally {
-      setIsLoading(false);
+      if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, allTags]);
-
-  const debouncedSearch = useDebounce((query: string) => {
-    performSearch(query, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
-  }, 300);
+  }, [addToHistory, allTags, isSupervisor]);
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query);
     setSelectedIndex(0);
-    debouncedSearch(query);
-  }, [debouncedSearch]);
+  }, []);
 
   useEffect(() => {
     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
-      performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
+      const timer = window.setTimeout(() => {
+        void performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
+      }, 300);
+      return () => window.clearTimeout(timer);
+    } else {
+      searchRequestId.current += 1;
+      const timer = window.setTimeout(() => {
+        setResults([]);
+        setIsLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
-  }, [activeTypes, dateFilter, selectedTags, mediaTypeFilter]);
+  }, [search, activeTypes, dateFilter, selectedTags, mediaTypeFilter, performSearch]);
+
+  const resetFilters = useCallback(() => {
+    setActiveTypes(new Set(['message', 'transcription', 'contact', 'action', 'crm']));
+    setDateFilter('all');
+    setMediaTypeFilter('all');
+    setSelectedTags([]);
+  }, []);
 
   const handleTagSelect = useCallback((tag: TagSuggestion) => {
     setSelectedTags(prev => [...prev, tag.id]);
     setSearch(prev => prev.replace(/#\w*$/, '').trim());
-    setTagSuggestions([]);
   }, []);
 
   const removeTag = useCallback((tagId: string) => {
@@ -235,6 +266,6 @@ export function useGlobalSearchData(open: boolean) {
     allTags, tagSuggestions, selectedTags, activeTypes, dateFilter, setDateFilter,
     mediaTypeFilter, setMediaTypeFilter, showFilters, setShowFilters,
     history, removeFromHistory, clearHistory,
-    toggleType, handleSearch, handleTagSelect, removeTag, performSearch,
+    toggleType, handleSearch, handleTagSelect, removeTag, performSearch, resetFilters,
   };
 }

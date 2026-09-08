@@ -6,7 +6,8 @@
  * best times, churn risk, DISC tips, and last interactions.
  */
 import { useQuery } from '@tanstack/react-query';
-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 
 export interface ContactBriefing {
@@ -98,14 +99,15 @@ export function useContactIntelligence(phone: string | undefined) {
     queryKey: ['contact-intelligence', cleanedPhone],
     queryFn: async () => {
       if (!cleanedPhone || cleanedPhone.length < 8) return null;
-      const { data, error } = await getExternalSupabase().rpc('get_contact_intelligence_by_phone', {
-        p_phone: cleanedPhone,
-      });
-      if (error) {
+      try {
+        const { data } = await callCRMIntegration<ContactIntelligenceData>('rpc', {
+          rpc: 'get_contact_intelligence_by_phone', params: { p_phone: cleanedPhone },
+        });
+        return data;
+      } catch (error) {
         log.error('Intelligence RPC error:', error);
         return null;
       }
-      return data as ContactIntelligenceData;
     },
     enabled: isExternalConfigured && !!cleanedPhone && cleanedPhone.length >= 8,
     staleTime: 1000 * 60 * 15, // 15 min

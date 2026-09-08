@@ -7,7 +7,8 @@
  */
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useState, useCallback, useMemo } from 'react';
-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 import type {
   SearchContactsParams,
@@ -16,6 +17,10 @@ import type {
 } from '@/types/contactSearch';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+export function normalizeSearchFilterValue<T extends string | number | boolean | undefined>(value: T): T | undefined {
+  return value === '' ? undefined : value;
+}
 
 export function useAdvancedContactSearch() {
   const [params, setParams] = useState<SearchContactsParams>({
@@ -35,32 +40,23 @@ export function useAdvancedContactSearch() {
   const query = useQuery<SearchContactsResponse | null>({
     queryKey: ['advanced-contact-search', params],
     queryFn: async () => {
-      const { data, error } = await getExternalSupabase().rpc('search_contacts_advanced', {
-        p_search: params.search || null,
-        p_vendedor: params.vendedor || null,
-        p_ramo: params.ramo || null,
-        p_rfm_segment: params.rfm_segment || null,
-        p_estado: params.estado || null,
-        p_cliente_ativado: params.cliente_ativado ?? null,
-        p_ja_comprou: params.ja_comprou ?? null,
-        p_sort_by: params.sort_by || 'relevance',
-        p_page: params.page || 0,
-        p_page_size: params.page_size || DEFAULT_PAGE_SIZE,
-      });
-
-      if (error) {
+      try {
+        const { data } = await callCRMIntegration<SearchContactsResponse>('rpc', {
+          rpc: 'search_contacts_advanced',
+          params: {
+            p_search: params.search || null, p_vendedor: params.vendedor || null,
+            p_ramo: params.ramo || null, p_rfm_segment: params.rfm_segment || null,
+            p_estado: params.estado || null, p_cliente_ativado: params.cliente_ativado ?? null,
+            p_ja_comprou: params.ja_comprou ?? null, p_sort_by: params.sort_by || 'relevance',
+            p_page: params.page || 0, p_page_size: params.page_size || DEFAULT_PAGE_SIZE,
+          },
+        });
+        if (data?.filters) setCachedFilters(data.filters);
+        return data;
+      } catch (error) {
         log.error('Advanced search error:', error);
         return null;
       }
-
-      const response = data as SearchContactsResponse;
-
-      // Cache filter options
-      if (response?.filters) {
-        setCachedFilters(response.filters);
-      }
-
-      return response;
     },
     enabled: isExternalConfigured && hasActiveFilters,
     placeholderData: keepPreviousData,
@@ -74,7 +70,7 @@ export function useAdvancedContactSearch() {
   }, []);
 
   const setFilter = useCallback((key: keyof SearchContactsParams, value: string | number | boolean | undefined) => {
-    setParams((prev) => ({ ...prev, [key]: value || undefined, page: 0 }));
+    setParams((prev) => ({ ...prev, [key]: normalizeSearchFilterValue(value), page: 0 }));
   }, []);
 
   const setSortBy = useCallback((sort_by: SearchContactsParams['sort_by']) => {
