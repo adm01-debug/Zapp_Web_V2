@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo, startTransition } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation, Message } from '@/types/chat';
@@ -45,6 +45,9 @@ interface ChatPanelProps {
   onToggleDetails?: () => void;
   onBack?: () => void;
   hideHeader?: boolean;
+  /** Texto vindo da aba IA ("Usar resposta") — aplicado ao input e consumido uma única vez. */
+  pendingDraft?: string | null;
+  onDraftConsumed?: () => void;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -83,7 +86,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -127,9 +130,20 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
   useEffect(() => { initResolve(); }, [conversation.contact.id]);
   useEffect(() => { messagesAreaRef.current?.scrollToBottom(); }, [messages.length, isContactTyping]);
+  // Resets UI-only state when conversation changes; startTransition avoids
+  // calling setState synchronously in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    setActiveTool(null); setHighlightedMessageIds(new Set()); setActiveHighlightId(null); setSearchQuery('');
+    startTransition(() => {
+      setActiveTool(null); setHighlightedMessageIds(new Set()); setActiveHighlightId(null); setSearchQuery('');
+    });
   }, [conversation.id]);
+
+  useEffect(() => {
+    if (!pendingDraft) return;
+    handlers.setInputValue(pendingDraft);
+    handlers.inputRef.current?.focus();
+    onDraftConsumed?.();
+  }, [pendingDraft, onDraftConsumed, handlers]);
 
   const canGenerateSummary = messages.length >= 10;
 

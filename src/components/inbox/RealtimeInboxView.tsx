@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
@@ -13,6 +13,10 @@ import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs';
+import { ConversationTabContent } from './chat/ConversationTabContent';
+import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
+import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
 const ChatPanel = lazy(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })));
 const ContactDetails = lazy(() => import('./ContactDetails').then(m => ({ default: m.ContactDetails })));
@@ -46,6 +50,31 @@ export function RealtimeInboxView() {
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await inbox.refetch(); }, disabled: !isMobile || !!inbox.selectedContactId });
+
+  // Aba ativa do painel central, ancorada no contato que a selecionou.
+  // Ao trocar de conversa o id deixa de bater e o valor derivado volta a 'chat'
+  // sem efeito nem setState em cascata — manter 'Notas' aberto ao clicar noutro
+  // contato seria desorientador.
+  const [tabState, setTabState] = useState<{ contactId: string | null; tab: ConversationTab }>(
+    { contactId: null, tab: 'chat' }
+  );
+  const activeTab: ConversationTab =
+    tabState.contactId === inbox.selectedContactId ? tabState.tab : 'chat';
+  const setActiveTab = useCallback(
+    (tab: ConversationTab) => setTabState({ contactId: inbox.selectedContactId, tab }),
+    [inbox.selectedContactId]
+  );
+  const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
+  // Badge da aba Pedidos vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
+  const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
+  const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
+
+  // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
+  const [pendingDraft, setPendingDraft] = useState<string | null>(null);
+  const handleUseSuggestion = useCallback((text: string) => {
+    setPendingDraft(text);
+    setActiveTab('chat');
+  }, [setActiveTab]);
 
   useGlobalSearchShortcut({ onOpen: () => inbox.setGlobalSearchOpen(true) });
 
@@ -115,8 +144,16 @@ export function RealtimeInboxView() {
         {inbox.legacyConversation ? (
           <Suspense fallback={<ChatFallback />}>
             <>
-              <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden">
+              <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
+                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} extraCounts={tabExtraCounts} />
                 {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
+                  <ConversationTabContent
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    conversation={inbox.legacyConversation}
+                    messages={inbox.legacyMessages}
+                    onUseSuggestion={handleUseSuggestion}
+                  >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel
                       key={inbox.legacyConversation.id}
@@ -124,6 +161,8 @@ export function RealtimeInboxView() {
                       messages={inbox.legacyMessages}
                       onSendMessage={inbox.handleSendMessage}
                       onSendAudio={inbox.handleSendAudio}
+                      pendingDraft={pendingDraft}
+                      onDraftConsumed={() => setPendingDraft(null)}
                       showDetails={isMobile ? false : inbox.showDetails}
                       onToggleDetails={() => inbox.setShowDetails(!inbox.showDetails)}
                       onBack={isMobile ? () => {
@@ -134,6 +173,7 @@ export function RealtimeInboxView() {
                         } : undefined}
                     />
                   </SectionErrorBoundary>
+                  </ConversationTabContent>
                 )}
               </div>
               {inbox.showDetails && (

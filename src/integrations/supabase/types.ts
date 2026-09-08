@@ -1618,26 +1618,35 @@ export type Database = {
       contact_notes: {
         Row: {
           author_id: string
+          category: string
           contact_id: string
           content: string
           created_at: string
+          due_date: string | null
           id: string
+          is_done: boolean
           updated_at: string
         }
         Insert: {
           author_id: string
+          category?: string
           contact_id: string
           content: string
           created_at?: string
+          due_date?: string | null
           id?: string
+          is_done?: boolean
           updated_at?: string
         }
         Update: {
           author_id?: string
+          category?: string
           contact_id?: string
           content?: string
           created_at?: string
+          due_date?: string | null
           id?: string
+          is_done?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -7556,6 +7565,21 @@ export type Database = {
           count: number
         }[]
       }
+      get_conversation_tab_counts: {
+        Args: { p_contact_id: string }
+        Returns: {
+          tasks_open: number
+          notes_total: number
+          files_total: number
+        }[]
+      }
+      get_last_message_dates: {
+        Args: { contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_at: string
+        }[]
+      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       effective_role: {
         Args: { _user_id: string }
@@ -7651,13 +7675,6 @@ export type Database = {
           profile_id: string
           profile_role_cached: string
           user_roles_list: string
-        }[]
-      }
-      get_last_message_dates: {
-        Args: { contact_ids: string[] }
-        Returns: {
-          contact_id: string
-          last_message_at: string
         }[]
       }
       get_own_gmail_accounts: {

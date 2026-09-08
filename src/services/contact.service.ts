@@ -70,7 +70,7 @@ export class ContactService {
   static async fetchNotes(contactId: string) {
     const { data, error } = await supabase
       .from('contact_notes')
-      .select(`id, contact_id, author_id, content, created_at, updated_at`)
+      .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
 
@@ -78,7 +78,7 @@ export class ContactService {
 
     const authorIds = [...new Set(data?.map(n => n.author_id).filter(Boolean) || [])];
     let authors: { id: string, name: string | null, avatar_url: string | null }[] = [];
-    
+
     if (authorIds.length > 0) {
       const { data: authorsData } = await supabase
         .from('profiles')
@@ -94,16 +94,34 @@ export class ContactService {
     }));
   }
 
-  static async addNote(contactId: string, authorId: string, content: string) {
+  static async addNote(
+    contactId: string,
+    authorId: string,
+    content: string,
+    options?: { category?: string; dueDate?: string | null },
+  ) {
     return supabase
       .from('contact_notes')
-      .insert({ contact_id: contactId, author_id: authorId, content })
+      .insert({
+        contact_id: contactId,
+        author_id: authorId,
+        content,
+        category: options?.category ?? 'note',
+        due_date: options?.dueDate ?? null,
+      })
       .select()
       .single();
   }
 
    static async deleteNote(noteId: string) {
      return supabase.from('contact_notes').delete().eq('id', noteId);
+   }
+
+   static async updateNote(
+     noteId: string,
+     updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>,
+   ) {
+     return supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
    }
  
    static async fetchCustomFields(contactId: string) {

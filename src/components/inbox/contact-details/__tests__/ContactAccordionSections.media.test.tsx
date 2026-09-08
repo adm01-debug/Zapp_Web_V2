@@ -28,13 +28,19 @@ function filterDomProps(props: Record<string, unknown>) {
   return rest;
 }
 
-const mockMessages = [
-  { id: 'm1', media_url: 'https://example.com/foto.jpg', message_type: 'image', content: 'primeira', created_at: '2026-09-01T10:00:00Z' },
-  { id: 'm2', media_url: 'https://example.com/doc.pdf', message_type: 'document', content: 'segunda', created_at: '2026-09-01T11:00:00Z' },
-];
+// Formato retornado por useContactMedia (src/hooks/chat/useContactMedia.ts):
+// { items: ContactMediaItem[], counts }. useQuery e mockado globalmente, entao
+// a queryFn real nunca roda — os dados aqui simulam o resultado ja classificado.
+const mockMediaResult = {
+  items: [
+    { id: 'm1', url: 'https://example.com/foto.jpg', type: 'image', filename: 'foto.jpg', created_at: '2026-09-01T10:00:00Z', caption: 'primeira', mimetype: 'image/jpeg', size: null, meta: null, sender: 'contact' },
+    { id: 'm2', url: 'https://example.com/doc.pdf', type: 'document', filename: 'doc.pdf', created_at: '2026-09-01T11:00:00Z', caption: 'segunda', mimetype: 'application/pdf', size: null, meta: null, sender: 'agent' },
+  ],
+  counts: { all: 2, image: 1, video: 0, audio: 0, document: 1 },
+};
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: mockMessages, isLoading: false }),
+  useQuery: () => ({ data: mockMediaResult, isLoading: false }),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
