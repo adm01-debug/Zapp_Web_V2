@@ -114,7 +114,7 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
       const summary = buildSummary(conversation, messages);
 
       syncConversation({
-        phone: conversation.contact.phone,
+        contactId: conversation.contact.id,
         channel: 'whatsapp',
         direction: 'inbound',
         assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
@@ -122,7 +122,6 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
         sentiment,
         messageCount: messageCount || messages?.length || 0,
         agentName: agentName || undefined,
-        zappConversationId: conversation.id,
       });
 
       log.info('CRM auto-sync triggered:', { id: conversation.id, sentiment });
@@ -147,14 +146,13 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
   const handleSync = async () => {
     try {
       const result = await syncConversationAsync({
-        phone: conversation.contact.phone,
+        contactId: conversation.contact.id,
         channel: 'whatsapp',
         direction: 'inbound',
         assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
         resumo: conversation.lastMessage?.content?.slice(0, 500) || undefined,
         sentiment: 'neutral',
         messageCount: messageCount || 0,
-        zappConversationId: conversation.id,
       });
 
       if (result?.synced) {
@@ -165,6 +163,9 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
             ? `Score atualizado: ${result.new_relationship_score}`
             : undefined,
         });
+      } else if (result?.queued) {
+        setLastSyncTime(new Date());
+        toast.info('Sincronização agendada', { description: 'A fila CRM fará novas tentativas automaticamente.' });
       } else if (result?.reason === 'duplicate') {
         setLastSyncTime(new Date());
         toast.info('Já sincronizado', { description: 'Esta conversa já foi enviada ao CRM.' });

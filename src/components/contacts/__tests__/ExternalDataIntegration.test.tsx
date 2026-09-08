@@ -3,48 +3,42 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Mock RPC and direct table calls used by the updated hooks
+// Mock the authenticated CRM gateway used by hooks and services.
 const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 
-vi.mock('@/integrations/supabase/externalClient', () => {
-  const _mockRpc = (...args: any[]) => (globalThis as any).__extMockRpc(...args);
-  const _mockFrom = (table: string) => {
-    (globalThis as any).__extMockFrom(table);
-    return {
-      select: vi.fn(() => ({
-        not: vi.fn(() => ({
-          limit: vi.fn(() => {
-            if (table === 'salespeople') {
-              return Promise.resolve({
-                data: [
-                  { role: 'Closer' },
-                  { role: 'SDR' },
-                  { role: 'Gerente' },
-                  { role: '  Hybrid  ' },
-                  { role: '' },
-                  { role: null },
-                ],
-                error: null,
-              });
-            }
-            return Promise.resolve({ data: [], error: null });
-          }),
-        })),
-      })),
-    };
-  };
-  const client = { rpc: _mockRpc, from: _mockFrom };
-  return {
-    externalSupabase: client,
-    getExternalSupabase: () => client,
-    isExternalConfigured: true,
-  };
-});
+vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: true }));
+
+vi.mock('@/lib/crmIntegration', () => ({
+  callCRMIntegration: async (action: string, payload: Record<string, unknown>) => {
+    if (action === 'rpc') {
+      const result = await (globalThis as unknown as {
+        __extMockRpc: (rpc: unknown, params: unknown) => Promise<{ data: unknown; error?: Error }>;
+      }).__extMockRpc(payload.rpc, payload.params);
+      if (result.error) throw result.error;
+      return { data: result.data, meta: { record_count: 1, duration_ms: 1, severity: 'ok' } };
+    }
+    if (action === 'select') {
+      (globalThis as unknown as { __extMockFrom: (table: unknown) => void }).__extMockFrom(payload.table);
+      return {
+        data: payload.table === 'salespeople' ? [
+          { role: 'Closer' }, { role: 'SDR' }, { role: 'Gerente' },
+          { role: '  Hybrid  ' }, { role: '' }, { role: null },
+        ] : [],
+        meta: { record_count: 6, duration_ms: 1, severity: 'ok' },
+      };
+    }
+    throw new Error(`Unexpected action: ${action}`);
+  },
+}));
 
 // Bridge mock fns to globalThis so the hoisted factory can access them
-(globalThis as any).__extMockRpc = mockRpc;
-(globalThis as any).__extMockFrom = mockFrom;
+const testGlobals = globalThis as unknown as {
+  __extMockRpc: typeof mockRpc;
+  __extMockFrom: typeof mockFrom;
+};
+testGlobals.__extMockRpc = mockRpc;
+testGlobals.__extMockFrom = mockFrom;
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
