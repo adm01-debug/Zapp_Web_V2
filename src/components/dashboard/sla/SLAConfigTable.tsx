@@ -1,5 +1,5 @@
 import { SlidersHorizontal, Pencil, Trash2, Plus, Loader2 } from 'lucide-react';
-import { DashboardCard, SectionHeader } from '../overview/DashboardCard';
+import { DashboardCard, SectionHeader, PrimaryButton } from '../overview/DashboardCard';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,21 +29,14 @@ export function SLAConfigTable() {
   } = useSLAConfigurations();
 
   return (
-    <DashboardCard testid="sla-config-table-card">
+    <DashboardCard testid="sla-config-table-card" variant="comfortable">
       <SectionHeader
         icon={SlidersHorizontal}
         title="Configurações Globais de SLA"
         subtitle="Defina metas padrão de tempo de primeira resposta por nível de prioridade"
-        tileSize={34}
-        right={(
-          <button
-            type="button"
-            onClick={openCreate}
-            className="h-8 px-2.5 rounded-lg bg-primary text-primary-foreground text-[12px] font-semibold flex items-center gap-1 shrink-0 hover:bg-primary/90"
-          >
-            <Plus className="w-3.5 h-3.5" /> Novo SLA
-          </button>
-        )}
+        tileSize={44}
+        size="lg"
+        right={<PrimaryButton icon={Plus} onClick={openCreate}>Novo SLA</PrimaryButton>}
       />
 
       {isLoading ? (
@@ -56,17 +49,17 @@ export function SLAConfigTable() {
         <table className="table-auto w-full text-[13px]">
           <thead>
             <tr className="text-left">
-              <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Prioridade</th>
-              <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Tempo de 1ª resposta</th>
-              <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Status</th>
-              <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Ações</th>
+              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Prioridade</th>
+              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Tempo de 1ª resposta</th>
+              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Status</th>
+              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Ações</th>
             </tr>
           </thead>
           <tbody>
             {configs.map((cfg) => {
               const pCfg = PRIORITY_CONFIG[cfg.priority] || PRIORITY_CONFIG.medium;
               return (
-                <tr key={cfg.id} className="h-11 border-t border-border/60">
+                <tr key={cfg.id} className="h-12 border-t border-border/50">
                   <td className="pr-2">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT_CLASS[cfg.priority] ?? 'bg-dash-blue'}`} />

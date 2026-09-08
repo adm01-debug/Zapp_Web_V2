@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
-import { Target } from 'lucide-react';
-import { DashboardCard, SectionHeader } from '../overview/DashboardCard';
+import { Target, MoreHorizontal } from 'lucide-react';
+import { DashboardCard, SectionHeader, Pill } from '../overview/DashboardCard';
 import type { Goal } from '@/hooks/analytics/useGoalsDashboard';
-import { getGoalStatus, getPriorityLabel, getGoalTileClass, GOAL_STATUS_BADGE_CLASS } from './goalsStatus';
+import { getGoalStatus, getPriorityLabel } from './goalsStatus';
 
 type SubTab = 'active' | 'completed' | 'all';
 
@@ -35,15 +35,16 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
   ];
 
   return (
-    <DashboardCard testid="goals-table-card">
+    <DashboardCard testid="goals-table-card" variant="comfortable">
       <SectionHeader
         icon={Target}
         title="Metas do dia"
-        subtitle="Acompanhe o progresso das suas metas ativas"
+        subtitle="Acompanhe o progresso das suas metas ativas."
         tileSize={44}
+        size="lg"
         right={(
           <LayoutGroup id="goals-subtabs">
-            <div className="h-8 rounded-lg bg-muted/40 border border-border/50 p-0.5 flex items-center gap-0.5 shrink-0">
+            <div className="h-10 rounded-lg bg-muted/40 border border-border/50 p-1 flex items-center gap-1 shrink-0">
               {tabs.map((t) => {
                 const isActive = subTab === t.value;
                 return (
@@ -51,7 +52,7 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                     key={t.value}
                     type="button"
                     onClick={() => setSubTab(t.value)}
-                    className="relative isolate h-7 px-2.5 rounded-md text-[12px] font-medium text-foreground-secondary data-[state=active]:text-white data-[state=active]:font-semibold transition-colors"
+                    className="relative isolate h-8 px-3.5 rounded-md text-[13px] font-medium text-foreground-secondary data-[state=active]:text-white data-[state=active]:font-semibold transition-colors"
                     data-state={isActive ? 'active' : 'inactive'}
                   >
                     {isActive && (
@@ -91,12 +92,13 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
           <table className="table-auto w-full text-[13px]">
             <thead>
               <tr className="text-left">
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Meta</th>
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Tipo</th>
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Progresso</th>
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Atual / Meta</th>
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Restante</th>
-                <th className="pb-2 text-[12px] font-semibold text-muted-foreground">Status</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Meta</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Tipo</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Progresso</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Atual / Meta</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Restante</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Status</th>
+                <th className="pb-3 text-[12px] font-semibold text-muted-foreground text-right pr-1">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -104,26 +106,24 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                 const Icon = goal.icon;
                 const remaining = Math.max(goal.target - goal.current, 0);
                 return (
-                  <tr key={goal.id} className="h-12 border-t border-border/60">
+                  <tr key={goal.id} className="h-14 border-t border-border/50">
                     <td className="pr-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 ${getGoalTileClass(goal.id)}`}>
-                          <Icon className="w-4 h-4 text-white/90" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-[10px] bg-primary/15 flex items-center justify-center shrink-0">
+                          <Icon className="w-[18px] h-[18px] text-primary-glow" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[13px] font-semibold text-foreground truncate">{goal.label}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{goal.description}</p>
+                          <p className="text-[14px] font-semibold text-foreground truncate">{goal.label}</p>
+                          <p className="text-[12px] text-muted-foreground truncate">{goal.description}</p>
                         </div>
                       </div>
                     </td>
                     <td className="pr-2">
-                      <span className="h-[22px] px-2 rounded-md text-[11px] font-medium bg-muted/50 text-foreground-secondary border border-border/60 inline-flex items-center">
-                        {getPriorityLabel(goal.priority)}
-                      </span>
+                      <Pill label={getPriorityLabel(goal.priority)} tone="muted" />
                     </td>
                     <td className="pr-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-[130px] h-1.5 rounded-full bg-muted overflow-hidden shrink-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-[120px] h-1.5 rounded-full bg-muted/50 overflow-hidden shrink-0">
                           <div className={`h-full rounded-full ${status.tone === 'success' ? 'bg-success' : status.tone === 'primary' ? 'bg-primary' : status.tone === 'warning' ? 'bg-warning' : 'bg-destructive'}`} style={{ width: `${percentage}%` }} />
                         </div>
                         <span className="text-[12px] font-medium text-foreground tabular-nums">{percentage}%</span>
@@ -136,9 +136,12 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                       {completed ? '—' : `${remaining.toLocaleString('pt-BR')} ${goal.unit}`}
                     </td>
                     <td>
-                      <span className={`h-[22px] px-2 rounded-md text-[11px] font-semibold border inline-flex items-center ${GOAL_STATUS_BADGE_CLASS[status.tone]}`}>
-                        {status.label}
-                      </span>
+                      <Pill label={status.label} tone={status.tone === 'success' ? 'success' : status.tone === 'primary' ? 'info' : status.tone === 'warning' ? 'warning' : 'danger'} />
+                    </td>
+                    <td className="text-right">
+                      <button type="button" onClick={onConfigure} title="Configurar meta" className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 );
