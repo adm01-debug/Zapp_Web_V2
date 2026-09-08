@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Tag, Sparkles, User, FileText, Clock, BarChart3, Brain, Info, TagsIcon, Smartphone, Image, ListTodo, Bell, TrendingUp, ShoppingBag, GitBranch, X, BadgeCheck } from 'lucide-react';
+import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, Smartphone, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, CircleDollarSign, ListTodo, Layers } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
@@ -13,18 +14,16 @@ import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { PrivateNotes } from '../PrivateNotes';
-import { ConversationHistory } from '../ConversationHistory';
-import { MediaGalleryContent } from '../MediaGallery';
-import { ConversationTasksPanel } from '../ConversationTasksPanel';
-import { RemindersPanel } from '../RemindersPanel';
+import { ComercialSummaryWidget } from './ComercialSummaryWidget';
+import { ContactTasksWidget } from './ContactTasksWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
 import { LeadRiskScorePanel } from '../LeadRiskScorePanel';
 import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { ConversationTimeline } from '../ConversationTimeline';
+import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
+import { AnalysisBadges } from '../AnalysisBadges';
 
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
-import { log } from '@/lib/logger';
 import type { EnrichedContactData, AIConversationTag, SLAInfo } from '@/hooks/crm/useContactEnrichedData';
 
 const sectionVariants = {
@@ -42,102 +41,102 @@ interface ContactAccordionSectionsProps {
   aiTags: AIConversationTag[];
   slaInfo: SLAInfo | null;
   profileId: string | null;
+  onPanelTabChange?: (tab: string) => void;
 }
 
-export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId }: ContactAccordionSectionsProps) {
+export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId, onPanelTabChange }: ContactAccordionSectionsProps) {
+  const [infoExpanded, setInfoExpanded] = useState(false);
+  const hasMoreInfo = isExternalConfigured || slaInfo || aiTags.length > 0;
+
   return (
     <>
       <Section index={0} value="info" icon={<Info className="w-3.5 h-3.5 text-primary" />} label="Informações">
-        <ContactInfoSection contact={contact} enrichedData={enrichedData} />
+        <div className="space-y-2">
+          <ContactInfoSection contact={contact} enrichedData={enrichedData} />
+          {hasMoreInfo && (
+            <>
+              <Button variant="ghost" size="sm" className="h-6 text-xs w-full justify-center text-muted-foreground hover:text-primary" onClick={() => setInfoExpanded((v) => !v)}>
+                Ver mais <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${infoExpanded ? 'rotate-180' : ''}`} />
+              </Button>
+              {infoExpanded && (
+                <div className="space-y-2 pt-1 border-t border-border/30">
+                  {isExternalConfigured && <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />}
+                  {(slaInfo || aiTags.length > 0) && <SLAAndAITagsSection slaInfo={slaInfo} aiTags={aiTags} />}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </Section>
 
       <Section index={1} value="whatsapp-status" icon={<Smartphone className="w-3.5 h-3.5 text-primary" />} label="Status WhatsApp">
         <WhatsAppStatusSection phone={contact.phone} />
       </Section>
 
-      {isExternalConfigured && (
-        <Section index={1.5} value="evolution-profile" icon={<BadgeCheck className="w-3.5 h-3.5 text-primary" />} label="Perfil WhatsApp">
-          <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />
-        </Section>
-      )}
-
-      {(slaInfo || aiTags.length > 0) && (
-        <Section index={1} value="sla-ai" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="SLA & Inteligência">
-          <SLAAndAITagsSection slaInfo={slaInfo} aiTags={aiTags} />
-        </Section>
-      )}
-
-      {isExternalConfigured && (
-        <>
-          <Section index={2} value="crm-360" icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
-            <ExternalContact360Panel phone={contact.phone} />
-          </Section>
-          <Section index={2.5} value="intelligence" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
-            <ContactIntelligencePanel phone={contact.phone} />
-          </Section>
-        </>
-      )}
-
-      <Section index={3} value="tags" icon={<Tag className="w-3.5 h-3.5 text-primary" />} label="Tags"
+      <Section index={2} value="tags" icon={<Tag className="w-3.5 h-3.5 text-primary" />} label="Tags"
         badge={((contact.tags ?? []).length + conversation.tags.length) > 0 ? (contact.tags ?? []).length + conversation.tags.length : undefined}>
         <TagsContent contact={contact} conversation={conversation} />
       </Section>
 
-      <Section index={4} value="assignment" icon={<User className="w-3.5 h-3.5 text-primary" />} label="Atribuição">
-        <AssignmentSection conversation={conversation} />
+      <Section index={3} value="commercial-summary" icon={<CircleDollarSign className="w-3.5 h-3.5 text-primary" />} label="Resumo Comercial">
+        <ComercialSummaryWidget contactId={contact.id} />
       </Section>
 
-      <Section index={5.5} value="tasks" icon={<ListTodo className="w-3.5 h-3.5 text-primary" />} label="Tarefas">
-        <ConversationTasksPanel contactId={contact.id} profileId={profileId} />
+      <Section index={4} value="tasks" icon={<ListTodo className="w-3.5 h-3.5 text-primary" />} label="Tarefas da Conversa">
+        <ContactTasksWidget contactId={contact.id} onOpenTasksTab={() => onPanelTabChange?.('tasks')} />
       </Section>
 
-      <Section index={5.7} value="reminders" icon={<Bell className="w-3.5 h-3.5 text-primary" />} label="Lembretes">
-        <RemindersPanel contactId={contact.id} profileId={profileId} />
-      </Section>
-
-      <Section index={5.9} value="memory" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Memória Viva">
-        <ConversationMemoryPanel contactId={contact.id} profileId={profileId} />
-      </Section>
-
-      <Section index={6} value="scoring" icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
-        <LeadRiskScorePanel contactId={contact.id} />
-      </Section>
-
-      <Section index={6.2} value="purchases" icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
-        <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
-      </Section>
-
-      <Section index={6} value="notes" icon={<FileText className="w-3.5 h-3.5 text-primary" />} label="Notas Privadas">
-        <PrivateNotes contactId={contact.id} />
-      </Section>
-
-      <Section index={6.8} value="timeline" icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
-        <ConversationTimeline contactId={contact.id} />
-      </Section>
-
-      <Section index={7} value="history" icon={<Clock className="w-3.5 h-3.5 text-primary" />} label="Histórico">
-        <ConversationHistory contactId={contact.id} contactPhone={contact.phone} onSelectConversation={(id) => log.debug('Selected conversation:', id)} />
-      </Section>
-
-      <motion.div custom={8} initial="hidden" animate="visible" variants={sectionVariants}>
-        <AccordionItem value="stats" className="border-border/30">
+      <motion.div custom={5} initial="hidden" animate="visible" variants={sectionVariants}>
+        <AccordionItem value="more-details" className="border-border/30">
           <AccordionTrigger className="px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider hover:no-underline hover:bg-muted/10">
-            <div className="flex items-center gap-2"><BarChart3 className="w-3.5 h-3.5 text-primary" />Estatísticas</div>
+            <div className="flex items-center gap-2"><Layers className="w-3.5 h-3.5 text-primary" />Mais detalhes</div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <ContactStatsSection contactId={contact.id} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="media" className="border-border/30">
-          <AccordionTrigger className="px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider hover:no-underline hover:bg-muted/10">
-            <div className="flex items-center gap-2"><Image className="w-3.5 h-3.5" />Mídia Compartilhada</div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <MediaGalleryContent contactId={contact.id} />
+          <AccordionContent className="px-4 pb-4 space-y-4">
+            {isExternalConfigured && (
+              <MoreDetailsBlock icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
+                <ExternalContact360Panel phone={contact.phone} />
+              </MoreDetailsBlock>
+            )}
+            {isExternalConfigured && (
+              <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
+                <ContactIntelligencePanel phone={contact.phone} />
+              </MoreDetailsBlock>
+            )}
+            <MoreDetailsBlock icon={<User className="w-3.5 h-3.5 text-primary" />} label="Atribuição">
+              <AssignmentSection conversation={conversation} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Memória Viva">
+              <ConversationMemoryPanel contactId={contact.id} profileId={profileId} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
+              <LeadRiskScorePanel contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
+              <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
+              <ConversationTimeline contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<BarChart3 className="w-3.5 h-3.5 text-primary" />} label="Estatísticas">
+              <ContactStatsSection contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<BookOpen className="w-3.5 h-3.5 text-primary" />} label="Base de Conhecimento">
+              <KnowledgeBaseSearchPanel />
+            </MoreDetailsBlock>
+            <AnalysisBadges contactId={contact.id} />
           </AccordionContent>
         </AccordionItem>
       </motion.div>
     </>
+  );
+}
+
+function MoreDetailsBlock({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
+      {children}
+    </div>
   );
 }
 
