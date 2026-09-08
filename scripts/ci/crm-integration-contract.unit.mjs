@@ -35,6 +35,15 @@ test('CRM gateway minimizes message data and authenticates before external confi
   assert.match(edgeSource, /AbortSignal\.timeout\(TIMEOUT_MS\)/);
 });
 
+test('contact enrichment derives phones from RLS-visible canonical contacts', () => {
+  assert.match(edgeSource, /action === 'contactLookup'/);
+  assert.match(edgeSource, /canonicalUser\.from\('contacts'\)/);
+  assert.match(edgeSource, /Contact not found or not visible/);
+  assert.match(edgeSource, /isServiceRequest \|\| isCronRequest \|\| !isValidUUID\(body\.contactId\)/);
+  assert.match(edgeSource, /action === 'contactLookupBatch'/);
+  assert.match(edgeSource, /body\.contactIds\.length > 100/);
+});
+
 test('CRM rejects false-success responses before completing the queue', () => {
   assert.deepEqual(parseSyncResult({ synced: true, interaction_id: 'i1', contact_id: 'c1' }), {
     synced: true, interaction_id: 'i1', contact_id: 'c1', company_id: null,
