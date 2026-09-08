@@ -4,7 +4,10 @@ import {
   SkipForward, BarChart3, Activity, RefreshCw, Zap,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
+import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import {
@@ -30,6 +33,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const { events, logEvent } = useTalkXEvents(campaignId);
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [elapsedSec, setElapsedSec] = useState(0);
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
@@ -66,28 +70,29 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [campaignId, statusFilter, qc]);
 
-  const elapsed = useMemo(() => {
-    if (!campaign?.started_at) return null;
-    const s = Math.floor((Date.now() - new Date(campaign.started_at).getTime()) / 1000);
-    const m = Math.floor(s / 60);
-    return m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m ${s%60}s`;
+  // Elapsed timer — Date.now() runs in effect/callback, never in render body
+  useEffect(() => {
+    if (!campaign?.started_at) return; // stays 0 (initial state) when no start time
+    const startMs = new Date(campaign.started_at).getTime();
+    const update = () => setElapsedSec(Math.floor((Date.now() - startMs) / 1000));
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
   }, [campaign?.started_at]);
+  const elapsed = elapsedSec === 0 ? null : (() => {
+    const m = Math.floor(elapsedSec / 60);
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m ${elapsedSec % 60}s`;
+  })();
 
   const progress = campaign && campaign.total_recipients > 0 ? pct(campaign.sent_count + campaign.failed_count, campaign.total_recipients) : 0;
   const remaining = campaign ? campaign.total_recipients - campaign.sent_count - campaign.failed_count : 0;
   const successRate = campaign && campaign.sent_count + campaign.failed_count > 0 ? pct(campaign.sent_count, campaign.sent_count + campaign.failed_count) : 0;
 
-  const chartData = useMemo(() => {
-    if (!campaign?.started_at) return [];
-    const start = new Date(campaign.started_at).getTime();
-    return Array.from({ length: 12 }, (_, i) => {
-      const t = new Date(start + i * 5 * 60_000);
-      return { label: `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`, Enviadas: Math.round(Math.random()*150+30), Entregues: Math.round(Math.random()*130+20) };
-    });
-  }, [campaign?.started_at]);
+  // Real rate data from hook (E02) — replaced Math.random with actual DB data
+  const { rateByMinute: chartData } = useTalkXMonitor(campaignId, statusFilter);
 
   const handleExport = async () => {
-    const { data } = await supabase.from('talkx_recipients').select('*, contacts:contact_id(name, phone)').eq('campaign_id', campaignId).order('created_at');
+    const { data } = await fromTable('talkx_recipients').select('*, contacts:contact_id(name, phone)').eq('campaign_id', campaignId).order('created_at');
     if (!data?.length) return;
     const rows = data.map((r) => ({ Nome: (r.contacts as {name:string}|null)?.name, Telefone: (r.contacts as {phone:string}|null)?.phone, Status: r.status, Mensagem: r.personalized_message, Erro: r.error_message, 'Enviada em': r.sent_at }));
     const h = Object.keys(rows[0]??{}); const csv = [h.join(','), ...rows.map((row) => h.map((k) => `"${String((row as Record<string,string>)[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');

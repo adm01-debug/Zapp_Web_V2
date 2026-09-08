@@ -154,7 +154,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                     const when = c.scheduled_at ?? c.started_at ?? null;
                     return (
                       <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                        <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
+                        <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
                         <Td>
                           <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
                             <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />

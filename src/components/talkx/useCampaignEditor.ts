@@ -85,6 +85,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   useEffect(() => {
     if (!campaign && templateId && !messageTemplate) {
       const t = templates.find((x) => x.id === templateId);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (t) { setMessageTemplate(t.content); if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); } }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,6 +101,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
 
