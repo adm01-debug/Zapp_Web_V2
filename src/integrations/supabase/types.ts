@@ -7556,6 +7556,21 @@ export type Database = {
           count: number
         }[]
       }
+      get_conversation_tab_counts: {
+        Args: { p_contact_id: string }
+        Returns: {
+          tasks_open: number
+          notes_total: number
+          files_total: number
+        }[]
+      }
+      get_last_message_dates: {
+        Args: { contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_at: string
+        }[]
+      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       effective_role: {
         Args: { _user_id: string }

@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
@@ -13,6 +13,9 @@ import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs';
+import { ConversationTabContent } from './chat/ConversationTabContent';
+import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
 const ChatPanel = lazy(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })));
 const ContactDetails = lazy(() => import('./ContactDetails').then(m => ({ default: m.ContactDetails })));
@@ -46,6 +49,21 @@ export function RealtimeInboxView() {
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await inbox.refetch(); }, disabled: !isMobile || !!inbox.selectedContactId });
+
+  // Aba ativa do painel central, ancorada no contato que a selecionou.
+  // Ao trocar de conversa o id deixa de bater e o valor derivado volta a 'chat'
+  // sem efeito nem setState em cascata — manter 'Notas' aberto ao clicar noutro
+  // contato seria desorientador.
+  const [tabState, setTabState] = useState<{ contactId: string | null; tab: ConversationTab }>(
+    { contactId: null, tab: 'chat' }
+  );
+  const activeTab: ConversationTab =
+    tabState.contactId === inbox.selectedContactId ? tabState.tab : 'chat';
+  const setActiveTab = useCallback(
+    (tab: ConversationTab) => setTabState({ contactId: inbox.selectedContactId, tab }),
+    [inbox.selectedContactId]
+  );
+  const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
 
   useGlobalSearchShortcut({ onOpen: () => inbox.setGlobalSearchOpen(true) });
 
@@ -115,8 +133,14 @@ export function RealtimeInboxView() {
         {inbox.legacyConversation ? (
           <Suspense fallback={<ChatFallback />}>
             <>
-              <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden">
+              <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
+                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} />
                 {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
+                  <ConversationTabContent
+                    activeTab={activeTab}
+                    conversation={inbox.legacyConversation}
+                    messages={inbox.legacyMessages}
+                  >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel
                       key={inbox.legacyConversation.id}
@@ -134,6 +158,7 @@ export function RealtimeInboxView() {
                         } : undefined}
                     />
                   </SectionErrorBoundary>
+                  </ConversationTabContent>
                 )}
               </div>
               {inbox.showDetails && (
