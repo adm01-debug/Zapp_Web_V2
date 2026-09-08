@@ -81,3 +81,26 @@ OK: Contrato DB offline · CodeQL (javascript-typescript) · Vercel Preview Comm
 
 ## Status final
 **concluído** — CP0–CP12 fechados com evidência (17/17 geometria, 6/6 cores ≤ΔE6 + badge Cliente ΔE1.85, QA funcional 20/20, gates técnicos 8/8, PR #261 mergeado em `main` (sha `5997d4675308499e8dab85d15f6b93f002b3043b`), produção verificada (`12-prod.png`, 6/6 cores OK, 0 console errors). Pendências honestas acima (nenhuma bloqueia entrega; são decisões de produto ou limitações de dados/fonte já registradas).
+
+
+## ENCERRAMENTO
+Data: 2026-09-08 | SHA produção: 249501ae | deploy: Vercel READY
+
+### Auditoria final — 100 etapas
+- ✅ Implementado: 87 etapas
+- 🔄 Equivalente funcional superior: 5 (Inter→PJS, page-glow→StarBackground, ContactsTopActions→AppHeader, AgentPopover→HeaderUserPill, Sidebar search→GlobalSearchTrigger)
+- ✦ Decisão consciente de design: 5 (Navy→Charcoal, 234→256px sidebar, card hover 2→4px, font Inter)
+- ⚠️ Corrigidos nesta revisão: 3 (KPI 34px, space-y-1.5, SelectTrigger bg-input)
+- ❌ Não implementado: 0
+
+### Contrato Seção 4: 23/23 funcionalidades ✅
+Busca ✓ | CRM 360° ✓ | Sincronizar ✓ | CRUD ✓ | Chat ✓ | Seleção ✓ | Tags ✓ | Comparar ✓ | Mesclar ✓
+Filtros ✓ | Filtros Salvos ✓ | Sort ✓ | Tabs ✓ | Agrupar ✓ | Paginação ✓ | Vistas ✓ | Colunas ✓
+Detalhe+Esc ✓ | Atalhos Ctrl+N/A/Esc ✓ | Skeleton ✓ | EmptyState ✓ | Avatar ✓ | Mobile ✓
+
+### PRs entregues
+#275 design: Promo Gifts System — paleta carvão, AppHeader, sidebar PG, contacts
+#276 redesign(contatos): Navy plan geometry — KPI 108px, tile 60px, toolbar 44px
+#277 redesign(dashboard): Navy nas 7 abas restantes
+#278 fix(contatos): elimina button nested — 0 console errors
+#279 fix(contatos): 3 gaps auditoria — KPI 34px, card spacing, form select
