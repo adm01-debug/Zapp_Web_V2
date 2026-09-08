@@ -1,25 +1,24 @@
-import { lazy, Suspense, useMemo, type ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import type { Conversation, Message } from '@/types/chat';
-import type { AnalysisMessage } from '../ai-tools/analysisConfigs';
 import type { ConversationTab } from './ConversationTabs';
 import { TabBanner } from '../tabs/TabBanner';
 
-const AIConversationAssistant = lazy(() =>
-  import('../AIConversationAssistant').then((m) => ({ default: m.AIConversationAssistant })));
+const AiTab = lazy(() =>
+  import('../tabs/AiTab').then((m) => ({ default: m.AiTab })));
 const Crm360Tab = lazy(() =>
   import('../tabs/Crm360Tab').then((m) => ({ default: m.Crm360Tab })));
 const OrdersTab = lazy(() =>
   import('../tabs/OrdersTab').then((m) => ({ default: m.OrdersTab })));
-const ConversationTasksPanel = lazy(() =>
-  import('../ConversationTasksPanel').then((m) => ({ default: m.ConversationTasksPanel })));
-const PrivateNotes = lazy(() =>
-  import('../PrivateNotes').then((m) => ({ default: m.PrivateNotes })));
+const TasksTab = lazy(() =>
+  import('../tabs/TasksTab').then((m) => ({ default: m.TasksTab })));
+const NotesTab = lazy(() =>
+  import('../tabs/NotesTab').then((m) => ({ default: m.NotesTab })));
 const FilesTab = lazy(() =>
   import('../tabs/FilesTab').then((m) => ({ default: m.FilesTab })));
-const ConversationHistory = lazy(() =>
-  import('../ConversationHistory').then((m) => ({ default: m.ConversationHistory })));
+const HistoryTab = lazy(() =>
+  import('../tabs/HistoryTab').then((m) => ({ default: m.HistoryTab })));
 
 function PanelFallback() {
   return (
@@ -47,24 +46,14 @@ interface ConversationTabContentProps {
   messages: Message[];
   /** Conteúdo da aba Chat — renderizado pelo pai, sempre montado. */
   children: ReactNode;
+  /** "Usar resposta" (aba IA) — leva o texto para o input do Chat e troca de aba. */
+  onUseSuggestion?: (text: string) => void;
 }
 
 export function ConversationTabContent({
-  activeTab, onTabChange, conversation, messages, children,
+  activeTab, onTabChange, conversation, messages, children, onUseSuggestion,
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
-
-  const analysisMessages = useMemo<AnalysisMessage[]>(
-    () => messages.map((m) => ({
-      id: m.id,
-      sender: m.sender,
-      content: m.content,
-      type: m.type,
-      mediaUrl: m.mediaUrl,
-      created_at: m.created_at ?? m.timestamp.toISOString(),
-    })),
-    [messages]
-  );
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -91,12 +80,10 @@ export function ConversationTabContent({
 
       {activeTab === 'ia' && (
         <Panel name="Assistente IA">
-          <AIConversationAssistant
-            messages={analysisMessages}
-            contactId={contactId}
-            contactName={conversation.contact.name}
-            isOpen
-            onClose={() => {}}
+          <AiTab
+            conversation={conversation}
+            messages={messages}
+            onUseSuggestion={(text) => onUseSuggestion?.(text)}
           />
         </Panel>
       )}
@@ -115,13 +102,13 @@ export function ConversationTabContent({
 
       {activeTab === 'tasks' && (
         <Panel name="Tarefas">
-          <ConversationTasksPanel contactId={contactId} />
+          <TasksTab contactId={contactId} />
         </Panel>
       )}
 
       {activeTab === 'notes' && (
         <Panel name="Notas">
-          <PrivateNotes contactId={contactId} />
+          <NotesTab contactId={contactId} />
         </Panel>
       )}
 
@@ -133,7 +120,7 @@ export function ConversationTabContent({
 
       {activeTab === 'history' && (
         <Panel name="Histórico">
-          <ConversationHistory contactId={contactId} contactPhone={conversation.contact.phone} />
+          <HistoryTab contactId={contactId} />
         </Panel>
       )}
     </div>

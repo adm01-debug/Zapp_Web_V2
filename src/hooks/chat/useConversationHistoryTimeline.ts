@@ -246,16 +246,17 @@ export function buildTimeline(
   };
 }
 
-export const conversationHistoryKey = (contactId: string | null | undefined, period: number, type: TimelineTypeFilter) =>
-  ['conversation-history', contactId, period, type] as const;
+export const conversationHistoryKey = (contactId: string | null | undefined, period: number, type: TimelineTypeFilter, limit = 200) =>
+  ['conversation-history', contactId, period, type, limit] as const;
 
 export function useConversationHistoryTimeline(
   contactId: string | null | undefined,
   period: 7 | 30 | 90 | 0 = 30,
   type: TimelineTypeFilter = 'all',
+  limit = 200,
 ) {
   return useQuery({
-    queryKey: conversationHistoryKey(contactId, period, type),
+    queryKey: conversationHistoryKey(contactId, period, type, limit),
     queryFn: async () => {
       const cid = contactId as string;
       const sinceIso = period > 0 ? new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString() : null;
@@ -304,7 +305,7 @@ export function useConversationHistoryTimeline(
           deals: (dealsRes.data ?? []) as RawDealRow[],
           activities: (activitiesRes.data ?? []) as RawActivityRow[],
         },
-        { type },
+        { type, limit },
       );
     },
     enabled: !!contactId,

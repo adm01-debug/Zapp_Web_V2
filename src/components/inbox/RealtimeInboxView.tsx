@@ -69,6 +69,13 @@ export function RealtimeInboxView() {
   const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
   const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
 
+  // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
+  const [pendingDraft, setPendingDraft] = useState<string | null>(null);
+  const handleUseSuggestion = useCallback((text: string) => {
+    setPendingDraft(text);
+    setActiveTab('chat');
+  }, [setActiveTab]);
+
   useGlobalSearchShortcut({ onOpen: () => inbox.setGlobalSearchOpen(true) });
 
   useEffect(() => {
@@ -145,6 +152,7 @@ export function RealtimeInboxView() {
                     onTabChange={setActiveTab}
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
+                    onUseSuggestion={handleUseSuggestion}
                   >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel
@@ -153,6 +161,8 @@ export function RealtimeInboxView() {
                       messages={inbox.legacyMessages}
                       onSendMessage={inbox.handleSendMessage}
                       onSendAudio={inbox.handleSendAudio}
+                      pendingDraft={pendingDraft}
+                      onDraftConsumed={() => setPendingDraft(null)}
                       showDetails={isMobile ? false : inbox.showDetails}
                       onToggleDetails={() => inbox.setShowDetails(!inbox.showDetails)}
                       onBack={isMobile ? () => {
