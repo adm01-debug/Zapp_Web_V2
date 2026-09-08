@@ -7,13 +7,13 @@
   ],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "a25ecdbd721a67b020e3b2f34fce57e1b153ec0b226bca49ddf0c09fd4494155"
+    "sha256": "94b522b1255b20ad4d9ca58232c1c5d209a9eab22fd9028a9764d0a1a258251e"
   },
   "summary": {
-    "function_count": 63,
-    "source_file_count": 81,
+    "function_count": 64,
+    "source_file_count": 83,
     "verify_jwt_true": 55,
-    "verify_jwt_false": 8
+    "verify_jwt_false": 9
   },
   "source_files": [
     {
@@ -35,6 +35,11 @@
       "path": "supabase/functions/_shared/contracts.ts",
       "bytes": 1391,
       "sha256": "d626eeb39308fd9028a7e79fc42b4d6f4b306fb62fa66320fd1de82225f843d6"
+    },
+    {
+      "path": "supabase/functions/_shared/crm-integration-contract.ts",
+      "bytes": 8419,
+      "sha256": "4f390e85a2cd0be97dc11f938cfff72c6f9ce99a30559787f2ba86a1259c324f"
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -210,6 +215,11 @@
       "path": "supabase/functions/create-user/index.ts",
       "bytes": 6171,
       "sha256": "6e249e4b173cec59251083e9912ac0cc7817440974bb66f5d60a166e37899c9e"
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.ts",
+      "bytes": 19236,
+      "sha256": "7f7568dedac00661769b656db1ae7dfb1cfa41f0e17f7c9ef3394c2706428ab2"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -688,6 +698,18 @@
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/create-user/index.ts"
+      ]
+    },
+    {
+      "name": "crm-integration",
+      "entrypoint": "supabase/functions/crm-integration/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "71692e96faec6a61053f62644af78963317d238813ee77fe943f8890809b55bc",
+      "source_files": [
+        "supabase/functions/_shared/crm-integration-contract.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/crm-integration/index.ts"
       ]
     },
     {
@@ -1199,5 +1221,5 @@
       ]
     }
   ],
-  "manifest_sha256": "28ef772e2966a31c9bbacd2b9808f51d95e70e7da4db68a52e7af9cbbc3b1fdf"
+  "manifest_sha256": "8f574943a7c473dbfb9141e0ebb28247e91f28c446711d9751273c640e7c6218"
 }
