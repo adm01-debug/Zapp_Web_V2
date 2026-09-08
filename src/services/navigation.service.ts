@@ -49,7 +49,7 @@ export class NavigationService {
         label: 'Vendas & CRM',
         icon: Kanban,
         items: [
-          { id: 'crm360', icon: Building2, label: 'CRM 360°' },
+          { id: 'crm360', icon: Building2, label: 'CRM 360°', roles: ['admin', 'supervisor'] },
           { id: 'wallet', icon: Wallet, label: 'Carteira' },
           { id: 'catalog', icon: Package, label: 'Catálogo' },
           { id: 'tags', icon: Tag, label: 'Etiquetas' },

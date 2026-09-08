@@ -13,8 +13,10 @@ import { CompanyFormDialog } from './CompanyFormDialog';
 import { ContactFormDialog } from './ContactFormDialog';
 import { DataExplorerTable } from './DataExplorerTable';
 import { TABS } from './crm360TabsConfig';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 export function CRM360ExplorerView() {
+  const { isSupervisor, loading: roleLoading } = useUserRole();
   const [activeTab, setActiveTab] = useState<string>(TABS[0].id);
   const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
@@ -33,6 +35,20 @@ export function CRM360ExplorerView() {
   }, []);
 
   const handleSuccess = useCallback(() => setRefreshKey(k => k + 1), []);
+
+  if (roleLoading) return null;
+
+  if (!isSupervisor) {
+    return (
+      <div className="flex items-center justify-center h-full w-full">
+        <Card className="max-w-md"><CardContent className="pt-6 text-center">
+          <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="font-semibold text-lg mb-2">Acesso restrito</h3>
+          <p className="text-muted-foreground text-sm">O CRM 360° está disponível apenas para administradores e supervisores.</p>
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   if (!isExternalConfigured) {
     return (

@@ -36,8 +36,10 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
 
 | Nome | Projeto (ref) | Superfície | Classe | Rotação |
 |---|---|---|---|---|
-| `VITE_CLIENTES_SUPABASE_URL` / `VITE_CLIENTES_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | `.env.production`, GitHub Secrets, fallback em `externalClient.ts` | público | Dashboard do projeto |
-| `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | Edge env | público/limitado | Dashboard do projeto |
+| `VITE_CRM_INTEGRATION_ENABLED` | n/a | `.env.production`/bundle | flag pública | n/a |
+| `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`) | URL pública / chave secreta server-side | Dashboard do projeto CRM |
+| `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`) | obrigatório; gateway recusa anon key | Dashboard do projeto CRM |
+| `EXTERNAL_SUPABASE_ANON_KEY` | banco externo legado | Edge env (`external-db-proxy`) | legado isolado; não usado por `crm-integration` | Dashboard do banco externo |
 | `PROMOGIFTS_SUPABASE_URL` / `PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY` | a confirmar | Edge env + GitHub Actions | servidor privilegiado; nunca frontend | Dashboard do projeto PromoGifts (owner a confirmar) |
 | (histórico) chaves `anon` do projeto `allrjhkpuscmgbsnmjlv` | legado | `.env` removido do HEAD (F-05) | público | n/a |
 
@@ -49,8 +51,8 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
 | `DESTINO_URL` | 2026-08-28 | 2026-08-28 | workflow `db-live-guard` |
 | `SUPABASE_ACCESS_TOKEN` | 2026-08-28 | 2026-08-29 | workflows Supabase CLI |
 | `SUPABASE_PROJECT_REF` | 2026-08-28 | 2026-08-28 | workflows Supabase CLI |
-| `VITE_CLIENTES_SUPABASE_ANON_KEY` | 2026-08-27 | 2026-08-27 | build no CI |
-| `VITE_CLIENTES_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | build no CI |
+| `VITE_CLIENTES_SUPABASE_ANON_KEY` | 2026-08-27 | 2026-08-27 | legado; remover do GitHub após deploy de `crm-integration` |
+| `VITE_CLIENTES_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | legado; remover do GitHub após deploy de `crm-integration` |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | 2026-08-27 | 2026-08-27 | build no CI |
 | `VITE_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | build no CI |
 
@@ -161,4 +163,3 @@ Legenda: **FP** = falso positivo · **PUB** = público por design · **SUSP** = 
 3. **Histórico:** `git log -S`/`-G` e `git log --follow` nos arquivos sinalizados; datas de inclusão/remoção registradas acima.
 4. **Não executado (fora de escopo/limitação):** enumeração de secrets do Supabase (CLI), Vercel e Hostinger; validação ativa de qualquer credencial contra serviços; rewrite de histórico Git; rotações (Classe D).
 5. **Risco residual conhecido:** valores SUSP permanecem no histórico e (para F-01/F-02) no HEAD até a aprovação das correções; credencial MCP e credencial Vercel seguem os trâmites da etapa 006.
-
