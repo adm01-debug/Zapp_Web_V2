@@ -132,17 +132,20 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
 
         <TicketTabs
           conversations={inbox.conversations}
-          mainTab={inboxFilters.mainTab}
-          subTab={inboxFilters.subTab}
-          onMainTabChange={inboxFilters.setMainTab}
-          onSubTabChange={inboxFilters.setSubTab}
+          chipTab={inboxFilters.chipTab}
+          onChipTabChange={inboxFilters.setChipTab}
+        />
+
+        <InboxFilters
+          filters={inboxFilters.filters}
+          onFiltersChange={inboxFilters.setFilters}
           showAll={inboxFilters.showAll}
           onShowAllChange={inboxFilters.setShowAll}
+          selectedContactType={inboxFilters.selectedContactType}
+          onContactTypeChange={inboxFilters.handleContactTypeChange}
           selectedQueueId={inboxFilters.selectedQueueId}
           onQueueChange={inboxFilters.setSelectedQueueId}
         />
-
-        <InboxFilters filters={inboxFilters.filters} onFiltersChange={inboxFilters.setFilters} />
       </div>
 
       {isMobile && (
