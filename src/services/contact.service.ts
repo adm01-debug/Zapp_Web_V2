@@ -57,6 +57,7 @@ export class ContactService {
   ): Promise<{ data: { contact_id: string; last_message_at: string }[] | null; error: unknown }> {
     if (!contactIds.length) return { data: [], error: null };
 
+    // @ts-expect-error: get_last_message_dates nao esta nos tipos gerados
     const { data, error } = await supabase.rpc('get_last_message_dates', {
       contact_ids: contactIds,
     });
