@@ -7,6 +7,7 @@ import { DashboardKpiCard, type KpiDelta } from './overview/DashboardKpiCard';
 import { SLAAgentTable } from './sla/SLAAgentTable';
 import { SLASummaryCard } from './sla/SLASummaryCard';
 import { SLAConfigTable } from './sla/SLAConfigTable';
+import { getSLARateTone, SLA_RATE_TEXT_CLASS } from './sla/slaRate';
 
 const KPI_HELP: Record<string, string> = {
   'Taxa Geral SLA': 'Percentual de conversas cuja 1ª resposta ficou dentro do prazo definido no SLA aplicável.',
@@ -18,7 +19,18 @@ const KPI_HELP: Record<string, string> = {
 function trendToDelta(trend: { direction: 'up' | 'down' | 'stable'; percentage: number } | undefined, invert = false): KpiDelta {
   if (!trend || trend.direction === 'stable') return null;
   const positive = trend.direction === 'up';
-  return { pct: Math.round(positive ? trend.percentage : -trend.percentage), invert, label: 'vs. período anterior' };
+  return { pct: Math.round(positive ? trend.percentage : -trend.percentage), invert, label: 'vs. semana anterior' };
+}
+
+function HelpIcon({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex text-muted-foreground/70 hover:text-foreground cursor-help"><Info className="w-3.5 h-3.5" /></span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-[240px] text-[12px]">{text}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function SLAMetricsDashboard() {
@@ -43,45 +55,48 @@ export function SLAMetricsDashboard() {
     };
   }, [history]);
 
-  const kpis = [
-    { label: 'Taxa Geral SLA', value: loading ? '—' : `${overallRate}%`, tile: 'blue' as const, icon: Target, bars: sparklines.rate, barsColor: 'blue' as const, delta: trendToDelta(history?.trends.overall) },
-    { label: 'No Prazo', value: loading ? '—' : String(onTime), tile: 'green' as const, icon: CheckCircle2, bars: sparklines.onTime, barsColor: 'green' as const, delta: null },
-    { label: 'Violações', value: loading ? '—' : String(breached), tile: 'red' as const, icon: XCircle, bars: sparklines.breached, barsColor: 'red' as const, delta: trendToDelta(history?.trends.firstResponse, true) },
-    { label: 'Total Conversas', value: loading ? '—' : String(total), tile: 'blue' as const, icon: TrendingUp, bars: sparklines.total, barsColor: 'blue' as const, delta: null },
-  ];
+  const rateTone = getSLARateTone(overallRate);
+  const rateLineColor = rateTone === 'success' ? 'green' : rateTone === 'warning' ? 'amber' : 'red';
 
   return (
     <TooltipProvider>
-      <div className="space-y-2.5">
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
-          {kpis.map((k, i) => (
-            <DashboardKpiCard
-              key={k.label}
-              index={i}
-              label={k.label}
-              value={k.value}
-              delta={k.delta}
-              tile={k.tile}
-              icon={k.icon}
-              bars={k.bars}
-              barsColor={k.barsColor}
-              chart="line"
-              footer={(
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground cursor-help">
-                      <Info className="w-3 h-3" /> sobre esta métrica
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[220px] text-[12px]">{KPI_HELP[k.label]}</TooltipContent>
-                </Tooltip>
-              )}
-            />
-          ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <DashboardKpiCard
+            index={0} size="hero" chart="line"
+            label="Taxa Geral SLA" labelAdornment={<HelpIcon text={KPI_HELP['Taxa Geral SLA']} />}
+            value={loading ? '—' : `${overallRate}%`}
+            valueClassName={loading ? undefined : SLA_RATE_TEXT_CLASS[rateTone]}
+            delta={trendToDelta(history?.trends.overall)}
+            tile="blue" icon={Target} bars={sparklines.rate} barsColor={rateLineColor}
+          />
+          <DashboardKpiCard
+            index={1} size="hero" chart="line"
+            label="No Prazo" labelAdornment={<HelpIcon text={KPI_HELP['No Prazo']} />}
+            value={loading ? '—' : String(onTime)}
+            valueClassName={loading ? undefined : 'text-dash-green'}
+            delta={trendToDelta(history?.trends.overall)}
+            tile="green" icon={CheckCircle2} bars={sparklines.onTime} barsColor="green"
+          />
+          <DashboardKpiCard
+            index={2} size="hero" chart="line"
+            label="Violações" labelAdornment={<HelpIcon text={KPI_HELP['Violações']} />}
+            value={loading ? '—' : String(breached)}
+            valueClassName={loading ? undefined : 'text-dash-red'}
+            delta={trendToDelta(history?.trends.firstResponse, true)}
+            tile="red" icon={XCircle} bars={sparklines.breached} barsColor="red"
+          />
+          <DashboardKpiCard
+            index={3} size="hero" chart="line"
+            label="Total Conversas" labelAdornment={<HelpIcon text={KPI_HELP['Total Conversas']} />}
+            value={loading ? '—' : String(total)}
+            delta={null}
+            tile="blue" icon={TrendingUp} bars={sparklines.total} barsColor="blue"
+          />
         </div>
-        <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-2.5">
+        <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
           <SLAAgentTable agents={agents} />
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             <SLASummaryCard
               periodFilter={period}
               onPeriodChange={setPeriod}
@@ -89,6 +104,7 @@ export function SLAMetricsDashboard() {
               onTime={onTime}
               breached={breached}
               overallTrend={history?.trends.overall}
+              firstResponseTrend={history?.trends.firstResponse}
             />
             <SLAConfigTable />
           </div>

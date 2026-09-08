@@ -177,7 +177,7 @@ export function DashboardView() {
         <TabsContent value="sla"><SLAMetricsDashboard /></TabsContent>
         <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel onNavigateTab={goToTab} /></TabsContent>
         <TabsContent value="satisfaction" className="space-y-2.5"><SatisfactionMetrics /><CSATDashboard /></TabsContent>
-        <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart /></TabsContent>
+        <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart onNavigateTab={goToTab} /></TabsContent>
         <TabsContent value="reports" className="space-y-2.5"><ScheduledReportsManager /></TabsContent>
         </Tabs>
       </div>
