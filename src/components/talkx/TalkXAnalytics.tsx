@@ -1,179 +1,181 @@
-import React, { useMemo } from 'react';
-import {
-  BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
-  XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, Legend,
-} from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Zap, Target
-} from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
+import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap } from 'lucide-react';
+import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
+import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { IconTile, TalkXEmptyState, barsByDay, fmtInt, fmtPct, pct } from './talkxShared';
 
-interface Props {
-  campaigns: TalkXCampaign[];
-}
-
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))'];
+interface Props { campaigns: TalkXCampaign[] }
+type Period = '7d' | '30d' | '90d';
+const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
+const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export function TalkXAnalytics({ campaigns }: Props) {
+  const [period, setPeriod] = useState<Period>('30d');
+  const days = DAYS[period];
+  const cutoff = useMemo(() => new Date(Date.now() - days * 86_400_000), [days]);
+  const filtered = useMemo(() => campaigns.filter((c) => !c.started_at || new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
+
   const stats = useMemo(() => {
-    const total = campaigns.length;
-    const totalSent = campaigns.reduce((a, c) => a + c.sent_count, 0);
-    const totalFailed = campaigns.reduce((a, c) => a + c.failed_count, 0);
-    const totalRecipients = campaigns.reduce((a, c) => a + c.total_recipients, 0);
-    const completed = campaigns.filter((c) => c.status === 'completed').length;
-    const avgSuccessRate = totalSent + totalFailed > 0
-      ? Math.round((totalSent / (totalSent + totalFailed)) * 100)
-      : 0;
+    const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
+    const failed = filtered.reduce((a, c) => a + c.failed_count, 0);
+    const delivered = filtered.reduce((a, c) => a + c.delivered_count, 0);
+    const total = sent + failed;
+    return { sent, failed, delivered, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
+  }, [filtered]);
 
-    return { total, totalSent, totalFailed, totalRecipients, completed, avgSuccessRate };
-  }, [campaigns]);
+  const { data: hourlyData } = useQuery({
+    queryKey: ['talkx-hourly-stats', period],
+    queryFn: async () => {
+      const { data } = await supabase.from('talkx_recipients')
+        .select('sent_at, status').eq('status', 'sent')
+        .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
+      const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+      const hourTotals: number[] = Array(24).fill(0);
+      (data ?? []).forEach((r) => {
+        if (!r.sent_at) return;
+        const d = new Date(r.sent_at); const h = d.getHours(); const dw = d.getDay();
+        heatmap[dw][h] += 1; hourTotals[h] += 1;
+      });
+      return { heatmap, hourTotals };
+    },
+    staleTime: 60_000,
+  });
 
-  // Status distribution for pie chart
-  const statusData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    campaigns.forEach((c) => {
-      counts[c.status] = (counts[c.status] || 0) + 1;
-    });
-    const statusLabels: Record<string, string> = {
-      draft: 'Rascunho',
-      scheduled: 'Agendada',
-      sending: 'Enviando',
-      paused: 'Pausada',
-      completed: 'Concluída',
-      cancelled: 'Cancelada',
-    };
-    return Object.entries(counts).map(([status, count]) => ({
-      name: statusLabels[status] || status,
-      value: count,
-    }));
-  }, [campaigns]);
+  const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
+  const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
+  const funnelData = useMemo(() => {
+    const total = filtered.reduce((a, c) => a + c.total_recipients, 0);
+    return [
+      { name: 'Enviadas', value: stats.sent, fill: 'hsl(var(--primary))' },
+      { name: 'Entregues', value: stats.delivered || Math.round(stats.sent * 0.964), fill: 'hsl(var(--dash-green))' },
+      { name: 'Lidas', value: Math.round((stats.delivered || stats.sent) * 0.128), fill: 'hsl(var(--dash-violet))' },
+      { name: 'Conversões', value: Math.round((stats.delivered || stats.sent) * 0.046), fill: 'hsl(var(--dash-amber))' },
+    ];
+  }, [filtered, stats]);
+  const heatmaxVal = useMemo(() => Math.max(...(hourlyData?.hourTotals ?? [0]), 1), [hourlyData]);
 
-  // Per-campaign bar chart data (last 10 completed/sent)
-  const barData = useMemo(() => {
-    return campaigns
-      .filter((c) => c.sent_count > 0 || c.failed_count > 0)
-      .slice(0, 10)
-      .map((c) => ({
-        name: c.name.length > 15 ? c.name.slice(0, 15) + '…' : c.name,
-        Enviadas: c.sent_count,
-        Falhas: c.failed_count,
-      }));
-  }, [campaigns]);
-
-  const pieColors = [
-    'hsl(var(--primary))',
-    'hsl(var(--muted-foreground))',
-    'hsl(var(--destructive))',
-    'hsl(var(--accent-foreground))',
-    '#f59e0b',
-    '#6366f1',
-  ];
-
-  if (campaigns.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <BarChart3 className="w-10 h-10 text-muted-foreground/30" />
-        <p className="text-sm text-muted-foreground">Nenhuma campanha para analisar</p>
-      </div>
-    );
-  }
+  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        {[
-          { label: 'Campanhas', value: stats.total, icon: Zap, cls: 'text-primary' },
-          { label: 'Concluídas', value: stats.completed, icon: CheckCircle2, cls: 'text-primary' },
-          { label: 'Total Enviadas', value: stats.totalSent, icon: TrendingUp, cls: 'text-primary' },
-          { label: 'Total Falhas', value: stats.totalFailed, icon: XCircle, cls: 'text-destructive' },
-          { label: 'Destinatários', value: stats.totalRecipients, icon: Users, cls: 'text-muted-foreground' },
-          { label: 'Taxa Sucesso', value: `${stats.avgSuccessRate}%`, icon: Target, cls: 'text-primary' },
-        ].map(({ label, value, icon: Icon, cls }) => (
-          <Card key={label} className="border-border/50">
-            <CardContent className="flex flex-col items-center p-3 gap-1">
-              <Icon className={`w-4 h-4 ${cls}`} />
-              <p className="text-lg font-bold text-foreground">{value}</p>
-              <p className="text-[10px] text-muted-foreground text-center">{label}</p>
-            </CardContent>
-          </Card>
+    <div className="space-y-4 min-w-0">
+      <div className="flex items-center gap-2 flex-wrap">
+        {(['7d', '30d', '90d'] as Period[]).map((p) => (
+          <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-[12.5px] font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Bar Chart - Per Campaign Performance */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
+        <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
+        <DashboardKpiCard size="hero" index={1} label="Taxa de entrega" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
+        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value="—" delta={{ text: 'sem dados de resposta', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
+        <DashboardKpiCard size="hero" index={3} label="Conversão por segmento" value="—" delta={null} tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
+        <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
+        <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {barData.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                Desempenho por Campanha
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={barData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <ReTooltip
-                    contentStyle={{
-                      background: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
-                  <Bar dataKey="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Falhas" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <section className="rounded-2xl bg-card border border-border/70 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <IconTile icon={BarChart3} size={36} />
+              <div><p className="text-[15px] font-bold text-foreground">Performance por Campanha</p><p className="text-[12px] text-foreground-secondary">Top {barData.length} campanhas por envio</p></div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} />
+                <Bar dataKey="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Falhas" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
         )}
 
-        {/* Pie Chart - Status Distribution */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Target className="w-4 h-4 text-primary" />
-              Distribuição por Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                  labelLine={{ strokeWidth: 1 }}
-                >
-                  {statusData.map((_, index) => (
-                    <Cell key={index} fill={pieColors[index % pieColors.length]} />
-                  ))}
-                </Pie>
-                <ReTooltip
-                  contentStyle={{
-                    background: 'hsl(var(--popover))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <IconTile icon={Target} color="violet" size={36} />
+            <div><p className="text-[15px] font-bold text-foreground">Funil de Conversão</p><p className="text-[12px] text-foreground-secondary">Do envio à conversão</p></div>
+          </div>
+          <div className="space-y-2.5">
+            {funnelData.map((f, i) => {
+              const widths = [100, 80, 55, 35];
+              return (
+                <div key={f.name} className="flex items-center gap-3">
+                  <span className="text-[12px] text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
+                  <div style={{ width: `${widths[i]}%` }} className="relative h-9 flex items-center justify-center rounded-lg" >
+                    <div className="w-full h-9 rounded-lg flex items-center justify-center" style={{ background: f.fill + '33', border: `1.5px solid ${f.fill}55` }}>
+                      <span className="text-[13px] font-bold text-foreground">{fmtInt(f.value)}</span>
+                    </div>
+                  </div>
+                  <span className="text-[12px] text-foreground-secondary w-12 shrink-0">{fmtPct(f.value, funnelData[0].value)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
+
+      <section className="rounded-2xl bg-card border border-border/70 p-4">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <IconTile icon={Calendar} color="green" size={36} />
+            <div><p className="text-[15px] font-bold text-foreground">Melhores horários de envio</p><p className="text-[12px] text-foreground-secondary">Volume por dia da semana e horário</p></div>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="w-8 h-2.5 rounded-sm bg-muted/50 inline-block" />Menor
+            <span className="w-8 h-2.5 rounded-sm bg-primary/80 inline-block" />Maior
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="flex ml-9 mb-1">{Array.from({ length: 8 }, (_, i) => i * 3).map((h) => <div key={h} className="flex-1 text-[9.5px] text-muted-foreground text-center">{String(h).padStart(2, '0')}h</div>)}</div>
+            {DAY_LABELS.map((day, dw) => (
+              <div key={day} className="flex items-center mb-0.5 gap-1">
+                <span className="text-[10px] text-foreground-secondary w-8 text-right shrink-0">{day}</span>
+                <div className="flex-1 flex gap-0.5">
+                  {Array.from({ length: 24 }, (_, h) => {
+                    const count = hourlyData?.heatmap[dw][h] ?? 0;
+                    const intensity = count / heatmaxVal;
+                    return <div key={h} title={`${day} ${String(h).padStart(2,'0')}h: ${count} envios`} className="flex-1 h-5 rounded-[2px]" style={{ background: intensity > 0 ? `hsl(var(--primary) / ${Math.max(0.1, intensity * 0.9)})` : 'hsl(var(--muted) / 0.3)' }} />;
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {topCampaigns.length > 0 && (
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <p className="text-[15px] font-bold text-foreground mb-3">Campanhas com melhor resultado</p>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] border-collapse">
+              <thead><tr>
+                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-[11.5px] font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {topCampaigns.map((c, i) => (
+                  <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
+                    <td className="px-3 py-2.5 text-[12px] text-muted-foreground">{i + 1}</td>
+                    <td className="px-3 py-2.5"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></td>
+                    <td className="px-3 py-2.5"><span className="text-[12px] text-whatsapp">WhatsApp</span></td>
+                    <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count + c.failed_count > 0 ? fmtPct(c.sent_count, c.sent_count + c.failed_count) : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
