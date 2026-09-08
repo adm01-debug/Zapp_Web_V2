@@ -292,7 +292,7 @@ function ActivityWidget({ stats }: { stats: DashboardStats }) {
                 <motion.div className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 hover:bg-muted/40 transition-all duration-200 cursor-pointer group" whileHover={{ x: 4, scale: 1.005 }} transition={{ duration: 0.15 }}>
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10 ring-2 ring-border/50 group-hover:ring-primary/30 transition-all">
-                      <AvatarImage src={activity.contactAvatar || undefined} />
+                      <AvatarImage src={activity.contactAvatar || undefined} alt={activity.contactName || 'Contato'} />
                       <AvatarFallback className={cn('font-semibold text-sm', getAvatarColor(activity.contactName).bg, getAvatarColor(activity.contactName).text)}>
                         {getInitials(activity.contactName)}
                       </AvatarFallback>

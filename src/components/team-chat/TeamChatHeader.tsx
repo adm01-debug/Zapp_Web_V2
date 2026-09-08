@@ -65,7 +65,7 @@ export function TeamChatHeader({
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <Avatar className="w-9 h-9 md:w-10 md:h-10 shrink-0">
-          <AvatarImage src={conversation.avatar_url || undefined} />
+          <AvatarImage src={conversation.avatar_url || undefined} alt={conversation.name || 'Avatar'} />
           <AvatarFallback className="bg-primary/10 text-primary">
             {conversation.type === 'group' ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
           </AvatarFallback>

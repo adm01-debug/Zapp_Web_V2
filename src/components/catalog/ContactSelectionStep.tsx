@@ -94,7 +94,7 @@ export function ContactSelectionStep({
                 )}
               >
                 <Avatar className="w-10 h-10 flex-shrink-0">
-                  <AvatarImage src={contact.avatar_url || undefined} />
+                  <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
                   <AvatarFallback className="bg-primary/10 text-primary text-sm">{contact.name?.[0] || '?'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">

@@ -49,7 +49,7 @@ export function InAppNotification({ notification, duration = 4000, onDismiss }: 
         >
           <div className="bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl p-3 flex items-center gap-3 mx-auto max-w-md">
             <Avatar className="w-10 h-10 shrink-0">
-              <AvatarImage src={notification.avatar} />
+              <AvatarImage src={notification.avatar} alt={notification.title || 'Notificação'} />
               <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
                 {initials}
               </AvatarFallback>

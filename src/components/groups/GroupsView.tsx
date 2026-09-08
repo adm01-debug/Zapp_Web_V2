@@ -217,7 +217,7 @@ export function GroupsView() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12">
-                          <AvatarImage src={group.avatar_url || undefined} />
+                          <AvatarImage src={group.avatar_url || undefined} alt={group.name || 'Grupo'} />
                           <AvatarFallback className="bg-whatsapp/10 text-whatsapp"><Users className="w-6 h-6" /></AvatarFallback>
                         </Avatar>
                         <div>

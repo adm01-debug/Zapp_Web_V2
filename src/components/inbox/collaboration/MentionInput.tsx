@@ -71,7 +71,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, disabled 
                 <button key={agent.id} className="w-full flex items-center gap-2 p-2 hover:bg-muted text-left"
                   onClick={() => handleSelectMention(agent)}>
                   <Avatar className="w-6 h-6">
-                    <AvatarImage src={agent.avatar_url || undefined} />
+                    <AvatarImage src={agent.avatar_url || undefined} alt={agent.name || 'Agente'} />
                     <AvatarFallback className="text-xs">{agent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <span className="text-sm">{agent.name}</span>

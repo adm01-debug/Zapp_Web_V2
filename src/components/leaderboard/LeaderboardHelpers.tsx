@@ -117,7 +117,7 @@ export function LeaderboardRow({ agent, index }: { agent: LeaderboardAgent; inde
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative">
             <Avatar className="w-10 h-10 ring-2 ring-border/30">
-              <AvatarImage src={agent.avatar} />
+              <AvatarImage src={agent.avatar} alt={agent.name || 'Agente'} />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                 {agent.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </AvatarFallback>

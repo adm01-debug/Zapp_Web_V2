@@ -140,7 +140,7 @@ export function PrivateNotes({ contactId }: PrivateNotesProps) {
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <Avatar className="w-4 h-4">
-                  <AvatarImage src={note.author?.avatar_url || undefined} />
+                  <AvatarImage src={note.author?.avatar_url || undefined} alt={note.author?.name || 'Autor'} />
                   <AvatarFallback className="text-[8px]">
                     {note.author?.name?.[0] || '?'}
                   </AvatarFallback>

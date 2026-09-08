@@ -91,7 +91,7 @@ export function ForwardMessageDialog({ open, onOpenChange, message, onForward }:
                         >
                           <Checkbox checked={isSelected} className="pointer-events-none" />
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={contact.avatar_url} />
+                            <AvatarImage src={contact.avatar_url} alt={contact.name || 'Avatar'} />
                             <AvatarFallback className="bg-primary/10 text-primary text-sm">{contact.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -124,7 +124,7 @@ export function ForwardMessageDialog({ open, onOpenChange, message, onForward }:
                         >
                           <Checkbox checked={isSelected} className="pointer-events-none" />
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={group.avatar_url} />
+                            <AvatarImage src={group.avatar_url} alt={group.name || 'Grupo'} />
                             <AvatarFallback className="bg-secondary text-secondary-foreground text-sm"><Users className="w-5 h-5" /></AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">

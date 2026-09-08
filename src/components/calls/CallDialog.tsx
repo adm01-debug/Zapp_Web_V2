@@ -153,7 +153,7 @@ export function CallDialog({
             className="relative"
           >
             <Avatar className="w-24 h-24 border-4 border-whatsapp/20">
-              <AvatarImage src={contact.avatar} />
+              <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
               <AvatarFallback className="text-2xl bg-whatsapp/10 text-whatsapp">
                 {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>

@@ -187,7 +187,7 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
                     >
                       <div className="relative">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={agent.avatar_url || undefined} />
+                          <AvatarImage src={agent.avatar_url || undefined} alt={agent.name || 'Agente'} />
                           <AvatarFallback>{agent.name[0]}</AvatarFallback>
                         </Avatar>
                         <span className={cn(

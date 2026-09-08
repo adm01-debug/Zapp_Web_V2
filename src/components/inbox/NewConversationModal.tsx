@@ -83,7 +83,7 @@ export function NewConversationModal({ open, onOpenChange, onConversationStarted
                       className={cn('w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all text-left',
                         selectedContact?.id === contact.id ? 'border-primary bg-primary/5' : 'border-border/30 hover:border-primary/30')}>
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={contact.avatar_url || undefined} />
+                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">{contact.name[0]}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">

@@ -50,7 +50,7 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={user.avatar_url || undefined} />
+                        <AvatarImage src={user.avatar_url || undefined} alt={user.name || user.email || 'Usuário'} />
                         <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                       <div>
