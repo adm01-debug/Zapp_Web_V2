@@ -80,6 +80,8 @@ export function DashboardView() {
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
 
+  const goToTab = (v: string) => setTab(v);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -170,10 +172,10 @@ export function DashboardView() {
           </div>
         </TabsContent>
 
-        <TabsContent value="goals" className="space-y-2.5"><GoalsDashboard /></TabsContent>
-        <TabsContent value="ai" className="space-y-2.5"><AIQuickAccess /></TabsContent>
+        <TabsContent value="goals" className="space-y-2.5"><GoalsDashboard onNavigateTab={goToTab} /></TabsContent>
+        <TabsContent value="ai" className="space-y-2.5"><AIQuickAccess onNavigateTab={goToTab} /></TabsContent>
         <TabsContent value="sla"><SLAMetricsDashboard /></TabsContent>
-        <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel /></TabsContent>
+        <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel onNavigateTab={goToTab} /></TabsContent>
         <TabsContent value="satisfaction" className="space-y-2.5"><SatisfactionMetrics /><CSATDashboard /></TabsContent>
         <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart /></TabsContent>
         <TabsContent value="reports" className="space-y-2.5"><ScheduledReportsManager /></TabsContent>

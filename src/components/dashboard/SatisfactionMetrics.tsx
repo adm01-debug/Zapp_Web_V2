@@ -1,234 +1,196 @@
-import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Star, TrendingUp, TrendingDown, Minus, Smile, Meh, Frown, Inbox } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { SatisfactionAgentRanking } from './SatisfactionAgentRanking';
+import { useState, useMemo } from 'react';
+import { MessageCircle, Users, Crown, TrendingUp, BarChart3, Star, Layers, X, Lightbulb } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { cn } from '@/lib/utils';
 import { useSatisfactionBreakdown } from '@/hooks/business/useCSAT';
 import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
+import { DashboardCard, SectionHeader, CardSelect } from './overview/DashboardCard';
+import { DashboardKpiCard } from './overview/DashboardKpiCard';
 
-type Period = '7d' | '30d' | '90d';
+const PERIOD_OPTIONS = [
+  { value: '7', label: 'Últimos 7 dias' },
+  { value: '30', label: 'Últimos 30 dias' },
+  { value: '90', label: 'Últimos 90 dias' },
+] as const;
 
-const PERIOD_DAYS: Record<Period, 7 | 30 | 90> = { '7d': 7, '30d': 30, '90d': 90 };
-const PERIOD_LABEL: Record<Period, string> = { '7d': '7 dias', '30d': '30 dias', '90d': '90 dias' };
+function EmptyBlock({ icon: Icon, title, sub }: { icon: React.ElementType; title: string; sub: string }) {
+  return (
+    <div className="flex flex-col items-center py-8 text-muted-foreground gap-2">
+      <Icon className="w-9 h-9 opacity-30" />
+      <p className="text-[13px] font-medium">{title}</p>
+      <p className="text-[12px] opacity-70 text-center max-w-[220px]">{sub}</p>
+    </div>
+  );
+}
 
-const getCSATColor = (v: number | null) => {
-  if (v === null) return 'text-muted-foreground';
-  return v >= 85 ? 'text-success' : v >= 70 ? 'text-warning' : 'text-destructive';
-};
-const getNPSColor = (v: number | null) => {
-  if (v === null) return 'text-muted-foreground';
-  return v >= 50 ? 'text-success' : v >= 0 ? 'text-warning' : 'text-destructive';
-};
-const getRatingIcon = (r: number) =>
-  r >= 4 ? <Smile className="h-4 w-4 text-success" /> : r === 3 ? <Meh className="h-4 w-4 text-warning" /> : <Frown className="h-4 w-4 text-destructive" />;
+function getCSATColor(v: number | null) { if (v === null) return 'text-muted-foreground'; return v >= 85 ? 'text-success' : v >= 70 ? 'text-warning' : 'text-destructive'; }
+function getNPSColor(v: number | null) { if (v === null) return 'text-muted-foreground'; return v >= 50 ? 'text-success' : v >= 0 ? 'text-warning' : 'text-destructive'; }
 
-export const SatisfactionMetrics = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30d');
-  const [detailsOpen, setDetailsOpen] = useState(false);
+export function SatisfactionMetrics() {
+  const [periodDays, setPeriodDays] = useState(30);
+  const [tipDismissed, setTipDismissed] = useState(false);
+  const { data: breakdown, isLoading, isError, refetch } = useSatisfactionBreakdown(periodDays as 7 | 30 | 90);
+  const { surveys: npsSurveys } = useNPSSurveys();
 
-  const periodDays = PERIOD_DAYS[selectedPeriod];
-  const { data: breakdown, isLoading: isBreakdownLoading, isError: isBreakdownError, refetch: refetchBreakdown } = useSatisfactionBreakdown(periodDays);
-  const { surveys: npsSurveys, isLoading: isNpsLoading } = useNPSSurveys();
-
-  const npsInPeriod = useMemo(() => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - periodDays);
-    return npsSurveys.filter((s) => new Date(s.created_at) >= cutoff);
-  }, [npsSurveys, periodDays]);
-
+  // react-hooks/purity acusa `Date.now()` (mesmo fora do useMemo) mas não `new Date()`
+  // (mesmo padrão já usado em GreetingBanner.tsx) — daí getTime() em vez de Date.now().
+  const now = new Date().getTime();
   const npsScore = useMemo(() => {
-    const total = npsInPeriod.length;
-    if (total === 0) return null;
-    const promoters = npsInPeriod.filter((s) => s.score >= 9).length;
-    const detractors = npsInPeriod.filter((s) => s.score <= 6).length;
-    return Math.round(((promoters - detractors) / total) * 100);
-  }, [npsInPeriod]);
+    if (!npsSurveys?.length) return null;
+    const cutoffMs = periodDays * 86400000;
+    const filtered = npsSurveys.filter(s => now - Date.parse(s.created_at) <= cutoffMs);
+    if (!filtered.length) return null;
+    const promoters = filtered.filter(s => s.score >= 9).length;
+    const detractors = filtered.filter(s => s.score <= 6).length;
+    return Math.round(((promoters - detractors) / filtered.length) * 100);
+  }, [npsSurveys, periodDays, now]);
 
-  const isLoading = isBreakdownLoading || isNpsLoading;
+  const hasCsat = (breakdown?.totalResponses ?? 0) > 0;
+  const hasQueue = (breakdown?.byQueue?.length ?? 0) > 0;
+  const hasTimeline = breakdown?.timeline?.some(t => t.csatPercent !== null) ?? false;
 
-  if (isLoading) {
+  // `t.date` já vem formatado ('dd/MM') de useSatisfactionBreakdown — não é ISO,
+  // reformatar com date-fns aqui lança RangeError (Invalid time value).
+  const timelineData = (breakdown?.timeline ?? []).map(t => ({
+    date: t.date,
+    CSAT: t.csatPercent != null ? Math.round(t.csatPercent) : null,
+  }));
+
+  const distributionData = (breakdown?.distribution ?? []).map(d => ({
+    nota: `Nota ${d.rating}`, count: d.count,
+  }));
+
+  const topAgent = breakdown?.byAgent?.[0];
+
+  if (isError) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-muted-foreground">Carregando métricas...</div>
-        </CardContent>
-      </Card>
+      <DashboardCard>
+        <div className="flex flex-col items-center py-12 text-muted-foreground gap-3">
+          <MessageCircle className="w-10 h-10 opacity-30" />
+          <p className="text-[14px] font-medium">Erro ao carregar dados de satisfação</p>
+          <button onClick={() => refetch()} className="text-[13px] text-primary hover:underline">Tentar novamente</button>
+        </div>
+      </DashboardCard>
     );
   }
-
-  // Sem este ramo, uma query que falha deixa isLoading=false e breakdown=undefined,
-  // prendendo o card no estado de carregamento para sempre.
-  if (isBreakdownError || !breakdown) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center gap-3 h-64">
-          <div className="text-muted-foreground">Não foi possível carregar as métricas de satisfação.</div>
-          <Button variant="outline" size="sm" onClick={() => refetchBreakdown()}>Tentar novamente</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const hasCsatData = breakdown.totalResponses > 0;
-  const hasQueueData = breakdown.byQueue.length > 0;
-  const hasTimelineData = breakdown.timeline.some((t) => t.csatPercent !== null);
-  const topAgent = breakdown.byAgent[0];
 
   return (
-    <>
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2"><Star className="h-5 w-5 text-warning" /><CardTitle className="text-lg">Satisfação do Cliente</CardTitle></div>
-            <div className="flex items-center gap-2">
-              {(['7d', '30d', '90d'] as const).map((p) => (
-                <Button key={p} variant={selectedPeriod === p ? 'default' : 'outline'} size="sm" className="text-xs" onClick={() => setSelectedPeriod(p)}>
-                  {PERIOD_LABEL[p]}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-muted/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-muted-foreground mb-1">CSAT</div>
-              <div className={`text-3xl font-bold ${getCSATColor(breakdown.csatPercent)}`}>
-                {breakdown.csatPercent === null ? '—' : `${Math.round(breakdown.csatPercent)}%`}
-              </div>
-              <div className="flex items-center justify-center gap-1 text-xs mt-1">
-                {breakdown.trend === null ? (
-                  <span className="text-muted-foreground">sem período anterior</span>
-                ) : (
-                  <>
-                    {breakdown.trend === 'up' ? <TrendingUp className="h-3 w-3 text-success" /> : breakdown.trend === 'down' ? <TrendingDown className="h-3 w-3 text-destructive" /> : <Minus className="h-3 w-3 text-warning" />}
-                    <span className={breakdown.trend === 'up' ? 'text-success' : breakdown.trend === 'down' ? 'text-destructive' : ''}>
-                      {breakdown.trendValue > 0 ? '+' : ''}{breakdown.trendValue} p.p.
-                    </span>
-                  </>
-                )}
-              </div>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-muted/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-muted-foreground mb-1">NPS</div>
-              <div className={`text-3xl font-bold ${getNPSColor(npsScore)}`}>
-                {npsScore === null ? '—' : `${npsScore > 0 ? '+' : ''}${npsScore}`}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {npsScore === null ? 'sem respostas no período' : npsScore >= 50 ? 'Excelente' : npsScore >= 0 ? 'Bom' : 'Precisa melhorar'}
-              </div>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-muted/50 rounded-lg p-4 text-center">
-              <div className="text-sm text-muted-foreground mb-1">Respostas CSAT</div>
-              <div className="text-3xl font-bold">{breakdown.totalResponses.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground mt-1">nos últimos {PERIOD_LABEL[selectedPeriod]}</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              role={topAgent ? 'button' : undefined}
-              tabIndex={topAgent ? 0 : undefined}
-              aria-label={topAgent ? 'Abrir ranking de agentes por CSAT' : undefined}
-              className={`bg-muted/50 rounded-lg p-4 text-center ${topAgent ? 'cursor-pointer hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' : ''}`}
-              onClick={() => topAgent && setDetailsOpen(true)}
-              onKeyDown={(e) => {
-                if (!topAgent) return;
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setDetailsOpen(true);
-                }
-              }}
-            >
-              <div className="text-sm text-muted-foreground mb-1">Top Agente</div>
-              {topAgent ? (
-                <>
-                  <div className="text-lg font-bold truncate">{topAgent.agentName}</div>
-                  <div className="text-xs text-success mt-1">{Math.round(topAgent.csatPercent)}% CSAT</div>
-                </>
+    <div className="space-y-2.5">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+        <DashboardKpiCard index={0} label="CSAT" value={hasCsat ? `${Math.round(breakdown!.csatPercent!)}%` : '—'}
+          delta={null} tile="green" icon={MessageCircle} bars={null} barsColor="green"
+          footer={!hasCsat ? <span className="text-[11px] text-muted-foreground">sem avaliações no período</span> : undefined}
+        />
+        <DashboardKpiCard index={1} label="NPS" value={npsScore != null ? String(npsScore) : '—'}
+          delta={null} tile="blue" icon={Users} bars={null} barsColor="blue"
+          footer={npsScore == null ? <span className="text-[11px] text-muted-foreground">sem respostas no período</span> : undefined}
+        />
+        <DashboardKpiCard index={2} label="Respostas CSAT" value={isLoading ? '—' : String(breakdown?.totalResponses ?? 0)}
+          delta={null} tile="violet" icon={MessageCircle} bars={null} barsColor="violet"
+          footer={<span className="text-[11px] text-muted-foreground">nos últimos {periodDays} dias</span>}
+        />
+        <DashboardKpiCard index={3} label="Top Agente" value={topAgent?.agentName?.split(' ')[0] ?? '—'}
+          delta={topAgent ? { text: `${Math.round(topAgent.csatPercent)}% CSAT`, tone: 'success' } : null}
+          tile="amber" icon={Crown} bars={null} barsColor="amber"
+          footer={!topAgent ? <span className="text-[11px] text-muted-foreground">sem avaliações no período</span> : undefined}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-2.5">
+        {/* Principal */}
+        <div className="space-y-2.5">
+          <DashboardCard testid="sat-evolution-card">
+            <SectionHeader icon={TrendingUp} title="Evolução da Satisfação" subtitle="CSAT e NPS ao longo do tempo" tileSize={44}
+              right={<CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} />}
+            />
+            <div className="mt-3 h-[220px]">
+              {!hasTimeline ? (
+                <EmptyBlock icon={BarChart3} title="Ainda não há avaliações de satisfação neste período" sub="Quando seus clientes avaliarem os atendimentos, você verá aqui a evolução do CSAT e NPS ao longo do tempo." />
               ) : (
-                <div className="text-lg font-bold text-muted-foreground">Sem dados</div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timelineData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Line type="monotone" dataKey="CSAT" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
               )}
-            </motion.div>
-          </div>
-
-          {!hasCsatData ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-muted-foreground">
-              <Inbox className="h-8 w-8" />
-              <p className="text-sm">Nenhuma avaliação CSAT registrada nos últimos {PERIOD_LABEL[selectedPeriod]}.</p>
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Distribuição de Notas</h4>
-                  <div className="space-y-2">
-                    {breakdown.distribution.map((item) => (
-                      <div key={item.rating} className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 w-16">{getRatingIcon(item.rating)}<span className="text-sm">{item.rating} ★</span></div>
-                        <div className="flex-1"><Progress value={(item.count / breakdown.totalResponses) * 100} className="h-2" /></div>
-                        <span className="text-sm text-muted-foreground w-12 text-right">{item.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Por Fila</h4>
-                  {hasQueueData ? (
-                    <div className="h-[150px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={breakdown.byQueue.map((q) => ({ queueName: q.queueName, csat: Math.round(q.csatPercent) }))}>
-                          <XAxis dataKey="queueName" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                          <Tooltip />
-                          <Bar dataKey="csat" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div className="h-[150px] flex items-center justify-center text-sm text-muted-foreground">
-                      Sem dados suficientes por fila.
-                    </div>
-                  )}
-                </div>
-              </div>
+          </DashboardCard>
+          <DashboardCard testid="sat-distribution-card">
+            <SectionHeader icon={BarChart3} title="Distribuição das avaliações (CSAT)" subtitle="Percentual de respostas por nota" tileSize={44} />
+            <div className="mt-3 h-[180px]">
+              {!hasCsat ? (
+                <EmptyBlock icon={Star} title="Sem avaliações no período" sub="As respostas dos clientes aparecerão aqui, distribuídas por nota de 1 a 5." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={distributionData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
+                    <XAxis dataKey="nota" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="count" name="Respostas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </DashboardCard>
+        </div>
 
-              <div>
-                <h4 className="text-sm font-medium mb-3">Evolução</h4>
-                {hasTimelineData ? (
-                  <div className="h-[150px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={breakdown.timeline.map((t) => ({ date: t.date, csat: t.csatPercent === null ? null : Math.round(t.csatPercent) }))}>
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="csat" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} connectNulls={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
+        {/* Rail */}
+        <div className="space-y-2.5">
+          <DashboardCard testid="sat-queue-card">
+            <SectionHeader icon={Layers} title="Satisfação por fila" subtitle="CSAT médio e volume de respostas por fila" tileSize={34} />
+            {!hasQueue ? (
+              <EmptyBlock icon={Layers} title="Sem dados para exibir" sub="Não há avaliações registradas nas filas durante o período selecionado." />
+            ) : (
+              <div className="mt-3 space-y-2">
+                {breakdown!.byQueue.slice(0, 5).map(q => (
+                  <div key={q.queueId} className="flex items-center justify-between gap-2 text-[13px]">
+                    <span className="truncate text-muted-foreground">{q.queueName}</span>
+                    <span className={cn('font-semibold', getCSATColor(q.csatPercent))}>{Math.round(q.csatPercent)}%</span>
                   </div>
-                ) : (
-                  <div className="h-[150px] flex items-center justify-center text-sm text-muted-foreground">
-                    Sem dados suficientes para o período.
-                  </div>
-                )}
+                ))}
               </div>
-            </>
+            )}
+          </DashboardCard>
+          <DashboardCard testid="sat-agents-card">
+            <SectionHeader icon={Users} title="Top agentes por satisfação" subtitle="Agentes com maior CSAT no período" tileSize={34} />
+            {!hasCsat || !breakdown?.byAgent?.length ? (
+              <EmptyBlock icon={Users} title="Sem dados para exibir" sub="Ainda não há avaliações de satisfação para os agentes neste período." />
+            ) : (
+              <div className="mt-3 space-y-2">
+                {breakdown.byAgent.slice(0, 5).map((a, i) => (
+                  <div key={a.agentId} className="flex items-center justify-between gap-2 text-[13px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-muted-foreground w-3">{i + 1}.</span>
+                      <span className="truncate">{a.agentName}</span>
+                    </div>
+                    <span className={cn('font-semibold', getCSATColor(a.csatPercent))}>{Math.round(a.csatPercent)}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DashboardCard>
+          {!tipDismissed && (
+            <DashboardCard testid="sat-tip-card">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-dash-tile-amber flex items-center justify-center shrink-0"><Lightbulb className="w-4 h-4 text-white/90" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold">Dica</p>
+                  <p className="text-[12px] text-muted-foreground mt-0.5">Incentive seus clientes a avaliarem os atendimentos. A satisfação do cliente ajuda a identificar pontos de melhoria e reconhecer sua equipe.</p>
+                </div>
+                <button onClick={() => setTipDismissed(true)} className="shrink-0 w-6 h-6 rounded flex items-center justify-center hover:bg-muted/60"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>
+              </div>
+            </DashboardCard>
           )}
-        </CardContent>
-      </Card>
-      <SatisfactionAgentRanking
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        agents={breakdown.byAgent.map((a) => ({
-          agentId: a.agentId,
-          agentName: a.agentName,
-          csat: Math.round(a.csatPercent),
-          responses: a.responses,
-        }))}
-      />
-    </>
+        </div>
+      </div>
+    </div>
   );
-};
+}

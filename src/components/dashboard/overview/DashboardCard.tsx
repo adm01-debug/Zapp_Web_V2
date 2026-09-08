@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 
 interface DashboardCardProps {
+  /** Handler de clique — opcional; quando presente, o card vira clicável (cursor-pointer). */
+  onClick?: () => void;
   children: ReactNode;
   className?: string;
   testid?: string;
@@ -19,12 +21,13 @@ interface DashboardCardProps {
   index?: number;
 }
 
-export function DashboardCard({ children, className, testid, index = 0 }: DashboardCardProps) {
+export function DashboardCard({ children, className, testid, index = 0, onClick }: DashboardCardProps) {
   const reducedMotion = useReducedMotion();
   return (
     <motion.section
       data-testid={testid}
-      className={cn(
+      onClick={onClick}
+        className={cn(onClick && 'cursor-pointer',
         'min-w-0 rounded-xl bg-card border border-border/70 p-3.5 flex flex-col transition-all duration-150',
         'hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.35)]',
         className,
@@ -109,7 +112,8 @@ export function StatusChip({ label, tone, pulse }: StatusChipProps) {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
           />
         )}
-        <span className={cn('relative inline-flex rounded-full w-1.5 h-1.5', tone === 'success' ? 'bg-success' : 'bg-muted-foreground')} />
+        <span
+        className={cn('relative inline-flex rounded-full w-1.5 h-1.5', tone === 'success' ? 'bg-success' : 'bg-muted-foreground')} />
       </span>
       {label}
     </span>
