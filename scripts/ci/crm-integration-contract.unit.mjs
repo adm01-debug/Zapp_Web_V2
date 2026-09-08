@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  isExpectedExternalAnonKey, isExpectedExternalUrl, normalizePhone,
+  validateMutation, validateRpc,
+} from '../../supabase/functions/_shared/crm-integration-contract.ts';
+
+test('CRM contract rejects foreign endpoints and credentials', () => {
+  assert.equal(isExpectedExternalUrl('https://pgxfvjmuubtbowutlide.supabase.co'), true);
+  assert.equal(isExpectedExternalUrl('https://pgxfvjmuubtbowutlide.supabase.co.evil.invalid'), false);
+  const payload = Buffer.from(JSON.stringify({ ref: 'pgxfvjmuubtbowutlide', role: 'anon' })).toString('base64url');
+  const foreign = Buffer.from(JSON.stringify({ ref: 'foreign', role: 'service_role' })).toString('base64url');
+  assert.equal(isExpectedExternalAnonKey(`x.${payload}.x`), true);
+  assert.equal(isExpectedExternalAnonKey(`x.${foreign}.x`), false);
+});
+
+test('CRM contract bounds identity, batches and mutations', () => {
+  assert.equal(normalizePhone('+55 (11) 99999-0000'), '5511999990000');
+  assert.ok(validateRpc('get_companies_by_phones_batch', { p_phones: Array(101).fill('5511999990000') }));
+  assert.ok(validateRpc('unknown', {}));
+  assert.ok(validateRpc('get_contact_360_by_phone', { p_phone: '5511999990000', injected: true }));
+  assert.equal(validateMutation('companies', 'insert', { nome_fantasia: 'ACME' }, undefined), null);
+  assert.ok(validateMutation('companies', 'update', { owner: 'attacker' }, { id: '1' }));
+  assert.ok(validateMutation('contacts', 'insert', { notes: { nested: true } }, undefined));
+});
