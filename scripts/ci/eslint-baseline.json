@@ -118,7 +118,7 @@
     },
     {
       "path": "src/components/calls/CallDialog.tsx",
-      "sha256": "f4c393358504477428895aa2d96ddcb866a0166e0bd155ded64881d148a11499"
+      "sha256": "a4e4e798ddd8e3e89cc799db201b1e73c618be99cb82a479b747259666c474b5"
     },
     {
       "path": "src/components/calls/VoIPPanel.tsx",
@@ -250,7 +250,7 @@
     },
     {
       "path": "src/components/contacts/ContactMergePanel.tsx",
-      "sha256": "63afcb55cf83fa098e52182cf80057e55236b898b5e018b0b037d99fcbb3cd45"
+      "sha256": "1aaa8102a55c5e93b492f15ff607ec9379ae9d504bb3cea9ba154f6969e59060"
     },
     {
       "path": "src/components/contacts/ContactNotes.tsx",
@@ -298,7 +298,7 @@
     },
     {
       "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
-      "sha256": "d7f38d6fde87f7cadd5b8f1659065914a2a7c5bb8e433bbca75e3390d4e855b3"
+      "sha256": "b9c7c9c052713bf7eed923f6838f23b6e13fab68df92baa1f0279fcd160717ff"
     },
     {
       "path": "src/components/dashboard/DemandPrediction.tsx",
@@ -450,7 +450,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "e7761cf57f3b60522ed893bab248118d90e0c24c6eeb347f00626a89410a5239"
+      "sha256": "0c5b1e8a9811b3ef7fe5ffe1805f961b6845b8822e6037b48a9afbc1be9f043a"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -470,7 +470,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "286ef03b7a60b961dd25b12b8332e589dc96941837055e0ebedfd60ebdca733f"
+      "sha256": "4109c28df1bd7d6e7aecd6fa7d40266413e457bfd816527411efe456faa1a687"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -478,19 +478,19 @@
     },
     {
       "path": "src/components/inbox/collaboration/HandoffDialog.tsx",
-      "sha256": "0151c980852a56ac3d557211b6afbf28690f4a03647638e7ec5019776b1f8ee1"
+      "sha256": "1b3dfd651c2684dd933a678f8b3cb76abb166ca497c96ce8f6cb30f5dd2e0c91"
     },
     {
       "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
-      "sha256": "f9c6b446b2a9080e947807e2c8cae0aa4f9617791b9f6feabe58acfb67a34974"
+      "sha256": "3c8cb947c95c4b26f55790e457014e5a3541b9bacfe38d9cfde65db89217ff8a"
     },
     {
       "path": "src/components/inbox/collaboration/MentionInput.tsx",
-      "sha256": "d0ef18e07d8eeeaa495c4d671754c266ec449ea3895af49c5d1f07eb70ad2092"
+      "sha256": "37d7a5865cdf105b564e74be184c0ea439c9876054fab121a9bdc571100e0b28"
     },
     {
       "path": "src/components/inbox/collaboration/ViewersIndicator.tsx",
-      "sha256": "fb7b6cc9beaefc1761f5bec1961fc993024839455048c84a02c57980319a4962"
+      "sha256": "8957c4ff6158b259b15f1412019fef2411c01eadedff2c6b923200a7f45b3346"
     },
     {
       "path": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
@@ -518,7 +518,7 @@
     },
     {
       "path": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "sha256": "6aba5dec9ee65affe6bfc5e5b888acd7779b16a7d40360651fdcef57afeade42"
+      "sha256": "0eed6b612936b32c31745ab60f97899c05139b880ce3e91a2bee9f9c05693da8"
     },
     {
       "path": "src/components/inbox/ConversationHistory.tsx",
@@ -535,10 +535,6 @@
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
       "sha256": "95e0690e9f1b044c5eae0c3de0e7176f7fb6bd83cc28430702bf04adab2f9500"
-    },
-    {
-      "path": "src/components/inbox/ConversationTasksPanel.tsx",
-      "sha256": "0f4a37eb79307788897e43bcf8035319602c5e5f57b31a792fdeb914586d38fe"
     },
     {
       "path": "src/components/inbox/ConversationTimeline.tsx",
@@ -573,20 +569,12 @@
       "sha256": "a034e9479d65732f7f63867b45113c1db9739f1691d50c639b9a866ff97290ab"
     },
     {
-      "path": "src/components/inbox/MediaGallery.tsx",
-      "sha256": "f8bd39c975158897bca77c0f3fe9cf2f543d54339122b89704634d6f977b2f89"
-    },
-    {
       "path": "src/components/inbox/MessageContextActions.tsx",
       "sha256": "e03a09b06f1ec04af6b3dbf6e573d7adb11df444e6cca65c8a29e514da39f187"
     },
     {
       "path": "src/components/inbox/MessagePreview.tsx",
       "sha256": "2c65b53a850a82390c1bbd344ecd6efd9c62f3bf06f59439994556f3a245b2da"
-    },
-    {
-      "path": "src/components/inbox/NextBestActionEngine.tsx",
-      "sha256": "b91382ac3448d1128f309ce0aab4039091e76402c3c6698b3c7c7b9c62b46457"
     },
     {
       "path": "src/components/inbox/ObjectionDetector.tsx",
@@ -602,7 +590,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "89386eb0375e71402fa0bfc091fd87e33030441aa900e283c5cf1ef3020084ae"
+      "sha256": "6143241f7912985653f361f75943025e6729875037ff63d4bf697cc9942e4ae3"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -638,7 +626,7 @@
     },
     {
       "path": "src/components/inbox/TransferDialog.tsx",
-      "sha256": "1478ca8e60025c8a6c90cd56e8cf0ec5d9a4090774d3812aea53850fcbe71d66"
+      "sha256": "f68359b781921916a590ce829557dcb342da7da8a6eab67da6aa48340eb9dcb8"
     },
     {
       "path": "src/components/inbox/useChatMediaSending.ts",
@@ -690,7 +678,7 @@
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "sha256": "81fb38d72bdad993a31f98a992e3b35f862a5da85436380d466304091d836984"
+      "sha256": "9c94cab0cdcd40e801d552bca7c6c12fc77b76585bff7a81720ffb258fbf5349"
     },
     {
       "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -814,7 +802,7 @@
     },
     {
       "path": "src/components/queues/AddMemberDialog.tsx",
-      "sha256": "f1e795a70d29aa679175b90553e0da50d28d3c1042f004fcac7f4c12f557d734"
+      "sha256": "a61374a9cd4fb115242a6dbbb941668f9777a01d99ff31a436c81479f7cdb7c1"
     },
     {
       "path": "src/components/queues/QueueCharts.tsx",
@@ -1010,11 +998,11 @@
     },
     {
       "path": "src/components/team-chat/AddMembersDialog.tsx",
-      "sha256": "9d66e93b516dd103186c7b7cb48a0082397d1c03d41d7305cf8d171df7720709"
+      "sha256": "353f47b324540c765571adef53b282fab0585afb5b2011b1dc06f4777e337f66"
     },
     {
       "path": "src/components/team-chat/NewConversationDialog.tsx",
-      "sha256": "32bd650073b4445cb297a144d66a73d136064f0d0997bb85724b200a4e02f8c1"
+      "sha256": "ed631d43b5f87401673594837574a670f72c1052be4a7441d2ac79af0fb762df"
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
@@ -1022,7 +1010,7 @@
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "3a76ee01d1095465dbd01d82337182cb1bbf0b2109a7eb011bc35882e5c6ff05"
+      "sha256": "abd023a53fc0fafdd8943af815267f5c1139152dbbb5ee6cdbf2293debb8057f"
     },
     {
       "path": "src/components/team-chat/TeamFileUploader.tsx",
@@ -1030,11 +1018,11 @@
     },
     {
       "path": "src/components/team-chat/TeamMemberDetails.tsx",
-      "sha256": "94531682316d2aacd8f3c7b3858aa5e80c823554744a008226c10a980f512c70"
+      "sha256": "d8dd02d537b890004890605f781760bfb87d299bd97b5d690e89f8f6df98c65a"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
-      "sha256": "de4a5c02c7d17c6a98115b0ded747eba058074df9c7c2c66645ae2dea53e5901"
+      "sha256": "f46b1c9bee41014dfe4fee5e27c1ffe44b1f22d06a20fb0d603eb35bd1d086bb"
     },
     {
       "path": "src/components/team-chat/useTeamChatPanel.ts",
@@ -5148,9 +5136,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 125,
+      "line": 128,
       "column": 101,
-      "endLine": 125,
+      "endLine": 128,
       "endColumn": 104,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -5162,9 +5150,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 125,
+      "line": 128,
       "column": 68,
-      "endLine": 125,
+      "endLine": 128,
       "endColumn": 71,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -5176,9 +5164,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 128,
+      "line": 131,
       "column": 39,
-      "endLine": 128,
+      "endLine": 131,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -5190,23 +5178,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 131,
-      "column": 5,
-      "endLine": 131,
-      "endColumn": 18,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/ChatPanel.tsx:131:5 129 | useEffect(() => { messagesAreaRef.current?.scrollToBottom(); }, [messages.length, isContactTyping]); 130 | useEffect(() => { > 131 | setActiveTool(null); setHighlightedMessageIds(new Set()); setActiveHighlightId(null); setSearchQuery(''); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 132 | }, [conversation.id]); 133 | 134 | const canGenerateSummary = messages.length >= 10;",
-      "spanHash": "94ea087b478206cdc53d3ab8c06d21b7854fc441a81c243ba704c4a8c756eeb6",
-      "lineHash": "db02633e8c5fcf9f013894b06b12ef0d2f4d136364a93b4fa7ea09873b4adfd4",
-      "contextHash": "1a581ed0268e4cfa3f53d225f80864c56c3d7f95080dffdd4aaba8c19dd7190e"
-    },
-    {
-      "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 154,
+      "line": 168,
       "column": 6,
-      "endLine": 154,
+      "endLine": 168,
       "endColumn": 8,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -5691,48 +5665,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "909debe0d6feb50bad814f7dd5293dc65a07d85a66993970332a27649ee3a9d3"
-    },
-    {
-      "file": "src/components/inbox/ConversationTasksPanel.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d2d1f63309fccf98bc88ad87ef8f05c8e9dd864e4049002d084db3d50b7b7132"
-    },
-    {
-      "file": "src/components/inbox/ConversationTasksPanel.tsx",
-      "line": 51,
-      "column": 5,
-      "endLine": 51,
-      "endColumn": 14,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `loadTasks` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/inbox/ConversationTasksPanel.tsx:51:5 49 | 50 | useEffect(() => { > 51 | loadTasks(); | ^^^^^^^^^ `loadTasks` accessed before it is declared 52 | }, [contactId]); 53 | 54 | const loadTasks = async () => { <ROOT>/src/components/inbox/ConversationTasksPanel.tsx:54:3 52 | }, [contactId]); 53 | > 54 | const loadTasks = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 55 | setLoading(true); | ^^^^^^^^^^^^^^^^^^^^^ > 56 | const { data } = await supabase | ^^^^^^^^^^^^^^^^^^^^^ > 57 | .from('conversation_tasks') | ^^^^^^^^^^^^^^^^^^^^^ > 58 | .select('*') | ^^^^^^^^^^^^^^^^^^^^^ > 59 | .eq('contact_id', contactId) | ^^^^^^^^^^^^^^^^^^^^^ > 60 | .order('created_at', { ascending: false }); | ^^^^^^^^^^^^^^^^^^^^^ > 61 | if (data) setTasks(data); | ^^^^^^^^^^^^^^^^^^^^^ > 62 | setLoading(false); | ^^^^^^^^^^^^^^^^^^^^^ > 63 | }; | ^^^^^ `loadTasks` is declared here 64 | 65 | const addTask = async () => { 66 | if (!newTitle.trim()) return;",
-      "spanHash": "065470e7259f09bfa1bc71e92210436a180a28c1907eda4c5ea47163059c0f95",
-      "lineHash": "51d8934893a77d2f7912a185ab99523274c39f657a3cf7792be2df84a0031333",
-      "contextHash": "8ab84c26907ac54253d23e52ae7dffbeb9b3294485647efcead9d29e3b9dabc3"
-    },
-    {
-      "file": "src/components/inbox/ConversationTasksPanel.tsx",
-      "line": 52,
-      "column": 6,
-      "endLine": 52,
-      "endColumn": 17,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'loadTasks'. Either include it or remove the dependency array.",
-      "spanHash": "e04e2cfc5685ff80d851af41d2333948964f145f5be204496679fb60eba27492",
-      "lineHash": "2f2c27959e5c12745458703ed815944b71659dd17dd90148b3a8e86f838863a4",
-      "contextHash": "9cf26cdf95cc4ce3e1c6c6ffcbccdd8e44e60e183b621790897d2a2e308f00f7"
     },
     {
       "file": "src/components/inbox/ConversationTimeline.tsx",
@@ -6925,20 +6857,6 @@
       "contextHash": "0be3ff2ccf054ef629fb2ed1112de684531cf7ee6cecb0022aa8c72f18fb00f7"
     },
     {
-      "file": "src/components/inbox/MediaGallery.tsx",
-      "line": 4,
-      "column": 1,
-      "endLine": 4,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "56a26e234dcb1d314ef5d7ef9ce557dbfe90392bdd0b7ac22b120313fecccc00"
-    },
-    {
       "file": "src/components/inbox/MessageContextActions.tsx",
       "line": 142,
       "column": 31,
@@ -6995,48 +6913,6 @@
       "contextHash": "ea68210b879b323877a6814b199f1bc9703a8ad9d4aa3178b9d1270c290076fc"
     },
     {
-      "file": "src/components/inbox/NextBestActionEngine.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "4d1770733b9fd38893746a9953431239b5f404c66cd87494270f762f6ccebe6b"
-    },
-    {
-      "file": "src/components/inbox/NextBestActionEngine.tsx",
-      "line": 39,
-      "column": 5,
-      "endLine": 39,
-      "endColumn": 22,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `analyzeAndSuggest` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/inbox/NextBestActionEngine.tsx:39:5 37 | 38 | useEffect(() => { > 39 | analyzeAndSuggest(); | ^^^^^^^^^^^^^^^^^ `analyzeAndSuggest` accessed before it is declared 40 | }, [contactId]); 41 | 42 | const analyzeAndSuggest = async () => { <ROOT>/src/components/inbox/NextBestActionEngine.tsx:42:3 40 | }, [contactId]); 41 | > 42 | const analyzeAndSuggest = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 43 | setLoading(true); | ^^^^^^^^^^^^^^^^^^^^^ > 44 | const suggestedActions: NextAction[] = []; … | ^^^^^^^^^^^^^^^^^^^^^ > 159 | setLoading(false); | ^^^^^^^^^^^^^^^^^^^^^ > 160 | }; | ^^^^^ `analyzeAndSuggest` is declared here 161 | 162 | const priorityColors = { 163 | high: 'border-destructive/30 bg-destructive/5',",
-      "spanHash": "0c11af9950e89d592a4986bfb5d543c192b972a3b2b52211e0aed537fa127403",
-      "lineHash": "7fad64166c77b22a9e521fd6502269b472fd7d1f63a8e26295597ac2590b15e2",
-      "contextHash": "8f7c4a80f94fe94070f313ad9f5dcb42a8abd86bf09f97459bb452c19b4bae1a"
-    },
-    {
-      "file": "src/components/inbox/NextBestActionEngine.tsx",
-      "line": 40,
-      "column": 6,
-      "endLine": 40,
-      "endColumn": 17,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'analyzeAndSuggest'. Either include it or remove the dependency array.",
-      "spanHash": "e04e2cfc5685ff80d851af41d2333948964f145f5be204496679fb60eba27492",
-      "lineHash": "2f2c27959e5c12745458703ed815944b71659dd17dd90148b3a8e86f838863a4",
-      "contextHash": "e6d6a545badc6d3841cc65f5370f427079d8841718978156b7f2ba73b8b63b68"
-    },
-    {
       "file": "src/components/inbox/ObjectionDetector.tsx",
       "line": 126,
       "column": 6,
@@ -7080,9 +6956,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 65,
+      "line": 94,
       "column": 6,
-      "endLine": 65,
+      "endLine": 94,
       "endColumn": 45,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
