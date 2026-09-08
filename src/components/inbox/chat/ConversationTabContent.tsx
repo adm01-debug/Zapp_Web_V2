@@ -1,14 +1,17 @@
 import { lazy, Suspense, useMemo, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import type { Conversation, Message } from '@/types/chat';
 import type { AnalysisMessage } from '../ai-tools/analysisConfigs';
 import type { ConversationTab } from './ConversationTabs';
+import { TabBanner } from '../tabs/TabBanner';
 
 const AIConversationAssistant = lazy(() =>
   import('../AIConversationAssistant').then((m) => ({ default: m.AIConversationAssistant })));
 const ContactPurchasesPanel = lazy(() =>
   import('../ContactPurchasesPanel').then((m) => ({ default: m.ContactPurchasesPanel })));
+const OrdersTab = lazy(() =>
+  import('../tabs/OrdersTab').then((m) => ({ default: m.OrdersTab })));
 const ConversationTasksPanel = lazy(() =>
   import('../ConversationTasksPanel').then((m) => ({ default: m.ConversationTasksPanel })));
 const PrivateNotes = lazy(() =>
@@ -39,6 +42,7 @@ function Panel({ name, children }: { name: string; children: ReactNode }) {
 
 interface ConversationTabContentProps {
   activeTab: ConversationTab;
+  onTabChange: (tab: ConversationTab) => void;
   conversation: Conversation;
   messages: Message[];
   /** Conteúdo da aba Chat — renderizado pelo pai, sempre montado. */
@@ -46,7 +50,7 @@ interface ConversationTabContentProps {
 }
 
 export function ConversationTabContent({
-  activeTab, conversation, messages, children,
+  activeTab, onTabChange, conversation, messages, children,
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
@@ -70,6 +74,18 @@ export function ConversationTabContent({
         As demais abas montam sob demanda (lazy) e desmontam ao sair.
       */}
       <div className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+        {activeTab === 'chat' && (
+          <div className="px-4 pt-3">
+            <TabBanner
+              icon={Sparkles}
+              title="Assistente IA"
+              description="Sugestões de resposta, identificação de intenção e próximos passos."
+              action={{ label: 'Ver sugestões', onClick: () => onTabChange('ia') }}
+              dismissKey="inbox-ai-banner-dismissed"
+              testId="chat-ai-banner"
+            />
+          </div>
+        )}
         {children}
       </div>
 
@@ -88,6 +104,12 @@ export function ConversationTabContent({
       {activeTab === 'crm' && (
         <Panel name="CRM 360°">
           <ContactPurchasesPanel contactId={contactId} />
+        </Panel>
+      )}
+
+      {activeTab === 'orders' && (
+        <Panel name="Pedidos">
+          <OrdersTab contactId={contactId} />
         </Panel>
       )}
 

@@ -1,12 +1,12 @@
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
 import {
-  MessageSquare, Sparkles, Compass, CheckSquare, FileText, Paperclip, History,
+  MessageSquare, Sparkles, Compass, ShoppingBag, CheckSquare, FileText, Paperclip, History,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
-export type ConversationTab = 'chat' | 'ia' | 'crm' | 'tasks' | 'notes' | 'files' | 'history';
+export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history';
 
 interface TabDef {
   id: ConversationTab;
@@ -20,6 +20,7 @@ const TABS: TabDef[] = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'ia', label: 'IA', icon: Sparkles },
   { id: 'crm', label: 'CRM 360°', icon: Compass },
+  { id: 'orders', label: 'Pedidos', icon: ShoppingBag },
   { id: 'tasks', label: 'Tarefas', icon: CheckSquare, count: (c) => c.tasksOpen },
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },
   { id: 'files', label: 'Arquivos', icon: Paperclip, count: (c) => c.filesTotal },
@@ -30,9 +31,11 @@ interface ConversationTabsProps {
   activeTab: ConversationTab;
   onTabChange: (tab: ConversationTab) => void;
   counts: ConversationTabCounts;
+  /** Badges resolvidos fora da RPC get_conversation_tab_counts (client-side). */
+  extraCounts?: { orders?: number };
 }
 
-export function ConversationTabs({ activeTab, onTabChange, counts }: ConversationTabsProps) {
+export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }: ConversationTabsProps) {
   const reduceMotion = useReducedMotion() ?? false;
 
   return (
@@ -46,7 +49,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts }: Conversatio
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
-          const count = tab.count?.(counts) ?? 0;
+          const count = tab.id === 'orders' ? (extraCounts?.orders ?? 0) : (tab.count?.(counts) ?? 0);
 
           return (
             <button
@@ -59,17 +62,17 @@ export function ConversationTabs({ activeTab, onTabChange, counts }: Conversatio
                 'relative isolate h-9 px-3 rounded-lg text-sm font-medium flex items-center gap-2 shrink-0',
                 'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 active
-                  ? 'text-primary font-semibold'
+                  ? 'text-foreground font-semibold'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
               )}
             >
               {active && (
                 reduceMotion ? (
-                  <span className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/30 -z-10" />
+                  <span className="absolute inset-0 rounded-lg bg-primary/15 border border-primary/40 -z-10" />
                 ) : (
                   <motion.span
                     layoutId="conversation-tab-pill"
-                    className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/30 -z-10"
+                    className="absolute inset-0 rounded-lg bg-primary/15 border border-primary/40 -z-10"
                     transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
                 )

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs';
 import { ConversationTabContent } from './chat/ConversationTabContent';
 import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
+import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
 const ChatPanel = lazy(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })));
 const ContactDetails = lazy(() => import('./ContactDetails').then(m => ({ default: m.ContactDetails })));
@@ -64,6 +65,9 @@ export function RealtimeInboxView() {
     [inbox.selectedContactId]
   );
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
+  // Badge da aba Pedidos vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
+  const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
+  const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
 
   useGlobalSearchShortcut({ onOpen: () => inbox.setGlobalSearchOpen(true) });
 
@@ -134,10 +138,11 @@ export function RealtimeInboxView() {
           <Suspense fallback={<ChatFallback />}>
             <>
               <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
-                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} />
+                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} extraCounts={tabExtraCounts} />
                 {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
                   <ConversationTabContent
                     activeTab={activeTab}
+                    onTabChange={setActiveTab}
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
                   >

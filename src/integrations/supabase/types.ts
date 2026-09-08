@@ -7677,13 +7677,6 @@ export type Database = {
           user_roles_list: string
         }[]
       }
-      get_last_message_dates: {
-        Args: { contact_ids: string[] }
-        Returns: {
-          contact_id: string
-          last_message_at: string
-        }[]
-      }
       get_own_gmail_accounts: {
         Args: never
         Returns: {
