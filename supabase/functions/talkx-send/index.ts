@@ -74,23 +74,27 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Verify caller has admin or manager role
+    // Auth: service-role key (scheduler/server-side) OR user JWT with admin/manager role.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
-    }
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .in("role", ["admin", "manager"])
-      .maybeSingle();
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+    const token = authHeader.slice(7);
+    const isServiceKey = token === serviceKey;
+    if (!isServiceKey) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      }
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["admin", "manager"])
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+      }
     }
 
     const { campaignId, action } = await req.json();
@@ -120,6 +124,25 @@ Deno.serve(async (req) => {
 
     if (!connection?.instance_id) {
       return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
+    }
+
+    // Enforce send_window and business_hours_only before marking as sending.
+    const nowBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const hBR = nowBR.getHours(); const mBR = nowBR.getMinutes(); const dowBR = nowBR.getDay();
+    const hmBR = hBR * 60 + mBR;
+    if (campaign.send_window_start && campaign.send_window_end) {
+      const [ws_h, ws_m] = campaign.send_window_start.split(":").map(Number);
+      const [we_h, we_m] = campaign.send_window_end.split(":").map(Number);
+      const ws = ws_h * 60 + ws_m; const we = we_h * 60 + we_m;
+      if (hmBR < ws || hmBR >= we) {
+        return new Response(JSON.stringify({ ok: false, reason: "outside_send_window", next_window: campaign.send_window_start }), { headers });
+      }
+    }
+    if (campaign.business_hours_only) {
+      // Mon–Fri (1–5), 08:00–18:00 Brasília
+      if (dowBR === 0 || dowBR === 6 || hBR < 8 || hBR >= 18) {
+        return new Response(JSON.stringify({ ok: false, reason: "outside_business_hours" }), { headers });
+      }
     }
 
     // Mark as sending
