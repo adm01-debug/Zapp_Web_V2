@@ -211,7 +211,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                         <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
                                       </div>
                                       <Avatar className="w-8 h-8">
-                                        <AvatarImage src={contact.avatar_url || undefined} />
+                                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
                                         <AvatarFallback className={cn(colors.bg, colors.text, 'text-[10px] font-bold')}>
                                           {getInitials(contact.name)}
                                         </AvatarFallback>

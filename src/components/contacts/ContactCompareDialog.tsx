@@ -52,7 +52,7 @@ export function ContactCompareDialog({ open, onOpenChange, contacts }: ContactCo
                         className="flex flex-col items-center gap-2"
                       >
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={c.avatar_url || undefined} />
+                          <AvatarImage src={c.avatar_url || undefined} alt={c.name || 'Avatar'} />
                           <AvatarFallback className={cn(getAvatarColor(c.name).bg, getAvatarColor(c.name).text)}>
                             {getInitials(c.name)}
                           </AvatarFallback>
