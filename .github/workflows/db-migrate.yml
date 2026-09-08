@@ -54,8 +54,11 @@ jobs:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/heads/main
+          ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -311,6 +314,42 @@ jobs:
                 ))::text
                 FROM payload;")
               ;;
+            20260908220000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH payload AS (
+                  SELECT jsonb_build_object(
+                    'server_major', current_setting('server_version_num')::int / 10000,
+                    'database', current_database(),
+                    'lease_column_count', (
+                      SELECT count(*) FROM information_schema.columns
+                      WHERE table_schema='public' AND table_name='crm_sync_outbox' AND column_name='lease_token'
+                    ),
+                    'new_complete_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='complete_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_lease_token uuid, p_interaction_id text, p_contact_id text, p_company_id text'
+                    ),
+                    'old_complete_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='complete_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_interaction_id text, p_contact_id text, p_company_id text'
+                    ),
+                    'new_fail_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='fail_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_lease_token uuid, p_error_code text'
+                    ),
+                    'state_constraint_count', (
+                      SELECT count(*) FROM pg_constraint
+                      WHERE conrelid='public.crm_sync_outbox'::regclass
+                        AND conname IN ('crm_sync_outbox_lease_state','crm_sync_outbox_success_state','crm_sync_outbox_phone_state')
+                    )
+                  ) AS value
+                )
+                SELECT (value || jsonb_build_object(
+                  'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
+                ))::text FROM payload;")
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -363,6 +402,18 @@ jobs:
                 && proof.function_count === 6
                 && proof.safe_function_count === 6
                 && proof.trigger_count === 1;
+          } else if (process.env.TARGET_VERSION === '20260908220000') {
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? proof.lease_column_count === 0
+                && proof.new_complete_count === 0
+                && proof.old_complete_count === 1
+                && proof.new_fail_count === 0
+                && proof.state_constraint_count === 0
+              : proof.lease_column_count === 1
+                && proof.new_complete_count === 1
+                && proof.old_complete_count === 0
+                && proof.new_fail_count === 1
+                && proof.state_constraint_count === 3;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -504,6 +555,47 @@ jobs:
             && proof.service_claim_execute === true
             && proof.trigger_count === 1;
           if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar fencing e maquina de estados da outbox CRM
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260908220000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            SELECT jsonb_build_object(
+              'lease_column', EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema='public' AND table_name='crm_sync_outbox' AND column_name='lease_token'
+              ),
+              'old_complete_absent', to_regprocedure('public.complete_crm_sync_outbox(uuid,text,text,text)') IS NULL,
+              'new_complete_service', has_function_privilege(
+                'service_role', 'public.complete_crm_sync_outbox(uuid,uuid,text,text,text)', 'EXECUTE'
+              ),
+              'new_complete_auth', has_function_privilege(
+                'authenticated', 'public.complete_crm_sync_outbox(uuid,uuid,text,text,text)', 'EXECUTE'
+              ),
+              'contact_fk_delete_action', (
+                SELECT confdeltype FROM pg_constraint
+                WHERE conrelid='public.crm_sync_outbox'::regclass
+                  AND conname='crm_sync_outbox_contact_id_fkey'
+              ),
+              'state_constraints', (
+                SELECT count(*) FROM pg_constraint
+                WHERE conrelid='public.crm_sync_outbox'::regclass
+                  AND conname IN ('crm_sync_outbox_lease_state','crm_sync_outbox_success_state','crm_sync_outbox_phone_state')
+              )
+            )::text;
+          SQL
+          )
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          if (!(proof.lease_column === true && proof.old_complete_absent === true
+            && proof.new_complete_service === true && proof.new_complete_auth === false
+            && proof.contact_fk_delete_action === 'n' && proof.state_constraints === 3)) process.exit(1);
           NODE
 
       - name: Provar paridade integral apos aplicacao
