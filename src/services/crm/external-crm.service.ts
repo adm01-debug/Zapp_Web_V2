@@ -14,15 +14,12 @@ interface ContactSearchResponse {
 }
  
  export class ExternalCRMService {
-   static async getContact360Batch(phones: string[]) {
-     const cleanedPhones = [...new Set(phones.map(p => p.replace(/[^0-9]/g, '')).filter(p => p.length >= 8))];
-     if (cleanedPhones.length === 0) return new Map();
+   static async getContact360Batch(contacts: Array<{ id: string; phone: string }>) {
+     const contactIds = [...new Set(contacts.map((contact) => contact.id).filter(Boolean))];
+     if (contactIds.length === 0) return new Map();
  
      try {
-       const { data } = await callCRMIntegration<Record<string, unknown>>('rpc', {
-         rpc: 'get_companies_by_phones_batch',
-         params: { p_phones: cleanedPhones },
-       });
+       const { data } = await callCRMIntegration<Record<string, unknown>>('contactLookupBatch', { contactIds });
        const map = new Map<string, unknown>();
        if (data && typeof data === 'object') {
          for (const [phone, info] of Object.entries(data)) {
@@ -85,14 +82,9 @@ interface ContactSearchResponse {
      return result.data;
    }
  
-   static async getContact360(phone: string) {
-     const cleanedPhone = phone.replace(/[^0-9]/g, '');
-     if (cleanedPhone.length < 8) return null;
- 
+   static async getContact360(contactId: string) {
      try {
-       const { data } = await callCRMIntegration<unknown>('rpc', {
-         rpc: 'get_contact_360_by_phone', params: { p_phone: cleanedPhone },
-       });
+       const { data } = await callCRMIntegration<unknown>('contactLookup', { contactId, lookup: '360' });
        return data;
      } catch (error) {
        log.error('[ExternalCRMService] Error fetching contact 360:', error);

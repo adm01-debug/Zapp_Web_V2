@@ -37,7 +37,7 @@ import type {
 } from '@/hooks/crm/useContactIntelligence';
 
 interface ContactIntelligencePanelProps {
-  phone: string;
+  contactId: string;
 }
 
 // ========================
@@ -254,8 +254,8 @@ function DISCSection({ disc }: { disc: DISCTips }) {
 // Main Component
 // ========================
 
-function ContactIntelligencePanelInner({ phone }: ContactIntelligencePanelProps) {
-  const { data, isLoading } = useContactIntelligence(phone);
+function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelProps) {
+  const { data, isLoading } = useContactIntelligence(contactId);
 
   if (isLoading) {
     return (

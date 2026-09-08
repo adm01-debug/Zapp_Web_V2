@@ -88,28 +88,20 @@ export interface ContactIntelligenceData {
   last_interactions: { channel: string; assunto: string; resumo: string | null; sentiment: string; data: string }[];
 }
 
-function cleanPhone(phone: string): string {
-  return phone.replace(/[^0-9]/g, '');
-}
-
-export function useContactIntelligence(phone: string | undefined) {
-  const cleanedPhone = phone ? cleanPhone(phone) : '';
-
+export function useContactIntelligence(contactId: string | undefined) {
   return useQuery<ContactIntelligenceData | null>({
-    queryKey: ['contact-intelligence', cleanedPhone],
+    queryKey: ['contact-intelligence', contactId],
     queryFn: async () => {
-      if (!cleanedPhone || cleanedPhone.length < 8) return null;
+      if (!contactId) return null;
       try {
-        const { data } = await callCRMIntegration<ContactIntelligenceData>('rpc', {
-          rpc: 'get_contact_intelligence_by_phone', params: { p_phone: cleanedPhone },
-        });
+        const { data } = await callCRMIntegration<ContactIntelligenceData>('contactLookup', { contactId, lookup: 'intelligence' });
         return data;
       } catch (error) {
         log.error('Intelligence RPC error:', error);
         return null;
       }
     },
-    enabled: isExternalConfigured && !!cleanedPhone && cleanedPhone.length >= 8,
+    enabled: isExternalConfigured && !!contactId,
     staleTime: 1000 * 60 * 15, // 15 min
     gcTime: 1000 * 60 * 30,
     retry: 1,

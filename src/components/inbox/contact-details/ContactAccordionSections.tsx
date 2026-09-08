@@ -70,10 +70,10 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
       {isExternalConfigured && (
         <>
           <Section index={2} value="crm-360" icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
-            <ExternalContact360Panel phone={contact.phone} />
+            <ExternalContact360Panel contactId={contact.id} />
           </Section>
           <Section index={2.5} value="intelligence" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
-            <ContactIntelligencePanel phone={contact.phone} />
+            <ContactIntelligencePanel contactId={contact.id} />
           </Section>
         </>
       )}

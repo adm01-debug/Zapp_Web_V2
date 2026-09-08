@@ -199,7 +199,41 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     const action = body.action;
     let data: unknown;
 
-    if (action === 'rpc') {
+    if (action === 'contactLookup') {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.contactId) ||
+        !['360', 'intelligence'].includes(String(body.lookup))) return errorResponse('Contact lookup is invalid', 400, req);
+      const { data: contact, error: contactError } = await canonicalUser.from('contacts')
+        .select('id,phone').eq('id', body.contactId).maybeSingle();
+      if (contactError || !contact) return errorResponse('Contact not found or not visible', 404, req);
+      const phone = normalizePhone(contact.phone);
+      if (!phone) return errorResponse('Contact phone is invalid', 409, req);
+      const rpc = body.lookup === '360' ? 'get_contact_360_by_phone' : 'get_contact_intelligence_by_phone';
+      const result = await withTimeout(externalClient.rpc(rpc, { p_phone: phone }));
+      if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+      if (JSON.stringify(result.data).length > 512_000) throw new Error('CRM_RESPONSE_TOO_LARGE');
+      data = result.data;
+    } else if (action === 'contactLookupBatch') {
+      if (isServiceRequest || isCronRequest || !Array.isArray(body.contactIds) || body.contactIds.length < 1 ||
+        body.contactIds.length > 100 || body.contactIds.some((id) => !isValidUUID(id))) {
+        return errorResponse('Contact batch is invalid', 400, req);
+      }
+      const contactIds = [...new Set(body.contactIds as string[])];
+      const { data: contacts, error: contactsError } = await canonicalUser.from('contacts')
+        .select('id,phone').in('id', contactIds);
+      if (contactsError) throw new Error(`CRM_CONTACTS:${contactsError.code || 'unknown'}`);
+      const phones = [...new Set((contacts || []).map((contact) => normalizePhone(contact.phone)).filter((phone): phone is string => Boolean(phone)))];
+      if (phones.length === 0) { data = {}; }
+      else {
+        const result = await withTimeout(externalClient.rpc('get_companies_by_phones_batch', { p_phones: phones }));
+        if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+        if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data) || JSON.stringify(result.data).length > 512_000) {
+          throw new Error('CRM_INVALID_RESPONSE');
+        }
+        const allowedPhones = new Set(phones);
+        data = Object.fromEntries(Object.entries(result.data as Record<string, unknown>)
+          .filter(([phone]) => { const normalized = normalizePhone(phone); return normalized && allowedPhones.has(normalized); }));
+      }
+    } else if (action === 'rpc') {
       const { data: isAdmin, error: adminError } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
       if (adminError || !isAdmin) return errorResponse('Forbidden', 403, req);
       const validation = validateRpc(body.rpc, body.params);

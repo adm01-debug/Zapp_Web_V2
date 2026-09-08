@@ -57,7 +57,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
 
-  const { data: crmData } = useExternalContact360(isExternalConfigured ? contact.phone : undefined);
+  const { data: crmData } = useExternalContact360(isExternalConfigured ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
