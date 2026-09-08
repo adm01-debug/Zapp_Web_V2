@@ -94,8 +94,8 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const handleExport = async () => {
     const { data } = await fromTable('talkx_recipients').select('*, contacts:contact_id(name, phone)').eq('campaign_id', campaignId).order('created_at');
     if (!data?.length) return;
-    const rows = data.map((r) => ({ Nome: (r.contacts as {name:string}|null)?.name, Telefone: (r.contacts as {phone:string}|null)?.phone, Status: r.status, Mensagem: r.personalized_message, Erro: r.error_message, 'Enviada em': r.sent_at }));
-    const h = Object.keys(rows[0]??{}); const csv = [h.join(','), ...rows.map((row) => h.map((k) => `"${String((row as Record<string,string>)[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
+    const rows = data.map((r: Record<string, unknown>) => ({ Nome: (r.contacts as {name:string}|null)?.name, Telefone: (r.contacts as {phone:string}|null)?.phone, Status: r.status, Mensagem: r.personalized_message, Erro: r.error_message, 'Enviada em': r.sent_at }));
+    const h = Object.keys(rows[0]??{}); const csv = [h.join(','), ...rows.map((row: Record<string, unknown>) => h.map((k) => `"${String(row[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
     a.download = `talkx-${campaign?.name??'campanha'}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
