@@ -50,6 +50,19 @@ test('smokeFunction never POSTs to a public webhook', async () => {
   assert.ok(recorder.calls.every((call) => call.init.method === 'OPTIONS'));
 });
 
+test('smokeFunction proves internal auth for the public cron gateway', async () => {
+  const recorder = secureFetchRecorder();
+  const result = await smokeFunction({
+    fn: { name: 'crm-integration', verify_jwt: false },
+    baseUrl: 'https://project.supabase.co/functions/v1',
+    retries: 1,
+    fetchImpl: recorder.fetchImpl,
+  });
+  assert.equal(result.passed, true);
+  assert.deepEqual(result.checks.anonymous_gateway, { status: 401, passed: true });
+  assert.equal(recorder.calls.length, 3);
+});
+
 test('smokeFunction fails closed when an endpoint returns wildcard CORS', async () => {
   const result = await smokeFunction({
     fn: { name: 'wildcard', verify_jwt: false },

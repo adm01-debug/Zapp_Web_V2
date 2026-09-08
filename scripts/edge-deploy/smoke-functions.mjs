@@ -6,6 +6,9 @@ import { verifyManifestDigest } from './manifest-lib.mjs';
 
 const DEFAULT_ALLOWED_ORIGIN = 'https://zapp-web-v2.vercel.app';
 const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
+// verify_jwt=false is required for cron callers that cannot mint a user JWT,
+// but these functions still enforce authentication inside their handler.
+const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration']);
 
 function parseArgs(argv) {
   const args = {
@@ -78,7 +81,7 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
       deniedOrigin !== DEFAULT_DENIED_ORIGIN && deniedOrigin !== '*';
 
     let anonymousGateway = null;
-    if (fn.verify_jwt) {
+    if (fn.verify_jwt || INTERNAL_AUTH_FUNCTIONS.has(fn.name)) {
       const anonymous = await fetchWithRetry(url, {
         method: 'POST',
         headers: { Origin: DEFAULT_ALLOWED_ORIGIN, 'Content-Type': 'application/json' },
