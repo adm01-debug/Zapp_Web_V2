@@ -40,7 +40,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
       const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
       const hourTotals: number[] = Array(24).fill(0);
-      (data ?? []).forEach((r) => {
+      (data ?? []).forEach((r: { sent_at?: string | null }) => {
         if (!r.sent_at) return;
         const d = new Date(r.sent_at); const h = d.getHours(); const dw = d.getDay();
         heatmap[dw][h] += 1; hourTotals[h] += 1;
