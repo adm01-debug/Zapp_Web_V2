@@ -165,11 +165,11 @@ VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
 VITE_SUPABASE_ANON_KEY=xxx
 
 # Externo
-VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
-VITE_CLIENTES_SUPABASE_ANON_KEY=xxx
+VITE_CRM_INTEGRATION_ENABLED=true
 
-# Nota: VITE_CLIE5TES_* tem fallback hardcoded (anon key pública por design).
-# No Vercel, VITE_CLIENTES_* é opcional — o fallback já aponta para pgxfvjmuubtbowutlide.
+# As credenciais do CRM externo nao pertencem ao Vercel/frontend. Configure
+# EXTERNAL_SUPABASE_URL e EXTERNAL_SUPABASE_ANON_KEY somente nos Edge Secrets
+# do projeto Supabase canonico; o navegador chama a edge crm-integration.
 
 # Sentry
 VITE_SENTRY_DSN=xxx

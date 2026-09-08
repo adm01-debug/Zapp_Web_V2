@@ -18,8 +18,7 @@ Já foram criados e commitados no GitHub:
 
 Os **environment secrets** necessários já estão no `.env`:
 ```
-VITE_EXTERNAL_SUPABASE_URL="https://pgxfvjmuubtbowutlide.supabase.co"
-VITE_EXTERNAL_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneGZ2am11dWJ0Ym93dXRsaWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjcwMTIsImV4cCI6MjA4NTcwMzAxMn0.sW9N_LChqwVNUvMmQWXx87Vhs3eoTI2OKg2TT_Cg4V0"
+VITE_CRM_INTEGRATION_ENABLED="true"
 ```
 
 **IMPORTANTE:** Esses secrets também precisam ser adicionados no painel do Lovable em Settings → Environment Variables.
@@ -122,21 +121,17 @@ O componente `src/components/inbox/ConversationList.tsx` mostra a lista de conve
 
 ## REFERÊNCIA TÉCNICA DOS ARQUIVOS EXISTENTES
 
-### Client externo (src/integrations/supabase/externalClient.ts)
+### Gateway externo (src/lib/crmIntegration.ts)
 ```typescript
-import { createClient } from '@supabase/supabase-js';
-const EXTERNAL_SUPABASE_URL = import.meta.env.VITE_EXTERNAL_SUPABASE_URL || '';
-const EXTERNAL_SUPABASE_ANON_KEY = import.meta.env.VITE_EXTERNAL_SUPABASE_ANON_KEY || '';
-export const externalSupabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-export const isExternalConfigured = Boolean(EXTERNAL_SUPABASE_URL && EXTERNAL_SUPABASE_ANON_KEY);
+// O navegador envia somente seu JWT do banco canonico. URL e chave do CRM
+// ficam exclusivamente nos Edge Function Secrets de crm-integration.
+await supabase.functions.invoke('crm-integration', { body: { action, ...payload } });
 ```
 
 ### Hook 360° (src/hooks/useExternalContact360.ts)
 ```typescript
 // Recebe um phone string, limpa caracteres não-numéricos, e chama:
-// externalSupabase.rpc('get_contact_360_by_phone', { p_phone: cleanedPhone })
+// crm-integration: rpc get_contact_360_by_phone, com JWT canonico
 // Retorna Contact360Data (ver src/types/contact360.ts)
 // Cache: staleTime 10min, gcTime 30min
 export function useExternalContact360(phone: string | undefined)

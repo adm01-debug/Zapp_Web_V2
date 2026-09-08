@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useDebounce } from '@/hooks/system/useDebounce';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { subDays, subMonths, startOfDay } from 'date-fns';
@@ -43,7 +44,6 @@ export function useGlobalSearchData(open: boolean) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [allTags, setAllTags] = useState<TagSuggestion[]>([]);
-  const [tagSuggestions, setTagSuggestions] = useState<TagSuggestion[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTypes, setActiveTypes] = useState<Set<ResultType>>(new Set(['message', 'transcription', 'contact', 'action', 'crm']));
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -60,15 +60,16 @@ export function useGlobalSearchData(open: boolean) {
     }
   }, [open]);
 
-  useEffect(() => {
+  const tagSuggestions = useMemo(() => {
     if (search.startsWith('#') || search.includes(' #')) {
       const tagQuery = search.includes(' #')
         ? search.split(' #').pop()?.toLowerCase() || ''
         : search.slice(1).toLowerCase();
-      setTagSuggestions(allTags.filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id)).slice(0, 5));
-    } else {
-      setTagSuggestions([]);
+      return allTags
+        .filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id))
+        .slice(0, 5);
     }
+    return [];
   }, [search, allTags, selectedTags]);
 
   const toggleType = useCallback((type: ResultType) => {
@@ -172,10 +173,11 @@ export function useGlobalSearchData(open: boolean) {
 
       if (types.has('crm') && isExternalConfigured && cleanQuery.length >= 3) {
         try {
-          const { data: crmData } = await getExternalSupabase().rpc('search_contacts_advanced', {
-            p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
-            p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
-            p_sort_by: 'relevance', p_page: 0, p_page_size: 8,
+          const { data: crmData } = await callCRMIntegration<{ results?: Record<string, string | null>[] }>('rpc', {
+            rpc: 'search_contacts_advanced',
+            params: { p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
+              p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
+              p_sort_by: 'relevance', p_page: 0, p_page_size: 8 },
           });
           if (crmData?.results) {
             const localPhones = new Set(searchResults.filter(r => r.type === 'contact').map(r => r.preview.replace(/\D/g, '')));
@@ -216,14 +218,16 @@ export function useGlobalSearchData(open: boolean) {
 
   useEffect(() => {
     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
-      performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
+      const timer = window.setTimeout(() => {
+        void performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [activeTypes, dateFilter, selectedTags, mediaTypeFilter]);
 
   const handleTagSelect = useCallback((tag: TagSuggestion) => {
     setSelectedTags(prev => [...prev, tag.id]);
     setSearch(prev => prev.replace(/#\w*$/, '').trim());
-    setTagSuggestions([]);
   }, []);
 
   const removeTag = useCallback((tagId: string) => {
