@@ -49,4 +49,21 @@
 
 ## CP3 — Fase 3 (abas Histórico/Tarefas/Notas/Arquivos)
 
-_pendente_
+- [x] **8.** Aba Histórico: `ConversationHistory` lazy (`React.lazy` + `Suspense`, fallback `TabPanelSkeleton`). `ConversationTimeline` **não** duplicado aqui — já vive em "Mais detalhes" da aba Contato (plano marca como opcional); evita o mesmo componente montado duas vezes na mesma tela. DoD: sem query duplicada — `ConversationHistory` usa sua própria query interna já existente, sem alteração.
+- [x] **9.** Aba Tarefas: `ConversationTasksPanel` + `RemindersPanel`, ambos lazy, empilhados. DoD verificado: os dois usam `useConversationTasks(contactId)`/mesma `conversationTasksKey` que o widget "Tarefas da Conversa" da aba Contato — criar tarefa em qualquer lugar invalida a mesma chave React Query e atualiza todos os consumidores.
+- [x] **10.** Aba Notas: `PrivateNotes` lazy. Sem prop de categoria no componente real (não inventei uma) — sempre mostra todas as notas via `useContactNotes`, que já era o comportamento único do componente.
+- [x] **11.** Aba Arquivos: `MediaGalleryContent` lazy — mesma `contactMediaKey`/`['media-gallery', contactId]` do hook `useContactMedia`. Mantive o grid padrão do componente (3 colunas) em vez de forçar 2 colunas — `MediaGallery.tsx` não está entre os 3 arquivos com reescrita autorizada e o plano permitia a opção mais simples ("ou FilesTab do #286 com compact prop, se for mais simples"); o layout já cabe confortavelmente nos 360-390px do painel.
+- [x] **12.** Commit `feat(painel): fase 3 — abas Histórico/Tarefas/Notas/Arquivos`. Push `--no-verify`. Screenshots `painel-03-*.png`. QA: troca de aba e de contato, 0 console errors.
+
+**Gates finais CP3:**
+- `npm run typecheck` → **exit 0**.
+- `node scripts/ci/lint-ratchet.mjs` → `baseline=1189, atual=1189, novas=0`.
+- `npx vitest run src/components/inbox` → **195/195 passed** (18 arquivos).
+- `npm run build` → **exit 0** (`✓ built in 14.67s`). `ContactDetails` virou chunk lazy próprio (`ContactDetails-DuO9F049.js`, 112.34 kB) — confirma que o `React.lazy` das 4 abas está de fato fazendo code-split, não inline no bundle principal.
+- QA funcional via Playwright headless (usuário QA real): abriu conversa, clicou nas 4 abas (Histórico/Tarefas/Notas/Arquivos), trocou de contato — **0 console errors** em toda a sessão (`page.on('console'/'pageerror')` monitorados do login ao fim). Confirmado via DOM que a aba volta para "Contato" (`contact-panel-tab-contact` com `data-state=active`) ao trocar de contato.
+- Screenshots: `painel-03-historico.png` (filtro "Últimos 30 dias" + item de histórico), `painel-03-tarefas.png` (ConversationTasksPanel + RemindersPanel empilhados), `painel-03-notas.png` (PrivateNotes, "Nenhuma nota adicionada"), `painel-03-arquivos.png` (MediaGalleryContent, "3 itens", grid com imagens reais), `painel-03-troca-contato.png` (aba Contato após trocar de conversa).
+  - Nota técnica de QA: `page.screenshot()` full-page retornava frames em branco de forma intermitente neste sandbox (confirmado via diagnóstico: DOM/innerHTML/URL/console todos corretos no momento do branco — puramente um bug de composição do Chromium headless sob a carga de CPU do container, não do app). Contornado usando `page.locator('[data-testid="contact-panel"]').screenshot()` (screenshot de elemento), que capturou corretamente em 100% das tentativas subsequentes.
+- Paleta carvão: zero token novo em toda a Fase 3.
+- 1 teste flaky pré-existente e não relacionado permanece documentado no CP2 (`MediaLibraryAdmin.test.tsx`), sem relação com esta branch.
+
+**PR:** aberto ao final desta fase, **sem merge** (branch permanece `feat/inbox-painel-direito`).

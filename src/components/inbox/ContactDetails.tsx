@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, startTransition } from 'react';
+import { useEffect, useRef, useState, useCallback, startTransition, lazy, Suspense } from 'react';
 import { EditContactDialog } from './contact-details/EditContactDialog';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,15 @@ import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { Accordion } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { log } from '@/lib/logger';
 import { undoToast } from '@/lib/undoToast';
 import { getStoredAccordionState, saveAccordionState } from './contact-details/contactDetailSections';
+
+const ConversationHistory = lazy(() => import('./ConversationHistory').then((m) => ({ default: m.ConversationHistory })));
+const ConversationTasksPanel = lazy(() => import('./ConversationTasksPanel').then((m) => ({ default: m.ConversationTasksPanel })));
+const RemindersPanel = lazy(() => import('./RemindersPanel').then((m) => ({ default: m.RemindersPanel })));
+const PrivateNotes = lazy(() => import('./PrivateNotes').then((m) => ({ default: m.PrivateNotes })));
+const MediaGalleryContent = lazy(() => import('./MediaGallery').then((m) => ({ default: m.MediaGalleryContent })));
 
 interface ContactDetailsProps {
   conversation: Conversation;
@@ -163,10 +170,30 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             </Accordion>
           </TabsContent>
 
-          <TabsContent value="history" className="mt-0"><TabPanelSkeleton /></TabsContent>
-          <TabsContent value="tasks" className="mt-0"><TabPanelSkeleton /></TabsContent>
-          <TabsContent value="notes" className="mt-0"><TabPanelSkeleton /></TabsContent>
-          <TabsContent value="files" className="mt-0"><TabPanelSkeleton /></TabsContent>
+          <TabsContent value="history" className="mt-0 px-3 pb-3">
+            <Suspense fallback={<TabPanelSkeleton />}>
+              <ConversationHistory contactId={contact.id} contactPhone={contact.phone} onSelectConversation={(id) => log.debug('Selected conversation:', id)} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="tasks" className="mt-0 px-3 pb-3 space-y-4">
+            <Suspense fallback={<TabPanelSkeleton />}>
+              <ConversationTasksPanel contactId={contact.id} profileId={profileId} />
+              <RemindersPanel contactId={contact.id} profileId={profileId} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="notes" className="mt-0 px-3 pb-3">
+            <Suspense fallback={<TabPanelSkeleton />}>
+              <PrivateNotes contactId={contact.id} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="files" className="mt-0 px-3 pb-3">
+            <Suspense fallback={<TabPanelSkeleton />}>
+              <MediaGalleryContent contactId={contact.id} />
+            </Suspense>
+          </TabsContent>
         </div>
       </Tabs>
 
