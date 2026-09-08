@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ContactResultsSummaryProps {
@@ -33,14 +33,28 @@ export function ContactResultsSummary({
   return (
     <div className="h-9 flex items-center justify-between text-[14px] text-muted-foreground">
       <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="sm" className="h-9 px-0 text-[14px] font-medium gap-2 hover:bg-transparent" onClick={onSelectAll}>
+        {/* Fix: <button> aninhado em <button> é HTML inválido.
+            Usamos div com role=button + onKeyDown para acessibilidade. */}
+        <div
+          role="button"
+          tabIndex={0}
+          className="h-9 flex items-center gap-2 text-[14px] font-medium cursor-pointer select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          onClick={onSelectAll}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelectAll()}
+          aria-label={selectedCount > 0 ? `${selectedCount} contatos selecionados — clique para desselecionar` : 'Selecionar todos os contatos'}
+        >
           <Checkbox
             checked={allSelected && filteredCount > 0}
-            onCheckedChange={() => onSelectAll()}
-            className="w-[18px] h-[18px] rounded-[5px] border-border"
+            className="w-[18px] h-[18px] rounded-[5px] border-border pointer-events-none"
+            aria-hidden="true"
+            tabIndex={-1}
           />
-          {selectedCount > 0 ? `${selectedCount} selecionado${selectedCount !== 1 ? 's' : ''}` : 'Selecionar todos'}
-        </Button>
+          <span>
+            {selectedCount > 0
+              ? `${selectedCount} selecionado${selectedCount !== 1 ? 's' : ''}`
+              : 'Selecionar todos'}
+          </span>
+        </div>
         <span className="h-4 w-px bg-border" />
         <span>
           Exibindo <span className="font-semibold text-foreground">{filteredCount}</span>
