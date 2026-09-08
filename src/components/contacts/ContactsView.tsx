@@ -57,8 +57,8 @@ export function ContactsView() {
     handleNewContactChange, handleEditContactChange,
   } = crud;
 
-  const contactPhones = useMemo(() => filteredContacts.map(c => c.phone), [filteredContacts]);
-  const { lookup } = useExternalContact360Batch(contactPhones);
+  const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
+  const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
   const reduceMotion = useReducedMotion();

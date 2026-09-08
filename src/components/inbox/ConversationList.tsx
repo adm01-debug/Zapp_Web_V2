@@ -69,11 +69,11 @@ export function ConversationList({
   const [filter, setFilter] = useState('all');
 
   // Batch CRM lookup: collect all phones, make 1 single RPC call
-  const allPhones = useMemo(
-    () => conversations.map((c) => c.contact.phone),
+  const crmContacts = useMemo(
+    () => conversations.map((c) => ({ id: c.contact.id, phone: c.contact.phone })),
     [conversations]
   );
-  const { lookup: crmLookup } = useExternalContact360Batch(allPhones);
+  const { lookup: crmLookup } = useExternalContact360Batch(crmContacts);
 
   const filteredConversations = useMemo(() => {
     const q = search.toLowerCase();

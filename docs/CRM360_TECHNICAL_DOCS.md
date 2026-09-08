@@ -65,8 +65,11 @@ Mapeamento score→stage:
 ## Variáveis de Ambiente
 
 ```env
-VITE_EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
-VITE_EXTERNAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
+VITE_CRM_INTEGRATION_ENABLED=true
+
+# Somente em Supabase Edge Function Secrets (nunca no Vercel/browser):
+EXTERNAL_SUPABASE_URL=https://external-project.supabase.co
+EXTERNAL_SUPABASE_SERVICE_ROLE_KEY=configure-no-dashboard
 ```
 
 ## Cadeia de Dados (Flow Completo)

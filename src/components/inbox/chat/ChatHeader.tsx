@@ -52,12 +52,12 @@ export function ChatHeader({
   voiceId, onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch,
   onOpenTransfer, onOpenSchedule, onVoiceChange,
 }: ChatHeaderProps) {
-  const { data: crmData } = useExternalContact360(isExternalConfigured ? conversation.contact.phone : undefined);
+  const { data: crmData } = useExternalContact360(isExternalConfigured ? conversation.contact.id : undefined);
   const crmCompany = crmData?.found ? crmData.company : null;
   const crmCustomer = crmData?.found ? crmData.customer : null;
   const crmRfm = crmData?.found ? crmData.rfm : null;
 
-  const { data: intel } = useContactIntelligence(isExternalConfigured ? conversation.contact.phone : undefined);
+  const { data: intel } = useContactIntelligence(isExternalConfigured ? conversation.contact.id : undefined);
   const briefing = intel?.found ? intel.briefing : null;
 
   return (

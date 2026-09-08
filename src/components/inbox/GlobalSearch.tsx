@@ -34,7 +34,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
     allTags, tagSuggestions, selectedTags, activeTypes, dateFilter, setDateFilter,
     mediaTypeFilter, setMediaTypeFilter, showFilters, setShowFilters,
     history, removeFromHistory, clearHistory,
-    toggleType, handleSearch, handleTagSelect, removeTag, performSearch,
+    toggleType, handleSearch, handleTagSelect, removeTag, resetFilters,
   } = useGlobalSearchData(open);
 
   const quickActions: QuickAction[] = useMemo(() => [
@@ -60,8 +60,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
   const handleHistorySelect = useCallback((query: string) => {
     handleSearch(query);
-    performSearch(query, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
-  }, [handleSearch, performSearch, activeTypes, dateFilter, selectedTags, mediaTypeFilter]);
+  }, [handleSearch]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -80,15 +79,13 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
     return () => document.removeEventListener('keydown', handler);
   }, [open, results, tagSuggestions, selectedIndex, handleSelect, handleTagSelect, onOpenChange, setSelectedIndex]);
 
-  const activeFiltersCount = (activeTypes.size < 4 ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0) + (selectedTags.length > 0 ? 1 : 0) + (mediaTypeFilter !== 'all' ? 1 : 0);
+  const activeFiltersCount = (activeTypes.size < 5 ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0) + (selectedTags.length > 0 ? 1 : 0) + (mediaTypeFilter !== 'all' ? 1 : 0);
   const showHistory = search.length === 0 && history.length > 0 && tagSuggestions.length === 0;
   const showActions = activeTypes.has('action') && filteredActions.length > 0 && (search.length === 0 || search.length >= 1);
 
   const handleClearFilters = useCallback(() => {
-    toggleType('message'); // reset handled inside
-    setDateFilter('all');
-    setMediaTypeFilter('all');
-  }, [toggleType, setDateFilter, setMediaTypeFilter]);
+    resetFilters();
+  }, [resetFilters]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

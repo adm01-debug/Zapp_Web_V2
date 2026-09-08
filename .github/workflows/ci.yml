@@ -17,8 +17,7 @@ on:
 env:
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-  VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
-  VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
+  VITE_CRM_INTEGRATION_ENABLED: 'true'
 
 permissions:
   contents: read
@@ -55,7 +54,9 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: 🧪 Test CI and Edge deployment guards
-        run: node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
+        run: >-
+          node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
@@ -143,8 +144,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
-          VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
+          VITE_CRM_INTEGRATION_ENABLED: 'true'
 
       # Artifact de dist/ so em PR — em push para main o deploy e feito pela
       # Vercel, e o upload custava 41.6k GigabyteHours de storage em agosto.
