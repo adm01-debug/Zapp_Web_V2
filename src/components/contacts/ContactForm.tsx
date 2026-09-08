@@ -96,7 +96,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
           <div className="space-y-1.5">
             <Label htmlFor="contact_type">Tipo de Contato</Label>
             <Select value={values.contact_type || 'cliente'} onValueChange={(val) => onChange('contact_type', val)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
               <SelectContent>{CONTACT_TYPES.map((type) => (
                 <SelectItem key={type.value} value={type.value}><div className="flex items-center gap-2"><span className={cn("w-2 h-2 rounded-full", type.color)} />{type.label}</div></SelectItem>
               ))}</SelectContent>
