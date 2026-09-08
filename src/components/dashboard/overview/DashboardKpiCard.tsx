@@ -184,7 +184,8 @@ function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSiz
   const hero = size === 'hero';
   const textCls = hero ? 'text-[13px]' : 'text-[11px]';
   if (delta === null) {
-    return <p className={cn(textCls, 'text-muted-foreground')}>—</p>;
+    // hero: sem linha de delta (mockups); compact/tall mantêm o "—" (comportamento atual, coberto por teste)
+    return hero ? null : <p className={cn(textCls, 'text-muted-foreground')}>—</p>;
   }
   if ('text' in delta) {
     return (
