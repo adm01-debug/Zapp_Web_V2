@@ -2552,7 +2552,7 @@ export type Database = {
           available_at: string
           closure_id: string | null
           completed_at: string | null
-          contact_id: string
+          contact_id: string | null
           created_at: string
           external_company_id: string | null
           external_contact_id: string | null
@@ -2560,10 +2560,11 @@ export type Database = {
           id: string
           idempotency_key: string
           last_error_code: string | null
+          lease_token: string | null
           locked_at: string | null
           locked_by: string | null
           max_attempts: number
-          normalized_phone: string
+          normalized_phone: string | null
           payload: Json
           status: string
           updated_at: string
@@ -2573,7 +2574,7 @@ export type Database = {
           available_at?: string
           closure_id?: string | null
           completed_at?: string | null
-          contact_id: string
+          contact_id?: string | null
           created_at?: string
           external_company_id?: string | null
           external_contact_id?: string | null
@@ -2581,10 +2582,11 @@ export type Database = {
           id?: string
           idempotency_key: string
           last_error_code?: string | null
+          lease_token?: string | null
           locked_at?: string | null
           locked_by?: string | null
           max_attempts?: number
-          normalized_phone: string
+          normalized_phone?: string | null
           payload?: Json
           status?: string
           updated_at?: string
@@ -2594,7 +2596,7 @@ export type Database = {
           available_at?: string
           closure_id?: string | null
           completed_at?: string | null
-          contact_id?: string
+          contact_id?: string | null
           created_at?: string
           external_company_id?: string | null
           external_contact_id?: string | null
@@ -2602,10 +2604,11 @@ export type Database = {
           id?: string
           idempotency_key?: string
           last_error_code?: string | null
+          lease_token?: string | null
           locked_at?: string | null
           locked_by?: string | null
           max_attempts?: number
-          normalized_phone?: string
+          normalized_phone?: string | null
           payload?: Json
           status?: string
           updated_at?: string
@@ -7918,7 +7921,7 @@ export type Database = {
           available_at: string
           closure_id: string | null
           completed_at: string | null
-          contact_id: string
+          contact_id: string | null
           created_at: string
           external_company_id: string | null
           external_contact_id: string | null
@@ -7926,10 +7929,11 @@ export type Database = {
           id: string
           idempotency_key: string
           last_error_code: string | null
+          lease_token: string | null
           locked_at: string | null
           locked_by: string | null
           max_attempts: number
-          normalized_phone: string
+          normalized_phone: string | null
           payload: Json
           status: string
           updated_at: string
@@ -7948,7 +7952,7 @@ export type Database = {
           available_at: string
           closure_id: string | null
           completed_at: string | null
-          contact_id: string
+          contact_id: string | null
           created_at: string
           external_company_id: string | null
           external_contact_id: string | null
@@ -7956,10 +7960,11 @@ export type Database = {
           id: string
           idempotency_key: string
           last_error_code: string | null
+          lease_token: string | null
           locked_at: string | null
           locked_by: string | null
           max_attempts: number
-          normalized_phone: string
+          normalized_phone: string | null
           payload: Json
           status: string
           updated_at: string
@@ -7988,6 +7993,7 @@ export type Database = {
           p_contact_id: string
           p_id: string
           p_interaction_id: string
+          p_lease_token: string
         }
         Returns: undefined
       }
@@ -8012,7 +8018,7 @@ export type Database = {
       }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
       fail_crm_sync_outbox: {
-        Args: { p_error_code: string; p_id: string }
+        Args: { p_error_code: string; p_id: string; p_lease_token: string }
         Returns: undefined
       }
       fn_list_audio_meme_categories: {
