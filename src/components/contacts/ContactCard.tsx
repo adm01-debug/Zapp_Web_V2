@@ -87,7 +87,7 @@ export function ContactCard({
       {/* Avatar + Name row */}
       <div className="flex items-start gap-3">
         <Avatar data-testid="contact-avatar" className="w-16 h-16 shrink-0 ring-2 ring-border/70">
-          <AvatarImage src={contact.avatar_url || undefined} />
+          <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
           <AvatarFallback className={cn('font-bold text-lg', avatarColors.bg, avatarColors.text)}>
             {getInitials(contact.name)}
           </AvatarFallback>

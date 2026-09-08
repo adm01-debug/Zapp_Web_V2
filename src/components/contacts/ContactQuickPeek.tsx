@@ -42,7 +42,7 @@ export function ContactQuickPeek({ contact, companyLogo, companyName, children }
           {/* Profile */}
           <div className="flex items-start gap-3">
             <Avatar className="w-12 h-12 ring-2 ring-border/30">
-              <AvatarImage src={contact.avatar_url || undefined} />
+              <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
               <AvatarFallback className={cn('font-bold text-sm', avatarColors.bg, avatarColors.text)}>
                 {getInitials(contact.name)}
               </AvatarFallback>

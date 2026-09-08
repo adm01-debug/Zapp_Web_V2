@@ -99,7 +99,7 @@ export function ContactDetailPanel({
 
           <div className="flex flex-col items-center text-center gap-3">
             <Avatar className="w-20 h-20 ring-4 ring-background shadow-lg">
-              <AvatarImage src={contact.avatar_url || undefined} />
+              <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
               <AvatarFallback className={cn(avatarColors.bg, avatarColors.text, 'text-xl font-bold')}>
                 {getInitials(contact.name)}
               </AvatarFallback>

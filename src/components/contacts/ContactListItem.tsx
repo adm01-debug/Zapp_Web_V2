@@ -45,7 +45,7 @@ export function ContactListItem({
       {/* Avatar */}
       <div className="relative shrink-0">
         <Avatar className="w-10 h-10 ring-2 ring-border/70">
-          <AvatarImage src={contact.avatar_url || undefined} />
+          <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
           <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
             {getInitials(contact.name)}
           </AvatarFallback>

@@ -40,7 +40,7 @@ export function ThemeInitializer() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         let presetId = DEFAULT_PRESET_ID;
-        let radius = 8;
+        let radius = 14; // 0.875rem = 14px — nosso token no tokens.css
         let storedConfig: StoredThemeConfig = {};
 
         if (saved) {
