@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { MobilePullToRefreshIndicator } from '@/components/mobile/MobilePullToRefresh';
@@ -6,14 +6,14 @@ import { VirtualizedRealtimeList } from './VirtualizedRealtimeList';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { InboxFilters } from './InboxFilters';
-import { ContactTypeFilter, FILTER_OPTIONS } from './ContactTypeFilter';
+import { FILTER_OPTIONS } from './ContactTypeFilter';
 import { TicketTabs } from './TicketTabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MessageSquare, RefreshCw, Search as SearchIcon, MessageSquarePlus, X } from 'lucide-react';
+import { MessageSquare, Search as SearchIcon, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -32,6 +32,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   const isMobile = useIsMobile();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
+  const conversationActions = useConversationActions();
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
@@ -48,7 +49,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   return (
     <div className={cn(
       'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-card flex flex-col overflow-hidden',
-      isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[320px] min-w-[320px] max-w-[320px]'
+      isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[350px] min-w-[350px] max-w-[350px]'
     )}>
       <BulkActionsToolbar
         selectedCount={bulkActions.selectedIds.size}
@@ -59,92 +60,74 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
         isLoading={bulkActions.bulkLoading}
       />
 
-      <div className={cn("px-3 border-b border-border space-y-1.5 shrink-0", isMobile ? "pt-1.5 pb-1.5" : "pt-2.5 pb-1.5")}>
+      <div className={cn('shrink-0 space-y-3 border-b border-border px-4', isMobile ? 'py-3' : 'pb-3 pt-3')}>
         {!isMobile && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-xs font-semibold text-foreground tracking-tight">Conversas</h2>
-              <span className={cn('w-1.5 h-1.5 rounded-full', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
+          <div className="flex min-h-14 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="truncate text-2xl font-bold tracking-tight text-foreground">Conversas</h2>
+              <div className="mt-0.5 flex items-center gap-2 text-[13px] text-muted-foreground">
+                <span>{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+                <span
+                  className={cn('h-2 w-2 rounded-full', inbox.isOnline ? 'bg-success' : 'bg-destructive')}
+                  aria-label={inbox.isOnline ? 'Conectado' : 'Sem conexão'}
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={inbox.refetch} disabled={inbox.loading} className="w-7 h-7 rounded-lg hover:bg-muted/60 active:scale-90 transition-all duration-150" aria-label="Atualizar">
-                    <RefreshCw className={cn('w-3.5 h-3.5', inbox.loading && 'animate-spin')} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[10px] font-medium">Atualizar</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => inbox.setShowNewConversation(true)} className="w-7 h-7 rounded-lg text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150" aria-label="Nova conversa">
-                    <MessageSquarePlus className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[10px] font-medium">Nova Conversa</TooltipContent>
-              </Tooltip>
-            </div>
+            <Button
+              type="button"
+              onClick={() => inbox.setShowNewConversation(true)}
+              className="h-10 shrink-0 gap-2 rounded-xl px-4 text-xs font-semibold shadow-none"
+            >
+              <Plus className="h-4 w-4" />
+              Nova conversa
+            </Button>
           </div>
         )}
 
-        <div className="flex items-center gap-1.5">
-          {isMobile ? (
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
-              <Input
-                ref={contactSearchRef}
-                placeholder="Buscar contato..."
-                value={contactSearch}
-                onChange={(e) => handleContactSearch(e.target.value)}
-                className="pl-8 pr-7 bg-muted/40 border-0 rounded-lg h-8 text-xs placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-primary/30"
-                aria-label="Buscar contato pelo nome"
-              />
-              {contactSearch && (
-                <Button variant="ghost" size="icon" onClick={clearContactSearch}
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 w-6 h-6 hover:bg-transparent" aria-label="Limpar busca">
-                  <X className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
-              <Input
-                ref={contactSearchRef}
-                placeholder="Buscar contato..."
-                value={contactSearch}
-                onChange={(e) => handleContactSearch(e.target.value)}
-                className="pl-7 pr-7 bg-muted/40 border-0 rounded-md h-7 text-[11px] placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-primary/30"
-                aria-label="Buscar contato pelo nome"
-              />
-              {contactSearch && (
-                <Button variant="ghost" size="icon" onClick={clearContactSearch}
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 w-5 h-5 hover:bg-transparent" aria-label="Limpar busca">
-                  <X className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-          )}
-          <div className="shrink-0 w-[130px]">
-            <ContactTypeFilter value={inboxFilters.selectedContactType} onChange={inboxFilters.handleContactTypeChange} conversations={inbox.cachedConversations} />
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <SearchIcon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+            <Input
+              ref={contactSearchRef}
+              placeholder="Buscar conversas…"
+              value={contactSearch}
+              onChange={(e) => handleContactSearch(e.target.value)}
+              className="h-10 rounded-xl border-border bg-input pl-10 pr-9 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40"
+              aria-label="Buscar conversas"
+            />
+            {contactSearch && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={clearContactSearch}
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-lg hover:bg-muted"
+                aria-label="Limpar busca"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
           </div>
+          <InboxFilters
+            compact
+            filters={inboxFilters.filters}
+            onFiltersChange={inboxFilters.setFilters}
+            showAll={inboxFilters.showAll}
+            onShowAllChange={inboxFilters.setShowAll}
+            selectedContactType={inboxFilters.selectedContactType}
+            onContactTypeChange={inboxFilters.handleContactTypeChange}
+            selectedQueueId={inboxFilters.selectedQueueId}
+            onQueueChange={inboxFilters.setSelectedQueueId}
+            onRefresh={inbox.refetch}
+            refreshing={inbox.loading}
+          />
         </div>
 
         <TicketTabs
           conversations={inbox.conversations}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
-        />
-
-        <InboxFilters
-          filters={inboxFilters.filters}
-          onFiltersChange={inboxFilters.setFilters}
-          showAll={inboxFilters.showAll}
-          onShowAllChange={inboxFilters.setShowAll}
-          selectedContactType={inboxFilters.selectedContactType}
-          onContactTypeChange={inboxFilters.handleContactTypeChange}
-          selectedQueueId={inboxFilters.selectedQueueId}
-          onQueueChange={inboxFilters.setSelectedQueueId}
+          profileId={inbox.profile?.id}
         />
       </div>
 
@@ -221,6 +204,16 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
               selectionMode={bulkActions.selectionMode}
               selectedIds={bulkActions.selectedIds}
               onToggleSelection={bulkActions.toggleSelection}
+              pinnedIds={conversationActions.pinnedIds}
+              favoriteIds={conversationActions.favoriteIds}
+              onPin={(contactId) => {
+                if (conversationActions.isPinned(contactId)) conversationActions.unpinConversation(contactId);
+                else conversationActions.pinConversation(contactId);
+              }}
+              onFavorite={(contactId) => {
+                if (conversationActions.isFavorite(contactId)) conversationActions.unfavoriteContact(contactId);
+                else conversationActions.favoriteContact(contactId);
+              }}
             />
           </ErrorBoundary>
         )}

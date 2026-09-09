@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Filter, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -45,6 +45,9 @@ interface InboxFiltersProps {
   onContactTypeChange?: (v: string | null) => void;
   selectedQueueId?: string | null;
   onQueueChange?: (v: string | null) => void;
+  compact?: boolean;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -66,6 +69,7 @@ export function InboxFilters({
   showAll = false, onShowAllChange,
   selectedContactType = null, onContactTypeChange,
   selectedQueueId = null, onQueueChange,
+  compact = false, onRefresh, refreshing = false,
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
@@ -78,7 +82,9 @@ export function InboxFilters({
     filters.status.length +
     filters.tags.length +
     (filters.agentId ? 1 : 0) +
-    (filters.dateRange.from ? 1 : 0);
+    (filters.dateRange.from ? 1 : 0) +
+    (selectedContactType ? 1 : 0) +
+    (selectedQueueId ? 1 : 0);
 
   const toggleStatus = useCallback((status: string) => {
     const newStatus = filters.status.includes(status)
@@ -129,23 +135,30 @@ export function InboxFilters({
   }, [filters, onFiltersChange]);
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className={cn('flex items-center gap-1.5', !compact && 'flex-wrap')}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="outline"
+            size={compact ? 'icon' : 'sm'}
+            data-testid="conversation-filter-button"
+            aria-label={activeFiltersCount > 0 ? `Filtros de conversa, ${activeFiltersCount} ativos` : 'Filtros de conversa'}
             className={cn(
-              'h-6 px-2 gap-1 text-[11px] rounded-md',
+              compact
+                ? 'relative h-10 w-10 shrink-0 rounded-xl border-border bg-input p-0'
+                : 'h-6 gap-1 rounded-md px-2 text-[11px]',
               activeFiltersCount > 0
-                ? 'text-primary bg-primary/10 hover:bg-primary/15'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'border-primary/40 bg-accent text-primary hover:bg-accent'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
-            <Filter className="w-3 h-3" />
-            Filtros
+            <SlidersHorizontal className={compact ? 'h-4 w-4' : 'h-3 w-3'} />
+            {!compact && 'Filtros'}
             {activeFiltersCount > 0 && (
-              <span className="ml-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] flex items-center justify-center font-bold">
+              <span className={cn(
+                'flex min-w-[14px] items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground',
+                compact ? 'absolute -right-1 -top-1 h-4 px-1' : 'ml-0.5 h-[14px]',
+              )}>
                 {activeFiltersCount}
               </span>
             )}
@@ -172,9 +185,9 @@ export function InboxFilters({
                 <section className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3 h-3 text-muted-foreground" />
-                    <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
+                    <Label htmlFor="show-all" className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
                   </div>
-                  <Switch checked={showAll} onCheckedChange={onShowAllChange} />
+                  <Switch id="show-all" checked={showAll} onCheckedChange={onShowAllChange} />
                 </section>
                 <Separator className="opacity-50" />
               </>
@@ -351,12 +364,31 @@ export function InboxFilters({
                 </div>
               )}
             </section>
+
+            {onRefresh && (
+              <>
+                <Separator className="opacity-50" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 w-full justify-center gap-2 rounded-lg border-border bg-card text-xs"
+                  onClick={() => {
+                    onRefresh();
+                    setIsOpen(false);
+                  }}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
+                  Atualizar conversas
+                </Button>
+              </>
+            )}
           </div>
         </PopoverContent>
       </Popover>
 
       {/* Active filter chips — inline, compact */}
-      {filters.status.map(status => {
+      {!compact && filters.status.map(status => {
         const opt = STATUS_OPTIONS.find(s => s.value === status);
         return (
           <Badge
@@ -371,7 +403,7 @@ export function InboxFilters({
         );
       })}
 
-      {filters.tags.map(tagId => {
+      {!compact && filters.tags.map(tagId => {
         const tag = tags.find(t => t.id === tagId);
         return tag ? (
           <Badge
@@ -387,7 +419,7 @@ export function InboxFilters({
         ) : null;
       })}
 
-      {filters.agentId && (
+      {!compact && filters.agentId && (
         <Badge
           variant="secondary"
           className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
@@ -398,7 +430,7 @@ export function InboxFilters({
         </Badge>
       )}
 
-      {filters.dateRange.from && (
+      {!compact && filters.dateRange.from && (
         <Badge
           variant="secondary"
           className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"

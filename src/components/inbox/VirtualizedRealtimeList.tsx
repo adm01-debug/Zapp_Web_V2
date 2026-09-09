@@ -1,16 +1,19 @@
-import { useRef, useCallback, useMemo } from 'react';
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
-import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import { memo, useCallback, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { format, isToday } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { FileText, MessageCircle, Pin, Star } from 'lucide-react';
+import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive } from 'lucide-react';
-import { toast } from 'sonner';
+import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
+import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+import {
+  buildConversationListEntries,
+  conversationDate,
+} from './conversation-list/groupConversations';
 
 interface VirtualizedRealtimeListProps {
   conversations: ConversationWithMessages[];
@@ -19,20 +22,14 @@ interface VirtualizedRealtimeListProps {
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelection?: (contactId: string) => void;
-  onMarkAsRead?: (contactId: string) => void;
-  onArchive?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   pinnedIds?: Set<string>;
-  onResolve?: (contactId: string) => void;
-  onTransfer?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
-  onSnooze?: (contactId: string) => void;
+  favoriteIds?: Set<string>;
 }
 
-// py-2.5 (20) + conteudo (48 com avatar, ate ~60 com a linha de tags) + gap-1.5
-// (6) + faixa de acoes h-7 (28) + border-b (1). A faixa e escondida com opacity,
-// entao ocupa altura mesmo fora do hover.
-const ITEM_HEIGHT = 120;
+const GROUP_HEIGHT = 32;
+const CONVERSATION_HEIGHT = 88;
 const EMPTY_SET = new Set<string>();
 
 export function VirtualizedRealtimeList({
@@ -42,357 +39,247 @@ export function VirtualizedRealtimeList({
   selectionMode = false,
   selectedIds = EMPTY_SET,
   onToggleSelection,
-  onMarkAsRead,
-  onArchive,
   onPin,
   pinnedIds = EMPTY_SET,
-  onResolve,
-  onTransfer,
   onFavorite,
-  onSnooze,
+  favoriteIds = EMPTY_SET,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-
-  const safeConversations = useMemo(() => {
-    if (!Array.isArray(conversations)) return [];
-    return conversations.filter(c => c?.contact?.id);
-  }, [conversations]);
-
-  const sortedConversations = useMemo(() => {
-    return [...safeConversations].sort((a, b) => {
-      const aPin = pinnedIds.has(a.contact.id);
-      const bPin = pinnedIds.has(b.contact.id);
-      if (aPin && !bPin) return -1;
-      if (!aPin && bPin) return 1;
-      const aTime = a.lastMessage ? new Date(a.lastMessage.created_at).getTime() : 0;
-      const bTime = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [safeConversations, pinnedIds]);
-
+  const entries = useMemo(
+    () => buildConversationListEntries(Array.isArray(conversations) ? conversations : [], pinnedIds),
+    [conversations, pinnedIds],
+  );
   const getScrollElement = useCallback(() => parentRef.current, []);
-  const estimateSize = useCallback(() => ITEM_HEIGHT, []);
 
+  // TanStack Virtual exposes imperative functions by design. The list entries,
+  // scroll resolver and item keys are stable, so opting this component out of
+  // React Compiler memoization is intentional and does not hide stale inputs.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
-    count: sortedConversations.length,
+    count: entries.length,
     getScrollElement,
-    estimateSize,
-    overscan: 5,
+    estimateSize: (index) => entries[index]?.kind === 'header' ? GROUP_HEIGHT : CONVERSATION_HEIGHT,
+    getItemKey: (index) => entries[index]?.key ?? index,
+    overscan: 6,
   });
 
-  const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
-    if (selectionMode && onToggleSelection) {
-      e.preventDefault();
-      onToggleSelection(contactId);
-    } else {
-      onSelectConversation(contactId);
-    }
-  }, [selectionMode, onToggleSelection, onSelectConversation]);
-
-  if (sortedConversations.length === 0) {
-    return null;
-  }
+  if (entries.length === 0) return null;
 
   return (
-    <div ref={parentRef} className="h-full overflow-auto scrollbar-thin">
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => (
-          <ConversationRow
-            key={sortedConversations[virtualRow.index].contact.id}
-            conversation={sortedConversations[virtualRow.index]}
-            virtualRow={virtualRow}
-            selectedContactId={selectedContactId}
-            isSelected={selectedIds.has(sortedConversations[virtualRow.index].contact.id)}
-            isPinned={pinnedIds.has(sortedConversations[virtualRow.index].contact.id)}
-            selectionMode={selectionMode}
-            onToggleSelection={onToggleSelection}
-            handleClick={handleClick}
-            onResolve={onResolve}
-            onTransfer={onTransfer}
-            onPin={onPin}
-            onFavorite={onFavorite}
-            onSnooze={onSnooze}
-            onArchive={onArchive}
-          />
-        ))}
+    <div ref={parentRef} className="h-full overflow-y-auto overflow-x-hidden scrollbar-thin">
+      <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const entry = entries[virtualRow.index];
+          if (!entry) return null;
+          return (
+            <div
+              key={entry.key}
+              className="absolute left-0 top-0 w-full"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {entry.kind === 'header' ? (
+                <ConversationGroupHeader title={entry.title} count={entry.count} pinned={entry.pinned} />
+              ) : (
+                <ConversationRow
+                  conversation={entry.conversation}
+                  selected={selectedContactId === entry.conversation.contact.id}
+                  checked={selectedIds.has(entry.conversation.contact.id)}
+                  pinned={pinnedIds.has(entry.conversation.contact.id)}
+                  favorite={favoriteIds.has(entry.conversation.contact.id)}
+                  selectionMode={selectionMode}
+                  onSelect={onSelectConversation}
+                  onToggleSelection={onToggleSelection}
+                  onPin={onPin}
+                  onFavorite={onFavorite}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-import { memo } from 'react';
-
-const SENTIMENT_LABEL: Record<string, string> = {
-  positive: 'positivo',
-  negative: 'negativo',
-  neutral: 'neutro',
-};
-
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
-  virtualRow: VirtualItem;
-  selectedContactId: string | null;
-  isSelected: boolean;
-  isPinned: boolean;
+  selected: boolean;
+  checked: boolean;
+  pinned: boolean;
+  favorite: boolean;
   selectionMode: boolean;
+  onSelect: (contactId: string) => void;
   onToggleSelection?: (contactId: string) => void;
-  handleClick: (contactId: string, e: React.SyntheticEvent) => void;
-  onResolve?: (contactId: string) => void;
-  onTransfer?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
-  onSnooze?: (contactId: string) => void;
-  onArchive?: (contactId: string) => void;
 }
 
-const ConversationRow = memo(({
+const MEDIA_TYPES = new Set(['image', 'video', 'audio', 'document', 'file']);
+
+const ConversationRow = memo(function ConversationRow({
   conversation,
-  virtualRow,
-  selectedContactId,
-  isSelected,
-  isPinned,
+  selected,
+  checked,
+  pinned,
+  favorite,
   selectionMode,
+  onSelect,
   onToggleSelection,
-  handleClick,
-  onResolve,
-  onTransfer,
   onPin,
   onFavorite,
-  onSnooze,
-  onArchive,
-}: ConversationRowProps) => {
-  const contactId = conversation.contact.id;
+}: ConversationRowProps) {
+  const contact = conversation.contact;
+  const contactId = contact.id;
+  const tags = contact.tags ?? [];
+  const normalizedTags = tags.map((tag) => tag.toLocaleLowerCase('pt-BR'));
+  const typeConfig = contact.contact_type ? CONTACT_TYPE_CONFIG[contact.contact_type] : undefined;
+  const isWhatsApp = Boolean(contact.whatsapp_connection_id);
+  const isVip = normalizedTags.includes('vip');
+  const lastMessageType = conversation.lastMessage?.message_type ?? 'text';
+  const lastMessageText = MEDIA_TYPES.has(lastMessageType)
+    ? `Arquivo: ${conversation.lastMessage?.content || lastMessageType}`
+    : conversation.lastMessage?.content || 'Sem mensagens';
+  const date = conversationDate(conversation);
+  const displayTime = isToday(date)
+    ? format(date, 'HH:mm', { locale: ptBR })
+    : format(date, 'dd/MM', { locale: ptBR });
 
-  const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
-    e.stopPropagation();
-    if (handler) handler(contactId);
-    else toast.info(`${label}: em breve`);
+  const selectConversation = () => {
+    if (selectionMode) onToggleSelection?.(contactId);
+    else onSelect(contactId);
   };
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: `${virtualRow.size}px`,
-        transform: `translateY(${virtualRow.start}px)`,
-      }}
-      className="px-2"
+    <article
+      data-testid="conversation-item"
+      data-contact-id={contactId}
+      className={cn(
+        'group mx-3 my-0.5 flex min-h-[84px] items-center gap-3 rounded-xl border px-3 py-2 transition-colors',
+        selected
+          ? 'border-primary/40 bg-accent'
+          : 'border-transparent bg-transparent hover:bg-muted/40',
+        checked && 'border-primary/40 bg-primary/10',
+      )}
     >
+      {selectionMode && (
+        <Checkbox
+          checked={checked}
+          onCheckedChange={() => onToggleSelection?.(contactId)}
+          aria-label={`Selecionar conversa com ${contact.name || 'contato sem nome'}`}
+          className="shrink-0 data-[state=checked]:bg-primary"
+        />
+      )}
+
       <div
-        className={cn(
-          'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 group',
-          'hover:bg-muted/50',
-          selectedContactId === contactId && 'bg-primary/10 border-l-2 border-l-primary',
-          isSelected && 'bg-primary/15',
-          isPinned && selectedContactId !== contactId && 'bg-muted/30'
-        )}
+        role="button"
+        tabIndex={0}
+        aria-current={selected ? 'true' : undefined}
+        aria-label={`Abrir conversa com ${contact.name || 'contato sem nome'}`}
+        onClick={selectConversation}
+        onKeyDown={(event) => {
+          if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+            event.preventDefault();
+            selectConversation();
+          }
+        }}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div className="flex items-center gap-3">
-          {selectionMode && (
-            <div className="flex-shrink-0 flex items-center">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onToggleSelection?.(contactId)}
-                aria-label={`Selecionar conversa com ${conversation.contact.name || 'contato sem nome'}`}
-                className="data-[state=checked]:bg-primary"
-              />
+        <div className="relative shrink-0">
+          <Avatar className="h-12 w-12 ring-1 ring-border/60">
+            <AvatarImage src={contact.avatar_url || undefined} alt="" />
+            <AvatarFallback className={cn(
+              'text-sm font-semibold',
+              getAvatarColor(contact.name || '?').bg,
+              getAvatarColor(contact.name || '?').text,
+            )}>
+              {getInitials(contact.name || '?')}
+            </AvatarFallback>
+          </Avatar>
+          {isWhatsApp && (
+            <span
+              className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-primary-foreground ring-2 ring-card"
+              aria-label="WhatsApp"
+            >
+              <MessageCircle className="h-3 w-3" aria-hidden="true" />
+            </span>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-1.5">
+            {pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Conversa fixada" />}
+            <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-foreground">
+              {contact.name || 'Sem nome'}
+            </span>
+            <time dateTime={date.toISOString()} className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {displayTime}
+            </time>
+          </div>
+
+          <div className="mt-0.5 flex min-w-0 items-center gap-2">
+            <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] text-muted-foreground">
+              {MEDIA_TYPES.has(lastMessageType) && <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+              <span className="truncate">{lastMessageText}</span>
+            </span>
+            {conversation.unreadCount > 0 && (
+              <span className="flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+              </span>
+            )}
+          </div>
+
+          {(typeConfig || isVip || conversation.contact.ai_sentiment) && (
+            <div className="mt-1 flex min-w-0 items-center gap-1 overflow-hidden">
+              {typeConfig && (
+                <span className="truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                  {typeConfig.label}
+                </span>
+              )}
+              {isVip && (
+                <span className="rounded-md border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[11px] font-medium text-warning">
+                  VIP
+                </span>
+              )}
+              {conversation.contact.ai_sentiment && (
+                <span className="truncate rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                  {conversation.contact.ai_sentiment === 'positive' ? 'Positivo' : conversation.contact.ai_sentiment === 'negative' ? 'Atenção' : 'Neutro'}
+                </span>
+              )}
             </div>
           )}
-
-          {/* role="button" e nao <button>: o conteudo tem <div> e <p>, que nao sao
-              conteudo valido de button. Aqui nao ha mais aninhamento — checkbox e
-              faixa de acoes sao irmaos deste elemento, entao o onKeyDown so
-              dispara com o foco nele. */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={(e) => handleClick(contactId, e)}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') return;
-              // Espaco segurado auto-repete; um <button> nativo ignora repeticao.
-              if (e.repeat) return;
-              e.preventDefault();
-              handleClick(contactId, e);
-            }}
-            className="flex-1 min-w-0 flex items-center gap-3 text-left cursor-pointer outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-          <div className="relative flex-shrink-0">
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={conversation.contact.avatar_url || undefined} alt="" />
-              <AvatarFallback className={cn(
-                'text-xs font-semibold',
-                getAvatarColor(conversation.contact.name || '?').bg,
-                getAvatarColor(conversation.contact.name || '?').text
-              )}>
-                {getInitials(conversation.contact.name || '?')}
-              </AvatarFallback>
-            </Avatar>
-            {conversation.contact.ai_sentiment && (
-              <span
-                role="img"
-                aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
-                className={cn(
-                  'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
-                  conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
-                  conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
-                  conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
-                )}
-                title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
-              />
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center justify-between gap-2 mb-0.5">
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                {isPinned && <Pin className="w-3 h-3 text-primary flex-shrink-0" />}
-                {conversation.contact.contact_type === 'sicoob_gifts' && (
-                  <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
-                )}
-                <span className="font-medium text-foreground truncate text-sm">
-                  {(() => {
-                    const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
-                    const company = conversation.contact.company;
-                    return company ? `${firstName} · ${company}` : firstName;
-                  })()}
-                </span>
-                {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
-                  <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}>
-                    {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
-                  </span>
-                )}
-                {conversation.contact.contact_type === 'sicoob_gifts' && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-info/40 text-info bg-info/10 flex-shrink-0">
-                    Sicoob Gifts
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {conversation.lastMessage && (
-                  <span className="text-[11px] text-muted-foreground">
-                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
-                      addSuffix: false,
-                      locale: ptBR,
-                    })}
-                  </span>
-                )}
-                {conversation.unreadCount > 0 && (
-                  <span className="min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                  </span>
-                )}
-              </div>
-            </div>
-            <p className="text-[13px] text-muted-foreground truncate">
-              {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
-                ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
-                : conversation.lastMessage?.content || 'Sem mensagens'}
-            </p>
-            {conversation.contact.tags && conversation.contact.tags.length > 0 && (
-              <div className="flex gap-1 mt-1">
-                {conversation.contact.tags.slice(0, 2).map((tag: string) => (
-                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                    {tag}
-                  </Badge>
-                ))}
-                {conversation.contact.tags.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    +{conversation.contact.tags.length - 2}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-          </div>
-        </div>
-
-        {/* Hover action buttons */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-150 translate-y-0.5 group-hover:translate-y-0 pl-[60px]">
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Resolver conversa"
-                  onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Resolver</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Transferir conversa"
-                  onClick={(e) => handleAction(e, onTransfer, 'Transferir')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Transferir</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Fixar conversa"
-                  onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
-                >
-                  <Pin className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Favoritar conversa"
-                  onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-400/10 active:scale-90 transition-all duration-150"
-                >
-                  <Star className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Favoritar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Adiar conversa"
-                  onClick={(e) => handleAction(e, onSnooze, 'Adiar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
-                >
-                  <AlarmClock className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Arquivar conversa"
-                  onClick={(e) => handleAction(e, onArchive, 'Arquivar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
-                >
-                  <Archive className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
-    </div>
+
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <button
+          type="button"
+          aria-label={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          aria-pressed={favorite}
+          onClick={(event) => {
+            event.stopPropagation();
+            onFavorite?.(contactId);
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-muted hover:text-warning focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Star className={cn('h-3.5 w-3.5', favorite && 'fill-warning text-warning')} />
+        </button>
+        {pinned && onPin && (
+          <button
+            type="button"
+            aria-label="Desafixar conversa"
+            onClick={(event) => {
+              event.stopPropagation();
+              onPin(contactId);
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-primary outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Pin className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </article>
   );
 });
