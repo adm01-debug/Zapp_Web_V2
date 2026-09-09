@@ -167,6 +167,18 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     return () => window.removeEventListener('keydown', h);
   }, []);
 
+  // Allows the contact side panel to reuse the canonical transfer dialog without
+  // duplicating its state or transfer implementation. Ignore events for stale panels.
+  useEffect(() => {
+    const handleOpenTransfer = (event: Event) => {
+      const detail = (event as CustomEvent<{ contactId?: string }>).detail;
+      if (!detail?.contactId || detail.contactId !== conversation.contact.id) return;
+      openDialog('transferDialog');
+    };
+    window.addEventListener('zapp:open-transfer-dialog', handleOpenTransfer);
+    return () => window.removeEventListener('zapp:open-transfer-dialog', handleOpenTransfer);
+  }, [conversation.contact.id, openDialog]);
+
   // Stable refs for ChatMessagesArea to prevent re-renders on input change
   const contactJid = useMemo(() => conversation.contact.phone ? `${conversation.contact.phone}@s.whatsapp.net` : '', [conversation.contact.phone]);
   const contactAvatar = conversation.contact.avatar || undefined;
