@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,10 +14,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
+import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
 
@@ -328,6 +330,33 @@ function StatTile({ icon, color, label, value, sub, subTone }: { icon: React.Ele
   );
 }
 
+function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string; name: string; description?: string | null; rules: unknown; estimated_count: number; last_used_at?: string | null }; estimatedCount?: number }) {
+  const { data: est, isFetching } = useAudienceEstimate(segment.rules as import('@/hooks/integrations/useTalkXSegments').SegmentRules, true);
+  const count = est?.count ?? estimatedCount ?? segment.estimated_count;
+  return (
+    <RailCard icon={Bookmark} color="violet" title={segment.name} subtitle={segment.description || 'Segmento salvo'}
+      right={isFetching ? <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" /> : undefined}
+    >
+      <p className="text-[11px] text-foreground-secondary">Público estimado</p>
+      <p className={cn('text-[24px] font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-[12px] font-normal text-muted-foreground ml-1">contatos</span></p>
+      {est?.sample && est.sample.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          <p className="text-[11px] text-foreground-secondary">Amostra (5)</p>
+          {est.sample.map((c) => (
+            <div key={c.id} className="flex items-center gap-2">
+              <InitialsAvatar name={c.name || '?'} size={24} />
+              <div className="min-w-0">
+                <p className="text-[11.5px] font-medium text-foreground truncate">{c.name}</p>
+                <p className="text-[10.5px] text-foreground-secondary truncate">{c.company || c.phone}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </RailCard>
+  );
+}
+
 function WizardRail({ ed }: { ed: WizardState }) {
   const sample = ed.contacts?.[0];
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
@@ -346,12 +375,7 @@ function WizardRail({ ed }: { ed: WizardState }) {
       <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
         <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
       </RailCard>
-      {ed.selectedSegment && (
-        <RailCard icon={Bookmark} color="violet" title={ed.selectedSegment.name} subtitle={ed.selectedSegment.description || 'Segmento salvo'}>
-          <MetaRow label="Público estimado" value={`${fmtInt(ed.segmentEstimate ?? ed.selectedSegment.estimated_count)} contatos`} />
-          <MetaRow label="Último uso" value={ed.selectedSegment.last_used_at ? fmtDateTime(ed.selectedSegment.last_used_at) : 'Nunca'} />
-        </RailCard>
-      )}
+      {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
     </div>
   );
 }
