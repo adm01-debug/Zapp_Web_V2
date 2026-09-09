@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 
@@ -18,9 +19,10 @@ export interface TalkXTemplate {
   created_at: string;
   updated_at: string;
   creator?: { name: string | null } | null;
+  custom_variables: string[];
 }
 
-export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status'>>;
+export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
 
 export function useTalkXTemplates() {
   const qc = useQueryClient();
@@ -89,6 +91,22 @@ export function useTalkXTemplates() {
     invalidate();
   };
 
+
+  const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone }: {
+    templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string;
+  }) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+    const res = await fetch(`${supabaseUrl}/functions/v1/talkx-send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) throw new Error(json.error || `Erro ${res.status}`);
+    return json;
+  };
+
   return {
     templates: query.data ?? [],
     isLoading: query.isLoading,
@@ -96,5 +114,6 @@ export function useTalkXTemplates() {
     error: query.error as Error | null,
     refetch: query.refetch,
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
+    testTemplate
   };
 }

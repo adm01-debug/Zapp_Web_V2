@@ -97,7 +97,45 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { campaignId, action } = await req.json();
+    const body = await req.json();
+    const { campaignId, action } = body;
+
+    // E47: action test --- envia template de teste para um numero
+    if (action === "test") {
+      const { templateContent, mediaUrl, mediaType, phone } = body as {
+        templateContent: string;
+        mediaUrl?: string | null;
+        mediaType?: string | null;
+        phone: string;
+      };
+      if (!templateContent || !phone) {
+        return new Response(JSON.stringify({ error: "templateContent e phone obrigatorios" }), { status: 400, headers });
+      }
+      // Buscar conexao WhatsApp padrao (primeira ativa)
+      const { data: conn } = await supabase
+        .from("whatsapp_connections").select("instance_id").eq("status", "connected").limit(1).single();
+      if (!conn?.instance_id) {
+        return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
+      }
+      // Personalizar com dados ficticios para preview
+      const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
+      const personalizedText = personalize(templateContent, dummyContact);
+      const cleanPhone = phone.replace(/\D/g, "");
+      try {
+        if (mediaUrl && mediaType && mediaType !== "audio") {
+          await evoFetch(evolutionUrl, evolutionKey, conn.instance_id, "sendMedia", {
+            number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText,
+          });
+        } else {
+          await evoFetch(evolutionUrl, evolutionKey, conn.instance_id, "sendText", {
+            number: cleanPhone, text: personalizedText,
+          });
+        }
+        return new Response(JSON.stringify({ success: true }), { headers });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
+      }
+    }
 
     if (!campaignId) {
       return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
