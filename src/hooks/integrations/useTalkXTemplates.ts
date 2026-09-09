@@ -16,13 +16,28 @@ export interface TalkXTemplate {
   status: 'draft' | 'review' | 'approved';
   use_count: number;
   created_by: string | null;
+  custom_variables: string[];
   created_at: string;
   updated_at: string;
   creator?: { name: string | null } | null;
-  custom_variables: string[];
 }
 
 export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
+type TemplateUpdateInput = TemplateInput & { id: string; expectedUpdatedAt: string };
+
+function templateUpdateErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('talkx_template_stale_version')) {
+    return 'Este template foi alterado por outra pessoa. Recarregue a lista antes de salvar novamente.';
+  }
+  if (message.includes('talkx_template_not_authorized')) {
+    return 'Você não tem permissão para alterar este template.';
+  }
+  if (message.includes('invalid_talkx_template')) {
+    return 'O template contém dados inválidos. Revise os campos e tente novamente.';
+  }
+  return 'Não foi possível atualizar o template. Tente novamente.';
+}
 
 export function useTalkXTemplates() {
   const qc = useQueryClient();
@@ -55,13 +70,36 @@ export function useTalkXTemplates() {
   });
 
   const updateTemplate = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<TemplateInput> & { id: string }) => {
-      const { data, error } = await fromTable('talkx_templates').update(updates).eq('id', id).select().single();
+    mutationFn: async ({ id, expectedUpdatedAt, ...updates }: TemplateUpdateInput) => {
+      const current = query.data?.find((template) => template.id === id);
+      if (!current) throw new Error('Template desatualizado; recarregue e tente novamente');
+      const next = { ...current, ...updates };
+      const { data, error } = await supabase.rpc('update_talkx_template_with_snapshot', {
+        p_template_id: id,
+        p_expected_updated_at: expectedUpdatedAt,
+        p_name: next.name,
+        p_description: next.description,
+        p_category: next.category,
+        p_content: next.content,
+        p_media_url: next.media_url,
+        p_media_type: next.media_type,
+        p_tags: next.tags,
+        p_status: next.status,
+        p_custom_variables: next.custom_variables ?? [],
+      });
       if (error) throw error;
-      return data as TalkXTemplate;
+      const persisted = data?.[0];
+      if (!persisted) throw new Error('Atualização não confirmada pelo banco');
+      return { ...next, updated_at: persisted.updated_at };
     },
-    onSuccess: () => { invalidate(); toast.success('Template atualizado'); },
-    onError: (e: Error) => toast.error(`Erro ao atualizar: ${e.message}`),
+    onSuccess: (updated) => {
+      qc.setQueryData<TalkXTemplate[]>(['talkx-templates'], (templates) =>
+        templates?.map((template) => template.id === updated.id ? updated : template)
+      );
+      invalidate();
+      toast.success('Template atualizado');
+    },
+    onError: (error: unknown) => toast.error(templateUpdateErrorMessage(error)),
   });
 
   const deleteTemplate = useMutation({
@@ -86,8 +124,8 @@ export function useTalkXTemplates() {
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
-  const registerUse = async (id: string, current: number) => {
-    await fromTable('talkx_templates').update({ use_count: current + 1 }).eq('id', id);
+  const registerUse = async (id: string, _current: number) => {
+    await supabase.rpc('increment_talkx_template_use', { p_template_id: id });
     invalidate();
   };
 
@@ -96,38 +134,11 @@ export function useTalkXTemplates() {
   const fetchVersionHistory = async (templateId: string) => {
     const { data } = await supabase
       .from('talkx_template_versions')
-      .select('id,version_number,name,content,category,status,media_url,media_type,tags,custom_variables,created_at')
+      .select('id,version_number,name,description,content,category,status,media_url,media_type,tags,custom_variables,created_at')
       .eq('template_id', templateId)
       .order('version_number', { ascending: false })
       .limit(10);
     return data ?? [];
-  };
-
-  const saveVersionSnapshot = async (templateId: string, payload: {
-    name: string; content: string; category: string; status: string;
-    media_url?: string | null; media_type?: string | null;
-    tags: string[]; custom_variables: string[];
-  }) => {
-    const { data: maxRow } = await supabase
-      .from('talkx_template_versions')
-      .select('version_number')
-      .eq('template_id', templateId)
-      .order('version_number', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const nextVersion = (maxRow?.version_number ?? 0) + 1;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
-    await supabase.from('talkx_template_versions').insert({
-      template_id: templateId,
-      version_number: nextVersion,
-      name: payload.name, content: payload.content, category: payload.category,
-      status: payload.status,
-      media_url: payload.media_url ?? null,
-      media_type: payload.media_type ?? null,
-      tags: payload.tags, custom_variables: payload.custom_variables,
-      saved_by: profileRow?.id ?? null,
-    });
   };
 
   const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone, customVariables }: {
@@ -154,6 +165,5 @@ export function useTalkXTemplates() {
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
     testTemplate,
     fetchVersionHistory,
-    saveVersionSnapshot,
   };
 }

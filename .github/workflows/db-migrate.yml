@@ -122,6 +122,13 @@ jobs:
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
             -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
             > /tmp/remote-versions
+          comm -13 /tmp/local-versions /tmp/remote-versions > /tmp/remote-only-versions
+          REMOTE_ONLY_COUNT=$(wc -l < /tmp/remote-only-versions | tr -d ' ')
+          if [ "$REMOTE_ONLY_COUNT" != "0" ]; then
+            echo "::error::O ledger remoto possui versions sem arquivo local; db push foi bloqueado antes do CLI."
+            echo "remote_only_count=$REMOTE_ONLY_COUNT"
+            exit 1
+          fi
           comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
@@ -438,6 +445,10 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
               ;;
+            20260909210000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+                -f scripts/db-audit/talkx-template-history-runtime.sql)
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -553,6 +564,83 @@ jobs:
                 && proof.authenticated_note_extra === false
                 && proof.service_note_crud === true
                 && proof.service_note_extra === false;
+          } else if (process.env.TARGET_VERSION === '20260909210000') {
+            const base = proof.table_count === 1
+              && proof.variant_table_count === 1
+              && proof.custom_variables_column_count === 1
+              && proof.invalid_live_template_count === 0
+              && proof.invalid_variant_count === 0
+              && proof.variant_rls_enabled === true
+              && proof.recipient_variant_fk_count === 1
+              && proof.rls_enabled === true;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? base
+                && (
+                  (proof.variant_policy_count === 2
+                   && proof.variant_legacy_write_policy_count === 1
+                   && proof.variant_canonical_policy_signature_count === 0
+                   && proof.variant_validated_constraint_count === 0)
+                  ||
+                  (proof.variant_policy_count === 4
+                   && proof.variant_legacy_write_policy_count === 0
+                   && proof.variant_canonical_policy_signature_count === 4
+                   && proof.variant_validated_constraint_count === 3
+                   && proof.variant_anon_any_access === false
+                   && proof.variant_authenticated_crud === true
+                   && proof.variant_authenticated_extra_access === false
+                   && proof.variant_service_role_crud === true
+                   && proof.variant_service_role_extra_access === false)
+                )
+                && [0, 1].includes(proof.history_description_column_count)
+                && [1, 2].includes(proof.policy_count)
+                && [3, 4].includes(proof.foundation_constraint_count)
+                && proof.function_count === 0
+                && proof.safe_function_count === 0
+                && proof.constraint_count === 0
+                && proof.immutable_trigger_count === 0
+                && proof.template_update_guard_count === 0
+                && proof.template_validation_trigger_count === 0
+                && proof.template_timestamp_trigger_count === 0
+                && proof.anon_any_access === true
+                && proof.authenticated_select === true
+                && proof.authenticated_any_mutation === true
+                && proof.authenticated_rpc_execute === false
+                && proof.authenticated_internal_function_execute_count === 0
+              : base
+                && proof.variant_policy_count === 4
+                && proof.variant_legacy_write_policy_count === 0
+                && proof.variant_canonical_policy_signature_count === 4
+                && proof.variant_validated_constraint_count === 3
+                && proof.variant_anon_any_access === false
+                && proof.variant_authenticated_crud === true
+                && proof.variant_authenticated_extra_access === false
+                && proof.variant_service_role_crud === true
+                && proof.variant_service_role_extra_access === false
+                && proof.history_description_column_count === 1
+                && proof.policy_count === 1
+                && proof.foundation_constraint_count === 4
+                && proof.canonical_select_policy_count === 1
+                && proof.constraint_count === 3
+                && proof.validated_constraint_count === 3
+                && proof.function_count === 6
+                && proof.safe_function_count === 6
+                && proof.definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'
+                && proof.immutable_trigger_count === 1
+                && proof.template_update_guard_count === 1
+                && proof.template_validation_trigger_count === 1
+                && proof.template_timestamp_trigger_count === 1
+                && proof.anon_any_access === false
+                && proof.authenticated_select === true
+                && proof.authenticated_any_mutation === false
+                && proof.history_service_role_crud === true
+                && proof.history_service_role_extra_access === false
+                && proof.authenticated_rpc_execute === true
+                && proof.anon_rpc_execute === false
+                && proof.authenticated_counter_execute === true
+                && proof.anon_counter_execute === false
+                && proof.authenticated_guard_execute === false
+                && proof.authenticated_update_guard_execute === false
+                && proof.authenticated_internal_function_execute_count === 0;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -885,6 +973,66 @@ jobs:
             && proof.authenticated_note_extra === false
             && proof.service_note_crud === true
             && proof.service_note_extra === false;
+          if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar histórico canônico de templates Talk X
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909210000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/talkx-template-history-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && proof.table_count === 1
+            && proof.variant_table_count === 1
+            && proof.custom_variables_column_count === 1
+            && proof.invalid_live_template_count === 0
+            && proof.invalid_variant_count === 0
+            && proof.variant_rls_enabled === true
+            && proof.variant_policy_count === 4
+            && proof.variant_legacy_write_policy_count === 0
+            && proof.variant_canonical_policy_signature_count === 4
+            && proof.variant_validated_constraint_count === 3
+            && proof.recipient_variant_fk_count === 1
+            && proof.variant_anon_any_access === false
+            && proof.variant_authenticated_crud === true
+            && proof.variant_authenticated_extra_access === false
+            && proof.variant_service_role_crud === true
+            && proof.variant_service_role_extra_access === false
+            && proof.history_description_column_count === 1
+            && proof.rls_enabled === true
+            && proof.policy_count === 1
+            && proof.canonical_select_policy_count === 1
+            && proof.constraint_count === 3
+            && proof.validated_constraint_count === 3
+            && proof.foundation_constraint_count === 4
+            && proof.function_count === 6
+            && proof.safe_function_count === 6
+            && proof.definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'
+            && proof.immutable_trigger_count === 1
+            && proof.template_update_guard_count === 1
+            && proof.template_validation_trigger_count === 1
+            && proof.template_timestamp_trigger_count === 1
+            && proof.anon_any_access === false
+            && proof.authenticated_select === true
+            && proof.authenticated_any_mutation === false
+            && proof.history_service_role_crud === true
+            && proof.history_service_role_extra_access === false
+            && proof.authenticated_rpc_execute === true
+            && proof.anon_rpc_execute === false
+            && proof.authenticated_counter_execute === true
+            && proof.anon_counter_execute === false
+            && proof.authenticated_guard_execute === false
+            && proof.authenticated_update_guard_execute === false
+            && proof.authenticated_internal_function_execute_count === 0;
           if (!ok) process.exit(1);
           NODE
 

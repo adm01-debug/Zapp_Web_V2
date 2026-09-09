@@ -557,6 +557,32 @@
             "reason": "safer-replay",
             "related_migration": null,
             "justification": "Migration aplicada via MCP em 2026-09-07 com SQL sem DROP CONSTRAINT; arquivo criado retroativamente com SQL idempotente adicional (DROP CONSTRAINT IF EXISTS antes do ADD). Hashes do arquivo e do ledger fixados independentemente."
+        },
+        {
+            "version": "20260909130000",
+            "filename": "20260909130000_talkx_template_versions_custom_variables.sql",
+            "file_sha256": "3ebd5f2f48537455a43e9c16a1105376f0dfd8673bb391e48f5d3af60bdafd8b",
+            "file_sql_sha256": "c85e6d5f05bf2e4e83cebd1beb1c41ddd5c78e5dbb2810662de189491cb78623",
+            "ledger_name": "talkx_template_versions_custom_variables",
+            "ledger_statements_sha256": "1d52fc91968ca312afc97d8386804b53a8e8eb71c0e84dc8d85f3c6fcdd01aaf",
+            "ledger_sql_sha256": "e3c02c306e2f0dd7241dcee35cc338502d3b8bd30e4cbf9901a9c9c8c12b05a4",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "ledger-summary",
+            "related_migration": null,
+            "justification": "Coleta forense cifrada e read-only do run 34397154909 confirmou que o ledger preserva somente tres resumos, incluindo CREATE TABLE ... (...), enquanto o arquivo versionado contem o replay SQL completo. Conteudos local e historico ficam fixados por hashes independentes; a migration 20260909210000 canoniza estrutura, ACL, RLS e imutabilidade no runtime."
+        },
+        {
+            "version": "20260909150000",
+            "filename": "20260909150000_talkx_template_variants_ab.sql",
+            "file_sha256": "357e356a442511592f05f4b28acae1e0d1f7e9c6a1dc7cde7f327761d7fc6592",
+            "file_sql_sha256": "02cdce593ba9c56ab05a6f5390c4d67728d57ce346eae55458bea8ae2c2387e5",
+            "ledger_name": "talkx_template_variants_ab",
+            "ledger_statements_sha256": "ceb44d01bbf94a90747c2da8e6d1689c148e2e32714e10c9d61ac997fc4e0407",
+            "ledger_sql_sha256": "d8ab0c44cf4e7a15b50e719cf4cd6a515d2424998c5091f59a9fbaed2c7aa297",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "ledger-summary",
+            "related_migration": null,
+            "justification": "Coleta forense cifrada e read-only do run 34397154909 confirmou que o ledger preserva apenas tres resumos nao executaveis. O arquivo foi recuperado byte a byte do commit historico db840e0e ainda preservado na branch remota origin/feat/talkx-f4-e49-ab-variants; a migration forward-only 20260909210000 substitui a policy historica ampla pelo hardening canonico no runtime. Fonte recuperada, ledger e forma SQL ficam fixados por hashes independentes."
         }
     ]
 }
