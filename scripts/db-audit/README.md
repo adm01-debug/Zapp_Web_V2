@@ -23,6 +23,8 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `check-manifest-fresh.mjs` | nao | Compara `supabase/schema-manifest.json` com o banco oficial, provando identidade |
 | `diff.mjs` | nao | Diffa dois manifestos v2, inclusive entre bancos distintos |
 | `catalog-manifest.test.sh` | Docker local | Executa os dois SQLs no PostgreSQL 17, desloca OIDs e simula mutacoes estruturais |
+| `gen-types.sh` | sim | Gera `types.ts` pela CLI pinada e normaliza o EOF de forma deterministica |
+| `gen-types.test.sh` | Shell local | Simula a CLI e prova que o gerador preserva linhas internas e deixa exatamente uma quebra de linha no EOF |
 
 ## Uso
 
