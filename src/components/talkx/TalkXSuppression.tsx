@@ -118,9 +118,10 @@ export function TalkXSuppression() {
     setImportResults(null);
     try {
       const text = await file.text();
-      const phones = text.split(/[\n,;\t]/).map((l) => l.replace(/[^0-9+]/g, '').trim()).filter((v) => v.length >= 8);
+      const phones = [...new Set(text.split(/[\n,;\t]/).map((l) => l.replace(/[^0-9]/g, '').trim()).filter((v) => v.length >= 8))];
       if (phones.length === 0) { toast.error('Nenhum telefone encontrado no arquivo.'); return; }
-      const { data: contacts } = await supabase.from('contacts').select('id, phone').in('phone', phones);
+      const { data: contacts, error: lookupErr } = await supabase.from('contacts').select('id, phone').in('phone', phones);
+      if (lookupErr) throw lookupErr;
       const found = contacts ?? [];
       const alreadyBlockedSet = new Set(blacklistedIds);
       const toInsert = found.filter((c) => c.phone && !alreadyBlockedSet.has(c.id));
@@ -130,8 +131,9 @@ export function TalkXSuppression() {
         return;
       }
       const { data: { user } } = await supabase.auth.getUser();
-      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: user?.id ?? null, origin: 'manual' as const }));
-      const { error } = await supabase.from('talkx_blacklist').insert(rows);
+      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: profileRow?.id ?? null, origin: 'manual' as const }));
+      const { error } = await supabase.from('talkx_blacklist').upsert(rows, { onConflict: 'contact_id', ignoreDuplicates: true });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['talkx-blacklist'] });
       const result = { added: toInsert.length, notFound: phones.length - found.length, alreadyBlocked: found.length - toInsert.length };
