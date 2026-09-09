@@ -8,13 +8,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
-  CAMPAIGN_STATUS, FilterBar, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile, TalkXEmptyState, TalkXSkeletonRows,
+  CAMPAIGN_STATUS, FilterBar, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
+  TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog, RowActionsMenu,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
 
@@ -94,16 +94,20 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Total de campanhas" value={String(totals.total)} delta={null} tile="blue" icon={Users} bars={totals.bars} barsColor="blue" />
-          <DashboardKpiCard size="hero" index={1} label="Em andamento" value={String(totals.active)} delta={totals.active > 0 ? { text: 'enviando agora', tone: 'success' } : null} tile="blue" icon={Play} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="Concluídas" value={String(totals.completed)} delta={null} tile="green" icon={CheckCircle2} bars={totals.barsCompleted} barsColor="green" />
-          <DashboardKpiCard size="hero" index={3} label="Taxa de sucesso" value={totals.successRate === null ? '—' : `${String(totals.successRate).replace('.', ',')}%`} delta={totals.successRate === null ? { text: 'sem envios ainda', tone: 'muted' } : null} tile="green" icon={Target} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="hero" index={4} label="Contatos alcançados" value={String(totals.reached)} delta={null} tile="violet" icon={Send} bars={null} barsColor="violet" chart="none" />
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">{Array.from({length:5}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)}   delta={totals.active>0?{value:totals.active,suffix:'%',tone:'up'}:undefined} />
+            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
+          </div>
+        )}
 
         {/* Filtros */}
         <FilterBar
@@ -212,48 +216,35 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
 
       {/* Rail */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={Zap} title="Talk X" subtitle="Campanhas que geram conversas e resultados." glow>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            {[[fmtInt(totals.reached), 'mensagens enviadas'], [totals.successRate === null ? '—' : `${String(totals.successRate).replace('.', ',')}%`, 'taxa de sucesso'], [fmtInt(segments.length), 'segmentos salvos']].map(([v, l]) => (
-              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1"><p className="text-[15px] font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary leading-tight">{l}</p></div>
-            ))}
-          </div>
-        </RailCard>
+        <HeroCard
+          icon={Zap} title="Talk X"
+          subtitle="Campanhas que geram conversas e resultados."
+          metrics={[
+            { label: 'Mensagens enviadas', value: fmtInt(totals.reached) },
+            { label: 'Taxa de sucesso', value: totals.successRate === null ? '—' : `${totals.successRate}%` },
+            { label: 'Segmentos salvos', value: fmtInt(segments.length) },
+          ]}
+        />
 
         <RailCard icon={Zap} title="Ações rápidas">
-          <div className="space-y-2">
-            <RailAction icon={Plus} title="Nova campanha" subtitle="Criar campanha do zero" onClick={onNew} />
-            <RailAction icon={FileText} color="violet" title="Usar template" subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
-            <RailAction icon={Bookmark} color="green" title="Criar segmento" subtitle="Definir público-alvo" onClick={() => onGoTab('segments')} />
-            <RailAction icon={Upload} color="amber" title="Importar contatos" subtitle="Adicionar novos contatos" onClick={() => onGoTab('import')} />
+          <div className="space-y-1.5">
+            <RailAction icon={Plus}    color="blue"   title="Nova campanha"      subtitle="Criar do zero"          onClick={onNew} />
+            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
+            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"   onClick={() => onGoTab('segments')} />
+            <RailAction icon={Upload}   color="amber"  title="Importar contatos"  subtitle="Adicionar novos"        onClick={() => onGoTab('import')} />
           </div>
         </RailCard>
 
         <RailCard icon={BarChart3} title="Últimas campanhas" right={<VerTodasButton onClick={clear} />}>
           {latest.length === 0 ? <p className="text-[12px] text-muted-foreground">Nenhuma campanha ainda.</p> : (
-            <div className="space-y-1">
-              {latest.map((c) => {
-                const m = CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.draft;
-                const dot = { success: 'bg-dash-green', danger: 'bg-dash-red', warning: 'bg-dash-amber', info: 'bg-primary', violet: 'bg-dash-violet', muted: 'bg-muted-foreground' }[m.tone];
-                return (
-                  <button key={c.id} type="button" onClick={() => onView(c)} className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-muted/40 text-left">
-                    <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={36} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[12.5px] font-semibold text-foreground truncate">{c.name}</span>
-                      <span className="flex items-center gap-1.5 text-[11px] text-foreground-secondary"><span className={cn('w-1.5 h-1.5 rounded-full', dot)} />{m.label}{c.total_recipients > 0 && c.status !== 'draft' ? ` · ${pct(c.sent_count + c.failed_count, c.total_recipients)}%` : ''}</span>
-                    </span>
-                    <span className="text-[10.5px] text-muted-foreground shrink-0">{fmtAgo(c.updated_at)}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <RecentList items={latest.map((c) => {
+              const m = CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.draft;
+              return { id: c.id, name: c.name, statusLabel: m.label, statusTone: m.tone, pct: c.total_recipients > 0 && c.status !== 'draft' ? pct(c.sent_count+c.failed_count, c.total_recipients) : undefined, onOpen: () => onView(c) };
+            })} />
           )}
         </RailCard>
 
-        <div className="rounded-2xl border border-dash-green/30 bg-dash-green/10 p-4 flex items-start gap-3">
-          <IconTile icon={Lightbulb} color="green" size={36} />
-          <div><p className="text-[13px] font-bold text-foreground">Dica do dia</p><p className="text-[12px] text-foreground-secondary leading-snug">Segmentos com regras claras evitam opt-outs: prefira públicos menores e mensagens com {'{{nome}}'} e {'{{empresa}}'}.</p></div>
-        </div>
+        <TipCard tip="Campanhas segmentadas por ramo têm 3× mais chances de conversão." />
       </div>
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>

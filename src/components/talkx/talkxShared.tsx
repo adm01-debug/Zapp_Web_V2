@@ -696,6 +696,7 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
   };
 
   // Reset ao fechar
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => { if (!open) setChecked(new Set()); }, [open]);
 
   return (
@@ -764,6 +765,7 @@ export function FilterBarV2({
   rightSlot?: ReactNode;
 }) {
   const [local, setLocal] = _useState(search ?? '');
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   _useEffect(() => { setLocal(search ?? ''); }, [search]);
   _useEffect(() => {
     if (!onSearch) return;
