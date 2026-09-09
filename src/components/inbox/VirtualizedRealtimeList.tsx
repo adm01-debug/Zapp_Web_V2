@@ -246,7 +246,7 @@ const ConversationRow = memo(({
     >
       <div
         className={cn(
-          'w-full min-h-[72px] my-0.5 px-3 py-2.5 rounded-xl flex flex-col gap-1.5 transition-all text-left border group',
+          'w-full min-h-[72px] my-0.5 px-3 py-2.5 rounded-xl flex flex-col gap-1.5 transition-all text-left border group relative',
           selectedContactId === contactId ? 'bg-accent border-primary/40' : 'border-transparent hover:bg-muted/40',
           isSelected && 'bg-accent',
           isPinned && selectedContactId !== contactId && 'bg-muted/30'
@@ -376,7 +376,7 @@ const ConversationRow = memo(({
         </div>
 
         {/* Hover action buttons */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-150 translate-y-0.5 group-hover:translate-y-0 pl-[60px]">
+        <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-150 pl-[60px]">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>

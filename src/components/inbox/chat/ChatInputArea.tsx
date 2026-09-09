@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RichTextToolbar } from './RichTextToolbar';
 import { AIRewriteButton } from './AIRewriteButton';
@@ -18,7 +19,7 @@ import { CustomEmojiPicker } from '../CustomEmojiPicker';
 import { RichTextToggle } from './RichTextToolbar';
 import { FileUploader } from '../FileUploader';
 import { QuickActionChips } from './QuickActionChips';
-import { Send, Mic, Check, Camera, Loader2 } from 'lucide-react';
+import { Send, Mic, Check, Camera, Loader2, Plus } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
 import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
@@ -237,6 +238,17 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 </TooltipTrigger>
                 <TooltipContent side="top">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent>
               </Tooltip>
+              {/* Ferramentas adicionais no mobile — replicam o menu "+" do desktop */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" aria-label="Mais ferramentas">
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-56 p-2">
+                  {tertiaryTools}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
