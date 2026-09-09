@@ -107,7 +107,7 @@ Por aba, o que ainda difere (código vs. referência, sem screenshot para confir
 
 ### Etapa 55 — Light mode (revisão de código, sem screenshot)
 Nenhuma classe nova usa cor fixa fora do sistema de tokens (confirmado na etapa 48: 0 cores literais novas) — todo o trabalho usa `bg-input/muted/card/accent`, `text-foreground/muted-foreground`, `bg-primary`, `bg-kpi-*`, `bg-dash-tile-*`, que já são theme-aware (a paleta clara já existe no `tokens.css`, não tocado). Não há motivo estrutural para quebra no light mode, mas não há confirmação visual.
-## CP7 Entrega    [x] PR=(ver linha FINAL) · CI=ver PR · gates: tsc=0 erros · lint-ratchet=novas 0 · implicit-any=0 (baseline 0) · vitest=suite inteira 2994 passed / 3 failed / 35 todo (3032) · build=OK (12.42s, RealtimeInboxView 91.70kB)
+## CP7 Entrega    [x] PR=https://github.com/adm01-debug/Zapp_Web_V2/pull/301 · CI=ver checks do PR · gates: tsc=0 erros · lint-ratchet=novas 0 · implicit-any=0 (baseline 0) · vitest=suite inteira 2994 passed / 3 failed / 35 todo (3032) · build=OK (12.42s, RealtimeInboxView 91.70kB)
 Os 3 testes que falham são **pré-existentes, fora do escopo deste branch** (confirmado `git diff --stat 27c22f4d -- <arquivo>` vazio para os 3): `AIUsageDashboard.test.tsx` (timeout de `waitFor`), `MediaLibraryAdmin.test.tsx` (timeout "100 items without crash"), `useTalkXMonitor.test.ts` (asserção de agrupamento por minuto). Nenhum dos três toca `src/components/inbox` ou dependências deste redesign.
 
 ## Etapa 50 — bundle RealtimeInboxView
