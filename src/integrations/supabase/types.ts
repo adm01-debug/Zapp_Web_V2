@@ -8433,6 +8433,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_talkx_template_with_snapshot: {
+        Args: {
+          p_category: string
+          p_content: string
+          p_custom_variables: string[]
+          p_description: string | null
+          p_expected_updated_at: string
+          p_media_type: string | null
+          p_media_url: string | null
+          p_name: string
+          p_status: string
+          p_tags: string[]
+          p_template_id: string
+        }
+        Returns: {
+          template_id: string
+          updated_at: string
+          version_number: number
+        }[]
+      }
       upsert_crm_contact_link_guarded: {
         Args: {
           p_external_company_id: string
@@ -8621,4 +8641,3 @@ export const Constants = {
     },
   },
 } as const
-

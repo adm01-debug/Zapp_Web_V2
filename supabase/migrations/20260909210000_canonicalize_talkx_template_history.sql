@@ -270,7 +270,10 @@ BEGIN
       status = p_status,
       custom_variables = COALESCE(p_custom_variables, '{}'::text[]),
       updated_at = v_updated_at
-  WHERE template.id = p_template_id;
+  WHERE template.id = p_template_id
+  -- The pre-existing updated_at trigger may use transaction_timestamp().
+  -- Return the value actually persisted, never the pre-trigger candidate.
+  RETURNING template.updated_at INTO v_updated_at;
 
   RETURN QUERY SELECT p_template_id, v_updated_at, v_version_number;
 END;
