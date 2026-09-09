@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, Upload, MessageSquare, BarChart3, Filter,
+  FileText, Bookmark, Upload, MessageSquare, BarChart3, Filter, Download,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
+import { exportCampaignsCsv } from '@/lib/talkxExport';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
@@ -128,6 +129,18 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
           filters={filterDefs} values={filterValues} onFilter={handleFilter}
           hasActive={hasActive} onClear={clear}
           view={layout} onView={setLayout}
+          rightSlot={
+            <button
+              type="button"
+              onClick={() => exportCampaignsCsv(selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered)}
+              disabled={filtered.length === 0}
+              title={selected.size > 0 ? `Exportar ${selected.size} selecionadas` : `Exportar ${filtered.length} campanhas`}
+              className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Exportar CSV"
+            >
+              <Download className="w-4 h-4 text-muted-foreground" />
+            </button>
+          }
         />
 
         {/* Tabela */}
