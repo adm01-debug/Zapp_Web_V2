@@ -81,6 +81,10 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.canonical_select_policy_count === 1/);
   assert.match(workflow, /proof\.validated_constraint_count === 3/);
   assert.match(workflow, /proof\.foundation_constraint_count === 4/);
+  assert.match(workflow, /20260909230000\)/);
+  assert.match(workflow, /TARGET_VERSION === '20260909230000'/);
+  assert.match(workflow, /proof\.history_saved_by_fk_no_action_count === 1/);
+  assert.match(workflow, /proof\.history_saved_by_fk_set_null_count === 1/);
   assert.match(workflow, /proof\.function_count === 6/);
   assert.match(workflow, /proof\.safe_function_count === 6/);
   assert.match(workflow, /proof\.immutable_trigger_count === 1/);

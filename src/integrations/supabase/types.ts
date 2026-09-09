@@ -6249,6 +6249,7 @@ export type Database = {
           sent_at: string | null
           status: string
           updated_at: string
+          variant_id: string | null
         }
         Insert: {
           campaign_id: string
@@ -6261,6 +6262,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           updated_at?: string
+          variant_id?: string | null
         }
         Update: {
           campaign_id?: string
@@ -6273,6 +6275,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           updated_at?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -6287,6 +6290,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_recipients_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_template_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -6347,6 +6357,47 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_template_variants: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          label: string
+          media_type: string | null
+          media_url: string | null
+          template_id: string
+          weight: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          label: string
+          media_type?: string | null
+          media_url?: string | null
+          template_id: string
+          weight?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          label?: string
+          media_type?: string | null
+          media_url?: string | null
+          template_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_template_variants_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_templates"
             referencedColumns: ["id"]
           },
         ]

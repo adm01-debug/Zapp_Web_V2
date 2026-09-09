@@ -557,6 +557,8 @@ const ok = proof.server_major === 17
   && proof.constraint_count === 3
   && proof.validated_constraint_count === 3
   && proof.foundation_constraint_count === 4
+  && proof.history_saved_by_fk_no_action_count === 0
+  && proof.history_saved_by_fk_set_null_count === 1
   && proof.function_count === 6
   && proof.safe_function_count === 6
   && proof.immutable_trigger_count === 1
