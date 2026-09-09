@@ -78,13 +78,15 @@ BEGIN
     _vnewv  text;
     _vi     int;
   BEGIN
-    FOR _vrow IN
-      SELECT id, content, custom_variables
-      FROM public.talkx_template_versions
-      WHERE EXISTS (
-        SELECT 1 FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv WHERE cv ~ '^[0-9]'
-      )
-    LOOP
+    -- Guard: talkx_template_versions pode nao existir em schema fresco (a migration a cria mais abaixo)
+    IF EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'talkx_template_versions') THEN
+      FOR _vrow IN
+        SELECT id, content, custom_variables
+        FROM public.talkx_template_versions
+        WHERE EXISTS (
+          SELECT 1 FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv WHERE cv ~ '^[0-9]'
+        )
+      LOOP
       _vnvars := _vrow.custom_variables;
       _vcont  := _vrow.content;
       FOR _vi IN 1..COALESCE(array_length(_vrow.custom_variables, 1), 0) LOOP
@@ -98,9 +100,10 @@ BEGIN
           _vcont := replace(_vcont, '{{' || _voldv || '}}', '{{' || _vnewv || '}}');
         END IF;
       END LOOP;
-      UPDATE public.talkx_template_versions
-      SET custom_variables = _vnvars, content = _vcont WHERE id = _vrow.id;
-    END LOOP;
+        UPDATE public.talkx_template_versions
+        SET custom_variables = _vnvars, content = _vcont WHERE id = _vrow.id;
+      END LOOP;
+    END IF;
   END;
 
   IF EXISTS (
