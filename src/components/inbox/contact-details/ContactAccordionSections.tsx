@@ -23,7 +23,7 @@ import { LeadRiskScorePanel } from '../LeadRiskScorePanel';
 import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { ConversationTimeline } from '../ConversationTimeline';
 
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { log } from '@/lib/logger';
 import type { EnrichedContactData, AIConversationTag, SLAInfo } from '@/hooks/crm/useContactEnrichedData';
 
@@ -45,6 +45,7 @@ interface ContactAccordionSectionsProps {
 }
 
 export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId }: ContactAccordionSectionsProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   return (
     <>
       <Section index={0} value="info" icon={<Info className="w-3.5 h-3.5 text-primary" />} label="Informações">
@@ -55,7 +56,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
         <WhatsAppStatusSection phone={contact.phone} />
       </Section>
 
-      {isExternalConfigured && (
+      {crmIntegrationEnabled && (
         <Section index={1.5} value="evolution-profile" icon={<BadgeCheck className="w-3.5 h-3.5 text-primary" />} label="Perfil WhatsApp">
           <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />
         </Section>
@@ -67,13 +68,13 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
         </Section>
       )}
 
-      {isExternalConfigured && (
+      {crmIntegrationEnabled && (
         <>
           <Section index={2} value="crm-360" icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
-            <ExternalContact360Panel phone={contact.phone} />
+            <ExternalContact360Panel contactId={contact.id} />
           </Section>
           <Section index={2.5} value="intelligence" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
-            <ContactIntelligencePanel phone={contact.phone} />
+            <ContactIntelligencePanel contactId={contact.id} />
           </Section>
         </>
       )}

@@ -1,10 +1,12 @@
 /**
  * useExternalDB — Generic hook for querying any table in the external CRM database
- * Uses externalSupabase client directly (secured by RLS policies on the external DB)
+ * Uses the authenticated crm-integration Edge Function. External credentials and
+ * privileged table access never reach the browser.
  */
  import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
  import { useState, useCallback } from 'react';
- import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+ import { callCRMIntegration } from '@/lib/crmIntegration';
  import { ExternalCRMService } from '@/services/crm/external-crm.service';
 import type {
   ExternalDBFilter,
@@ -27,6 +29,7 @@ interface UseExternalSelectOptions<T> {
 }
 
 export function useExternalSelect<T = Record<string, unknown>>(options: UseExternalSelectOptions<T>) {
+  const crmEnabled = useCRMIntegrationEnabled();
   const { table, select, filters, order, limit = 50, offset = 0, countMode, enabled = true, staleTime = 5 * 60 * 1000 } = options;
 
   return useQuery({
@@ -40,7 +43,7 @@ export function useExternalSelect<T = Record<string, unknown>>(options: UseExter
        offset,
        countMode,
      }),
-    enabled: enabled && isExternalConfigured,
+    enabled: enabled && crmEnabled,
     staleTime,
     gcTime: staleTime * 2,
   });
@@ -55,10 +58,11 @@ interface UseExternalRPCOptions {
 }
 
 export function useExternalRPC<T = unknown>(options: UseExternalRPCOptions) {
+  const crmEnabled = useCRMIntegrationEnabled();
   return useQuery({
     queryKey: ['external-db', 'rpc', options.rpc, options.params],
      queryFn: () => ExternalCRMService.callRPC<T>(options.rpc, options.params),
-    enabled: (options.enabled ?? true) && isExternalConfigured,
+    enabled: (options.enabled ?? true) && crmEnabled,
     staleTime: options.staleTime ?? 10 * 60 * 1000,
   });
 }
@@ -130,40 +134,24 @@ export function useExternalTableBrowser<T = Record<string, unknown>>(tableName: 
   };
 }
 
-// ─── Mutation (insert/update/delete via external client) ──────
+// ─── Mutation via authenticated server-side integration ──────
 export function useExternalMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (params: {
-      action: 'insert' | 'update' | 'delete';
+      action: 'insert' | 'update';
       table: string;
-      data?: Record<string, unknown> | Record<string, unknown>[];
+      data: Record<string, unknown>;
       match?: Record<string, unknown>;
     }) => {
-      if (params.action === 'insert') {
-        const { data, error } = await getExternalSupabase().from(params.table).insert(params.data as any).select();
-        if (error) throw new Error(error.message);
-        return data;
-      }
-      if (params.action === 'update') {
-        let q = getExternalSupabase().from(params.table).update(params.data as any);
-        if (params.match) {
-          for (const [k, v] of Object.entries(params.match)) q = q.eq(k, v as string);
-        }
-        const { data, error } = await q.select();
-        if (error) throw new Error(error.message);
-        return data;
-      }
-      if (params.action === 'delete') {
-        let q = getExternalSupabase().from(params.table).delete();
-        if (params.match) {
-          for (const [k, v] of Object.entries(params.match)) q = q.eq(k, v as string);
-        }
-        const { data, error } = await q.select();
-        if (error) throw new Error(error.message);
-        return data;
-      }
+      const response = await callCRMIntegration<unknown[]>('mutate', {
+        mutationAction: params.action,
+        table: params.table,
+        data: params.data,
+        match: params.match,
+      });
+      return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['external-db', variables.table] });

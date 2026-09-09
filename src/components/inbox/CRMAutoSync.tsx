@@ -11,7 +11,6 @@ import { useEffect, useRef, useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
@@ -47,45 +46,10 @@ function detectSentiment(messages: Message[] | undefined): string {
   return 'neutral';
 }
 
-// Build a summary from the conversation
-function buildSummary(conversation: Conversation, messages: Message[] | undefined): string {
-  const parts: string[] = [];
-
-  // Contact info
-  parts.push(`Conversa com ${conversation.contact.name}`);
-
-  // Duration estimate
-  if (messages && messages.length > 1) {
-    const first = messages[0]?.timestamp;
-    const last = messages[messages.length - 1]?.timestamp;
-    if (first && last) {
-      const diffMin = Math.round((last.getTime() - first.getTime()) / 60000);
-      if (diffMin > 0) parts.push(`(${diffMin} min)`);
-    }
-  }
-
-  // Message count
-  if (messages) {
-    const agentMsgs = messages.filter(m => m.sender === 'agent').length;
-    const contactMsgs = messages.filter(m => m.sender === 'contact').length;
-    parts.push(`${contactMsgs} msgs cliente, ${agentMsgs} msgs agente`);
-  }
-
-  // Last messages as context
-  if (messages && messages.length > 0) {
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.content) {
-      parts.push('Última: ' + lastMsg.content.slice(0, 200));
-    }
-  }
-
-  return parts.join('. ');
-}
-
 /**
  * Auto-sync: watches conversation status and syncs to CRM when resolved.
  */
-export function CRMAutoSync({ conversation, messageCount, agentName, messages }: CRMAutoSyncProps) {
+export function CRMAutoSync({ conversation, messages }: CRMAutoSyncProps) {
   const { syncConversation, isConfigured } = useSyncToCRM();
   const lastSyncedStatus = useRef<string>('');
   const lastSyncedId = useRef<string>('');
@@ -101,7 +65,6 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
 
   useEffect(() => {
     if (!isConfigured) return;
-    if (!conversation.contact.phone) return;
 
     const shouldSync =
       effectiveStatus === 'resolved' &&
@@ -111,25 +74,20 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
       lastSyncedStatus.current = effectiveStatus;
       lastSyncedId.current = conversation.id;
 
-      const summary = buildSummary(conversation, messages);
-
-      syncConversation({
-        phone: conversation.contact.phone,
-        channel: 'whatsapp',
-        direction: 'inbound',
-        assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
-        resumo: summary,
-        sentiment,
-        messageCount: messageCount || messages?.length || 0,
-        agentName: agentName || undefined,
-        zappConversationId: conversation.id,
+      syncConversation({ contactId: conversation.contact.id }, {
+        onError: () => {
+          if (lastSyncedId.current === conversation.id) {
+            lastSyncedStatus.current = '';
+            lastSyncedId.current = '';
+          }
+        },
       });
 
       log.info('CRM auto-sync triggered:', { id: conversation.id, sentiment });
     }
 
-    lastSyncedStatus.current = effectiveStatus;
-  }, [effectiveStatus, conversation, isConfigured, syncConversation, messageCount, agentName, messages, sentiment]);
+    if (!shouldSync) lastSyncedStatus.current = effectiveStatus;
+  }, [effectiveStatus, conversation, isConfigured, syncConversation, sentiment]);
 
   return null; // Invisible component
 }
@@ -147,14 +105,13 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
   const handleSync = async () => {
     try {
       const result = await syncConversationAsync({
-        phone: conversation.contact.phone,
+        contactId: conversation.contact.id,
         channel: 'whatsapp',
         direction: 'inbound',
         assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
         resumo: conversation.lastMessage?.content?.slice(0, 500) || undefined,
         sentiment: 'neutral',
         messageCount: messageCount || 0,
-        zappConversationId: conversation.id,
       });
 
       if (result?.synced) {
@@ -165,6 +122,9 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
             ? `Score atualizado: ${result.new_relationship_score}`
             : undefined,
         });
+      } else if (result?.queued) {
+        setLastSyncTime(new Date());
+        toast.info('Sincronização agendada', { description: 'A fila CRM fará novas tentativas automaticamente.' });
       } else if (result?.reason === 'duplicate') {
         setLastSyncTime(new Date());
         toast.info('Já sincronizado', { description: 'Esta conversa já foi enviada ao CRM.' });

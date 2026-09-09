@@ -10,7 +10,7 @@
  * Returns a Map<phone, CRMBatchResult> for O(1) lookup per conversation item.
  */
 import { useQuery } from '@tanstack/react-query';
- import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
  import { ExternalCRMService } from '@/services/crm/external-crm.service';
 import { log } from '@/lib/logger';
 
@@ -29,16 +29,20 @@ function cleanPhone(phone: string): string {
   return phone.replace(/[^0-9]/g, '');
 }
 
-export function useExternalContact360Batch(phones: string[]) {
-  // Deduplicate and clean phones
-  const cleanedPhones = [...new Set(phones.map(cleanPhone).filter(p => p.length >= 8))];
-  // Create a stable key from sorted phones
-  const queryKey = cleanedPhones.sort().join(',');
+export function useExternalContact360Batch(contacts: Array<{ id: string; phone: string }>) {
+  const crmEnabled = useCRMIntegrationEnabled();
+  const stableContacts = [...new Map(contacts.map((contact) => [contact.id, contact])).values()];
+  // Phone participates in the key because the external lookup still receives
+  // canonical IDs but resolves the current phone server-side.
+  const queryKey = stableContacts
+    .map((contact) => `${contact.id}:${cleanPhone(contact.phone)}`)
+    .sort()
+    .join(',');
 
   const query = useQuery<Map<string, CRMBatchResult>>({
     queryKey: ['external-contact-360-batch', queryKey],
-     queryFn: () => ExternalCRMService.getContact360Batch(cleanedPhones),
-    enabled: isExternalConfigured && cleanedPhones.length > 0,
+     queryFn: () => ExternalCRMService.getContact360Batch(stableContacts),
+    enabled: crmEnabled && stableContacts.length > 0,
     staleTime: 1000 * 60 * 10, // 10 min cache
     gcTime: 1000 * 60 * 30,
   });
@@ -54,6 +58,6 @@ export function useExternalContact360Batch(phones: string[]) {
     batchData: query.data || new Map<string, CRMBatchResult>(),
     lookup,
     isLoading: query.isLoading,
-    isConfigured: isExternalConfigured,
+    isConfigured: crmEnabled,
   };
 }

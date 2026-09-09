@@ -6,18 +6,17 @@
  * RFM, interactions history, social media, stakeholder map, etc.
  */
  import { useQuery } from '@tanstack/react-query';
- import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
  import { ExternalCRMService } from '@/services/crm/external-crm.service';
 import { Contact360Data } from '@/types/contact360';
 import { log } from '@/lib/logger';
 
- export function useExternalContact360(phone: string | undefined) {
-   const cleanedPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
- 
+ export function useExternalContact360(contactId: string | undefined) {
+   const crmEnabled = useCRMIntegrationEnabled();
    return useQuery<Contact360Data | null>({
-     queryKey: ['external-contact-360', cleanedPhone],
-     queryFn: () => cleanedPhone ? ExternalCRMService.getContact360(cleanedPhone) as Promise<Contact360Data> : Promise.resolve(null),
-     enabled: isExternalConfigured && !!cleanedPhone && cleanedPhone.length >= 8,
+     queryKey: ['external-contact-360', contactId],
+     queryFn: () => contactId ? ExternalCRMService.getContact360(contactId) as Promise<Contact360Data> : Promise.resolve(null),
+     enabled: crmEnabled && !!contactId,
     staleTime: 1000 * 60 * 10, // 10 min cache
     gcTime: 1000 * 60 * 30,    // 30 min gc
     retry: 1,

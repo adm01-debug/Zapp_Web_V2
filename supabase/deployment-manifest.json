@@ -7,13 +7,13 @@
   ],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "a25ecdbd721a67b020e3b2f34fce57e1b153ec0b226bca49ddf0c09fd4494155"
+    "sha256": "94b522b1255b20ad4d9ca58232c1c5d209a9eab22fd9028a9764d0a1a258251e"
   },
   "summary": {
-    "function_count": 63,
-    "source_file_count": 81,
+    "function_count": 64,
+    "source_file_count": 83,
     "verify_jwt_true": 55,
-    "verify_jwt_false": 8
+    "verify_jwt_false": 9
   },
   "source_files": [
     {
@@ -35,6 +35,11 @@
       "path": "supabase/functions/_shared/contracts.ts",
       "bytes": 1391,
       "sha256": "d626eeb39308fd9028a7e79fc42b4d6f4b306fb62fa66320fd1de82225f843d6"
+    },
+    {
+      "path": "supabase/functions/_shared/crm-integration-contract.ts",
+      "bytes": 8856,
+      "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c"
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -210,6 +215,11 @@
       "path": "supabase/functions/create-user/index.ts",
       "bytes": 6171,
       "sha256": "6e249e4b173cec59251083e9912ac0cc7817440974bb66f5d60a166e37899c9e"
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.ts",
+      "bytes": 23541,
+      "sha256": "b5d565af15dda84208f7c4b8f87038b36062a20e007a200be3facd86da694187"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -388,8 +398,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 11284,
-      "sha256": "0ca953c8b1a6031122f1869b88df039b6d4aaba6f516dfb2d24f0af974589874"
+      "bytes": 12521,
+      "sha256": "3546bff4513844f0c4c9ebeea42f7a37e13ef11458a0840d0480ce5103a844cc"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -688,6 +698,18 @@
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/create-user/index.ts"
+      ]
+    },
+    {
+      "name": "crm-integration",
+      "entrypoint": "supabase/functions/crm-integration/index.ts",
+      "verify_jwt": false,
+      "source_sha256": "5b9ea490565ddf2a79c10420f3801337d2022ce40fdf476d0f3093f37f74e54c",
+      "source_files": [
+        "supabase/functions/_shared/crm-integration-contract.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/crm-integration/index.ts"
       ]
     },
     {
@@ -1119,7 +1141,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4ace48398f81f3c98df6a531ae0f75333b507dfedaaba2951f6ad27665519fff",
+      "source_sha256": "b6737711222e1569b8252f9c7261a38b758af055becac0b3f02884341bda12f0",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1199,5 +1221,5 @@
       ]
     }
   ],
-  "manifest_sha256": "29b850206d9220f13d279ee94b66a700e222932f7fb7fa1b0249ed66c811dfe0"
+  "manifest_sha256": "6c119168e4b19eccad0a18981907ca3d22e344ed9994988cb55c1a1eeea4b4a5"
 }

@@ -64,14 +64,41 @@ function scan() {
   return found;
 }
 
+function projectSchemaFromForwardMigrations(catalog) {
+  const cutoff = String(catalog.generated_at || '').replace(/\D/g, '').slice(0, 8);
+  const functions = new Set();
+  const relations = new Set();
+  const migrationsDir = path.join(ROOT, 'supabase/migrations');
+  if (!/^\d{8}$/.test(cutoff) || !fs.existsSync(migrationsDir)) return { functions, relations };
+
+  for (const filename of fs.readdirSync(migrationsDir).filter((name) => /^\d{14}_.+\.sql$/.test(name)).sort()) {
+    if (filename.slice(0, 8) <= cutoff) continue;
+    const sql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
+    for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      functions.add(match[1]);
+    }
+    for (const match of sql.matchAll(/DROP\s+FUNCTION(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
+      functions.delete(match[1]);
+    }
+    for (const match of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
+      relations.add(match[1]);
+    }
+    for (const match of sql.matchAll(/DROP\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-zA-Z0-9_]+)/gi)) {
+      relations.delete(match[1]);
+    }
+  }
+  return { functions, relations };
+}
+
 function main() {
   if (!fs.existsSync(CATALOG)) {
     console.error('ERRO: ' + CATALOG + ' nao encontrado. Regenere com scripts/db-audit/catalog.sql.');
     process.exit(2);
   }
   const cat = JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
-  const relations = new Set([...cat.tables, ...cat.views]);
-  const functions = new Set(cat.functions);
+  const projected = projectSchemaFromForwardMigrations(cat);
+  const relations = new Set([...cat.tables, ...cat.views, ...projected.relations]);
+  const functions = new Set([...cat.functions, ...projected.functions]);
   const baseline = fs.existsSync(BASELINE)
     ? new Set(JSON.parse(fs.readFileSync(BASELINE, 'utf8')).known)
     : new Set();
@@ -91,7 +118,9 @@ function main() {
 
   console.log(
     'Catalogo: ' + cat.tables.length + ' tabelas, ' + cat.views.length +
-    ' views, ' + cat.functions.length + ' funcoes (gerado em ' + cat.generated_at + ')',
+    ' views, ' + cat.functions.length + ' funcoes (gerado em ' + cat.generated_at +
+    '); projecao forward-only: ' + projected.relations.size + ' relacoes, ' +
+    projected.functions.size + ' funcoes',
   );
   console.log(
     'Violacoes totais: ' + violations.length +

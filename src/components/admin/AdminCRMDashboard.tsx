@@ -3,6 +3,7 @@
  * Shows summary cards and quick data previews from the external CRM database
  */
 import { memo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,9 +14,69 @@ import {
   TrendingUp, Package, Truck, Activity, ExternalLink,
 } from 'lucide-react';
 import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useNavigate } from 'react-router-dom';
 import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
+import { callCRMIntegration } from '@/lib/crmIntegration';
+
+interface CRMQueueHealth {
+  pending: number;
+  processing: number;
+  failed: number;
+  dead_letter: number;
+  succeeded_24h: number;
+  succeeded_without_link: number;
+  oldest_ready_age_seconds: number;
+  generated_at: string;
+}
+
+function IntegrationHealth() {
+  const health = useQuery({
+    queryKey: ['crm-integration-health'],
+    queryFn: async () => {
+      const response = await callCRMIntegration<{ external_reachable: boolean; queue: CRMQueueHealth }>('health');
+      const value = response.data;
+      const queue = value?.queue;
+      if (value?.external_reachable !== true || !queue ||
+        !['pending', 'processing', 'failed', 'dead_letter', 'succeeded_24h', 'succeeded_without_link', 'oldest_ready_age_seconds']
+          .every((key) => typeof queue[key as keyof CRMQueueHealth] === 'number')) {
+        throw new Error('CRM health returned an invalid response');
+      }
+      return value;
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 1,
+  });
+  const queue = health.data?.queue;
+  const degraded = Boolean(queue && (
+    queue.dead_letter > 0 || queue.succeeded_without_link > 0 || queue.oldest_ready_age_seconds > 900
+  ));
+
+  return (
+    <Card className={degraded || health.isError ? 'border-destructive/50' : 'border-border/50'}>
+      <CardContent className="p-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+        <div className="flex items-center gap-2 font-medium">
+          <Activity className="h-4 w-4 text-primary" /> Saúde da integração
+        </div>
+        {health.isLoading ? <Skeleton className="h-5 w-48" /> : health.isError ? (
+          <Badge variant="destructive">Health check indisponível</Badge>
+        ) : (
+          <>
+            <Badge variant={health.data?.external_reachable ? 'outline' : 'destructive'}>
+              CRM {health.data?.external_reachable ? 'conectado' : 'indisponível'}
+            </Badge>
+            <span>Pendentes: {queue?.pending ?? 0}</span>
+            <span>Falhas: {queue?.failed ?? 0}</span>
+            <span>DLQ: {queue?.dead_letter ?? 0}</span>
+            <span>Sucesso 24h: {queue?.succeeded_24h ?? 0}</span>
+            <span>Sem vínculo: {queue?.succeeded_without_link ?? 0}</span>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // ─── Metric Card ─────────────────────────────────────────────
 function MetricCard({ label, table, icon: Icon, color }: {
@@ -190,8 +251,9 @@ function RecentSales() {
 // ─── Main ────────────────────────────────────────────────────
 export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
   const navigate = useNavigate();
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
-  if (!isExternalConfigured) {
+  if (!crmIntegrationEnabled) {
     return (
       <Card className="max-w-md mx-auto mt-8">
         <CardContent className="pt-6 text-center">
@@ -217,6 +279,8 @@ export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
           <ExternalLink className="h-3.5 w-3.5" /> Explorer Completo
         </Button>
       </div>
+
+      <IntegrationHealth />
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">

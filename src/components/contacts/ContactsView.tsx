@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Sparkles, RefreshCw,
 } from 'lucide-react';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
@@ -25,6 +25,7 @@ import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
     isImportOpen, setIsImportOpen, isMergeOpen, setIsMergeOpen,
@@ -57,8 +58,8 @@ export function ContactsView() {
     handleNewContactChange, handleEditContactChange,
   } = crud;
 
-  const contactPhones = useMemo(() => filteredContacts.map(c => c.phone), [filteredContacts]);
-  const { lookup } = useExternalContact360Batch(contactPhones);
+  const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
+  const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
   const reduceMotion = useReducedMotion();
@@ -83,7 +84,7 @@ export function ContactsView() {
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-3 flex-wrap">
-            {isExternalConfigured && (
+            {crmIntegrationEnabled && (
               <motion.div whileTap={tapAnimation}>
                 <Button
                   onClick={() => setIsCRMSearchOpen(true)}
@@ -210,7 +211,7 @@ export function ContactsView() {
         />
       )}
 
-      {isExternalConfigured && (
+      {crmIntegrationEnabled && (
         <ContactCRMDialog
           open={isCRMSearchOpen}
           onOpenChange={setIsCRMSearchOpen}

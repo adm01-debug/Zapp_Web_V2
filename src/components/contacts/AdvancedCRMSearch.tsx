@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useAdvancedContactSearch } from '@/hooks/crm/useAdvancedContactSearch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Sparkles, Loader2
 import type { SearchContactResult } from '@/types/contactSearch';
 import { CRMContactCard } from './CRMContactCard';
 import { CRMFiltersPanel } from './CRMFiltersPanel';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 
 interface AdvancedCRMSearchProps {
   onSelectContact?: (contact: SearchContactResult) => void;
@@ -19,23 +20,36 @@ interface AdvancedCRMSearchProps {
 }
 
 function AdvancedCRMSearchInner({ onSelectContact, className }: AdvancedCRMSearchProps) {
+  const authorized = useCRMAdminAccess();
+
   const {
     results, total, totalPages, currentPage, filters,
     isLoading, isFetching, hasActiveFilters, activeFilterCount,
     params, setSearch, setFilter, setSortBy, setPage, clearFilters, isConfigured,
-  } = useAdvancedContactSearch();
+  } = useAdvancedContactSearch(authorized === true);
 
   const [searchInput, setSearchInput] = useState('');
-  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSearchInput = useCallback((value: string) => {
     setSearchInput(value);
-    if (searchTimeout) clearTimeout(searchTimeout);
-    const timeout = setTimeout(() => setSearch(value), 400);
-    setSearchTimeout(timeout);
-  }, [setSearch, searchTimeout]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => setSearch(value), 400);
+  }, [setSearch]);
+
+  useEffect(() => () => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+  }, []);
 
   if (!isConfigured) return null;
+  if (authorized === null) return <Skeleton className={cn('h-full w-full', className)} />;
+  if (!authorized) {
+    return (
+      <div className={cn('flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground', className)}>
+        Você não possui permissão para pesquisar diretamente no CRM externo.
+      </div>
+    );
+  }
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -68,13 +82,11 @@ function AdvancedCRMSearchInner({ onSelectContact, className }: AdvancedCRMSearc
             </ScrollArea>
           </SheetContent>
         </Sheet>
-        <Select value={params.sort_by || 'relevance'} onValueChange={(v) => setSortBy(v as 'relevance' | 'name' | 'score' | 'compras' | 'pedidos' | 'recent')}>
+        <Select value={params.sort_by || 'relevance'} onValueChange={(v) => setSortBy(v as 'relevance' | 'name' | 'relationship_score' | 'recent')}>
           <SelectTrigger className="h-9 w-[130px] text-xs"><ArrowUpDown className="w-3 h-3 mr-1" /><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="relevance">Relevância</SelectItem>
-            <SelectItem value="score">Score</SelectItem>
-            <SelectItem value="compras">Compras</SelectItem>
-            <SelectItem value="pedidos">Pedidos</SelectItem>
+            <SelectItem value="relationship_score">Score</SelectItem>
             <SelectItem value="recent">Recentes</SelectItem>
           </SelectContent>
         </Select>

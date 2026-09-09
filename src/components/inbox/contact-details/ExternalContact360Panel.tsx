@@ -15,11 +15,11 @@ import {
 } from './Contact360Helpers';
 
 interface ExternalContact360PanelProps {
-  phone: string;
+  contactId: string;
 }
 
-function ExternalContact360PanelInner({ phone }: ExternalContact360PanelProps) {
-  const { data, isLoading, error } = useExternalContact360(phone);
+function ExternalContact360PanelInner({ contactId }: ExternalContact360PanelProps) {
+  const { data, isLoading, error } = useExternalContact360(contactId);
 
   if (isLoading) {
     return (

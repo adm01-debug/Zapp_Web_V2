@@ -6,7 +6,8 @@
  * best times, churn risk, DISC tips, and last interactions.
  */
 import { useQuery } from '@tanstack/react-query';
-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 
 export interface ContactBriefing {
@@ -87,27 +88,21 @@ export interface ContactIntelligenceData {
   last_interactions: { channel: string; assunto: string; resumo: string | null; sentiment: string; data: string }[];
 }
 
-function cleanPhone(phone: string): string {
-  return phone.replace(/[^0-9]/g, '');
-}
-
-export function useContactIntelligence(phone: string | undefined) {
-  const cleanedPhone = phone ? cleanPhone(phone) : '';
-
+export function useContactIntelligence(contactId: string | undefined) {
+  const crmEnabled = useCRMIntegrationEnabled();
   return useQuery<ContactIntelligenceData | null>({
-    queryKey: ['contact-intelligence', cleanedPhone],
+    queryKey: ['contact-intelligence', contactId],
     queryFn: async () => {
-      if (!cleanedPhone || cleanedPhone.length < 8) return null;
-      const { data, error } = await getExternalSupabase().rpc('get_contact_intelligence_by_phone', {
-        p_phone: cleanedPhone,
-      });
-      if (error) {
+      if (!contactId) return null;
+      try {
+        const { data } = await callCRMIntegration<ContactIntelligenceData>('contactLookup', { contactId, lookup: 'intelligence' });
+        return data;
+      } catch (error) {
         log.error('Intelligence RPC error:', error);
         return null;
       }
-      return data as ContactIntelligenceData;
     },
-    enabled: isExternalConfigured && !!cleanedPhone && cleanedPhone.length >= 8,
+    enabled: crmEnabled && !!contactId,
     staleTime: 1000 * 60 * 15, // 15 min
     gcTime: 1000 * 60 * 30,
     retry: 1,

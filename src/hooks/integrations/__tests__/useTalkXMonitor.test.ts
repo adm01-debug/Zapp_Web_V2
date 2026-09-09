@@ -1,36 +1,18 @@
 /**
  * E09: Testes do useTalkXMonitor — rateByMinute real, sem Math.random
  */
-import { describe, it, expect, vi } from 'vitest';
-
-// Testar a função pura buildRateByMinute via extração manual
-// (a função não é exportada do hook, testamos o comportamento)
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { buildRateByMinute } from '../useTalkXMonitor';
 
 type RecipientStub = { sent_at: string | null; delivered_at: string | null };
 
-function buildRateByMinute(data: RecipientStub[]) {
-  if (!data.length) return [];
-  const now = Date.now();
-  const windowMs = 60 * 60_000;
-  const buckets = new Map<string, { sent: number; delivered: number }>();
-
-  for (const r of data) {
-    if (!r.sent_at) continue;
-    const t = new Date(r.sent_at).getTime();
-    if (now - t > windowMs) continue;
-    const d = new Date(t);
-    const key = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    const b = buckets.get(key) ?? { sent: 0, delivered: 0 };
-    b.sent += 1;
-    if (r.delivered_at) b.delivered += 1;
-    buckets.set(key, b);
-  }
-  return Array.from(buckets.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, { sent, delivered }]) => ({ label, Enviadas: sent, Entregues: delivered }));
-}
-
 describe('buildRateByMinute', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-08T15:00:30.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
   it('retorna array vazio para dados vazios', () => {
     expect(buildRateByMinute([])).toEqual([]);
   });
@@ -51,7 +33,7 @@ describe('buildRateByMinute', () => {
     // 2 no mesmo minuto, 1 em outro
     const data: RecipientStub[] = [
       { sent_at: new Date(min0.getTime()).toISOString(), delivered_at: null },
-      { sent_at: new Date(min0.getTime() + 15_000).toISOString(), delivered_at: new Date().toISOString() },
+      { sent_at: new Date(min0.getTime() + 10_000).toISOString(), delivered_at: new Date().toISOString() },
       { sent_at: new Date(min1.getTime()).toISOString(), delivered_at: null },
     ];
 

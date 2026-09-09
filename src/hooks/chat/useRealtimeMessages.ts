@@ -39,6 +39,17 @@ export function useRealtimeMessages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const conversationsRef = useRef<ConversationWithMessages[]>([]);
+  const mountedRef = useRef(true);
+  const fetchGenerationRef = useRef(0);
+  const liveRevisionRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      fetchGenerationRef.current += 1;
+    };
+  }, []);
 
   const {
     newMessageNotification, notifyAboutIncomingMessage,
@@ -64,6 +75,8 @@ export function useRealtimeMessages() {
       try {
         const [contact] = await RealtimeService.fetchContactsByIds([message.contact_id]);
         if (!contact) { log.warn('Incoming message received for unknown contact', { contactId: message.contact_id }); return; }
+        if (!mountedRef.current) return;
+        liveRevisionRef.current += 1;
         commitConversations((prev) => {
           const idx = prev.findIndex((c) => c.contact.id === contact.id);
           if (idx >= 0) {
@@ -82,13 +95,22 @@ export function useRealtimeMessages() {
     [commitConversations, notifyAboutIncomingMessage]
   );
 
-  const { handleMessageUpdate } = useMessageUpdateBatcher(conversationsRef, commitConversations, hydrateConversationForMessage);
+  const { handleMessageUpdate: handleBatchedMessageUpdate } = useMessageUpdateBatcher(
+    conversationsRef,
+    commitConversations,
+    hydrateConversationForMessage,
+  );
+  const handleMessageUpdate = useCallback((payload: RealtimePostgresChangesPayload<RealtimeMessage>) => {
+    liveRevisionRef.current += 1;
+    handleBatchedMessageUpdate(payload);
+  }, [handleBatchedMessageUpdate]);
 
   const handleNewMessage = useCallback(
     (payload: RealtimePostgresChangesPayload<RealtimeMessage>) => {
       const newMessage = normalizeMessage(payload.new as RealtimeMessage);
       if (!newMessage.contact_id) return;
 
+      liveRevisionRef.current += 1;
       const existingConversation = conversationsRef.current.find((c) => c.contact.id === newMessage.contact_id);
       if (!existingConversation) { void hydrateConversationForMessage(newMessage); return; }
 
@@ -109,12 +131,32 @@ export function useRealtimeMessages() {
   );
 
   const fetchConversations = useCallback(async () => {
+    const generation = ++fetchGenerationRef.current;
+    const startingLiveRevision = liveRevisionRef.current;
     try {
       setLoading(true);
       setError(null);
       const builtConversations = await RealtimeService.fetchInitialConversations();
-      commitConversations(builtConversations);
+      if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
+      if (liveRevisionRef.current === startingLiveRevision) {
+        commitConversations(builtConversations);
+      } else {
+        // Preserve events received while the snapshot request was in flight.
+        commitConversations((current) => {
+          const liveByContact = new Map(current.map((conversation) => [conversation.contact.id, conversation]));
+          const merged = builtConversations.map((snapshot) => {
+            const live = liveByContact.get(snapshot.contact.id);
+            if (!live) return snapshot;
+            liveByContact.delete(snapshot.contact.id);
+            const messages = new Map(snapshot.messages.map((message) => [message.id, message]));
+            for (const message of live.messages) messages.set(message.id, message);
+            return buildConversation(live.contact, [...messages.values()]);
+          });
+          return [...liveByContact.values(), ...merged];
+        });
+      }
     } catch (err) {
+      if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
       const errorMessage = err instanceof Error ? err.message : 'Falha ao carregar conversas';
       log.error('Error fetching conversations:', err);
       setError(errorMessage);
@@ -123,11 +165,13 @@ export function useRealtimeMessages() {
           description: 'Não foi possível carregar suas conversas. Verifique sua conexão.'
         });
       });
-    } finally { setLoading(false); }
+    } finally {
+      if (mountedRef.current && generation === fetchGenerationRef.current) setLoading(false);
+    }
   }, [commitConversations]);
 
   useEffect(() => {
-    fetchConversations();
+    void Promise.resolve().then(fetchConversations);
   }, [fetchConversations]);
 
   useSupabaseRealtime<RealtimeMessage>({
