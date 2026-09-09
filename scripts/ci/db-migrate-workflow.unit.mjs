@@ -73,7 +73,12 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
   assert.match(workflow, /proof\.trigger_name_collision_count === 0/);
   assert.match(workflow, /proof\.constraint_name_collision_count === 0/);
   assert.match(workflow, /proof\.authenticated_internal_guard_execute === false/);
-  assert.match(workflow, /proof\.service_delivery_count === 3/);
+  assert.match(workflow, /proof\.service_role_inherits_authenticated === true/);
+  assert.match(workflow, /proof\.authenticated_enqueue_direct === true/);
+  assert.match(workflow, /proof\.service_enqueue_effective === true/);
+  assert.match(workflow, /proof\.service_enqueue_direct === false/);
+  assert.match(workflow, /proof\.service_delivery_effective_count === 3/);
+  assert.match(workflow, /proof\.service_delivery_direct_count === 3/);
   assert.match(
     workflow,
     /definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'/

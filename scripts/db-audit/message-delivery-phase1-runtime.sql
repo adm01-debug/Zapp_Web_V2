@@ -1,6 +1,6 @@
 WITH expected_functions AS (
   SELECT procedure.oid, procedure.proname, procedure.prosecdef,
-         procedure.proowner,
+         procedure.proowner, procedure.proacl,
          COALESCE('search_path=public, pg_temp' = ANY(procedure.proconfig), false) AS safe_path,
          pg_get_functiondef(procedure.oid) AS definition
   FROM pg_proc AS procedure
@@ -29,6 +29,13 @@ WITH expected_functions AS (
           )
        AND pg_get_function_identity_arguments(procedure.oid) = '')
     )
+), expected_function_acl AS (
+  SELECT function_row.oid, function_row.proname,
+         acl.grantee, acl.privilege_type
+  FROM expected_functions AS function_row
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(function_row.proacl, acldefault('f', function_row.proowner))
+  ) AS acl
 ), expected_triggers AS (
   SELECT trigger.oid, trigger.tgname,
          pg_get_triggerdef(trigger.oid, true) AS definition
@@ -216,18 +223,44 @@ WITH expected_functions AS (
           ORDER BY tgname), ''), 'UTF8'
       )), 'hex') FROM expected_triggers
     ),
-    'authenticated_enqueue', COALESCE((SELECT has_function_privilege(
+    'service_role_inherits_authenticated',
+      pg_has_role('service_role', 'authenticated', 'USAGE'),
+    'authenticated_enqueue_effective', COALESCE((SELECT has_function_privilege(
       'authenticated', oid, 'EXECUTE'
     ) FROM expected_functions WHERE proname = 'enqueue_outbound_message'), false),
-    'authenticated_close', COALESCE((SELECT has_function_privilege(
+    'authenticated_enqueue_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'enqueue_outbound_message'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'authenticated')
+        AND privilege_type = 'EXECUTE'
+    ),
+    'authenticated_close_effective', COALESCE((SELECT has_function_privilege(
       'authenticated', oid, 'EXECUTE'
     ) FROM expected_functions WHERE proname = 'close_conversation_atomic'), false),
-    'service_enqueue', COALESCE((SELECT has_function_privilege(
+    'authenticated_close_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'close_conversation_atomic'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'authenticated')
+        AND privilege_type = 'EXECUTE'
+    ),
+    'service_enqueue_effective', COALESCE((SELECT has_function_privilege(
       'service_role', oid, 'EXECUTE'
     ) FROM expected_functions WHERE proname = 'enqueue_outbound_message'), false),
-    'service_close', COALESCE((SELECT has_function_privilege(
+    'service_enqueue_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'enqueue_outbound_message'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
+    'service_close_effective', COALESCE((SELECT has_function_privilege(
       'service_role', oid, 'EXECUTE'
     ) FROM expected_functions WHERE proname = 'close_conversation_atomic'), false),
+    'service_close_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'close_conversation_atomic'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
     'authenticated_privileged_delivery', COALESCE((SELECT bool_or(
       has_function_privilege('authenticated', oid, 'EXECUTE')
     ) FROM expected_functions WHERE proname IN (
@@ -240,12 +273,21 @@ WITH expected_functions AS (
     'anon_any_execute', COALESCE((SELECT bool_or(
       has_function_privilege('anon', oid, 'EXECUTE')
     ) FROM expected_functions), false),
-    'service_delivery_count', (
+    'service_delivery_effective_count', (
       SELECT count(*) FROM expected_functions
       WHERE proname IN (
         'claim_outbound_message', 'complete_outbound_message',
         'fail_outbound_message'
       ) AND has_function_privilege('service_role', oid, 'EXECUTE')
+    ),
+    'service_delivery_direct_count', (
+      SELECT count(DISTINCT proname) FROM expected_function_acl
+      WHERE proname IN (
+        'claim_outbound_message', 'complete_outbound_message',
+        'fail_outbound_message'
+      )
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
     ),
     'custom_guc_reference_count', (
       SELECT count(*) FROM expected_functions

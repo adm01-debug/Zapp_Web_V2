@@ -664,14 +664,20 @@ jobs:
               && proof.function_name_collision_count === 0
               && proof.trigger_name_collision_count === 0
               && proof.constraint_name_collision_count === 0
-              && proof.authenticated_enqueue === false
-              && proof.authenticated_close === false
-              && proof.service_enqueue === false
-              && proof.service_close === false
+              && proof.service_role_inherits_authenticated === true
+              && proof.authenticated_enqueue_effective === false
+              && proof.authenticated_enqueue_direct === false
+              && proof.authenticated_close_effective === false
+              && proof.authenticated_close_direct === false
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.service_close_effective === false
+              && proof.service_close_direct === false
               && proof.authenticated_privileged_delivery === false
               && proof.authenticated_internal_guard_execute === false
               && proof.anon_any_execute === false
-              && proof.service_delivery_count === 0
+              && proof.service_delivery_effective_count === 0
+              && proof.service_delivery_direct_count === 0
               && proof.custom_guc_reference_count === 0;
             const applied = proof.message_column_count === 7
               && proof.closure_column_count === 1
@@ -691,14 +697,20 @@ jobs:
               && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
               && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
               && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
-              && proof.authenticated_enqueue === true
-              && proof.authenticated_close === true
-              && proof.service_enqueue === false
-              && proof.service_close === true
+              && proof.service_role_inherits_authenticated === true
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.authenticated_close_effective === true
+              && proof.authenticated_close_direct === true
+              && proof.service_enqueue_effective === true
+              && proof.service_enqueue_direct === false
+              && proof.service_close_effective === true
+              && proof.service_close_direct === true
               && proof.authenticated_privileged_delivery === false
               && proof.authenticated_internal_guard_execute === false
               && proof.anon_any_execute === false
-              && proof.service_delivery_count === 3
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
               && proof.custom_guc_reference_count === 0;
             targetOk = process.env.NEEDS_APPLY === 'true' ? absent : applied;
           } else if (process.env.TARGET_VERSION === '20260909230000') {
@@ -1120,14 +1132,20 @@ jobs:
             && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
             && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
             && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
-            && proof.authenticated_enqueue === true
-            && proof.authenticated_close === true
-            && proof.service_enqueue === false
-            && proof.service_close === true
+            && proof.service_role_inherits_authenticated === true
+            && proof.authenticated_enqueue_effective === true
+            && proof.authenticated_enqueue_direct === true
+            && proof.authenticated_close_effective === true
+            && proof.authenticated_close_direct === true
+            && proof.service_enqueue_effective === true
+            && proof.service_enqueue_direct === false
+            && proof.service_close_effective === true
+            && proof.service_close_direct === true
             && proof.authenticated_privileged_delivery === false
             && proof.authenticated_internal_guard_execute === false
             && proof.anon_any_execute === false
-            && proof.service_delivery_count === 3
+            && proof.service_delivery_effective_count === 3
+            && proof.service_delivery_direct_count === 3
             && proof.custom_guc_reference_count === 0;
           if (!ok) process.exit(1);
           NODE
