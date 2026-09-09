@@ -81,6 +81,15 @@ jobs:
           INBOX_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/inbox-contact-authorization.test.sh
 
+      - name: Simular histórico atômico de templates Talk X
+        env:
+          TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: |
+          TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+
       - name: Simular reconciliação segura do ledger
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine

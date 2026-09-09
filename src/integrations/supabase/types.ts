@@ -6357,6 +6357,7 @@ export type Database = {
           content: string
           created_at: string
           custom_variables: string[]
+          description: string | null
           id: string
           media_type: string | null
           media_url: string | null
@@ -6372,6 +6373,7 @@ export type Database = {
           content: string
           created_at?: string
           custom_variables?: string[]
+          description?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -6387,6 +6389,7 @@ export type Database = {
           content?: string
           created_at?: string
           custom_variables?: string[]
+          description?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -8265,6 +8268,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_talkx_template_use: {
+        Args: { p_template_id: string }
+        Returns: number
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -8432,6 +8439,26 @@ export type Database = {
           p_signature?: string
         }
         Returns: boolean
+      }
+      update_talkx_template_with_snapshot: {
+        Args: {
+          p_category: string
+          p_content: string
+          p_custom_variables: string[]
+          p_description: string | null
+          p_expected_updated_at: string
+          p_media_type: string | null
+          p_media_url: string | null
+          p_name: string
+          p_status: string
+          p_tags: string[]
+          p_template_id: string
+        }
+        Returns: {
+          template_id: string
+          updated_at: string
+          version_number: number
+        }[]
       }
       upsert_crm_contact_link_guarded: {
         Args: {
@@ -8621,4 +8648,3 @@ export const Constants = {
     },
   },
 } as const
-

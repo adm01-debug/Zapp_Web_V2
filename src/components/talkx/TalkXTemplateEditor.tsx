@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput } from '@/hooks/integrations/useTalkXTemplates';
 import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
@@ -24,7 +25,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, saveVersionSnapshot } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory } = useTalkXTemplates();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Inicializa campos do template sendo editado
@@ -47,8 +48,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(editing?.updated_at ?? null);
   const [versions, setVersions] = useState<Array<{
-    id: string; version_number: number; name: string; content: string;
+    id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
@@ -77,20 +79,22 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const save = async () => {
     if (saving) return;
     if (!eName.trim() || !eContent.trim()) return;
+    if (eHasMedia && !/^https:\/\//i.test(eMediaUrl)) {
+      toast.error('Informe uma URL de mídia HTTPS válida.');
+      return;
+    }
     setSaving(true);
     const payload: TemplateInput = {
       name: eName, description: eDesc || null, category: eCat, content: eContent,
-      media_url: eHasMedia && eMediaUrl && /^https?:\/\//i.test(eMediaUrl) ? eMediaUrl : null,
+      media_url: eHasMedia ? eMediaUrl : null,
       media_type: eHasMedia && eMediaType ? eMediaType : null,
       tags: eTags, status: eStatus,
       custom_variables: eCustomVars,
     };
     try {
       if (activeTemplateId) {
-        if (eContent !== activeTemplate?.content) {
-          await saveVersionSnapshot(activeTemplateId, { name: eName, content: eContent, category: eCat, status: eStatus, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, custom_variables: eCustomVars });
-        }
-        await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
+        if (!expectedUpdatedAt) throw new Error('Versão do template indisponível; reabra o editor');
+        await updateTemplate.mutateAsync({ id: activeTemplateId, expectedUpdatedAt, ...payload });
       }
       else await createTemplate.mutateAsync(payload);
       onClose();
@@ -103,6 +107,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     setVersions([]); setShowVersions(false);
     if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
     setActiveTemplateId(t.id);
+    setExpectedUpdatedAt(t.updated_at);
     setVersions([]); setShowVersions(false);
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
@@ -157,7 +162,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = (v: typeof versions[0]) => {
     if (!confirm('Restaurar esta versao? Os campos atuais serao substituidos.')) return;
-    setEName(v.name); setECat(v.category); setEContent(v.content);
+    setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
     setETags(v.tags ?? []); setECustomVars(v.custom_variables ?? []);
