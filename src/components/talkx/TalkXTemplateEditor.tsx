@@ -372,7 +372,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <div className="flex items-center gap-2">
               <Input
                 value={eCustomVarInput}
-                onChange={(e) => setECustomVarInput(e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase())}
+                onChange={(e) => setECustomVarInput(e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase().replace(/^[0-9]+/, ''))}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && eCustomVarInput.trim()) {
                     const v = eCustomVarInput.trim();

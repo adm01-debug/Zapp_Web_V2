@@ -10,6 +10,16 @@ ALTER TABLE public.talkx_templates
 -- nao convertemos URL, conteudo ou classificacao silenciosamente.
 DO $migration$
 BEGIN
+  -- Reconciliar custom_variables com digito na posicao inicial (legado do editor anterior)
+  UPDATE public.talkx_templates
+  SET custom_variables = ARRAY(
+    SELECT CASE WHEN cv ~ '^[0-9]' THEN '_' || cv ELSE cv END
+    FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv
+  )
+  WHERE EXISTS (
+    SELECT 1 FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv WHERE cv ~ '^[0-9]'
+  );
+
   IF EXISTS (
     SELECT 1
     FROM public.talkx_templates AS template
