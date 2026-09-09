@@ -39,6 +39,9 @@ CREATE EXTENSION pgcrypto;
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN BYPASSRLS;
+-- Supabase Cloud grants authenticated to service_role. Model that topology so
+-- effective ACL checks cannot be confused with direct function grants.
+GRANT authenticated TO service_role;
 CREATE SCHEMA auth;
 GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
@@ -174,6 +177,35 @@ INSERT INTO public.contacts(id,phone,assigned_to,queue_id,whatsapp_connection_id
  ('50000000-0000-0000-0000-000000000006','5511999990006','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001');
 SQL
 
+preflight_runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
+RUNTIME_PROOF="$preflight_runtime_proof" node --input-type=module <<'NODE'
+const proof = JSON.parse(process.env.RUNTIME_PROOF);
+const ok = proof.server_major === 17
+  && proof.database === 'postgres'
+  && proof.service_role_inherits_authenticated === true
+  && proof.message_column_count === 0
+  && proof.closure_column_count === 0
+  && proof.event_column_count === 0
+  && proof.column_contract_count === 0
+  && proof.validated_constraint_count === 0
+  && proof.index_count === 0
+  && proof.function_count === 0
+  && proof.authenticated_enqueue_effective === false
+  && proof.authenticated_enqueue_direct === false
+  && proof.authenticated_close_effective === false
+  && proof.authenticated_close_direct === false
+  && proof.service_enqueue_effective === false
+  && proof.service_enqueue_direct === false
+  && proof.service_close_effective === false
+  && proof.service_close_direct === false
+  && proof.service_delivery_effective_count === 0
+  && proof.service_delivery_direct_count === 0;
+if (!ok) {
+  console.error(`preflight runtime proof inesperado: ${JSON.stringify(proof)}`);
+  process.exit(1);
+}
+NODE
+
 psql_test < "$repo_root/supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql" >/dev/null
 
 expect_failure() {
@@ -190,6 +222,7 @@ agent_two="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.c
 inactive="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000004',true);"
 service_role="BEGIN; SET LOCAL ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',true);"
 
+expect_failure 'authentication_required' "$service_role SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'service-cannot-enqueue','text',NULL,NULL,NULL); COMMIT;"
 expect_failure 'messages_delivery_claim_state' "$service_role INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status,delivery_claim_token,delivery_claimed_at,delivery_claim_expires_at,delivery_attempt_count) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','malformed-lease','text','sending',gen_random_uuid(),statement_timestamp(),statement_timestamp()+interval '90 seconds',1); COMMIT;"
 expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','forged','text','sending'); COMMIT;"
 expect_failure 'closure_request_id_internal_field_forbidden' "$agent_one INSERT INTO public.conversation_closures(contact_id,closed_by,close_reason,client_request_id) VALUES ('50000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','resolved',gen_random_uuid()); COMMIT;"
@@ -551,14 +584,20 @@ const ok = proof.server_major === 17
   && proof.function_name_collision_count === 0
   && proof.trigger_name_collision_count === 0
   && proof.constraint_name_collision_count === 0
-  && proof.authenticated_enqueue === true
-  && proof.authenticated_close === true
-  && proof.service_enqueue === false
-  && proof.service_close === true
+  && proof.service_role_inherits_authenticated === true
+  && proof.authenticated_enqueue_effective === true
+  && proof.authenticated_enqueue_direct === true
+  && proof.authenticated_close_effective === true
+  && proof.authenticated_close_direct === true
+  && proof.service_enqueue_effective === true
+  && proof.service_enqueue_direct === false
+  && proof.service_close_effective === true
+  && proof.service_close_direct === true
   && proof.authenticated_privileged_delivery === false
   && proof.authenticated_internal_guard_execute === false
   && proof.anon_any_execute === false
-  && proof.service_delivery_count === 3
+  && proof.service_delivery_effective_count === 3
+  && proof.service_delivery_direct_count === 3
   && proof.custom_guc_reference_count === 0
   && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
