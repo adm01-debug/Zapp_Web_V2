@@ -3,6 +3,7 @@ import {
   X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,18 +57,21 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
+  // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
+  const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? editing;
+
   // Dirty-check: qualquer campo alterado em relação ao original
-  const isDirty = editing
-    ? eName !== editing.name
-      || eDesc !== (editing.description ?? '')
-      || eCat !== editing.category
-      || eContent !== editing.content
-      || eStatus !== editing.status
-      || JSON.stringify(eTags) !== JSON.stringify(editing.tags ?? [])
-      || eHasMedia !== !!editing.media_url
-      || eMediaUrl !== (editing.media_url ?? '')
-      || eMediaType !== (editing.media_type ?? '')
-      || JSON.stringify(eCustomVars) !== JSON.stringify(editing.custom_variables ?? [])
+  const isDirty = activeTemplate
+    ? eName !== activeTemplate.name
+      || eDesc !== (activeTemplate.description ?? '')
+      || eCat !== activeTemplate.category
+      || eContent !== activeTemplate.content
+      || eStatus !== activeTemplate.status
+      || JSON.stringify(eTags) !== JSON.stringify(activeTemplate.tags ?? [])
+      || eHasMedia !== !!activeTemplate.media_url
+      || eMediaUrl !== (activeTemplate.media_url ?? '')
+      || eMediaType !== (activeTemplate.media_type ?? '')
+      || JSON.stringify(eCustomVars) !== JSON.stringify(activeTemplate.custom_variables ?? [])
     : eName.trim().length > 0 || eContent.trim().length > 0;
 
   const save = async () => {
@@ -76,7 +80,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     setSaving(true);
     const payload: TemplateInput = {
       name: eName, description: eDesc || null, category: eCat, content: eContent,
-      media_url: eHasMedia && eMediaUrl ? eMediaUrl : null,
+      media_url: eHasMedia && eMediaUrl && /^https?:\/\//i.test(eMediaUrl) ? eMediaUrl : null,
       media_type: eHasMedia && eMediaType ? eMediaType : null,
       tags: eTags, status: eStatus,
       custom_variables: eCustomVars,
@@ -88,6 +92,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       }
       else await createTemplate.mutateAsync(payload);
       onClose();
+    } catch (e) {
+      console.error('Falha ao salvar template', e);
     } finally { setSaving(false); }
   };
 
@@ -205,7 +211,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                       onClick={() => loadTemplate(t)}
                       className={cn(
                         'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
-                        editing?.id === t.id
+                        activeTemplateId === t.id
                           ? 'border-primary bg-primary/10'
                           : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
                       )}
@@ -292,9 +298,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               {VARIABLE_KEYS.slice(0, 6).map((v) => (
                 <button key={v} type="button" title={`Inserir ${v}`} onClick={() => insertAtCursor(v)} className="h-7 px-1.5 rounded text-[10px] font-mono border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 whitespace-nowrap">{v.replace(/[{}]/g, '')}</button>
               ))}
-              <button type="button" title="Mais variáveis" className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary"><Hash className="w-3.5 h-3.5" /></button>
-              <div className="w-px h-4 bg-border/60 mx-0.5" />
-              <button type="button" title="Emoji" className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary"><Smile className="w-3.5 h-3.5" /></button>
+              
+              
             </div>
             <Textarea
               ref={textareaRef}
@@ -463,22 +468,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       </aside>
 
       {/* E47: Test Dialog */}
-      {showTest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="rounded-2xl bg-card border border-border/70 shadow-2xl w-full max-w-sm p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-[15px] font-bold text-foreground">Testar template</p>
-              <button type="button" onClick={() => setShowTest(false)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>
-            </div>
-            <p className="text-[12.5px] text-foreground-secondary">Envia a mensagem personalizada para um numero via WhatsApp (instancia padrao).</p>
+      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um numero via WhatsApp.</DialogDescription></DialogHeader>
             <div>
               <Label className="text-[12px] text-foreground-secondary">Numero de destino</Label>
-              <Input
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-                placeholder="5541999001234"
-                className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono"
-              />
+              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
             </div>
             {testResult && (
               <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-[12.5px]' : 'flex items-center gap-2 text-dash-red text-[12.5px]'}>
@@ -488,18 +481,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             )}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
-              <button
-                type="button"
-                onClick={handleTest}
-                disabled={testing || !testPhone.trim()}
-                className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                {testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
+            </div></DialogContent></Dialog>
     </div>
   );
 }

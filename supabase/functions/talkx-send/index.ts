@@ -123,11 +123,11 @@ Deno.serve(async (req) => {
       const cleanPhone = phone.replace(/\D/g, "");
       try {
         if (mediaUrl && mediaType && mediaType !== "audio") {
-          await evoFetch(evolutionUrl, evolutionKey, conn.instance_id, "sendMedia", {
+          await evoFetch(evolutionUrl, evolutionKey, `/message/sendMedia/${conn.instance_id}`, {
             number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText,
           });
         } else {
-          await evoFetch(evolutionUrl, evolutionKey, conn.instance_id, "sendText", {
+          await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
             number: cleanPhone, text: personalizedText,
           });
         }
