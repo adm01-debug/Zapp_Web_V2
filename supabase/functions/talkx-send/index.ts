@@ -16,16 +16,19 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
-function personalize(template: string, contact: { name: string; nickname?: string; company?: string }): string {
-  const firstName = contact.name?.split(" ")[0] || "";
-  return template
+function personalize(template, contact, customVars = []) {
+  const firstName = (contact.name || '').split(' ')[0] || '';
+  let result = template
     .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, contact.name || "")
+    .replace(/\{\{nome_completo\}\}/gi, contact.name || '')
     .replace(/\{\{apelido\}\}/gi, contact.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, contact.company || "")
+    .replace(/\{\{empresa\}\}/gi, contact.company || '')
     .replace(/\{\{saudacao\}\}/gi, getGreeting());
+  for (const v of customVars) {
+    result = result.split('{{' + v + '}}').join('[' + v + ']');
+  }
+  return result;
 }
-
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -90,14 +93,58 @@ Deno.serve(async (req) => {
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
-        .in("role", ["admin", "manager"])
+        .in("role", ["admin", "supervisor"])
         .maybeSingle();
       if (!roleData) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
       }
     }
 
-    const { campaignId, action } = await req.json();
+    const body = await req.json();
+    const { campaignId, action } = body;
+
+    // E47: action test --- envia template de teste para um numero
+    if (action === "test") {
+      const { templateContent, mediaUrl, mediaType, phone, customVariables } = body as {
+        templateContent: string;
+        mediaUrl?: string | null;
+        mediaType?: string | null;
+        phone: string;
+        customVariables?: string[];
+      };
+      if (!templateContent || !phone) {
+        return new Response(JSON.stringify({ error: "templateContent e phone obrigatorios" }), { status: 400, headers });
+      }
+      // Buscar conexao WhatsApp padrao (primeira ativa)
+      const { data: conn } = await supabase
+        .from("whatsapp_connections").select("instance_id").eq("status", "connected").limit(1).single();
+      if (!conn?.instance_id) {
+        return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
+      }
+      // Personalizar com dados ficticios para preview
+      const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
+      const personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
+      const cleanPhone = phone.replace(/\D/g, "");
+      try {
+        let sendRes: Response;
+        if (mediaUrl && mediaType && mediaType !== "audio") {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendMedia/${conn.instance_id}`, {
+            number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText,
+          });
+        } else {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
+            number: cleanPhone, text: personalizedText,
+          });
+        }
+        if (!sendRes.ok) {
+          const body = await sendRes.text().catch(() => '');
+          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
+        }
+        return new Response(JSON.stringify({ success: true }), { headers });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
+      }
+    }
 
     if (!campaignId) {
       return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
