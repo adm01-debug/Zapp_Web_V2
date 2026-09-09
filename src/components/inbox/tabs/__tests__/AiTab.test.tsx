@@ -8,6 +8,7 @@ const mockUseLatestAnalysis = vi.fn();
 const mockUseNextBestAction = vi.fn();
 const mockUseContactLeadScore = vi.fn();
 const mockFrom = vi.fn();
+const mockCreateTask = vi.fn();
 
 vi.mock('@/hooks/chat/useLatestAnalysis', () => ({
   useLatestAnalysis: (...args: unknown[]) => mockUseLatestAnalysis(...args),
@@ -17,6 +18,9 @@ vi.mock('@/hooks/chat/useNextBestAction', () => ({
 }));
 vi.mock('@/hooks/crm/useContactCrm360', () => ({
   useContactLeadScore: (...args: unknown[]) => mockUseContactLeadScore(...args),
+}));
+vi.mock('@/hooks/chat/useConversationTasks', () => ({
+  useConversationTasks: () => ({ createTask: mockCreateTask, isCreating: false }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: (...args: unknown[]) => mockFrom(...args) },
@@ -52,6 +56,7 @@ function renderTab(overrides: { latestAnalysis?: unknown; actions?: unknown[]; l
   mockFrom.mockReturnValue(chain());
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const onUseSuggestion = vi.fn();
+  mockCreateTask.mockResolvedValue(undefined);
   const conv = overrides.sentiment !== undefined
     ? { ...conversation, contact: { ...conversation.contact, ai_sentiment: overrides.sentiment } }
     : conversation;
@@ -76,6 +81,11 @@ describe('AiTab', () => {
     expect(screen.getByText(/Análise atualizada às/)).toBeInTheDocument();
   });
 
+  it('não quebra com data de análise inválida', () => {
+    renderTab({ latestAnalysis: { created_at: 'data-inválida' } });
+    expect(screen.getByText('Análise disponível')).toBeInTheDocument();
+  });
+
   it('"Usar resposta" da sugestão de IA chama onUseSuggestion com o texto', () => {
     const { onUseSuggestion } = renderTab();
     fireEvent.click(screen.getByText('mock-ai-suggestions'));
@@ -85,6 +95,22 @@ describe('AiTab', () => {
   it('sem ações sugeridas mostra o empty state honesto', () => {
     renderTab({ actions: [] });
     expect(screen.getByText('Sem ações sugeridas')).toBeInTheDocument();
+  });
+
+  it('transforma uma próxima ação em tarefa real somente após clique', () => {
+    renderTab({
+      actions: [{ type: 'follow_up', label: 'Enviar follow-up', description: 'Contato sem resposta', priority: 'medium' }],
+    });
+    expect(mockCreateTask).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Criar tarefa/i }));
+    expect(mockCreateTask).toHaveBeenCalledWith({ title: 'Enviar follow-up', description: 'Contato sem resposta' });
+  });
+
+  it('usa grid responsivo ao container, sem depender de breakpoint de viewport', () => {
+    renderTab();
+    expect(screen.getByTestId('ai-card-grid')).toHaveStyle({
+      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 24rem), 1fr))',
+    });
   });
 
   it('sem sentimento registrado mostra "Sem análise recente"', () => {

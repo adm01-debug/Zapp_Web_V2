@@ -1,9 +1,9 @@
 import { useMemo, useState, lazy, Suspense } from 'react';
 import {
   Calendar, BarChart3, MessageSquare, Circle, Building2, Target, ShoppingBag,
-  FileText, Zap, TrendingUp, History as HistoryIcon,
+  FileText, Zap, TrendingUp, History as HistoryIcon, AlertTriangle,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { formatBRL, formatRelativeTime } from '@/lib/formatters';
@@ -22,7 +22,7 @@ const EditContactDialog = lazy(() =>
   import('../contact-details/EditContactDialog').then((m) => ({ default: m.EditContactDialog })));
 
 const STATUS_LABEL: Record<string, string> = {
-  open: 'Aberta', waiting: 'Aguardando', resolved: 'Resolvida', archived: 'Arquivada',
+  open: 'Aberta', waiting: 'Aguardando', pending: 'Pendente', resolved: 'Resolvida', closed: 'Encerrada', archived: 'Arquivada',
 };
 
 const PURCHASE_STATUS_PILL: Record<string, { label: string; className: string }> = {
@@ -31,6 +31,12 @@ const PURCHASE_STATUS_PILL: Record<string, { label: string; className: string }>
   completed: { label: 'Concluído', className: 'bg-primary/15 text-primary border-primary/30' },
   cancelled: { label: 'Cancelado', className: 'bg-destructive/15 text-destructive border-destructive/30' },
 };
+
+function validDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return isValid(date) ? date : null;
+}
 
 interface Crm360TabProps {
   conversation: Conversation;
@@ -43,15 +49,15 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
   const contactName = conversation.contact.name;
   const [editOpen, setEditOpen] = useState(false);
 
-  const { data: crm360 } = useContactCrm360(contactId);
-  const { actions: nextActions } = useNextBestAction(contactId, contactName);
-  const { createTask } = useConversationTasks(contactId);
+  const { data: crm360, isLoading: crmLoading, isError: crmError } = useContactCrm360(contactId);
+  const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
+  const { createTask, isCreating } = useConversationTasks(contactId);
   const { data: extra } = useContactLeadScore(contactId);
   const advanceStage = useAdvanceDealStage(contactId);
 
   const lastInteractionAt = useMemo(() => {
-    if (messages.length === 0) return null;
-    return messages.reduce((max, m) => (m.timestamp.getTime() > max.getTime() ? m.timestamp : max), messages[0].timestamp);
+    const dates = messages.map((message) => validDate(message.timestamp)).filter((date): date is Date => date !== null);
+    return dates.reduce<Date | null>((latest, date) => !latest || date.getTime() > latest.getTime() ? date : latest, null);
   }, [messages]);
 
   const leadScore = extra?.lead_score ?? null;
@@ -65,24 +71,46 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
   }, [crm360]);
 
   const pipelineTotal = crm360
-    ? crm360.pipeline.propostas.total + crm360.pipeline.negociacao.total + crm360.pipeline.ganhos.total
+    ? Math.max(0, crm360.pipeline.propostas.total) + Math.max(0, crm360.pipeline.negociacao.total) + Math.max(0, crm360.pipeline.ganhos.total)
     : 0;
+  const pipelineShare = (value: number) => pipelineTotal > 0 ? (Math.max(0, value) / pipelineTotal) * 100 : 0;
+  const contactCreatedAt = validDate(conversation.contact.created_at);
+  const status = conversation.contact.conversation_status ?? conversation.status;
+  const scoreTone = leadScore == null
+    ? 'bg-muted/40 text-muted-foreground'
+    : leadScore >= 80 ? 'bg-success/15 text-success' : leadScore >= 50 ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive';
 
   return (
     <div className="flex flex-col gap-4" data-testid="crm360-tab">
       <KpiStrip
         cells={[
-          { icon: Calendar, label: 'Cliente desde', value: conversation.contact.created_at ? format(new Date(conversation.contact.created_at), 'dd MMM yyyy', { locale: ptBR }) : '—' },
-          { icon: BarChart3, label: `Lead score${leadScore != null ? ` · ${leadScoreLabel}` : ''}`, value: leadScore ?? '—' },
+          { icon: Calendar, label: 'Cliente desde', value: contactCreatedAt ? format(contactCreatedAt, 'dd MMM yyyy', { locale: ptBR }) : '—', iconClassName: 'bg-muted/40 text-muted-foreground' },
+          { icon: BarChart3, label: `Lead score${leadScore != null ? ` · ${leadScoreLabel}` : ''}`, value: leadScore ?? '—', iconClassName: scoreTone },
           { icon: MessageSquare, label: 'Última interação', value: lastInteractionAt ? formatRelativeTime(lastInteractionAt) : '—' },
-          { icon: Circle, label: 'Status', value: STATUS_LABEL[conversation.contact.conversation_status ?? ''] ?? '—' },
+          { icon: Circle, label: 'Status', value: STATUS_LABEL[status] ?? '—', iconClassName: status === 'open' ? 'bg-success/15 text-success' : status === 'waiting' || status === 'pending' ? 'bg-warning/15 text-warning' : 'bg-muted/40 text-muted-foreground' },
         ]}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {crmLoading && (
+        <div role="status" className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 24rem), 1fr))' }}>
+          <span className="sr-only">Carregando dados comerciais</span>
+          {Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-36 animate-pulse rounded-xl border border-border bg-muted/20" />)}
+        </div>
+      )}
+
+      {crmError && !crmLoading && (
+        <EmptyState icon={AlertTriangle} title="Não foi possível carregar o CRM" description="Tente novamente em instantes." size="sm" />
+      )}
+
+      {!crmLoading && !crmError && <div
+        data-testid="crm-card-grid"
+        className="grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 24rem), 1fr))' }}
+      >
         <SectionCard
           icon={Building2}
           title="Empresa"
+          className="border-border/80"
           action={{ label: conversation.contact.company ? 'Editar' : 'Adicionar empresa', onClick: () => setEditOpen(true) }}
         >
           <div className="flex items-center gap-3">
@@ -117,7 +145,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={Target} title="Etapa no funil" action={{ label: 'Ver funil →', onClick: () => navigateToView('pipeline') }}>
+        <SectionCard icon={Target} title="Etapa no funil" className="border-primary/20" action={{ label: 'Ver funil →', onClick: () => navigateToView('pipeline') }}>
           {crm360?.currentDeal ? (
             <>
               <ol className="flex items-center gap-1 overflow-x-auto">
@@ -140,7 +168,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                 })}
               </ol>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Última atualização: {crm360.currentDeal.updated_at ? formatRelativeTime(crm360.currentDeal.updated_at) : '—'}</span>
+                <span>Última atualização: {validDate(crm360.currentDeal.updated_at) ? formatRelativeTime(crm360.currentDeal.updated_at!) : '—'}</span>
                 {nextStage && (
                   <button
                     type="button"
@@ -165,24 +193,25 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               </ol>
               <p className="text-sm text-muted-foreground">Nenhuma negociação aberta</p>
               <button type="button" onClick={() => navigateToView('pipeline')} className="h-8 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25">
-                Criar negociação
+                Abrir pipeline
               </button>
             </div>
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
+        <SectionCard icon={ShoppingBag} title="Últimas compras" className="border-success/20" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
           {!crm360 || crm360.purchases.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
           ) : (
             <ul className="space-y-2">
               {crm360.purchases.slice(0, 3).map((p) => {
                 const pill = PURCHASE_STATUS_PILL[p.status ?? ''] ?? PURCHASE_STATUS_PILL.pending;
+                const purchaseDate = validDate(p.purchased_at);
                 return (
-                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-2.5">
-                    <div className="min-w-0">
+                  <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/20 p-2.5">
+                    <div className="min-w-[10rem] flex-1">
                       <p className="text-sm font-medium truncate">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">{p.purchased_at ? format(new Date(p.purchased_at), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
+                      <p className="text-xs text-muted-foreground">{purchaseDate ? format(purchaseDate, 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {p.amount != null && <span className="text-sm font-semibold tabular-nums">{formatBRL(p.amount)}</span>}
@@ -195,11 +224,11 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={FileText} title="Propostas em aberto">
+        <SectionCard icon={FileText} title="Propostas em aberto" className="border-warning/20">
           <OpenDealsList deals={crm360?.openDeals ?? []} limit={3} />
         </SectionCard>
 
-        <SectionCard icon={BarChart3} title="Ticket médio">
+        <SectionCard icon={BarChart3} title="Ticket médio" className="border-success/20">
           <div className="flex items-center gap-3">
             <p className="text-2xl font-bold tabular-nums">{crm360?.ticketMedio != null ? formatBRL(crm360.ticketMedio) : '—'}</p>
             {crm360?.ticketDeltaPct != null && (
@@ -210,7 +239,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           </div>
         </SectionCard>
 
-        <SectionCard icon={Target} title="Produtos de interesse">
+        <SectionCard icon={Target} title="Produtos de interesse" className="border-primary/20">
           {!crm360 || crm360.interesses.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum interesse marcado</p>
           ) : (
@@ -222,8 +251,10 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={Zap} title="Próxima melhor ação">
-          {nextActions.length === 0 ? (
+        <SectionCard icon={Zap} title="Próxima melhor ação" className="border-warning/20">
+          {nextActionsLoading ? (
+            <div className="h-16 rounded-lg bg-muted/30 animate-pulse" />
+          ) : nextActions.length === 0 ? (
             <p className="text-sm text-muted-foreground">Sem ações sugeridas</p>
           ) : (
             <div className="flex items-center justify-between gap-3 rounded-lg bg-primary/10 border border-primary/30 p-3">
@@ -234,7 +265,8 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               <button
                 type="button"
                 className="text-xs font-semibold text-primary hover:underline shrink-0"
-                onClick={() => createTask({ title: nextActions[0].label })}
+                disabled={isCreating}
+                onClick={() => void createTask({ title: nextActions[0].label, description: nextActions[0].description }).catch(() => undefined)}
               >
                 Criar tarefa →
               </button>
@@ -248,37 +280,40 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           ) : (
             <div className="flex flex-col gap-2">
               <div className="h-2.5 rounded-full overflow-hidden flex bg-muted/40">
-                <div className="bg-primary h-full" style={{ width: `${(crm360.pipeline.propostas.total / pipelineTotal) * 100}%` }} />
-                <div className="bg-warning h-full" style={{ width: `${(crm360.pipeline.negociacao.total / pipelineTotal) * 100}%` }} />
-                <div className="bg-success h-full" style={{ width: `${(crm360.pipeline.ganhos.total / pipelineTotal) * 100}%` }} />
+                <div className="bg-primary h-full" style={{ width: `${pipelineShare(crm360.pipeline.propostas.total)}%` }} />
+                <div className="bg-warning h-full" style={{ width: `${pipelineShare(crm360.pipeline.negociacao.total)}%` }} />
+                <div className="bg-success h-full" style={{ width: `${pipelineShare(crm360.pipeline.ganhos.total)}%` }} />
               </div>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" />Propostas {crm360.pipeline.propostas.count} · {((crm360.pipeline.propostas.total / pipelineTotal) * 100).toFixed(0)}%</span>
-                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning" />Negociação {crm360.pipeline.negociacao.count} · {((crm360.pipeline.negociacao.total / pipelineTotal) * 100).toFixed(0)}%</span>
-                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success" />Ganhos {crm360.pipeline.ganhos.count} · {((crm360.pipeline.ganhos.total / pipelineTotal) * 100).toFixed(0)}%</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" />Propostas {crm360.pipeline.propostas.count} · {pipelineShare(crm360.pipeline.propostas.total).toFixed(0)}%</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning" />Negociação {crm360.pipeline.negociacao.count} · {pipelineShare(crm360.pipeline.negociacao.total).toFixed(0)}%</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success" />Ganhos {crm360.pipeline.ganhos.count} · {pipelineShare(crm360.pipeline.ganhos.total).toFixed(0)}%</span>
               </div>
             </div>
           )}
         </SectionCard>
 
-        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver histórico →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
+        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver histórico →', onClick: () => onTabChange('history') }} className="border-border/80 [grid-column:1/-1]">
           {!crm360 || crm360.interacoes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma interação comercial</p>
           ) : (
             <ul className="space-y-2">
-              {crm360.interacoes.map((it) => (
-                <li key={it.id} className="flex items-center gap-3">
-                  <span className={cn('w-2 h-2 rounded-full shrink-0', {
-                    primary: 'bg-primary', success: 'bg-success', warning: 'bg-warning', muted: 'bg-muted-foreground',
-                  }[it.color])} />
-                  <span className="text-xs text-muted-foreground shrink-0 w-24">{format(new Date(it.at), 'dd MMM, HH:mm', { locale: ptBR })}</span>
-                  <span className="text-sm truncate">{it.text}</span>
-                </li>
-              ))}
+              {crm360.interacoes.map((it) => {
+                const interactionDate = validDate(it.at);
+                return (
+                  <li key={it.id} className="flex items-center gap-3">
+                    <span className={cn('w-2 h-2 rounded-full shrink-0', {
+                      primary: 'bg-primary', success: 'bg-success', warning: 'bg-warning', muted: 'bg-muted-foreground',
+                    }[it.color])} />
+                    <span className="text-xs text-muted-foreground shrink-0 w-24">{interactionDate ? format(interactionDate, 'dd MMM, HH:mm', { locale: ptBR }) : '—'}</span>
+                    <span className="text-sm truncate">{it.text}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </SectionCard>
-      </div>
+      </div>}
     </div>
   );
 }
