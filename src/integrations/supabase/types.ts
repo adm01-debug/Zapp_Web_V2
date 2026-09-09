@@ -6600,12 +6600,6 @@ export type Database = {
           },
         ]
       }
-      talkx_template_variants: {
-        Row: { content: string; created_at: string; id: string; label: string; media_type: string | null; media_url: string | null; template_id: string; weight: number }
-        Insert: { content: string; created_at?: string; id?: string; label: string; media_type?: string | null; media_url?: string | null; template_id: string; weight?: number }
-        Update: { content?: string; created_at?: string; id?: string; label?: string; media_type?: string | null; media_url?: string | null; template_id?: string; weight?: number }
-        Relationships: [{ foreignKeyName: "talkx_template_variants_template_id_fkey"; columns: ["template_id"]; isOneToOne: false; referencedRelation: "talkx_templates"; referencedColumns: ["id"] }]
-      }
       team_conversation_members: {
         Row: {
           conversation_id: string
