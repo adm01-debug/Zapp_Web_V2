@@ -89,7 +89,8 @@ CREATE TABLE public.messages (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (sender IN ('agent','contact')),
-  CHECK (message_type IN ('text','image','audio','video','document','sticker'))
+  media_meta jsonb DEFAULT '{}'::jsonb,
+  CHECK (message_type IN ('text','image','audio','video','document','sticker','location','poll','contact'))
 );
 CREATE TABLE public.conversation_closures (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -175,7 +176,8 @@ INSERT INTO public.contacts(id,phone,assigned_to,queue_id,whatsapp_connection_id
  ('50000000-0000-0000-0000-000000000003','5511999990003',NULL,'30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001'),
  ('50000000-0000-0000-0000-000000000004','5511999990004',NULL,NULL,'40000000-0000-0000-0000-000000000002'),
  ('50000000-0000-0000-0000-000000000005','5511999990005','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001'),
- ('50000000-0000-0000-0000-000000000006','5511999990006','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001');
+ ('50000000-0000-0000-0000-000000000006','5511999990006','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001'),
+ ('50000000-0000-0000-0000-000000000007','+55 (11) 99999-0007','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001');
 SQL
 
 preflight_runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
@@ -243,7 +245,11 @@ service_role="BEGIN; SET LOCAL ROLE service_role; SELECT set_config('request.jwt
 
 expect_failure 'authentication_required' "$service_role SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'service-cannot-enqueue','text',NULL,NULL,NULL); COMMIT;"
 psql_test < "$repo_root/supabase/migrations/20260909240000_revoke_service_role_message_enqueue_and_guards.sql" >/dev/null
+psql_test < "$repo_root/supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql" >/dev/null
+psql_test < "$repo_root/supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql" >/dev/null
+psql_test < "$repo_root/supabase/migrations/20260909270000_normalize_atomic_delivery_phone.sql" >/dev/null
 expect_failure 'permission denied for function enqueue_outbound_message' "$service_role SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'service-cannot-enqueue','text',NULL,NULL,NULL); COMMIT;"
+expect_failure 'permission denied for function enqueue_rich_outbound_message' "$service_role SELECT public.enqueue_rich_outbound_message('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'poll','poll','{\"name\":\"x\",\"values\":[\"a\",\"b\"],\"selectableCount\":1}'::jsonb,NULL,NULL); COMMIT;"
 expect_failure 'messages_delivery_claim_state' "$service_role INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status,delivery_claim_token,delivery_claimed_at,delivery_claim_expires_at,delivery_attempt_count) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','malformed-lease','text','sending',gen_random_uuid(),statement_timestamp(),statement_timestamp()+interval '90 seconds',1); COMMIT;"
 expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','forged','text','sending'); COMMIT;"
 expect_failure 'closure_request_id_internal_field_forbidden' "$agent_one INSERT INTO public.conversation_closures(contact_id,closed_by,close_reason,client_request_id) VALUES ('50000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','resolved',gen_random_uuid()); COMMIT;"
@@ -275,6 +281,59 @@ COMMIT;
 SQL
 )"
 grep -Fx 'enqueue=ok' <<<"$enqueue_output" >/dev/null || fail 'enqueue/idempotencia/derivacao'
+
+rich_enqueue_output="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+CREATE TEMP TABLE first_rich_enqueue AS SELECT (public.enqueue_rich_outbound_message(
+  '50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000010',
+  '📊 *Enquete:* Preferência','poll',
+  '{"name":"Preferência","values":["A","B"],"selectableCount":1}'::jsonb,NULL,NULL
+)).id AS id;
+CREATE TEMP TABLE retry_rich_enqueue AS SELECT (public.enqueue_rich_outbound_message(
+  '50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000010',
+  '📊 *Enquete:* Preferência','poll',
+  '{"name":"Preferência","values":["A","B"],"selectableCount":1}'::jsonb,NULL,NULL
+)).id AS id;
+RESET ROLE;
+SELECT CASE WHEN (SELECT id FROM first_rich_enqueue) = (SELECT id FROM retry_rich_enqueue)
+  AND (SELECT count(*) FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000010') = 1
+  AND (SELECT message_type='poll'
+    AND media_meta->'outbound_delivery_payload' = '{"name":"Preferência","values":["A","B"],"selectableCount":1}'::jsonb
+    FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000010')
+THEN 'rich-enqueue=ok' ELSE 'rich-enqueue=fail' END;
+COMMIT;
+SQL
+)"
+grep -Fx 'rich-enqueue=ok' <<<"$rich_enqueue_output" >/dev/null || fail 'rich enqueue/idempotencia/payload imutavel'
+expect_failure 'invalid_poll_payload' "$agent_one SELECT public.enqueue_rich_outbound_message('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'bad','poll','{\"name\":\"x\",\"values\":[\"only-one\"],\"selectableCount\":1}'::jsonb,NULL,NULL); COMMIT;"
+expect_failure 'message_contact_not_authorized' "$agent_one SELECT public.enqueue_rich_outbound_message('50000000-0000-0000-0000-000000000002',gen_random_uuid(),'idor','poll','{\"name\":\"x\",\"values\":[\"a\",\"b\"],\"selectableCount\":1}'::jsonb,NULL,NULL); COMMIT;"
+expect_failure 'message_contact_not_authorized' "$agent_two SELECT public.enqueue_rich_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000010','📊 *Enquete:* Preferência','poll','{\"name\":\"Preferência\",\"values\":[\"A\",\"B\"],\"selectableCount\":1}'::jsonb,NULL,NULL); COMMIT;"
+
+formatted_phone_claim_output="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.enqueue_outbound_message(
+  '50000000-0000-0000-0000-000000000007','60000000-0000-0000-0000-000000000011',
+  'telefone formatado','text',NULL,NULL,NULL
+);
+COMMIT;
+BEGIN;
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+SELECT CASE WHEN contact_phone='5511999990007' THEN 'formatted-phone=ok' ELSE 'formatted-phone=fail' END
+FROM public.claim_outbound_message(
+  (SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000011'),
+  '10000000-0000-0000-0000-000000000001','edge-phone-normalization',90
+);
+COMMIT;
+SQL
+)"
+grep -Fx 'formatted-phone=ok' <<<"$formatted_phone_claim_output" >/dev/null || fail 'telefone formatado nao foi normalizado no claim'
 
 expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one UPDATE public.messages SET delivery_claim_token=gen_random_uuid() WHERE client_message_id='60000000-0000-0000-0000-000000000001'; COMMIT;"
 
@@ -597,21 +656,25 @@ const ok = proof.server_major === 17
   && proof.column_contract_count === 9
   && proof.validated_constraint_count === 4
   && proof.index_count === 4
-  && proof.function_count === 8
-  && proof.safe_api_function_count === 5
+  && proof.function_count === 9
+  && proof.safe_api_function_count === 6
   && proof.internal_guard_function_count === 3
   && proof.internal_guard_trigger_count === 3
-  && proof.trusted_owner_function_count === 8
+  && proof.trusted_owner_function_count === 9
   && proof.function_name_collision_count === 0
   && proof.trigger_name_collision_count === 0
   && proof.constraint_name_collision_count === 0
   && proof.service_role_inherits_authenticated === false
   && proof.authenticated_enqueue_effective === true
   && proof.authenticated_enqueue_direct === true
+  && proof.authenticated_rich_enqueue_effective === true
+  && proof.authenticated_rich_enqueue_direct === true
   && proof.authenticated_close_effective === true
   && proof.authenticated_close_direct === true
   && proof.service_enqueue_effective === false
   && proof.service_enqueue_direct === false
+  && proof.service_rich_enqueue_effective === false
+  && proof.service_rich_enqueue_direct === false
   && proof.service_close_effective === true
   && proof.service_close_direct === true
   && proof.authenticated_privileged_delivery === false
@@ -622,7 +685,7 @@ const ok = proof.server_major === 17
   && proof.service_internal_guard_execute === false
   && proof.service_internal_guard_direct_count === 0
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+  && proof.definition_sha256 === '9b6e7ea975d023dbee6e6966987238b9b4bcabbbc65c0fa0866c62e04619d1f6'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'

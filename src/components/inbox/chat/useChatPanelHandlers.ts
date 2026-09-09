@@ -12,7 +12,7 @@ interface UseChatPanelHandlersOptions {
   contactId: string;
   contactPhone: string;
   instanceName?: string;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => Promise<void> | void;
   editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<any>;
   applySignature: (text: string) => string;
   handleTypingStart: () => void;
@@ -98,7 +98,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
     try {
-      onSendMessage(messageContent);
+      await onSendMessage(messageContent);
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -155,7 +155,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [closeDialog, openDialog, handleSetActiveTool]);
 
-  const handleSendProduct = useCallback((product: ExternalProduct) => {
+  const handleSendProduct = useCallback(async (product: ExternalProduct) => {
     const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);
     const lines = [
       `📦 *${product.name}*`, product.brand ? `🏷️ Marca: ${product.brand}` : '', `💰 Preço: ${price}`,
@@ -168,7 +168,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       (product.short_description || product.description) ? `\n${(product.short_description || product.description || '').slice(0, 300)}` : '',
       product.primary_image_url ? `\n🔗 ${product.primary_image_url}` : '',
     ].filter(Boolean).join('\n');
-    onSendMessage(lines);
+    await onSendMessage(lines);
     toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
   }, [onSendMessage]);
 
