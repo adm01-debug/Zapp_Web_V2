@@ -94,8 +94,7 @@ export function useTalkXTemplates() {
 
 
   const fetchVersionHistory = async (templateId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as unknown as any)
+    const { data } = await supabase
       .from('talkx_template_versions')
       .select('id,version_number,name,content,category,status,media_url,media_type,tags,custom_variables,created_at')
       .eq('template_id', templateId)
@@ -109,8 +108,7 @@ export function useTalkXTemplates() {
     media_url?: string | null; media_type?: string | null;
     tags: string[]; custom_variables: string[];
   }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: maxRow } = await (supabase as unknown as any)
+    const { data: maxRow } = await supabase
       .from('talkx_template_versions')
       .select('version_number')
       .eq('template_id', templateId)
@@ -120,8 +118,7 @@ export function useTalkXTemplates() {
     const nextVersion = (maxRow?.version_number ?? 0) + 1;
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as unknown as any).from('talkx_template_versions').insert({
+    await supabase.from('talkx_template_versions').insert({
       template_id: templateId,
       version_number: nextVersion,
       name: payload.name, content: payload.content, category: payload.category,

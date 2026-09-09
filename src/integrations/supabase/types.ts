@@ -6357,6 +6357,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string | null
+          custom_variables: string[]
           description: string | null
           id: string
           media_type: string | null
@@ -6372,6 +6373,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by?: string | null
+          custom_variables?: string[]
           description?: string | null
           id?: string
           media_type?: string | null
@@ -6387,6 +6389,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string | null
+          custom_variables?: string[]
           description?: string | null
           id?: string
           media_type?: string | null
@@ -6410,6 +6413,69 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_template_versions: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          custom_variables: string[]
+          id: string
+          media_type: string | null
+          media_url: string | null
+          name: string
+          saved_by: string | null
+          status: string
+          tags: string[]
+          template_id: string
+          version_number: number
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          custom_variables?: string[]
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name: string
+          saved_by?: string | null
+          status?: string
+          tags?: string[]
+          template_id: string
+          version_number: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          custom_variables?: string[]
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name?: string
+          saved_by?: string | null
+          status?: string
+          tags?: string[]
+          template_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_template_versions_saved_by_fkey"
+            columns: ["saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
