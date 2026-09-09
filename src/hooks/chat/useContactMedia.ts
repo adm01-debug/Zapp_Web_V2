@@ -52,6 +52,9 @@ export function useContactMedia(contactId: string | null | undefined) {
         .from('messages')
         .select('id, media_url, message_type, media_type, media_mimetype, media_filename, media_size, media_meta, caption, content, sender, ptt, created_at')
         .eq('contact_id', contactId as string)
+        // is_deleted ainda e nullable no schema: NULL representa registros
+        // legados nao apagados e precisa continuar visivel.
+        .or('is_deleted.eq.false,is_deleted.is.null')
         .not('media_url', 'is', null)
         .order('created_at', { ascending: false })
         .limit(200);

@@ -5,6 +5,8 @@ import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 
 const mockUseContactMedia = vi.fn();
+const mockResolveStorageUrl = vi.fn((source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }));
+const mockToastError = vi.fn();
 
 vi.mock('@/hooks/chat/useContactMedia', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMedia')>('@/hooks/chat/useContactMedia');
@@ -12,8 +14,10 @@ vi.mock('@/hooks/chat/useContactMedia', async () => {
 });
 
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
-  useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),
+  useResolvedStorageUrl: (source: string) => mockResolveStorageUrl(source),
 }));
+
+vi.mock('sonner', () => ({ toast: { error: (...args: unknown[]) => mockToastError(...args) } }));
 
 const ITEMS: ContactMediaItem[] = [
   { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
@@ -38,7 +42,10 @@ function renderTab(items: ContactMediaItem[] = ITEMS) {
 }
 
 describe('FilesTab', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockResolveStorageUrl.mockImplementation((source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }));
+  });
 
   it('renderiza os chips com as contagens reais por tipo', () => {
     renderTab();
@@ -77,5 +84,23 @@ describe('FilesTab', () => {
     renderTab();
     fireEvent.click(screen.getByText('foto-praia.jpg'));
     expect(screen.getByTestId('file-detail-panel')).toBeInTheDocument();
+  });
+
+  it('falha fechado ao encaminhar enquanto nao existe handler de envio real', () => {
+    renderTab();
+
+    fireEvent.click(screen.getAllByLabelText('Encaminhar')[0]);
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      'Encaminhamento indisponível',
+      expect.objectContaining({ description: expect.stringContaining('Nenhuma mensagem foi encaminhada') }),
+    );
+    expect(screen.queryByText('Encaminhar Mensagem')).not.toBeInTheDocument();
+  });
+
+  it('adia a assinatura da miniatura ate o card entrar na area visivel', () => {
+    renderTab([ITEMS[0]]);
+    expect(mockResolveStorageUrl).toHaveBeenCalledWith('');
+    expect(mockResolveStorageUrl).not.toHaveBeenCalledWith(ITEMS[0].url);
   });
 });

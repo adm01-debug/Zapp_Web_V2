@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, File, Play, Eye, Download, Share2, MoreVertical, Link2, Trash2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -23,8 +23,27 @@ interface FileCardProps {
 
 export function FileCard({ item, contactName, selected, onSelect, onPreview, onForward, onDeleted }: FileCardProps) {
   const [hasError, setHasError] = useState(false);
-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [shouldResolvePreview, setShouldResolvePreview] = useState(item.type !== 'image');
+  const previewSource = item.type === 'image' && shouldResolvePreview ? item.url : '';
+  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(previewSource);
   const size = formatSize(item.size);
+
+  useEffect(() => {
+    if (item.type !== 'image' || shouldResolvePreview) return;
+    const element = cardRef.current;
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      setShouldResolvePreview(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setShouldResolvePreview(true);
+      observer.disconnect();
+    }, { rootMargin: '240px' });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [item.type, shouldResolvePreview]);
 
   const copyLink = async () => {
     try {
@@ -46,6 +65,7 @@ export function FileCard({ item, contactName, selected, onSelect, onPreview, onF
 
   return (
     <div
+      ref={cardRef}
       data-testid="file-card"
       className={cn('rounded-xl border bg-card overflow-hidden flex flex-col cursor-pointer transition-colors', selected ? 'border-primary' : 'border-border hover:border-primary/40')}
       onClick={onSelect}

@@ -31,13 +31,47 @@ export class ChatService {
   static async fetchMessages(contactId: string, page = 0, pageSize = 1000) {
     const from = page * pageSize;
     const to = from + pageSize - 1;
-    
-    return supabase
+
+    const result = await supabase
       .from('messages')
       .select('*')
       .eq('contact_id', contactId)
-      .order('created_at', { ascending: true })
+      // Paginar no banco a partir do fim da conversa. Ordenar ASC antes do
+      // range fazia a primeira pagina conter as mensagens mais antigas.
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .range(from, to);
+
+    return {
+      ...result,
+      // O ChatPanel consome a lista em ordem cronologica.
+      data: result.data ? [...result.data].reverse() : result.data,
+    };
+  }
+
+  /**
+   * Busca a pagina imediatamente anterior usando cursor estavel. Diferente de
+   * OFFSET, novas mensagens recebidas por realtime nao deslocam a janela e nao
+   * fazem uma mensagem antiga ser pulada durante o carregamento incremental.
+   */
+  static async fetchMessagesBefore(
+    contactId: string,
+    before: { createdAt: string; id: string },
+    pageSize = 1000,
+  ) {
+    const result = await supabase
+      .from('messages')
+      .select('*')
+      .eq('contact_id', contactId)
+      .or(`created_at.lt.${before.createdAt},and(created_at.eq.${before.createdAt},id.lt.${before.id})`)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(pageSize);
+
+    return {
+      ...result,
+      data: result.data ? [...result.data].reverse() : result.data,
+    };
   }
 
   static async sendMessage(payload: MessageInsert) {
