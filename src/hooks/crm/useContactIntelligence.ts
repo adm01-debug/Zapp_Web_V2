@@ -6,7 +6,7 @@
  * best times, churn risk, DISC tips, and last interactions.
  */
 import { useQuery } from '@tanstack/react-query';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 
@@ -89,6 +89,7 @@ export interface ContactIntelligenceData {
 }
 
 export function useContactIntelligence(contactId: string | undefined) {
+  const crmEnabled = useCRMIntegrationEnabled();
   return useQuery<ContactIntelligenceData | null>({
     queryKey: ['contact-intelligence', contactId],
     queryFn: async () => {
@@ -101,7 +102,7 @@ export function useContactIntelligence(contactId: string | undefined) {
         return null;
       }
     },
-    enabled: isExternalConfigured && !!contactId,
+    enabled: crmEnabled && !!contactId,
     staleTime: 1000 * 60 * 15, // 15 min
     gcTime: 1000 * 60 * 30,
     retry: 1,

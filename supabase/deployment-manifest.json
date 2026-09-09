@@ -38,8 +38,8 @@
     },
     {
       "path": "supabase/functions/_shared/crm-integration-contract.ts",
-      "bytes": 8419,
-      "sha256": "4f390e85a2cd0be97dc11f938cfff72c6f9ce99a30559787f2ba86a1259c324f"
+      "bytes": 8856,
+      "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c"
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -218,8 +218,8 @@
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
-      "bytes": 21805,
-      "sha256": "28c000bb4714babef3782a2fef9f0b3ce46512a778a5b7323523832e3a341f4e"
+      "bytes": 23541,
+      "sha256": "b5d565af15dda84208f7c4b8f87038b36062a20e007a200be3facd86da694187"
     },
     {
       "path": "supabase/functions/csp-report/index.ts",
@@ -704,7 +704,7 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "d11283d0bf8b6949bd790461ddac111a71c86794a8a7424eafeeba300f669709",
+      "source_sha256": "5b9ea490565ddf2a79c10420f3801337d2022ce40fdf476d0f3093f37f74e54c",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1221,5 +1221,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a819522df4ebd993cfeb42e1718a63c8224e371568ea4ac3fa2a1ab3f83e68c1"
+  "manifest_sha256": "6c119168e4b19eccad0a18981907ca3d22e344ed9994988cb55c1a1eeea4b4a5"
 }

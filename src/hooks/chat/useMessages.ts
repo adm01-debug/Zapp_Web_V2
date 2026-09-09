@@ -16,6 +16,9 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   const [error, setError] = useState<string | null>(null);
   const previousContactIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+  const activeContactIdRef = useRef<string | null>(contactId);
+  const requestGenerationRef = useRef(0);
+  const realtimeOverlayRef = useRef<Map<string, Message | null>>(new Map());
 
   // Track mount state to prevent setState after unmount
   useEffect(() => {
@@ -25,7 +28,9 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Fetch messages for contact
   const fetchMessages = useCallback(async () => {
-    if (!contactId) {
+    const requestedContactId = contactId;
+    const generation = ++requestGenerationRef.current;
+    if (!requestedContactId) {
       if (mountedRef.current) {
         setMessages([]);
         setLoading(false);
@@ -39,19 +44,28 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         setError(null);
       }
       
-      const { data, error: fetchError } = await ChatService.fetchMessages(contactId);
+      const { data, error: fetchError } = await ChatService.fetchMessages(requestedContactId);
       if (fetchError) throw fetchError;
       
-      if (mountedRef.current && data) {
-        setMessages(data.map(mapMessageRowToMessage as any));
+      if (mountedRef.current && generation === requestGenerationRef.current &&
+        activeContactIdRef.current === requestedContactId && data) {
+        const snapshot = data.map((row) => mapMessageRowToMessage(row));
+        const merged = new Map(snapshot.map((message) => [message.id, message]));
+        for (const [id, message] of realtimeOverlayRef.current) {
+          if (message) merged.set(id, message);
+          else merged.delete(id);
+        }
+        setMessages([...merged.values()].sort((a, b) =>
+          new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+        ));
       }
     } catch (err) {
       log.error('Error fetching messages:', err);
-      if (mountedRef.current) {
+      if (mountedRef.current && generation === requestGenerationRef.current) {
         setError(err instanceof Error ? err.message : 'Failed to fetch messages');
       }
     } finally {
-      if (mountedRef.current) {
+      if (mountedRef.current && generation === requestGenerationRef.current) {
         setLoading(false);
       }
     }
@@ -64,6 +78,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
+        realtimeOverlayRef.current.set(newMessage.id, newMessage);
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMessage.id)) {
             return prev;
@@ -84,6 +99,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       const updatedMessage = mapMessageRowToMessage(payload.new as any);
 
       if (updatedMessage.contact_id === contactId) {
+        realtimeOverlayRef.current.set(updatedMessage.id, updatedMessage);
         setMessages((prev) =>
           prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
         );
@@ -98,6 +114,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       const deletedMessage = payload.old as Message;
 
       if (deletedMessage.contact_id === contactId) {
+        realtimeOverlayRef.current.set(deletedMessage.id, null);
         setMessages((prev) => prev.filter((m) => m.id !== deletedMessage.id));
       }
     },
@@ -106,14 +123,27 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Fetch on contact change
   useEffect(() => {
-    if (enabled) {
-      if (contactId !== previousContactIdRef.current) {
-        previousContactIdRef.current = contactId;
-        // Clear messages and set loading immediately to prevent UI flicker of old messages
+    activeContactIdRef.current = enabled ? contactId : null;
+    if (!enabled || !contactId) {
+      requestGenerationRef.current += 1;
+      previousContactIdRef.current = null;
+      realtimeOverlayRef.current.clear();
+      const invalidatedGeneration = requestGenerationRef.current;
+      void Promise.resolve().then(() => {
+        if (!mountedRef.current || requestGenerationRef.current !== invalidatedGeneration) return;
         setMessages([]);
-        setLoading(true);
-        fetchMessages();
-      }
+        setLoading(false);
+        setError(null);
+      });
+      return;
+    }
+    if (contactId !== previousContactIdRef.current) {
+      previousContactIdRef.current = contactId;
+      realtimeOverlayRef.current.clear();
+      // Clear messages and set loading immediately to prevent UI flicker of old messages
+      setMessages([]);
+      setLoading(true);
+      void fetchMessages();
     }
   }, [contactId, enabled, fetchMessages]);
 
@@ -130,6 +160,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Add a message optimistically
   const addMessage = useCallback((message: Message) => {
+    realtimeOverlayRef.current.set(message.id, message);
     setMessages((prev) => {
       if (prev.some((m) => m.id === message.id)) {
         return prev;
@@ -140,13 +171,17 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Update a message optimistically
   const updateMessage = useCallback((messageId: string, updates: Partial<Message>) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, ...updates } : m))
-    );
+    setMessages((prev) => prev.map((message) => {
+      if (message.id !== messageId) return message;
+      const updated = { ...message, ...updates };
+      realtimeOverlayRef.current.set(messageId, updated);
+      return updated;
+    }));
   }, []);
 
   // Remove a message optimistically
   const removeMessage = useCallback((messageId: string) => {
+    realtimeOverlayRef.current.set(messageId, null);
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
   }, []);
 

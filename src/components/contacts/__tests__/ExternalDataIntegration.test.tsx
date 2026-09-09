@@ -8,6 +8,7 @@ const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: true }));
+vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => true }));
 
 vi.mock('@/lib/crmIntegration', () => ({
   callCRMIntegration: async (action: string, payload: Record<string, unknown>) => {
@@ -199,14 +200,6 @@ describe('useExternalCargos', () => {
     const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data!.length).toBeGreaterThan(0);
-  });
-});
-
-// ─── Disabled state ────────────────────────────────────────────────
-describe('useExternalEmpresas — disabled when not configured', () => {
-  it('does not fetch when external is not configured', () => {
-    const enabled = false; // simulating isExternalConfigured = false
-    expect(enabled).toBe(false);
   });
 });
 

@@ -253,7 +253,7 @@ describe('useRealtimeMessages', () => {
     );
   });
 
-  it('creates a conversation when a realtime message arrives for a contact not loaded initially', () => {
+  it('creates a conversation when a realtime message arrives for a contact not loaded initially', async () => {
     // Validates that the hook exposes the correct API shape for handling realtime messages
     const unloadedContact = makeContact({
       id: 'new-contact',
@@ -264,8 +264,7 @@ describe('useRealtimeMessages', () => {
 
     const { result } = renderHook(() => useRealtimeMessages());
 
-    // Hook initializes with loading=true and empty conversations
-    expect(result.current.loading).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.conversations).toEqual([]);
     expect(typeof result.current.sendMessage).toBe('function');
     expect(typeof result.current.refetch).toBe('function');

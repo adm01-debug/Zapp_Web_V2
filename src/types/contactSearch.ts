@@ -58,7 +58,7 @@ export interface SearchContactsParams {
   estado?: string;
   cliente_ativado?: boolean;
   ja_comprou?: boolean;
-  sort_by?: 'relevance' | 'name' | 'score' | 'compras' | 'pedidos' | 'recent';
+  sort_by?: 'relevance' | 'name' | 'relationship_score' | 'recent';
   page?: number;
   page_size?: number;
 }

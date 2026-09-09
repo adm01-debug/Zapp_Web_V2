@@ -13,7 +13,7 @@ export interface MonitorRecipient {
   personalized_message: string | null;
 }
 
-function buildRateByMinute(data: { sent_at: string | null; delivered_at: string | null }[]): RatePoint[] {
+export function buildRateByMinute(data: { sent_at: string | null; delivered_at: string | null }[]): RatePoint[] {
   if (!data.length) return [];
   const now = Date.now();
   const windowMs = 60 * 60_000;

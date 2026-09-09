@@ -60,6 +60,14 @@ export function parseSyncResult(value: unknown): ValidSyncResult {
   };
 }
 
+export function extractContact360Id(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const contact = (value as Record<string, unknown>).contact;
+  if (!contact || typeof contact !== 'object' || Array.isArray(contact)) return null;
+  const id = (contact as Record<string, unknown>).id;
+  return typeof id === 'string' && id.length >= 1 && id.length <= 200 ? id : null;
+}
+
 export function validIdentifier(value: unknown): value is string {
   return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);
 }

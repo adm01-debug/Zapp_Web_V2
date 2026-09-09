@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFile } from 'node:fs/promises';
+
+const workflow = await readFile(
+  new URL('../../.github/workflows/db-migrate.yml', import.meta.url),
+  'utf8',
+);
+
+test('CRM rollout migration has preflight and post-deploy runtime contracts', () => {
+  assert.match(workflow, /20260909120000\)\n[\s\S]*validated_constraint_count/);
+  assert.match(workflow, /TARGET_VERSION === '20260909120000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260909120000'/);
+  assert.match(workflow, /validated_constraints === 5/);
+  assert.match(workflow, /safe_functions === 3/);
+  assert.match(workflow, /proof\.auth_links_mutate === false/);
+  assert.match(workflow, /proof\.anon_links_access === false/);
+  assert.match(workflow, /proof\.runtime_flag_disabled === true/);
+});
+
+test('CRM rollout remains two-phase and identity-bound', () => {
+  assert.match(workflow, /confirm_runtime_sha256/);
+  assert.match(workflow, /proof\.runtime_sha256 !== process\.env\.CONFIRM_RUNTIME_SHA256/);
+  assert.match(workflow, /confirm_project_ref/);
+  assert.match(workflow, /OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'/);
+  assert.match(workflow, /--dry-run --yes/);
+});
