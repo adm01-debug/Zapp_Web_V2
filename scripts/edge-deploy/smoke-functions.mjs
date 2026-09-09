@@ -9,6 +9,7 @@ const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
 // verify_jwt=false is required for cron callers that cannot mint a user JWT,
 // but these functions still enforce authentication inside their handler.
 const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration']);
+const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
 
 function parseArgs(argv) {
   const args = {
@@ -81,7 +82,20 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
       deniedOrigin !== DEFAULT_DENIED_ORIGIN && deniedOrigin !== '*';
 
     let anonymousGateway = null;
-    if (fn.verify_jwt || INTERNAL_AUTH_FUNCTIONS.has(fn.name)) {
+    let disabledEndpoint = null;
+    const disabledStatus = DISABLED_FUNCTIONS.get(fn.name);
+    if (disabledStatus) {
+      const disabled = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: {
+          Origin: DEFAULT_ALLOWED_ORIGIN,
+          'Content-Type': 'application/json',
+          'x-api-key': 'invalid-smoke-credential',
+        },
+        body: '{"action":"send"}',
+      }, { retries, expectedStatuses: [disabledStatus], fetchImpl });
+      disabledEndpoint = { status: disabled.status, passed: disabled.status === disabledStatus };
+    } else if (fn.verify_jwt || INTERNAL_AUTH_FUNCTIONS.has(fn.name)) {
       const anonymous = await fetchWithRetry(url, {
         method: 'POST',
         headers: { Origin: DEFAULT_ALLOWED_ORIGIN, 'Content-Type': 'application/json' },
@@ -90,7 +104,8 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
       anonymousGateway = { status: anonymous.status, passed: anonymous.status === 401 };
     }
 
-    const passed = availabilityOk && corsDenialOk && (anonymousGateway?.passed ?? true);
+    const passed = availabilityOk && corsDenialOk &&
+      (anonymousGateway?.passed ?? true) && (disabledEndpoint?.passed ?? true);
     return {
       name: fn.name,
       verify_jwt: fn.verify_jwt,
@@ -99,6 +114,7 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
         availability: { status: allowed.status, allow_origin: allowedOrigin, passed: availabilityOk },
         denied_origin: { status: denied.status, allow_origin: deniedOrigin, passed: corsDenialOk },
         anonymous_gateway: anonymousGateway,
+        disabled_endpoint: disabledEndpoint,
       },
     };
   } catch (error) {

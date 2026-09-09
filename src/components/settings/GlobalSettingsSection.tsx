@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Globe, Users, MessageCircle, RotateCcw, Key } from 'lucide-react';
+import { Globe, Users, MessageCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
 
@@ -101,22 +101,6 @@ export function GlobalSettingsSection() {
           />
         </div>
 
-        <div className="p-3 rounded-lg border border-border/20 space-y-2">
-          <div className="flex items-center gap-2">
-            <Key className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">Token API Pública</Label>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Token para autenticar chamadas à API pública de envio de mensagens
-          </p>
-          <Input
-            type="password"
-            value={getSetting('api_token') || ''}
-            onChange={(e) => handleInputChange('api_token', e.target.value)}
-            placeholder="Defina um token seguro..."
-            className="h-8 text-sm"
-          />
-        </div>
       </CardContent>
     </Card>
   );
