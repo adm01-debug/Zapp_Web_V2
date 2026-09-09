@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Search, Image, Video, Music, X,
   Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff,
@@ -85,95 +86,16 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
 
   if (mode === 'edit') {
     return (
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 min-w-0">
-        <div className="min-w-0 space-y-4">
-          {/* Header */}
-          <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
-            <button type="button" onClick={() => setMode('list')} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
-            <IconTile icon={FileText} size={48} />
-            <div className="min-w-0 flex-1">
-              <p className="text-[22px] font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
-              <p className="text-[12.5px] text-foreground-secondary">Personalize sua mensagem e adicione variáveis e mídia</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <GhostButton icon={Copy} onClick={() => { if (editing) duplicateTemplate.mutate(editing); setMode('list'); }}>Duplicar</GhostButton>
-              <GhostButton icon={showPreview ? EyeOff : Eye} onClick={() => setShowPreview(!showPreview)}>{showPreview ? 'Ocultar' : 'Prévia'}</GhostButton>
-              <PrimaryButton icon={saving ? undefined : Check} onClick={save} className={cn((saving || !eName.trim() || !eContent.trim()) && 'opacity-50 pointer-events-none')}>{saving ? 'Salvando…' : 'Salvar template'}</PrimaryButton>
-            </div>
-          </div>
-
-          <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
-              <div><Label className="text-[12px] text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-              <div>
-                <Label className="text-[12px] text-foreground-secondary">Categoria</Label>
-                <Select value={eCat} onValueChange={setECat}>
-                  <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-                  <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-[12px] text-foreground-secondary">Status</Label>
-                <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft'|'review'|'approved')}>
-                  <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5"><Label className="text-[12px] text-foreground-secondary">Mensagem</Label><span className="text-[11px] text-muted-foreground">{eContent.length}/1024</span></div>
-              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                {VARIABLE_KEYS.map((v) => <button key={v} type="button" onClick={() => setEContent((p) => p + v)} className="h-7 px-2 rounded-md text-[11px] font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>)}
-              </div>
-              <Textarea value={eContent} onChange={(e) => setEContent(e.target.value)} rows={6} className="resize-none bg-input/40 border-border/70 text-[13.5px] leading-relaxed font-mono" placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" />
-            </div>
-            {/* Mídia */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Label className="text-[12px] text-foreground-secondary">Mídia (opcional)</Label>
-                <div className="flex gap-1.5">
-                  {[{ v: '', l: 'Sem mídia' }, { v: 'image', l: 'Imagem' }, { v: 'video', l: 'Vídeo' }, { v: 'document', l: 'Documento' }].map(({ v, l }) => {
-                    const active = v === '' ? !eHasMedia : eHasMedia && eMediaType === v;
-                    return <button key={l} type="button" onClick={() => { if (v === '') setEHasMedia(false); else { setEHasMedia(true); setEMediaType(v); } }} className={cn('h-7 px-2.5 rounded-md text-[11.5px] font-medium border', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:border-primary/40')}>{l}</button>;
-                  })}
-                </div>
-              </div>
-              {eHasMedia && <Input value={eMediaUrl} onChange={(e) => setEMediaUrl(e.target.value)} placeholder="https://exemplo.com/imagem.jpg" className="h-9 bg-input/40 border-border/70 text-[12.5px]" />}
-            </div>
-            {/* Tags */}
-            <div>
-              <Label className="text-[12px] text-foreground-secondary">Tags</Label>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                {eTags.map((t) => <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-[12px] font-medium text-primary-glow">#{t}<button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))}><X className="w-3 h-3" /></button></span>)}
-                <div className="flex items-center gap-1.5">
-                  <Input value={eTagInput} onChange={(e) => setETagInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && eTagInput.trim()) { setETags((p) => [...new Set([...p, eTagInput.trim().toLowerCase()])]); setETagInput(''); e.preventDefault(); } }} placeholder="+ adicionar tag (Enter)" className="h-7 w-36 bg-input/40 border-border/70 text-[12px]" />
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Prévia + stats */}
-        <div className="space-y-4 min-w-0">
-          <RailCard icon={FileText} color="green" title="Pré-visualização no WhatsApp">
-            <WhatsAppBubble text={personalizePreview(eContent)} mediaUrl={eHasMedia ? eMediaUrl : null} mediaType={eHasMedia ? eMediaType : null} />
-          </RailCard>
-          {editing && (
-            <RailCard icon={BarChart3} title="Desempenho deste template" subtitle="Últimos 30 dias">
-              <div className="grid grid-cols-2 gap-2 text-center">
-                {[[fmtInt(editing.use_count), 'Envios'], ['—', 'Taxa de resposta'], ['—', 'Taxa de conversão'], ['—', 'Taxa de rejeição']].map(([v, l]) => (
-                  <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1"><p className="text-[15px] font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary">{l}</p></div>
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">{(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-[10.5px]">#{t}</Badge>)}</div>
-            </RailCard>
-          )}
-        </div>
-      </div>
+      <TalkXTemplateEditor
+        templates={templates}
+        isLoading={isLoading}
+        editing={editing}
+        onClose={() => setMode('list')}
+      />
     );
   }
 
-  return (
+    return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
