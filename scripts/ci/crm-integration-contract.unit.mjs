@@ -33,6 +33,9 @@ test('CRM gateway minimizes message data and authenticates before external confi
   assert.match(edgeSource, /p_lease_token: row\.lease_token/);
   assert.match(edgeSource, /parseSyncResult\(result\.data\)/);
   assert.match(edgeSource, /AbortSignal\.timeout\(TIMEOUT_MS\)/);
+  assert.ok(edgeSource.indexOf("externalClient.rpc('get_contact_360_by_phone'") < edgeSource.indexOf("externalClient.rpc('sync_interaction_from_zapp'"));
+  assert.match(edgeSource, /if \(!row\.contact_id\) throw new Error\('CRM_CONTACT_DELETED'\)/);
+  assert.match(edgeSource, /upsert_crm_contact_link_guarded/);
 });
 
 test('contact enrichment derives phones from RLS-visible canonical contacts', () => {
@@ -42,6 +45,7 @@ test('contact enrichment derives phones from RLS-visible canonical contacts', ()
   assert.match(edgeSource, /isServiceRequest \|\| isCronRequest \|\| !isValidUUID\(body\.contactId\)/);
   assert.match(edgeSource, /action === 'contactLookupBatch'/);
   assert.match(edgeSource, /body\.contactIds\.length > 100/);
+  assert.match(edgeSource, /Contact CRM identity requires reverification/);
 });
 
 test('CRM rejects false-success responses before completing the queue', () => {

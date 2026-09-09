@@ -5,9 +5,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Merge, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { mergeContactsAtomic } from '@/services/contact-merge.service';
 
 interface Contact {
   id: string; name: string; surname?: string | null; phone: string;
@@ -46,7 +46,7 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
     setMerging(true);
     try {
       const primary = contacts[0];
-      const merged: Record<string, unknown> = {};
+      const merged: Record<string, string | string[]> = {};
       FIELDS.forEach(f => {
         const src = contacts[selections[f.key]];
         const val = src[f.key as keyof Contact];
@@ -54,14 +54,15 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
       });
       merged.tags = [...new Set(contacts.flatMap(c => c.tags || []))];
 
-      await supabase.from('contacts').update(merged).eq('id', primary.id);
-      for (let i = 1; i < contacts.length; i++) {
-        await supabase.from('messages').update({ contact_id: primary.id }).eq('contact_id', contacts[i].id);
-        await supabase.from('contacts').delete().eq('id', contacts[i].id);
-      }
+      await mergeContactsAtomic(primary.id, contacts.slice(1).map((contact) => contact.id), merged);
       toast.success(`Contatos mesclados em "${merged.name}"`);
       onMergeComplete(); onOpenChange(false);
-    } catch { toast.error('Erro ao mesclar'); }
+    } catch (err) {
+      const conflict = err instanceof Error && err.message.includes('crm_contact_link_conflict');
+      toast.error(conflict
+        ? 'Há vínculos CRM conflitantes. Resolva-os antes de mesclar.'
+        : 'Erro ao mesclar. Nenhuma alteração foi aplicada.');
+    }
     finally { setMerging(false); }
   };
 

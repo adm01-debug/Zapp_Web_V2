@@ -3,7 +3,7 @@ import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, isValidUUID, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';
 import {
-  CRM_TABLE_ALLOWLIST, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
+  CRM_TABLE_ALLOWLIST, extractContact360Id, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
   normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
 } from '../_shared/crm-integration-contract.ts';
 
@@ -145,6 +145,21 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     for (const row of rows) {
       try {
         if (!row.lease_token || !row.normalized_phone) throw new Error('CRM_INVALID_QUEUE_ROW');
+        if (!row.contact_id) throw new Error('CRM_CONTACT_DELETED');
+        const { data: stableLink, error: stableLinkError } = await canonical.from('crm_contact_links')
+          .select('external_contact_id').eq('zapp_contact_id', row.contact_id).maybeSingle();
+        if (stableLinkError) throw new Error(`CRM_LINK_READ:${stableLinkError.code || 'unknown'}`);
+        if (stableLink) {
+          // Prova a resolução por telefone antes da escrita. A comparação feita
+          // somente após sync_interaction_from_zapp detectava a troca tarde demais.
+          const identityLookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', {
+            p_phone: row.normalized_phone,
+          }));
+          if (identityLookup.error) throw new Error(`CRM_IDENTITY_LOOKUP:${identityLookup.error.code || 'unknown'}`);
+          if (extractContact360Id(identityLookup.data) !== stableLink.external_contact_id) {
+            throw new Error('CRM_IDENTITY_MISMATCH');
+          }
+        }
         const payload = row.payload || {};
         const result = await withTimeout(externalClient.rpc('sync_interaction_from_zapp', {
           p_phone: row.normalized_phone,
@@ -161,20 +176,14 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         }));
         if (result.error) throw new Error(`CRM_SYNC:${result.error.code || 'unknown'}`);
         const value = parseSyncResult(result.data);
-        if (row.contact_id) {
-          const { data: stableLink, error: stableLinkError } = await canonical.from('crm_contact_links')
-            .select('external_contact_id').eq('zapp_contact_id', row.contact_id).maybeSingle();
-          if (stableLinkError) throw new Error(`CRM_LINK_READ:${stableLinkError.code || 'unknown'}`);
-          if (stableLink && stableLink.external_contact_id !== value.contact_id) throw new Error('CRM_IDENTITY_MISMATCH');
-          const { error: linkError } = await canonical.from('crm_contact_links').upsert({
-            zapp_contact_id: row.contact_id,
-            external_contact_id: value.contact_id,
-            external_company_id: typeof value.company_id === 'string' ? value.company_id : null,
-            normalized_phone: row.normalized_phone,
-            link_source: 'sync_result', verified_at: new Date().toISOString(),
-          }, { onConflict: 'zapp_contact_id' });
-          if (linkError) throw new Error(`CRM_LINK:${linkError.code || 'unknown'}`);
-        }
+        if (stableLink && stableLink.external_contact_id !== value.contact_id) throw new Error('CRM_IDENTITY_MISMATCH');
+        const { error: linkError } = await canonical.rpc('upsert_crm_contact_link_guarded', {
+          p_zapp_contact_id: row.contact_id,
+          p_external_contact_id: value.contact_id,
+          p_external_company_id: typeof value.company_id === 'string' ? value.company_id : null,
+          p_normalized_phone: row.normalized_phone,
+        });
+        if (linkError) throw new Error(`CRM_LINK:${linkError.code || 'unknown'}`);
         const { error: completeError } = await canonical.rpc('complete_crm_sync_outbox', {
           p_id: row.id, p_lease_token: row.lease_token,
           p_interaction_id: value.interaction_id,
@@ -207,9 +216,18 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       if (contactError || !contact) return errorResponse('Contact not found or not visible', 404, req);
       const phone = normalizePhone(contact.phone);
       if (!phone) return errorResponse('Contact phone is invalid', 409, req);
+      const { data: stableLink, error: linkError } = await canonical.from('crm_contact_links')
+        .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle();
+      if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
+      if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
+        return errorResponse('Contact CRM identity requires reverification', 409, req);
+      }
       const rpc = body.lookup === '360' ? 'get_contact_360_by_phone' : 'get_contact_intelligence_by_phone';
       const result = await withTimeout(externalClient.rpc(rpc, { p_phone: phone }));
       if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+      if (stableLink && body.lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) {
+        return errorResponse('Contact CRM identity mismatch', 409, req);
+      }
       if (JSON.stringify(result.data).length > 512_000) throw new Error('CRM_RESPONSE_TOO_LARGE');
       data = result.data;
     } else if (action === 'contactLookupBatch') {
@@ -221,7 +239,15 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       const { data: contacts, error: contactsError } = await canonicalUser.from('contacts')
         .select('id,phone').in('id', contactIds);
       if (contactsError) throw new Error(`CRM_CONTACTS:${contactsError.code || 'unknown'}`);
-      const phones = [...new Set((contacts || []).map((contact) => normalizePhone(contact.phone)).filter((phone): phone is string => Boolean(phone)))];
+      const { data: links, error: linksError } = await canonical.from('crm_contact_links')
+        .select('zapp_contact_id,normalized_phone').in('zapp_contact_id', contactIds);
+      if (linksError) throw new Error(`CRM_LINK_READ:${linksError.code || 'unknown'}`);
+      const linkedPhone = new Map((links || []).map((link) => [link.zapp_contact_id, link.normalized_phone]));
+      const phones = [...new Set((contacts || []).flatMap((contact) => {
+        const phone = normalizePhone(contact.phone);
+        const stablePhone = linkedPhone.get(contact.id);
+        return phone && (!stablePhone || stablePhone === phone) ? [phone] : [];
+      }))];
       if (phones.length === 0) { data = {}; }
       else {
         const result = await withTimeout(externalClient.rpc('get_companies_by_phones_batch', { p_phones: phones }));

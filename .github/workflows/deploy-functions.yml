@@ -24,6 +24,11 @@ on:
         required: false
         default: ''
         type: string
+      source_ref:
+        description: 'SHA/tag anterior da main para rollback. Vazio = SHA atual.'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -51,11 +56,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.source_ref || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Provar checkout imutavel
-        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
+          if [ -z "$SOURCE_REF" ]; then
+            test "$DEPLOYED_GIT_SHA" = "$GITHUB_SHA"
+          else
+            # Rollback so aceita commit historico ancestral da main que disparou o workflow.
+            git merge-base --is-ancestor "$DEPLOYED_GIT_SHA" "$GITHUB_SHA"
+          fi
+          echo "DEPLOYED_GIT_SHA=$DEPLOYED_GIT_SHA" >> "$GITHUB_ENV"
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -112,7 +128,9 @@ jobs:
             echo "Setando CRON_SECRET nas edges"
             supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
           fi
-          if [ "$FN" = "crm-integration" ]; then
+          # Deploy total (FN vazio) também inclui crm-integration e deve falhar
+          # fechado se suas dependências server-side não estiverem prontas.
+          if [ "$FN" = "crm-integration" ] || [ -z "$FN" ]; then
             if [ -z "$EXTERNAL_SUPABASE_URL" ] || [ -z "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" ]; then
               echo "::error::Credenciais server-side do CRM externo ausentes."
               exit 1
@@ -198,7 +216,7 @@ jobs:
             --manifest supabase/deployment-manifest.json \
             --remote "$RUNNER_TEMP/edge-functions-remote.json" \
             --output "$EVIDENCE_DIR/edge-deployment-attestation.json" \
-            --git-sha "$GITHUB_SHA" \
+            --git-sha "$DEPLOYED_GIT_SHA" \
             --run-id "$GITHUB_RUN_ID" \
             --scope "$SCOPE"
           rm "$RUNNER_TEMP/edge-functions-remote.json"
@@ -211,7 +229,7 @@ jobs:
             --manifest supabase/deployment-manifest.json \
             --base-url "https://$PROJECT_REF.supabase.co/functions/v1" \
             --output "$RUNNER_TEMP/edge-deployment-evidence/edge-smoke-evidence.json" \
-            --git-sha "$GITHUB_SHA" \
+            --git-sha "$DEPLOYED_GIT_SHA" \
             --run-id "$GITHUB_RUN_ID"
 
       - name: Publicar resumo da evidencia
@@ -227,6 +245,7 @@ jobs:
             const attestation = JSON.parse(readFileSync(attestationPath, 'utf8'));
             lines.push(`- Source manifest: \`${attestation.source_manifest_sha256}\``);
             lines.push(`- Remote functions reconciled: ${attestation.function_count}`);
+            lines.push('- Remote bundle digests: captured from Supabase Management API');
             lines.push(`- Deployment scope: \`${attestation.deployment_scope}\``);
           }
           if (existsSync(smokePath)) {

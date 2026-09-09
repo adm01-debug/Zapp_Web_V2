@@ -13,7 +13,7 @@ import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
@@ -60,12 +60,13 @@ const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => 
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
   const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
   const isFav = isFavorite(contact.id);
   const toggleFavorite = () => { if (isFav) { unfavoriteContact(contact.id); } else { favoriteContact(contact.id); } };
 
-  const { data: crmData } = useExternalContact360(isExternalConfigured ? contact.id : undefined);
+  const { data: crmData } = useExternalContact360(crmIntegrationEnabled ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;

@@ -7,7 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -75,6 +75,7 @@ function Tile({ icon, label, onClick, disabled, title, testId }: {
 export function ContactActionButtons({
   contact, conversation, hasExpandedSections, onCollapseAll, onQuickAction, onStartCall,
 }: ContactActionButtonsProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const handleTransfer = () => {
     window.dispatchEvent(new CustomEvent('open-transfer-dialog', { detail: { contactId: contact.id } }));
   };
@@ -137,7 +138,7 @@ export function ContactActionButtons({
             <DropdownMenuItem onClick={() => onQuickAction?.('block')} className="gap-2 text-xs text-destructive">
               <Ban className="w-3.5 h-3.5" />Bloquear
             </DropdownMenuItem>
-            {isExternalConfigured && conversation && <CrmSyncMenuItem conversation={conversation} />}
+            {crmIntegrationEnabled && conversation && <CrmSyncMenuItem conversation={conversation} />}
             {hasExpandedSections && onCollapseAll && (
               <DropdownMenuItem onClick={onCollapseAll} className="gap-2 text-xs">
                 <ChevronsDownUp className="w-3.5 h-3.5 text-muted-foreground" />Recolher seções

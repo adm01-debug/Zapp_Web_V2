@@ -5,7 +5,7 @@
  */
  import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
  import { useState, useCallback } from 'react';
- import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
  import { callCRMIntegration } from '@/lib/crmIntegration';
  import { ExternalCRMService } from '@/services/crm/external-crm.service';
 import type {
@@ -29,6 +29,7 @@ interface UseExternalSelectOptions<T> {
 }
 
 export function useExternalSelect<T = Record<string, unknown>>(options: UseExternalSelectOptions<T>) {
+  const crmEnabled = useCRMIntegrationEnabled();
   const { table, select, filters, order, limit = 50, offset = 0, countMode, enabled = true, staleTime = 5 * 60 * 1000 } = options;
 
   return useQuery({
@@ -42,7 +43,7 @@ export function useExternalSelect<T = Record<string, unknown>>(options: UseExter
        offset,
        countMode,
      }),
-    enabled: enabled && isExternalConfigured,
+    enabled: enabled && crmEnabled,
     staleTime,
     gcTime: staleTime * 2,
   });
@@ -57,10 +58,11 @@ interface UseExternalRPCOptions {
 }
 
 export function useExternalRPC<T = unknown>(options: UseExternalRPCOptions) {
+  const crmEnabled = useCRMIntegrationEnabled();
   return useQuery({
     queryKey: ['external-db', 'rpc', options.rpc, options.params],
      queryFn: () => ExternalCRMService.callRPC<T>(options.rpc, options.params),
-    enabled: (options.enabled ?? true) && isExternalConfigured,
+    enabled: (options.enabled ?? true) && crmEnabled,
     staleTime: options.staleTime ?? 10 * 60 * 1000,
   });
 }

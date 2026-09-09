@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import type { ResultType, DateFilter, MediaTypeFilter } from '../useGlobalSearchData';
 
 interface GlobalSearchFiltersProps {
@@ -28,6 +28,7 @@ export function GlobalSearchFilters({
   show, activeTypes, dateFilter, mediaTypeFilter, activeFiltersCount,
   onToggleType, onSetDateFilter, onSetMediaTypeFilter, onClearFilters,
 }: GlobalSearchFiltersProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   return (
     <AnimatePresence>
       {show && (
@@ -52,7 +53,7 @@ export function GlobalSearchFilters({
               <Toggle pressed={activeTypes.has('contact')} onPressedChange={() => onToggleType('contact')} size="sm" className="gap-1.5 data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground">
                 <User className="h-3.5 w-3.5" /> Contatos
               </Toggle>
-              {isExternalConfigured && (
+              {crmIntegrationEnabled && (
                 <Toggle pressed={activeTypes.has('crm')} onPressedChange={() => onToggleType('crm')} size="sm" className="gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   <Sparkles className="h-3.5 w-3.5" /> CRM
                 </Toggle>

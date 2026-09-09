@@ -25,7 +25,7 @@ import { ConversationTimeline } from '../ConversationTimeline';
 import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
 import { AnalysisBadges } from '../AnalysisBadges';
 
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import type { EnrichedContactData, AIConversationTag, SLAInfo } from '@/hooks/crm/useContactEnrichedData';
 
 const sectionVariants = {
@@ -47,8 +47,9 @@ interface ContactAccordionSectionsProps {
 }
 
 export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId, onPanelTabChange }: ContactAccordionSectionsProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const [infoExpanded, setInfoExpanded] = useState(false);
-  const hasMoreInfo = isExternalConfigured || slaInfo || aiTags.length > 0;
+  const hasMoreInfo = crmIntegrationEnabled || slaInfo || aiTags.length > 0;
 
   return (
     <>
@@ -62,7 +63,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
               </Button>
               {infoExpanded && (
                 <div className="space-y-2 pt-1 border-t border-border/30">
-                  {isExternalConfigured && <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />}
+                  {crmIntegrationEnabled && <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />}
                   {(slaInfo || aiTags.length > 0) && <SLAAndAITagsSection slaInfo={slaInfo} aiTags={aiTags} />}
                 </div>
               )}
@@ -105,12 +106,12 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-3 pb-3 space-y-4">
-            {isExternalConfigured && (
+            {crmIntegrationEnabled && (
               <MoreDetailsBlock icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
                 <ExternalContact360Panel contactId={contact.id} />
               </MoreDetailsBlock>
             )}
-            {isExternalConfigured && (
+            {crmIntegrationEnabled && (
               <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
                 <ContactIntelligencePanel contactId={contact.id} />
               </MoreDetailsBlock>
