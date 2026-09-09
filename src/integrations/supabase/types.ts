@@ -6351,6 +6351,76 @@ export type Database = {
           },
         ]
       }
+      talkx_template_versions: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          custom_variables: string[]
+          id: string
+          media_type: string | null
+          media_url: string | null
+          name: string
+          saved_by: string | null
+          status: string
+          tags: string[]
+          template_id: string
+          version_number: number
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          custom_variables?: string[]
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name: string
+          saved_by?: string | null
+          status?: string
+          tags?: string[]
+          template_id: string
+          version_number: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          custom_variables?: string[]
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          name?: string
+          saved_by?: string | null
+          status?: string
+          tags?: string[]
+          template_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_template_versions_saved_by_fkey"
+            columns: ["saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_template_versions_saved_by_fkey"
+            columns: ["saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_templates: {
         Row: {
           category: string
