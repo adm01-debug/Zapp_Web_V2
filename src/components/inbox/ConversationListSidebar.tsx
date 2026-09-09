@@ -112,7 +112,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
             onRefetch={inbox.refetch}
             isRefetching={inbox.loading}
           />
-        
+        </div>
 
         <StatusChips
           conversations={inbox.conversations}
