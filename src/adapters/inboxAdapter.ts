@@ -73,7 +73,7 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     lastMessage: rc.lastMessage ? mapRealtimeMessageToMessage(rc.lastMessage, rc.contact.id) : undefined,
     unreadCount: rc.unreadCount,
     status: 'open',
-    priority: (['high','urgent'].includes((rc.contact as { ai_priority?: string | null }).ai_priority ?? '') ? 'high' : 'medium') as Conversation['priority'],
+    priority: (['high','urgent'].includes((rc.contact as { ai_priority?: string | null }).ai_priority ?? '') ? 'high' : (rc.contact as { ai_priority?: string | null }).ai_priority === 'low' ? 'low' : 'medium') as Conversation['priority'],
     tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
