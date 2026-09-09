@@ -13,11 +13,11 @@ interface SectionCardProps {
 /** Card de seção reaproveitado nas abas CRM 360°, Arquivos, IA, Notas etc. (Apêndice B). */
 export function SectionCard({ icon: Icon, title, count, action, className, children }: SectionCardProps) {
   return (
-    <section className={cn('rounded-xl border border-border bg-card p-4 flex flex-col gap-3', className)}>
-      <header className="flex items-center justify-between gap-2">
+    <section className={cn('rounded-xl border border-border bg-card p-4 flex min-w-0 flex-col gap-3', className)}>
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
-            <Icon className="w-4 h-4" />
+            <Icon className="w-4 h-4" aria-hidden="true" />
           </span>
           <h3 className="text-sm font-semibold truncate">{title}</h3>
           {typeof count === 'number' && count > 0 && (
@@ -28,7 +28,7 @@ export function SectionCard({ icon: Icon, title, count, action, className, child
           <button
             type="button"
             onClick={action.onClick}
-            className="text-xs font-medium text-primary hover:underline shrink-0"
+            className="min-h-8 rounded-md px-2 text-xs font-medium text-primary hover:underline shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {action.label}
           </button>
