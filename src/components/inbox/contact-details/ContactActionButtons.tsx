@@ -67,7 +67,7 @@ function Tile({ icon, label, onClick, disabled, title, testId }: {
       )}
     >
       {icon}
-      <span className="text-[11px] text-muted-foreground leading-none">{label}</span>
+      <span className="text-[11px] font-medium text-muted-foreground leading-none">{label}</span>
     </button>
   );
 }
@@ -80,7 +80,7 @@ export function ContactActionButtons({
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-3">
+    <div className="grid grid-cols-5 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Tile icon={<Phone className="w-[18px] h-[18px] text-primary" />} label="Ligar" title="Opções de chamada" />
@@ -114,7 +114,7 @@ export function ContactActionButtons({
         />
 
         <Tile
-          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-primary" />}
+          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-foreground" />}
           label="Transferir"
           title="Transferir conversa"
           onClick={handleTransfer}
@@ -122,7 +122,7 @@ export function ContactActionButtons({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-muted-foreground" />} label="Mais" title="Mais ações" />
+            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-foreground" />} label="Mais" title="Mais ações" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">

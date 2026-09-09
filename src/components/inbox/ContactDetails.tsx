@@ -126,7 +126,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 100, opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }} ref={panelRef} role="complementary" aria-label="Detalhes do contato"
       data-testid="contact-panel"
-      className="w-[390px] xl:w-[360px] h-full min-h-0 shrink-0 bg-card border-l border-border flex flex-col overflow-hidden"
+      className="w-[380px] h-full min-h-0 shrink-0 bg-card border-l border-border flex flex-col overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-card to-card/95 shrink-0">
         <div className="flex items-center gap-2">
@@ -138,18 +138,6 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
         </Button>
       </div>
 
-      <AnimatePresence>
-        {showCompactHeader && (
-          <ContactHeaderSection contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact />
-        )}
-      </AnimatePresence>
-
-      <ContactHeaderSection
-        contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation}
-        onQuickAction={handleQuickAction} hasExpandedSections={accordionValue.length > 0}
-        onCollapseAll={() => { setAccordionValue([]); saveAccordionState([]); }}
-      />
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
         <TabsList data-testid="contact-panel-tabs" className="w-full h-11 shrink-0 bg-transparent border-b border-border rounded-none p-0 justify-start gap-0">
           {PANEL_TABS.map((tab) => (
@@ -158,6 +146,18 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <AnimatePresence>
+          {showCompactHeader && (
+            <ContactHeaderSection contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact />
+          )}
+        </AnimatePresence>
+
+        <ContactHeaderSection
+          contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation}
+          onQuickAction={handleQuickAction} hasExpandedSections={accordionValue.length > 0}
+          onCollapseAll={() => { setAccordionValue([]); saveAccordionState([]); }}
+        />
 
         <div ref={scrollRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <TabsContent value="contact" className="mt-0">
@@ -170,26 +170,26 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             </Accordion>
           </TabsContent>
 
-          <TabsContent value="history" className="mt-0 px-3 pb-3">
+          <TabsContent value="history" className="mt-0 px-4 pb-4">
             <Suspense fallback={<TabPanelSkeleton />}>
               <ConversationHistory contactId={contact.id} contactPhone={contact.phone} onSelectConversation={(id) => log.debug('Selected conversation:', id)} />
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="tasks" className="mt-0 px-3 pb-3 space-y-4">
+          <TabsContent value="tasks" className="mt-0 px-4 pb-4 space-y-4">
             <Suspense fallback={<TabPanelSkeleton />}>
               <ConversationTasksPanel contactId={contact.id} profileId={profileId} />
               <RemindersPanel contactId={contact.id} profileId={profileId} />
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="notes" className="mt-0 px-3 pb-3">
+          <TabsContent value="notes" className="mt-0 px-4 pb-4">
             <Suspense fallback={<TabPanelSkeleton />}>
               <PrivateNotes contactId={contact.id} />
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="files" className="mt-0 px-3 pb-3">
+          <TabsContent value="files" className="mt-0 px-4 pb-4">
             <Suspense fallback={<TabPanelSkeleton />}>
               <MediaGalleryContent contactId={contact.id} />
             </Suspense>

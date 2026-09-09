@@ -1,48 +1,52 @@
 import { useState, lazy, Suspense } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Building, Briefcase, Crown } from 'lucide-react';
+import { Building, Briefcase, Crown, Star, Pencil, Calendar, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
 import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
+import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 
 const channelIcons: Record<string, string> = {
   whatsapp: '💬', instagram: '📸', facebook: '📘', telegram: '✈️',
   email: '📧', sms: '📱', webchat: '🌐',
 };
 
-const sentimentConfig: Record<string, { label: string; color: string; emoji: string }> = {
-  positive: { label: 'Positivo', color: 'bg-success/15 text-success border-success/30', emoji: '😊' },
-  neutral: { label: 'Neutro', color: 'bg-muted/30 text-muted-foreground border-border/30', emoji: '😐' },
-  negative: { label: 'Negativo', color: 'bg-warning/15 text-warning border-warning/30', emoji: '😟' },
-  critical: { label: 'Crítico', color: 'bg-destructive/15 text-destructive border-destructive/30', emoji: '🔴' },
-};
-
 const priorityConfig: Record<string, { label: string; color: string }> = {
-  high: { label: 'Alta', color: 'bg-destructive/15 text-destructive border-destructive/30' },
-  medium: { label: 'Média', color: 'bg-warning/15 text-warning border-warning/30' },
-  low: { label: 'Baixa', color: 'bg-success/15 text-success border-success/30' },
+  high: { label: 'Alta prioridade', color: 'bg-destructive/15 text-destructive border-destructive/40' },
 };
 
-const contactTypeConfig: Record<string, { label: string; color: string }> = {
-  customer: { label: 'Cliente', color: 'bg-primary/15 text-primary border-primary/30' },
-  cliente: { label: 'Cliente', color: 'bg-primary/15 text-primary border-primary/30' },
-  lead: { label: 'Lead', color: 'bg-info/15 text-info border-info/30' },
-  employee: { label: 'Colaborador', color: 'bg-success/15 text-success border-success/30' },
-  colaborador: { label: 'Colaborador', color: 'bg-success/15 text-success border-success/30' },
-  supplier: { label: 'Fornecedor', color: 'bg-warning/15 text-warning border-warning/30' },
-  fornecedor: { label: 'Fornecedor', color: 'bg-warning/15 text-warning border-warning/30' },
+// Labels vêm do config canônico (src/components/contacts/contactTypeConfig.tsx); cores usam
+// tokens carvão em vez do badgeClass daquele arquivo (que embute cor literal inline).
+const contactTypeColor: Record<string, string> = {
+  cliente: 'bg-primary/15 text-primary border-primary/40',
+  customer: 'bg-primary/15 text-primary border-primary/40',
+  fornecedor: 'bg-warning/15 text-warning border-warning/40',
+  supplier: 'bg-warning/15 text-warning border-warning/40',
+  colaborador: 'bg-success/15 text-success border-success/40',
+  employee: 'bg-success/15 text-success border-success/40',
+  lead: 'bg-info/15 text-info border-info/40',
 };
+const contactTypeLabel: Record<string, string> = { customer: 'Cliente', employee: 'Colaborador', supplier: 'Fornecedor' };
+const getContactTypeBadge = (type: string) => ({
+  label: CONTACT_TYPE_CONFIG[type]?.label ?? contactTypeLabel[type] ?? type,
+  color: contactTypeColor[type] ?? 'bg-muted text-foreground border-transparent',
+});
 
 interface ContactHeaderSectionProps {
-  contact: { id: string; name: string; phone: string; avatar?: string; email?: string };
+  contact: { id: string; name: string; phone: string; avatar?: string; email?: string; createdAt?: Date };
   enrichedData: EnrichedContactData | null | undefined;
   conversation?: Conversation;
   onQuickAction?: (action: string) => void;
@@ -56,6 +60,10 @@ const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => 
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+
+  const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
+  const isFav = isFavorite(contact.id);
+  const toggleFavorite = () => { if (isFav) { unfavoriteContact(contact.id); } else { favoriteContact(contact.id); } };
 
   const { data: crmData } = useExternalContact360(isExternalConfigured ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
@@ -88,65 +96,95 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   return (
     <>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="p-4 flex flex-col items-center text-center border-b border-border">
-        {/* Avatar with engagement ring */}
-        <div className="relative mb-3">
-          <div className="relative inline-block">
-            <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90" viewBox="0 0 108 108">
-              <circle cx="54" cy="54" r="50" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" opacity="0.3" />
-              <motion.circle cx="54" cy="54" r="50" fill="none" stroke={getScoreColor(engagementScore)} strokeWidth="2.5" strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 50} initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-                animate={{ strokeDashoffset: ((100 - engagementScore) / 100) * 2 * Math.PI * 50 }} transition={{ duration: 1, ease: 'easeOut' }} />
-            </svg>
-            <Avatar data-testid="contact-avatar" className="w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
-              onClick={() => contact.avatar && setShowAvatarPreview(true)}>
-              <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-background"
-                    style={{ backgroundColor: getScoreColor(engagementScore), color: 'white' }}>
-                    {engagementScore}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Engajamento: {engagementScore >= 80 ? 'Alto' : engagementScore >= 50 ? 'Médio' : 'Baixo'} ({engagementScore}/100)</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {channelEmoji && <span className="absolute -bottom-1 -right-1 text-lg bg-card rounded-full p-0.5 ring-2 ring-background">{channelEmoji}</span>}
-            {crmCompany?.logo_url && (
-              <img src={crmCompany.logo_url} alt={crmCompany.nome_fantasia || ''}
-                className="absolute -top-1 -left-1 w-8 h-8 rounded-md object-contain bg-background border border-border/30 ring-2 ring-background" />
+        className="p-4 border-b border-border">
+        <div className="flex items-start gap-3">
+          {/* Avatar with engagement ring */}
+          <div className="relative shrink-0">
+            <div className="relative inline-block">
+              <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90" viewBox="0 0 108 108">
+                <circle cx="54" cy="54" r="50" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" opacity="0.3" />
+                <motion.circle cx="54" cy="54" r="50" fill="none" stroke={getScoreColor(engagementScore)} strokeWidth="2.5" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 50} initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                  animate={{ strokeDashoffset: ((100 - engagementScore) / 100) * 2 * Math.PI * 50 }} transition={{ duration: 1, ease: 'easeOut' }} />
+              </svg>
+              <Avatar data-testid="contact-avatar" className="w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
+                onClick={() => contact.avatar && setShowAvatarPreview(true)}>
+                <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                  {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-background"
+                      style={{ backgroundColor: getScoreColor(engagementScore), color: 'white' }}>
+                      {engagementScore}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Engajamento: {engagementScore >= 80 ? 'Alto' : engagementScore >= 50 ? 'Médio' : 'Baixo'} ({engagementScore}/100)</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {channelEmoji && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-success ring-2 ring-card">
+                  <MessageCircle className="w-3.5 h-3.5 text-white" />
+                </div>
+              )}
+              {crmCompany?.logo_url && (
+                <img src={crmCompany.logo_url} alt={crmCompany.nome_fantasia || ''}
+                  className="absolute -top-1 -left-1 w-8 h-8 rounded-md object-contain bg-background border border-border/30 ring-2 ring-background" />
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h4 className="font-bold text-[18px] text-foreground leading-tight truncate">{firstName}</h4>
+                <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
+                  aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
+                  <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
+                </button>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => onQuickAction?.('edit')}
+                className="h-9 px-3 rounded-lg border border-border bg-card gap-1.5 text-[13px] font-medium shrink-0">
+                <Pencil className="w-3.5 h-3.5" />Editar
+              </Button>
+            </div>
+
+            {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate"><Building className="w-3 h-3 shrink-0" />{companyName}</p>}
+            {nomeTratamento && <p className="text-[10px] text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
+            {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
+              {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
+            </p>}
+
+            <a href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
+              className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1 w-fit hover:text-success transition-colors">
+              <MessageCircle className="w-4 h-4 text-success shrink-0" />{contact.phone}
+            </a>
+
+            {contact.createdAt && (
+              <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-0.5">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />Cliente desde {format(contact.createdAt, "MMM 'de' yyyy", { locale: ptBR })}
+              </p>
             )}
           </div>
         </div>
 
-        <h4 className="font-semibold text-lg text-foreground leading-tight">{firstName}</h4>
-        {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Building className="w-3 h-3" />{companyName}</p>}
-        {nomeTratamento && <p className="text-[10px] text-primary/70 italic mt-0.5">"{nomeTratamento}"</p>}
-        {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
-          {!companyName && <Briefcase className="w-3 h-3" />}{enrichedData.job_title}
-        </p>}
-        <p className="text-xs text-muted-foreground mt-0.5 font-mono tracking-tight">{contact.phone}</p>
-
-        {/* Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
-          {contactType && contactTypeConfig[contactType] && (
-            <Badge variant="outline" className={`text-[10px] font-medium h-5 px-2 ${contactTypeConfig[contactType].color}`}>{contactTypeConfig[contactType].label}</Badge>
-          )}
-          {isVip && (
-            <Badge variant="outline" className="text-[10px] font-medium h-5 px-2 bg-warning/15 text-warning border-warning/30"><Crown className="w-3 h-3 mr-0.5" />VIP</Badge>
-          )}
-          {sentiment && sentimentConfig[sentiment] && (
-            <Badge variant="outline" className={`text-[10px] font-medium h-5 px-2 ${sentimentConfig[sentiment].color}`}>
-              <span className="mr-0.5">{sentimentConfig[sentiment].emoji}</span>{sentimentConfig[sentiment].label}
+        {/* Chips do contato */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+          {contactType && (
+            <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${getContactTypeBadge(contactType).color}`}>
+              {getContactTypeBadge(contactType).label}
             </Badge>
           )}
-          {priority && priorityConfig[priority] && (
-            <Badge variant="outline" className={`text-[10px] font-medium h-5 px-2 ${priorityConfig[priority].color}`}>{priorityConfig[priority].label}</Badge>
+          {isVip && (
+            <Badge variant="outline" className="h-6 px-2.5 rounded-full text-xs font-semibold bg-warning/15 text-warning border-warning/40">
+              <Crown className="w-3 h-3 mr-1" />VIP
+            </Badge>
+          )}
+          {priority === 'high' && (
+            <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${priorityConfig.high.color}`}>{priorityConfig.high.label}</Badge>
           )}
         </div>
 

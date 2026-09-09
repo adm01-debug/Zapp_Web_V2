@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -29,6 +29,7 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'history', label: 'Histórico', icon: Clock, customIndex: 7 },
   { value: 'stats', label: 'Estatísticas', icon: BarChart3, customIndex: 8 },
   { value: 'media', label: 'Mídia Compartilhada', icon: Image, customIndex: 8 },
+  { value: 'last-activity', label: 'Última atividade', icon: Activity, customIndex: 8.5 },
   { value: 'more-details', label: 'Mais detalhes', icon: Layers, customIndex: 9 },
 ];
 
