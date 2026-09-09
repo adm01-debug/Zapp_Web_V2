@@ -231,6 +231,50 @@ expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request
 expect_failure 'talkx_template_update_requires_authorized_rpc' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); UPDATE public.talkx_templates SET name='Direct bypass' WHERE id='30000000-0000-0000-0000-000000000001'; COMMIT;"
 expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_versions(template_id,version_number,name,content,category) VALUES ('30000000-0000-0000-0000-000000000001',99,'Forged','Forged','sales'); COMMIT;"
 
+# Simula uma funcao SECURITY DEFINER irma, com o mesmo owner da RPC canonica,
+# tentando criar um snapshot valido e aproveitar o mesmo statement para alterar
+# ownership. O guard da tabela deve limitar a autorizacao aos campos expostos
+# pela RPC, em vez de confiar apenas no owner/call context.
+psql_test >/dev/null <<'SQL'
+CREATE FUNCTION public.simulate_sibling_definer_bypass(p_template_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_template public.talkx_templates%ROWTYPE;
+BEGIN
+  SELECT * INTO v_template
+  FROM public.talkx_templates
+  WHERE id = p_template_id;
+
+  INSERT INTO public.talkx_template_versions (
+    template_id, version_number, name, description, content, category, status,
+    media_url, media_type, tags, custom_variables, saved_by, created_at
+  ) VALUES (
+    v_template.id,
+    (SELECT COALESCE(max(version_number), 0) + 1
+       FROM public.talkx_template_versions WHERE template_id = p_template_id),
+    v_template.name, v_template.description, v_template.content,
+    v_template.category, v_template.status, v_template.media_url,
+    v_template.media_type, v_template.tags, v_template.custom_variables,
+    public.get_profile_id_for_user(auth.uid()), statement_timestamp()
+  );
+
+  UPDATE public.talkx_templates
+  SET created_by = '10000000-0000-0000-0000-000000000002'
+  WHERE id = p_template_id;
+END;
+$function$;
+GRANT EXECUTE ON FUNCTION public.simulate_sibling_definer_bypass(uuid)
+  TO authenticated;
+SQL
+expect_failure 'talkx_template_update_requires_authorized_rpc' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT public.simulate_sibling_definer_bypass('30000000-0000-0000-0000-000000000001'); COMMIT;"
+psql_test >/dev/null <<'SQL'
+DROP FUNCTION public.simulate_sibling_definer_bypass(uuid);
+SQL
+
 counter_result="$(psql_test -At <<'SQL'
 BEGIN;
 SET LOCAL ROLE authenticated;
@@ -312,7 +356,7 @@ const ok = proof.server_major === 17
   && proof.anon_counter_execute === false
   && proof.authenticated_guard_execute === false
   && proof.authenticated_update_guard_execute === false
-  && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
+  && proof.definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 ?? '');
 if (!ok) {
   console.error(`runtime proof inesperado: definition_sha256=${proof.definition_sha256}`);

@@ -582,7 +582,7 @@ jobs:
                 && proof.validated_constraint_count === 3
                 && proof.function_count === 4
                 && proof.safe_function_count === 4
-                && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
+                && proof.definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'
                 && proof.immutable_trigger_count === 1
                 && proof.template_update_guard_count === 1
                 && proof.anon_any_access === false
@@ -955,7 +955,7 @@ jobs:
             && proof.foundation_constraint_count === 4
             && proof.function_count === 4
             && proof.safe_function_count === 4
-            && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
+            && proof.definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'
             && proof.immutable_trigger_count === 1
             && proof.template_update_guard_count === 1
             && proof.anon_any_access === false
