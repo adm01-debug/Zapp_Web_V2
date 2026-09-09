@@ -338,6 +338,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
                   onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="w-4 h-4 flex items-center justify-center text-muted-foreground/40 hover:text-warning transition-colors"
                 >
                   <Star className={cn('w-3.5 h-3.5', isFavorite && 'fill-warning text-warning')} />
