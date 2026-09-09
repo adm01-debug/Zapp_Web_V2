@@ -347,6 +347,7 @@ expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_templates(name,category,content,media_url,media_type,created_by) VALUES ('HTTP create','sales','X','http://legacy.invalid/media.png','image','10000000-0000-0000-0000-000000000001'); COMMIT;"
 expect_failure 'talkx_template_variants_media_url_check' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_variants(template_id,label,content,media_url,media_type) VALUES ('30000000-0000-0000-0000-000000000001','A','Variant','http://legacy.invalid/media.png','image'); COMMIT;"
 expect_failure 'permission denied' "BEGIN; SET LOCAL ROLE anon; SELECT * FROM public.talkx_template_variants; COMMIT;"
+expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); TRUNCATE public.talkx_template_variants CASCADE; COMMIT;"
 
 variant_owner_result="$(psql_test -At <<'SQL'
 BEGIN;
@@ -546,6 +547,9 @@ const ok = proof.server_major === 17
   && proof.recipient_variant_fk_count === 1
   && proof.variant_anon_any_access === false
   && proof.variant_authenticated_crud === true
+  && proof.variant_authenticated_extra_access === false
+  && proof.variant_service_role_crud === true
+  && proof.variant_service_role_extra_access === false
   && proof.history_description_column_count === 1
   && proof.rls_enabled === true
   && proof.policy_count === 1
@@ -562,6 +566,8 @@ const ok = proof.server_major === 17
   && proof.anon_any_access === false
   && proof.authenticated_select === true
   && proof.authenticated_any_mutation === false
+  && proof.history_service_role_crud === true
+  && proof.history_service_role_extra_access === false
   && proof.authenticated_rpc_execute === true
   && proof.anon_rpc_execute === false
   && proof.authenticated_counter_execute === true

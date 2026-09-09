@@ -586,7 +586,10 @@ jobs:
                    && proof.variant_canonical_policy_signature_count === 4
                    && proof.variant_validated_constraint_count === 3
                    && proof.variant_anon_any_access === false
-                   && proof.variant_authenticated_crud === true)
+                   && proof.variant_authenticated_crud === true
+                   && proof.variant_authenticated_extra_access === false
+                   && proof.variant_service_role_crud === true
+                   && proof.variant_service_role_extra_access === false)
                 )
                 && [0, 1].includes(proof.history_description_column_count)
                 && [1, 2].includes(proof.policy_count)
@@ -610,6 +613,9 @@ jobs:
                 && proof.variant_validated_constraint_count === 3
                 && proof.variant_anon_any_access === false
                 && proof.variant_authenticated_crud === true
+                && proof.variant_authenticated_extra_access === false
+                && proof.variant_service_role_crud === true
+                && proof.variant_service_role_extra_access === false
                 && proof.history_description_column_count === 1
                 && proof.policy_count === 1
                 && proof.foundation_constraint_count === 4
@@ -626,6 +632,8 @@ jobs:
                 && proof.anon_any_access === false
                 && proof.authenticated_select === true
                 && proof.authenticated_any_mutation === false
+                && proof.history_service_role_crud === true
+                && proof.history_service_role_extra_access === false
                 && proof.authenticated_rpc_execute === true
                 && proof.anon_rpc_execute === false
                 && proof.authenticated_counter_execute === true
@@ -996,6 +1004,9 @@ jobs:
             && proof.recipient_variant_fk_count === 1
             && proof.variant_anon_any_access === false
             && proof.variant_authenticated_crud === true
+            && proof.variant_authenticated_extra_access === false
+            && proof.variant_service_role_crud === true
+            && proof.variant_service_role_extra_access === false
             && proof.history_description_column_count === 1
             && proof.rls_enabled === true
             && proof.policy_count === 1
@@ -1013,6 +1024,8 @@ jobs:
             && proof.anon_any_access === false
             && proof.authenticated_select === true
             && proof.authenticated_any_mutation === false
+            && proof.history_service_role_crud === true
+            && proof.history_service_role_extra_access === false
             && proof.authenticated_rpc_execute === true
             && proof.anon_rpc_execute === false
             && proof.authenticated_counter_execute === true

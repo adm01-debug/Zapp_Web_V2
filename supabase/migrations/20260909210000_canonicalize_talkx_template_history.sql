@@ -191,7 +191,8 @@ USING (
   )
 );
 
-REVOKE ALL ON TABLE public.talkx_template_variants FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.talkx_template_variants
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE
   ON TABLE public.talkx_template_variants TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE
@@ -759,7 +760,8 @@ FOR EACH ROW EXECUTE FUNCTION public.guard_talkx_template_version_immutable();
 REVOKE ALL ON FUNCTION public.guard_talkx_template_version_immutable()
   FROM PUBLIC, anon, authenticated;
 
-REVOKE ALL ON TABLE public.talkx_template_versions FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.talkx_template_versions
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT SELECT ON TABLE public.talkx_template_versions TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.talkx_template_versions TO service_role;
 

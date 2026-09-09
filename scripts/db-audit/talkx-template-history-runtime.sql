@@ -159,12 +159,34 @@ WITH target_relation AS (
       OR has_table_privilege('anon', oid, 'INSERT')
       OR has_table_privilege('anon', oid, 'UPDATE')
       OR has_table_privilege('anon', oid, 'DELETE')
+      OR has_table_privilege('anon', oid, 'TRUNCATE')
+      OR has_table_privilege('anon', oid, 'REFERENCES')
+      OR has_table_privilege('anon', oid, 'TRIGGER')
+      OR has_table_privilege('anon', oid, 'MAINTAIN')
       FROM variant_relation), false),
     'variant_authenticated_crud', COALESCE((SELECT
       has_table_privilege('authenticated', oid, 'SELECT')
       AND has_table_privilege('authenticated', oid, 'INSERT')
       AND has_table_privilege('authenticated', oid, 'UPDATE')
       AND has_table_privilege('authenticated', oid, 'DELETE')
+      FROM variant_relation), false),
+    'variant_authenticated_extra_access', COALESCE((SELECT
+      has_table_privilege('authenticated', oid, 'TRUNCATE')
+      OR has_table_privilege('authenticated', oid, 'REFERENCES')
+      OR has_table_privilege('authenticated', oid, 'TRIGGER')
+      OR has_table_privilege('authenticated', oid, 'MAINTAIN')
+      FROM variant_relation), false),
+    'variant_service_role_crud', COALESCE((SELECT
+      has_table_privilege('service_role', oid, 'SELECT')
+      AND has_table_privilege('service_role', oid, 'INSERT')
+      AND has_table_privilege('service_role', oid, 'UPDATE')
+      AND has_table_privilege('service_role', oid, 'DELETE')
+      FROM variant_relation), false),
+    'variant_service_role_extra_access', COALESCE((SELECT
+      has_table_privilege('service_role', oid, 'TRUNCATE')
+      OR has_table_privilege('service_role', oid, 'REFERENCES')
+      OR has_table_privilege('service_role', oid, 'TRIGGER')
+      OR has_table_privilege('service_role', oid, 'MAINTAIN')
       FROM variant_relation), false),
     'history_description_column_count', (
       SELECT count(*) FROM information_schema.columns
@@ -295,6 +317,7 @@ WITH target_relation AS (
       OR has_table_privilege('anon', oid, 'TRUNCATE')
       OR has_table_privilege('anon', oid, 'REFERENCES')
       OR has_table_privilege('anon', oid, 'TRIGGER')
+      OR has_table_privilege('anon', oid, 'MAINTAIN')
       FROM target_relation), false),
     'authenticated_select', COALESCE((SELECT
       has_table_privilege('authenticated', oid, 'SELECT') FROM target_relation
@@ -306,6 +329,19 @@ WITH target_relation AS (
       OR has_table_privilege('authenticated', oid, 'TRUNCATE')
       OR has_table_privilege('authenticated', oid, 'REFERENCES')
       OR has_table_privilege('authenticated', oid, 'TRIGGER')
+      OR has_table_privilege('authenticated', oid, 'MAINTAIN')
+      FROM target_relation), false),
+    'history_service_role_crud', COALESCE((SELECT
+      has_table_privilege('service_role', oid, 'SELECT')
+      AND has_table_privilege('service_role', oid, 'INSERT')
+      AND has_table_privilege('service_role', oid, 'UPDATE')
+      AND has_table_privilege('service_role', oid, 'DELETE')
+      FROM target_relation), false),
+    'history_service_role_extra_access', COALESCE((SELECT
+      has_table_privilege('service_role', oid, 'TRUNCATE')
+      OR has_table_privilege('service_role', oid, 'REFERENCES')
+      OR has_table_privilege('service_role', oid, 'TRIGGER')
+      OR has_table_privilege('service_role', oid, 'MAINTAIN')
       FROM target_relation), false),
     'authenticated_rpc_execute', COALESCE((SELECT
       has_function_privilege('authenticated', oid, 'EXECUTE')

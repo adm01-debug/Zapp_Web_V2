@@ -69,6 +69,11 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.recipient_variant_fk_count === 1/);
   assert.match(workflow, /proof\.variant_anon_any_access === false/);
   assert.match(workflow, /proof\.variant_authenticated_crud === true/);
+  assert.match(workflow, /proof\.variant_authenticated_extra_access === false/);
+  assert.match(workflow, /proof\.variant_service_role_crud === true/);
+  assert.match(workflow, /proof\.variant_service_role_extra_access === false/);
+  assert.match(workflow, /proof\.history_service_role_crud === true/);
+  assert.match(workflow, /proof\.history_service_role_extra_access === false/);
   assert.match(workflow, /proof\.history_description_column_count === 1/);
   assert.match(workflow, /\[0, 1\]\.includes\(proof\.history_description_column_count\)/);
   assert.match(workflow, /\[1, 2\]\.includes\(proof\.policy_count\)/);
