@@ -59,3 +59,15 @@ em comentario para o Dependabot.
 ```sh
 node scripts/ci/check-workflow-pins.mjs
 ```
+
+## Fronteira de secrets em pull requests
+
+`check-pr-workflow-secrets.mjs` falha quando um workflow acionado por
+`pull_request` ou `pull_request_target` referencia secrets privilegiados, mesmo
+que a etapa possua um `if` declarando execução somente em push. Essa condição
+pode ser alterada pelo próprio PR e, portanto, não é uma fronteira de segurança.
+Somente a URL e a chave publishable do Supabase são permitidas nesse contexto.
+
+```sh
+node scripts/ci/check-pr-workflow-secrets.mjs
+```
