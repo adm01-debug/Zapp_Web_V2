@@ -107,7 +107,8 @@ Por aba, o que ainda difere (código vs. referência, sem screenshot para confir
 
 ### Etapa 55 — Light mode (revisão de código, sem screenshot)
 Nenhuma classe nova usa cor fixa fora do sistema de tokens (confirmado na etapa 48: 0 cores literais novas) — todo o trabalho usa `bg-input/muted/card/accent`, `text-foreground/muted-foreground`, `bg-primary`, `bg-kpi-*`, `bg-dash-tile-*`, que já são theme-aware (a paleta clara já existe no `tokens.css`, não tocado). Não há motivo estrutural para quebra no light mode, mas não há confirmação visual.
-## CP7 Entrega    [ ] PR=_ · CI=_ · gates: tsc=_ lint=_ implicit=_ vitest=_ build=_
+## CP7 Entrega    [x] PR=(ver linha FINAL) · CI=ver PR · gates: tsc=0 erros · lint-ratchet=novas 0 · implicit-any=0 (baseline 0) · vitest=suite inteira 2994 passed / 3 failed / 35 todo (3032) · build=OK (12.42s, RealtimeInboxView 91.70kB)
+Os 3 testes que falham são **pré-existentes, fora do escopo deste branch** (confirmado `git diff --stat 27c22f4d -- <arquivo>` vazio para os 3): `AIUsageDashboard.test.tsx` (timeout de `waitFor`), `MediaLibraryAdmin.test.tsx` (timeout "100 items without crash"), `useTalkXMonitor.test.ts` (asserção de agrupamento por minuto). Nenhum dos três toca `src/components/inbox` ou dependências deste redesign.
 
 ## Etapa 50 — bundle RealtimeInboxView
 `npm run build`: `dist/assets/RealtimeInboxView-*.js` = **91.70 kB** (era 86 kB antes do branch, conforme plano). Δ = **+5.70 kB**, dentro da tolerância de +15KB da regra 50 — não precisa de justificativa adicional. Build 0 erros.
@@ -134,8 +135,12 @@ Consequência: **screenshots `fid-*.png` e medidas via Playwright ficam pendente
 - `lint-ratchet.mjs` reportava 1 "nova" ocorrência em `VirtualizedRealtimeList.tsx:107:23` (`react-hooks/incompatible-library`, warning) — a MESMA violação já presente na baseline em `VirtualizedRealtimeList.tsx:76:23` (mesma regra, mesmo `useVirtualizer()`, `eslint-baseline.json:7288`), só deslocada de linha pela etapa 12 (agrupamento Fixadas/Hoje/Ontem). O hook pre-commit bloqueia com `novas>0`, então precisei resolver de fato: adicionei `// eslint-disable-next-line react-hooks/incompatible-library` imediatamente acima da chamada (regra 1 do §0.2 veda tocar em `tokens.css`/`tailwind.config.ts`/etc., não veda anotações inline no próprio código novo). `lint-ratchet` volta a `novas=0`. Não toquei no baseline (regra 9).
 
 ## Pendências / resíduos (honestos)
-- Fotos de contato: avatar real ou iniciais (referência usa rostos gerados)
-- Presença "Online": só se houver fonte real
-- Chips de tom da IA: dependem do hook aceitar `tone`
-- Spam: chip só se existir status/tag no modelo
--
+- Fotos de contato: avatar real ou iniciais (referência usa rostos gerados) — mantido como está, sem dado inventado.
+- Presença "Online" na lista de conversas: não implementada — não existe fonte real de presença por contato no schema atual (só há `ai_sentiment`/`conversation_status`). O dot "Online" do CABEÇALHO do chat já existia (usa uma heurística pré-existente, não mexi).
+- **Bloqueio de QA visual automatizada**: login (produção e preview local) trava em "Email inválido" com o campo email sendo esvaziado — reproduzido em `main`/produção também, não é regressão deste branch. Root-cause provável: lockout de tentativas (`src/lib/loginAttempts.ts`) ou dessincronia FormData/estado em `useAuthForm.ts` (arquivo fora do escopo desta tarefa, não alterado). **Nenhum screenshot `fid-*.png` foi gerado em nenhuma fase** — toda evidência de fidelidade visual neste ledger é por leitura de código/comparação com a referência, não por captura de tela real. Isso é a maior divergência entre o que o plano pedia e o que foi entregue.
+- Chips de tom da IA (Mais formal/casual/curta/detalhada): a etapa 40 previa regenerar a sugestão por tom "se o hook aceitar tone" — não investiguei `AISuggestions.tsx`/hook a fundo para saber se aceita; os 4 chips de tom **não foram implementados** nesta rodada (ficaram como pendência, não há chips visíveis ainda no card "Sugestão de resposta"). Registrar como próximo passo.
+- Objeções: badge vermelho de contagem no header do card e chip de severidade (spec etapa 40) **não foram verificados/implementados** — `ObjectionDetector.tsx` não foi auditado linha a linha nesta fase; o `SectionCard` tone="red" foi aplicado no nível do card-pai, mas o conteúdo interno do `ObjectionDetector` pode não ter os chips de severidade exatos da referência.
+- Spam: chip não existe — confirmado que não há status/tag de spam no modelo (`grep spam` = 0), decisão correta de omitir mantida.
+- Card de produto na mensagem do chat (etapa 45): não existe componente dedicado no código atual; nada a reaproveitar, não inventei.
+- Mobile (390×844) e Light mode: revisados só por leitura de código (tokens semânticos, sem cor literal nova) — sem confirmação visual real (bloqueio de login).
+- `ConversationItem.tsx` e `VirtualizedConversationList.tsx` continuam mortos/não usados — não removidos (fora do diff mínimo autorizado; risco zero por não estarem em uso).
