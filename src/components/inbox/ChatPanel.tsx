@@ -49,6 +49,7 @@ interface ChatPanelProps {
   onDraftConsumed?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onSwitchToAiTab?: () => void;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -87,7 +88,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onSwitchToAiTab }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -273,7 +274,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onPollSent={async (poll) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📊 *Enquete:* ${poll.name}\n${poll.options.map((o, i) => `${i + 1}. ${o}`).join('\n')}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
           onContactSent={async (contactName) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📇 Cartão de contato: ${contactName}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
-          fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef} />
+          fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef}
+          onOpenAiAssistant={onSwitchToAiTab} onOpenTransfer={() => openDialog('transferDialog')} />
 
         <ChatDialogs
           dialogs={dialogs} openDialog={openDialog} closeDialog={closeDialog}

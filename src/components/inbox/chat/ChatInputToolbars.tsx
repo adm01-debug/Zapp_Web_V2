@@ -7,8 +7,6 @@ import { RichTextToggle } from './RichTextToolbar';
 import { StickerPicker } from '../StickerPicker';
 import { AudioMemePicker } from '../AudioMemePicker';
 import { VoiceChangerPicker } from '../VoiceChangerPicker';
-import { CustomEmojiPicker } from '../CustomEmojiPicker';
-import { FileUploader, FileUploaderRef } from '../FileUploader';
 import { VoiceDictationButton } from '@/components/mobile/VoiceDictationButton';
 import { TextToAudioButton } from '../TextToAudioButton';
 import { AISuggestions } from '../AISuggestions';
@@ -19,7 +17,6 @@ import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { Message } from '@/types/chat';
 import { Package, Layers, MapPin, Clock, Zap, PenTool, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/ui/use-toast';
 
 type QuickReplyItem = { id: string; title: string; shortcut: string; content: string; category: string };
 
@@ -31,21 +28,19 @@ interface SecondaryToolbarProps {
   isRecordingAudio: boolean;
   onSendSticker: (url: string) => void;
   onSendAudioMeme: (url: string) => void;
-  onSendCustomEmoji: (url: string) => void;
   onOpenCatalog?: () => void;
   onAudioSend: (blob: Blob) => void;
-  fileUploaderRef: React.RefObject<FileUploaderRef | null>;
-  instanceName?: string;
-  contactPhone: string;
-  contactId: string;
   contactName?: string;
   onVoiceDictation: (text: string) => void;
 }
 
+/** Ferramentas secundárias — vivem dentro do popover "⋯ Mais" (fase 3, redesign
+    carvão). FileUploader e CustomEmojiPicker saíram daqui: viraram ícones fixos
+    na linha do input (ver ChatInputArea) para não duplicar o input de arquivo. */
 export function SecondaryToolbar({
   inputRef, inputValue, showRichToolbar, onToggleRichToolbar, isRecordingAudio,
-  onSendSticker, onSendAudioMeme, onSendCustomEmoji, onOpenCatalog, onAudioSend,
-  fileUploaderRef, instanceName, contactPhone, contactId, contactName, onVoiceDictation,
+  onSendSticker, onSendAudioMeme, onOpenCatalog, onAudioSend,
+  contactName, onVoiceDictation,
 }: SecondaryToolbarProps) {
   const handleRewrite = (newText: string) => {
     const el = inputRef.current;
@@ -58,12 +53,11 @@ export function SecondaryToolbar({
   };
 
   return (
-    <div className="flex items-center gap-0.5 shrink-0">
+    <div className="flex items-center gap-0.5 shrink-0 flex-wrap">
       <AIRewriteButton inputValue={inputValue} onRewrite={handleRewrite} contactName={contactName} />
       <StickerPicker onSendSticker={onSendSticker} />
       <AudioMemePicker onSendAudio={onSendAudioMeme} />
       <VoiceChangerPicker onSendAudio={onSendAudioMeme} />
-      <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
       {onOpenCatalog && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -80,19 +74,6 @@ export function SecondaryToolbar({
           <TooltipContent side="top">Catálogo de Produtos</TooltipContent>
         </Tooltip>
       )}
-      <FileUploader
-        ref={fileUploaderRef}
-        instanceName={instanceName || ''}
-        recipientNumber={contactPhone}
-        contactId={contactId}
-        connectionId={undefined}
-        onFileSelect={(file, category) => {
-          toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` });
-        }}
-        onFileSent={() => {
-          toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso.' });
-        }}
-      />
       <RichTextToggle active={showRichToolbar} onToggle={onToggleRichToolbar} />
       <VoiceDictationButton onTranscript={onVoiceDictation} disabled={isRecordingAudio} />
       <TextToAudioButton inputValue={inputValue} onAudioReady={onAudioSend} />
