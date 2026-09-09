@@ -50,6 +50,154 @@ BEGIN
 END;
 $migration$;
 
+-- A migration 20260909150000 foi executada fora da main com uma policy FOR ALL
+-- cujo USING era true e comparava profiles.id diretamente com auth.uid().
+-- Canonizamos o runtime antes de expor o editor de variacoes A/B.
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM public.talkx_template_variants AS variant
+    WHERE variant.template_id IS NULL
+       OR variant.label IS NULL
+       OR variant.label NOT IN ('A', 'B', 'C')
+       OR variant.content IS NULL
+       OR length(variant.content) NOT BETWEEN 1 AND 65536
+       OR variant.weight IS NULL
+       OR variant.weight NOT BETWEEN 1 AND 100
+       OR (variant.media_url IS NOT NULL AND (
+         length(variant.media_url) > 8192 OR variant.media_url !~ '^https://'
+       ))
+       OR (variant.media_type IS NOT NULL
+           AND variant.media_type NOT IN ('image', 'video', 'document', 'audio'))
+  ) THEN
+    RAISE EXCEPTION 'talkx_template_variants_invalid_existing_rows'
+      USING ERRCODE = '23514',
+            HINT = 'Repare explicitamente as variantes fora do contrato antes de reaplicar a migration.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.talkx_template_variants'::regclass
+      AND conname = 'talkx_template_variants_content_check'
+  ) THEN
+    ALTER TABLE public.talkx_template_variants
+      ADD CONSTRAINT talkx_template_variants_content_check
+      CHECK (length(content) BETWEEN 1 AND 65536) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.talkx_template_variants'::regclass
+      AND conname = 'talkx_template_variants_media_url_check'
+  ) THEN
+    ALTER TABLE public.talkx_template_variants
+      ADD CONSTRAINT talkx_template_variants_media_url_check
+      CHECK (media_url IS NULL OR (length(media_url) <= 8192 AND media_url ~ '^https://'))
+      NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.talkx_template_variants'::regclass
+      AND conname = 'talkx_template_variants_media_type_check'
+  ) THEN
+    ALTER TABLE public.talkx_template_variants
+      ADD CONSTRAINT talkx_template_variants_media_type_check
+      CHECK (media_type IS NULL OR media_type IN ('image', 'video', 'document', 'audio'))
+      NOT VALID;
+  END IF;
+END;
+$migration$;
+
+ALTER TABLE public.talkx_template_variants
+  VALIDATE CONSTRAINT talkx_template_variants_content_check;
+ALTER TABLE public.talkx_template_variants
+  VALIDATE CONSTRAINT talkx_template_variants_media_url_check;
+ALTER TABLE public.talkx_template_variants
+  VALIDATE CONSTRAINT talkx_template_variants_media_type_check;
+
+ALTER TABLE public.talkx_template_variants ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS talkx_template_variants_select
+  ON public.talkx_template_variants;
+DROP POLICY IF EXISTS talkx_template_variants_write
+  ON public.talkx_template_variants;
+DROP POLICY IF EXISTS talkx_template_variants_insert
+  ON public.talkx_template_variants;
+DROP POLICY IF EXISTS talkx_template_variants_update
+  ON public.talkx_template_variants;
+DROP POLICY IF EXISTS talkx_template_variants_delete
+  ON public.talkx_template_variants;
+
+CREATE POLICY talkx_template_variants_select
+ON public.talkx_template_variants
+FOR SELECT TO authenticated
+USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY talkx_template_variants_insert
+ON public.talkx_template_variants
+FOR INSERT TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.id = talkx_template_variants.template_id
+      AND (
+        template.created_by = public.get_profile_id_for_user(auth.uid())
+        OR public.is_admin_or_supervisor(auth.uid())
+      )
+  )
+);
+
+CREATE POLICY talkx_template_variants_update
+ON public.talkx_template_variants
+FOR UPDATE TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.id = talkx_template_variants.template_id
+      AND (
+        template.created_by = public.get_profile_id_for_user(auth.uid())
+        OR public.is_admin_or_supervisor(auth.uid())
+      )
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.id = talkx_template_variants.template_id
+      AND (
+        template.created_by = public.get_profile_id_for_user(auth.uid())
+        OR public.is_admin_or_supervisor(auth.uid())
+      )
+  )
+);
+
+CREATE POLICY talkx_template_variants_delete
+ON public.talkx_template_variants
+FOR DELETE TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.id = talkx_template_variants.template_id
+      AND (
+        template.created_by = public.get_profile_id_for_user(auth.uid())
+        OR public.is_admin_or_supervisor(auth.uid())
+      )
+  )
+);
+
+REVOKE ALL ON TABLE public.talkx_template_variants
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.talkx_template_variants TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.talkx_template_variants TO service_role;
+
 CREATE TABLE IF NOT EXISTS public.talkx_template_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   template_id uuid NOT NULL REFERENCES public.talkx_templates(id) ON DELETE CASCADE,
@@ -612,7 +760,8 @@ FOR EACH ROW EXECUTE FUNCTION public.guard_talkx_template_version_immutable();
 REVOKE ALL ON FUNCTION public.guard_talkx_template_version_immutable()
   FROM PUBLIC, anon, authenticated;
 
-REVOKE ALL ON TABLE public.talkx_template_versions FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.talkx_template_versions
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT SELECT ON TABLE public.talkx_template_versions TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.talkx_template_versions TO service_role;
 

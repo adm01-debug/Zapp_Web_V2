@@ -6,6 +6,7 @@ postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 precreate_runtime="${TALKX_HISTORY_PRECREATE_RUNTIME:-true}"
 invalid_prestate="${TALKX_HISTORY_INVALID_PRESTATE:-false}"
 invalid_live_prestate="${TALKX_HISTORY_INVALID_LIVE_PRESTATE:-false}"
+invalid_variant_prestate="${TALKX_HISTORY_INVALID_VARIANT_PRESTATE:-false}"
 container_name="zapp-talkx-history-$RANDOM-$$"
 test_password="talkx_history_test_only"
 concurrency_dir=""
@@ -32,10 +33,19 @@ docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password
   || fail 'TALKX_HISTORY_INVALID_PRESTATE deve ser true ou false'
 [[ "$invalid_live_prestate" == true || "$invalid_live_prestate" == false ]] \
   || fail 'TALKX_HISTORY_INVALID_LIVE_PRESTATE deve ser true ou false'
+[[ "$invalid_variant_prestate" == true || "$invalid_variant_prestate" == false ]] \
+  || fail 'TALKX_HISTORY_INVALID_VARIANT_PRESTATE deve ser true ou false'
 if [[ "$invalid_prestate" == true && "$precreate_runtime" != true ]]; then
   fail 'TALKX_HISTORY_INVALID_PRESTATE exige TALKX_HISTORY_PRECREATE_RUNTIME=true'
 fi
-if [[ "$invalid_prestate" == true && "$invalid_live_prestate" == true ]]; then
+if [[ "$invalid_variant_prestate" == true && "$precreate_runtime" != true ]]; then
+  fail 'TALKX_HISTORY_INVALID_VARIANT_PRESTATE exige TALKX_HISTORY_PRECREATE_RUNTIME=true'
+fi
+invalid_mode_count=0
+[[ "$invalid_prestate" == true ]] && invalid_mode_count=$((invalid_mode_count + 1))
+[[ "$invalid_live_prestate" == true ]] && invalid_mode_count=$((invalid_mode_count + 1))
+[[ "$invalid_variant_prestate" == true ]] && invalid_mode_count=$((invalid_mode_count + 1))
+if [[ "$invalid_mode_count" -gt 1 ]]; then
   fail 'selecione apenas um pre-estado invalido por execucao'
 fi
 
@@ -53,7 +63,8 @@ done
 
 psql_test -v precreate_runtime="$precreate_runtime" \
   -v invalid_prestate="$invalid_prestate" \
-  -v invalid_live_prestate="$invalid_live_prestate" >/dev/null <<'SQL'
+  -v invalid_live_prestate="$invalid_live_prestate" \
+  -v invalid_variant_prestate="$invalid_variant_prestate" >/dev/null <<'SQL'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
@@ -89,6 +100,9 @@ CREATE TABLE public.talkx_templates (
   created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.talkx_recipients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
 
 CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
@@ -144,6 +158,33 @@ INSERT INTO public.talkx_templates(
 -- Estado observado no runtime antes da canonizacao: DDL sem migration,
 -- default grants amplos e somente policy de leitura.
 \if :precreate_runtime
+CREATE TABLE public.talkx_template_variants (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id uuid NOT NULL REFERENCES public.talkx_templates(id) ON DELETE CASCADE,
+  label text NOT NULL CHECK (label IN ('A', 'B', 'C')),
+  content text NOT NULL,
+  media_url text,
+  media_type text,
+  weight integer NOT NULL DEFAULT 50 CHECK (weight > 0 AND weight <= 100),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (template_id, label)
+);
+ALTER TABLE public.talkx_recipients
+  ADD COLUMN variant_id uuid REFERENCES public.talkx_template_variants(id) ON DELETE SET NULL;
+ALTER TABLE public.talkx_template_variants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY talkx_template_variants_select ON public.talkx_template_variants
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY talkx_template_variants_write ON public.talkx_template_variants
+  FOR ALL TO authenticated USING (true) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.talkx_templates template
+      JOIN public.profiles profile ON profile.id = auth.uid()
+      WHERE template.id = template_id
+        AND (template.created_by = auth.uid() OR profile.role IN ('admin', 'supervisor'))
+    )
+  );
+GRANT ALL ON public.talkx_template_variants TO anon, authenticated, service_role;
+
 ALTER TABLE public.talkx_templates
   ADD COLUMN custom_variables text[] NOT NULL DEFAULT '{}'::text[];
 CREATE TABLE public.talkx_template_versions (
@@ -186,9 +227,19 @@ UPDATE public.talkx_templates
 SET media_url = 'http://legacy.invalid/media.png', media_type = 'image'
 WHERE id = '30000000-0000-0000-0000-000000000001';
 \endif
+
+\if :invalid_variant_prestate
+INSERT INTO public.talkx_template_variants(
+  template_id, label, content, media_url, media_type, weight
+) VALUES (
+  '30000000-0000-0000-0000-000000000001', 'A', 'Legacy variant',
+  'http://legacy.invalid/media.png', 'image', 50
+);
+\endif
 SQL
 
-if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true ]]; then
+if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true \
+  || "$invalid_variant_prestate" == true ]]; then
   set +e
   invalid_output="$(psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" 2>&1)"
   invalid_status=$?
@@ -198,12 +249,20 @@ if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true ]]; then
     grep -q 'talkx_template_history_irreconcilable_nulls' <<<"$invalid_output" \
       || fail 'migration nao retornou diagnostico explicito para historico irrecuperavel'
     printf '[OK] Talk X template history: pre-estado irrecuperavel abortado explicitamente, sem fabricar auditoria.\n'
-  else
+  elif [[ "$invalid_live_prestate" == true ]]; then
     grep -q 'talkx_templates_invalid_existing_rows' <<<"$invalid_output" \
       || fail 'migration nao diagnosticou template legado fora do contrato'
     printf '[OK] Talk X template history: template legado invalido bloqueado antes do rollout.\n'
+  else
+    grep -q 'talkx_template_variants_invalid_existing_rows' <<<"$invalid_output" \
+      || fail 'migration nao diagnosticou variante legada fora do contrato'
+    printf '[OK] Talk X template history: variante legada invalida bloqueada antes do rollout.\n'
   fi
   exit 0
+fi
+
+if [[ "$precreate_runtime" == false ]]; then
+  psql_test < "$repo_root/supabase/migrations/20260909150000_talkx_template_variants_ab.sql" >/dev/null
 fi
 
 psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" >/dev/null
@@ -286,6 +345,54 @@ expect_failure 'talkx_template_stale_version' "$auth_prefix SELECT set_config('r
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Bad URL',NULL,'sales','X','http://127.0.0.1/private','image','{}','draft','{}'); COMMIT;"
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Null status',NULL,'sales','X',NULL,NULL,'{}',NULL,'{}'); COMMIT;"
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_templates(name,category,content,media_url,media_type,created_by) VALUES ('HTTP create','sales','X','http://legacy.invalid/media.png','image','10000000-0000-0000-0000-000000000001'); COMMIT;"
+expect_failure 'talkx_template_variants_media_url_check' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_variants(template_id,label,content,media_url,media_type) VALUES ('30000000-0000-0000-0000-000000000001','A','Variant','http://legacy.invalid/media.png','image'); COMMIT;"
+expect_failure 'permission denied' "BEGIN; SET LOCAL ROLE anon; SELECT * FROM public.talkx_template_variants; COMMIT;"
+expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); TRUNCATE public.talkx_template_variants CASCADE; COMMIT;"
+
+variant_owner_result="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+INSERT INTO public.talkx_template_variants(template_id,label,content,weight)
+VALUES ('30000000-0000-0000-0000-000000000001','A','Owner variant',50)
+RETURNING label || '|' || content;
+COMMIT;
+SQL
+)"
+grep -q '^A|Owner variant$' <<<"$variant_owner_result" \
+  || fail 'owner nao conseguiu criar variante valida'
+
+variant_other_result="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000002',true);
+WITH changed AS (
+  UPDATE public.talkx_template_variants SET content='Hijacked' WHERE label='A' RETURNING 1
+) SELECT 'UPDATE|' || count(*) FROM changed;
+WITH removed AS (
+  DELETE FROM public.talkx_template_variants WHERE label='A' RETURNING 1
+) SELECT 'DELETE|' || count(*) FROM removed;
+COMMIT;
+SQL
+)"
+grep -q '^UPDATE|0$' <<<"$variant_other_result" \
+  && grep -q '^DELETE|0$' <<<"$variant_other_result" \
+  || { printf '%s\n' "$variant_other_result" >&2; fail 'agente sem ownership alterou variante alheia'; }
+
+variant_admin_result="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000003',true);
+UPDATE public.talkx_template_variants SET content='Admin reviewed' WHERE label='A'
+RETURNING content;
+COMMIT;
+SQL
+)"
+grep -q '^Admin reviewed$' <<<"$variant_admin_result" \
+  || fail 'admin nao conseguiu moderar variante'
 expect_failure 'talkx_template_update_requires_authorized_rpc' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); UPDATE public.talkx_templates SET name='Direct bypass' WHERE id='30000000-0000-0000-0000-000000000001'; COMMIT;"
 expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_versions(template_id,version_number,name,content,category) VALUES ('30000000-0000-0000-0000-000000000001',99,'Forged','Forged','sales'); COMMIT;"
 
@@ -428,8 +535,21 @@ const proof = JSON.parse(process.env.RUNTIME_PROOF);
 const ok = proof.server_major === 17
   && proof.database === 'postgres'
   && proof.table_count === 1
+  && proof.variant_table_count === 1
   && proof.custom_variables_column_count === 1
   && proof.invalid_live_template_count === 0
+  && proof.invalid_variant_count === 0
+  && proof.variant_rls_enabled === true
+  && proof.variant_policy_count === 4
+  && proof.variant_legacy_write_policy_count === 0
+  && proof.variant_canonical_policy_signature_count === 4
+  && proof.variant_validated_constraint_count === 3
+  && proof.recipient_variant_fk_count === 1
+  && proof.variant_anon_any_access === false
+  && proof.variant_authenticated_crud === true
+  && proof.variant_authenticated_extra_access === false
+  && proof.variant_service_role_crud === true
+  && proof.variant_service_role_extra_access === false
   && proof.history_description_column_count === 1
   && proof.rls_enabled === true
   && proof.policy_count === 1
@@ -446,6 +566,8 @@ const ok = proof.server_major === 17
   && proof.anon_any_access === false
   && proof.authenticated_select === true
   && proof.authenticated_any_mutation === false
+  && proof.history_service_role_crud === true
+  && proof.history_service_role_extra_access === false
   && proof.authenticated_rpc_execute === true
   && proof.anon_rpc_execute === false
   && proof.authenticated_counter_execute === true

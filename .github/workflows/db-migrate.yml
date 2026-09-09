@@ -122,6 +122,13 @@ jobs:
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
             -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
             > /tmp/remote-versions
+          comm -13 /tmp/local-versions /tmp/remote-versions > /tmp/remote-only-versions
+          REMOTE_ONLY_COUNT=$(wc -l < /tmp/remote-only-versions | tr -d ' ')
+          if [ "$REMOTE_ONLY_COUNT" != "0" ]; then
+            echo "::error::O ledger remoto possui versions sem arquivo local; db push foi bloqueado antes do CLI."
+            echo "remote_only_count=$REMOTE_ONLY_COUNT"
+            exit 1
+          fi
           comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
@@ -559,11 +566,31 @@ jobs:
                 && proof.service_note_extra === false;
           } else if (process.env.TARGET_VERSION === '20260909210000') {
             const base = proof.table_count === 1
+              && proof.variant_table_count === 1
               && proof.custom_variables_column_count === 1
               && proof.invalid_live_template_count === 0
+              && proof.invalid_variant_count === 0
+              && proof.variant_rls_enabled === true
+              && proof.recipient_variant_fk_count === 1
               && proof.rls_enabled === true;
             targetOk = process.env.NEEDS_APPLY === 'true'
               ? base
+                && (
+                  (proof.variant_policy_count === 2
+                   && proof.variant_legacy_write_policy_count === 1
+                   && proof.variant_canonical_policy_signature_count === 0
+                   && proof.variant_validated_constraint_count === 0)
+                  ||
+                  (proof.variant_policy_count === 4
+                   && proof.variant_legacy_write_policy_count === 0
+                   && proof.variant_canonical_policy_signature_count === 4
+                   && proof.variant_validated_constraint_count === 3
+                   && proof.variant_anon_any_access === false
+                   && proof.variant_authenticated_crud === true
+                   && proof.variant_authenticated_extra_access === false
+                   && proof.variant_service_role_crud === true
+                   && proof.variant_service_role_extra_access === false)
+                )
                 && [0, 1].includes(proof.history_description_column_count)
                 && [1, 2].includes(proof.policy_count)
                 && [3, 4].includes(proof.foundation_constraint_count)
@@ -580,6 +607,15 @@ jobs:
                 && proof.authenticated_rpc_execute === false
                 && proof.authenticated_internal_function_execute_count === 0
               : base
+                && proof.variant_policy_count === 4
+                && proof.variant_legacy_write_policy_count === 0
+                && proof.variant_canonical_policy_signature_count === 4
+                && proof.variant_validated_constraint_count === 3
+                && proof.variant_anon_any_access === false
+                && proof.variant_authenticated_crud === true
+                && proof.variant_authenticated_extra_access === false
+                && proof.variant_service_role_crud === true
+                && proof.variant_service_role_extra_access === false
                 && proof.history_description_column_count === 1
                 && proof.policy_count === 1
                 && proof.foundation_constraint_count === 4
@@ -596,6 +632,8 @@ jobs:
                 && proof.anon_any_access === false
                 && proof.authenticated_select === true
                 && proof.authenticated_any_mutation === false
+                && proof.history_service_role_crud === true
+                && proof.history_service_role_extra_access === false
                 && proof.authenticated_rpc_execute === true
                 && proof.anon_rpc_execute === false
                 && proof.authenticated_counter_execute === true
@@ -954,8 +992,21 @@ jobs:
             && proof.database === 'postgres'
             && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
             && proof.table_count === 1
+            && proof.variant_table_count === 1
             && proof.custom_variables_column_count === 1
             && proof.invalid_live_template_count === 0
+            && proof.invalid_variant_count === 0
+            && proof.variant_rls_enabled === true
+            && proof.variant_policy_count === 4
+            && proof.variant_legacy_write_policy_count === 0
+            && proof.variant_canonical_policy_signature_count === 4
+            && proof.variant_validated_constraint_count === 3
+            && proof.recipient_variant_fk_count === 1
+            && proof.variant_anon_any_access === false
+            && proof.variant_authenticated_crud === true
+            && proof.variant_authenticated_extra_access === false
+            && proof.variant_service_role_crud === true
+            && proof.variant_service_role_extra_access === false
             && proof.history_description_column_count === 1
             && proof.rls_enabled === true
             && proof.policy_count === 1
@@ -973,6 +1024,8 @@ jobs:
             && proof.anon_any_access === false
             && proof.authenticated_select === true
             && proof.authenticated_any_mutation === false
+            && proof.history_service_role_crud === true
+            && proof.history_service_role_extra_access === false
             && proof.authenticated_rpc_execute === true
             && proof.anon_rpc_execute === false
             && proof.authenticated_counter_execute === true
