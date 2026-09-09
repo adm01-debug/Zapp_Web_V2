@@ -51,6 +51,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const totals = useMemo(() => ({
     total: segments.length,
     active: segments.filter((s) => s.status === 'active').length,
+    crm360: segments.filter((s) => s.origin === 'crm360').length,
     totalContacts: segments.reduce((a, s) => a + s.estimated_count, 0),
     bars: barsByDay(segments.map((s) => s.created_at)),
   }), [segments]);
@@ -84,7 +85,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             <KpiCard icon={Database} color="blue"   index={0} label="Total de segmentos"  value={fmtInt(totals.total)}        bars={totals.bars} />
             <KpiCard icon={Check}    color="green"  index={1} label="Ativos este mês"      value={fmtInt(totals.active)} />
-            <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value="0" />
+            <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value={fmtInt(totals.crm360)} />
             <KpiCard icon={BarChart3} color="amber" index={3} label="Contatos cobertos"    value={fmtInt(totals.totalContacts)} />
           </div>
         )}
@@ -141,7 +142,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                               <button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => { setSelected(s === selected ? null : s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => onUseCampaign(s.id)}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openEdit(s)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleFav(s)}>{s.is_favorite ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}{s.is_favorite ? 'Remover favorito' : 'Favoritar'}</DropdownMenuItem>
