@@ -1,7 +1,8 @@
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, FileText } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { OpenDealsList } from './OpenDealsList';
+import { SectionCard } from './SectionCard';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
 
 interface OrdersTabProps {
@@ -18,7 +19,7 @@ export function OrdersTab({ contactId }: OrdersTabProps) {
   return (
     <div className="flex flex-col gap-4" data-testid="orders-tab">
       <header>
-        <h2 className="text-lg font-bold text-foreground">Pedidos</h2>
+        <h2 className="text-xl font-bold text-foreground">Pedidos</h2>
         <p className="text-sm text-muted-foreground">Compras e propostas deste contato.</p>
       </header>
 
@@ -31,15 +32,13 @@ export function OrdersTab({ contactId }: OrdersTabProps) {
         />
       ) : (
         <>
-          <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-            <h3 className="text-sm font-semibold">Compras e propostas</h3>
+          <SectionCard icon={ShoppingBag} title="Compras e propostas" tone="blue">
             <ContactPurchasesPanel contactId={contactId} />
-          </section>
+          </SectionCard>
 
-          <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-            <h3 className="text-sm font-semibold">Propostas em aberto</h3>
+          <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
             <OpenDealsList deals={crm360?.openDeals ?? []} />
-          </section>
+          </SectionCard>
         </>
       )}
     </div>

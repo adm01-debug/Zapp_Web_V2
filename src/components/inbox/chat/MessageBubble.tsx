@@ -149,7 +149,7 @@ export const MessageBubble = memo(function MessageBubble({
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-br-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tr-sm rounded-br-md',
                         !isFirstInGroup && !isLastInGroup && 'rounded-xl rounded-tr-sm rounded-br-sm')
-                    : cn('bg-card border border-border/30 text-foreground shadow-sm',
+                    : cn('bg-muted text-foreground shadow-sm',
                         isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-bl-md',
                         isFirstInGroup && !isLastInGroup && 'rounded-2xl rounded-bl-sm',
                         !isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-tl-sm rounded-bl-md',
@@ -245,7 +245,7 @@ export const MessageBubble = memo(function MessageBubble({
                   (message.type === 'image' || message.type === 'video') && !message.content && 'px-3.5 pb-1'
                 )}>
                   {message.isEdited && <span className="text-[9px] italic mr-0.5">editada</span>}
-                  <span className="text-[10px] font-medium">{formatMessageTime(message.timestamp)}</span>
+                  <span className="text-[11px] font-medium">{formatMessageTime(message.timestamp)}</span>
                   {isSent && <MessageStatusIcon status={message.status} />}
                 </div>
               </motion.div>

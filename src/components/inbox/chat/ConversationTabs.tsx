@@ -68,11 +68,11 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }
             >
               {active && (
                 reduceMotion ? (
-                  <span className="absolute inset-0 rounded-lg bg-primary/15 border border-primary/40 -z-10" />
+                  <span className="absolute inset-0 rounded-lg bg-accent border border-primary/40 -z-10" />
                 ) : (
                   <motion.span
                     layoutId="conversation-tab-pill"
-                    className="absolute inset-0 rounded-lg bg-primary/15 border border-primary/40 -z-10"
+                    className="absolute inset-0 rounded-lg bg-accent border border-primary/40 -z-10"
                     transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
                 )

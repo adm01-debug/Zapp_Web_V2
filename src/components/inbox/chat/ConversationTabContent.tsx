@@ -72,6 +72,7 @@ export function ConversationTabContent({
               action={{ label: 'Ver sugestões', onClick: () => onTabChange('ia') }}
               dismissKey="inbox-ai-banner-dismissed"
               testId="chat-ai-banner"
+              iconClassName="bg-kpi-purple text-kpi-purple-fg"
             />
           </div>
         )}
