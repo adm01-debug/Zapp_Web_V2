@@ -65,7 +65,7 @@ test('Inbox authorization migration has caller-bound and post-apply contracts', 
 test('message delivery phase 1 has strict absent/applied runtime contracts', () => {
   assert.match(
     workflow,
-    /20260909220000\|20260909240000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
+    /20260909220000\|20260909240000\|20260909250000\|20260909260000\|20260909270000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
   );
   assert.match(workflow, /TARGET_VERSION === '20260909220000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909220000'/);
@@ -88,6 +88,11 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
   assert.match(workflow, /proof\.service_delivery_direct_count === 3/);
   assert.match(workflow, /TARGET_VERSION === '20260909240000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909240000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909250000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909260000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909270000'/);
+  assert.match(workflow, /proof\.authenticated_rich_enqueue_effective === true/);
+  assert.match(workflow, /proof\.service_rich_enqueue_effective === false/);
   assert.match(workflow, /proof\.service_internal_guard_execute === false/);
   assert.match(workflow, /proof\.service_internal_guard_direct_count === 0/);
   assert.match(
