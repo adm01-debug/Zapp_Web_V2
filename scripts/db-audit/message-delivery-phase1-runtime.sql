@@ -270,6 +270,15 @@ WITH expected_functions AS (
     'authenticated_internal_guard_execute', COALESCE((SELECT bool_or(
       has_function_privilege('authenticated', oid, 'EXECUTE')
     ) FROM expected_functions WHERE proname LIKE 'guard_%'), false),
+    'service_internal_guard_execute', COALESCE((SELECT bool_or(
+      has_function_privilege('service_role', oid, 'EXECUTE')
+    ) FROM expected_functions WHERE proname LIKE 'guard_%'), false),
+    'service_internal_guard_direct_count', (
+      SELECT count(DISTINCT proname) FROM expected_function_acl
+      WHERE proname LIKE 'guard_%'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
     'anon_any_execute', COALESCE((SELECT bool_or(
       has_function_privilege('anon', oid, 'EXECUTE')
     ) FROM expected_functions), false),
