@@ -71,9 +71,7 @@ jobs:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
       - name: Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+        run: bash scripts/ci/install-postgresql-client.sh
 
       - name: Provar identidade e validar confirmacoes
         env:
@@ -436,6 +434,10 @@ jobs:
                   'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
                 ))::text FROM payload;")
               ;;
+            20260909200000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+                -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -526,6 +528,31 @@ jobs:
                 && proof.legacy_token_count === 0
                 && proof.constraint_count === 1
                 && proof.validated_constraint_count === 1;
+          } else if (process.env.TARGET_VERSION === '20260909200000') {
+            const base = proof.note_table_count === 1
+              && proof.function_count === 4
+              && proof.note_rls_enabled === true
+              && Number.isInteger(proof.policy_count)
+              && proof.policy_count >= 0;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? base
+              : base
+                && proof.safe_function_count === 4
+                && proof.definition_sha256 === '55078d2e365413bea0b93777ec63e70063def445760d0ae8f516670b86070771'
+                && proof.caller_bound_count === 3
+                && proof.rpc_authorized_count === 1
+                && proof.policy_count === 4
+                && proof.policy_signature_count === 4
+                && proof.identity_trigger_count === 1
+                && proof.authenticated_api_execute_count === 4
+                && proof.anon_api_execute_count === 0
+                && proof.guard_authenticated_execute === false
+                && proof.guard_anon_execute === false
+                && proof.anon_note_access === false
+                && proof.authenticated_note_crud === true
+                && proof.authenticated_note_extra === false
+                && proof.service_note_crud === true
+                && proof.service_note_extra === false;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -823,6 +850,42 @@ jobs:
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RESULT_JSON);
           if (proof.legacy_token_count !== 0 || proof.constraint_count !== 1) process.exit(1);
+          NODE
+
+      - name: Validar autorizacao canonica do Inbox
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909200000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && proof.function_count === 4
+            && proof.safe_function_count === 4
+            && proof.definition_sha256 === '55078d2e365413bea0b93777ec63e70063def445760d0ae8f516670b86070771'
+            && proof.note_rls_enabled === true
+            && proof.caller_bound_count === 3
+            && proof.rpc_authorized_count === 1
+            && proof.policy_count === 4
+            && proof.policy_signature_count === 4
+            && proof.identity_trigger_count === 1
+            && proof.authenticated_api_execute_count === 4
+            && proof.anon_api_execute_count === 0
+            && proof.guard_authenticated_execute === false
+            && proof.guard_anon_execute === false
+            && proof.anon_note_access === false
+            && proof.authenticated_note_crud === true
+            && proof.authenticated_note_extra === false
+            && proof.service_note_crud === true
+            && proof.service_note_extra === false;
+          if (!ok) process.exit(1);
           NODE
 
       - name: Provar paridade integral apos aplicacao

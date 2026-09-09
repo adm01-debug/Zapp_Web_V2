@@ -31,11 +31,18 @@ command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
-for _ in $(seq 1 60); do
-  if psql_sql 'SELECT 1' >/dev/null 2>&1; then break; fi
+postgres_ready=false
+for _ in $(seq 1 90); do
+  ready_markers="$(docker logs "$container_name" 2>&1 \
+    | grep -c 'database system is ready to accept connections' || true)"
+  if [[ "$ready_markers" -ge 2 ]] \
+    && psql_sql 'SELECT 1' >/dev/null 2>&1; then
+    postgres_ready=true
+    break
+  fi
   sleep 1
 done
-psql_sql 'SELECT 1' >/dev/null 2>&1 || fail "PostgreSQL descartavel nao ficou pronto"
+[[ "$postgres_ready" == true ]] || fail "PostgreSQL descartavel nao ficou pronto"
 
 psql_sql "
   CREATE TABLE public.global_settings (

@@ -45,9 +45,7 @@ jobs:
           node-version: '24'
 
       - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+        run: bash scripts/ci/install-postgresql-client.sh
 
       - name: Confirmar identidade do banco oficial
         env:
