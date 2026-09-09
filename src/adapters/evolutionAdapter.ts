@@ -3,7 +3,11 @@
  * into the frontend's Message and Conversation types
  */
 import type { EvolutionMessage, DerivedContact } from '@/types/evolutionExternal';
-import type { RealtimeMessage, ConversationContact, ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import type {
+  RealtimeMessage,
+  ConversationContact,
+  ConversationWithMessages,
+} from '@/hooks/chat/useRealtimeMessages';
 
 /**
  * Extract phone number from remote_jid (e.g. "5511999990001@s.whatsapp.net" → "5511999990001")
@@ -39,6 +43,13 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessa
     is_deleted: evo.deleted_at != null,
     audio_meme_id: null,
     caption: evo.caption ?? null,
+    client_message_id: null,
+    delivery_attempt_count: 0,
+    delivery_claim_expires_at: null,
+    delivery_claim_token: null,
+    delivery_claimed_at: null,
+    delivery_claimed_by: null,
+    delivery_last_claim_token: null,
     link_preview: null,
     media_filename: null,
     media_mimetype: null,
@@ -165,7 +176,9 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
 /**
  * Build ConversationWithMessages from evolution messages grouped by remote_jid
  */
-export function buildExternalConversations(messages: EvolutionMessage[]): ConversationWithMessages[] {
+export function buildExternalConversations(
+  messages: EvolutionMessage[]
+): ConversationWithMessages[] {
   const derivedContacts = deriveContactsFromMessages(messages);
   const messagesByJid = new Map<string, EvolutionMessage[]>();
 
@@ -182,9 +195,10 @@ export function buildExternalConversations(messages: EvolutionMessage[]): Conver
     const realtimeMessages = evoMessages
       .map(evolutionToRealtimeMessage)
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    
-    const unreadCount = realtimeMessages.filter(m => !m.is_read && m.sender === 'contact').length;
-    const lastMessage = realtimeMessages.length > 0 ? realtimeMessages[realtimeMessages.length - 1] : null;
+
+    const unreadCount = realtimeMessages.filter((m) => !m.is_read && m.sender === 'contact').length;
+    const lastMessage =
+      realtimeMessages.length > 0 ? realtimeMessages[realtimeMessages.length - 1] : null;
 
     return { contact, messages: realtimeMessages, unreadCount, lastMessage };
   });

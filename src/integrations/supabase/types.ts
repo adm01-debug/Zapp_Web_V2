@@ -2031,6 +2031,7 @@ export type Database = {
       conversation_closures: {
         Row: {
           classification: string | null
+          client_request_id: string | null
           close_reason: string
           closed_by: string | null
           contact_id: string
@@ -2041,6 +2042,7 @@ export type Database = {
         }
         Insert: {
           classification?: string | null
+          client_request_id?: string | null
           close_reason: string
           closed_by?: string | null
           contact_id: string
@@ -2051,6 +2053,7 @@ export type Database = {
         }
         Update: {
           classification?: string | null
+          client_request_id?: string | null
           close_reason?: string
           closed_by?: string | null
           contact_id?: string
@@ -2085,6 +2088,7 @@ export type Database = {
       }
       conversation_events: {
         Row: {
+          closure_id: string | null
           contact_id: string
           created_at: string
           event_type: string
@@ -2097,6 +2101,7 @@ export type Database = {
           to_queue_id: string | null
         }
         Insert: {
+          closure_id?: string | null
           contact_id: string
           created_at?: string
           event_type: string
@@ -2109,6 +2114,7 @@ export type Database = {
           to_queue_id?: string | null
         }
         Update: {
+          closure_id?: string | null
           contact_id?: string
           created_at?: string
           event_type?: string
@@ -2121,6 +2127,13 @@ export type Database = {
           to_queue_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "conversation_events_closure_id_fkey"
+            columns: ["closure_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_closures"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversation_events_contact_id_fkey"
             columns: ["contact_id"]
@@ -3961,9 +3974,16 @@ export type Database = {
           caption: string | null
           channel_connection_id: string | null
           channel_type: string | null
+          client_message_id: string | null
           contact_id: string | null
           content: string
           created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
           external_id: string | null
           id: string
           is_deleted: boolean | null
@@ -3993,9 +4013,16 @@ export type Database = {
           caption?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
+          client_message_id?: string | null
           contact_id?: string | null
           content: string
           created_at?: string
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          delivery_last_claim_token?: string | null
           external_id?: string | null
           id?: string
           is_deleted?: boolean | null
@@ -4025,9 +4052,16 @@ export type Database = {
           caption?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
+          client_message_id?: string | null
           contact_id?: string | null
           content?: string
           created_at?: string
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          delivery_last_claim_token?: string | null
           external_id?: string | null
           id?: string
           is_deleted?: boolean | null
@@ -5968,29 +6002,47 @@ export type Database = {
         Row: {
           blocked_by: string | null
           campaign_id: string | null
-          contact_id: string
+          contact_id: string | null
           created_at: string
+          expires_at: string | null
           id: string
           origin: string
+          phone: string | null
           reason: string | null
+          reason_code:
+            | Database["public"]["Enums"]["talkx_blacklist_reason"]
+            | null
+          source_message_id: string | null
         }
         Insert: {
           blocked_by?: string | null
           campaign_id?: string | null
-          contact_id: string
+          contact_id?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           origin?: string
+          phone?: string | null
           reason?: string | null
+          reason_code?:
+            | Database["public"]["Enums"]["talkx_blacklist_reason"]
+            | null
+          source_message_id?: string | null
         }
         Update: {
           blocked_by?: string | null
           campaign_id?: string | null
-          contact_id?: string
+          contact_id?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           origin?: string
+          phone?: string | null
           reason?: string | null
+          reason_code?:
+            | Database["public"]["Enums"]["talkx_blacklist_reason"]
+            | null
+          source_message_id?: string | null
         }
         Relationships: [
           {
@@ -6019,6 +6071,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: true
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -8103,6 +8162,34 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_outbound_message: {
+        Args: {
+          p_agent_id: string
+          p_lease_seconds?: number
+          p_message_id: string
+          p_worker: string
+        }
+        Returns: {
+          agent_id: string
+          caption: string
+          claim_expires_at: string
+          claim_token: string
+          client_message_id: string
+          contact_id: string
+          contact_phone: string
+          content: string
+          delivery_attempt_count: number
+          media_filename: string
+          media_mimetype: string
+          media_url: string
+          message_id: string
+          message_type: string
+          reply_external_id: string
+          reply_to_id: string
+          whatsapp_connection_id: string
+          whatsapp_instance_name: string
+        }[]
+      }
       cleanup_crm_sync_outbox: {
         Args: {
           p_dead_letter_days?: number
@@ -8122,6 +8209,23 @@ export type Database = {
         }[]
       }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
+      close_conversation_atomic: {
+        Args: {
+          p_classification?: string
+          p_client_request_id: string
+          p_close_reason: string
+          p_contact_id: string
+          p_notes?: string
+          p_outcome?: string
+        }
+        Returns: {
+          closure_id: string
+          contact_id: string
+          conversation_status: string
+          conversation_status_changed_at: string
+          event_id: string
+        }[]
+      }
       complete_crm_sync_outbox: {
         Args: {
           p_company_id: string
@@ -8131,6 +8235,59 @@ export type Database = {
           p_lease_token: string
         }
         Returns: undefined
+      }
+      complete_outbound_message: {
+        Args: {
+          p_claim_token: string
+          p_delivery_status?: string
+          p_external_id: string
+          p_message_id: string
+        }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
@@ -8152,9 +8309,117 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
+      enqueue_outbound_message: {
+        Args: {
+          p_client_message_id: string
+          p_contact_id: string
+          p_content: string
+          p_media_url?: string
+          p_message_type?: string
+          p_reply_to_id?: string
+          p_whatsapp_connection_id?: string
+        }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       fail_crm_sync_outbox: {
         Args: { p_error_code: string; p_id: string; p_lease_token: string }
         Returns: undefined
+      }
+      fail_outbound_message: {
+        Args: {
+          p_claim_token: string
+          p_message_id: string
+          p_retryable?: boolean
+        }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       fn_list_audio_meme_categories: {
         Args: never
@@ -8546,6 +8811,13 @@ export type Database = {
         | "google_calendar"
         | "google_drive"
         | "dropbox"
+      talkx_blacklist_reason:
+        | "opt_out"
+        | "invalid_number"
+        | "manual"
+        | "lgpd"
+        | "no_commercial_permission"
+        | "bounce"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8695,6 +8967,14 @@ export const Constants = {
         "google_calendar",
         "google_drive",
         "dropbox",
+      ],
+      talkx_blacklist_reason: [
+        "opt_out",
+        "invalid_number",
+        "manual",
+        "lgpd",
+        "no_commercial_permission",
+        "bounce",
       ],
     },
   },
