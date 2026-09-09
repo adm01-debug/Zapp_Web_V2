@@ -146,7 +146,9 @@ INSERT INTO public.contacts(id,phone,assigned_to,queue_id,whatsapp_connection_id
  ('50000000-0000-0000-0000-000000000001','5511999990001','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001'),
  ('50000000-0000-0000-0000-000000000002','5511999990002','10000000-0000-0000-0000-000000000002',NULL,'40000000-0000-0000-0000-000000000001'),
  ('50000000-0000-0000-0000-000000000003','5511999990003',NULL,'30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001'),
- ('50000000-0000-0000-0000-000000000004','5511999990004',NULL,NULL,'40000000-0000-0000-0000-000000000002');
+ ('50000000-0000-0000-0000-000000000004','5511999990004',NULL,NULL,'40000000-0000-0000-0000-000000000002'),
+ ('50000000-0000-0000-0000-000000000005','5511999990005','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001'),
+ ('50000000-0000-0000-0000-000000000006','5511999990006','10000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000001');
 SQL
 
 psql_test < "$repo_root/supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql" >/dev/null
@@ -165,6 +167,7 @@ agent_two="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.c
 inactive="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000004',true);"
 service_role="BEGIN; SET LOCAL ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',true);"
 
+expect_failure 'messages_delivery_claim_state' "$service_role INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status,delivery_claim_token,delivery_claimed_at,delivery_claim_expires_at,delivery_attempt_count) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','malformed-lease','text','sending',gen_random_uuid(),statement_timestamp(),statement_timestamp()+interval '90 seconds',1); COMMIT;"
 expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one INSERT INTO public.messages(contact_id,client_message_id,agent_id,sender,content,message_type,status) VALUES ('50000000-0000-0000-0000-000000000001',gen_random_uuid(),'10000000-0000-0000-0000-000000000001','agent','forged','text','sending'); COMMIT;"
 expect_failure 'closure_request_id_internal_field_forbidden' "$agent_one INSERT INTO public.conversation_closures(contact_id,closed_by,close_reason,client_request_id) VALUES ('50000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','resolved',gen_random_uuid()); COMMIT;"
 expect_failure 'event_closure_id_internal_field_forbidden' "$agent_one INSERT INTO public.conversation_events(contact_id,event_type,performed_by,closure_id) VALUES ('50000000-0000-0000-0000-000000000001','close','10000000-0000-0000-0000-000000000001',gen_random_uuid()); COMMIT;"
@@ -434,6 +437,39 @@ grep -Fx 'compatibility=ok' <<<"$compatibility" >/dev/null || fail 'compatibilid
 # Real concurrency in independent sessions: enqueue converges to one row, only
 # one worker gets the lease, and duplicate closes converge to one closure/event.
 concurrency_dir="$(mktemp -d /tmp/zapp-message-phase1.XXXXXX)"
+
+# Authorization is rechecked only after the contact lock is acquired. Both
+# calls start with visibility, block behind a concurrent reassignment, then
+# must observe the revoked assignment and leave no partial write.
+revoker_sql="BEGIN; SET LOCAL application_name='zapp-auth-revoker'; UPDATE public.contacts SET assigned_to='10000000-0000-0000-0000-000000000002' WHERE id IN ('50000000-0000-0000-0000-000000000005','50000000-0000-0000-0000-000000000006'); SELECT pg_sleep(2); COMMIT;"
+psql_test -qAtc "$revoker_sql" >"$concurrency_dir/revoker" 2>"$concurrency_dir/revoker.err" & revoker_pid=$!
+revoker_ready=false
+for _ in $(seq 1 100); do
+  if [ "$(psql_test -Atqc "SELECT count(*) FROM pg_stat_activity WHERE application_name='zapp-auth-revoker' AND wait_event='PgSleep'")" = 1 ]; then
+    revoker_ready=true
+    break
+  fi
+  sleep 0.02
+done
+[ "$revoker_ready" = true ] || fail 'reassign concorrente nao adquiriu os locks'
+set +e
+psql_test -v VERBOSITY=verbose -c "$agent_one SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000005','60000000-0000-0000-0000-000000000098','revoked','text',NULL,NULL,NULL); COMMIT;" >"$concurrency_dir/revoked-enqueue" 2>"$concurrency_dir/revoked-enqueue.err" & revoked_enqueue_pid=$!
+psql_test -v VERBOSITY=verbose -c "$agent_one SELECT * FROM public.close_conversation_atomic('50000000-0000-0000-0000-000000000006','70000000-0000-0000-0000-000000000098','resolved',NULL,NULL,NULL); COMMIT;" >"$concurrency_dir/revoked-close" 2>"$concurrency_dir/revoked-close.err" & revoked_close_pid=$!
+wait "$revoker_pid"; revoker_status=$?
+wait "$revoked_enqueue_pid"; revoked_enqueue_status=$?
+wait "$revoked_close_pid"; revoked_close_status=$?
+set -e
+[ "$revoker_status" -eq 0 ] || fail 'reassign concorrente falhou'
+[ "$revoked_enqueue_status" -ne 0 ] \
+  && grep -q 'message_contact_not_authorized' "$concurrency_dir/revoked-enqueue.err" \
+  || fail 'enqueue aceitou autorizacao revogada durante espera por lock'
+[ "$revoked_close_status" -ne 0 ] \
+  && grep -q 'contact_not_authorized' "$concurrency_dir/revoked-close.err" \
+  || fail 'close aceitou autorizacao revogada durante espera por lock'
+revocation_proof="$(psql_test -Atqc "SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-000000000098') AND NOT EXISTS(SELECT 1 FROM public.conversation_closures WHERE client_request_id='70000000-0000-0000-0000-000000000098') AND (SELECT conversation_status='open' FROM public.contacts WHERE id='50000000-0000-0000-0000-000000000006') THEN 'revocation-race=ok' ELSE 'revocation-race=fail' END")"
+[ "$revocation_proof" = 'revocation-race=ok' ] \
+  || fail 'reassign concorrente deixou escrita parcial'
+
 enqueue_sql="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.role','authenticated',true); SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT (public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000099','concurrent','text',NULL,NULL,NULL)).id; COMMIT;"
 set +e
 psql_test -qAtc "$enqueue_sql" >"$concurrency_dir/enqueue-1" 2>"$concurrency_dir/enqueue-1.err" & pid_1=$!
@@ -500,8 +536,8 @@ const ok = proof.server_major === 17
   && proof.anon_any_execute === false
   && proof.service_delivery_count === 3
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === '3891f505b00daf3049d9de0753f4201f95d739f2fcdfb6354ed26bb67d3122a9'
-  && proof.constraint_definition_sha256 === 'e0d16c992513b40596c32e39cc9be2515a1e67ce8a316d1c5a5cc47716952486'
+  && proof.definition_sha256 === '14d530ff27e7ed1ec197efd2ccfed867a6f2143ccf553920ed53ffe41996899a'
+  && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 ?? '');

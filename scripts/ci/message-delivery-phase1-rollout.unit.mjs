@@ -15,6 +15,13 @@ const dbGuard = readFileSync(
   new URL('../../.github/workflows/db-guard.yml', import.meta.url),
   'utf8',
 );
+const enqueueBody = migration.slice(
+  migration.indexOf('CREATE OR REPLACE FUNCTION public.enqueue_outbound_message'),
+  migration.indexOf('CREATE OR REPLACE FUNCTION public.claim_outbound_message'),
+);
+const closeBody = migration.slice(
+  migration.indexOf('CREATE OR REPLACE FUNCTION public.close_conversation_atomic'),
+);
 
 test('message delivery phase 1 remains additive and deployment-order safe', () => {
   assert.doesNotMatch(executableMigration, /DROP\s+POLICY/i);
@@ -23,14 +30,28 @@ test('message delivery phase 1 remains additive and deployment-order safe', () =
   assert.match(migration, /SET LOCAL lock_timeout = '5s'/);
   assert.match(migration, /SET LOCAL statement_timeout = '120s'/);
   assert.match(migration, /ADD COLUMN delivery_last_claim_token uuid/);
+  assert.match(migration, /AND delivery_claimed_by IS NOT NULL/);
   assert.match(migration, /CREATE TRIGGER trg_guard_message_delivery_internal_fields/);
   assert.match(migration, /CREATE TRIGGER trg_guard_conversation_closure_request_id/);
   assert.match(migration, /CREATE TRIGGER trg_guard_conversation_event_closure_id/);
   assert.match(migration, /current_user IN \('postgres', 'service_role'\)/);
   assert.match(migration, /delivery_last_claim_token = p_claim_token/);
+  assert.match(migration, /p_lease_seconds IS NULL/);
+  assert.match(migration, /p_delivery_status IS NULL/);
+  assert.match(migration, /p_close_reason IS NULL/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.enqueue_outbound_message/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.claim_outbound_message/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.close_conversation_atomic/);
+  assert.ok(
+    enqueueBody.indexOf('FOR SHARE') <
+      enqueueBody.indexOf('public.is_contact_visible_to_user'),
+    'enqueue must lock the contact before evaluating visibility',
+  );
+  assert.ok(
+    closeBody.indexOf('FOR UPDATE') <
+      closeBody.indexOf('public.is_contact_visible_to_user'),
+    'close must lock the contact before evaluating visibility',
+  );
 });
 
 test('offline DB guard executes the PostgreSQL 17 behavioral harness', () => {

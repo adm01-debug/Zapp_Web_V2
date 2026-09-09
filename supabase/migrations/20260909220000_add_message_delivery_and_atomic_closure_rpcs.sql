@@ -30,6 +30,7 @@ ALTER TABLE public.messages
       (delivery_claim_token IS NOT NULL
         AND delivery_claimed_at IS NOT NULL
         AND delivery_claim_expires_at IS NOT NULL
+        AND delivery_claimed_by IS NOT NULL
         AND delivery_claim_expires_at > delivery_claimed_at
         AND length(delivery_claimed_by) BETWEEN 1 AND 100)
     ) NOT VALID;
@@ -182,14 +183,6 @@ BEGIN
     RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
   END IF;
 
-  SELECT profile.id INTO v_profile_id
-  FROM public.profiles AS profile
-  WHERE profile.user_id = auth.uid() AND profile.is_active = true
-  LIMIT 1;
-  IF v_profile_id IS NULL THEN
-    RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
-  END IF;
-
   IF p_contact_id IS NULL OR p_client_message_id IS NULL
      OR p_content IS NULL OR length(p_content) > 65536
      OR v_message_type NOT IN ('text', 'image', 'audio', 'video', 'document', 'sticker')
@@ -198,16 +191,23 @@ BEGIN
      OR (v_message_type <> 'text' AND p_media_url IS NULL) THEN
     RAISE EXCEPTION 'invalid_outbound_message' USING ERRCODE = '22023';
   END IF;
-  IF public.is_contact_visible_to_user(p_contact_id, auth.uid()) IS NOT TRUE THEN
-    RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
-  END IF;
-
   SELECT contact.whatsapp_connection_id INTO v_connection_id
   FROM public.contacts AS contact
   WHERE contact.id = p_contact_id
   FOR SHARE;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'contact_not_found' USING ERRCODE = 'P0002';
+    RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
+  END IF;
+  SELECT profile.id INTO v_profile_id
+  FROM public.profiles AS profile
+  WHERE profile.user_id = auth.uid() AND profile.is_active = true
+  LIMIT 1
+  FOR SHARE;
+  IF v_profile_id IS NULL THEN
+    RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
+  END IF;
+  IF public.is_contact_visible_to_user(p_contact_id, auth.uid()) IS NOT TRUE THEN
+    RAISE EXCEPTION 'message_contact_not_authorized' USING ERRCODE = '42501';
   END IF;
   IF p_whatsapp_connection_id IS NOT NULL
      AND p_whatsapp_connection_id IS DISTINCT FROM v_connection_id THEN
@@ -521,25 +521,32 @@ BEGIN
     RAISE EXCEPTION 'invalid_conversation_closure' USING ERRCODE = '22023';
   END IF;
 
-  IF v_role = 'authenticated' THEN
-    IF auth.uid() IS NULL
-       OR public.is_contact_visible_to_user(p_contact_id, auth.uid()) IS NOT TRUE THEN
-      RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
-    END IF;
-    SELECT profile.id INTO v_profile_id
-    FROM public.profiles AS profile
-    WHERE profile.user_id = auth.uid() AND profile.is_active = true
-    LIMIT 1;
-    IF v_profile_id IS NULL THEN
-      RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
-    END IF;
+  IF v_role = 'authenticated' AND auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
   END IF;
 
   SELECT contact.conversation_status INTO v_current_status
   FROM public.contacts AS contact
   WHERE contact.id = p_contact_id FOR UPDATE;
   IF NOT FOUND THEN
+    IF v_role = 'authenticated' THEN
+      RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
+    END IF;
     RAISE EXCEPTION 'contact_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_role = 'authenticated' THEN
+    SELECT profile.id INTO v_profile_id
+    FROM public.profiles AS profile
+    WHERE profile.user_id = auth.uid() AND profile.is_active = true
+    LIMIT 1
+    FOR SHARE;
+    IF v_profile_id IS NULL THEN
+      RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
+    END IF;
+    IF public.is_contact_visible_to_user(p_contact_id, auth.uid()) IS NOT TRUE THEN
+      RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
+    END IF;
   END IF;
 
   SELECT * INTO v_existing

@@ -687,8 +687,8 @@ jobs:
               && proof.function_name_collision_count === 0
               && proof.trigger_name_collision_count === 0
               && proof.constraint_name_collision_count === 0
-              && proof.definition_sha256 === '3891f505b00daf3049d9de0753f4201f95d739f2fcdfb6354ed26bb67d3122a9'
-              && proof.constraint_definition_sha256 === 'e0d16c992513b40596c32e39cc9be2515a1e67ce8a316d1c5a5cc47716952486'
+              && proof.definition_sha256 === '14d530ff27e7ed1ec197efd2ccfed867a6f2143ccf553920ed53ffe41996899a'
+              && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
               && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
               && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
               && proof.authenticated_enqueue === true
@@ -1116,8 +1116,8 @@ jobs:
             && proof.function_name_collision_count === 0
             && proof.trigger_name_collision_count === 0
             && proof.constraint_name_collision_count === 0
-            && proof.definition_sha256 === '3891f505b00daf3049d9de0753f4201f95d739f2fcdfb6354ed26bb67d3122a9'
-            && proof.constraint_definition_sha256 === 'e0d16c992513b40596c32e39cc9be2515a1e67ce8a316d1c5a5cc47716952486'
+            && proof.definition_sha256 === '14d530ff27e7ed1ec197efd2ccfed867a6f2143ccf553920ed53ffe41996899a'
+            && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
             && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
             && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
             && proof.authenticated_enqueue === true

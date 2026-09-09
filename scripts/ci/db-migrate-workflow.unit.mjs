@@ -76,11 +76,11 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
   assert.match(workflow, /proof\.service_delivery_count === 3/);
   assert.match(
     workflow,
-    /definition_sha256 === '3891f505b00daf3049d9de0753f4201f95d739f2fcdfb6354ed26bb67d3122a9'/
+    /definition_sha256 === '14d530ff27e7ed1ec197efd2ccfed867a6f2143ccf553920ed53ffe41996899a'/
   );
   assert.match(
     workflow,
-    /constraint_definition_sha256 === 'e0d16c992513b40596c32e39cc9be2515a1e67ce8a316d1c5a5cc47716952486'/
+    /constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'/
   );
   assert.match(
     workflow,
