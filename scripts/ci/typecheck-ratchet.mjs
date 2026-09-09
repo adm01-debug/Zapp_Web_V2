@@ -237,8 +237,9 @@ function runTsc(root) {
   });
 
   if (result.error) throw result.error;
-  // tsc -b sai com 1 quando ha erro de tipo (esperado), 2 em erro de config/CLI.
-  if (result.status !== 0 && result.status !== 1) {
+  // tsc -b retorna 0 (sem erros), 1 (erros+emit) ou 2 (erros+noEmit/allowImportingTsExtensions).
+  // Todos sao validos e processados pelo ratchet; outros codigos indicam falha de CLI.
+  if (result.status !== 0 && result.status !== 1 && result.status !== 2) {
     throw new Error(`tsc -b falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)}`);
   }
 

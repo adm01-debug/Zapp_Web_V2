@@ -1,22 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, Upload, Lightbulb, LayoutList, LayoutGrid, MessageSquare, BarChart3, Filter,
+  FileText, Bookmark, Upload, MessageSquare, BarChart3, Filter, Download,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
-import { ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
-import { cn } from '@/lib/utils';
+import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
+import { exportCampaignsCsv } from '@/lib/talkxExport';
 import {
-  CAMPAIGN_STATUS, FilterBar, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile, TalkXEmptyState, TalkXSkeletonRows,
+  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
+  TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
+
+const STORAGE_KEY = 'talkx.overview.filters';
+function loadFilters() {
+  try { const s = sessionStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
 
 interface Props {
   campaigns: TalkXCampaign[];
@@ -37,18 +39,40 @@ interface Props {
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
 export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+  const saved = useMemo(() => loadFilters(), []);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('all');
-  const [objective, setObjective] = useState('all');
-  const [segment, setSegment] = useState('all');
-  const [creator, setCreator] = useState('all');
+  const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
+  const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
+  const [segment, setSegment] = useState<string>(() => saved?.segment ?? 'all');
+  const [creator, setCreator] = useState<string>(() => saved?.creator ?? 'all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState<{ kind: 'delete' | 'cancel' | 'start'; c: TalkXCampaign } | null>(null);
 
+  React.useEffect(() => {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ status, objective, segment, creator })); } catch { /* ignore */ }
+  }, [status, objective, segment, creator]);
+
   const segmentName = (id?: string | null) => segments.find((s) => s.id === id)?.name;
+
+  const filterValues = useMemo(() => ({ status, objective, segment, creator }), [status, objective, segment, creator]);
+  const handleFilter = (key: string, val: string) => {
+    if (key === 'status') { setStatus(val); setPage(1); }
+    else if (key === 'objective') { setObjective(val); setPage(1); }
+    else if (key === 'segment') { setSegment(val); setPage(1); }
+    else if (key === 'creator') { setCreator(val); setPage(1); }
+  };
+  const hasActive = status !== 'all' || objective !== 'all' || segment !== 'all' || creator !== 'all' || search.trim() !== '';
+  const clear = () => { setSearch(''); setStatus('all'); setObjective('all'); setSegment('all'); setCreator('all'); setPage(1); };
+
+  const filterDefs = useMemo(() => [
+    { key: 'status',    label: 'Todos os status',    options: Object.entries(CAMPAIGN_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
+    { key: 'objective', label: 'Todos os objetivos', options: OBJECTIVES.map((o) => ({ value: o.value, label: o.label })) },
+    { key: 'segment',   label: 'Todos os segmentos', options: [{ value: 'manual', label: 'Seleção manual' }, ...segments.map((s) => ({ value: s.id, label: s.name }))] },
+    { key: 'creator',   label: 'Todos os criadores', options: Object.entries(creators).map(([id, n]) => ({ value: id, label: n })) },
+  ], [segments, creators]);
 
   const filtered = useMemo(() => {
     let r = campaigns;
@@ -64,18 +88,16 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
   }, [campaigns, status, objective, segment, creator, search]);
 
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const clear = () => { setSearch(''); setStatus('all'); setObjective('all'); setSegment('all'); setCreator('all'); setPage(1); };
 
   const totals = useMemo(() => {
     const sent = campaigns.reduce((a, c) => a + c.sent_count, 0);
     const failed = campaigns.reduce((a, c) => a + c.failed_count, 0);
-    const reached = sent;
     return {
       total: campaigns.length,
       active: campaigns.filter((c) => c.status === 'sending' || c.status === 'paused').length,
       completed: campaigns.filter((c) => c.status === 'completed').length,
       successRate: sent + failed > 0 ? Math.round((sent / (sent + failed)) * 1000) / 10 : null,
-      reached,
+      reached: sent,
       bars: barsByDay(campaigns.map((c) => c.created_at)),
       barsCompleted: barsByDay(campaigns.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
     };
@@ -85,42 +107,40 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
 
   const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
 
-  const act = () => {
-    if (!confirm) return;
-    if (confirm.kind === 'delete') onDelete(confirm.c.id);
-    if (confirm.kind === 'cancel') onCancel(confirm.c.id);
-    if (confirm.kind === 'start') onStart(confirm.c.id);
-    setConfirm(null);
-  };
-
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Total de campanhas" value={String(totals.total)} delta={null} tile="blue" icon={Users} bars={totals.bars} barsColor="blue" />
-          <DashboardKpiCard size="hero" index={1} label="Em andamento" value={String(totals.active)} delta={totals.active > 0 ? { text: 'enviando agora', tone: 'success' } : null} tile="blue" icon={Play} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="Concluídas" value={String(totals.completed)} delta={null} tile="green" icon={CheckCircle2} bars={totals.barsCompleted} barsColor="green" />
-          <DashboardKpiCard size="hero" index={3} label="Taxa de sucesso" value={totals.successRate === null ? '—' : `${String(totals.successRate).replace('.', ',')}%`} delta={totals.successRate === null ? { text: 'sem envios ainda', tone: 'muted' } : null} tile="green" icon={Target} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="hero" index={4} label="Contatos alcançados" value={String(totals.reached)} delta={null} tile="violet" icon={Send} bars={null} barsColor="violet" chart="none" />
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">{Array.from({length:5}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)}   delta={totals.active>0?{value:totals.active,suffix:'%',tone:'up'}:undefined} />
+            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
+          </div>
+        )}
 
         {/* Filtros */}
-        <FilterBar
+        <FilterBarV2
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar campanhas…"
-          selects={[
-            { key: 'status', value: status, onChange: (v) => { setStatus(v); setPage(1); }, label: 'Todos os status', options: Object.entries(CAMPAIGN_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
-            { key: 'obj', value: objective, onChange: (v) => { setObjective(v); setPage(1); }, label: 'Todos os objetivos', options: OBJECTIVES.map((o) => ({ value: o.value, label: o.label })) },
-            { key: 'seg', value: segment, onChange: (v) => { setSegment(v); setPage(1); }, label: 'Todos os segmentos', options: [{ value: 'manual', label: 'Seleção manual' }, ...segments.map((s) => ({ value: s.id, label: s.name }))] },
-            { key: 'creator', value: creator, onChange: (v) => { setCreator(v); setPage(1); }, label: 'Todos os criadores', options: Object.entries(creators).map(([id, n]) => ({ value: id, label: n })) },
-          ]}
-          onClear={clear}
-          right={(
-            <div className="flex items-center rounded-lg border border-border/70 bg-input/40 p-0.5">
-              <button type="button" onClick={() => setLayout('list')} className={cn('h-8 w-8 rounded-md flex items-center justify-center', layout === 'list' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')} aria-label="Lista"><LayoutList className="w-4 h-4" /></button>
-              <button type="button" onClick={() => setLayout('grid')} className={cn('h-8 w-8 rounded-md flex items-center justify-center', layout === 'grid' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')} aria-label="Grade"><LayoutGrid className="w-4 h-4" /></button>
-            </div>
-          )}
+          filters={filterDefs} values={filterValues} onFilter={handleFilter}
+          hasActive={hasActive} onClear={clear}
+          view={layout} onView={setLayout}
+          rightSlot={
+            <button
+              type="button"
+              onClick={() => exportCampaignsCsv(selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered)}
+              disabled={filtered.length === 0}
+              title={selected.size > 0 ? `Exportar ${selected.size} selecionadas` : `Exportar ${filtered.length} campanhas`}
+              className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Exportar CSV"
+            >
+              <Download className="w-4 h-4 text-muted-foreground" />
+            </button>
+          }
         />
 
         {/* Tabela */}
@@ -150,7 +170,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                   {pageItems.map((c) => {
                     const done = c.sent_count + c.failed_count;
                     const progress = pct(done, c.total_recipients);
-                    const tone = c.status === 'completed' ? 'success' : c.status === 'paused' ? 'warning' : c.status === 'cancelled' ? 'danger' : 'info';
+                    const pbTone = c.status === 'completed' ? 'success' : c.status === 'paused' ? 'warning' : c.status === 'cancelled' ? 'danger' : 'info';
                     const when = c.scheduled_at ?? c.started_at ?? null;
                     return (
                       <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
@@ -172,7 +192,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                         <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
                         <Td>
                           {c.total_recipients > 0 && c.status !== 'draft' && c.status !== 'scheduled' ? (
-                            <div className="min-w-[110px]"><p className="text-[12.5px] font-semibold text-foreground mb-1">{progress}%</p><ProgressBar value={progress} tone={tone} height={6} /></div>
+                            <div className="min-w-[110px]"><p className="text-[12.5px] font-semibold text-foreground mb-1">{progress}%</p><ProgressBar value={progress} tone={pbTone} height={6} /></div>
                           ) : <span className="text-muted-foreground text-[12px]">{c.total_recipients > 0 ? '0%' : '—'}</span>}
                         </Td>
                         <Td>
@@ -212,67 +232,64 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
 
       {/* Rail */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={Zap} title="Talk X" subtitle="Campanhas que geram conversas e resultados." glow>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            {[[fmtInt(totals.reached), 'mensagens enviadas'], [totals.successRate === null ? '—' : `${String(totals.successRate).replace('.', ',')}%`, 'taxa de sucesso'], [fmtInt(segments.length), 'segmentos salvos']].map(([v, l]) => (
-              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1"><p className="text-[15px] font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary leading-tight">{l}</p></div>
-            ))}
-          </div>
-        </RailCard>
-
+        <HeroCard
+          icon={Zap} title="Talk X"
+          subtitle="Campanhas que geram conversas e resultados."
+          metrics={[
+            { label: 'Mensagens enviadas', value: fmtInt(totals.reached) },
+            { label: 'Taxa de sucesso', value: totals.successRate === null ? '—' : `${totals.successRate}%` },
+            { label: 'Segmentos salvos', value: fmtInt(segments.length) },
+          ]}
+        />
         <RailCard icon={Zap} title="Ações rápidas">
-          <div className="space-y-2">
-            <RailAction icon={Plus} title="Nova campanha" subtitle="Criar campanha do zero" onClick={onNew} />
-            <RailAction icon={FileText} color="violet" title="Usar template" subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
-            <RailAction icon={Bookmark} color="green" title="Criar segmento" subtitle="Definir público-alvo" onClick={() => onGoTab('segments')} />
-            <RailAction icon={Upload} color="amber" title="Importar contatos" subtitle="Adicionar novos contatos" onClick={() => onGoTab('import')} />
+          <div className="space-y-1.5">
+            <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"          onClick={onNew} />
+            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
+            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"   onClick={() => onGoTab('segments')} />
+            <RailAction icon={Upload}   color="amber"  title="Importar contatos"  subtitle="Adicionar novos"        onClick={() => onGoTab('import')} />
           </div>
         </RailCard>
-
         <RailCard icon={BarChart3} title="Últimas campanhas" right={<VerTodasButton onClick={clear} />}>
           {latest.length === 0 ? <p className="text-[12px] text-muted-foreground">Nenhuma campanha ainda.</p> : (
-            <div className="space-y-1">
-              {latest.map((c) => {
-                const m = CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.draft;
-                const dot = { success: 'bg-dash-green', danger: 'bg-dash-red', warning: 'bg-dash-amber', info: 'bg-primary', violet: 'bg-dash-violet', muted: 'bg-muted-foreground' }[m.tone];
-                return (
-                  <button key={c.id} type="button" onClick={() => onView(c)} className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-muted/40 text-left">
-                    <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={36} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[12.5px] font-semibold text-foreground truncate">{c.name}</span>
-                      <span className="flex items-center gap-1.5 text-[11px] text-foreground-secondary"><span className={cn('w-1.5 h-1.5 rounded-full', dot)} />{m.label}{c.total_recipients > 0 && c.status !== 'draft' ? ` · ${pct(c.sent_count + c.failed_count, c.total_recipients)}%` : ''}</span>
-                    </span>
-                    <span className="text-[10.5px] text-muted-foreground shrink-0">{fmtAgo(c.updated_at)}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <RecentList items={latest.map((c) => {
+              const m = CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.draft;
+              return { id: c.id, name: c.name, statusLabel: m.label, statusTone: m.tone, pct: c.total_recipients > 0 && c.status !== 'draft' ? pct(c.sent_count+c.failed_count, c.total_recipients) : undefined, onOpen: () => onView(c) };
+            })} />
           )}
         </RailCard>
-
-        <div className="rounded-2xl border border-dash-green/30 bg-dash-green/10 p-4 flex items-start gap-3">
-          <IconTile icon={Lightbulb} color="green" size={36} />
-          <div><p className="text-[13px] font-bold text-foreground">Dica do dia</p><p className="text-[12px] text-foreground-secondary leading-snug">Segmentos com regras claras evitam opt-outs: prefira públicos menores e mensagens com {'{{nome}}'} e {'{{empresa}}'}.</p></div>
-        </div>
+        <TipCard tip="Campanhas segmentadas por ramo têm 3× mais chances de conversão." />
       </div>
 
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader>
-            <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-1', confirm?.kind === 'start' ? 'bg-primary/15 text-primary-glow' : 'bg-dash-red/15 text-dash-red')}>{confirm?.kind === 'start' ? <Play className="w-6 h-6" /> : confirm?.kind === 'cancel' ? <Square className="w-6 h-6" /> : <Trash2 className="w-6 h-6" />}</div>
-            <AlertDialogTitle>{confirm?.kind === 'start' ? 'Iniciar campanha?' : confirm?.kind === 'cancel' ? 'Cancelar campanha' : 'Excluir campanha'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirm?.kind === 'start' && <>As mensagens serão enviadas agora para <b className="text-foreground">{fmtInt(confirm.c.total_recipients)} contatos</b> de “{confirm.c.name}”. Esta ação não pode ser desfeita.</>}
-              {confirm?.kind === 'cancel' && <>Tem certeza que deseja cancelar a campanha <b className="text-foreground">“{confirm.c.name}”</b>? O envio será interrompido imediatamente e os contatos pendentes não receberão as mensagens.</>}
-              {confirm?.kind === 'delete' && <>Tem certeza que deseja excluir a campanha <b className="text-foreground">“{confirm.c.name}”</b>? Esta ação não pode ser desfeita.</>}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{confirm?.kind === 'cancel' ? 'Voltar' : 'Cancelar'}</AlertDialogCancel>
-            <AlertDialogAction onClick={act} className={cn(confirm?.kind !== 'start' && 'bg-dash-red hover:bg-dash-red/90 text-white')}>{confirm?.kind === 'start' ? 'Iniciar envio' : confirm?.kind === 'cancel' ? 'Cancelar campanha' : 'Excluir'}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* E25 — Modais de confirmação via TalkXConfirmDialog */}
+      <TalkXConfirmDialog
+        open={confirm?.kind === 'delete'}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => { if (confirm) onDelete(confirm.c.id); setConfirm(null); }}
+        icon={Trash2} iconColor="red" tone="danger"
+        title="Excluir campanha"
+        description="Esta ação não pode ser desfeita."
+        entityName={confirm?.c.name}
+        confirmLabel="Excluir campanha" cancelLabel="Cancelar"
+      />
+      <TalkXConfirmDialog
+        open={confirm?.kind === 'cancel'}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => { if (confirm) onCancel(confirm.c.id); setConfirm(null); }}
+        icon={Square} iconColor="red" tone="danger"
+        title="Cancelar campanha"
+        description="O envio será interrompido imediatamente e os contatos pendentes não receberão as mensagens."
+        entityName={confirm?.c.name}
+        confirmLabel="Cancelar campanha" cancelLabel="Voltar"
+      />
+      <TalkXConfirmDialog
+        open={confirm?.kind === 'start'}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => { if (confirm) onStart(confirm.c.id); setConfirm(null); }}
+        icon={Play} iconColor="blue" tone="primary"
+        title="Iniciar campanha?"
+        description={`As mensagens serão enviadas agora para ${fmtInt(confirm?.c.total_recipients ?? 0)} contatos. Esta ação não pode ser desfeita.`}
+        confirmLabel="Iniciar envio" cancelLabel="Cancelar"
+      />
     </div>
   );
 }
