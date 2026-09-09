@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles } from 'lucide-react';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -62,6 +62,22 @@ export function TalkXAnalytics({ campaigns }: Props) {
     ];
   }, [filtered, stats]);
   const heatmaxVal = useMemo(() => Math.max(...(hourlyData?.hourTotals ?? [0]), 1), [hourlyData]);
+
+  // Por dia da semana: soma de todas as horas de cada dia
+  const dayTotals = useMemo(() => DAY_LABELS.map((day, dw) => ({
+    name: day,
+    Envios: hourlyData ? hourlyData.heatmap[dw].reduce((a: number, b: number) => a + b, 0) : 0,
+  })), [hourlyData]);
+
+  // Melhor horário: pico no hourTotals
+  const bestHour = useMemo(() => {
+    const totals = hourlyData?.hourTotals ?? [];
+    const max = Math.max(...totals, 0);
+    if (max === 0) return null;
+    const h = totals.indexOf(max);
+    const bestDay = hourlyData ? hourlyData.heatmap.reduce((best, row, dw) => row[h] > best.count ? { dw, count: row[h] } : best, { dw: -1, count: 0 }) : null;
+    return { hour: h, day: bestDay && bestDay.dw >= 0 ? DAY_LABELS[bestDay.dw] : null, count: max };
+  }, [hourlyData]);
 
   if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
 
@@ -123,6 +139,49 @@ export function TalkXAnalytics({ campaigns }: Props) {
               );
             })}
           </div>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+        {/* Barra por dia da semana */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <IconTile icon={BarChart3} color="amber" size={36} />
+            <div><p className="text-[15px] font-bold text-foreground">Volume por dia da semana</p><p className="text-[12px] text-foreground-secondary">Total de envios por dia</p></div>
+          </div>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={dayTotals} margin={{ top: 4, right: 4, left: -25, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+              <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+              <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} />
+              <Bar dataKey="Envios" radius={[4, 4, 0, 0]}>
+                {dayTotals.map((entry) => {
+                  const max = Math.max(...dayTotals.map((d) => d.Envios), 1);
+                  const intensity = entry.Envios / max;
+                  return <Cell key={entry.name} fill={`hsl(var(--primary) / ${0.3 + intensity * 0.7})`} />;
+                })}
+                <LabelList dataKey="Envios" position="top" style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} formatter={(v) => (typeof v === 'number' && v > 0 ? String(v) : '')} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+
+        {/* Card de insight: melhor horário */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-3">
+            <IconTile icon={Sparkles} color="violet" size={36} />
+            <div><p className="text-[15px] font-bold text-foreground">Melhor horário</p><p className="text-[12px] text-foreground-secondary">Pico de entrega no período</p></div>
+          </div>
+          {bestHour ? (
+            <div className="text-center py-4">
+              <p className="text-[42px] font-bold text-foreground tabular-nums leading-none">{String(bestHour.hour).padStart(2, '0')}h</p>
+              {bestHour.day && <p className="text-[14px] text-foreground-secondary mt-1">{bestHour.day} &mdash; {bestHour.count} envios</p>}
+              <p className="text-[11.5px] text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground text-center py-6">Sem dados de envio no período selecionado.</p>
+          )}
         </section>
       </div>
 
