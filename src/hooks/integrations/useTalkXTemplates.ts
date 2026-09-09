@@ -24,6 +24,18 @@ export interface TalkXTemplate {
 
 export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
 
+
+// E49: tipo de variante A/B
+export type TemplateVariant = {
+  id: string;
+  template_id: string;
+  label: 'A' | 'B' | 'C';
+  content: string;
+  media_url: string | null;
+  media_type: string | null;
+  weight: number;
+  created_at: string;
+};
 export function useTalkXTemplates() {
   const qc = useQueryClient();
   const { profile } = useAuth();
@@ -145,6 +157,34 @@ export function useTalkXTemplates() {
     return json;
   };
 
+  // E49: busca variantes de um template
+  const fetchVariants = async (templateId: string): Promise<TemplateVariant[]> => {
+    const { data } = await supabase
+      .from('talkx_template_variants')
+      .select('id,template_id,label,content,media_url,media_type,weight,created_at')
+      .eq('template_id', templateId)
+      .order('label', { ascending: true });
+    return (data ?? []) as TemplateVariant[];
+  };
+
+  const saveVariant = async (templateId: string, variant: Omit<TemplateVariant, 'id' | 'created_at'> & { id?: string }) => {
+    const { id, ...payload } = variant;
+    if (id) {
+      const { error } = await supabase.from('talkx_template_variants').update(payload).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('talkx_template_variants').insert({ ...payload, template_id: templateId });
+      if (error) throw error;
+    }
+    invalidate();
+  };
+
+  const deleteVariant = async (variantId: string) => {
+    const { error } = await supabase.from('talkx_template_variants').delete().eq('id', variantId);
+    if (error) throw error;
+    invalidate();
+  };
+
   return {
     templates: query.data ?? [],
     isLoading: query.isLoading,
@@ -155,5 +195,8 @@ export function useTalkXTemplates() {
     testTemplate,
     fetchVersionHistory,
     saveVersionSnapshot,
+    fetchVariants,
+    saveVariant,
+    deleteVariant,
   };
 }

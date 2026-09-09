@@ -16,6 +16,23 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
+
+/** E49: sorteia variante pelo peso. Retorna null se nao houver variantes. */
+async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
+  const { data: variants } = await supabase
+    .from('talkx_template_variants')
+    .select('id,content,media_url,media_type,weight')
+    .eq('template_id', templateId);
+  if (!variants || variants.length === 0) return null;
+  const totalWeight = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const v of variants) {
+    roll -= v.weight;
+    if (roll <= 0) return v;
+  }
+  return variants[variants.length - 1];
+}
+
 function personalize(template, contact, customVars = []) {
   const firstName = (contact.name || '').split(' ')[0] || '';
   let result = template
@@ -252,9 +269,14 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const personalizedMsg = personalize(campaign.message_template, contact as { name: string; nickname?: string; company?: string });
+      // E49: sortear variante A/B se houver
+      const variant = campaign.template_id ? await pickVariant(supabase, campaign.template_id).catch(() => null) : null;
+      const contentToSend = variant?.content ?? campaign.message_template;
+      const mediaUrlToSend = variant?.media_url ?? campaign.media_url;
+      const mediaTypeToSend = variant?.media_type ?? campaign.media_type;
+      const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
       await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, status: "sending" }).eq("id", recipient.id);
+        .update({ personalized_message: personalizedMsg, status: "sending", ...(variant ? { variant_id: variant.id } : {}) }).eq("id", recipient.id);
 
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
@@ -273,7 +295,7 @@ Deno.serve(async (req) => {
 
         if (hasMedia) {
           const mediaEndpoint = getMediaEndpoint(campaign.media_type);
-          const mediaSource = await mediaForSend();
+          const mediaSource = await mediaForSend(mediaUrlToSend as string | undefined);
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
             { number: phone, mediatype: campaign.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },
