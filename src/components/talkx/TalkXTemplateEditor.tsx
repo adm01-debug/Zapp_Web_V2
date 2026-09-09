@@ -87,7 +87,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     };
     try {
       if (activeTemplateId) {
-        await saveVersionSnapshot(activeTemplateId, { name: eName, content: eContent, category: eCat, status: eStatus, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, custom_variables: eCustomVars });
+        if (eContent !== activeTemplate?.content) {
+          await saveVersionSnapshot(activeTemplateId, { name: eName, content: eContent, category: eCat, status: eStatus, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, custom_variables: eCustomVars });
+        }
         await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
       }
       else await createTemplate.mutateAsync(payload);
@@ -100,6 +102,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const loadTemplate = (t: TalkXTemplate) => {
     if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
     setActiveTemplateId(t.id);
+    setVersions([]); setShowVersions(false);
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);

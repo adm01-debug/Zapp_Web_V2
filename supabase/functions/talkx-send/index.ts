@@ -126,14 +126,19 @@ Deno.serve(async (req) => {
       const personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
       const cleanPhone = phone.replace(/\D/g, "");
       try {
+        let sendRes: Response;
         if (mediaUrl && mediaType && mediaType !== "audio") {
-          await evoFetch(evolutionUrl, evolutionKey, `/message/sendMedia/${conn.instance_id}`, {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendMedia/${conn.instance_id}`, {
             number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText,
           });
         } else {
-          await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
             number: cleanPhone, text: personalizedText,
           });
+        }
+        if (!sendRes.ok) {
+          const body = await sendRes.text().catch(() => '');
+          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
         }
         return new Response(JSON.stringify({ success: true }), { headers });
       } catch (e) {

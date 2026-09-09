@@ -121,6 +121,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
       let ok = 0, fail = 0;
       for (const row of rows) {
         if (!row.name || !row.content) { fail++; continue; }
+        if (row.content.length > 1024) { fail++; continue; }
         try {
           await createTemplate.mutateAsync({
             name: row.name,

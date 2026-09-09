@@ -77,7 +77,7 @@ export function useTalkXTemplates() {
     mutationFn: async (t: TalkXTemplate) => {
       const { error } = await fromTable('talkx_templates').insert({
         name: `${t.name} (cópia)`, description: t.description, category: t.category, content: t.content,
-        media_url: t.media_url, media_type: t.media_type, tags: t.tags, status: 'draft', created_by: profile?.id ?? null,
+        media_url: t.media_url, media_type: t.media_type, tags: t.tags, status: 'draft', created_by: profile?.id ?? null, custom_variables: t.custom_variables ?? [],
       });
       if (error) throw error;
     },

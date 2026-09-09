@@ -38,4 +38,12 @@ CREATE POLICY "talkx_template_versions_select"
 CREATE POLICY "talkx_template_versions_insert"
   ON public.talkx_template_versions FOR INSERT
   TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.talkx_templates tmpl
+      JOIN public.profiles prof ON prof.id = auth.uid()
+      WHERE tmpl.id = template_id
+        AND (tmpl.created_by = auth.uid() OR prof.role IN ('admin', 'supervisor'))
+    )
+  );
