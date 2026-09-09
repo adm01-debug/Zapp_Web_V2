@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Lightbulb, AlertTriangle, Heart, Zap, Shield, Sparkles, ChevronRight } from 'lucide-react';
 import { useContactIntelligence } from '@/hooks/crm/useContactIntelligence';
 import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 
 interface AIInsightsWidgetProps {
   contactId: string;
@@ -9,8 +10,10 @@ interface AIInsightsWidgetProps {
 
 /** Resumo compacto do ContactIntelligencePanel (mesma query, dedupada pelo React Query) — só aparece com dado real. */
 export function AIInsightsWidget({ contactId }: AIInsightsWidgetProps) {
-  const { data } = useContactIntelligence(isExternalConfigured ? contactId : undefined);
-  if (!data?.found) return null;
+  const crmEnabled = useCRMIntegrationEnabled();
+  const { data } = useContactIntelligence(crmEnabled && isExternalConfigured ? contactId : undefined);
+  // Kill switch fail-closed: sem a integracao ligada nao renderiza nem o cache do React Query.
+  if (!crmEnabled || !data?.found) return null;
 
   const items: { icon: ReactNode; text: string }[] = [];
   if (data.briefing?.opening_tip) items.push({ icon: <Lightbulb className="w-3.5 h-3.5" />, text: data.briefing.opening_tip });
