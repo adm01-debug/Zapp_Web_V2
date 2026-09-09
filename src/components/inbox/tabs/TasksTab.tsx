@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, Clock, CheckCircle2, ListTodo } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle2, ListTodo, CalendarClock, CalendarCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,6 +8,7 @@ import { useConversationTasks } from '@/hooks/chat/useConversationTasks';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { KpiStrip } from './KpiStrip';
 import { TaskCard } from './TaskCard';
+import { TaskColumn } from './TaskColumn';
 
 type AssignFilter = 'all' | 'mine' | 'others';
 
@@ -84,13 +85,13 @@ export function TasksTab({ contactId }: TasksTabProps) {
         <KpiStrip
           className="flex-1"
           cells={[
-            { icon: AlertCircle, label: 'Atrasadas', value: overdue.length, iconClassName: 'bg-destructive/15 text-destructive' },
-            { icon: Clock, label: 'Para hoje', value: today.length, iconClassName: 'bg-warning/15 text-warning' },
-            { icon: CheckCircle2, label: 'Concluídas', value: completed7d.length, iconClassName: 'bg-success/15 text-success' },
+            { icon: AlertCircle, label: 'Atrasadas', value: overdue.length, tone: 'red', sublabel: 'Requer atenção' },
+            { icon: Clock, label: 'Para hoje', value: today.length, tone: 'yellow', sublabel: 'Vencem hoje' },
+            { icon: CheckCircle2, label: 'Concluídas', value: completed7d.length, tone: 'green', sublabel: 'Últimos 7 dias' },
           ]}
         />
         <Select value={filter} onValueChange={(v) => setFilter(v as AssignFilter)}>
-          <SelectTrigger className="h-9 w-[220px] shrink-0"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-9 w-[220px] shrink-0 bg-input border-border"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as tarefas</SelectItem>
             <SelectItem value="mine">Minhas</SelectItem>
@@ -99,28 +100,18 @@ export function TasksTab({ contactId }: TasksTabProps) {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Hoje</h3><span className="text-xs text-muted-foreground">({hoje.length})</span></div>
-          <p className="text-xs text-muted-foreground capitalize">{todayLabel}</p>
-          {hoje.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa para hoje</p>
-            : hoje.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+        <TaskColumn icon={Clock} title="Hoje" count={hoje.length} subtitle={todayLabel} emptyLabel="Nenhuma tarefa para hoje">
+          {hoje.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
+        </TaskColumn>
 
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Próximas</h3><span className="text-xs text-muted-foreground">({proximas.length})</span></div>
-          {proximas.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa futura</p>
-            : proximas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
+        <TaskColumn icon={CalendarClock} title="Próximas" count={proximas.length} subtitle="Esta semana" emptyLabel="Nenhuma tarefa futura">
+          {proximas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
+        </TaskColumn>
 
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Concluídas recentes</h3><span className="text-xs text-muted-foreground">({concluidas.length})</span></div>
-          {concluidas.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa concluída nos últimos 7 dias</p>
-            : concluidas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
+        <TaskColumn icon={CalendarCheck} title="Concluídas recentes" count={concluidas.length} subtitle="Últimos 7 dias" emptyLabel="Nenhuma tarefa concluída nos últimos 7 dias">
+          {concluidas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
+        </TaskColumn>
       </div>
     </div>
   );

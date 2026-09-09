@@ -58,9 +58,24 @@ Branch: redesign/inbox-fidelidade-carvao · Base: 27c22f4d · Worktree: /workspa
   - CustomEmojiPicker reaproveitado como ícone "Smile" do input — semântica original é emoji de assinatura, não inserir emoji no texto (não existe componente dedicado a isso no código atual); handler 100% preservado, só reposicionado.
   - "Câmera" (4º ícone) e "Anexar" (chip) disparam o MESMO input oculto — não há fluxo de captura de câmera nativa distinto no código; onOpenAiAssistant/onOpenTransfer são wiring novo (Transferir já existia como `openDialog('transferDialog')`, Assistente IA é novo atalho para `setActiveTab('ia')`).
 ## CP4 Primitivos [x] sha=(commit fase 4) · testes: KpiStrip 8/8 (5 tones + default + iconClassName-priority + sublabel) · SectionCard 6/6 (default/tone/link/pill/subtitle+headerRight) · TaskCard 7/7 (atrasada/hoje/futura/concluída/toggle/delete) · consumidores atuais (TasksTab/Crm360Tab/HistoryTab/NotesTab) continuam passando sem alteração — default sem tone/variant é idêntico ao comportamento anterior (verificado via 263/263 testes verdes)
-## CP5 Abas       [ ] sha= · shots=fid-05-{tasks,notes,ia,crm,files,history,chat}.png · por aba, o que ainda difere: _ · nomes inventados=0 · cores literais=0 · bundle Δ=_
+## CP5 Abas       [x] sha=(commit fase 5) · shots=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · nomes inventados=0 (etapa 47) · cores literais novas=0 (etapa 48, ver seção própria) · bundle Δ=+5.70kB (etapa 50, ver seção própria) · vitest 227/227 (inbox) + 36/36 (hooks chat/crm)
+Por aba, o que ainda difere (código vs. referência, sem screenshot para confirmar visualmente):
+- **Tarefas**: `TaskColumn.tsx` novo criado; 3 colunas com subtitle+SectionCard; difere: banner mantém ícone 40px (spec não exige mudança aqui, só as abas 2-3).
+- **Notas**: 6 cards agora usam `SectionCard` com tone; difere: nenhuma divergência conhecida além de fontes de presença/avatar já registradas nas pendências.
+- **IA**: `AISuggestions`/`ConversationSummary`/`ObjectionDetector` são componentes filhos não reescritos nesta fase — os 4 chips de tom, badge de contagem de objeções e chip de severidade **vivem dentro desses componentes filhos** e não foram auditados/redesenhados linha a linha (risco de não bater 100% com a referência); `SectionCard` com tone aplicado no nível do card-pai. Registrado como resíduo — abrir subtarefa futura se a fidelidade exata desses 3 componentes for cobrada.
+- **CRM 360°**: já estava muito próximo da referência antes desta fase (KPIs, funil, listas, pipeline); apliquei tones e mantive.
+- **Arquivos**: grid 3 col + detalhe 260px já existiam; sem botão de filtro dedicado (não há filtro avançado real para abrir — não inventei UI sem função).
+- **Histórico**: timeline com dot/tile colorido por `event_type` já mapeado em `useConversationHistoryTimeline`; mapa completo de `event_type` → cor/ícone/badge já estava implementado antes desta fase (não precisou de novo grep, o hook já centraliza).
+- **Pedidos**: harmonizado com CRM via `SectionCard` tone blue.
+- **Chat**: banner/bolhas/input já cobertos nas fases 2-3; card de produto na mensagem **não existe** como componente dedicado no código atual — não há o que reaproveitar nem inventar, registrado como pendência honesta.
 ## CP6 QA         [ ] geometria _/N · func _/20 · mobile _ · light _
 ## CP7 Entrega    [ ] PR=_ · CI=_ · gates: tsc=_ lint=_ implicit=_ vitest=_ build=_
+
+## Etapa 50 — bundle RealtimeInboxView
+`npm run build`: `dist/assets/RealtimeInboxView-*.js` = **91.70 kB** (era 86 kB antes do branch, conforme plano). Δ = **+5.70 kB**, dentro da tolerância de +15KB da regra 50 — não precisa de justificativa adicional. Build 0 erros.
+
+## Etapa 48 — grep cores literais (0 novas)
+`grep -rnE "bg-\[#|text-\[#|hsl\(" src/components/inbox --include=*.tsx | grep -v "var(--"` retorna 5 ocorrências, todas em arquivos **não tocados neste branch** (confirmado via `git diff --stat 27c22f4d -- <arquivo>` vazio): `conversation-list/ConversationItem.tsx` (4× — é o arquivo morto documentado na Fase 1) e `chat/messageUtils.tsx:52` (1×, `text-[#53bdeb]`, ícone de verificação do WhatsApp, pré-existente). Zero cores literais novas introduzidas por este trabalho.
 
 ## Divergências plano × código
 - **§1.2/§3.1 (ConversationItem.tsx):** `conversation-list/ConversationItem.tsx` e `VirtualizedConversationList.tsx` são código morto — não importados por nenhuma tela em produção (grep confirmado). O renderer real usado por `ConversationListSidebar.tsx` é `VirtualizedRealtimeList.tsx`, que tem seu próprio `ConversationRow` inline. Decisão: aplicar a etapa 13 (item 72px, avatar 48, estrela, chips) em `VirtualizedRealtimeList.tsx`/`ConversationRow`, não no arquivo morto. `ConversationItem.tsx` fica intocado (fora do diff mínimo autorizado, mas também fora de uso — sem risco de regressão).

@@ -106,7 +106,7 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
       <div className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><Clock className="w-5 h-5" /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-foreground">Histórico da Conversa</h2>
+          <h2 className="text-xl font-bold text-foreground">Histórico da Conversa</h2>
           <p className="text-sm text-muted-foreground">Acompanhe toda a jornada de relacionamento com este contato.</p>
         </div>
         <button
@@ -120,23 +120,29 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Select value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
-          <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{PERIOD_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={type} onValueChange={(v) => setType(v as TimelineTypeFilter)}>
-          <SelectTrigger className="h-9 w-[200px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-        </Select>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground shrink-0">Período</span>
+          <Select value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
+            <SelectTrigger className="h-9 w-[180px] bg-input border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>{PERIOD_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground shrink-0">Tipo de evento</span>
+          <Select value={type} onValueChange={(v) => setType(v as TimelineTypeFilter)}>
+            <SelectTrigger className="h-9 w-[200px] bg-input border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>{TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
       </div>
 
       <KpiStrip
         cells={[
-          { icon: Activity, label: 'Total de interações', value: metrics?.total ?? '—' },
-          { icon: CalendarClock, label: 'Último contato', value: metrics?.lastContactAt ? formatRelativeTime(metrics.lastContactAt) : '—' },
-          { icon: Clock, label: 'Tempo médio de resposta', value: formatAvgResponse(metrics?.avgResponseMin ?? null) },
-          { icon: CheckCircle2, label: 'Resoluções', value: metrics?.resolutions ?? '—' },
+          { icon: Activity, label: 'Total de interações', value: metrics?.total ?? '—', tone: 'blue', sublabel: 'Mensagens, ligações e ações' },
+          { icon: CalendarClock, label: 'Último contato', value: metrics?.lastContactAt ? formatRelativeTime(metrics.lastContactAt) : '—', tone: 'green' },
+          { icon: Clock, label: 'Tempo médio de resposta', value: formatAvgResponse(metrics?.avgResponseMin ?? null), tone: 'blue' },
+          { icon: CheckCircle2, label: 'Resoluções', value: metrics?.resolutions ?? '—', tone: 'green', sublabel: 'Conversas finalizadas' },
         ]}
       />
 

@@ -72,10 +72,10 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
     <div className="flex flex-col gap-4" data-testid="crm360-tab">
       <KpiStrip
         cells={[
-          { icon: Calendar, label: 'Cliente desde', value: conversation.contact.created_at ? format(new Date(conversation.contact.created_at), 'dd MMM yyyy', { locale: ptBR }) : '—' },
-          { icon: BarChart3, label: `Lead score${leadScore != null ? ` · ${leadScoreLabel}` : ''}`, value: leadScore ?? '—' },
-          { icon: MessageSquare, label: 'Última interação', value: lastInteractionAt ? formatRelativeTime(lastInteractionAt) : '—' },
-          { icon: Circle, label: 'Status', value: STATUS_LABEL[conversation.contact.conversation_status ?? ''] ?? '—' },
+          { icon: Calendar, label: 'Cliente desde', value: conversation.contact.created_at ? format(new Date(conversation.contact.created_at), 'dd MMM yyyy', { locale: ptBR }) : '—', tone: 'blue' },
+          { icon: BarChart3, label: 'Lead score', value: leadScore ?? '—', tone: 'green', sublabel: leadScore != null ? leadScoreLabel : undefined },
+          { icon: MessageSquare, label: 'Última interação', value: lastInteractionAt ? formatRelativeTime(lastInteractionAt) : '—', tone: 'blue' },
+          { icon: Circle, label: 'Status', value: STATUS_LABEL[conversation.contact.conversation_status ?? ''] ?? '—', tone: 'green' },
         ]}
       />
 
@@ -171,7 +171,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
+        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
           {!crm360 || crm360.purchases.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
           ) : (
@@ -195,11 +195,11 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={FileText} title="Propostas em aberto">
+        <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
           <OpenDealsList deals={crm360?.openDeals ?? []} limit={3} />
         </SectionCard>
 
-        <SectionCard icon={BarChart3} title="Ticket médio">
+        <SectionCard icon={BarChart3} title="Ticket médio" tone="green">
           <div className="flex items-center gap-3">
             <p className="text-2xl font-bold tabular-nums">{crm360?.ticketMedio != null ? formatBRL(crm360.ticketMedio) : '—'}</p>
             {crm360?.ticketDeltaPct != null && (
@@ -222,7 +222,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={Zap} title="Próxima melhor ação">
+        <SectionCard icon={Zap} title="Próxima melhor ação" tone="purple">
           {nextActions.length === 0 ? (
             <p className="text-sm text-muted-foreground">Sem ações sugeridas</p>
           ) : (
@@ -242,7 +242,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={TrendingUp} title="Pipeline comercial" action={{ label: 'Ver pipeline →', onClick: () => navigateToView('pipeline') }}>
+        <SectionCard icon={TrendingUp} title="Pipeline comercial" tone="blue" action={{ label: 'Ver pipeline →', onClick: () => navigateToView('pipeline') }}>
           {!crm360 || pipelineTotal === 0 ? (
             <p className="text-sm text-muted-foreground">Sem negociações</p>
           ) : (

@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
 import { useConversationTasks } from '@/hooks/chat/useConversationTasks';
 import { useContactSummaryNote } from '@/hooks/crm/useContactSummaryNote';
+import { SectionCard } from './SectionCard';
+import type { KpiTone } from './KpiStrip';
 
 interface NotesTabProps {
   contactId: string;
@@ -59,6 +61,7 @@ function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
 interface NoteCategoryCardProps {
   icon: LucideIcon;
   title: string;
+  tone: KpiTone;
   notes: ContactNote[];
   category: ContactNoteCategory;
   placeholder: string;
@@ -69,30 +72,14 @@ interface NoteCategoryCardProps {
   renderItem?: (note: ContactNote) => ReactNode;
 }
 
-function NoteCategoryCard({ icon: Icon, title, notes, category, placeholder, withDueDate, currentProfileId, onAdd, onDelete, renderItem }: NoteCategoryCardProps) {
+function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, withDueDate, currentProfileId, onAdd, onDelete, renderItem }: NoteCategoryCardProps) {
   const [adding, setAdding] = useState(false);
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-      <header className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
-            <Icon className="w-4 h-4" />
-          </span>
-          <h3 className="text-sm font-semibold truncate">{title}</h3>
-          {notes.length > 0 && <span className="text-xs text-muted-foreground shrink-0">({notes.length})</span>}
-        </div>
-        {!adding && (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="h-8 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 shrink-0"
-          >
-            + Adicionar
-          </button>
-        )}
-      </header>
-
+    <SectionCard
+      icon={icon} title={title} tone={tone} count={notes.length}
+      action={!adding ? { label: '+ Adicionar', onClick: () => setAdding(true), variant: 'pill' } : undefined}
+    >
       {adding && (
         <AddInline
           placeholder={placeholder}
@@ -124,7 +111,7 @@ function NoteCategoryCard({ icon: Icon, title, notes, category, placeholder, wit
           </li>
         ))}
       </ul>
-    </section>
+    </SectionCard>
   );
 }
 
@@ -202,42 +189,35 @@ export function NotesTab({ contactId }: NotesTabProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <NoteCategoryCard
-          icon={FileText} title="Notas privadas" category="note" placeholder="Escreva uma nota privada..."
+          icon={FileText} title="Notas privadas" tone="blue" category="note" placeholder="Escreva uma nota privada..."
           notes={byCategory('note')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
         />
 
         <NoteCategoryCard
-          icon={Lightbulb} title="Fatos relevantes" category="fact" placeholder="Ex.: Cliente prefere contato por WhatsApp após 18h"
+          icon={Lightbulb} title="Fatos relevantes" tone="yellow" category="fact" placeholder="Ex.: Cliente prefere contato por WhatsApp após 18h"
           notes={byCategory('fact')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
         />
 
         <NoteCategoryCard
-          icon={XCircle} title="Objeções" category="objection" placeholder="Ex.: [Preço] Acha o valor alto"
+          icon={XCircle} title="Objeções" tone="red" category="objection" placeholder="Ex.: [Preço] Acha o valor alto"
           notes={byCategory('objection')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
           renderItem={(note) => <ObjectionItem note={note} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
         <NoteCategoryCard
-          icon={Handshake} title="Promessas feitas" category="promise" placeholder="Ex.: Enviar catálogo atualizado" withDueDate
+          icon={Handshake} title="Promessas feitas" tone="green" category="promise" placeholder="Ex.: Enviar catálogo atualizado" withDueDate
           notes={byCategory('promise')} currentProfileId={currentProfileId}
           onAdd={(content, category, dueDate) => addNote(content, category, dueDate)} onDelete={deleteNote}
           renderItem={(note) => <PromiseItem note={note} onToggle={toggleNoteDone} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
-        <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-          <header className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><Clock className="w-4 h-4" /></span>
-              <h3 className="text-sm font-semibold truncate">Pendências</h3>
-              {openTasks.length > 0 && <span className="text-xs text-muted-foreground shrink-0">({openTasks.length})</span>}
-            </div>
-            {!addingTask && (
-              <button type="button" onClick={() => setAddingTask(true)} className="h-8 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 shrink-0">+ Adicionar</button>
-            )}
-          </header>
+        <SectionCard
+          icon={Clock} title="Pendências" tone="blue" count={openTasks.length}
+          action={!addingTask ? { label: '+ Adicionar', onClick: () => setAddingTask(true), variant: 'pill' } : undefined}
+        >
           {addingTask && (
             <AddInline placeholder="Nova pendência..." onCancel={() => setAddingTask(false)} onSave={(content) => { createTask({ title: content }); setAddingTask(false); }} />
           )}
@@ -254,18 +234,12 @@ export function NotesTab({ contactId }: NotesTabProps) {
               </li>
             ))}
           </ul>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-          <header className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0"><BarChart3 className="w-4 h-4" /></span>
-              <h3 className="text-sm font-semibold truncate">Resumo comercial</h3>
-            </div>
-            {!editingSummary && (
-              <button type="button" onClick={() => { setSummaryDraft(summaryNote.summary); setEditingSummary(true); }} className="text-xs font-medium text-primary hover:underline shrink-0">Editar</button>
-            )}
-          </header>
+        <SectionCard
+          icon={BarChart3} title="Resumo comercial" tone="blue"
+          action={!editingSummary ? { label: 'Editar', onClick: () => { setSummaryDraft(summaryNote.summary); setEditingSummary(true); } } : undefined}
+        >
           {editingSummary ? (
             <div className="flex flex-col gap-2">
               <Textarea value={summaryDraft} onChange={(e) => setSummaryDraft(e.target.value)} rows={4} className="text-sm resize-none" autoFocus />
@@ -277,7 +251,7 @@ export function NotesTab({ contactId }: NotesTabProps) {
           ) : (
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{summaryNote.summary || 'Nenhum resumo comercial registrado.'}</p>
           )}
-        </section>
+        </SectionCard>
       </div>
 
       <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3">
