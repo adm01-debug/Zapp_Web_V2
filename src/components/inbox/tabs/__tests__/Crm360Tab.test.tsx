@@ -22,7 +22,7 @@ vi.mock('@/hooks/chat/useNextBestAction', () => ({
 }));
 
 vi.mock('@/hooks/chat/useConversationTasks', () => ({
-  useConversationTasks: () => ({ createTask: mockCreateTask }),
+  useConversationTasks: () => ({ createTask: mockCreateTask, isCreating: false }),
 }));
 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({
@@ -62,17 +62,21 @@ const conversation: Conversation = {
   status: 'open',
 } as unknown as Conversation;
 
-function renderTab(crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360) {
-  mockUseContactCrm360.mockReturnValue({ data: crm360 });
+function renderTab(
+  crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360,
+  queryState: { isLoading?: boolean; isError?: boolean } = {},
+  conversationValue: Conversation = conversation,
+) {
+  mockUseContactCrm360.mockReturnValue({ data: crm360, isLoading: false, isError: false, ...queryState });
   mockUseContactLeadScore.mockReturnValue({ data: null });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const onTabChange = vi.fn();
-  render(
+  const view = render(
     <QueryClientProvider client={qc}>
-      <Crm360Tab conversation={conversation} messages={[]} onTabChange={onTabChange} />
+      <Crm360Tab conversation={conversationValue} messages={[]} onTabChange={onTabChange} />
     </QueryClientProvider>
   );
-  return { onTabChange };
+  return { onTabChange, ...view };
 }
 
 describe('Crm360Tab', () => {
@@ -82,6 +86,23 @@ describe('Crm360Tab', () => {
     renderTab();
     expect(screen.getByTestId('kpi-strip')).toBeInTheDocument();
     expect(screen.getAllByTestId('kpi-cell')).toHaveLength(4);
+  });
+
+  it('usa grid de cards responsivo à largura do container', () => {
+    renderTab();
+    expect(screen.getByTestId('crm-card-grid')).toHaveStyle({
+      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 24rem), 1fr))',
+    });
+  });
+
+  it('distingue carregamento, erro e ausência de dados', () => {
+    const { unmount } = renderTab(undefined, { isLoading: true });
+    expect(screen.getByText('Carregando dados comerciais')).toBeInTheDocument();
+    expect(screen.queryByText('Nenhuma compra registrada')).not.toBeInTheDocument();
+    unmount();
+
+    renderTab(undefined, { isError: true });
+    expect(screen.getByText('Não foi possível carregar o CRM')).toBeInTheDocument();
   });
 
   it('mostra empty states honestos quando não há dados comerciais', () => {
@@ -121,6 +142,22 @@ describe('Crm360Tab', () => {
   it('exibe o ticket médio formatado em BRL quando há compras concluídas', () => {
     renderTab({ ...EMPTY_CRM360, ticketMedio: 1234.5 });
     expect(screen.getByText(/R\$\s*1\.234,50/)).toBeInTheDocument();
+  });
+
+  it('preserva valores zero e tolera datas inválidas sem inventar conteúdo', () => {
+    const invalidDateConversation = {
+      ...conversation,
+      contact: { ...conversation.contact, created_at: 'inválida' },
+    } as Conversation;
+    renderTab({
+      ...EMPTY_CRM360,
+      ticketMedio: 0,
+      purchases: [{ id: 'p1', title: 'Pedido real', amount: 0, purchased_at: 'inválida', status: 'completed' }],
+      interacoes: [{ id: 'i1', at: 'inválida', kind: 'event', text: 'Interação real', color: 'muted' }],
+    }, {}, invalidDateConversation);
+    expect(screen.getAllByText(/R\$\s*0,00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.getByText('Interação real')).toBeInTheDocument();
   });
 
   it('renderiza o stepper de etapas quando há um deal aberto', () => {
