@@ -30,13 +30,13 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete }: TaskCardPro
   return (
     <div data-testid="task-card" className="rounded-xl border border-border bg-card p-3 flex flex-col gap-2">
       <div className="flex items-start gap-2">
-        <input type="checkbox" checked={completed} onChange={() => onToggle(task)} className="mt-0.5 shrink-0" aria-label={`Concluir ${task.title}`} />
+        <input type="checkbox" checked={completed} onChange={() => onToggle(task)} className="mt-0.5 h-6 w-6 shrink-0 accent-primary" aria-label={`Concluir ${task.title}`} />
         <div className="min-w-0 flex-1">
-          <p className={cn('text-sm font-semibold', completed && 'line-through text-muted-foreground')}>{task.title}</p>
-          {task.description && <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>}
+          <p className={cn('text-sm font-semibold break-words', completed && 'line-through text-muted-foreground')}>{task.title}</p>
+          {task.description && <p className="text-xs text-muted-foreground mt-0.5 break-words">{task.description}</p>}
         </div>
-        <button type="button" onClick={() => onDelete(task.id)} className="text-muted-foreground hover:text-destructive shrink-0" aria-label="Excluir tarefa">
-          <Trash2 className="w-3.5 h-3.5" />
+        <button type="button" onClick={() => onDelete(task.id)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Excluir tarefa ${task.title}`}>
+          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -47,7 +47,7 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete }: TaskCardPro
         )}
         {due && (
           <span className={cn('text-xs inline-flex items-center gap-1', dueUrgent ? 'text-destructive' : 'text-muted-foreground')}>
-            {dueUrgent ? <Clock className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+            {dueUrgent ? <Clock className="w-3 h-3" aria-hidden="true" /> : <Calendar className="w-3 h-3" aria-hidden="true" />}
             {isToday || completed ? `Hoje, ${format(due, 'HH:mm')}` : format(due, "EEE, dd/MM, HH:mm", { locale: ptBR })}
           </span>
         )}
