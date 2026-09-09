@@ -28,14 +28,7 @@ function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
   const handleCrmSync = async () => {
     try {
       const result = await syncConversationAsync({
-        phone: conversation.contact.phone,
-        channel: 'whatsapp',
-        direction: 'inbound',
-        assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
-        resumo: conversation.lastMessage?.content?.slice(0, 500) || undefined,
-        sentiment: 'neutral',
-        messageCount: 0,
-        zappConversationId: conversation.id,
+        contactId: conversation.contact.id,
       });
       if (result?.synced) {
         toast.success('Sincronizado com o CRM!', {
