@@ -49,6 +49,9 @@ jobs:
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
         run: bash scripts/db-audit/catalog-manifest.test.sh
 
+      - name: Testar normalizacao deterministica dos tipos gerados
+        run: bash scripts/db-audit/gen-types.test.sh
+
       # Sem DESTINO_URL: valida nomes, duplicatas e conteudo local das
       # migrations, mas nao consulta schema_migrations.
       - name: Validar migrations localmente
@@ -90,6 +93,19 @@ jobs:
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+
+      - name: Simular correção forward-only da FK saved_by do Talk X
+        env:
+          TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: |
+          TALKX_HISTORY_FK_PRESTATE=NO_ACTION bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+          TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+          TALKX_HISTORY_FK_PRESTATE=ORPHAN bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+
+      - name: Simular primitivas atômicas de mensagens e encerramento
+        env:
+          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
       - name: Simular reconciliação segura do ledger
         env:
