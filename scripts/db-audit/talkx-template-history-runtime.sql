@@ -254,6 +254,30 @@ WITH target_relation AS (
         AND pg_get_constraintdef(constraint_row.oid) LIKE 'FOREIGN KEY (saved_by)%'
       )
     ),
+    'history_saved_by_fk_no_action_count', (
+      SELECT count(*)
+      FROM pg_constraint constraint_row
+      JOIN target_relation relation ON relation.oid=constraint_row.conrelid
+      WHERE constraint_row.conname='talkx_template_versions_saved_by_fkey'
+        AND constraint_row.contype='f'
+        AND constraint_row.confrelid='public.profiles'::regclass
+        AND constraint_row.confdeltype='a'
+        AND constraint_row.convalidated
+        AND pg_get_constraintdef(constraint_row.oid)
+          LIKE 'FOREIGN KEY (saved_by) REFERENCES profiles(id)%'
+    ),
+    'history_saved_by_fk_set_null_count', (
+      SELECT count(*)
+      FROM pg_constraint constraint_row
+      JOIN target_relation relation ON relation.oid=constraint_row.conrelid
+      WHERE constraint_row.conname='talkx_template_versions_saved_by_fkey'
+        AND constraint_row.contype='f'
+        AND constraint_row.confrelid='public.profiles'::regclass
+        AND constraint_row.confdeltype='n'
+        AND constraint_row.convalidated
+        AND pg_get_constraintdef(constraint_row.oid)
+          LIKE 'FOREIGN KEY (saved_by) REFERENCES profiles(id)%ON DELETE SET NULL%'
+    ),
     'function_count', (SELECT count(*) FROM expected_functions),
     'safe_function_count', (
       SELECT count(*) FROM expected_functions
