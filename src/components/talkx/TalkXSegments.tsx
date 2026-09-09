@@ -76,7 +76,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         {isLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
@@ -234,10 +234,32 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
 }) {
   const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
   const riskLevel = est?.count === 0 ? 'high' : (est?.count ?? 0) > 10000 ? 'low' : 'moderate';
+  // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
+  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
+  const resolveGroupId = () => {
+    if (activeGroupId && rules.groups.some((g) => g.id === activeGroupId)) return activeGroupId;
+    return rules.groups[rules.groups.length - 1]?.id ?? null;
+  };
 
-  const addGroup = (match: 'and' | 'or') => setRules({ groups: [...rules.groups, { id: crypto.randomUUID(), match, rules: [] }] });
-  const removeGroup = (gid: string) => setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
-  const addRule = (gid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, newRule()] }) });
+  const addGroup = (match: 'and' | 'or') => {
+    const id = crypto.randomUUID();
+    setRules({ groups: [...rules.groups, { id, match, rules: [] }] });
+    setActiveGroupId(id);
+  };
+  const removeGroup = (gid: string) => {
+    setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
+    if (activeGroupId === gid) setActiveGroupId(null);
+  };
+  const addRule = (gid: string, preset?: SegmentRule) => {
+    setActiveGroupId(gid);
+    setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, preset ?? newRule()] }) });
+  };
+  const addFieldToGroup = (f: typeof RULE_FIELDS[number]) => {
+    const gid = resolveGroupId();
+    if (!gid) return;
+    const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp;
+    addRule(gid, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' });
+  };
   const removeRule = (gid: string, rid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.filter((r) => r.id !== rid) }) });
   const updateRule = (gid: string, rid: string, patch: Partial<SegmentRule>) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.map((r) => r.id !== rid ? r : { ...r, ...patch }) }) });
 
@@ -292,32 +314,31 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           </div>
         </section>
 
-        {/* Filtros disponíveis */}
-        <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
-          <p className="text-[15px] font-bold text-foreground mb-1">Filtros disponíveis</p>
-          <p className="text-[12.5px] text-foreground-secondary mb-3">Clique ou arraste os filtros para o construtor</p>
-          <div className="flex flex-wrap gap-2">
-            {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
-              <div key={cat} className="w-full">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5 capitalize">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                    <button key={f.value} type="button" onClick={() => { if (rules.groups.length > 0) addRule(rules.groups[0].id); }} className="h-8 px-2.5 rounded-lg text-[12px] font-medium border border-border/60 bg-muted/30 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow flex items-center gap-1.5">
-                      <Sliders className="w-3 h-3" />{f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
+
+      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
+      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+        <p className="text-[13px] font-bold text-foreground">Filtros</p>
+        <p className="text-[11.5px] text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+        {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
+          <div key={cat}>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+            <div className="flex flex-col gap-1">
+              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                <button key={f.value} type="button" onClick={() => addFieldToGroup(f)} className="h-8 px-2.5 rounded-lg text-[12px] font-medium border border-border/60 bg-muted/30 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow flex items-start gap-1.5 w-full text-left">
+                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </aside>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={BarChart3} title="Resumo do segmento" right={<Pill label={estFetching ? 'Calculando…' : '● Tempo real'} tone={estFetching ? 'muted' : 'success'} />}>
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-[11.5px] font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
           <p className="text-[11px] text-foreground-secondary">Audiência estimada</p>
-          <p className="text-[32px] font-bold text-foreground tabular-nums tracking-[-0.02em]">{fmtInt(est?.count ?? 0)}</p>
+          <p className={cn('text-[32px] font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-[12px] text-foreground-secondary">contatos</p>
           <div className="mt-3 rounded-xl border border-border/50 bg-input/20 p-3">
             <p className="text-[12.5px] font-semibold text-foreground mb-1">Risco de entrega</p>
