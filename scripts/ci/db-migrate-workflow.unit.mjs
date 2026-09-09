@@ -55,6 +55,43 @@ test('Inbox authorization migration has caller-bound and post-apply contracts', 
   assert.match(workflow, /definition_sha256 === '[a-f0-9]{64}'/);
 });
 
+test('message delivery phase 1 has strict absent/applied runtime contracts', () => {
+  assert.match(
+    workflow,
+    /20260909220000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
+  );
+  assert.match(workflow, /TARGET_VERSION === '20260909220000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260909220000'/);
+  assert.match(workflow, /proof\.message_column_count === 0/);
+  assert.match(workflow, /proof\.message_column_count === 7/);
+  assert.match(workflow, /proof\.column_contract_count === 9/);
+  assert.match(workflow, /proof\.safe_api_function_count === 5/);
+  assert.match(workflow, /proof\.internal_guard_function_count === 3/);
+  assert.match(workflow, /proof\.internal_guard_trigger_count === 3/);
+  assert.match(workflow, /proof\.trusted_owner_function_count === 8/);
+  assert.match(workflow, /proof\.function_name_collision_count === 0/);
+  assert.match(workflow, /proof\.trigger_name_collision_count === 0/);
+  assert.match(workflow, /proof\.constraint_name_collision_count === 0/);
+  assert.match(workflow, /proof\.authenticated_internal_guard_execute === false/);
+  assert.match(workflow, /proof\.service_delivery_count === 3/);
+  assert.match(
+    workflow,
+    /definition_sha256 === '3891f505b00daf3049d9de0753f4201f95d739f2fcdfb6354ed26bb67d3122a9'/
+  );
+  assert.match(
+    workflow,
+    /constraint_definition_sha256 === 'e0d16c992513b40596c32e39cc9be2515a1e67ce8a316d1c5a5cc47716952486'/
+  );
+  assert.match(
+    workflow,
+    /index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'/
+  );
+  assert.match(
+    workflow,
+    /trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'/
+  );
+});
+
 test('Talk X template history migration has ACL, atomicity and runtime contracts', () => {
   assert.match(workflow, /20260909210000\)\n[\s\S]*talkx-template-history-runtime\.sql/);
   assert.match(workflow, /TARGET_VERSION === '20260909210000'/);
