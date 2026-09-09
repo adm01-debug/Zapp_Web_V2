@@ -449,7 +449,7 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
-            20260909220000|20260909240000)
+            20260909220000|20260909240000|20260909250000|20260909260000)
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/message-delivery-phase1-runtime.sql)
               ;;
@@ -762,6 +762,83 @@ jobs:
             targetOk = process.env.NEEDS_APPLY === 'true'
               ? preHardening
               : hardened;
+          } else if (process.env.TARGET_VERSION === '20260909250000') {
+            // Location support only extends the enqueue contract; the
+            // structural delivery primitives and hardened grants remain.
+            const base = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 8
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.authenticated_rich_enqueue_effective === false
+              && proof.authenticated_rich_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = base;
+          } else if (process.env.TARGET_VERSION === '20260909260000') {
+            const preRich = proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.trusted_owner_function_count === 8
+              && proof.authenticated_rich_enqueue_effective === false
+              && proof.authenticated_rich_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.anon_any_execute === false;
+            const richApplied = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 9
+              && proof.safe_api_function_count === 6
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 9
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.definition_sha256 === '9f297416251216f0b1d35448cf179eb31d09aba9d87a529a1c01ed2c2c06688d'
+              && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
+              && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
+              && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.authenticated_rich_enqueue_effective === true
+              && proof.authenticated_rich_enqueue_direct === true
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = process.env.NEEDS_APPLY === 'true' ? preRich : richApplied;
           } else if (process.env.TARGET_VERSION === '20260909230000') {
             const canonicalExceptSavedByAction = proof.table_count === 1
               && proof.variant_table_count === 1
@@ -1199,6 +1276,34 @@ jobs:
             && proof.service_delivery_effective_count === 3
             && proof.service_delivery_direct_count === 3
             && proof.custom_guc_reference_count === 0;
+          if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar entrega atomica de enquetes e contatos
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909260000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/message-delivery-phase1-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && proof.function_count === 9
+            && proof.safe_api_function_count === 6
+            && proof.trusted_owner_function_count === 9
+            && proof.function_name_collision_count === 0
+            && proof.definition_sha256 === '9f297416251216f0b1d35448cf179eb31d09aba9d87a529a1c01ed2c2c06688d'
+            && proof.authenticated_rich_enqueue_effective === true
+            && proof.authenticated_rich_enqueue_direct === true
+            && proof.service_rich_enqueue_effective === false
+            && proof.service_rich_enqueue_direct === false
+            && proof.anon_any_execute === false;
           if (!ok) process.exit(1);
           NODE
 

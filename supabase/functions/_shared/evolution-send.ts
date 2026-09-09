@@ -4,7 +4,7 @@ import { translateV2ToGo } from "./evolution-go-routes.ts";
 
 type Fetcher = (url: string, options: RequestInit) => Promise<Response>;
 
-export function evoFetch(
+export async function evoFetch(
   evolutionUrl: string,
   evolutionKey: string,
   v2Path: string,

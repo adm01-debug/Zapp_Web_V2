@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { sendOutboundMessage, sendRichOutboundMessage } from '@/services/outbound-message.service';
 import { toast } from 'sonner';
 import {
   MoreHorizontal,
@@ -34,13 +35,14 @@ interface PollData {
 }
 
 interface AdvancedMessageMenuProps {
+  contactId: string;
   instanceName: string;
   recipientNumber: string;
   onPollSent?: (poll: PollData) => void;
   onContactSent?: (contactName: string) => void;
 }
 
-export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent, onContactSent }: AdvancedMessageMenuProps) {
+export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, onPollSent, onContactSent }: AdvancedMessageMenuProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [stickerDialog, setStickerDialog] = useState(false);
   const [pollDialog, setPollDialog] = useState(false);
@@ -66,19 +68,21 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
   // Status state
   const [statusText, setStatusText] = useState('');
 
-  const { sendStickerMessage, sendPollMessage, sendContactMessage, sendStatusMessage, isLoading } = useEvolutionApi();
+  const { sendStatusMessage, isLoading } = useEvolutionApi();
 
   const handleSendSticker = useCallback(async () => {
     if (!stickerUrl.trim()) return;
     try {
-      await sendStickerMessage(instanceName, recipientNumber, stickerUrl);
+      await sendOutboundMessage({
+        contactId, content: '[Sticker]', messageType: 'sticker', mediaUrl: stickerUrl,
+      });
       toast.success('Figurinha enviada!');
       setStickerUrl('');
       setStickerDialog(false);
     } catch {
       toast.error('Erro ao enviar figurinha');
     }
-  }, [stickerUrl, instanceName, recipientNumber, sendStickerMessage]);
+  }, [contactId, stickerUrl]);
 
   const handleSendPoll = useCallback(async () => {
     const validOptions = pollOptions.filter(o => o.trim());
@@ -87,12 +91,11 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
       return;
     }
     try {
-      await sendPollMessage({
-        instanceName,
-        number: recipientNumber,
-        name: pollName,
-        selectableCount: pollSelectableCount,
-        values: validOptions,
+      await sendRichOutboundMessage({
+        contactId,
+        displayContent: `📊 *Enquete:* ${pollName}\n${validOptions.map((option, index) => `${index + 1}. ${option}`).join('\n')}`,
+        messageType: 'poll',
+        deliveryPayload: { name: pollName, selectableCount: pollSelectableCount, values: validOptions },
       });
       onPollSent?.({ name: pollName, options: validOptions, selectableCount: pollSelectableCount });
       toast.success('Enquete enviada!');
@@ -102,7 +105,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
     } catch {
       toast.error('Erro ao enviar enquete');
     }
-  }, [pollName, pollOptions, pollSelectableCount, instanceName, recipientNumber, sendPollMessage, onPollSent]);
+  }, [contactId, pollName, pollOptions, pollSelectableCount, onPollSent]);
 
   const handleSendContact = useCallback(async () => {
     if (!contactCard.fullName.trim() || !contactCard.phoneNumber.trim()) {
@@ -110,13 +113,17 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
       return;
     }
     try {
-      await sendContactMessage(instanceName, recipientNumber, [{
-        fullName: contactCard.fullName,
-        wuid: contactCard.phoneNumber,
-        phoneNumber: contactCard.phoneNumber,
-        organization: contactCard.organization || undefined,
-        email: contactCard.email || undefined,
-      }]);
+      await sendRichOutboundMessage({
+        contactId,
+        displayContent: `📇 Cartão de contato: ${contactCard.fullName}`,
+        messageType: 'contact',
+        deliveryPayload: {
+          fullName: contactCard.fullName,
+          phoneNumber: contactCard.phoneNumber,
+          ...(contactCard.organization ? { organization: contactCard.organization } : {}),
+          ...(contactCard.email ? { email: contactCard.email } : {}),
+        },
+      });
       onContactSent?.(contactCard.fullName);
       toast.success('Cartão de contato enviado!');
       setContactCard({ fullName: '', phoneNumber: '', organization: '', email: '' });
@@ -124,7 +131,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
     } catch {
       toast.error('Erro ao enviar contato');
     }
-  }, [contactCard, instanceName, recipientNumber, sendContactMessage, onContactSent]);
+  }, [contactId, contactCard, onContactSent]);
 
   const handleSendStatus = useCallback(async () => {
     if (!statusText.trim()) return;
