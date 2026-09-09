@@ -77,6 +77,17 @@ CREATE TABLE public.talkx_templates (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at := transaction_timestamp();
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER update_talkx_templates_updated_at
+BEFORE UPDATE ON public.talkx_templates
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 CREATE FUNCTION public.get_profile_id_for_user(p_user_id uuid) RETURNS uuid
 LANGUAGE sql SECURITY DEFINER STABLE SET search_path=public,pg_temp AS $$
   SELECT id FROM public.profiles WHERE user_id=p_user_id AND is_active=true LIMIT 1
@@ -168,25 +179,34 @@ BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
-SELECT template_id || '|' || version_number
-FROM public.update_talkx_template_with_snapshot(
+SELECT pg_sleep(0.02);
+CREATE TEMP TABLE rpc_result ON COMMIT PRESERVE ROWS AS
+SELECT * FROM public.update_talkx_template_with_snapshot(
   '30000000-0000-0000-0000-000000000001','2026-09-09T10:00:00Z',
   'Updated','new description','sales','New content','https://example.test/media.png',
   'image',ARRAY['new'],'review',ARRAY['customer_name']
 );
 COMMIT;
+SELECT 'RPC|' || template_id || '|' || updated_at || '|' || version_number
+FROM rpc_result;
 SELECT name || '|' || content || '|' || version_number || '|' || saved_by
 FROM public.talkx_template_versions;
 SELECT name || '|' || content || '|' || status || '|' || custom_variables[1]
 FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001';
+SELECT 'TABLE|' || updated_at
+FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001';
 SQL
 )"
-grep -q '30000000-0000-0000-0000-000000000001|1' <<<"$owner_result" \
+grep -q 'RPC|30000000-0000-0000-0000-000000000001|.*|1' <<<"$owner_result" \
   || fail 'RPC do owner nao retornou versao 1'
 grep -q 'Original|Old content|1|10000000-0000-0000-0000-000000000001' <<<"$owner_result" \
   || fail 'snapshot nao preservou o estado anterior/autoria canonica'
 grep -q 'Updated|New content|review|customer_name' <<<"$owner_result" \
   || fail 'update atomico nao persistiu o novo estado'
+rpc_timestamp="$(sed -n 's/^RPC|[^|]*|\([^|]*\)|1$/\1/p' <<<"$owner_result")"
+table_timestamp="$(sed -n 's/^TABLE|//p' <<<"$owner_result")"
+[ -n "$rpc_timestamp" ] && [ "$rpc_timestamp" = "$table_timestamp" ] \
+  || fail 'RPC nao retornou o updated_at efetivamente persistido pelo trigger'
 
 expect_failure() {
   local expected="$1"
@@ -268,10 +288,10 @@ const ok = proof.server_major === 17
   && proof.authenticated_rpc_execute === true
   && proof.anon_rpc_execute === false
   && proof.authenticated_guard_execute === false
-  && proof.definition_sha256 === 'aed607c3f2eceee35f302b3418ece6294cd4a65f8643f24441f1c60bb26e31a1'
+  && proof.definition_sha256 === '86d55f75aacb024be68ea7e859eb10966da55e4de84049c9b9023a446fd0ea1d'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 ?? '');
 if (!ok) {
-  console.error('runtime proof inesperado');
+  console.error(`runtime proof inesperado: definition_sha256=${proof.definition_sha256}`);
   process.exit(1);
 }
 NODE

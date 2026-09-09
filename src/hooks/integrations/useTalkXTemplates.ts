@@ -16,6 +16,7 @@ export interface TalkXTemplate {
   status: 'draft' | 'review' | 'approved';
   use_count: number;
   created_by: string | null;
+  custom_variables: string[];
   created_at: string;
   updated_at: string;
   creator?: { name: string | null } | null;
@@ -56,11 +57,34 @@ export function useTalkXTemplates() {
 
   const updateTemplate = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TemplateInput> & { id: string }) => {
-      const { data, error } = await fromTable('talkx_templates').update(updates).eq('id', id).select().single();
+      const current = query.data?.find((template) => template.id === id);
+      if (!current) throw new Error('Template desatualizado; recarregue e tente novamente');
+      const next = { ...current, ...updates };
+      const { data, error } = await supabase.rpc('update_talkx_template_with_snapshot', {
+        p_template_id: id,
+        p_expected_updated_at: current.updated_at,
+        p_name: next.name,
+        p_description: next.description,
+        p_category: next.category,
+        p_content: next.content,
+        p_media_url: next.media_url,
+        p_media_type: next.media_type,
+        p_tags: next.tags,
+        p_status: next.status,
+        p_custom_variables: next.custom_variables ?? [],
+      });
       if (error) throw error;
-      return data as TalkXTemplate;
+      const persisted = data?.[0];
+      if (!persisted) throw new Error('Atualização não confirmada pelo banco');
+      return { ...next, updated_at: persisted.updated_at };
     },
-    onSuccess: () => { invalidate(); toast.success('Template atualizado'); },
+    onSuccess: (updated) => {
+      qc.setQueryData<TalkXTemplate[]>(['talkx-templates'], (templates) =>
+        templates?.map((template) => template.id === updated.id ? updated : template)
+      );
+      invalidate();
+      toast.success('Template atualizado');
+    },
     onError: (e: Error) => toast.error(`Erro ao atualizar: ${e.message}`),
   });
 

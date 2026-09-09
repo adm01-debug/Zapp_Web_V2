@@ -67,5 +67,5 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.authenticated_any_mutation === false/);
   assert.match(workflow, /proof\.authenticated_rpc_execute === true/);
   assert.match(workflow, /proof\.authenticated_guard_execute === false/);
-  assert.match(workflow, /definition_sha256 === 'aed607c3f2eceee35f302b3418ece6294cd4a65f8643f24441f1c60bb26e31a1'/);
+  assert.match(workflow, /definition_sha256 === '86d55f75aacb024be68ea7e859eb10966da55e4de84049c9b9023a446fd0ea1d'/);
 });
