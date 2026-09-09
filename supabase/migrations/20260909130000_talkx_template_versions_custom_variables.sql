@@ -40,10 +40,11 @@ CREATE POLICY "talkx_template_versions_insert"
   TO authenticated
   WITH CHECK (
     EXISTS (
-      SELECT 1
-      FROM public.talkx_templates tmpl
-      JOIN public.profiles prof ON prof.id = auth.uid()
+      SELECT 1 FROM public.talkx_templates tmpl
       WHERE tmpl.id = template_id
-        AND (tmpl.created_by = auth.uid() OR prof.role IN ('admin', 'supervisor'))
+        AND (
+          tmpl.created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1)
+          OR public.is_admin_or_supervisor(auth.uid())
+        )
     )
   );
