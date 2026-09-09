@@ -82,6 +82,7 @@ export function SecondaryToolbar({
 }
 
 interface TertiaryToolsMenuProps {
+  contactId: string;
   instanceName?: string;
   contactPhone: string;
   contactName: string;
@@ -102,7 +103,7 @@ interface TertiaryToolsMenuProps {
 }
 
 export function TertiaryToolsMenu({
-  instanceName, contactPhone, contactName, messages, quickReplies,
+  contactId, instanceName, contactPhone, contactName, messages, quickReplies,
   onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule,
   onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply,
   signatureEnabled, signatureName, onToggleSignature, onPollSent, onContactSent,
@@ -142,7 +143,7 @@ export function TertiaryToolsMenu({
           </Button>
         }
       />
-      <AdvancedMessageMenu instanceName={instanceName || ''} recipientNumber={contactPhone} onPollSent={onPollSent} onContactSent={onContactSent} />
+      <AdvancedMessageMenu contactId={contactId} instanceName={instanceName || ''} recipientNumber={contactPhone} onPollSent={onPollSent} onContactSent={onContactSent} />
       <AISuggestions
         messages={messages.map(m => ({ id: m.id, content: m.content, sender: m.sender, timestamp: m.timestamp }))}
         contactName={contactName}
