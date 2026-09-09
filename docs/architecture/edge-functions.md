@@ -57,7 +57,7 @@ O projeto possui 40+ Edge Functions deployadas automaticamente pelo Lovable Clou
 | `sicoob-bridge` | Integração com sistema Sicoob |
 | `sicoob-bridge-reply` | Respostas via bridge Sicoob |
 | `promogifts-catalog` | Catálogo de produtos PromoGifts |
-| `public-api` | API pública para integrações externas |
+| `public-api` | Tombstone de segurança: integração legada desativada, responde HTTP 410 sem ler credenciais ou executar efeitos |
 
 ### 📧 Comunicação
 | Função | Descrição |

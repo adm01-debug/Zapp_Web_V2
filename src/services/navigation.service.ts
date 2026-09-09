@@ -7,7 +7,7 @@ import {
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
-  ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit, Code2,
+  ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
   Webhook, HardDrive, Landmark, FlaskConical,
 } from 'lucide-react';
 
@@ -130,7 +130,6 @@ export class NavigationService {
       { id: 'performance', icon: Cpu, label: 'Performance' },
       { id: 'telemetry', icon: BarChartHorizontal, label: 'Telemetria BD' },
       { id: 'ai-usage', icon: BrainCircuit, label: 'Consumo IA' },
-      { id: 'public-api', icon: Code2, label: 'API Pública' },
       { id: 'gmail-webhook', icon: Webhook, label: 'Gmail Webhook' },
       { id: 'media-migration', icon: HardDrive, label: 'Migração Mídia' },
       { id: 'sicoob-bridge', icon: Landmark, label: 'Sicoob Bridge' },
