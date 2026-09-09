@@ -72,7 +72,10 @@ function projectSchemaFromForwardMigrations(catalog) {
   if (!/^\d{8}$/.test(cutoff) || !fs.existsSync(migrationsDir)) return { functions, relations };
 
   for (const filename of fs.readdirSync(migrationsDir).filter((name) => /^\d{14}_.+\.sql$/.test(name)).sort()) {
-    if (filename.slice(0, 8) <= cutoff) continue;
+    // Catalog snapshots only retain YYYY-MM-DD, not the generation time. A
+    // migration from the same UTC day may have been created after the snapshot,
+    // so same-day files must remain in the forward-only projection.
+    if (filename.slice(0, 8) < cutoff) continue;
     const sql = fs.readFileSync(path.join(migrationsDir, filename), 'utf8');
     for (const match of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\(/gi)) {
       functions.add(match[1]);
