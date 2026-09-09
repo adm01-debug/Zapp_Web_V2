@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useTalkXTemplates, type TalkXTemplate, type TemplateInput } from '@/hooks/integrations/useTalkXTemplates';
+import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant } = useTalkXTemplates();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Inicializa campos do template sendo editado
@@ -56,6 +56,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [variants, setVariants] = useState<TemplateVariant[]>([]);
+  const [showVariants, setShowVariants] = useState(false);
+  const [savingVariant, setSavingVariant] = useState(false);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
@@ -104,7 +107,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   };
 
   const loadTemplate = (t: TalkXTemplate) => {
-    setVersions([]); setShowVersions(false);
+    setVersions([]); setShowVersions(false); setVariants([]); setShowVariants(false);
     if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
     setActiveTemplateId(t.id);
     setExpectedUpdatedAt(t.updated_at);
@@ -442,6 +445,27 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <History className="w-3.5 h-3.5 text-foreground-secondary" />
+              <p className="text-[12.5px] font-semibold text-foreground">Variações A/B</p>
+              <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+              {showVariants && (
+                <div className="space-y-2 mt-1">
+                  {variants.map((v) => (
+                    <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-primary">Variante {v.label} · {v.weight}%</span>
+                        <button type="button" onClick={async () => { await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-[10px]">×</button>
+                      </div>
+                      <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-[11px] bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+                    </div>
+                  ))}
+                  {variants.length < 3 && (
+                    <button type="button" disabled={savingVariant || !activeTemplateId} onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const totalWeight = variants.reduce((s, v) => s + v.weight, 0); const newWeight = Math.max(10, 100 - totalWeight); setSavingVariant(true); try { await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: newWeight }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } finally { setSavingVariant(false); } }} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-[11px] text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+                  )}
+                  {variants.length > 0 && (
+                    <p className={`text-[10px] ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+                  )}
+                </div>
+              )}
               <p className="text-[12.5px] font-semibold text-foreground">Historico</p>
             </div>
             <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>

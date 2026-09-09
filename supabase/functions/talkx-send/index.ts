@@ -29,6 +29,19 @@ function personalize(template, contact, customVars = []) {
   }
   return result;
 }
+/** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
+async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
+  const { data: variants } = await supabase
+    .from('talkx_template_variants')
+    .select('id,content,media_url,media_type,weight')
+    .eq('template_id', templateId);
+  if (!variants || variants.length === 0) return null;
+  const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
+  let roll = Math.random() * total;
+  for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
+  return variants[variants.length - 1];
+}
+
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -252,9 +265,12 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const personalizedMsg = personalize(campaign.message_template, contact as { name: string; nickname?: string; company?: string });
+      // E49: sortear variante A/B
+      const variant = campaign.template_id ? await pickVariant(supabase, campaign.template_id).catch(() => null) : null;
+      const contentToSend = variant?.content ?? campaign.message_template;
+      const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
       await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, status: "sending" }).eq("id", recipient.id);
+        .update({ personalized_message: personalizedMsg, status: "sending", ...(variant ? { variant_id: variant.id } : {}) }).eq("id", recipient.id);
 
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
