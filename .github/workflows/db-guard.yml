@@ -66,6 +66,11 @@ jobs:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
+      - name: Provar remoção do token legado da API pública
+        env:
+          PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/public-api-disable.test.sh
+
       - name: Simular concorrência e integridade da fila CRM
         env:
           CRM_OUTBOX_TEST_POSTGRES_IMAGE: postgres:17-alpine

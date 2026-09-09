@@ -25,3 +25,12 @@ test('CRM rollout remains two-phase and identity-bound', () => {
   assert.match(workflow, /OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'/);
   assert.match(workflow, /--dry-run --yes/);
 });
+
+test('public API kill switch has preflight and post-apply runtime contracts', () => {
+  assert.match(workflow, /20260909180000\)\n[\s\S]*legacy_token_count/);
+  assert.match(workflow, /TARGET_VERSION === '20260909180000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260909180000'/);
+  assert.match(workflow, /proof\.legacy_token_count === 0/);
+  assert.match(workflow, /proof\.constraint_count === 1/);
+  assert.match(workflow, /global_settings_no_plaintext_api_token/);
+});
