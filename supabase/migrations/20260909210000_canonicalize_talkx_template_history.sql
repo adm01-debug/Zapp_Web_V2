@@ -48,24 +48,26 @@ BEGIN
       SET custom_variables = _new_vars,
           content = _content
       WHERE id = _row.id;
-      -- Aplicar o mesmo mapeamento nas versões históricas deste template
-      FOR _i IN 1..COALESCE(array_length(_row.custom_variables, 1), 0) LOOP
-        _old_var := _row.custom_variables[_i];
-        IF _old_var ~ '^[0-9]' THEN
-          _new_var := '_' || _old_var;
-          WHILE _new_var = ANY(_new_vars) AND _new_vars[_i] <> _new_var LOOP
-            _new_var := '_' || _new_var;
-          END LOOP;
-          UPDATE public.talkx_template_versions
-          SET custom_variables = ARRAY(
-                SELECT CASE WHEN cv = _old_var THEN _new_var ELSE cv END
-                FROM unnest(custom_variables) AS cv
-              ),
-              content = replace(content, '{{' || _old_var || '}}', '{{' || _new_var || '}}')
-          WHERE template_id = _row.id
-            AND _old_var = ANY(custom_variables);
-        END IF;
-      END LOOP;
+      -- Aplicar o mesmo mapeamento nas versoes historicas deste template (guard para schema fresco)
+      IF EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'talkx_template_versions') THEN
+        FOR _i IN 1..COALESCE(array_length(_row.custom_variables, 1), 0) LOOP
+          _old_var := _row.custom_variables[_i];
+          IF _old_var ~ '^[0-9]' THEN
+            _new_var := left('_' || _old_var, 64);
+            WHILE _new_var = ANY(_new_vars) AND _new_vars[_i] <> _new_var LOOP
+              _new_var := left('_' || _new_var, 64);
+            END LOOP;
+            UPDATE public.talkx_template_versions
+            SET custom_variables = ARRAY(
+                  SELECT CASE WHEN cv = _old_var THEN _new_var ELSE cv END
+                  FROM unnest(custom_variables) AS cv
+                ),
+                content = replace(content, '{{' || _old_var || '}}', '{{' || _new_var || '}}')
+            WHERE template_id = _row.id
+              AND _old_var = ANY(custom_variables);
+          END IF;
+        END LOOP;
+      END IF;
     END LOOP;
   END;
 
