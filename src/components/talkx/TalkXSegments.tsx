@@ -237,6 +237,8 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
   const riskLevel = est?.count === 0 ? 'high' : (est?.count ?? 0) > 10000 ? 'low' : 'moderate';
   // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
   const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
+  const [dragOverGroupId, setDragOverGroupId] = React.useState<string | null>(null);
+  const [draggingField, setDraggingField] = React.useState<string | null>(null);
   const resolveGroupId = () => {
     if (activeGroupId && rules.groups.some((g) => g.id === activeGroupId)) return activeGroupId;
     return rules.groups[rules.groups.length - 1]?.id ?? null;
@@ -291,7 +293,13 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           </div>
           <div className="space-y-4">
             {rules.groups.map((g, gi) => (
-              <div key={g.id} className="rounded-xl border border-border/60 bg-input/20 overflow-hidden">
+              <div
+                key={g.id}
+                className={cn('rounded-xl border overflow-hidden transition-colors', dragOverGroupId === g.id ? 'border-primary/60 bg-primary/10' : 'border-border/60 bg-input/20')}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOverGroupId(g.id); }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
+                onDrop={(e) => { e.preventDefault(); const fieldVal = e.dataTransfer.getData('text/plain'); const f = RULE_FIELDS.find((x) => x.value === fieldVal); if (f) { setActiveGroupId(g.id); const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp; addRule(g.id, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' }); } setDragOverGroupId(null); setDraggingField(null); }}
+              >
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
                   <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-[12px] font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
                   <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-[11px] font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
@@ -326,7 +334,15 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
             <div className="flex flex-col gap-1">
               {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                <button key={f.value} type="button" onClick={() => addFieldToGroup(f)} className="h-8 px-2.5 rounded-lg text-[12px] font-medium border border-border/60 bg-muted/30 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow flex items-start gap-1.5 w-full text-left">
+                <button
+                  key={f.value}
+                  type="button"
+                  draggable
+                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
+                  onClick={() => addFieldToGroup(f)}
+                  className={cn('h-8 px-2.5 rounded-lg text-[12px] font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                >
                   <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
                 </button>
               ))}
