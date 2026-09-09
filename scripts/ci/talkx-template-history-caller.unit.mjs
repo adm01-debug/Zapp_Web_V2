@@ -17,8 +17,12 @@ const updateMutation = source.slice(
 );
 
 test('Talk X editor updates only through the atomic snapshot RPC', () => {
-  assert.match(updateMutation, /rpc\('update_talkx_template_with_snapshot'/);
+  assert.match(updateMutation, /rpc\(\s*'update_talkx_template_with_snapshot'/);
   assert.match(updateMutation, /p_expected_updated_at:\s*expectedUpdatedAt/);
+  assert.match(updateMutation, /p_description:\s*next\.description/);
+  assert.match(updateMutation, /p_media_url:\s*next\.media_url/);
+  assert.match(updateMutation, /p_media_type:\s*next\.media_type/);
+  assert.doesNotMatch(updateMutation, /p_(?:description|media_url|media_type):[^\n]*\?\?\s*['"]{2}/);
   assert.match(updateMutation, /updated_at:\s*persisted\.updated_at/);
   assert.match(updateMutation, /templateUpdateErrorMessage\(error\)/);
   assert.doesNotMatch(updateMutation, /fromTable\('talkx_templates'\)\.update/);
