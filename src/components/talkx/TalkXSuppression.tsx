@@ -97,9 +97,9 @@ export function TalkXSuppression() {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase.from('profiles').select('id').single();
+      const { data: { user } } = await supabase.auth.getUser();
       const finalReason = addReason === 'Outro' ? addCustomReason || 'Outro' : addReason;
-      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: profile?.id, origin: addOrigin });
+      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: user?.id ?? null, origin: addOrigin });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
@@ -129,8 +129,8 @@ export function TalkXSuppression() {
         toast.info('Nenhum contato novo para adicionar.');
         return;
       }
-      const { data: profile } = await supabase.from('profiles').select('id').single();
-      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: profile?.id, origin: 'manual' as const }));
+      const { data: { user } } = await supabase.auth.getUser();
+      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: user?.id ?? null, origin: 'manual' as const }));
       const { error } = await supabase.from('talkx_blacklist').insert(rows);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['talkx-blacklist'] });
