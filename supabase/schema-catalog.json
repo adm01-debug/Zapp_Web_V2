@@ -125,6 +125,7 @@
         "talkx_recipients",
         "talkx_segments",
         "talkx_template_versions",
+        "talkx_template_variants",
         "talkx_templates",
         "talkx_template_versions",
         "team_conversation_members",
