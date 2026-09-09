@@ -111,7 +111,7 @@ export default function ChatPopup() {
         lastMessage: undefined,
         unreadCount: 0,
         tags: contact.tags || [],
-        priority: contact.ai_priority === 'high' ? 'high' : 'medium',
+        priority: (['high', 'urgent'].includes(contact.ai_priority ?? '') ? 'high' : contact.ai_priority === 'low' ? 'low' : 'medium') as 'low' | 'medium' | 'high',
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
         firstResponseAt,
