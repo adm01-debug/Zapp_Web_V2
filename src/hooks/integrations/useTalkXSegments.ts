@@ -47,7 +47,7 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: ['open', 'pending', 'resolved', 'waiting'] },
   { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial' },
   { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento' },
-  { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: ['high', 'medium', 'low'] },
+  { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: ['high', 'urgent', 'medium', 'low'] },
   { value: 'ai_sentiment', label: 'Sentimento (IA)', kind: 'enum', category: 'comportamento', options: ['positive', 'neutral', 'negative'] },
   { value: 'updated_at', label: 'Última interação', kind: 'date', category: 'comportamento' },
   { value: 'created_at', label: 'Data de cadastro', kind: 'date', category: 'basico' },

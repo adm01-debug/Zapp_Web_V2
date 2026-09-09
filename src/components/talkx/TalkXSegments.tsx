@@ -115,7 +115,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s === selected ? null : s)}>
+                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-[13.5px] font-semibold text-foreground">{s.name}</p>
