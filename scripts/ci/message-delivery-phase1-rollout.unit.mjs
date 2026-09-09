@@ -39,6 +39,7 @@ test('message delivery phase 1 remains additive and deployment-order safe', () =
   assert.match(migration, /p_lease_seconds IS NULL/);
   assert.match(migration, /p_delivery_status IS NULL/);
   assert.match(migration, /p_close_reason IS NULL/);
+  assert.match(migration, /v_changed_at := transaction_timestamp\(\)/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.enqueue_outbound_message/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.claim_outbound_message/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.close_conversation_atomic/);

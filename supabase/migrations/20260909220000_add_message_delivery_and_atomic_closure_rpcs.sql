@@ -578,7 +578,10 @@ BEGIN
       USING ERRCODE = '23514';
   END IF;
 
-  v_changed_at := statement_timestamp();
+  -- The canonical FSM trigger also writes NOW() (transaction timestamp).
+  -- Use the same clock so the persisted contact value and replay payload stay
+  -- identical even when the transaction began before this statement.
+  v_changed_at := transaction_timestamp();
 
   INSERT INTO public.conversation_closures (
     contact_id, closed_by, close_reason, outcome, classification, notes,

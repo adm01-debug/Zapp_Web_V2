@@ -124,6 +124,29 @@ RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE SET search_path=public,pg_t
   )
 $$;
 
+-- Mirror the canonical contacts FSM trigger: it overwrites the supplied
+-- timestamp with NOW(), which is transaction_timestamp() in PostgreSQL.
+CREATE FUNCTION public.enforce_conversation_status_transition() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+  IF OLD.conversation_status = NEW.conversation_status THEN RETURN NEW; END IF;
+  IF NOT (
+    (OLD.conversation_status='open' AND NEW.conversation_status IN ('waiting','resolved','archived'))
+    OR (OLD.conversation_status='waiting' AND NEW.conversation_status IN ('open','resolved'))
+    OR (OLD.conversation_status='resolved' AND NEW.conversation_status IN ('open','archived'))
+    OR (OLD.conversation_status='archived' AND NEW.conversation_status='open')
+  ) THEN
+    RAISE EXCEPTION 'Invalid conversation_status transition: % -> %',
+      OLD.conversation_status, NEW.conversation_status USING ERRCODE='23514';
+  END IF;
+  NEW.conversation_status_changed_at = NOW();
+  RETURN NEW;
+END $$;
+CREATE TRIGGER trg_contacts_fsm_transition
+BEFORE UPDATE ON public.contacts FOR EACH ROW
+WHEN (OLD.conversation_status IS DISTINCT FROM NEW.conversation_status)
+EXECUTE FUNCTION public.enforce_conversation_status_transition();
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.messages,
   public.conversation_closures, public.conversation_events TO authenticated;
 GRANT SELECT, UPDATE ON public.contacts TO authenticated;
@@ -354,6 +377,7 @@ expired_proof="$(psql_test -Atqc "SELECT CASE WHEN delivery_attempt_count=2 AND 
 
 close_output="$(psql_test -At <<'SQL'
 BEGIN;
+SELECT pg_sleep(0.05);
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
@@ -536,7 +560,7 @@ const ok = proof.server_major === 17
   && proof.anon_any_execute === false
   && proof.service_delivery_count === 3
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === '14d530ff27e7ed1ec197efd2ccfed867a6f2143ccf553920ed53ffe41996899a'
+  && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
