@@ -111,7 +111,7 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
 test('message delivery ACL hardening revokes only implicit service entry points', () => {
   assert.match(
     messageAclHardening,
-    /REVOKE EXECUTE ON FUNCTION public\.enqueue_outbound_message\([\s\S]*FROM service_role;/
+    /REVOKE EXECUTE ON FUNCTION public\.enqueue_outbound_message\([^;]*FROM service_role;/
   );
   for (const guard of [
     'guard_message_delivery_internal_fields',
@@ -120,7 +120,7 @@ test('message delivery ACL hardening revokes only implicit service entry points'
   ]) {
     assert.match(
       messageAclHardening,
-      new RegExp(`REVOKE EXECUTE ON FUNCTION public\\.${guard}\\(\\)[\\s\\S]*?FROM service_role;`)
+      new RegExp(`REVOKE EXECUTE ON FUNCTION public\\.${guard}\\(\\)[^;]*FROM service_role;`)
     );
   }
   assert.doesNotMatch(messageAclHardening, /claim_outbound_message/);
