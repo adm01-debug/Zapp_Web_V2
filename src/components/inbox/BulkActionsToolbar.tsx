@@ -39,9 +39,9 @@ export function BulkActionsToolbar({
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="absolute top-0 left-0 right-0 z-20 bg-primary/95 backdrop-blur-sm border-b border-primary-foreground/20 p-3"
+          className="absolute top-0 left-0 right-0 z-20 h-10 bg-primary/95 backdrop-blur-sm border-b border-primary-foreground/20 px-3 flex items-center"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>

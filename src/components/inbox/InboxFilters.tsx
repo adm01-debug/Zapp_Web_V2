@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Filter, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -45,6 +45,8 @@ interface InboxFiltersProps {
   onContactTypeChange?: (v: string | null) => void;
   selectedQueueId?: string | null;
   onQueueChange?: (v: string | null) => void;
+  onRefetch?: () => void;
+  isRefetching?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -66,6 +68,7 @@ export function InboxFilters({
   showAll = false, onShowAllChange,
   selectedContactType = null, onContactTypeChange,
   selectedQueueId = null, onQueueChange,
+  onRefetch, isRefetching = false,
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
@@ -78,7 +81,12 @@ export function InboxFilters({
     filters.status.length +
     filters.tags.length +
     (filters.agentId ? 1 : 0) +
-    (filters.dateRange.from ? 1 : 0);
+    (filters.dateRange.from ? 1 : 0) +
+    (selectedContactType ? 1 : 0) +
+    (selectedQueueId ? 1 : 0) +
+    (showAll ? 1 : 0);
+
+  const triggerBadgeCount = activeFiltersCount;
 
   const toggleStatus = useCallback((status: string) => {
     const newStatus = filters.status.includes(status)
@@ -103,13 +111,11 @@ export function InboxFilters({
   }, [filters, onFiltersChange]);
 
   const clearFilters = useCallback(() => {
-    onFiltersChange({
-      status: [],
-      tags: [],
-      agentId: null,
-      dateRange: { from: null, to: null },
-    });
-  }, [onFiltersChange]);
+    onFiltersChange({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
+    onContactTypeChange?.(null);
+    onQueueChange?.(null);
+    onShowAllChange?.(false);
+  }, [onFiltersChange, onContactTypeChange, onQueueChange, onShowAllChange]);
 
   const removeFilter = useCallback((type: 'status' | 'tag' | 'agent' | 'date', value?: string) => {
     switch (type) {
@@ -133,36 +139,47 @@ export function InboxFilters({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="outline"
+            size="icon"
+            data-testid="conversation-filter-button"
             className={cn(
-              'h-6 px-2 gap-1 text-[11px] rounded-md',
-              activeFiltersCount > 0
-                ? 'text-primary bg-primary/10 hover:bg-primary/15'
-                : 'text-muted-foreground hover:text-foreground'
+              'relative w-10 h-10 rounded-xl border-border bg-input shrink-0',
+              triggerBadgeCount > 0 ? 'text-primary border-primary/40' : 'text-muted-foreground'
             )}
+            aria-label="Filtros"
           >
-            <Filter className="w-3 h-3" />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <span className="ml-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] flex items-center justify-center font-bold">
-                {activeFiltersCount}
+            <SlidersHorizontal className="w-4 h-4" />
+            {triggerBadgeCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] flex items-center justify-center font-bold">
+                {triggerBadgeCount}
               </span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <PopoverContent className="w-72 p-0" align="end" onOpenAutoFocus={(e) => e.preventDefault()}>
           {/* Header */}
           <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground">Filtros</span>
-            {activeFiltersCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-              >
-                Limpar tudo
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {onRefetch && (
+                <button
+                  onClick={onRefetch}
+                  disabled={isRefetching}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <RefreshCw className={cn('w-3 h-3', isRefetching && 'animate-spin')} />
+                  Atualizar
+                </button>
+              )}
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Limpar tudo
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-[360px] overflow-y-auto p-3 pb-4 space-y-4">
@@ -172,9 +189,9 @@ export function InboxFilters({
                 <section className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3 h-3 text-muted-foreground" />
-                    <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
+                    <Label htmlFor="show-all" className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
                   </div>
-                  <Switch checked={showAll} onCheckedChange={onShowAllChange} />
+                  <Switch id="show-all" checked={showAll} onCheckedChange={onShowAllChange} />
                 </section>
                 <Separator className="opacity-50" />
               </>

@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RichTextToolbar } from './RichTextToolbar';
 import { AIRewriteButton } from './AIRewriteButton';
@@ -12,13 +13,13 @@ import { SlashCommands, SlashCommand } from '../SlashCommands';
 import { AudioRecorder } from '../AudioRecorder';
 import { FileUploaderRef } from '../FileUploader';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SecondaryToolbar, TertiaryToolsMenu } from './ChatInputToolbars';
 import { StickerPicker } from '../StickerPicker';
 import { CustomEmojiPicker } from '../CustomEmojiPicker';
 import { RichTextToggle } from './RichTextToolbar';
 import { FileUploader } from '../FileUploader';
-import { Send, Mic, Check, Plus, Loader2 } from 'lucide-react';
+import { QuickActionChips } from './QuickActionChips';
+import { Send, Mic, Check, Camera, Loader2, Plus } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
 import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
@@ -75,6 +76,8 @@ interface ChatInputAreaProps {
   onToggleSignature?: () => void;
   fileUploaderRef: React.RefObject<FileUploaderRef | null>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  onOpenAiAssistant?: () => void;
+  onOpenTransfer?: () => void;
 }
 
 export function ChatInputArea(props: ChatInputAreaProps) {
@@ -88,7 +91,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onOpenLocationPicker, onSendProduct, onSendSticker, onSendAudioMeme,
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
-    fileUploaderRef, inputRef,
+    fileUploaderRef, inputRef, onOpenAiAssistant, onOpenTransfer,
   } = props;
 
   const logic = useChatInputLogic({
@@ -96,6 +99,17 @@ export function ChatInputArea(props: ChatInputAreaProps) {
   });
 
   const { isOpen: mentionOpen, cursorPos: mentionCursorPos, checkForMention, handleSelect: handleMentionSelect, close: closeMention } = useMentions(inputRef);
+
+  // Chip "Anexar" e ícone "Câmera" disparam este input oculto e entregam os
+  // arquivos para o MESMO pipeline do FileUploader (handleExternalFiles já
+  // existia na ref) — evita duplicar upload/preview/dialog.
+  const externalFileInputRef = useRef<HTMLInputElement>(null);
+  const openAttachDialog = () => externalFileInputRef.current?.click();
+  const handleExternalFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length > 0) fileUploaderRef.current?.handleExternalFiles(files);
+    e.target.value = '';
+  };
 
   const tertiaryTools = useMemo(() => (
     <TertiaryToolsMenu
@@ -112,6 +126,8 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
   return (
     <>
+      <input ref={externalFileInputRef} type="file" multiple className="hidden" onChange={handleExternalFileInput} aria-hidden="true" tabIndex={-1} />
+
       <RichTextToolbar
         inputRef={inputRef} inputValue={inputValue}
         onInputChange={(val) => setNativeValue(inputRef, val)}
@@ -123,6 +139,29 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         onCancelReply={onCancelReply} onCancelEdit={onCancelEdit}
       />
 
+      {!logic.isMobile && (
+        <QuickActionChips
+          quickReplies={quickReplies}
+          onQuickReply={onQuickReply}
+          onOpenAiAssistant={() => onOpenAiAssistant?.()}
+          onAttach={openAttachDialog}
+          onOpenSchedule={onOpenSchedule}
+          onOpenTransfer={onOpenTransfer}
+          moreContent={
+            <div className="space-y-2">
+              <SecondaryToolbar inputRef={inputRef} inputValue={inputValue}
+                showRichToolbar={logic.showRichToolbar} onToggleRichToolbar={() => logic.setShowRichToolbar(!logic.showRichToolbar)}
+                isRecordingAudio={isRecordingAudio} onSendSticker={onSendSticker} onSendAudioMeme={onSendAudioMeme}
+                onOpenCatalog={onOpenCatalog} onAudioSend={onAudioSend}
+                contactName={contactName} onVoiceDictation={logic.handleVoiceDictation}
+              />
+              <div className="border-t border-border" />
+              {tertiaryTools}
+            </div>
+          }
+        />
+      )}
+
       <div className={cn("px-4 py-3 border-t border-border bg-card", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
         <AnimatePresence>
           {isRecordingAudio && (
@@ -132,102 +171,101 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
         <SlashCommands inputValue={inputValue} onSelectCommand={onSlashCommand} onClose={onCloseSlashCommands} isOpen={showSlashCommands} />
 
-        <div className="flex items-end gap-1.5" role="toolbar" aria-label="Barra de mensagem">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon"
-                className={cn("text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 touch-manipulation active:scale-95", logic.isMobile ? "w-10 h-10" : "w-9 h-9")}
-                aria-label="Mais opções de mensagem">
-                <Plus className="w-[18px] h-[18px]" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2 bg-popover border-border" align="start" side="top">{tertiaryTools}</PopoverContent>
-          </Popover>
-
-          <div className="flex-1 min-w-0 relative">
+        <div className="flex items-end gap-2" role="toolbar" aria-label="Barra de mensagem">
+          <div className={cn(
+            "flex-1 min-w-0 relative flex items-end gap-1 rounded-xl bg-input border border-border",
+            logic.isMobile ? "pl-3 pr-1 py-1" : "min-h-[52px] pl-4 pr-2"
+          )}>
             <MentionAutocomplete inputValue={inputValue} cursorPosition={mentionCursorPos} onSelect={handleMentionSelect} onClose={closeMention} isOpen={mentionOpen} />
 
-            <AnimatePresence>
-              {logic.showMarkdownPreview && logic.hasText && logic.showRichToolbar && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                  className="mb-1 px-3 py-2 border border-border/50 rounded-lg bg-muted/30 text-sm max-h-[100px] overflow-y-auto">
-                  <MarkdownPreview text={inputValue} className="text-foreground leading-relaxed" />
-                </motion.div>
+            <div className="flex-1 min-w-0 relative">
+              <AnimatePresence>
+                {logic.showMarkdownPreview && logic.hasText && logic.showRichToolbar && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                    className="mb-1 px-3 py-2 border border-border/50 rounded-lg bg-muted/30 text-sm max-h-[100px] overflow-y-auto">
+                    <MarkdownPreview text={inputValue} className="text-foreground leading-relaxed" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <textarea ref={inputRef} value={inputValue}
+                onChange={(e) => { onInputChange(e); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
+                onKeyDown={onKeyDown} onBlur={onBlur} onPaste={logic.handlePaste}
+                onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
+                placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
+                rows={1}
+                className={cn(
+                  "w-full bg-transparent border-0 outline-none text-sm text-foreground",
+                  "placeholder:text-muted-foreground resize-none transition-all",
+                  "focus:ring-0",
+                  logic.isMobile ? "px-1 py-2.5 text-[16px] min-h-[42px] max-h-[200px]" : "py-3.5 min-h-[52px] max-h-[200px]",
+                )}
+                aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
+                aria-describedby={logic.charCount > 0 ? "char-counter" : undefined}
+              />
+              {logic.charCount > 100 && (
+                <span id="char-counter" className={cn("absolute bottom-1 right-2 text-[10px] select-none pointer-events-none",
+                  logic.isOverLimit ? "text-destructive font-medium" : logic.isNearLimit ? "text-warning" : "text-muted-foreground/50")}>
+                  {logic.charCount}/{logic.CHAR_LIMIT}
+                </span>
               )}
-            </AnimatePresence>
+            </div>
 
-            <textarea ref={inputRef} value={inputValue}
-              onChange={(e) => { onInputChange(e); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
-              onKeyDown={onKeyDown} onBlur={onBlur} onPaste={logic.handlePaste}
-              onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
-              placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem... (/ para comandos, @ para mencionar)"}
-              rows={1}
-              className={cn(
-                "w-full bg-transparent border border-border/50 rounded-xl outline-none text-sm text-foreground",
-                "placeholder:text-muted-foreground resize-none transition-all",
-                "focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
-                logic.isMobile ? "px-3 py-2.5 text-[16px] min-h-[42px] max-h-[200px]" : "px-3 py-2 min-h-[40px] max-h-[200px]",
-                logic.isOverLimit && "border-destructive/50 focus:border-destructive focus:ring-destructive/20"
-              )}
-              aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
-              aria-describedby={logic.charCount > 0 ? "char-counter" : undefined}
-            />
-            {logic.charCount > 100 && (
-              <span id="char-counter" className={cn("absolute bottom-1 right-2 text-[10px] select-none pointer-events-none",
-                logic.isOverLimit ? "text-destructive font-medium" : logic.isNearLimit ? "text-warning" : "text-muted-foreground/50")}>
-                {logic.charCount}/{logic.CHAR_LIMIT}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button onClick={logic.handleSendWithAnimation}
-                  disabled={(!logic.hasText && !editingMessage) || logic.isOverLimit || isSending}
-                  size="icon"
-                  className={cn("rounded-full shrink-0 disabled:opacity-40 touch-manipulation active:scale-95 transition-all",
-                    "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40",
-                    logic.isMobile ? "w-11 h-11" : "w-10 h-10", logic.sendAnimation && "motion-safe:animate-pulse")}
-                  aria-label={editingMessage ? "Confirmar edição" : "Enviar mensagem"}>
-                  {isSending ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : editingMessage ? <Check className="w-[18px] h-[18px]" /> : <Send className="w-[18px] h-[18px]" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{editingMessage ? 'Confirmar edição' : 'Enviar (Enter)'}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon"
-                  className={cn("shrink-0 touch-manipulation active:scale-95 rounded-full transition-all",
-                    logic.isMobile ? "w-11 h-11" : "w-10 h-10",
-                    isRecordingAudio ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 hover:bg-destructive/90" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30")}
-                  onClick={onRecordToggle} aria-label={isRecordingAudio ? "Parar gravação" : "Gravar áudio"}>
-                  <Mic className={cn("w-5 h-5", isRecordingAudio && "motion-safe:animate-pulse")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent>
-            </Tooltip>
-          </div>
-
-          {!logic.isMobile && (
-            <SecondaryToolbar inputRef={inputRef} inputValue={inputValue}
-              showRichToolbar={logic.showRichToolbar} onToggleRichToolbar={() => logic.setShowRichToolbar(!logic.showRichToolbar)}
-              isRecordingAudio={isRecordingAudio} onSendSticker={onSendSticker} onSendAudioMeme={onSendAudioMeme}
-              onSendCustomEmoji={onSendCustomEmoji} onOpenCatalog={onOpenCatalog} onAudioSend={onAudioSend}
-              fileUploaderRef={fileUploaderRef} instanceName={instanceName} contactPhone={contactPhone}
-              contactId={contactId} contactName={contactName} onVoiceDictation={logic.handleVoiceDictation}
-            />
-          )}
-
-          {logic.isMobile && (
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0 pb-1.5">
+              <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
               <FileUploader ref={fileUploaderRef} instanceName={instanceName || ''} recipientNumber={contactPhone}
                 contactId={contactId} connectionId={undefined}
                 onFileSelect={(file, category) => toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` })}
                 onFileSent={() => toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso.' })}
               />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                    onClick={openAttachDialog} aria-label="Enviar imagem">
+                    <Camera className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Enviar imagem</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon"
+                    className={cn("w-9 h-9 rounded-lg shrink-0 touch-manipulation active:scale-95 transition-all",
+                      isRecordingAudio ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted")}
+                    onClick={onRecordToggle} aria-label={isRecordingAudio ? "Parar gravação" : "Gravar áudio"}>
+                    <Mic className={cn("w-5 h-5", isRecordingAudio && "motion-safe:animate-pulse")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent>
+              </Tooltip>
+              {/* Ferramentas adicionais no mobile — o desktop já tem via QuickActionChips */}
+              {logic.isMobile && <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" aria-label="Mais ferramentas">
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-56 p-2">
+                  {tertiaryTools}
+                </PopoverContent>
+              </Popover>}
             </div>
-          )}
+          </div>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={logic.handleSendWithAnimation}
+                disabled={(!logic.hasText && !editingMessage) || logic.isOverLimit || isSending}
+                size="icon"
+                className={cn("w-11 h-11 rounded-[10px] shrink-0 disabled:opacity-40 touch-manipulation active:scale-95 transition-all",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
+                  logic.sendAnimation && "motion-safe:animate-pulse")}
+                aria-label={editingMessage ? "Confirmar edição" : "Enviar mensagem"}>
+                {isSending ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : editingMessage ? <Check className="w-[18px] h-[18px]" /> : <Send className="w-[18px] h-[18px]" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">{editingMessage ? 'Confirmar edição' : 'Enviar (Enter)'}</TooltipContent>
+          </Tooltip>
         </div>
 
         {logic.isMobile && logic.hasText && (
@@ -236,7 +274,6 @@ export function ChatInputArea(props: ChatInputAreaProps) {
             <AIRewriteButton inputValue={inputValue} contactName={contactName}
               onRewrite={(newText) => setNativeValue(inputRef, newText)} />
             <RichTextToggle active={logic.showRichToolbar} onToggle={() => logic.setShowRichToolbar(!logic.showRichToolbar)} />
-            <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
             <StickerPicker onSendSticker={onSendSticker} />
           </motion.div>
         )}

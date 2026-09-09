@@ -72,7 +72,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   return (
     <div className="flex flex-col gap-4" data-testid="files-tab">
       <header>
-        <h2 className="text-lg font-bold text-foreground">Arquivos compartilhados</h2>
+        <h2 className="text-xl font-bold text-foreground">Arquivos compartilhados</h2>
         <p className="text-sm text-muted-foreground">Todos os arquivos, mídias e documentos desta conversa.</p>
       </header>
 
@@ -98,11 +98,14 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             type="button"
             onClick={() => setTypeFilter(chip.id)}
             className={cn(
-              'h-8 px-3 rounded-lg text-[13px] font-medium border',
+              'h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5',
               typeFilter === chip.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
             )}
           >
-            {chip.label} <span className="tabular-nums">{counts[chip.id]}</span>
+            {chip.label}
+            <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-[10px] font-bold flex items-center justify-center', typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
+              {counts[chip.id]}
+            </span>
           </button>
         ))}
       </div>

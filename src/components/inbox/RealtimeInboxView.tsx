@@ -10,6 +10,7 @@ import { useGlobalSearchShortcut } from '@/hooks/ui/useGlobalSearchShortcut';
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ export function RealtimeInboxView() {
   const inbox = useRealtimeInbox();
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
+  const conversationActions = useConversationActions();
   const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await inbox.refetch(); }, disabled: !isMobile || !!inbox.selectedContactId });
 
   // Aba ativa do painel central, ancorada no contato que a selecionou.
@@ -138,7 +140,7 @@ export function RealtimeInboxView() {
         </Suspense>
       )}
 
-      <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} />
+      <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} conversationActions={conversationActions} />
 
       <div className={cn('flex-1 flex min-w-0 min-h-0 relative z-10 bg-background h-full overflow-hidden', isMobile && !inbox.selectedContactId && 'hidden')}>
         {inbox.legacyConversation ? (
@@ -171,6 +173,14 @@ export function RealtimeInboxView() {
                           }
                           inbox.setSelectedContactId(null);
                         } : undefined}
+                      isFavorite={conversationActions.isFavorite(inbox.legacyConversation.contact.id)}
+                      onToggleFavorite={() => {
+                        if (!inbox.legacyConversation) return;
+                        const id = inbox.legacyConversation.contact.id;
+                        if (conversationActions.isFavorite(id)) conversationActions.unfavoriteContact(id);
+                        else conversationActions.favoriteContact(id);
+                      }}
+                      onSwitchToAiTab={() => setActiveTab('ia')}
                     />
                   </SectionErrorBoundary>
                   </ConversationTabContent>

@@ -10,6 +10,25 @@ vi.mock('@/lib/popupManager', () => ({ openChatPopup: vi.fn() }));
 vi.mock('@/components/inbox/SLAIndicator', () => ({ SLAIndicator: () => null }));
 vi.mock('@/components/inbox/VoiceSelector', () => ({ VoiceSelector: () => null }));
 vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }));
+vi.mock('@/components/inbox/RealtimeCollaboration', () => ({ RealtimeCollaboration: () => null }));
+
+// Radix DropdownMenu/Popover não abrem de forma confiável sob jsdom+fireEvent
+// (mesmo padrão usado em EmailChatReplyBar.test.tsx) — mock simples que
+// renderiza o conteúdo sempre "aberto" para testar os itens do menu.
+vi.mock('@/components/ui/dropdown-menu', () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
+    <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+}));
+vi.mock('@/components/ui/popover', () => ({
+  Popover: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
 
 const mockConversation = {
   id: 'conv-1',
@@ -82,60 +101,70 @@ describe('ChatPanelHeader', () => {
     expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
-  it('does NOT render summary button when onGenerateSummary is undefined', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} />
-      </Wrapper>
-    );
-    expect(screen.queryByLabelText(/resumo/i)).not.toBeInTheDocument();
-  });
-
-  it('renders summary button when handler is provided', () => {
-    const onGenerate = vi.fn();
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
-      </Wrapper>
-    );
-    expect(screen.getByLabelText(/resumo/i)).toBeInTheDocument();
-  });
-
-  it('calls onGenerateSummary when clicked', () => {
-    const onGenerate = vi.fn();
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
-      </Wrapper>
-    );
-    fireEvent.click(screen.getByLabelText(/resumo/i));
-    expect(onGenerate).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows loader and disables button when isSummaryLoading=true', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader
-          {...baseProps}
-          canGenerateSummary={true}
-          onGenerateSummary={vi.fn()}
-          isSummaryLoading={true}
-        />
-      </Wrapper>
-    );
-    const summaryBtn = screen.getByLabelText(/resumo/i);
-    expect(summaryBtn).toBeDisabled();
-  });
-
-  it('calls onOpenSearch when search button is clicked', () => {
+  it('renders exactly 4 header action buttons (Ligar · Vídeo · Adicionar participante · Mais)', () => {
     render(
       <Wrapper>
         <ChatPanelHeader {...baseProps} />
       </Wrapper>
     );
-    const buttons = screen.getAllByRole('button');
-    const searchBtn = buttons.find(b => b.querySelector('.lucide-search'));
-    fireEvent.click(searchBtn!);
+    expect(screen.getByLabelText('Ligar')).toBeInTheDocument();
+    expect(screen.getByLabelText('Videochamada')).toBeInTheDocument();
+    expect(screen.getByLabelText('Adicionar participante')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mais ações')).toBeInTheDocument();
+  });
+
+  it('does NOT render summary item in the menu when onGenerateSummary is undefined', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} canGenerateSummary={true} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Mais ações'));
+    expect(screen.queryByText(/resumo da conversa/i)).not.toBeInTheDocument();
+  });
+
+  it('renders summary menu item when handler is provided', () => {
+    const onGenerate = vi.fn();
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Mais ações'));
+    expect(screen.getByText(/resumo da conversa/i)).toBeInTheDocument();
+  });
+
+  it('calls onGenerateSummary when the menu item is clicked', () => {
+    const onGenerate = vi.fn();
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Mais ações'));
+    fireEvent.click(screen.getByText(/resumo da conversa/i));
+    expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onOpenSearch when the "Buscar na conversa" menu item is clicked', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Mais ações'));
+    fireEvent.click(screen.getByText(/buscar na conversa/i));
     expect(baseProps.onOpenSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the favorite star and calls onToggleFavorite when clicked', () => {
+    const onToggleFavorite = vi.fn();
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} isFavorite={false} onToggleFavorite={onToggleFavorite} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Favoritar conversa'));
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
   });
 });
