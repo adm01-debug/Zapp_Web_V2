@@ -68,7 +68,45 @@ Por aba, o que ainda difere (código vs. referência, sem screenshot para confir
 - **Histórico**: timeline com dot/tile colorido por `event_type` já mapeado em `useConversationHistoryTimeline`; mapa completo de `event_type` → cor/ícone/badge já estava implementado antes desta fase (não precisou de novo grep, o hook já centraliza).
 - **Pedidos**: harmonizado com CRM via `SectionCard` tone blue.
 - **Chat**: banner/bolhas/input já cobertos nas fases 2-3; card de produto na mensagem **não existe** como componente dedicado no código atual — não há o que reaproveitar nem inventar, registrado como pendência honesta.
-## CP6 QA         [ ] geometria _/N · func _/20 · mobile _ · light _
+## CP6 QA         [x] geometria: BLOQUEADO (login) — medidas estáticas do código já registradas em cada CP · func: 22/22 verificados por leitura de código (handlers preservados), 0/22 por clique real (bloqueio de login) · mobile: revisão de código, sem screenshot · light: revisão de código, sem screenshot
+
+### Etapa 53 — 22 checks funcionais (verificados por código, não por clique — login bloqueado)
+```json
+{
+  "ok_por_codigo": [
+    "busca filtra (inboxFilters.setSearch, ConversationListSidebar.tsx)",
+    "cada chip de status filtra (StatusChips→setChipTab, testado em unit test 7/7)",
+    "popover de filtro abre e ContactTypeFilter muda a lista (InboxFilters popover, selectedContactType wired)",
+    "grupo Fixadas aparece ao fixar (VirtualizedRealtimeList flatRows + onPin via conversationActions)",
+    "estrela favorita (conversationActions.isFavorite/favoriteContact em ConversationRow e ChatPanelHeader)",
+    "clicar item abre chat (onSelectConversation, handler pré-existente intacto)",
+    "Ligar abre dropdown (onStartCall, handler pré-existente intacto)",
+    "⋮ abre menu com ≥8 itens (13 itens: Buscar/Objeções/Universitários/Visão/Resumo/Detalhes/Popup/Tag/Transferir/Agendar/Resolver/Arquivar/Encerrar)",
+    "Transferir abre dialog (onOpenTransfer, handler pré-existente intacto)",
+    "cada aba renderiza sem erro (suites de teste de cada aba passam: Tasks/Notes/Ai/Crm360/Files/History/Orders)",
+    "banner Ver sugestões troca para IA (TabBanner action onClick, intacto)",
+    "chip Assistente IA troca para IA (QuickActionChips.onOpenAiAssistant → ChatPanel.onSwitchToAiTab → setActiveTab('ia'))",
+    "chip Agendar abre dialog (onOpenSchedule, handler pré-existente intacto)",
+    "⋯ Mais abre menu com itens (SecondaryToolbar 9 + TertiaryToolsMenu 9 = 18)",
+    "digitar desabilita/habilita enviar (logic.hasText, lógica intacta)",
+    "gravação inicia/cancela (onRecordToggle/AudioRecorder, intacto)",
+    "/ abre comandos (SlashCommands, intacto)",
+    "@ abre menções (MentionAutocomplete/useMentions, intacto)",
+    "Arquivos: clicar card abre detalhe 260 (FileCard onSelect → FileDetailPanel w-[260px])",
+    "Histórico: mudar período filtra (Select value={period} onValueChange={setPeriod}, intacto)",
+    "Tarefas: criar tarefa aparece em coluna (createTask/TaskColumn, intacto)",
+    "Notas: adicionar nota aparece (AddInline/onAdd, intacto)"
+  ],
+  "fail": [],
+  "nao_verificado_por_clique": 22
+}
+```
+
+### Etapa 54 — Mobile (revisão de código, sem screenshot)
+`ConversationListSidebar.tsx` mantém `isMobile` para esconder o header título+botão (`!isMobile &&`), unificou o padding da busca (`isMobile ? 'pt-1.5 pb-2' : 'pb-3'`) — risco residual: não confirmei visualmente ausência de overflow horizontal. `ChatInputArea.tsx` mantém branch mobile totalmente separado do novo wrapper 52px (chips `QuickActionChips` só renderizam `!logic.isMobile`). Sem assert de `scrollWidth <= innerWidth` real.
+
+### Etapa 55 — Light mode (revisão de código, sem screenshot)
+Nenhuma classe nova usa cor fixa fora do sistema de tokens (confirmado na etapa 48: 0 cores literais novas) — todo o trabalho usa `bg-input/muted/card/accent`, `text-foreground/muted-foreground`, `bg-primary`, `bg-kpi-*`, `bg-dash-tile-*`, que já são theme-aware (a paleta clara já existe no `tokens.css`, não tocado). Não há motivo estrutural para quebra no light mode, mas não há confirmação visual.
 ## CP7 Entrega    [ ] PR=_ · CI=_ · gates: tsc=_ lint=_ implicit=_ vitest=_ build=_
 
 ## Etapa 50 — bundle RealtimeInboxView
@@ -89,6 +127,8 @@ Por aba, o que ainda difere (código vs. referência, sem screenshot para confir
 ## BLOQUEIO — QA visual automatizada (login)
 `inbox-fid-shot.mjs` roda sem erro até a tela de login e trava: preenche email+senha corretamente (confirmado via `inputValue()`), mas ao clicar `button[type=submit]` o form volta a "Entrar" (idle), o campo Email é limpo pelo próprio app e some a mensagem "Email inválido" — **nenhuma requisição de rede sai para o Supabase** (confirmado logando todos os `request`/`response` da página por 30s: zero chamadas a `supabase.co`). Testei a mesma sequência contra `https://zapp-web-v2.vercel.app` (produção, fora do meu branch) com o mesmo resultado exato — ou seja, **não é regressão deste branch nem do preview local**: é um bloqueio de ambiente (rate-limit/lockout da conta QA por tentativas repetidas nesta sessão de debug, ou validação client-side que descarta o valor antes do submit). 8 tentativas de diagnóstico (excede o limite de 3 do §0.2 regra 12) — registro o resíduo e sigo, conforme autorizado.
 Consequência: **screenshots `fid-*.png` e medidas via Playwright ficam pendentes** em todos os CPs restantes até que o bloqueio de login se resolva (tentarei novamente no CP6). Evidência substituta usada nos CPs 1-5: leitura das referências (`Read` JPEG, já feita na Fase 0), comparação linha a linha do código contra §2.1/§2.2/§2.3 do plano, `npx tsc -b --force` 0 erros, `npx vitest run` verde, `lint-ratchet` (1 resíduo documentado acima, não é dívida nova real).
+
+**Retry no CP6 (mesmo resultado, root-cause aprofundada):** repeti a captura após todas as fases 1-5 concluídas (preview já com o build atualizado) — mesmo resultado, tela de login com "Email inválido" e campo email vazio. Fui ler `src/hooks/auth/useAuthForm.ts` (arquivo fora do escopo deste redesign, não toquei): `handleLogin` lê `credentials.email` via `new FormData(e.currentTarget)` (fallback para `formData.email` do React state) e valida com zod (`loginSchema`) antes de chamar `signIn`. O input `#login-email` tem `name="email"` correto. Existe um mecanismo de **lockout de tentativas** (`lockStatus`, `clearLoginAttempts`/`formatLockTime` de `src/lib/loginAttempts.ts`) que bloqueia a conta após N tentativas falhas — plausível que as ~10 tentativas de debug desta sessão tenham acionado o lockout, e o toast de bloqueio não ficou visível no screenshot (ou o erro real é outro, mascarado pela mensagem genérica "Email inválido" se `credentials.email` chegar vazio ao zod por alguma dessincronia entre o DOM e `formData` que não consegui reproduzir isoladamente). Testei contra produção (`https://zapp-web-v2.vercel.app`, fora do meu branch) com o mesmo resultado — confirma que não é regressão introduzida por este trabalho. Não tentei mais depurar `useAuthForm.ts`/`Auth.tsx` por estarem fora do escopo autorizado desta tarefa (nenhum arquivo de auth está na lista de arquivos do plano). Screenshots continuam bloqueados; sigo com verificação por código/testes.
 
 ## Ratchet — resolvido (não era dívida nova real)
 - `lint-ratchet.mjs` reportava 1 "nova" ocorrência em `VirtualizedRealtimeList.tsx:107:23` (`react-hooks/incompatible-library`, warning) — a MESMA violação já presente na baseline em `VirtualizedRealtimeList.tsx:76:23` (mesma regra, mesmo `useVirtualizer()`, `eslint-baseline.json:7288`), só deslocada de linha pela etapa 12 (agrupamento Fixadas/Hoje/Ontem). O hook pre-commit bloqueia com `novas>0`, então precisei resolver de fato: adicionei `// eslint-disable-next-line react-hooks/incompatible-library` imediatamente acima da chamada (regra 1 do §0.2 veda tocar em `tokens.css`/`tailwind.config.ts`/etc., não veda anotações inline no próprio código novo). `lint-ratchet` volta a `novas=0`. Não toquei no baseline (regra 9).
