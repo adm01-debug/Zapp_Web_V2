@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const workflow = await readFile(
   new URL('../../.github/workflows/db-migrate.yml', import.meta.url),
-  'utf8',
+  'utf8'
 );
 
 test('CRM rollout migration has preflight and post-deploy runtime contracts', () => {
@@ -24,6 +24,8 @@ test('CRM rollout remains two-phase and identity-bound', () => {
   assert.match(workflow, /confirm_project_ref/);
   assert.match(workflow, /OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'/);
   assert.match(workflow, /--dry-run --yes/);
+  assert.match(workflow, /comm -13 \/tmp\/local-versions \/tmp\/remote-versions/);
+  assert.match(workflow, /REMOTE_ONLY_COUNT/);
 });
 
 test('public API kill switch has preflight and post-apply runtime contracts', () => {
@@ -59,6 +61,14 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /inputs\.migration_version == '20260909210000'/);
   assert.match(workflow, /proof\.custom_variables_column_count === 1/);
   assert.match(workflow, /proof\.invalid_live_template_count === 0/);
+  assert.match(workflow, /proof\.variant_table_count === 1/);
+  assert.match(workflow, /proof\.invalid_variant_count === 0/);
+  assert.match(workflow, /proof\.variant_canonical_policy_signature_count === 4/);
+  assert.match(workflow, /proof\.variant_legacy_write_policy_count === 0/);
+  assert.match(workflow, /proof\.variant_validated_constraint_count === 3/);
+  assert.match(workflow, /proof\.recipient_variant_fk_count === 1/);
+  assert.match(workflow, /proof\.variant_anon_any_access === false/);
+  assert.match(workflow, /proof\.variant_authenticated_crud === true/);
   assert.match(workflow, /proof\.history_description_column_count === 1/);
   assert.match(workflow, /\[0, 1\]\.includes\(proof\.history_description_column_count\)/);
   assert.match(workflow, /\[1, 2\]\.includes\(proof\.policy_count\)/);
@@ -79,5 +89,8 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.authenticated_guard_execute === false/);
   assert.match(workflow, /proof\.authenticated_update_guard_execute === false/);
   assert.match(workflow, /proof\.authenticated_internal_function_execute_count === 0/);
-  assert.match(workflow, /definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'/);
+  assert.match(
+    workflow,
+    /definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'/
+  );
 });

@@ -5,6 +5,13 @@ WITH target_relation AS (
   WHERE n.nspname = 'public'
     AND c.relname = 'talkx_template_versions'
     AND c.relkind IN ('r', 'p')
+), variant_relation AS (
+  SELECT c.oid, c.relrowsecurity
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relname = 'talkx_template_variants'
+    AND c.relkind IN ('r', 'p')
 ), expected_functions AS (
   SELECT p.oid, p.proname, p.prosecdef,
          COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path,
@@ -32,6 +39,7 @@ WITH target_relation AS (
     'server_major', current_setting('server_version_num')::integer / 10000,
     'database', current_database(),
     'table_count', (SELECT count(*) FROM target_relation),
+    'variant_table_count', (SELECT count(*) FROM variant_relation),
     'custom_variables_column_count', (
       SELECT count(*) FROM information_schema.columns
       WHERE table_schema='public' AND table_name='talkx_templates'
@@ -70,6 +78,94 @@ WITH target_relation AS (
            FROM unnest(COALESCE(template.custom_variables, '{}'::text[])) AS value
          )) IS DISTINCT FROM cardinality(COALESCE(template.custom_variables, '{}'::text[]))
     ),
+    'invalid_variant_count', (
+      SELECT count(*)
+      FROM public.talkx_template_variants AS variant
+      WHERE variant.template_id IS NULL
+         OR variant.label IS NULL
+         OR variant.label NOT IN ('A', 'B', 'C')
+         OR variant.content IS NULL
+         OR length(variant.content) NOT BETWEEN 1 AND 65536
+         OR variant.weight IS NULL
+         OR variant.weight NOT BETWEEN 1 AND 100
+         OR (variant.media_url IS NOT NULL AND (
+           length(variant.media_url) > 8192 OR variant.media_url !~ '^https://'
+         ))
+         OR (variant.media_type IS NOT NULL
+             AND variant.media_type NOT IN ('image', 'video', 'document', 'audio'))
+    ),
+    'variant_rls_enabled', COALESCE((SELECT bool_and(relrowsecurity) FROM variant_relation), false),
+    'variant_policy_count', (
+      SELECT count(*) FROM pg_policy policy
+      JOIN variant_relation relation ON relation.oid=policy.polrelid
+    ),
+    'variant_legacy_write_policy_count', (
+      SELECT count(*) FROM pg_policy policy
+      JOIN variant_relation relation ON relation.oid=policy.polrelid
+      WHERE policy.polname='talkx_template_variants_write'
+        AND policy.polcmd='*'
+        AND pg_get_expr(policy.polqual, policy.polrelid)='true'
+    ),
+    'variant_canonical_policy_signature_count', (
+      SELECT count(*) FROM pg_policy policy
+      JOIN variant_relation relation ON relation.oid=policy.polrelid
+      WHERE policy.polpermissive
+        AND policy.polroles=ARRAY['authenticated'::regrole::oid]
+        AND (
+          (policy.polname='talkx_template_variants_select'
+           AND policy.polcmd='r'
+           AND policy.polwithcheck IS NULL
+           AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%auth.uid() IS NOT NULL%')
+          OR
+          (policy.polname='talkx_template_variants_insert'
+           AND policy.polcmd='a'
+           AND policy.polqual IS NULL
+           AND pg_get_expr(policy.polwithcheck, policy.polrelid) LIKE '%get_profile_id_for_user(auth.uid())%'
+           AND pg_get_expr(policy.polwithcheck, policy.polrelid) LIKE '%is_admin_or_supervisor(auth.uid())%')
+          OR
+          (policy.polname='talkx_template_variants_update'
+           AND policy.polcmd='w'
+           AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%get_profile_id_for_user(auth.uid())%'
+           AND pg_get_expr(policy.polwithcheck, policy.polrelid) LIKE '%get_profile_id_for_user(auth.uid())%')
+          OR
+          (policy.polname='talkx_template_variants_delete'
+           AND policy.polcmd='d'
+           AND policy.polwithcheck IS NULL
+           AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%get_profile_id_for_user(auth.uid())%'
+           AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%is_admin_or_supervisor(auth.uid())%')
+        )
+    ),
+    'variant_validated_constraint_count', (
+      SELECT count(*) FROM pg_constraint constraint_row
+      JOIN variant_relation relation ON relation.oid=constraint_row.conrelid
+      WHERE constraint_row.convalidated
+        AND constraint_row.conname IN (
+          'talkx_template_variants_content_check',
+          'talkx_template_variants_media_url_check',
+          'talkx_template_variants_media_type_check'
+        )
+    ),
+    'recipient_variant_fk_count', (
+      SELECT count(*) FROM pg_constraint constraint_row
+      WHERE constraint_row.conrelid='public.talkx_recipients'::regclass
+        AND constraint_row.conname='talkx_recipients_variant_id_fkey'
+        AND constraint_row.contype='f'
+        AND constraint_row.confrelid='public.talkx_template_variants'::regclass
+        AND constraint_row.confdeltype='n'
+        AND constraint_row.convalidated
+    ),
+    'variant_anon_any_access', COALESCE((SELECT
+      has_table_privilege('anon', oid, 'SELECT')
+      OR has_table_privilege('anon', oid, 'INSERT')
+      OR has_table_privilege('anon', oid, 'UPDATE')
+      OR has_table_privilege('anon', oid, 'DELETE')
+      FROM variant_relation), false),
+    'variant_authenticated_crud', COALESCE((SELECT
+      has_table_privilege('authenticated', oid, 'SELECT')
+      AND has_table_privilege('authenticated', oid, 'INSERT')
+      AND has_table_privilege('authenticated', oid, 'UPDATE')
+      AND has_table_privilege('authenticated', oid, 'DELETE')
+      FROM variant_relation), false),
     'history_description_column_count', (
       SELECT count(*) FROM information_schema.columns
       WHERE table_schema='public' AND table_name='talkx_template_versions'
