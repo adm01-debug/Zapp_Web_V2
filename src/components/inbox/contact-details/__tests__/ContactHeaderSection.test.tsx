@@ -10,6 +10,7 @@ vi.mock('@/hooks/crm/useExternalContact360', () => ({
 vi.mock('@/integrations/supabase/externalClient', () => ({
   isExternalConfigured: false,
 }));
+vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },

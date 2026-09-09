@@ -5,4 +5,10 @@
  */
 // Fail closed during staged deployments: the browser only switches to the
 // server-side gateway after DB + Edge smoke tests have passed.
-export const isExternalConfigured = import.meta.env.VITE_CRM_INTEGRATION_ENABLED === 'true';
+export function parseCRMIntegrationBuildFlag(value: unknown): boolean {
+  return value === 'true';
+}
+
+export const isExternalConfigured = parseCRMIntegrationBuildFlag(
+  import.meta.env.VITE_CRM_INTEGRATION_ENABLED,
+);

@@ -18,9 +18,19 @@ interface ContactSearchResponse {
      const contactIds = [...new Set(contacts.map((contact) => contact.id).filter(Boolean))];
      if (contactIds.length === 0) return new Map();
  
-     try {
-       const { data } = await callCRMIntegration<Record<string, unknown>>('contactLookupBatch', { contactIds });
-       const map = new Map<string, unknown>();
+     const chunks: string[][] = [];
+     for (let index = 0; index < contactIds.length; index += 100) {
+       chunks.push(contactIds.slice(index, index + 100));
+     }
+     const map = new Map<string, unknown>();
+     let nextChunk = 0;
+     let successfulChunks = 0;
+     const worker = async () => {
+       while (nextChunk < chunks.length) {
+         const chunk = chunks[nextChunk++];
+         try {
+           const { data } = await callCRMIntegration<Record<string, unknown>>('contactLookupBatch', { contactIds: chunk });
+           successfulChunks += 1;
        if (data && typeof data === 'object') {
          for (const [phone, info] of Object.entries(data)) {
            map.set(phone, info);
@@ -29,11 +39,14 @@ interface ContactSearchResponse {
            if (!phone.startsWith('55') && clean.length <= 11) map.set('55' + clean, info);
          }
        }
-       return map;
-     } catch (error) {
-       log.error('[ExternalCRMService] Batch CRM lookup error:', error);
-       return new Map();
-     }
+         } catch (error) {
+           log.error('[ExternalCRMService] CRM batch chunk failed:', error);
+         }
+       }
+     };
+     await Promise.all(Array.from({ length: Math.min(3, chunks.length) }, () => worker()));
+     if (successfulChunks === 0) throw new Error('Todos os lotes de enriquecimento CRM falharam');
+     return map;
    }
  
    static async queryExternal<T = unknown>(params: {

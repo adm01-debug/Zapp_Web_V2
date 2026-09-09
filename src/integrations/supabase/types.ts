@@ -7914,6 +7914,14 @@ export type Database = {
     }
     Functions: {
       calculate_level: { Args: { xp_amount: number }; Returns: number }
+      merge_contacts_atomic: {
+        Args: {
+          p_merged_fields?: Json
+          p_primary_id: string
+          p_secondary_ids: string[]
+        }
+        Returns: Json
+      }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
         Returns: {
@@ -8523,4 +8531,3 @@ export const Constants = {
     },
   },
 } as const
-

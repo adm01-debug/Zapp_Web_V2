@@ -276,9 +276,13 @@ export function buildDeploymentAttestation({
         `${expected.name}: verify_jwt mismatch; expected=${expected.verify_jwt}, remote=${remote.verify_jwt}`,
       );
     }
+    if (typeof remote.ezbr_sha256 !== 'string' || remote.ezbr_sha256.length < 16) {
+      throw new Error(`${expected.name}: remote bundle digest is missing`);
+    }
     return {
       name: expected.name,
-      source_sha256: expected.source_sha256,
+      local_source_sha256: expected.source_sha256,
+      remote_bundle_sha256: remote.ezbr_sha256,
       verify_jwt: expected.verify_jwt,
       remote_id: typeof remote.id === 'string' ? remote.id : null,
       remote_version: Number.isInteger(remote.version) ? remote.version : null,

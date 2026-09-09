@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { CRMSyncButton } from '../CRMAutoSync';
 import type { Conversation } from '@/types/chat';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -25,6 +25,7 @@ interface ContactActionButtonsProps {
 export function ContactActionButtons({
   contact, conversation, hasExpandedSections, onCollapseAll, onQuickAction, onStartCall,
 }: ContactActionButtonsProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   return (
     <div className="flex items-center gap-1 mt-2">
       <TooltipProvider>
@@ -68,7 +69,7 @@ export function ContactActionButtons({
           <TooltipContent side="top">{contact.email ? 'Abrir email' : 'Sem email'}</TooltipContent>
         </Tooltip>
 
-        {isExternalConfigured && conversation && <CRMSyncButton conversation={conversation} />}
+        {crmIntegrationEnabled && conversation && <CRMSyncButton conversation={conversation} />}
 
         {hasExpandedSections && onCollapseAll && (
           <Tooltip>

@@ -10,7 +10,11 @@ const hardening = await readFile(
   new URL('../../supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql', import.meta.url),
   'utf8',
 );
-const migration = `${foundation}\n${hardening}`;
+const rollout = await readFile(
+  new URL('../../supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql', import.meta.url),
+  'utf8',
+);
+const migration = `${foundation}\n${hardening}\n${rollout}`;
 
 test('outbox is idempotent per closure and uses stable external identity links', () => {
   assert.match(migration, /idempotency_key text NOT NULL UNIQUE/i);
@@ -70,4 +74,31 @@ test('hardening preserves audit rows and fails closed on missing claims', () => 
   assert.match(hardening, /COALESCE\(public\.is_admin_or_supervisor\(auth\.uid\(\)\), false\) IS NOT TRUE/i);
   assert.match(hardening, /status = 'dead_letter'.+last_error_code/s);
   assert.match(hardening, /octet_length\(payload::text\) <= 20000/i);
+});
+
+test('legacy rows are remediated before every outbox constraint is validated', () => {
+  for (const constraint of [
+    'crm_sync_outbox_payload_size', 'crm_sync_outbox_external_ids_bounded',
+    'crm_sync_outbox_lease_state', 'crm_sync_outbox_success_state',
+    'crm_sync_outbox_phone_state',
+  ]) {
+    assert.match(rollout, new RegExp(`VALIDATE CONSTRAINT ${constraint}`, 'i'));
+  }
+  assert.match(rollout, /LEGACY_PAYLOAD_OVERSIZE/i);
+  assert.match(rollout, /original_sha256/i);
+});
+
+test('CRM links follow least privilege and contact merge is atomic', () => {
+  assert.match(rollout, /REVOKE ALL ON TABLE public\.crm_contact_links FROM anon, authenticated/i);
+  assert.match(rollout, /GRANT SELECT ON TABLE public\.crm_contact_links TO authenticated/i);
+  assert.doesNotMatch(rollout, /GRANT (?:INSERT|UPDATE|DELETE|TRUNCATE)[^;]+crm_contact_links[^;]+authenticated/i);
+  assert.match(rollout, /FUNCTION public\.merge_contacts_atomic/i);
+  assert.match(rollout, /FOR UPDATE/i);
+  assert.match(rollout, /crm_contact_link_conflict/i);
+  assert.match(rollout, /REVOKE ALL ON FUNCTION public\.merge_contacts_atomic[^;]+FROM PUBLIC, anon/i);
+  assert.match(rollout, /FUNCTION public\.upsert_crm_contact_link_guarded/i);
+  assert.match(rollout, /ON CONFLICT \(zapp_contact_id\) DO UPDATE[\s\S]*external_contact_id = EXCLUDED\.external_contact_id/i);
+  assert.match(rollout, /GET DIAGNOSTICS v_rows = ROW_COUNT;[\s\S]*v_rows <> 1[\s\S]*crm_contact_link_conflict/i);
+  assert.match(rollout, /FUNCTION public\.redact_crm_sync_on_contact_delete/i);
+  assert.match(rollout, /last_error_code = 'CONTACT_DELETED'/i);
 });

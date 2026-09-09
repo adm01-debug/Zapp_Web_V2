@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Contact } from './types';
+import { mergeContactsAtomic } from '@/services/contact-merge.service';
 
 interface ContactMergePanelProps {
   open: boolean;
@@ -74,34 +74,16 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
       const allTags = [...new Set([...(primary.tags || []), ...(secondary.tags || [])])];
       mergedData.tags = allTags;
 
-      // Update primary with merged data
-      const { error: updateError } = await supabase
-        .from('contacts')
-        .update(mergedData)
-        .eq('id', primary.id);
-
-      if (updateError) throw updateError;
-
-      // Move messages from secondary to primary
-      await supabase
-        .from('messages')
-        .update({ contact_id: primary.id })
-        .eq('contact_id', secondary.id);
-
-      // Move notes
-      await supabase
-        .from('contact_notes')
-        .update({ contact_id: primary.id })
-        .eq('contact_id', secondary.id);
-
-      // Delete secondary
-      await supabase.from('contacts').delete().eq('id', secondary.id);
+      await mergeContactsAtomic(primary.id, [secondary.id], mergedData);
 
       toast.success('Contatos mesclados com sucesso!');
       onMergeComplete();
       onOpenChange(false);
     } catch (err) {
-      toast.error('Erro ao mesclar contatos');
+      const conflict = err instanceof Error && err.message.includes('crm_contact_link_conflict');
+      toast.error(conflict
+        ? 'Os contatos possuem vínculos CRM diferentes. Resolva o vínculo antes de mesclar.'
+        : 'Erro ao mesclar contatos. Nenhuma alteração foi aplicada.');
     } finally {
       setMerging(false);
     }
