@@ -20,7 +20,9 @@ verify_jwt = false
 [functions.elevenlabs-webhook]
 verify_jwt = false
 
-# Autenticacao propria via header x-api-key (retorna 401 sem ele).
+# Kill switch: endpoint legado preservado somente para responder 410 sem tocar
+# em banco, Evolution ou credenciais. Nao reativar sem ADR, credenciais hashadas,
+# escopo por tenant e rate limit distribuido.
 [functions.public-api]
 verify_jwt = false
 
