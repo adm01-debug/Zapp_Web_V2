@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music,
+  X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate } = useTalkXTemplates();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Inicializa campos do template sendo editado
@@ -37,6 +37,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [eStatus, setEStatus] = useState<'draft' | 'review' | 'approved'>(editing?.status ?? 'approved');
   const [eTags, setETags] = useState<string[]>(editing?.tags ?? []);
   const [eTagInput, setETagInput] = useState('');
+  const [eCustomVars, setECustomVars] = useState<string[]>(editing?.custom_variables ?? []);
+  const [eCustomVarInput, setECustomVarInput] = useState('');
+  // E47: test sheet
+  const [showTest, setShowTest] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
   const [libSearch, setLibSearch] = useState('');
@@ -53,6 +60,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       || eHasMedia !== !!editing.media_url
       || eMediaUrl !== (editing.media_url ?? '')
       || eMediaType !== (editing.media_type ?? '')
+      || JSON.stringify(eCustomVars) !== JSON.stringify(editing.custom_variables ?? [])
     : eName.trim().length > 0 || eContent.trim().length > 0;
 
   const save = async () => {
@@ -64,6 +72,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       media_url: eHasMedia && eMediaUrl ? eMediaUrl : null,
       media_type: eHasMedia && eMediaType ? eMediaType : null,
       tags: eTags, status: eStatus,
+      custom_variables: eCustomVars,
     };
     try {
       if (activeTemplateId) await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
@@ -76,7 +85,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     setActiveTemplateId(t.id);
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
-    setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []);
+    setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
   };
 
   /** Insere markup na posicao do cursor no textarea */
@@ -97,6 +106,23 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       el.setSelectionRange(cursor, cursor);
     });
   }, [eContent]);
+
+
+  /** E47: envia mensagem de teste para o numero informado */
+  const handleTest = async () => {
+    const phone = testPhone.replace(/\D/g, '');
+    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Numero invalido' }); return; }
+    if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
+    setTesting(true); setTestResult(null);
+    try {
+      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone });
+      setTestResult({ ok: true, msg: `Mensagem enviada para ${phone}` });
+    } catch (e) {
+      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const libFiltered = templates.filter((t) => {
     const q = libSearch.toLowerCase();
@@ -191,6 +217,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             {editing && (
               <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(editing); onClose(); }}>Duplicar</GhostButton>
             )}
+            <GhostButton icon={Send} onClick={() => { setShowTest(true); setTestResult(null); }}>Testar</GhostButton>
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
@@ -285,6 +312,51 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             {eHasMedia && <Input value={eMediaUrl} onChange={(e) => setEMediaUrl(e.target.value)} placeholder="URL da mídia (ex: https://…/imagem.jpg)" className="h-9 bg-input/40 border-border/70 text-[12.5px]" />}
           </div>
 
+
+          {/* E45: Variaveis customizadas */}
+          <div>
+            <p className="text-[12px] text-foreground-secondary mb-1.5">Variaveis personalizadas</p>
+            <p className="text-[11px] text-muted-foreground mb-2">Defina variaveis proprias para este template. Serao inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              {eCustomVars.map((v) => (
+                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-[12px] font-mono text-violet-300">
+                  {'{{'}{v}{'}}'}
+                  <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                value={eCustomVarInput}
+                onChange={(e) => setECustomVarInput(e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && eCustomVarInput.trim()) {
+                    const v = eCustomVarInput.trim();
+                    setECustomVars((p) => [...new Set([...p, v])]);
+                    setECustomVarInput('');
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="nome_variavel (Enter)"
+                className="h-7 w-44 bg-input/40 border-border/70 text-[12px] font-mono"
+              />
+              <button
+                type="button"
+                disabled={!eCustomVarInput.trim()}
+                onClick={() => {
+                  if (eCustomVarInput.trim()) {
+                    insertAtCursor('{{' + eCustomVarInput.trim() + '}}');
+                    setECustomVars((p) => [...new Set([...p, eCustomVarInput.trim()])]);
+                    setECustomVarInput('');
+                  }
+                }}
+                className="h-7 px-2 rounded-md text-[11.5px] font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
+              >
+                + Inserir
+              </button>
+            </div>
+          </div>
+
           {/* Tags */}
           <div>
             <Label className="text-[12px] text-foreground-secondary">Tags</Label>
@@ -338,6 +410,45 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           </RailCard>
         )}
       </aside>
+
+      {/* E47: Test Dialog */}
+      {showTest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="rounded-2xl bg-card border border-border/70 shadow-2xl w-full max-w-sm p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-bold text-foreground">Testar template</p>
+              <button type="button" onClick={() => setShowTest(false)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-[12.5px] text-foreground-secondary">Envia a mensagem personalizada para um numero via WhatsApp (instancia padrao).</p>
+            <div>
+              <Label className="text-[12px] text-foreground-secondary">Numero de destino</Label>
+              <Input
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+                placeholder="5541999001234"
+                className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono"
+              />
+            </div>
+            {testResult && (
+              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-[12.5px]' : 'flex items-center gap-2 text-dash-red text-[12.5px]'}>
+                {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+                {testResult.msg}
+              </div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={testing || !testPhone.trim()}
+                className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
