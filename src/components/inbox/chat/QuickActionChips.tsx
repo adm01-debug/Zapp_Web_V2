@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { motion } from '@/components/ui/motion';
@@ -37,9 +37,10 @@ function Chip({ icon: Icon, label, onClick, testId }: { icon: typeof MessageSqua
 export function QuickActionChips({
   quickReplies, onQuickReply, onOpenAiAssistant, onAttach, onOpenSchedule, onOpenTransfer, moreContent,
 }: QuickActionChipsProps) {
+  const [quickReplyOpen, setQuickReplyOpen] = useState(false);
   return (
     <div className="flex items-center gap-2 px-4 pt-2 overflow-x-auto scrollbar-none" data-testid="quick-action-chips">
-      <Popover>
+      <Popover open={quickReplyOpen} onOpenChange={setQuickReplyOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -59,7 +60,7 @@ export function QuickActionChips({
               <motion.button
                 key={reply.id}
                 whileHover={{ x: 4 }}
-                onClick={() => onQuickReply(reply)}
+                onClick={() => { onQuickReply(reply); setQuickReplyOpen(false); }}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">

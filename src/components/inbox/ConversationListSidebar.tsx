@@ -80,7 +80,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
           </div>
         )}
 
-        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-2' : 'pb-3')}>
+        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'pb-1')}>
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
             <Input
@@ -98,6 +98,8 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
               </Button>
             )}
           </div>
+        </div>
+        <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
           <InboxFilters
             filters={inboxFilters.filters}
             onFiltersChange={inboxFilters.setFilters}
@@ -110,7 +112,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
             onRefetch={inbox.refetch}
             isRefetching={inbox.loading}
           />
-        </div>
+        
 
         <StatusChips
           conversations={inbox.conversations}

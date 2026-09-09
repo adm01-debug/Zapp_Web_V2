@@ -222,7 +222,7 @@ const ConversationRow = memo(({
   const contactId = conversation.contact.id;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.contact.tags ?? []).some(t => t.toLowerCase() === 'vip');
-  const isHighPriority = conversation.contact.ai_priority === 'high';
+  const isHighPriority = conversation.contact.ai_priority === 'high' || conversation.contact.ai_priority === 'urgent';
   const isWhatsapp = !conversation.contact.channel_type || conversation.contact.channel_type === 'whatsapp';
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
@@ -377,7 +377,7 @@ const ConversationRow = memo(({
         </div>
 
         {/* Hover action buttons */}
-        <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-150 pl-[60px]">
+        <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-all duration-150 pl-[60px]">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>

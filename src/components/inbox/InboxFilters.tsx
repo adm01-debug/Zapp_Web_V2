@@ -81,7 +81,10 @@ export function InboxFilters({
     filters.status.length +
     filters.tags.length +
     (filters.agentId ? 1 : 0) +
-    (filters.dateRange.from ? 1 : 0);
+    (filters.dateRange.from ? 1 : 0) +
+    (selectedContactType ? 1 : 0) +
+    (selectedQueueId ? 1 : 0) +
+    (showAll ? 1 : 0);
 
   const triggerBadgeCount =
     activeFiltersCount +
@@ -112,13 +115,11 @@ export function InboxFilters({
   }, [filters, onFiltersChange]);
 
   const clearFilters = useCallback(() => {
-    onFiltersChange({
-      status: [],
-      tags: [],
-      agentId: null,
-      dateRange: { from: null, to: null },
-    });
-  }, [onFiltersChange]);
+    onFiltersChange({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
+    onContactTypeChange?.(null);
+    onQueueChange?.(null);
+    onShowAllChange?.(false);
+  }, [onFiltersChange, onContactTypeChange, onQueueChange, onShowAllChange]);
 
   const removeFilter = useCallback((type: 'status' | 'tag' | 'agent' | 'date', value?: string) => {
     switch (type) {
