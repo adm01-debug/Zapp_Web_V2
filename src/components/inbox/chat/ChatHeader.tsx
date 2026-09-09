@@ -14,7 +14,7 @@ import { QueuePositionNotifier } from '../QueuePositionNotifier';
 import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
 import { useContactIntelligence } from '@/hooks/crm/useContactIntelligence';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { CrmBadges } from './CrmBadges';
 import { BusinessHoursBadge } from '../BusinessHoursBadge';
 import { AnalysisBadges } from '../AnalysisBadges';
@@ -52,12 +52,13 @@ export function ChatHeader({
   voiceId, onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch,
   onOpenTransfer, onOpenSchedule, onVoiceChange,
 }: ChatHeaderProps) {
-  const { data: crmData } = useExternalContact360(isExternalConfigured ? conversation.contact.id : undefined);
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  const { data: crmData } = useExternalContact360(crmIntegrationEnabled ? conversation.contact.id : undefined);
   const crmCompany = crmData?.found ? crmData.company : null;
   const crmCustomer = crmData?.found ? crmData.customer : null;
   const crmRfm = crmData?.found ? crmData.rfm : null;
 
-  const { data: intel } = useContactIntelligence(isExternalConfigured ? conversation.contact.id : undefined);
+  const { data: intel } = useContactIntelligence(crmIntegrationEnabled ? conversation.contact.id : undefined);
   const briefing = intel?.found ? intel.briefing : null;
 
   return (

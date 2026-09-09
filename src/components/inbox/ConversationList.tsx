@@ -10,7 +10,7 @@ import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
 import { SLAIndicator } from './SLAIndicator';
 import { ConversationContextMenu } from './ConversationContextMenu';
 import { useExternalContact360Batch, CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import {
   Search,
   Filter,
@@ -65,6 +65,7 @@ export function ConversationList({
   selectedId,
   onSelect,
 }: ConversationListProps) {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -261,7 +262,7 @@ export function ConversationList({
                         </div>
 
                         {/* CRM company indicator (from batch — 1 RPC for all conversations) */}
-                        {isExternalConfigured && (
+                        {crmIntegrationEnabled && (
                           <CRMConversationBadge crmInfo={crmLookup(conversation.contact.phone)} />
                         )}
                         <div className="mt-2">

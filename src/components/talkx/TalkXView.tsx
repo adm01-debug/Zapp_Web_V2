@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  Zap, Plus, Bookmark, FileText, ShieldBan, BarChart3, ArrowLeft,
+  Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
+  LayoutDashboard, Users,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { ModuleHeader, IconTile } from './talkxShared';
-import { PrimaryButton, GhostButton } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXOverview } from './TalkXOverview';
 import { TalkXCampaignWizard } from './TalkXCampaignWizard';
 import { TalkXLiveMonitor } from './TalkXLiveMonitor';
@@ -19,7 +20,7 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor';
 
 export default function TalkXView() {
-  const { campaigns, isLoading, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
+  const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const [topView, setTopView] = useState<TalkXTopView>('tabs');
@@ -79,17 +80,38 @@ export default function TalkXView() {
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-5">
       <ModuleHeader
         icon={Zap}
-        title="Talk X"
-        subtitle="Campanhas WhatsApp que geram conversas reais e resultados mensuráveis."
-        right={<PrimaryButton icon={Plus} onClick={() => openNew()}>Nova campanha</PrimaryButton>}
+        title="Campanhas"
+        subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
+        right={
+          <div className="flex items-center gap-3">
+            {isLive && (
+              <span className="flex items-center gap-1.5 text-[11.5px] text-success font-medium">
+                <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
+                Ao vivo
+              </span>
+            )}
+            <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
+          </div>
+        }
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex gap-1 h-auto bg-transparent border-b border-border/60 rounded-none pb-0 px-0 w-full justify-start">
-            {([['overview', 'Visão Geral', BarChart3],['segments', 'Segmentos', Bookmark],['templates', 'Templates', FileText],['suppression', 'Supressão', ShieldBan],['analytics', 'Analytics', BarChart3]] as const).map(([v, label, Icon]) => (
-              <TabsTrigger key={v} value={v} className="relative h-9 px-3.5 rounded-none border-b-2 text-[12.5px] font-medium transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent data-[state=inactive]:text-foreground-secondary hover:text-foreground hover:border-border data-[state=active]:bg-transparent data-[state=inactive]:bg-transparent">
-                <span className="flex items-center gap-1.5"><Icon className="w-3.5 h-3.5" />{label}</span>
+          <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
+            {([
+              ['overview',    'Visão geral', LayoutDashboard],
+              ['segments',    'Segmentos',   Users],
+              ['templates',   'Templates',   FileText],
+              ['suppression', 'Lista de supressão', ShieldBan],
+              ['analytics',   'Analytics',   BarChart3],
+            ] as const).map(([v, label, Icon]) => (
+              <TabsTrigger key={v} value={v}
+                className="talkx-glow-ring h-10 px-4 rounded-lg border text-[12.5px] font-medium transition-all flex items-center gap-1.5
+                  data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
+                  data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
+                  hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
+              >
+                <Icon className="w-4 h-4 shrink-0" />{label}
               </TabsTrigger>
             ))}
           </TabsList>

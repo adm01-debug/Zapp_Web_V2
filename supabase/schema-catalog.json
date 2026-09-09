@@ -1602,6 +1602,7 @@
         "calculate_level",
         "claim_crm_sync_outbox",
         "claim_crm_sync_outbox_by_id",
+        "cleanup_crm_sync_outbox",
         "cleanup_expired_challenges",
         "cleanup_link_preview_cache",
         "clear_login_attempts",
@@ -1648,6 +1649,7 @@
         "mark_first_response",
         "mcp_exec",
         "mcp_exec_many",
+        "merge_contacts_atomic",
         "phone_variants",
         "reassign_absent_agents",
         "reassign_overloaded_agents",
@@ -1659,9 +1661,10 @@
         "skill_based_assign",
         "store_gmail_tokens",
         "update_own_profile",
+        "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-08",
+    "generated_at": "2026-09-09",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
@@ -1673,6 +1676,7 @@
         "calculate_level(xp_amount integer)->integer|kind=f",
         "claim_crm_sync_outbox(p_worker text, p_limit integer)->SETOF crm_sync_outbox|kind=f",
         "claim_crm_sync_outbox_by_id(p_id uuid, p_worker text)->SETOF crm_sync_outbox|kind=f",
+        "cleanup_crm_sync_outbox(p_succeeded_days integer, p_dead_letter_days integer, p_limit integer)->integer|kind=f",
         "cleanup_expired_challenges()->void|kind=f",
         "cleanup_link_preview_cache()->TABLE(deleted_count integer, remaining_count integer, table_size_bytes bigint, duration_ms integer)|kind=f",
         "clear_login_attempts(p_email text)->void|kind=f",
@@ -1719,6 +1723,7 @@
         "mark_first_response(p_contact_id uuid)->void|kind=f",
         "mcp_exec(sql text, max_rows integer)->jsonb|kind=f",
         "mcp_exec_many(statements text[], max_rows integer)->jsonb|kind=f",
+        "merge_contacts_atomic(p_primary_id uuid, p_secondary_ids uuid[], p_merged_fields jsonb)->jsonb|kind=f",
         "phone_variants(p_phone text)->text[]|kind=f",
         "reassign_absent_agents(inactive_minutes integer)->integer|kind=f",
         "reassign_overloaded_agents()->integer|kind=f",
@@ -1730,6 +1735,7 @@
         "skill_based_assign(p_queue_id uuid)->uuid|kind=f",
         "store_gmail_tokens(p_account_id uuid, p_access_token text, p_refresh_token text)->void|kind=f",
         "update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)->boolean|kind=f",
+        "upsert_crm_contact_link_guarded(p_zapp_contact_id uuid, p_external_contact_id text, p_external_company_id text, p_normalized_phone text)->void|kind=f",
         "user_has_permission(_user_id uuid, _permission_name text)->boolean|kind=f"
     ]
 }

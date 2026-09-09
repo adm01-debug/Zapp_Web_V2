@@ -10,6 +10,7 @@ vi.mock('@/hooks/crm/useExternalContact360', () => ({
 vi.mock('@/integrations/supabase/externalClient', () => ({
   isExternalConfigured: false,
 }));
+vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -55,14 +56,14 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('+5511999999999')).toBeInTheDocument();
   });
 
-  it('renders sentiment badge', () => {
+  it('does not render a sentiment chip (fora do escopo dos chips §5.3: tipo/VIP/alta prioridade)', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.getByText(/Positivo/)).toBeInTheDocument();
+    expect(screen.queryByText(/Positivo/)).not.toBeInTheDocument();
   });
 
   it('renders priority badge', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.getByText('Alta')).toBeInTheDocument();
+    expect(screen.getByText('Alta prioridade')).toBeInTheDocument();
   });
 
   it('renders contact type badge', () => {

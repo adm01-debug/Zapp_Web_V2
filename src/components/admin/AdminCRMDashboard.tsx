@@ -14,7 +14,7 @@ import {
   TrendingUp, Package, Truck, Activity, ExternalLink,
 } from 'lucide-react';
 import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useNavigate } from 'react-router-dom';
 import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
 import { callCRMIntegration } from '@/lib/crmIntegration';
@@ -251,8 +251,9 @@ function RecentSales() {
 // ─── Main ────────────────────────────────────────────────────
 export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
   const navigate = useNavigate();
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
-  if (!isExternalConfigured) {
+  if (!crmIntegrationEnabled) {
     return (
       <Card className="max-w-md mx-auto mt-8">
         <CardContent className="pt-6 text-center">

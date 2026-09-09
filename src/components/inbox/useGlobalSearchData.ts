@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
@@ -40,6 +40,7 @@ function getDateFilterStart(filter: DateFilter): Date | null {
 
 export function useGlobalSearchData(open: boolean) {
   const { isSupervisor } = useUserRole();
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const searchRequestId = useRef(0);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -178,7 +179,7 @@ export function useGlobalSearchData(open: boolean) {
         }
       }
 
-      if (types.has('crm') && isSupervisor && isExternalConfigured && cleanQuery.length >= 3) {
+      if (types.has('crm') && isSupervisor && crmIntegrationEnabled && cleanQuery.length >= 3) {
         try {
           const { data: crmData } = await callCRMIntegration<{ results?: Record<string, string | null>[] }>('rpc', {
             rpc: 'search_contacts_advanced',
@@ -222,7 +223,7 @@ export function useGlobalSearchData(open: boolean) {
     } finally {
       if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, allTags, isSupervisor]);
+  }, [addToHistory, allTags, crmIntegrationEnabled, isSupervisor]);
 
   const handleSearch = useCallback((query: string) => {
     searchRequestId.current += 1;

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, Pencil } from 'lucide-react';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { CRM360StatsCards } from './CRM360StatsCards';
 import { CompanyFormDialog } from './CompanyFormDialog';
 import { ContactFormDialog } from './ContactFormDialog';
@@ -17,6 +17,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 
 export function CRM360ExplorerView() {
   const { isSupervisor, loading: roleLoading } = useUserRole();
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const [activeTab, setActiveTab] = useState<string>(TABS[0].id);
   const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
@@ -50,7 +51,7 @@ export function CRM360ExplorerView() {
     );
   }
 
-  if (!isExternalConfigured) {
+  if (!crmIntegrationEnabled) {
     return (
       <div className="flex items-center justify-center h-full w-full">
         <Card className="max-w-md">

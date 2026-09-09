@@ -169,6 +169,17 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     return () => window.removeEventListener('keydown', h);
   }, [handleSetActiveTool]);
 
+  // Painel direito: tile "Transferir" dispara este evento para abrir o mesmo TransferDialog do header.
+  useEffect(() => {
+    const h = (e: Event) => {
+      const detail = (e as CustomEvent<{ contactId?: string }>).detail;
+      if (detail?.contactId && detail.contactId !== conversation.contact.id) return;
+      openDialog('transferDialog');
+    };
+    window.addEventListener('open-transfer-dialog', h);
+    return () => window.removeEventListener('open-transfer-dialog', h);
+  }, [conversation.contact.id, openDialog]);
+
   // Stable refs for ChatMessagesArea to prevent re-renders on input change
   const contactJid = useMemo(() => conversation.contact.phone ? `${conversation.contact.phone}@s.whatsapp.net` : '', [conversation.contact.phone]);
   const contactAvatar = conversation.contact.avatar || undefined;

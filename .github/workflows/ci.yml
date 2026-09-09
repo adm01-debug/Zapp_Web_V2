@@ -53,6 +53,17 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
+        with:
+          deno-version: v2.x
+
+      - name: 🧪 Run executable Edge handler contracts
+        run: >-
+          deno test --allow-env
+          supabase/functions/_shared/__tests__/crm-integration-contract.test.ts
+          supabase/functions/crm-integration/index.test.ts
+
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs

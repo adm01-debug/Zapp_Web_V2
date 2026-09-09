@@ -7,7 +7,7 @@
  */
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useState, useCallback, useMemo } from 'react';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 import type {
@@ -22,7 +22,8 @@ export function normalizeSearchFilterValue<T extends string | number | boolean |
   return value === '' ? undefined : value;
 }
 
-export function useAdvancedContactSearch() {
+export function useAdvancedContactSearch(authorized = false) {
+  const crmEnabled = useCRMIntegrationEnabled();
   const [params, setParams] = useState<SearchContactsParams>({
     page: 0,
     page_size: DEFAULT_PAGE_SIZE,
@@ -58,7 +59,7 @@ export function useAdvancedContactSearch() {
         return null;
       }
     },
-    enabled: isExternalConfigured && hasActiveFilters,
+    enabled: authorized && crmEnabled && hasActiveFilters,
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 2, // 2 min
     gcTime: 1000 * 60 * 10,
@@ -117,6 +118,6 @@ export function useAdvancedContactSearch() {
     clearFilters,
 
     // Config
-    isConfigured: isExternalConfigured,
+    isConfigured: crmEnabled,
   };
 }

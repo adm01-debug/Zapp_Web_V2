@@ -1,23 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X,
+  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Copy, Shield,
   Check, RefreshCw, ChevronDown, ChevronUp, Info, Database, Search, Sliders,
 } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
+
 import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience } from '@/hooks/integrations/useTalkXSegments';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBar, TalkXPagination, Th, Td, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
 import { toast } from 'sonner';
 
 interface Props {
@@ -54,7 +51,9 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const totals = useMemo(() => ({
     total: segments.length,
     active: segments.filter((s) => s.status === 'active').length,
+    crm360: segments.filter((s) => s.origin === 'crm360').length,
     totalContacts: segments.reduce((a, s) => a + s.estimated_count, 0),
+    bars: barsByDay(segments.map((s) => s.created_at)),
   }), [segments]);
 
   const openNew = () => { setEditingName(''); setEditingDesc(''); setEditingRules(emptyRules()); setSelected(null); setMode('edit'); };
@@ -80,17 +79,29 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Total de segmentos" value={String(totals.total)} delta={null} tile="blue" icon={Database} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="hero" index={1} label="Ativos este mês" value={String(totals.active)} delta={null} tile="green" icon={Check} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="CRM 360° conectados" value="0" delta={{ text: 'integração não configurada', tone: 'muted' }} tile="violet" icon={Database} bars={null} barsColor="violet" chart="none" />
-          <DashboardKpiCard size="hero" index={3} label="Contatos cobertos" value={fmtInt(totals.totalContacts)} delta={null} tile="amber" icon={BarChart3} bars={null} barsColor="amber" chart="none" />
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+            <KpiCard icon={Database} color="blue"   index={0} label="Total de segmentos"  value={fmtInt(totals.total)}        bars={totals.bars} />
+            <KpiCard icon={Check}    color="green"  index={1} label="Ativos este mês"      value={fmtInt(totals.active)} />
+            <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value={fmtInt(totals.crm360)} />
+            <KpiCard icon={BarChart3} color="amber" index={3} label="Contatos cobertos"    value={fmtInt(totals.totalContacts)} />
+          </div>
+        )}
 
-        <FilterBar search={search} onSearch={setSearch} placeholder="Buscar segmentos…" selects={[
-          { key: 'origin', value: filterOrigin, onChange: setFilterOrigin, label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
-          { key: 'status', value: filterStatus, onChange: setFilterStatus, label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
-        ]} right={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>} />
+        <FilterBarV2
+          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
+          filters={[
+            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
+          ]}
+          values={{ origin: filterOrigin, status: filterStatus }}
+          onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
+          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
+          onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
+          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
+        />
 
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           {isLoading ? (<div className="p-4"><TalkXSkeletonRows rows={5} /></div>)
@@ -125,10 +136,20 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                       <Td><span className="text-[12px] text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
                       <Td><ProgressBar value={Math.min(100, (s.estimated_count / Math.max(...segments.map((x) => x.estimated_count), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
                       <Td className="text-right">
-                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <GhostButton size="sm" onClick={() => onUseCampaign(s.id)}>Usar em campanha</GhostButton>
-                          <button type="button" onClick={() => openEdit(s)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
-                          <button type="button" onClick={() => setDeleting(s)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 text-muted-foreground hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUseCampaign(s.id)}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEdit(s)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toggleFav(s)}>{s.is_favorite ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}{s.is_favorite ? 'Remover favorito' : 'Favoritar'}</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-dash-red" onClick={() => setDeleting(s)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </Td>
                     </tr>
@@ -156,18 +177,16 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         </div>
       </div>
 
-      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir segmento?</AlertDialogTitle>
-            <AlertDialogDescription>O segmento <b className="text-foreground">"{deleting?.name}"</b> será excluído permanentemente. Campanhas já criadas não serão afetadas.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={() => { if (deleting) deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); }}>Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TalkXConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
+        icon={Trash2} iconColor="red" tone="danger"
+        title="Excluir segmento?"
+        description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
+        entityName={deleting?.name}
+        confirmLabel="Excluir segmento" cancelLabel="Cancelar"
+      />
     </div>
   );
 }
@@ -216,15 +235,37 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
 }) {
   const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
   const riskLevel = est?.count === 0 ? 'high' : (est?.count ?? 0) > 10000 ? 'low' : 'moderate';
+  // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
+  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
+  const resolveGroupId = () => {
+    if (activeGroupId && rules.groups.some((g) => g.id === activeGroupId)) return activeGroupId;
+    return rules.groups[rules.groups.length - 1]?.id ?? null;
+  };
 
-  const addGroup = (match: 'and' | 'or') => setRules({ groups: [...rules.groups, { id: crypto.randomUUID(), match, rules: [] }] });
-  const removeGroup = (gid: string) => setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
-  const addRule = (gid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, newRule()] }) });
+  const addGroup = (match: 'and' | 'or') => {
+    const id = crypto.randomUUID();
+    setRules({ groups: [...rules.groups, { id, match, rules: [] }] });
+    setActiveGroupId(id);
+  };
+  const removeGroup = (gid: string) => {
+    setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
+    if (activeGroupId === gid) setActiveGroupId(null);
+  };
+  const addRule = (gid: string, preset?: SegmentRule) => {
+    setActiveGroupId(gid);
+    setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, preset ?? newRule()] }) });
+  };
+  const addFieldToGroup = (f: typeof RULE_FIELDS[number]) => {
+    const gid = resolveGroupId();
+    if (!gid) return;
+    const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp;
+    addRule(gid, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' });
+  };
   const removeRule = (gid: string, rid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.filter((r) => r.id !== rid) }) });
   const updateRule = (gid: string, rid: string, patch: Partial<SegmentRule>) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.map((r) => r.id !== rid ? r : { ...r, ...patch }) }) });
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
@@ -274,32 +315,31 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           </div>
         </section>
 
-        {/* Filtros disponíveis */}
-        <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
-          <p className="text-[15px] font-bold text-foreground mb-1">Filtros disponíveis</p>
-          <p className="text-[12.5px] text-foreground-secondary mb-3">Clique ou arraste os filtros para o construtor</p>
-          <div className="flex flex-wrap gap-2">
-            {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
-              <div key={cat} className="w-full">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5 capitalize">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                    <button key={f.value} type="button" onClick={() => { if (rules.groups.length > 0) addRule(rules.groups[0].id); }} className="h-8 px-2.5 rounded-lg text-[12px] font-medium border border-border/60 bg-muted/30 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow flex items-center gap-1.5">
-                      <Sliders className="w-3 h-3" />{f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
+
+      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
+      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+        <p className="text-[13px] font-bold text-foreground">Filtros</p>
+        <p className="text-[11.5px] text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+        {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
+          <div key={cat}>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+            <div className="flex flex-col gap-1">
+              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                <button key={f.value} type="button" onClick={() => addFieldToGroup(f)} className="h-8 px-2.5 rounded-lg text-[12px] font-medium border border-border/60 bg-muted/30 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow flex items-start gap-1.5 w-full text-left">
+                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </aside>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={BarChart3} title="Resumo do segmento" right={<Pill label={estFetching ? 'Calculando…' : '● Tempo real'} tone={estFetching ? 'muted' : 'success'} />}>
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-[11.5px] font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
           <p className="text-[11px] text-foreground-secondary">Audiência estimada</p>
-          <p className="text-[32px] font-bold text-foreground tabular-nums tracking-[-0.02em]">{fmtInt(est?.count ?? 0)}</p>
+          <p className={cn('text-[32px] font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-[12px] text-foreground-secondary">contatos</p>
           <div className="mt-3 rounded-xl border border-border/50 bg-input/20 p-3">
             <p className="text-[12.5px] font-semibold text-foreground mb-1">Risco de entrega</p>
