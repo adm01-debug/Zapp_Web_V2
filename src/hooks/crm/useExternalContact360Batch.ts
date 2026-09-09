@@ -29,16 +29,14 @@ function cleanPhone(phone: string): string {
   return phone.replace(/[^0-9]/g, '');
 }
 
-export function useExternalContact360Batch(phones: string[]) {
-  // Deduplicate and clean phones
-  const cleanedPhones = [...new Set(phones.map(cleanPhone).filter(p => p.length >= 8))];
-  // Create a stable key from sorted phones
-  const queryKey = cleanedPhones.sort().join(',');
+export function useExternalContact360Batch(contacts: Array<{ id: string; phone: string }>) {
+  const stableContacts = [...new Map(contacts.map((contact) => [contact.id, contact])).values()];
+  const queryKey = stableContacts.map((contact) => contact.id).sort().join(',');
 
   const query = useQuery<Map<string, CRMBatchResult>>({
     queryKey: ['external-contact-360-batch', queryKey],
-     queryFn: () => ExternalCRMService.getContact360Batch(cleanedPhones),
-    enabled: isExternalConfigured && cleanedPhones.length > 0,
+     queryFn: () => ExternalCRMService.getContact360Batch(stableContacts),
+    enabled: isExternalConfigured && stableContacts.length > 0,
     staleTime: 1000 * 60 * 10, // 10 min cache
     gcTime: 1000 * 60 * 30,
   });

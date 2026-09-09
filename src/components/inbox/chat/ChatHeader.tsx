@@ -19,7 +19,8 @@ import { CrmBadges } from './CrmBadges';
 import { BusinessHoursBadge } from '../BusinessHoursBadge';
 import { AnalysisBadges } from '../AnalysisBadges';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Video, Tag, Archive, CheckCircle, Clock, ArrowRight, PhoneCall, Search, Brain, Info, Users, UserCheck, Truck, Wrench } from 'lucide-react';
+import { MoreVertical, Video, Tag, Archive, CheckCircle, Clock, ArrowRight, Phone, Search, Brain, Info, Users, UserCheck, Truck, Wrench } from 'lucide-react';
+import { toast } from '@/hooks/ui/use-toast';
 
 const contactTypeConfig: Record<string, { label: string; icon: typeof Users; color: string }> = {
   cliente: { label: 'Cliente', icon: Users, color: 'bg-info/10 text-info border-info/30' },
@@ -51,19 +52,19 @@ export function ChatHeader({
   voiceId, onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch,
   onOpenTransfer, onOpenSchedule, onVoiceChange,
 }: ChatHeaderProps) {
-  const { data: crmData } = useExternalContact360(isExternalConfigured ? conversation.contact.phone : undefined);
+  const { data: crmData } = useExternalContact360(isExternalConfigured ? conversation.contact.id : undefined);
   const crmCompany = crmData?.found ? crmData.company : null;
   const crmCustomer = crmData?.found ? crmData.customer : null;
   const crmRfm = crmData?.found ? crmData.rfm : null;
 
-  const { data: intel } = useContactIntelligence(isExternalConfigured ? conversation.contact.phone : undefined);
+  const { data: intel } = useContactIntelligence(isExternalConfigured ? conversation.contact.id : undefined);
   const briefing = intel?.found ? intel.briefing : null;
 
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card">
       <div className="flex items-center gap-3">
         <motion.div whileHover={{ scale: 1.05 }}>
-          <Avatar className="w-10 h-10 ring-2 ring-border/30">
+          <Avatar className="w-12 h-12 ring-2 ring-border">
             <AvatarImage src={conversation.contact.avatar ?? undefined} alt={conversation.contact.name || 'Avatar'} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
@@ -75,7 +76,7 @@ export function ChatHeader({
             {briefing ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h3 className="font-semibold text-foreground cursor-help border-b border-dashed border-primary/30 flex items-center gap-1.5">
+                  <h3 className="text-lg font-bold text-foreground cursor-help border-b border-dashed border-primary/30 flex items-center gap-1.5">
                     {conversation.contact.name}
                     <Brain className="w-3.5 h-3.5 text-primary/60" />
                   </h3>
@@ -104,7 +105,7 @@ export function ChatHeader({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <h3 className="font-semibold text-foreground">{conversation.contact.name}</h3>
+              <h3 className="text-lg font-bold text-foreground">{conversation.contact.name}</h3>
             )}
             <Badge variant="outline" className={cn('text-[10px] capitalize border',
               briefing?.sentiment === 'positive' && 'border-success/50 text-success bg-success/10',
@@ -142,15 +143,25 @@ export function ChatHeader({
 
       <div className="flex items-center gap-1">
         <RealtimeCollaboration contactId={conversation.contact.id} className="mr-1" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={onOpenSearch} aria-label="Buscar (Ctrl+K)">
+                <Search className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>Buscar (Ctrl+K)</TooltipContent>
+        </Tooltip>
         {[
-          { icon: Search, label: 'Buscar (Ctrl+K)', onClick: onOpenSearch },
-          { icon: PhoneCall, label: 'Iniciar chamada', onClick: onStartCall },
-          { icon: Video, label: 'Videochamada', onClick: undefined },
+          { icon: Phone, label: 'Ligar', onClick: onStartCall },
+          { icon: Video, label: 'Videochamada', onClick: () => toast({ title: 'Em breve', description: 'Videochamada estará disponível em breve.' }) },
+          { icon: ArrowRight, label: 'Transferir', onClick: onOpenTransfer },
         ].map(({ icon: Icon, label, onClick }) => (
           <Tooltip key={label}>
             <TooltipTrigger asChild>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={onClick} aria-label={label}>
+                <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={onClick} aria-label={label}>
                   <Icon className="w-4 h-4" />
                 </Button>
               </motion.div>
@@ -188,7 +199,7 @@ export function ChatHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" aria-label="Mais opções">
+              <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-primary hover:bg-primary/10" aria-label="Mais opções">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </motion.div>

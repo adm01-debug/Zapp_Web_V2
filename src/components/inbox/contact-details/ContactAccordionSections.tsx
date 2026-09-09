@@ -94,12 +94,12 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
           <AccordionContent className="px-4 pb-4 space-y-4">
             {isExternalConfigured && (
               <MoreDetailsBlock icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
-                <ExternalContact360Panel phone={contact.phone} />
+                <ExternalContact360Panel contactId={contact.id} />
               </MoreDetailsBlock>
             )}
             {isExternalConfigured && (
               <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
-                <ContactIntelligencePanel phone={contact.phone} />
+                <ContactIntelligencePanel contactId={contact.id} />
               </MoreDetailsBlock>
             )}
             <MoreDetailsBlock icon={<User className="w-3.5 h-3.5 text-primary" />} label="Atribuição">

@@ -54,8 +54,11 @@ jobs:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/heads/main
+          ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -266,6 +269,87 @@ jobs:
                 ))::text
                 FROM payload;")
               ;;
+            20260908180000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH relations AS (
+                  SELECT c.relname, c.relrowsecurity
+                  FROM pg_class c
+                  JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'public'
+                    AND c.relname IN ('crm_contact_links', 'crm_sync_outbox')
+                    AND c.relkind IN ('r', 'p')
+                ), functions AS (
+                  SELECT p.proname, p.prosecdef,
+                         COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path
+                  FROM pg_proc p
+                  JOIN pg_namespace n ON n.oid = p.pronamespace
+                  WHERE n.nspname = 'public'
+                    AND p.proname IN (
+                      'enqueue_crm_sync_from_closure', 'claim_crm_sync_outbox',
+                      'claim_crm_sync_outbox_by_id', 'complete_crm_sync_outbox',
+                      'fail_crm_sync_outbox', 'get_crm_sync_health'
+                    )
+                ), triggers AS (
+                  SELECT count(*) AS n
+                  FROM pg_trigger t
+                  JOIN pg_class c ON c.oid = t.tgrelid
+                  JOIN pg_namespace ns ON ns.oid = c.relnamespace
+                  WHERE ns.nspname = 'public'
+                    AND c.relname = 'conversation_closures'
+                    AND t.tgname = 'trg_enqueue_crm_sync_from_closure'
+                    AND NOT t.tgisinternal
+                ), payload AS (
+                  SELECT jsonb_build_object(
+                    'server_major', current_setting('server_version_num')::int / 10000,
+                    'database', current_database(),
+                    'table_count', (SELECT count(*) FROM relations),
+                    'rls_count', (SELECT count(*) FROM relations WHERE relrowsecurity),
+                    'function_count', (SELECT count(*) FROM functions),
+                    'safe_function_count', (SELECT count(*) FROM functions WHERE prosecdef AND safe_path),
+                    'trigger_count', (SELECT n FROM triggers)
+                  ) AS value
+                )
+                SELECT (value || jsonb_build_object(
+                  'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
+                ))::text
+                FROM payload;")
+              ;;
+            20260908220000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH payload AS (
+                  SELECT jsonb_build_object(
+                    'server_major', current_setting('server_version_num')::int / 10000,
+                    'database', current_database(),
+                    'lease_column_count', (
+                      SELECT count(*) FROM information_schema.columns
+                      WHERE table_schema='public' AND table_name='crm_sync_outbox' AND column_name='lease_token'
+                    ),
+                    'new_complete_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='complete_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_lease_token uuid, p_interaction_id text, p_contact_id text, p_company_id text'
+                    ),
+                    'old_complete_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='complete_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_interaction_id text, p_contact_id text, p_company_id text'
+                    ),
+                    'new_fail_count', (
+                      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                      WHERE n.nspname='public' AND p.proname='fail_crm_sync_outbox'
+                        AND pg_get_function_identity_arguments(p.oid)='p_id uuid, p_lease_token uuid, p_error_code text'
+                    ),
+                    'state_constraint_count', (
+                      SELECT count(*) FROM pg_constraint
+                      WHERE conrelid='public.crm_sync_outbox'::regclass
+                        AND conname IN ('crm_sync_outbox_lease_state','crm_sync_outbox_success_state','crm_sync_outbox_phone_state')
+                    )
+                  ) AS value
+                )
+                SELECT (value || jsonb_build_object(
+                  'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
+                ))::text FROM payload;")
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -306,6 +390,30 @@ jobs:
               && Number.isInteger(proof.legacy_signed_url_count)
               && proof.legacy_signed_url_count >= 0
               && (process.env.NEEDS_APPLY === 'true' || proof.legacy_signed_url_count === 0);
+          } else if (process.env.TARGET_VERSION === '20260908180000') {
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? proof.table_count === 0
+                && proof.rls_count === 0
+                && proof.function_count === 0
+                && proof.safe_function_count === 0
+                && proof.trigger_count === 0
+              : proof.table_count === 2
+                && proof.rls_count === 2
+                && proof.function_count === 6
+                && proof.safe_function_count === 6
+                && proof.trigger_count === 1;
+          } else if (process.env.TARGET_VERSION === '20260908220000') {
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? proof.lease_column_count === 0
+                && proof.new_complete_count === 0
+                && proof.old_complete_count === 1
+                && proof.new_fail_count === 0
+                && proof.state_constraint_count === 0
+              : proof.lease_column_count === 1
+                && proof.new_complete_count === 1
+                && proof.old_complete_count === 0
+                && proof.new_fail_count === 1
+                && proof.state_constraint_count === 3;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -410,6 +518,85 @@ jobs:
           )
           test "$LEGACY_COUNT" = "0"
           echo "OK: nenhuma credencial temporaria de Storage permanece nas tabelas alvo."
+
+      - name: Validar estrutura e privilegios da outbox CRM
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260908180000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            SELECT jsonb_build_object(
+              'outbox_rls', (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.crm_sync_outbox'::regclass),
+              'links_rls', (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.crm_contact_links'::regclass),
+              'auth_outbox_select', has_table_privilege('authenticated', 'public.crm_sync_outbox', 'SELECT'),
+              'auth_outbox_mutate', has_table_privilege('authenticated', 'public.crm_sync_outbox', 'INSERT, UPDATE, DELETE'),
+              'anon_outbox_access', has_table_privilege('anon', 'public.crm_sync_outbox', 'SELECT, INSERT, UPDATE, DELETE'),
+              'auth_claim_execute', has_function_privilege('authenticated', 'public.claim_crm_sync_outbox(text,integer)', 'EXECUTE'),
+              'service_claim_execute', has_function_privilege('service_role', 'public.claim_crm_sync_outbox(text,integer)', 'EXECUTE'),
+              'trigger_count', (
+                SELECT count(*) FROM pg_trigger
+                WHERE tgrelid = 'public.conversation_closures'::regclass
+                  AND tgname = 'trg_enqueue_crm_sync_from_closure' AND NOT tgisinternal
+              )
+            )::text;
+          SQL
+          )
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.outbox_rls === true
+            && proof.links_rls === true
+            && proof.auth_outbox_select === true
+            && proof.auth_outbox_mutate === false
+            && proof.anon_outbox_access === false
+            && proof.auth_claim_execute === false
+            && proof.service_claim_execute === true
+            && proof.trigger_count === 1;
+          if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar fencing e maquina de estados da outbox CRM
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260908220000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            SELECT jsonb_build_object(
+              'lease_column', EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema='public' AND table_name='crm_sync_outbox' AND column_name='lease_token'
+              ),
+              'old_complete_absent', to_regprocedure('public.complete_crm_sync_outbox(uuid,text,text,text)') IS NULL,
+              'new_complete_service', has_function_privilege(
+                'service_role', 'public.complete_crm_sync_outbox(uuid,uuid,text,text,text)', 'EXECUTE'
+              ),
+              'new_complete_auth', has_function_privilege(
+                'authenticated', 'public.complete_crm_sync_outbox(uuid,uuid,text,text,text)', 'EXECUTE'
+              ),
+              'contact_fk_delete_action', (
+                SELECT confdeltype FROM pg_constraint
+                WHERE conrelid='public.crm_sync_outbox'::regclass
+                  AND conname='crm_sync_outbox_contact_id_fkey'
+              ),
+              'state_constraints', (
+                SELECT count(*) FROM pg_constraint
+                WHERE conrelid='public.crm_sync_outbox'::regclass
+                  AND conname IN ('crm_sync_outbox_lease_state','crm_sync_outbox_success_state','crm_sync_outbox_phone_state')
+              )
+            )::text;
+          SQL
+          )
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          if (!(proof.lease_column === true && proof.old_complete_absent === true
+            && proof.new_complete_service === true && proof.new_complete_auth === false
+            && proof.contact_fk_delete_action === 'n' && proof.state_constraints === 3)) process.exit(1);
+          NODE
 
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true

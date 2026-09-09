@@ -11,8 +11,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MoreVertical, Tag, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle } from 'lucide-react';
+import { MoreVertical, Tag, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle, Phone, Video } from 'lucide-react';
 import { openChatPopup } from '@/lib/popupManager';
+import { toast } from '@/hooks/ui/use-toast';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
@@ -47,7 +48,7 @@ interface ChatPanelHeaderProps {
 
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
-  onToggleAIAssistant, onToggleDetails, onOpenSearch, onOpenTransfer, onOpenSchedule,
+  onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, activeTool, onSetActiveTool,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
@@ -61,7 +62,7 @@ function ChatPanelHeaderBase({
           </Button>
         )}
         <div className="relative shrink-0">
-          <Avatar className="w-9 h-9 md:w-10 md:h-10">
+          <Avatar className="w-12 h-12 ring-2 ring-border">
             <AvatarImage src={conversation.contact.avatar ?? undefined} alt={conversation.contact.name || 'Avatar'} />
             <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
               {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
@@ -70,23 +71,39 @@ function ChatPanelHeaderBase({
           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[hsl(var(--online))] border-2 border-card" />
         </div>
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground text-[15px]">{conversation.contact.name}</h3>
+          <h3 className="text-lg font-bold text-foreground">{conversation.contact.name}</h3>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {isContactTyping ? <TypingIndicatorCompact isVisible={true} /> : (
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--online))]" />Online</span>
+            )}
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
               firstResponseAt={conversation.firstResponseAt ?? null}
               firstResponseMinutes={5}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            {isContactTyping ? <TypingIndicatorCompact isVisible={true} /> : (
-              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--online))]" />Online</span>
-            )}
-          </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-1">
+        <Tooltip><TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onStartCall} aria-label="Ligar">
+            <Phone className="w-[18px] h-[18px]" />
+          </Button>
+        </TooltipTrigger><TooltipContent side="bottom">Ligar</TooltipContent></Tooltip>
+
+        <Tooltip><TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => toast({ title: 'Em breve', description: 'Videochamada estará disponível em breve.' })} aria-label="Videochamada">
+            <Video className="w-[18px] h-[18px]" />
+          </Button>
+        </TooltipTrigger><TooltipContent side="bottom">Videochamada</TooltipContent></Tooltip>
+
+        <Tooltip><TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onOpenTransfer} aria-label="Transferir">
+            <ArrowRight className="w-[18px] h-[18px]" />
+          </Button>
+        </TooltipTrigger><TooltipContent side="bottom">Transferir</TooltipContent></Tooltip>
+
         <ChatHeaderToolbar
           activeTool={activeTool} showAIAssistant={showAIAssistant} showDetails={showDetails}
           showSummaryPanel={showSummaryPanel} isSummaryLoading={isSummaryLoading}
@@ -98,7 +115,7 @@ function ChatPanelHeaderBase({
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
+              <Button variant="ghost" size="icon" className="h-10 w-10 border border-border/30 text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
                 <MoreVertical className="w-[18px] h-[18px]" />
               </Button>
             </DropdownMenuTrigger>

@@ -88,3 +88,8 @@ git rev-parse --short HEAD
 grep "Built from commit" graphify-out/GRAPH_REPORT.md
 ```
 Se divergirem, auto-sync N8N corrige em ate 15min.
+
+## Talk X / Campanhas
+M≥dulo em desenvolvimento ativo. Branch de feature: `feat/talkx-f0-remaining` (fase 0), pr√≥ximas fases em `feat/talkx-f{N}`.
+- Plano completo: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md`
+- **NUNCA** imprimir tokens ou secrets no output.

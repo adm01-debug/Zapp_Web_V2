@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Filter, X, Calendar, User, Tag, MessageCircle } from 'lucide-react';
+import { Filter, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,11 +16,15 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { useTags } from '@/hooks/crm/useTags';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { useQueues } from '@/hooks/business/useQueues';
+import { FILTER_OPTIONS } from './ContactTypeFilter';
 
 export interface InboxFiltersState {
   status: string[];
@@ -35,6 +39,12 @@ export interface InboxFiltersState {
 interface InboxFiltersProps {
   filters: InboxFiltersState;
   onFiltersChange: (filters: InboxFiltersState) => void;
+  showAll?: boolean;
+  onShowAllChange?: (v: boolean) => void;
+  selectedContactType?: string | null;
+  onContactTypeChange?: (v: string | null) => void;
+  selectedQueueId?: string | null;
+  onQueueChange?: (v: string | null) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -51,10 +61,18 @@ const DATE_PRESETS = [
   { label: 'Mês', getValue: () => ({ from: startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), to: endOfDay(new Date()) }) },
 ];
 
-export function InboxFilters({ filters, onFiltersChange }: InboxFiltersProps) {
+export function InboxFilters({
+  filters, onFiltersChange,
+  showAll = false, onShowAllChange,
+  selectedContactType = null, onContactTypeChange,
+  selectedQueueId = null, onQueueChange,
+}: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
   const { tags } = useTags();
+  const { isAdmin, isSupervisor } = useUserRole();
+  const { queues } = useQueues();
+  const canShowAll = isAdmin || isSupervisor;
 
   const activeFiltersCount =
     filters.status.length +
@@ -148,6 +166,72 @@ export function InboxFilters({ filters, onFiltersChange }: InboxFiltersProps) {
           </div>
 
           <div className="max-h-[360px] overflow-y-auto p-3 pb-4 space-y-4">
+            {/* Mostrar Todos */}
+            {canShowAll && (
+              <>
+                <section className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3 h-3 text-muted-foreground" />
+                    <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
+                  </div>
+                  <Switch checked={showAll} onCheckedChange={onShowAllChange} />
+                </section>
+                <Separator className="opacity-50" />
+              </>
+            )}
+
+            {/* Tipo de contato */}
+            <section className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Headphones className="w-3 h-3 text-muted-foreground" />
+                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Tipo de contato</Label>
+              </div>
+              <Select
+                value={selectedContactType ?? 'all'}
+                onValueChange={(v) => onContactTypeChange?.(v === 'all' ? null : v)}
+              >
+                <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md">
+                  <SelectValue placeholder="Todos os tipos" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FILTER_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </section>
+
+            <Separator className="opacity-50" />
+
+            {/* Fila */}
+            <section className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Inbox className="w-3 h-3 text-muted-foreground" />
+                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fila</Label>
+              </div>
+              <Select
+                value={selectedQueueId ?? 'all'}
+                onValueChange={(v) => onQueueChange?.(v === 'all' ? null : v)}
+              >
+                <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md">
+                  <SelectValue placeholder="Todas as filas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as filas</SelectItem>
+                  {queues.map(q => (
+                    <SelectItem key={q.id} value={q.id}>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: q.color || 'hsl(var(--primary))' }} />
+                        {q.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </section>
+
+            <Separator className="opacity-50" />
+
             {/* Status */}
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">

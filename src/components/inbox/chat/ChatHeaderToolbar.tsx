@@ -37,7 +37,7 @@ function ToolButton({ icon, label, active, onClick, disabled, badge, highlight }
           variant="ghost"
           size="icon"
           className={cn(
-            "w-9 h-9",
+            "h-10 w-10 border border-border/30",
             highlight ? "text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary ring-1 ring-primary/20" :
             active ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted",
             badge && "relative"

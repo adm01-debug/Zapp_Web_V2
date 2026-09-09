@@ -1,0 +1,70 @@
+name: CRM Sync Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: 'Quantidade maxima desta execucao (1-10)'
+        required: false
+        default: '1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crm-sync-worker
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    name: Processar outbox CRM
+    if: github.event_name == 'workflow_dispatch' || vars.CRM_SYNC_WORKER_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validar configuracao e processar lote
+        env:
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          INPUT_BATCH: ${{ inputs.batch_size }}
+        run: |
+          if [ "$PROJECT_REF" != "tnnnlkbymytvtqngbbqh" ]; then
+            echo "::error::Destino nao corresponde ao Supabase canonico."
+            exit 1
+          fi
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET ausente."
+            exit 1
+          fi
+          BATCH="${INPUT_BATCH:-1}"
+          case "$BATCH" in
+            ''|*[!0-9]*) echo "::error::batch_size invalido."; exit 1 ;;
+          esac
+          if [ "$BATCH" -lt 1 ] || [ "$BATCH" -gt 10 ]; then
+            echo "::error::batch_size fora de 1..10."
+            exit 1
+          fi
+          HEALTH_STATUS=$(curl --silent --show-error --output "$RUNNER_TEMP/crm-health.json" --write-out '%{http_code}' \
+            --connect-timeout 10 --max-time 45 \
+            "https://$PROJECT_REF.supabase.co/functions/v1/crm-integration" \
+            -H 'Content-Type: application/json' \
+            -H "x-cron-secret: $CRON_SECRET" \
+            --data '{"action":"health"}')
+          if [ "$HEALTH_STATUS" != "200" ]; then
+            echo "::error::Health check CRM falhou (HTTP $HEALTH_STATUS)."
+            exit 1
+          fi
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/crm-health.json','utf8'));if(r?.data?.external_reachable!==true||!r?.data?.queue)process.exit(1);console.log('CRM health: external=ok, queue=ok')"
+          STATUS=$(curl --silent --show-error --output "$RUNNER_TEMP/crm-worker.json" --write-out '%{http_code}' \
+            --connect-timeout 10 --max-time 150 \
+            "https://$PROJECT_REF.supabase.co/functions/v1/crm-integration" \
+            -H 'Content-Type: application/json' \
+            -H "x-cron-secret: $CRON_SECRET" \
+            --data "{\"action\":\"processOutbox\",\"limit\":$BATCH}")
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Worker CRM falhou (HTTP $STATUS)."
+            exit 1
+          fi
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/crm-worker.json','utf8'));if(!Array.isArray(r.data))process.exit(1);const failed=r.data.filter(x=>!x.ok);console.log('CRM outbox: processados='+r.data.length+', falhas='+failed.length);if(failed.length)process.exit(2)"

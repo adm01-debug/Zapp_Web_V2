@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Search, X, Building2, Tag } from 'lucide-react';
-import { TalkXRecipientsList } from './TalkXRecipientsList';
 import { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
 interface ContactItem {
@@ -99,7 +98,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
       </CardHeader>
       <CardContent className="flex-1 overflow-auto min-h-0">
         {campaign ? (
-          <TalkXRecipientsList campaignId={campaign.id} />
+          <p className="text-sm text-muted-foreground text-center py-4">Ver destinatários no monitor.</p>
         ) : (
           <div className="space-y-0.5">
             {filteredContacts.length === 0 ? (

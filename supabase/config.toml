@@ -33,5 +33,11 @@ verify_jwt = false
 [functions.promogifts-catalog]
 verify_jwt = true
 
+# Gateway com autenticacao interna obrigatoria: JWT de usuario/service_role ou
+# x-cron-secret para o worker. verify_jwt=false permite o cron externo; a funcao
+# rejeita qualquer requisicao antes de consultar o CRM quando nenhum deles existe.
+[functions.crm-integration]
+verify_jwt = false
+
 [functions.csp-report]
 verify_jwt = false

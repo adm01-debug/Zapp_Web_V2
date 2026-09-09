@@ -164,12 +164,12 @@ supabase secrets list --project-ref tnnnlkbymytvtqngbbqh
 VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
 VITE_SUPABASE_ANON_KEY=xxx
 
-# Externo
-VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
-VITE_CLIENTES_SUPABASE_ANON_KEY=xxx
+# Externo — manter false ate banco + Edge passarem os smokes do runbook
+VITE_CRM_INTEGRATION_ENABLED=false
 
-# Nota: VITE_CLIE5TES_* tem fallback hardcoded (anon key pública por design).
-# No Vercel, VITE_CLIENTES_* é opcional — o fallback já aponta para pgxfvjmuubtbowutlide.
+# As credenciais do CRM externo nao pertencem ao Vercel/frontend. Configure
+# EXTERNAL_SUPABASE_URL e EXTERNAL_SUPABASE_SERVICE_ROLE_KEY somente nos Edge
+# Secrets do projeto Supabase canonico. O gateway CRM recusa anon key.
 
 # Sentry
 VITE_SENTRY_DSN=xxx
@@ -185,6 +185,10 @@ EVOLUTION_API_KEY=xxx
 # Catálogo de produtos (usadas apenas pela edge promogifts-catalog — NÃO expostas ao front)
 PROMOGIFTS_SUPABASE_URL=https://doufsxqlfjyuvxuezpln.supabase.co
 PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=xxx
+
+# CRM empresas/contatos (somente edge crm-integration)
+EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+EXTERNAL_SUPABASE_SERVICE_ROLE_KEY=xxx
 
 # IA
 OPENAI_API_KEY=sk-xxx
