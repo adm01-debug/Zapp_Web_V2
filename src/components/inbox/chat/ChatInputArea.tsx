@@ -238,8 +238,8 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 </TooltipTrigger>
                 <TooltipContent side="top">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent>
               </Tooltip>
-              {/* Ferramentas adicionais no mobile — replicam o menu "+" do desktop */}
-              <Popover>
+              {/* Ferramentas adicionais no mobile — o desktop já tem via QuickActionChips */}
+              {logic.isMobile && <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" aria-label="Mais ferramentas">
                     <Plus className="w-5 h-5" />
@@ -248,7 +248,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 <PopoverContent side="top" align="end" className="w-56 p-2">
                   {tertiaryTools}
                 </PopoverContent>
-              </Popover>
+              </Popover>}
             </div>
           </div>
 

@@ -86,11 +86,7 @@ export function InboxFilters({
     (selectedQueueId ? 1 : 0) +
     (showAll ? 1 : 0);
 
-  const triggerBadgeCount =
-    activeFiltersCount +
-    (selectedContactType ? 1 : 0) +
-    (selectedQueueId ? 1 : 0) +
-    (showAll ? 1 : 0);
+  const triggerBadgeCount = activeFiltersCount;
 
   const toggleStatus = useCallback((status: string) => {
     const newStatus = filters.status.includes(status)
