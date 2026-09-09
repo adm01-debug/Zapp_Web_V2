@@ -1,4 +1,4 @@
-import { useMemo, useState, lazy, Suspense } from 'react';
+import { useCallback, useMemo, useState, lazy, Suspense } from 'react';
 import { Search, Paperclip } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,12 +10,10 @@ import { contactMediaKey } from '@/hooks/chat/useContactMedia';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { FileCard } from './FileCard';
 import { FileDetailPanel } from './FileDetailPanel';
-import type { Message } from '@/types/chat';
+import { toast } from 'sonner';
 
 const MediaPreviewDialog = lazy(() =>
   import('../media-gallery/MediaPreviewDialog').then((m) => ({ default: m.MediaPreviewDialog })));
-const ForwardMessageDialog = lazy(() =>
-  import('../ForwardMessageDialog').then((m) => ({ default: m.ForwardMessageDialog })));
 
 type TypeFilter = 'all' | ContactMediaKind;
 type SortMode = 'recent' | 'old' | 'biggest';
@@ -41,7 +39,11 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const [sort, setSort] = useState<SortMode>('recent');
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
-  const [forwardItem, setForwardItem] = useState<ContactMediaItem | null>(null);
+  const handleForwardUnavailable = useCallback(() => {
+    toast.error('Encaminhamento indisponível', {
+      description: 'Abra a conversa e envie o arquivo novamente. Nenhuma mensagem foi encaminhada.',
+    });
+  }, []);
 
   const items = useMemo(() => data?.items ?? [], [data]);
   const counts = data?.counts ?? { all: 0, image: 0, video: 0, audio: 0, document: 0 };
@@ -64,10 +66,6 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     queryClient.invalidateQueries({ queryKey: contactMediaKey(contactId) });
     queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
   };
-
-  const forwardMessage: Message | null = forwardItem
-    ? { id: forwardItem.id, content: forwardItem.caption ?? '', sender: (forwardItem.sender as 'agent' | 'contact') ?? 'contact', timestamp: new Date(forwardItem.created_at), type: forwardItem.type === 'document' ? 'document' : forwardItem.type }
-    : null;
 
   return (
     <div className="flex flex-col gap-4" data-testid="files-tab">
@@ -125,7 +123,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
                   selected={selected?.id === item.id}
                   onSelect={() => setSelected(item)}
                   onPreview={() => setPreviewItem(item)}
-                  onForward={() => setForwardItem(item)}
+                  onForward={handleForwardUnavailable}
                   onDeleted={handleDeleted}
                 />
               ))}
@@ -138,7 +136,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             item={selected}
             contactName={contactName}
             onClose={() => setSelected(null)}
-            onForward={() => setForwardItem(selected)}
+            onForward={handleForwardUnavailable}
             onDeleted={handleDeleted}
           />
         )}
@@ -150,16 +148,6 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         </Suspense>
       )}
 
-      {forwardMessage && (
-        <Suspense fallback={null}>
-          <ForwardMessageDialog
-            open={!!forwardItem}
-            onOpenChange={(open) => !open && setForwardItem(null)}
-            message={forwardMessage}
-            onForward={() => {}}
-          />
-        </Suspense>
-      )}
     </div>
   );
 }

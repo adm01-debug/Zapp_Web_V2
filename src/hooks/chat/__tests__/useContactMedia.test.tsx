@@ -33,9 +33,11 @@ describe('useContactMedia', () => {
     mockFrom.mockImplementation(() => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          not: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+          or: vi.fn().mockReturnValue({
+            not: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+              }),
             }),
           }),
         }),
@@ -65,6 +67,26 @@ describe('useContactMedia', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     const item5 = result.current.data!.items.find((i) => i.id === '5');
     expect(item5?.caption).toBe('legenda antiga');
+  });
+
+  it('filtra mensagens apagadas antes de aplicar o limite da galeria', async () => {
+    const limit = vi.fn().mockResolvedValue({ data: rows, error: null });
+    const softDeleteFilter = vi.fn().mockReturnValue({
+      not: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({ limit }),
+      }),
+    });
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ or: softDeleteFilter }),
+      }),
+    });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(softDeleteFilter).toHaveBeenCalledWith('is_deleted.eq.false,is_deleted.is.null');
+    expect(limit).toHaveBeenCalledWith(200);
   });
 
   it('nao busca quando contactId e nulo', async () => {

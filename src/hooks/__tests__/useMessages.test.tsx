@@ -25,6 +25,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useMessages } from '@/hooks/chat/useMessages';
+import { ChatService } from '@/services/chat.service';
 
 function makeQueryChain(data: any[] = [], error: any = null) {
   const rangeMock = vi.fn()
@@ -34,7 +35,7 @@ function makeQueryChain(data: any[] = [], error: any = null) {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          range: rangeMock,
+          order: vi.fn().mockReturnValue({ range: rangeMock }),
         }),
       }),
     }),
@@ -61,8 +62,8 @@ describe('useMessages', () => {
 
   it('fetches messages when contactId is provided', async () => {
     const mockMessages = [
-      { id: 'msg-1', contact_id: 'c1', content: 'Hello', sender: 'contact', created_at: '2024-01-01' },
       { id: 'msg-2', contact_id: 'c1', content: 'Hi!', sender: 'agent', created_at: '2024-01-01' },
+      { id: 'msg-1', contact_id: 'c1', content: 'Hello', sender: 'contact', created_at: '2024-01-01' },
     ];
     mockFrom.mockReturnValue(makeQueryChain(mockMessages));
 
@@ -127,7 +128,7 @@ describe('useMessages', () => {
       select: vi.fn(() => ({
         eq: vi.fn((_: string, contact: string) => ({
           order: vi.fn(() => ({
-            range: vi.fn(() => contact === 'c1' ? c1Promise : c2Promise),
+            order: vi.fn(() => ({ range: vi.fn(() => contact === 'c1' ? c1Promise : c2Promise) })),
           })),
         })),
       })),
@@ -159,9 +160,9 @@ describe('useMessages', () => {
     mockFrom.mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({ order: vi.fn(() => ({
-          range: vi.fn(() => ++calls === 1
+          order: vi.fn(() => ({ range: vi.fn(() => ++calls === 1
             ? first
-            : Promise.resolve({ data: [{ id: 'fresh', contact_id: 'c1', content: 'Fresh', sender: 'contact', created_at: '2024-01-02' }], error: null })),
+            : Promise.resolve({ data: [{ id: 'fresh', contact_id: 'c1', content: 'Fresh', sender: 'contact', created_at: '2024-01-02' }], error: null })) })),
         })) })),
       })),
     }));
@@ -180,5 +181,47 @@ describe('useMessages', () => {
     rerender({ enabled: true });
     await waitFor(() => expect(result.current.messages.map((message) => message.id)).toEqual(['fresh']));
     expect(calls).toBe(2);
+  });
+
+  it('carrega pagina anterior por cursor e bloqueia requisicoes concorrentes duplicadas', async () => {
+    const initialMessages = Array.from({ length: 1000 }, (_, index) => ({
+      id: `msg-${String(index).padStart(4, '0')}`,
+      contact_id: 'c1',
+      content: `Message ${index}`,
+      sender: 'contact',
+      created_at: new Date(Date.UTC(2024, 0, 2, 0, 0, index)).toISOString(),
+    }));
+    vi.spyOn(ChatService, 'fetchMessages').mockResolvedValue({ data: initialMessages, error: null });
+
+    let resolveOlder: (value: unknown) => void = () => undefined;
+    const olderPromise = new Promise((resolve) => { resolveOlder = resolve; });
+    const fetchBefore = vi.spyOn(ChatService, 'fetchMessagesBefore').mockReturnValue(olderPromise);
+
+    const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
+    await waitFor(() => expect(result.current.hasOlder).toBe(true));
+
+    let firstRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.loadOlderMessages();
+      void result.current.loadOlderMessages();
+    });
+    expect(fetchBefore).toHaveBeenCalledTimes(1);
+    expect(fetchBefore).toHaveBeenCalledWith(
+      'c1',
+      { createdAt: initialMessages[0].created_at, id: initialMessages[0].id },
+      1000,
+    );
+
+    await act(async () => {
+      resolveOlder({
+        data: [{ id: 'older', contact_id: 'c1', content: 'Older', sender: 'contact', created_at: '2024-01-01T00:00:00.000Z' }],
+        error: null,
+      });
+      await firstRequest;
+    });
+
+    expect(result.current.messages[0].id).toBe('older');
+    expect(result.current.hasOlder).toBe(false);
+    expect(result.current.loadingOlder).toBe(false);
   });
 });

@@ -5,9 +5,13 @@ const storageMocks = vi.hoisted(() => ({
   upload: vi.fn(),
   getPublicUrl: vi.fn(),
 }));
+const databaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    from: databaseMocks.from,
     storage: { from: storageMocks.from },
   },
 }));
@@ -17,6 +21,65 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { ChatService } from '@/services/chat.service';
+
+describe('ChatService.fetchMessages', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('pagina do mais recente no banco e devolve ordem cronologica para a UI', async () => {
+    const range = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'new', created_at: '2026-09-09T12:00:00Z' },
+        { id: 'old', created_at: '2026-09-09T11:00:00Z' },
+      ],
+      error: null,
+    });
+    const orderById = vi.fn().mockReturnValue({ range });
+    const order = vi.fn().mockReturnValue({ order: orderById });
+    databaseMocks.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ order }),
+      }),
+    });
+
+    const result = await ChatService.fetchMessages('contact-1', 0, 2);
+
+    expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(orderById).toHaveBeenCalledWith('id', { ascending: false });
+    expect(range).toHaveBeenCalledWith(0, 1);
+    expect(result.data?.map((row) => row.id)).toEqual(['old', 'new']);
+  });
+
+  it('usa cursor composto para carregar mensagens anteriores sem gap por realtime', async () => {
+    const limit = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'b', created_at: '2026-09-09T10:00:00Z' },
+        { id: 'a', created_at: '2026-09-09T10:00:00Z' },
+      ],
+      error: null,
+    });
+    const secondOrder = vi.fn().mockReturnValue({ limit });
+    const firstOrder = vi.fn().mockReturnValue({ order: secondOrder });
+    const or = vi.fn().mockReturnValue({ order: firstOrder });
+    databaseMocks.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ or }),
+      }),
+    });
+
+    const result = await ChatService.fetchMessagesBefore(
+      'contact-1',
+      { createdAt: '2026-09-09T11:00:00Z', id: 'c' },
+      2,
+    );
+
+    expect(or).toHaveBeenCalledWith(
+      'created_at.lt.2026-09-09T11:00:00Z,and(created_at.eq.2026-09-09T11:00:00Z,id.lt.c)',
+    );
+    expect(firstOrder).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(secondOrder).toHaveBeenCalledWith('id', { ascending: false });
+    expect(result.data?.map((row) => row.id)).toEqual(['a', 'b']);
+  });
+});
 
 describe('ChatService.uploadAudio', () => {
   beforeEach(() => {
