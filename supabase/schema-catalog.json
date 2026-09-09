@@ -1362,6 +1362,7 @@
         "talkx_template_versions.custom_variables:text[]:not-null",
         "talkx_template_versions.saved_by:uuid:nullable",
         "talkx_template_versions.created_at:timestamp with time zone:not-null",
+        "talkx_template_versions.description:text:nullable",
         "talkx_templates.id:uuid:not-null",
         "talkx_templates.name:text:not-null",
         "talkx_templates.description:text:nullable",
@@ -1659,6 +1660,7 @@
         "get_team_profiles",
         "get_visible_agent_ids",
         "has_role",
+        "increment_talkx_template_use",
         "ingest_inbound_message",
         "is_account_locked",
         "is_admin",
@@ -1686,6 +1688,7 @@
         "skill_based_assign",
         "store_gmail_tokens",
         "update_own_profile",
+        "update_talkx_template_with_snapshot",
         "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
@@ -1733,6 +1736,7 @@
         "get_team_profiles()->TABLE(id uuid, user_id uuid, name text, email text, avatar_url text, role text, is_active boolean, department text, job_title text, phone text, max_chats integer, created_at timestamp with time zone)|kind=f",
         "get_visible_agent_ids(_user_id uuid)->SETOF uuid|kind=f",
         "has_role(_user_id uuid, _role app_role)->boolean|kind=f",
+        "increment_talkx_template_use(p_template_id uuid)->integer|kind=f",
         "ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)->TABLE(contact_id uuid, contact_name text, assigned_to uuid, avatar_url text, contact_created boolean, message_id uuid, outcome text)|kind=f",
         "is_account_locked(check_email text)->TABLE(is_locked boolean, locked_until timestamp with time zone, attempts integer)|kind=f",
         "is_admin(_user_id uuid)->boolean|kind=f",
@@ -1760,6 +1764,7 @@
         "skill_based_assign(p_queue_id uuid)->uuid|kind=f",
         "store_gmail_tokens(p_account_id uuid, p_access_token text, p_refresh_token text)->void|kind=f",
         "update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)->boolean|kind=f",
+        "update_talkx_template_with_snapshot(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_description text, p_category text, p_content text, p_media_url text, p_media_type text, p_tags text[], p_status text, p_custom_variables text[])->TABLE(template_id uuid, updated_at timestamp with time zone, version_number integer)|kind=f",
         "upsert_crm_contact_link_guarded(p_zapp_contact_id uuid, p_external_contact_id text, p_external_company_id text, p_normalized_phone text)->void|kind=f",
         "user_has_permission(_user_id uuid, _permission_name text)->boolean|kind=f"
     ]
