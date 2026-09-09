@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 
@@ -24,6 +25,12 @@ export interface TalkXTemplate {
 
 export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
 type TemplateUpdateInput = TemplateInput & { id: string; expectedUpdatedAt: string };
+type GeneratedSnapshotArgs = Database['public']['Functions']['update_talkx_template_with_snapshot']['Args'];
+type SnapshotArgs = Omit<GeneratedSnapshotArgs, 'p_description' | 'p_media_url' | 'p_media_type'> & {
+  p_description: string | null;
+  p_media_url: string | null;
+  p_media_type: string | null;
+};
 
 function templateUpdateErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : '';
@@ -74,7 +81,7 @@ export function useTalkXTemplates() {
       const current = query.data?.find((template) => template.id === id);
       if (!current) throw new Error('Template desatualizado; recarregue e tente novamente');
       const next = { ...current, ...updates };
-      const { data, error } = await supabase.rpc('update_talkx_template_with_snapshot', {
+      const snapshotArgs = {
         p_template_id: id,
         p_expected_updated_at: expectedUpdatedAt,
         p_name: next.name,
@@ -86,7 +93,13 @@ export function useTalkXTemplates() {
         p_tags: next.tags,
         p_status: next.status,
         p_custom_variables: next.custom_variables ?? [],
-      });
+      } satisfies SnapshotArgs;
+      // PostgreSQL aceita NULL nesses parametros text (a funcao nao e STRICT),
+      // mas o typegen nao representa nulabilidade de argumentos sem default.
+      const { data, error } = await supabase.rpc(
+        'update_talkx_template_with_snapshot',
+        snapshotArgs as unknown as GeneratedSnapshotArgs,
+      );
       if (error) throw error;
       const persisted = data?.[0];
       if (!persisted) throw new Error('Atualização não confirmada pelo banco');

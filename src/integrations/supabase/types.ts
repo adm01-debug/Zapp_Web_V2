@@ -8496,10 +8496,10 @@ export type Database = {
           p_category: string
           p_content: string
           p_custom_variables: string[]
-          p_description: string | null
+          p_description: string
           p_expected_updated_at: string
-          p_media_type: string | null
-          p_media_url: string | null
+          p_media_type: string
+          p_media_url: string
           p_name: string
           p_status: string
           p_tags: string[]

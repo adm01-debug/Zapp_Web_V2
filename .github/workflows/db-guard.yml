@@ -49,6 +49,9 @@ jobs:
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
         run: bash scripts/db-audit/catalog-manifest.test.sh
 
+      - name: Testar normalizacao deterministica dos tipos gerados
+        run: bash scripts/db-audit/gen-types.test.sh
+
       # Sem DESTINO_URL: valida nomes, duplicatas e conteudo local das
       # migrations, mas nao consulta schema_migrations.
       - name: Validar migrations localmente
