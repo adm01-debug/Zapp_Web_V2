@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useConversationTasks } from '@/hooks/chat/useConversationTasks';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { KpiStrip } from './KpiStrip';
-import { TaskCard } from './TaskCard';
+import { TaskColumn } from './TaskColumn';
 
 type AssignFilter = 'all' | 'mine' | 'others';
 
@@ -18,7 +18,7 @@ interface TasksTabProps {
 /** Aba Tarefas (2.9) — banner + KPIs + 3 colunas (Hoje/Próximas/Concluídas recentes). */
 export function TasksTab({ contactId }: TasksTabProps) {
   const { profile } = useAuth();
-  const { overdue, today, upcoming, completed7d, toggleTask, deleteTask, createTask } = useConversationTasks(contactId);
+  const { overdue, today, upcoming, completed7d, toggleTask, deleteTask, createTask, isCreating, isLoading } = useConversationTasks(contactId);
   const { data: teamProfiles = [] } = useTeamProfiles();
   const [filter, setFilter] = useState<AssignFilter>('all');
   const [adding, setAdding] = useState(false);
@@ -41,48 +41,63 @@ export function TasksTab({ contactId }: TasksTabProps) {
 
   const todayLabel = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
 
-  const submitNewTask = () => {
-    if (!title.trim()) return;
-    createTask({ title: title.trim(), createdBy: profile?.id, assignedTo: profile?.id });
+  const closeComposer = () => {
     setTitle('');
     setAdding(false);
   };
 
+  const submitNewTask = async () => {
+    if (!title.trim()) return;
+    try {
+      await createTask({ title: title.trim(), createdBy: profile?.id, assignedTo: profile?.id });
+      closeComposer();
+    } catch {
+      // O hook apresenta o erro; manter o formulário aberto preserva o texto para nova tentativa.
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4" data-testid="tasks-tab">
-      <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 flex items-center gap-3">
-        <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0"><ListTodo className="w-5 h-5" /></span>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4">
+        <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0"><ListTodo className="w-5 h-5" aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-semibold text-foreground">Tarefas desta conversa</p>
-          <p className="text-[13px] text-muted-foreground truncate">Organize e acompanhe todas as ações relacionadas a este cliente.</p>
+          <p className="text-[13px] text-muted-foreground">Organize e acompanhe todas as ações relacionadas a este cliente.</p>
         </div>
-        <button type="button" className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shrink-0" onClick={() => setAdding(true)}>
+        <button type="button" className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" onClick={() => setAdding(true)}>
           + Nova tarefa
         </button>
       </div>
 
       {adding && (
-        <div className="rounded-xl border border-border bg-card p-3 flex items-center gap-2">
+        <form className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3" onSubmit={(event) => { event.preventDefault(); void submitNewTask(); }}>
+          <label htmlFor="conversation-task-title" className="sr-only">Título da nova tarefa</label>
           <input
+            id="conversation-task-title"
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título da tarefa..."
-            className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm"
-            onKeyDown={(e) => { if (e.key === 'Enter') submitNewTask(); if (e.key === 'Escape') setAdding(false); }}
+            className="h-10 min-w-[12rem] flex-1 rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); closeComposer(); } }}
           />
-          <button type="button" className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50" disabled={!title.trim()} onClick={submitNewTask}>
+          <button type="submit" className="h-10 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold outline-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring" disabled={!title.trim() || isCreating}>
             Salvar
           </button>
-          <button type="button" className="h-9 px-3 rounded-lg text-xs text-muted-foreground" onClick={() => setAdding(false)}>
+          <button type="button" className="h-10 px-3 rounded-lg text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring" onClick={closeComposer}>
             Cancelar
           </button>
-        </div>
+        </form>
       )}
 
-      <div className="flex items-center gap-3">
+      {isLoading ? (
+        <div role="status" aria-live="polite" className="grid min-h-40 place-items-center rounded-xl border border-border bg-card/40">
+          <span className="text-sm text-muted-foreground">Carregando tarefas…</span>
+        </div>
+      ) : (
+      <>
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
         <KpiStrip
-          className="flex-1"
           cells={[
             { icon: AlertCircle, label: 'Atrasadas', value: overdue.length, iconClassName: 'bg-destructive/15 text-destructive' },
             { icon: Clock, label: 'Para hoje', value: today.length, iconClassName: 'bg-warning/15 text-warning' },
@@ -90,7 +105,7 @@ export function TasksTab({ contactId }: TasksTabProps) {
           ]}
         />
         <Select value={filter} onValueChange={(v) => setFilter(v as AssignFilter)}>
-          <SelectTrigger className="h-9 w-[220px] shrink-0"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-10 w-full" aria-label="Filtrar tarefas por responsável"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as tarefas</SelectItem>
             <SelectItem value="mine">Minhas</SelectItem>
@@ -99,29 +114,13 @@ export function TasksTab({ contactId }: TasksTabProps) {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Hoje</h3><span className="text-xs text-muted-foreground">({hoje.length})</span></div>
-          <p className="text-xs text-muted-foreground capitalize">{todayLabel}</p>
-          {hoje.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa para hoje</p>
-            : hoje.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
-
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Próximas</h3><span className="text-xs text-muted-foreground">({proximas.length})</span></div>
-          {proximas.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa futura</p>
-            : proximas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
-
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><h3 className="text-sm font-semibold">Concluídas recentes</h3><span className="text-xs text-muted-foreground">({concluidas.length})</span></div>
-          {concluidas.length === 0
-            ? <p className="text-sm text-muted-foreground py-2">Nenhuma tarefa concluída nos últimos 7 dias</p>
-            : concluidas.map((t) => <TaskCard key={t.id} task={t} assigneeName={t.assigned_to ? profileNameById.get(t.assigned_to) : undefined} onToggle={toggleTask} onDelete={deleteTask} />)}
-        </section>
+      <div data-testid="task-columns" className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))]">
+        <TaskColumn title="Hoje" subtitle={todayLabel} tasks={hoje} emptyText="Nenhuma tarefa para hoje" profileNameById={profileNameById} onToggle={toggleTask} onDelete={deleteTask} />
+        <TaskColumn title="Próximas" tasks={proximas} emptyText="Nenhuma tarefa futura" profileNameById={profileNameById} onToggle={toggleTask} onDelete={deleteTask} />
+        <TaskColumn title="Concluídas recentes" tasks={concluidas} emptyText="Nenhuma tarefa concluída nos últimos 7 dias" profileNameById={profileNameById} onToggle={toggleTask} onDelete={deleteTask} />
       </div>
+      </>
+      )}
     </div>
   );
 }
