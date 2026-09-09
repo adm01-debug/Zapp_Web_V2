@@ -149,3 +149,62 @@ data-testid="contact-action-tile"     — cada um dos 5 tiles
 - Tokens CSS, `tailwind.config.ts`, `src/styles/tokens.css` — zero diff.
 - Worktree `/workspace/repos/Zapp_Web_V2` (main) — zero diff.
 
+
+
+---
+
+## 5. ADENDO DE FIDELIDADE (09/09/2026 — instrução de Joaquim: "o mais semelhante possível às imagens, mantendo o carvão; a versão anterior ficou medíocre")
+
+Este adendo **prevalece** sobre §2 e §3 onde houver conflito. As Fases 1–3 já estão commitadas (`2e672341`, `950b15d2`, `53bc821c`) e pushadas; o PR **não** foi aberto. Sua tarefa agora: (a) sincronizar com `main`, (b) fazer a passada de fidelidade abaixo (Fase 4), (c) QA, (d) abrir o PR.
+
+Leia as referências com `Read` antes de cada etapa: `/workspace/qa/ref/inbox/07-chat.jpg` (painel na aba Contato, layout "Dados principais"), `01-crm360.jpg` (layout "Informações + Status WhatsApp + Tags + Resumo Comercial + Tarefas da Conversa"), `03-ia.jpg` (bloco "Insights da IA" roxo), `05-tarefas.jpg` (lista "Tarefas" no painel). Estado atual de produção: `/workspace/qa/out/prod-inbox-*.jpg`; seu estado atual: `docs/design/painel-0*.png`.
+
+### 5.0 Sincronização (Fase 0 do adendo)
+- `git fetch origin && git merge origin/main --no-edit` (branch está 9 commits atrás; `main` inclui o #288 que tocou `ChatPanelHeader.tsx`/`ChatHeader.tsx`/`TicketTabs.tsx`/`InboxFilters.tsx`/`useInboxFilters.ts` — nenhum arquivo seu, conflito improvável; se houver em `ChatPanel.tsx`, mantenha o `useEffect` do `open-transfer-dialog` e o que veio de main). `npm run typecheck` → 0. `bun install --frozen-lockfile` se o lockfile mudou. Push `--no-verify`.
+- **Screenshots não vão mais para o repo.** Os 7 PNGs em `docs/design/painel-*.png` já commitados: `git rm --cached docs/design/painel-*.png`, mova para `/workspace/qa/out/`, adicione `docs/design/*.png` ao `.gitignore` (linha única). Commit `chore(painel): screenshots fora do repo`. Daqui em diante todo screenshot vai para `/workspace/qa/out/painel-*.png`.
+- **QA shot:** a conta QA abre com lista vazia (chip "Em atendimento" por padrão pós-#288 e "Mostrar Todos" dentro de `InboxFilters`). Copie `/workspace/qa/inbox-shot.mjs` para `/workspace/qa/painel-shot.mjs` e, depois de "Pular tour": abra o painel de filtros (botão "Filtros" — descubra o seletor com `page.content()`), ligue "Mostrar Todos" (`getByLabel(/Mostrar Todos/i)` ou `#show-all`), Escape, clique no chip "Todas", e só então abra a primeira conversa. Sem isso não há painel para fotografar.
+
+### 5.1 Sessão irmã em paralelo
+A lista de conversas, o chat header, o input e as 8 abas centrais estão sendo refeitos na branch `redesign/inbox-fidelidade-carvao` (worktree `Zapp_Web_V2-inbox`). **Você não toca**: `ConversationListSidebar`, `conversation-list/**`, `TicketTabs`, `InboxFilters`, `chat/**`, `tabs/**`, `RealtimeInboxView` (exceto se a largura do painel for definida lá — aí só a classe de largura do painel). Seus arquivos: `ContactDetails.tsx`, `ContactDetailsResponsive.tsx`, `contact-details/**`, `ChatPanel.tsx` (só o listener já adicionado).
+
+### 5.2 Mapa navy → carvão (tokens intocados)
+fundo card `bg-card` · seção `bg-muted/30 rounded-xl` · borda `border-border` · aba ativa: texto `text-foreground font-semibold` + underline 2px `bg-primary` · botão azul `bg-primary` · tile de ação `bg-muted/40 border border-border` com ícone colorido: Ligar `text-primary`, WhatsApp `text-success`, E-mail `text-primary`, Transferir/Mais `text-foreground` · chips: Cliente `bg-primary/15 text-primary border-primary/40`, VIP `bg-warning/15 text-warning border-warning/40`, Alta prioridade `bg-destructive/15 text-destructive border-destructive/40`, tags neutras `bg-muted text-foreground` · bloco IA `bg-kpi-purple border border-kpi-purple-fg/30` texto `text-kpi-purple-fg` · KPI tile `bg-muted/40 rounded-lg`. Zero cor literal, zero token novo.
+
+### 5.3 Geometria (viewport 1672×941)
+| Bloco | Alvo | Tol |
+|---|---|---|
+| Painel | **w 380** (`w-[380px]`, override do §2.1/`w-[390px] xl:w-[360px]`) `bg-card border-l border-border` | ±4 |
+| Abas (topo do painel, **antes** do avatar — na referência as abas ficam acima do header) | h 44; 5 abas `flex-1 text-[13px]`; ativa `font-semibold text-foreground` + underline `h-0.5 bg-primary`; inativa `text-muted-foreground` | ±2 |
+| Header do contato | padding 16; avatar **72** (já feito) + badge canal **24** bottom-right (`bg-success` com ícone WhatsApp branco 14, `ring-2 ring-card`); nome 18/700 + `Star` 16 (favorito, clicável, `fill-warning` quando favorito); telefone 14 muted + ícone WhatsApp 16 verde (link `wa.me`); linha "Cliente desde {mês ano}" 13 muted com ícone 14; botão **Editar** à direita `h-9 px-3 rounded-lg border border-border bg-card gap-1.5 text-[13px]` (`Pencil` 14 + "Editar") → `EditContactDialog` existente | ±2 |
+| Chips do contato | linha abaixo do header, `h-6 px-2.5 rounded-full text-xs font-semibold`: tipo (via `contactTypeConfig` de `src/components/contacts/contactTypeConfig.tsx`), VIP (se tag), Alta prioridade (se `priority==='high'`) — só com dado real | — |
+| 5 tiles de ação (já feitos) | grid-cols-5 gap-2 px-4; tile **h 56** `rounded-xl bg-muted/40 border border-border hover:bg-muted/70 flex-col gap-1`; ícone 18 **colorido** (§5.2); label 11/500 | ±2 |
+| Seção | `mx-4 mb-3 rounded-xl border border-border bg-muted/20 p-3`; header: tile 24 `bg-primary/15 text-primary rounded-md` + título 14/600 + ação à direita (`Editar` outline h-7 · `Ver no CRM` link · `Adicionar tag` outline h-7 · `+ Nova tarefa` pill `bg-primary/15 text-primary h-7` · `Reanalisar` outline h-7) | — |
+| Linha label/valor | h 28; label 13 muted com ícone 14 (`w-[120px]`); valor 13 foreground; valor vazio → link `text-primary` "Adicionar {campo}" (abre o `EditContactDialog`) | — |
+| Resumo comercial | grid 2×2 gap-2; tile `rounded-lg bg-muted/40 p-2.5`: valor 15/700 tabular + label 11 muted | — |
+| Tarefas da conversa | lista até 5: `Clock` 14 muted + título 13 truncate + data 11 à direita (`text-destructive` atrasada / `text-warning` hoje / muted) + avatar 18 | — |
+| Insights da IA | bloco roxo com até 4 linhas: ícone 14 + texto 12 + `ChevronRight` 14 — só com dado real de `ContactIntelligencePanel`/análises; senão o bloco não aparece | — |
+
+### 5.4 Ordem das seções na aba Contato (referências 07-chat e 01-crm360 combinadas)
+1. **Informações** (tile `Info`): E-mail · Empresa · Cargo · Origem (canal) · Responsável (agente) · Cliente desde · CNPJ/CPF (só se houver) — botão "Editar" no header. "Ver mais ▾" mantém o que já faz.
+2. **Status WhatsApp** (tile `MessageCircle`): dot `bg-online` + status real + "Última visualização" se houver.
+3. **Tags** (tile `Tag`): chips + botão "Adicionar tag" outline h-7.
+4. **Resumo Comercial** (tile `BarChart3`, ação "Ver no CRM" → aba CRM 360° central se existir prop para isso — grep `onCenterTabChange`/`setActiveTab` no `ChatPanel`; se não existir, registre pendência e omita a ação).
+5. **Tarefas da Conversa** (tile `CheckSquare`, ação "+ Nova tarefa").
+6. **Insights da IA** (bloco roxo) — só com dado.
+7. **Última atividade** (tile `Activity`, colapsável, fechado): 3 últimos eventos via `useConversationHistoryTimeline`.
+8. **Mais detalhes** (Accordion fechado): as seções restantes, **todas** presentes (18/18).
+
+### 5.5 Abas Histórico / Tarefas / Notas / Arquivos do painel
+Container `px-4 pb-4`; cards internos no estilo de seção de §5.3 (tile 24 + título 14/600). Só classes — componentes já ligados na Fase 3.
+
+### 5.6 Plano do adendo — FASE 4 (etapas 13–20) → CP4
+- [ ] **13.** §5.0 completo (merge main, screenshots fora do repo, `painel-shot.mjs` funcionando: screenshot `painel-04-before.png` com conversa aberta e painel visível). — DoD: 3 commits/ações + screenshot.
+- [ ] **14.** Abas para o topo do painel (acima do header) — `ContactDetails.tsx`: ordem `Tabs` → header → chips → tiles → conteúdo. h 44. — DoD: medida.
+- [ ] **15.** Header: badge canal 24, estrela favorito (`useConversationActions.isFavorite/toggleFavorite`), telefone com ícone WhatsApp, "Cliente desde", botão Editar h-9. `ContactHeaderSection.tsx` (edição cirúrgica). — DoD: Editar abre `EditContactDialog`.
+- [ ] **16.** Chips do contato (tipo/VIP/prioridade) com dado real; tiles com ícone colorido (§5.2). — DoD: screenshot.
+- [ ] **17.** Seções da aba Contato reestilizadas (§5.3 "Seção", "Linha label/valor", "Resumo comercial", "Tarefas") + ordem de §5.4 (adicionar "Última atividade" e "Insights da IA" só com dado). `ContactAccordionSections.tsx` (reescrita já autorizada) + `ContactInfoSection.tsx` (cirúrgica). 18/18 seções presentes. — DoD: lista das 18 no ledger.
+- [ ] **18.** Abas secundárias: `px-4 pb-4` + estilo de seção. — DoD: 4 screenshots.
+- [ ] **19.** Testes de `contact-details/__tests__` verdes; `npx tsc -b --force` 0; lint-ratchet novas=0; `grep -rnE "bg-\[#|text-\[#|hsl\(" src/components/inbox/contact-details src/components/inbox/ContactDetails*.tsx | grep -v "var(--"` = 0; `grep -rn "Joaquim\|Sicoob" src/components/inbox/contact-details` = 0. — DoD: saídas no ledger.
+- [ ] **20.** Commit `feat(painel): fase 4 — fidelidade (abas no topo, header, seções, tiles coloridos)`. Push `--no-verify`. Screenshots `painel-04-{contact,history,tasks,notes,files}.png` em 1672×941 + medidas (painel w, abas h, avatar, badge, Editar h, tiles). Abrir PR `feat(inbox): painel direito com 5 abas — fidelidade carvão` para `main` via API (`gh` não está autenticado — use `curl` com o token que o git remote já usa: `git config --get remote.origin.url` mostra se há token embutido; senão use `GH_TOKEN` de `/workspace/.secrets/*.env` se existir; se nenhum, registre "PR pendente: sem token" no ledger e pare). **Não merge.** — DoD: URL do PR na última linha do stdout.
+
+**CP4 — Fidelidade.** Gate: painel 380±4 · abas 44±2 no topo · avatar 72 · badge 24 · Editar 36±2 · 5 tiles 56 · 18/18 seções · 0 cor literal · 0 nome inventado · 5 screenshots · PR aberto (ou pendência registrada). Ledger `docs/design/PAINEL_STATUS.md` com CP4 + 3 linhas honestas "o que ainda difere da referência".
