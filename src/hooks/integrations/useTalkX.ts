@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -27,7 +27,7 @@ export interface TalkXCampaign {
   media_url: string | null;
   media_type: string | null;
   scheduled_at: string | null;
-  // migration 20260908120000 — wizard / agendamento / supressão
+  // migration 20260908120000 — wizard / agendamento / supressao
   description?: string | null;
   objective?: string;
   audience_source?: 'contacts' | 'segment' | 'crm360';
@@ -65,6 +65,8 @@ type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updat
 export function useTalkX() {
   const queryClient = useQueryClient();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const campaignsQuery = useQuery({
     queryKey: ['talkx-campaigns'],
@@ -76,7 +78,45 @@ export function useTalkX() {
       if (error) throw error;
       return (data ?? []) as unknown as TalkXCampaign[];
     },
+    // Fallback polling quando o canal realtime nao esta conectado
+    refetchInterval: isLive ? false : 15_000,
   });
+
+  // E27 — Canal realtime talkx:campaigns (UPDATE pontual + INSERT invalida)
+  useEffect(() => {
+    const channel = supabase
+      .channel('talkx:campaigns')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns' },
+        (payload) => {
+          // Debounce 500ms para rajadas durante envio ativo
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current = setTimeout(() => {
+            const updated = payload.new as TalkXCampaign;
+            queryClient.setQueryData<TalkXCampaign[]>(['talkx-campaigns'], (old) => {
+              if (!old) return old;
+              return old.map((c) => c.id === updated.id ? { ...c, ...updated } : c);
+            });
+          }, 500);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'talkx_campaigns' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+        }
+      )
+      .subscribe((status) => {
+        setIsLive(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const recipientsQuery = useQuery({
     queryKey: ['talkx-recipients', selectedCampaignId],
@@ -211,6 +251,7 @@ export function useTalkX() {
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
+    isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
     selectedCampaignId,

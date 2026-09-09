@@ -20,7 +20,7 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor';
 
 export default function TalkXView() {
-  const { campaigns, isLoading, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
+  const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const [topView, setTopView] = useState<TalkXTopView>('tabs');
@@ -83,7 +83,13 @@ export default function TalkXView() {
         title="Campanhas"
         subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {isLive && (
+              <span className="flex items-center gap-1.5 text-[11.5px] text-success font-medium">
+                <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
+                Ao vivo
+              </span>
+            )}
             <GhostButton icon={HelpCircle} onClick={() => setActiveTab('help')} size="sm">Ajuda</GhostButton>
             <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
           </div>
