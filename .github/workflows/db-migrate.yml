@@ -449,6 +449,10 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
+            20260909220000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+                -f scripts/db-audit/message-delivery-phase1-runtime.sql)
+              ;;
             20260909230000)
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
@@ -645,6 +649,58 @@ jobs:
                 && proof.authenticated_guard_execute === false
                 && proof.authenticated_update_guard_execute === false
                 && proof.authenticated_internal_function_execute_count === 0;
+          } else if (process.env.TARGET_VERSION === '20260909220000') {
+            const absent = proof.message_column_count === 0
+              && proof.closure_column_count === 0
+              && proof.event_column_count === 0
+              && proof.column_contract_count === 0
+              && proof.validated_constraint_count === 0
+              && proof.index_count === 0
+              && proof.function_count === 0
+              && proof.safe_api_function_count === 0
+              && proof.internal_guard_function_count === 0
+              && proof.internal_guard_trigger_count === 0
+              && proof.trusted_owner_function_count === 0
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.authenticated_enqueue === false
+              && proof.authenticated_close === false
+              && proof.service_enqueue === false
+              && proof.service_close === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.anon_any_execute === false
+              && proof.service_delivery_count === 0
+              && proof.custom_guc_reference_count === 0;
+            const applied = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 8
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+              && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
+              && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
+              && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
+              && proof.authenticated_enqueue === true
+              && proof.authenticated_close === true
+              && proof.service_enqueue === false
+              && proof.service_close === true
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.anon_any_execute === false
+              && proof.service_delivery_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = process.env.NEEDS_APPLY === 'true' ? absent : applied;
           } else if (process.env.TARGET_VERSION === '20260909230000') {
             const canonicalExceptSavedByAction = proof.table_count === 1
               && proof.variant_table_count === 1
@@ -1028,6 +1084,51 @@ jobs:
             && proof.authenticated_note_extra === false
             && proof.service_note_crud === true
             && proof.service_note_extra === false;
+          if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar primitivas atomicas de mensagens e encerramento
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909220000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/message-delivery-phase1-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && proof.message_column_count === 7
+            && proof.closure_column_count === 1
+            && proof.event_column_count === 1
+            && proof.column_contract_count === 9
+            && proof.validated_constraint_count === 4
+            && proof.index_count === 4
+            && proof.function_count === 8
+            && proof.safe_api_function_count === 5
+            && proof.internal_guard_function_count === 3
+            && proof.internal_guard_trigger_count === 3
+            && proof.trusted_owner_function_count === 8
+            && proof.function_name_collision_count === 0
+            && proof.trigger_name_collision_count === 0
+            && proof.constraint_name_collision_count === 0
+            && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+            && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
+            && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
+            && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
+            && proof.authenticated_enqueue === true
+            && proof.authenticated_close === true
+            && proof.service_enqueue === false
+            && proof.service_close === true
+            && proof.authenticated_privileged_delivery === false
+            && proof.authenticated_internal_guard_execute === false
+            && proof.anon_any_execute === false
+            && proof.service_delivery_count === 3
+            && proof.custom_guc_reference_count === 0;
           if (!ok) process.exit(1);
           NODE
 

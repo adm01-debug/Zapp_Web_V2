@@ -102,6 +102,11 @@ jobs:
           TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
           TALKX_HISTORY_FK_PRESTATE=ORPHAN bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
 
+      - name: Simular primitivas atômicas de mensagens e encerramento
+        env:
+          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
+
       - name: Simular reconciliação segura do ledger
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
