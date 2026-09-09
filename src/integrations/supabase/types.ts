@@ -8268,6 +8268,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_talkx_template_use: {
+        Args: { p_template_id: string }
+        Returns: number
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -8435,10 +8439,6 @@ export type Database = {
           p_signature?: string
         }
         Returns: boolean
-      }
-      increment_talkx_template_use: {
-        Args: { p_template_id: string }
-        Returns: number
       }
       update_talkx_template_with_snapshot: {
         Args: {

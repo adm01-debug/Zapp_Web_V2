@@ -560,12 +560,12 @@ jobs:
           } else if (process.env.TARGET_VERSION === '20260909210000') {
             const base = proof.table_count === 1
               && proof.custom_variables_column_count === 1
-              && proof.rls_enabled === true
-              && proof.policy_count === 1
-              && proof.foundation_constraint_count === 4;
+              && proof.rls_enabled === true;
             targetOk = process.env.NEEDS_APPLY === 'true'
               ? base
-                && proof.history_description_column_count === 0
+                && [0, 1].includes(proof.history_description_column_count)
+                && [1, 2].includes(proof.policy_count)
+                && [3, 4].includes(proof.foundation_constraint_count)
                 && proof.function_count === 0
                 && proof.safe_function_count === 0
                 && proof.constraint_count === 0
@@ -577,12 +577,14 @@ jobs:
                 && proof.authenticated_rpc_execute === false
               : base
                 && proof.history_description_column_count === 1
+                && proof.policy_count === 1
+                && proof.foundation_constraint_count === 4
                 && proof.canonical_select_policy_count === 1
                 && proof.constraint_count === 3
                 && proof.validated_constraint_count === 3
                 && proof.function_count === 4
                 && proof.safe_function_count === 4
-                && proof.definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'
+                && proof.definition_sha256 === 'fe8ee233b88420087f7fe0ddfa5edb4784a57af2df1188040f2acba9f77cc337'
                 && proof.immutable_trigger_count === 1
                 && proof.template_update_guard_count === 1
                 && proof.anon_any_access === false
@@ -955,7 +957,7 @@ jobs:
             && proof.foundation_constraint_count === 4
             && proof.function_count === 4
             && proof.safe_function_count === 4
-            && proof.definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'
+            && proof.definition_sha256 === 'fe8ee233b88420087f7fe0ddfa5edb4784a57af2df1188040f2acba9f77cc337'
             && proof.immutable_trigger_count === 1
             && proof.template_update_guard_count === 1
             && proof.anon_any_access === false

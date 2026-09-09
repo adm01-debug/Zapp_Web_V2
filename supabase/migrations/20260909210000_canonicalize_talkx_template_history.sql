@@ -49,6 +49,39 @@ UPDATE public.talkx_template_versions
 SET custom_variables = '{}'::text[]
 WHERE custom_variables IS NULL;
 
+UPDATE public.talkx_template_versions
+SET id = gen_random_uuid()
+WHERE id IS NULL;
+
+UPDATE public.talkx_template_versions
+SET status = 'draft'
+WHERE status IS NULL;
+
+UPDATE public.talkx_template_versions
+SET created_at = statement_timestamp()
+WHERE created_at IS NULL;
+
+-- template_id/version_number e o conteudo historico nao podem ser inferidos
+-- sem fabricar auditoria. Pare com diagnostico deterministico antes dos
+-- SET NOT NULL caso um runtime parcialmente formado contenha essas lacunas.
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM public.talkx_template_versions
+    WHERE template_id IS NULL
+       OR version_number IS NULL
+       OR name IS NULL
+       OR content IS NULL
+       OR category IS NULL
+  ) THEN
+    RAISE EXCEPTION 'talkx_template_history_irreconcilable_nulls'
+      USING ERRCODE = '23502',
+            HINT = 'Repare explicitamente template_id, version_number, name, content e category antes de reaplicar a migration.';
+  END IF;
+END;
+$migration$;
+
 ALTER TABLE public.talkx_template_versions
   ALTER COLUMN id SET DEFAULT gen_random_uuid(),
   ALTER COLUMN id SET NOT NULL,
@@ -156,6 +189,8 @@ ALTER TABLE public.talkx_template_versions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS talkx_template_versions_select
   ON public.talkx_template_versions;
+DROP POLICY IF EXISTS talkx_template_versions_insert
+  ON public.talkx_template_versions;
 CREATE POLICY talkx_template_versions_select
 ON public.talkx_template_versions
 FOR SELECT TO authenticated
@@ -224,6 +259,7 @@ BEGIN
   IF p_name IS NULL OR length(btrim(p_name)) NOT BETWEEN 1 AND 200
      OR p_category IS NULL OR length(btrim(p_category)) NOT BETWEEN 1 AND 100
      OR p_content IS NULL OR length(p_content) NOT BETWEEN 1 AND 65536
+     OR p_status IS NULL
      OR p_status NOT IN ('draft', 'review', 'approved')
      OR (p_description IS NOT NULL AND length(p_description) > 4000)
      OR (p_media_url IS NOT NULL AND (
@@ -410,6 +446,17 @@ BEGIN
   FROM pg_proc procedure
   JOIN pg_roles role ON role.oid = procedure.proowner
   WHERE procedure.oid = 'public.update_talkx_template_with_snapshot(uuid,timestamptz,text,text,text,text,text,text,text[],text,text[])'::regprocedure;
+
+  -- Em um ON DELETE CASCADE o pai ja nao esta visivel. Isso preserva a
+  -- exclusao canonica do template, sem permitir DELETE direto do historico
+  -- enquanto o pai ainda existe.
+  IF TG_OP = 'DELETE' AND NOT EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.id = OLD.template_id
+  ) THEN
+    RETURN OLD;
+  END IF;
 
   IF current_user IS DISTINCT FROM v_rpc_owner
      AND current_user IS DISTINCT FROM 'service_role'::name THEN

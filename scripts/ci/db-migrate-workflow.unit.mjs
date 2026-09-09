@@ -59,6 +59,9 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /inputs\.migration_version == '20260909210000'/);
   assert.match(workflow, /proof\.custom_variables_column_count === 1/);
   assert.match(workflow, /proof\.history_description_column_count === 1/);
+  assert.match(workflow, /\[0, 1\]\.includes\(proof\.history_description_column_count\)/);
+  assert.match(workflow, /\[1, 2\]\.includes\(proof\.policy_count\)/);
+  assert.match(workflow, /\[3, 4\]\.includes\(proof\.foundation_constraint_count\)/);
   assert.match(workflow, /proof\.canonical_select_policy_count === 1/);
   assert.match(workflow, /proof\.validated_constraint_count === 3/);
   assert.match(workflow, /proof\.foundation_constraint_count === 4/);
@@ -71,5 +74,5 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.authenticated_counter_execute === true/);
   assert.match(workflow, /proof\.authenticated_guard_execute === false/);
   assert.match(workflow, /proof\.authenticated_update_guard_execute === false/);
-  assert.match(workflow, /definition_sha256 === '417224aa090330039e12232953ac346d6c36162b032f14375fd38657330064a4'/);
+  assert.match(workflow, /definition_sha256 === 'fe8ee233b88420087f7fe0ddfa5edb4784a57af2df1188040f2acba9f77cc337'/);
 });

@@ -25,6 +25,20 @@ export interface TalkXTemplate {
 export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
 type TemplateUpdateInput = TemplateInput & { id: string; expectedUpdatedAt: string };
 
+function templateUpdateErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('talkx_template_stale_version')) {
+    return 'Este template foi alterado por outra pessoa. Recarregue a lista antes de salvar novamente.';
+  }
+  if (message.includes('talkx_template_not_authorized')) {
+    return 'Você não tem permissão para alterar este template.';
+  }
+  if (message.includes('invalid_talkx_template')) {
+    return 'O template contém dados inválidos. Revise os campos e tente novamente.';
+  }
+  return 'Não foi possível atualizar o template. Tente novamente.';
+}
+
 export function useTalkXTemplates() {
   const qc = useQueryClient();
   const { profile } = useAuth();
@@ -85,7 +99,7 @@ export function useTalkXTemplates() {
       invalidate();
       toast.success('Template atualizado');
     },
-    onError: (e: Error) => toast.error(`Erro ao atualizar: ${e.message}`),
+    onError: (error: unknown) => toast.error(templateUpdateErrorMessage(error)),
   });
 
   const deleteTemplate = useMutation({
