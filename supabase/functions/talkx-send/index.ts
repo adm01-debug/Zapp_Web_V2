@@ -16,16 +16,19 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
-function personalize(template: string, contact: { name: string; nickname?: string; company?: string }): string {
-  const firstName = contact.name?.split(" ")[0] || "";
-  return template
+function personalize(template, contact, customVars = []) {
+  const firstName = (contact.name || '').split(' ')[0] || '';
+  let result = template
     .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, contact.name || "")
+    .replace(/\{\{nome_completo\}\}/gi, contact.name || '')
     .replace(/\{\{apelido\}\}/gi, contact.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, contact.company || "")
+    .replace(/\{\{empresa\}\}/gi, contact.company || '')
     .replace(/\{\{saudacao\}\}/gi, getGreeting());
+  for (const v of customVars) {
+    result = result.split('{{' + v + '}}').join('[' + v + ']');
+  }
+  return result;
 }
-
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -102,11 +105,12 @@ Deno.serve(async (req) => {
 
     // E47: action test --- envia template de teste para um numero
     if (action === "test") {
-      const { templateContent, mediaUrl, mediaType, phone } = body as {
+      const { templateContent, mediaUrl, mediaType, phone, customVariables } = body as {
         templateContent: string;
         mediaUrl?: string | null;
         mediaType?: string | null;
         phone: string;
+        customVariables?: string[];
       };
       if (!templateContent || !phone) {
         return new Response(JSON.stringify({ error: "templateContent e phone obrigatorios" }), { status: 400, headers });
@@ -119,7 +123,7 @@ Deno.serve(async (req) => {
       }
       // Personalizar com dados ficticios para preview
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
-      const personalizedText = personalize(templateContent, dummyContact);
+      const personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
       const cleanPhone = phone.replace(/\D/g, "");
       try {
         if (mediaUrl && mediaType && mediaType !== "audio") {

@@ -99,10 +99,22 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
         rows = JSON.parse(text);
         if (!Array.isArray(rows)) throw new Error('JSON deve ser um array');
       } else {
-        const [header, ...lines] = text.trim().split('\n');
-        const cols = header.split(',').map((c: string) => c.trim().replace(/^"|"$/g, ''));
-        rows = lines.filter(Boolean).map((line: string) => {
-          const vals = line.split(',').map((v: string) => v.trim().replace(/^"|"$/g, ''));
+        const parseCsvRow = (line: string): string[] => {
+          const result: string[] = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') { if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+            else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+            else cur += ch;
+          }
+          result.push(cur.trim());
+          return result;
+        };
+        const allLines = text.trim().split(/\r?\n/);
+        const cols = parseCsvRow(allLines[0]);
+        rows = allLines.slice(1).filter(Boolean).map((line: string) => {
+          const vals = parseCsvRow(line);
           return Object.fromEntries(cols.map((c: string, i: number) => [c, vals[i] ?? ''])) as typeof rows[0];
         });
       }

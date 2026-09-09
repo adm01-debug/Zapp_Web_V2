@@ -130,15 +130,15 @@ export function useTalkXTemplates() {
     });
   };
 
-  const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone }: {
-    templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string;
+  const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone, customVariables }: {
+    templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string; customVariables?: string[];
   }) => {
     const { data: { session } } = await supabase.auth.getSession();
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const res = await fetch(`${supabaseUrl}/functions/v1/talkx-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone }),
+      body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone, customVariables }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.success) throw new Error(json.error || `Erro ${res.status}`);

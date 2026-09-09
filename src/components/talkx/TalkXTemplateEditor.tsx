@@ -98,6 +98,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   };
 
   const loadTemplate = (t: TalkXTemplate) => {
+    if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
     setActiveTemplateId(t.id);
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
@@ -131,7 +132,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
     setTesting(true); setTestResult(null);
     try {
-      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone });
+      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone, customVariables: eCustomVars });
       setTestResult({ ok: true, msg: `Mensagem enviada para ${phone}` });
     } catch (e) {
       setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
@@ -152,7 +153,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = (v: typeof versions[0]) => {
     if (!confirm('Restaurar esta versao? Os campos atuais serao substituidos.')) return;
-    setEName(v.name); setEDesc(''); setECat(v.category); setEContent(v.content);
+    setEName(v.name); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
     setETags(v.tags ?? []); setECustomVars(v.custom_variables ?? []);
@@ -250,7 +251,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {editing && (
-              <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(editing); onClose(); }}>Duplicar</GhostButton>
+              <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
             )}
             <GhostButton icon={Send} onClick={() => { setShowTest(true); setTestResult(null); }}>Testar</GhostButton>
             <PrimaryButton
