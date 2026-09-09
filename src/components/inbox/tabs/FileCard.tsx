@@ -47,7 +47,7 @@ export function FileCard({ item, contactName, selected, onSelect, onPreview, onF
   return (
     <div
       data-testid="file-card"
-      className={cn('rounded-xl border bg-card overflow-hidden flex flex-col cursor-pointer transition-colors', selected ? 'border-primary' : 'border-border hover:border-primary/40')}
+      className={cn('rounded-xl border bg-card overflow-hidden flex flex-col cursor-pointer transition-colors', selected ? 'border-border ring-2 ring-primary' : 'border-border hover:border-primary/40')}
       onClick={onSelect}
     >
       <div className="aspect-[16/10] bg-muted relative">

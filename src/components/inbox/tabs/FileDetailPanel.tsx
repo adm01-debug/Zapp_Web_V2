@@ -41,7 +41,7 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
   };
 
   return (
-    <div data-testid="file-detail-panel" className="w-[220px] shrink-0 rounded-xl border border-border bg-card p-3 flex flex-col gap-3">
+    <div data-testid="file-detail-panel" className="w-[260px] shrink-0 rounded-xl border border-border bg-card p-3 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-muted-foreground">Detalhes</p>
         <button type="button" aria-label="Fechar" onClick={onClose} className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"><X className="w-3.5 h-3.5" /></button>

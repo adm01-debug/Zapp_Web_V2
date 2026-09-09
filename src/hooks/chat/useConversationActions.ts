@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addHours, startOfTomorrow, addDays, setHours } from 'date-fns';
 
+// Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
+const _favBus = new EventTarget();
+
 interface FavoriteContact {
   contact_id: string;
 }
@@ -59,7 +62,12 @@ export function useConversationActions() {
 
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+    loadFavorites();
+    // Sincronizar com outras instâncias do hook (VRL ↔ ContactHeaderSection)
+    const onFavChange = () => { if (mountedRef.current) loadFavorites(); };
+    _favBus.addEventListener('change', onFavChange);
+    return () => { _favBus.removeEventListener('change', onFavChange); };
+  }, [loadProfile, loadFavorites]);
 
   useEffect(() => {
     if (profileId) {
@@ -101,6 +109,7 @@ export function useConversationActions() {
       .insert({ contact_id: contactId, user_id: user.id });
     if (!error) {
       setFavoriteIds(prev => new Set([...prev, contactId]));
+      _favBus.dispatchEvent(new CustomEvent('change'));
       toast.success('Contato favoritado');
     }
   }, []);
@@ -115,6 +124,7 @@ export function useConversationActions() {
       .eq('user_id', user.id);
     if (!error) {
       setFavoriteIds(prev => { const n = new Set(prev); n.delete(contactId); return n; });
+      _favBus.dispatchEvent(new CustomEvent('change'));
       toast.success('Favorito removido');
     }
   }, []);

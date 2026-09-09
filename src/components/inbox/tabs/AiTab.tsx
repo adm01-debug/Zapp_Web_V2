@@ -80,16 +80,16 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <SectionCard icon={MessageSquare} title="Sugestão de resposta">
+        <SectionCard icon={MessageSquare} title="Sugestão de resposta" tone="blue">
           <p className="text-xs text-muted-foreground -mt-1">Gere uma sugestão de resposta com base nas últimas mensagens.</p>
           <AISuggestions messages={messages} contactName={contactName} contactId={contactId} onSelectSuggestion={onUseSuggestion} />
         </SectionCard>
 
-        <SectionCard icon={FileText} title="Resumo da conversa">
+        <SectionCard icon={FileText} title="Resumo da conversa" tone="blue">
           <ConversationSummary messages={summaryMessages} contactName={contactName} contactId={contactId} />
         </SectionCard>
 
-        <SectionCard icon={ShieldQuestion} title="Objeções detectadas">
+        <SectionCard icon={ShieldQuestion} title="Objeções detectadas" tone="red">
           <ObjectionDetector
             contactId={contactId}
             contactName={contactName}
@@ -102,6 +102,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
         <SectionCard
           icon={Zap}
           title="Próxima melhor ação"
+          tone="purple"
           action={nextActions.length > 1 ? { label: showAllActions ? 'Ver menos' : 'Ver todas', onClick: () => setShowAllActions((v) => !v) } : undefined}
         >
           {nextActionsLoading ? (
@@ -110,8 +111,11 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
             <p className="text-sm text-muted-foreground">Sem ações sugeridas</p>
           ) : (
             <>
-              <div className="flex items-center justify-between gap-3 rounded-lg bg-primary/10 border border-primary/30 p-3">
-                <div className="min-w-0">
+              <div className="flex items-center gap-3 rounded-lg bg-primary/10 border border-primary/30 p-3">
+                <span className="w-8 h-8 rounded-[10px] bg-kpi-purple text-kpi-purple-fg flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4" />
+                </span>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{nextActions[0].label}</p>
                   <p className="text-xs text-muted-foreground truncate">{nextActions[0].description}</p>
                 </div>
@@ -131,7 +135,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           )}
         </SectionCard>
 
-        <SectionCard icon={Package} title="Produtos recomendados">
+        <SectionCard icon={Package} title="Produtos recomendados" tone="blue">
           {productsLoading ? (
             <div className="h-16 rounded-lg bg-muted/30 animate-pulse" />
           ) : products.length === 0 ? (
