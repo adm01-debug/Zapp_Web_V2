@@ -82,8 +82,42 @@ describe('FilesTab', () => {
 
   it('abre o painel de detalhe ao selecionar um card', () => {
     renderTab();
-    fireEvent.click(screen.getByText('foto-praia.jpg'));
-    expect(screen.getByTestId('file-detail-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar arquivo foto-praia.jpg' }));
+    expect(screen.getByTestId('file-detail-panel')).toHaveClass('xl:w-[260px]');
+    expect(screen.getByRole('button', { name: 'Selecionar arquivo foto-praia.jpg' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('mantem tres colunas e reduz para duas quando o detalhe abre', () => {
+    renderTab();
+    expect(screen.getByTestId('files-grid')).toHaveStyle({
+      gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15rem), 1fr))',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar arquivo foto-praia.jpg' }));
+
+    expect(screen.getByTestId('file-detail-panel')).toHaveClass('xl:w-[260px]');
+    expect(screen.getByTestId('files-grid')).toHaveStyle({
+      gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15rem), 1fr))',
+    });
+  });
+
+  it('usa controle nativo focavel para selecao por teclado', () => {
+    renderTab();
+    const selectButton = screen.getByRole('button', { name: 'Selecionar arquivo foto-praia.jpg' });
+    expect(selectButton.tagName).toBe('BUTTON');
+    expect(selectButton).toHaveAttribute('type', 'button');
+    expect(selectButton).not.toHaveAttribute('tabindex', '-1');
+  });
+
+  it('rotula busca, ordenacao, filtros e estado dos chips', () => {
+    renderTab();
+    expect(screen.getByLabelText('Buscar arquivos')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ordenar arquivos')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Filtrar por tipo de arquivo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Todos/ })).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros de tipo' }));
+    expect(screen.queryByRole('group', { name: 'Filtrar por tipo de arquivo' })).not.toBeInTheDocument();
   });
 
   it('falha fechado ao encaminhar enquanto nao existe handler de envio real', () => {

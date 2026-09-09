@@ -38,6 +38,11 @@ describe('HistoryTab', () => {
     expect(screen.getAllByTestId('timeline-event')).toHaveLength(2);
     expect(screen.getByText('Mensagem recebida')).toBeInTheDocument();
     expect(screen.getByText('Tarefa criada: Ligar')).toBeInTheDocument();
+    expect(screen.getByText('Recebida')).toBeInTheDocument();
+    expect(screen.getByText('Pendente')).toBeInTheDocument();
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getAllByTestId('timeline-event')[0]).toHaveClass('grid-cols-[44px_20px_minmax(0,1fr)]');
   });
 
   it('mostra os KPIs vindos do hook', () => {
@@ -45,6 +50,33 @@ describe('HistoryTab', () => {
     const strip = screen.getByTestId('kpi-strip');
     expect(strip).toHaveTextContent('5');
     expect(strip).toHaveTextContent('1');
+    expect(strip).toHaveTextContent('Mensagens, notas e ações');
+    expect(strip).toHaveTextContent('Conversas finalizadas');
+    expect(strip).toHaveTextContent('Sem comparação anterior');
+  });
+
+  it('exibe filtros com rotulos associados aos controles', () => {
+    renderTab();
+    expect(screen.getByLabelText('Período')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tipo de evento')).toBeInTheDocument();
+  });
+
+  it('mapeia categorias reais para badges sem inventar canal', () => {
+    renderTab({
+      days: [{
+        date: '2026-09-08',
+        events: [
+          { id: 'transfer-1', at: '2026-09-08T15:00:00.000Z', kind: 'transfer', title: 'Transferência' },
+          { id: 'close-1', at: '2026-09-08T14:00:00.000Z', kind: 'close', title: 'Conversa encerrada' },
+          { id: 'reopen-1', at: '2026-09-08T13:00:00.000Z', kind: 'reopen', title: 'Conversa reaberta' },
+        ],
+      }],
+    });
+
+    expect(screen.getAllByText('Transferência')).toHaveLength(2);
+    expect(screen.getByText('Encerrada')).toBeInTheDocument();
+    expect(screen.getByText('Reaberta')).toBeInTheDocument();
+    expect(screen.queryByText('WhatsApp')).not.toBeInTheDocument();
   });
 
   it('trocar o período chama o hook com o novo valor', () => {
