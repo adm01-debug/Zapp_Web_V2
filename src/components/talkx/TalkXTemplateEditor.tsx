@@ -38,6 +38,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [eTags, setETags] = useState<string[]>(editing?.tags ?? []);
   const [eTagInput, setETagInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
@@ -49,9 +50,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       || eContent !== editing.content
       || eStatus !== editing.status
       || JSON.stringify(eTags) !== JSON.stringify(editing.tags ?? [])
+      || eHasMedia !== !!editing.media_url
+      || eMediaUrl !== (editing.media_url ?? '')
+      || eMediaType !== (editing.media_type ?? '')
     : eName.trim().length > 0 || eContent.trim().length > 0;
 
   const save = async () => {
+    if (saving) return;
     if (!eName.trim() || !eContent.trim()) return;
     setSaving(true);
     const payload: TemplateInput = {
@@ -61,13 +66,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       tags: eTags, status: eStatus,
     };
     try {
-      if (editing) await updateTemplate.mutateAsync({ id: editing.id, ...payload });
+      if (activeTemplateId) await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
       else await createTemplate.mutateAsync(payload);
       onClose();
     } finally { setSaving(false); }
   };
 
   const loadTemplate = (t: TalkXTemplate) => {
+    setActiveTemplateId(t.id);
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []);
@@ -82,7 +88,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     const selected = eContent.slice(start, end) || placeholder;
     const before = eContent.slice(0, start);
     const after = eContent.slice(end);
-    const next = before + prefix + selected + suffix + after;
+    const next = (before + prefix + selected + suffix + after).slice(0, 1024);
     setEContent(next);
     // Reposiciona cursor apos a insercao
     requestAnimationFrame(() => {

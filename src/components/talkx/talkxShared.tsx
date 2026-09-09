@@ -92,6 +92,9 @@ export const fmtTime = (d: string | null | undefined) => (d ? format(new Date(d)
 export const fmtAgo = (d: string | null | undefined) =>
   d ? formatDistanceToNowStrict(new Date(d), { locale: ptBR, addSuffix: true }) : '—';
 
+/** Garante que src de imagem usa apenas http/https (evita javascript: XSS). */
+const safeImgSrc = (url?: string | null) => (url && /^https?:\/\//i.test(url) ? url : '');
+
 export function personalizePreview(template: string, contact?: { name?: string | null; nickname?: string | null; company?: string | null } | null) {
   const c = contact ?? { name: 'João Silva', nickname: null, company: 'Sua Empresa' };
   const firstName = (c.name || '').split(' ')[0];
@@ -250,7 +253,7 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
         <div className="flex justify-center mb-2"><span className="text-[10px] px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground">Hoje</span></div>
         <div className="flex justify-end">
           <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
-            {mediaUrl && mediaType === 'image' && <img src={mediaUrl} alt="" className="rounded-lg mb-2 max-h-40 w-full object-cover" loading="lazy" decoding="async" />}
+            {mediaUrl && mediaType === 'image' && <img src={safeImgSrc(mediaUrl)} alt="" className="rounded-lg mb-2 max-h-40 w-full object-cover" loading="lazy" decoding="async" />}
             {mediaUrl && mediaType && mediaType !== 'image' && (
               <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-[11px] text-muted-foreground">📎 {mediaType} anexado</div>
             )}
@@ -301,7 +304,7 @@ export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empres
           <div className="flex justify-end">
             <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-[9.5px] text-foreground whitespace-pre-wrap leading-snug break-words">
               {mediaUrl && mediaType === 'image' && (
-                <img src={mediaUrl} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />
+                <img src={safeImgSrc(mediaUrl)} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />
               )}
               {mediaUrl && mediaType && mediaType !== 'image' && (
                 <div className="rounded mb-1 px-1.5 py-0.5 bg-black/20 text-[8px] text-muted-foreground">📎 {mediaType}</div>
