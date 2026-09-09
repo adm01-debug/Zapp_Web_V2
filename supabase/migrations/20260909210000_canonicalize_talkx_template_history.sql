@@ -11,14 +11,45 @@ ALTER TABLE public.talkx_templates
 DO $migration$
 BEGIN
   -- Reconciliar custom_variables com digito na posicao inicial (legado do editor anterior)
-  UPDATE public.talkx_templates
-  SET custom_variables = ARRAY(
-    SELECT CASE WHEN cv ~ '^[0-9]' THEN '_' || cv ELSE cv END
-    FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv
-  )
-  WHERE EXISTS (
-    SELECT 1 FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv WHERE cv ~ '^[0-9]'
-  );
+  -- Renomeia variaveis E atualiza placeholders no content atomicamente.
+  -- Mapeamento livre de colisao: se '_' || old ja existe no array, usa '__' || old, etc.
+  DECLARE
+    _row    RECORD;
+    _new_vars text[];
+    _content  text;
+    _old_var  text;
+    _new_var  text;
+    _i        int;
+  BEGIN
+    FOR _row IN
+      SELECT id, content, custom_variables
+      FROM public.talkx_templates
+      WHERE EXISTS (
+        SELECT 1 FROM unnest(COALESCE(custom_variables, '{}'::text[])) AS cv
+        WHERE cv ~ '^[0-9]'
+      )
+    LOOP
+      _new_vars := _row.custom_variables;
+      _content  := _row.content;
+      FOR _i IN 1..COALESCE(array_length(_row.custom_variables, 1), 0) LOOP
+        _old_var := _row.custom_variables[_i];
+        IF _old_var ~ '^[0-9]' THEN
+          _new_var := '_' || _old_var;
+          -- Evitar colisao com valor ja existente no array
+          WHILE _new_var = ANY(_new_vars) AND _new_vars[_i] <> _new_var LOOP
+            _new_var := '_' || _new_var;
+          END LOOP;
+          _new_vars[_i] := _new_var;
+          -- Atualizar placeholder correspondente no content
+          _content := replace(_content, '{{' || _old_var || '}}', '{{' || _new_var || '}}');
+        END IF;
+      END LOOP;
+      UPDATE public.talkx_templates
+      SET custom_variables = _new_vars,
+          content = _content
+      WHERE id = _row.id;
+    END LOOP;
+  END;
 
   IF EXISTS (
     SELECT 1
