@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo, startTransition } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useReducer, useCallback, useMemo, startTransition, type ReactNode } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation, Message } from '@/types/chat';
@@ -13,20 +13,21 @@ import { useScheduledMessages } from '@/hooks/chat/useScheduledMessages';
 import { useMessageSignature } from '@/hooks/chat/useMessageSignature';
 import { useChatMediaSending } from './useChatMediaSending';
 import { CRMAutoSync } from './CRMAutoSync';
-import { useAmbientColor } from '@/hooks/ui/useAmbientColor';
 import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
-import { ChatAssignedBar } from './chat/ChatAssignedBar';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
 import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
+import { TabBanner } from './tabs/TabBanner';
+import type { ConversationTab } from './chat/ConversationTabs';
+import { ChevronUp, Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
-const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
 
 if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
   (window as Window).requestIdleCallback(() => {
@@ -39,7 +40,7 @@ if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
 interface ChatPanelProps {
   conversation: Conversation;
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => void | Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
   showDetails?: boolean;
   onToggleDetails?: () => void;
@@ -48,6 +49,15 @@ interface ChatPanelProps {
   /** Texto vindo da aba IA ("Usar resposta") — aplicado ao input e consumido uma única vez. */
   pendingDraft?: string | null;
   onDraftConsumed?: () => void;
+  activeTab?: ConversationTab;
+  tabNavigation?: ReactNode;
+  tabContent?: ReactNode;
+  onSelectAssistantTab?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  hasOlderMessages?: boolean;
+  loadingOlderMessages?: boolean;
+  onLoadOlderMessages?: () => void | Promise<void>;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -86,7 +96,27 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed }: ChatPanelProps) {
+export function ChatPanel({
+  conversation,
+  messages,
+  onSendMessage,
+  onSendAudio,
+  showDetails = false,
+  onToggleDetails,
+  onBack,
+  hideHeader = false,
+  pendingDraft,
+  onDraftConsumed,
+  activeTab = 'chat',
+  tabNavigation,
+  tabContent,
+  onSelectAssistantTab,
+  isFavorite = false,
+  onToggleFavorite,
+  hasOlderMessages = false,
+  loadingOlderMessages = false,
+  onLoadOlderMessages,
+}: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -114,7 +144,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const { editMessage } = useEvolutionApi();
   const { scheduleMessage } = useScheduledMessages(conversation.contact.id);
   const { signatureEnabled, agentName, toggleSignature, applySignature } = useMessageSignature();
-  const { instanceName, whatsappConnectionId, initResolve, handleSendSticker, handleSendCustomEmoji, handleSendAudioMeme } = useChatMediaSending(conversation.contact.id, conversation.contact.phone);
+  const { instanceName, initResolve, handleSendSticker, handleSendCustomEmoji, handleSendAudioMeme } = useChatMediaSending(conversation.contact.id, conversation.contact.phone);
 
   const handleVoiceChange = useCallback((v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
   const handleSpeedChange = useCallback((s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
@@ -128,8 +158,12 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     handleTypingStart, handleTypingStop, openDialog: openDialog as any, closeDialog: closeDialog as any, handleSetActiveTool,
   });
 
-  useEffect(() => { initResolve(); }, [conversation.contact.id]);
-  useEffect(() => { messagesAreaRef.current?.scrollToBottom(); }, [messages.length, isContactTyping]);
+  useEffect(() => { initResolve(); }, [conversation.contact.id, initResolve]);
+  useEffect(() => {
+    if (activeTab === 'chat' && messagesAreaRef.current?.isNearBottom()) {
+      messagesAreaRef.current.scrollToBottom();
+    }
+  }, [activeTab, messages.length, isContactTyping]);
   // Resets UI-only state when conversation changes; startTransition avoids
   // calling setState synchronously in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
@@ -157,15 +191,18 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     [messages]
   );
   const filteredQuickReplies = useMemo(
-    () => dbQuickReplies.filter(r => handlers.inputValue.startsWith('/') && r.shortcut.toLowerCase().includes(handlers.inputValue.toLowerCase())),
+    () => handlers.inputValue.startsWith('/')
+      ? dbQuickReplies.filter((reply) => reply.shortcut.toLowerCase().includes(handlers.inputValue.slice(1).toLowerCase()))
+      : dbQuickReplies,
     [dbQuickReplies, handlers.inputValue]
   );
 
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); handleSetActiveTool('chatSearch'); } };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, []);
+  const handlePanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase('pt-BR') === 'f') {
+      event.preventDefault();
+      handleSetActiveTool('chatSearch');
+    }
+  }, [handleSetActiveTool]);
 
   // Allows the contact side panel to reuse the canonical transfer dialog without
   // duplicating its state or transfer implementation. Ignore events for stale panels.
@@ -188,8 +225,25 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
 
-  const handleTransfer = (type: 'agent' | 'queue', targetId: string, message?: string) => {
-    toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
+  const handleTransfer = async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
+    const update = type === 'agent'
+      ? { assigned_to: targetId }
+      : type === 'queue'
+        ? { queue_id: targetId, assigned_to: null }
+        : { whatsapp_connection_id: targetId };
+    const { error } = await supabase.from('contacts').update(update).eq('id', conversation.contact.id);
+    if (error) {
+      toast({ title: 'Erro ao transferir', description: 'A conversa não foi alterada.', variant: 'destructive' });
+      throw error;
+    }
+    toast({
+      title: 'Conversa transferida',
+      description: type === 'agent'
+        ? 'O novo atendente foi confirmado.'
+        : type === 'queue'
+          ? 'A nova fila foi confirmada.'
+          : 'A nova conexão foi confirmada.',
+    });
   };
 
   const handleScheduleMessage = async (message: string, scheduledAt: Date, attachment?: File) => {
@@ -197,7 +251,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       let mediaUrl: string | undefined;
       let messageType = 'text';
       if (attachment) {
-        const fileName = `scheduled_${Date.now()}_${attachment.name}`;
+        const safeName = attachment.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const uniqueName = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const fileName = `${conversation.contact.id}/${uniqueName}-${safeName}`;
         const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, attachment);
         if (uploadError) throw uploadError;
         const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
@@ -207,7 +265,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       }
       await scheduleMessage({ contactId: conversation.contact.id, content: message, scheduledAt, messageType, mediaUrl });
       closeDialog('scheduleDialog');
-    } catch (err) { log.error('Failed to schedule message:', err); }
+    } catch (err) {
+      log.error('Failed to schedule message:', err);
+      toast({ title: 'Erro ao agendar', description: 'A mensagem não foi agendada.', variant: 'destructive' });
+      throw err;
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounterRef.current++; if (e.dataTransfer.types.includes('Files')) setIsDraggingOver(true); };
@@ -219,10 +281,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     if (files.length > 0 && fileUploaderRef.current) fileUploaderRef.current.handleExternalFiles(files);
   };
 
-  const ambient = useAmbientColor(conversation.sentiment);
-
   return (
-    <div className={`flex h-full min-h-0 min-w-0 overflow-hidden relative ${ambient.className}`} style={{ backgroundColor: ambient.bgTint }} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
+    <div className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-background" onKeyDown={handlePanelKeyDown} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
       <ChatDragOverlay isDraggingOver={isDraggingOver} />
       <CRMAutoSync conversation={conversation} messageCount={messages.length} messages={messages} />
 
@@ -238,8 +298,12 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             onCloseConversation={() => openDialog('closeDialog')}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}
-            onSelectSuggestion={(text) => handlers.setInputValue(text)} />
+            onSelectSuggestion={(text) => handlers.setInputValue(text)}
+            isFavorite={isFavorite}
+            onToggleFavorite={onToggleFavorite} />
         )}
+
+        {tabNavigation}
 
         <ChatSearchBar messages={messages} isOpen={activeTool === 'chatSearch'}
           onClose={() => { handleSetActiveTool('chatSearch'); setTimeout(() => handlers.inputRef.current?.focus(), 150); }}
@@ -247,18 +311,56 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onHighlightChange={(ids, activeId) => { setHighlightedMessageIds(ids); setActiveHighlightId(activeId); }}
           onSearchQueryChange={setSearchQuery} />
 
-        <ChatAssignedBar conversation={conversation} onOpenTransfer={() => openDialog('transferDialog')} />
+        {activeTab === 'chat' ? (
+          <div
+            id="conversation-tabpanel-chat"
+            role="tabpanel"
+            aria-labelledby="conversation-tab-chat"
+            tabIndex={0}
+            className="flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <div className="px-3 pt-3">
+              <TabBanner
+                icon={Sparkles}
+                title="Assistente IA"
+                description="Sugestões de resposta, identificação de intenção e próximos passos."
+                action={onSelectAssistantTab ? {
+                  label: 'Ver sugestões',
+                  onClick: onSelectAssistantTab,
+                } : undefined}
+                dismissKey="inbox-ai-banner-dismissed"
+                testId="chat-ai-banner"
+              />
+            </div>
 
-        <Suspense fallback={null}>
-          <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
-        </Suspense>
+            {hasOlderMessages && onLoadOlderMessages && (
+              <div className="flex shrink-0 justify-center px-3 pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void onLoadOlderMessages()}
+                  disabled={loadingOlderMessages}
+                  className="h-8 gap-1.5 rounded-lg px-3 text-xs text-muted-foreground"
+                >
+                  {loadingOlderMessages
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+                    : <ChevronUp className="h-3.5 w-3.5" />}
+                  {loadingOlderMessages ? 'Carregando mensagens…' : 'Carregar mensagens anteriores'}
+                </Button>
+              </div>
+            )}
 
-        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} typingUserName={typingUsers[0]?.name || conversation.contact.name}
-          ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
-          conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
-          onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
-          onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
-          highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery} />
+            <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} typingUserName={typingUsers[0]?.name || conversation.contact.name}
+              ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
+              conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
+              onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
+              onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
+              highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery} />
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col">{tabContent}</div>
+        )}
 
         <ChatQuickRepliesPopover show={dialogs.quickReplies} replies={filteredQuickReplies} onSelect={handleQuickReply} onClose={() => closeDialog('quickReplies')} />
 
@@ -276,11 +378,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onCloseSlashCommands={() => closeDialog('slashCommands')} onQuickReply={handleQuickReply}
           onRecordToggle={() => handlers.setIsRecordingAudio(!handlers.isRecordingAudio)} onAudioSend={(blob) => handlers.handleAudioSend(blob, onSendAudio)} onAudioCancel={() => handlers.setIsRecordingAudio(false)}
           onOpenInteractiveBuilder={() => openDialog('interactiveBuilder')} onOpenSchedule={() => openDialog('scheduleDialog')}
+          onOpenQuickReplies={() => openDialog('quickReplies')}
+          onOpenAssistant={() => onSelectAssistantTab ? onSelectAssistantTab() : handleSetActiveTool('aiAssistant')}
+          onOpenTransfer={() => openDialog('transferDialog')}
           onOpenLocationPicker={() => openDialog('locationPicker')} onSendProduct={handlers.handleSendProduct} onSendSticker={handleSendSticker}
           onSendAudioMeme={handleSendAudioMeme} onSendCustomEmoji={handleSendCustomEmoji}
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
-          onPollSent={async (poll) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📊 *Enquete:* ${poll.name}\n${poll.options.map((o, i) => `${i + 1}. ${o}`).join('\n')}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
-          onContactSent={async (contactName) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📇 Cartão de contato: ${contactName}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
+          onPollSent={async (poll) => { await onSendMessage(`📊 *Enquete:* ${poll.name}\n${poll.options.map((option, index) => `${index + 1}. ${option}`).join('\n')}`); }}
+          onContactSent={async (contactName) => { await onSendMessage(`📇 Cartão de contato: ${contactName}`); }}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
           fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef} />
 

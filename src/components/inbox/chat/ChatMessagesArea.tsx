@@ -42,6 +42,7 @@ interface ChatMessagesAreaProps {
 
 export interface ChatMessagesAreaRef {
   scrollToBottom: () => void;
+  isNearBottom: () => boolean;
   registerMessageRef: (messageId: string, el: HTMLDivElement | null) => void;
   scrollToMessage: (messageId: string) => void;
 }
@@ -81,6 +82,11 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   });
 
   useImperativeHandle(ref, () => ({
+    isNearBottom: () => {
+      const element = scrollContainerRef.current;
+      if (!element) return true;
+      return element.scrollHeight - element.scrollTop - element.clientHeight < 160;
+    },
     scrollToBottom: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
       // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
@@ -126,7 +132,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   }, [subscriptionKey, queryClient]);
 
   return (
-    <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-background/50 relative">
+    <div ref={scrollContainerRef} role="list" aria-label="Mensagens da conversa" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-background/50 relative">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {messages[messages.length - 1]?.sender === 'contact'
+          ? `Nova mensagem de ${typingUserName}: ${messages[messages.length - 1]?.content.slice(0, 160)}`
+          : ''}
+      </div>
       <ChatWatermark />
 
       <div
@@ -158,6 +169,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
                 transform: `translateY(${virtualRow.start}px)`,
               }}
               className="py-1"
+              role="listitem"
             >
               {showDateSeparator && (
                 <div className="flex justify-center my-5">

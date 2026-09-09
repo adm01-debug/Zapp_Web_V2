@@ -17,6 +17,7 @@ import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs'
 import { ConversationTabContent } from './chat/ConversationTabContent';
 import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
 
 const ChatPanel = lazy(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })));
 const ContactDetails = lazy(() => import('./ContactDetails').then(m => ({ default: m.ContactDetails })));
@@ -50,6 +51,7 @@ export function RealtimeInboxView() {
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await inbox.refetch(); }, disabled: !isMobile || !!inbox.selectedContactId });
+  const conversationActions = useConversationActions();
 
   // Aba ativa do painel central, ancorada no contato que a selecionou.
   // Ao trocar de conversa o id deixa de bater e o valor derivado volta a 'chat'
@@ -138,22 +140,14 @@ export function RealtimeInboxView() {
         </Suspense>
       )}
 
-      <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} />
+      <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} conversationActions={conversationActions} />
 
       <div className={cn('flex-1 flex min-w-0 min-h-0 relative z-10 bg-background h-full overflow-hidden', isMobile && !inbox.selectedContactId && 'hidden')}>
         {inbox.legacyConversation ? (
           <Suspense fallback={<ChatFallback />}>
             <>
               <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
-                <ConversationTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} extraCounts={tabExtraCounts} />
                 {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
-                  <ConversationTabContent
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    conversation={inbox.legacyConversation}
-                    messages={inbox.legacyMessages}
-                    onUseSuggestion={handleUseSuggestion}
-                  >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel
                       key={inbox.legacyConversation.id}
@@ -163,6 +157,37 @@ export function RealtimeInboxView() {
                       onSendAudio={inbox.handleSendAudio}
                       pendingDraft={pendingDraft}
                       onDraftConsumed={() => setPendingDraft(null)}
+                      hasOlderMessages={inbox.hasOlderMessages}
+                      loadingOlderMessages={inbox.loadingOlderMessages}
+                      onLoadOlderMessages={inbox.loadOlderMessages}
+                      activeTab={activeTab}
+                      tabNavigation={(
+                        <ConversationTabs
+                          activeTab={activeTab}
+                          onTabChange={setActiveTab}
+                          counts={tabCounts}
+                          extraCounts={tabExtraCounts}
+                        />
+                      )}
+                      tabContent={(
+                        <ConversationTabContent
+                          activeTab={activeTab}
+                          onTabChange={setActiveTab}
+                          conversation={inbox.legacyConversation}
+                          messages={inbox.legacyMessages}
+                          onUseSuggestion={handleUseSuggestion}
+                        >
+                          {null}
+                        </ConversationTabContent>
+                      )}
+                      onSelectAssistantTab={() => setActiveTab('ia')}
+                      isFavorite={conversationActions.isFavorite(inbox.legacyConversation.contact.id)}
+                      onToggleFavorite={() => {
+                        const contactId = inbox.legacyConversation?.contact.id;
+                        if (!contactId) return;
+                        if (conversationActions.isFavorite(contactId)) conversationActions.unfavoriteContact(contactId);
+                        else conversationActions.favoriteContact(contactId);
+                      }}
                       showDetails={isMobile ? false : inbox.showDetails}
                       onToggleDetails={() => inbox.setShowDetails(!inbox.showDetails)}
                       onBack={isMobile ? () => {
@@ -173,7 +198,6 @@ export function RealtimeInboxView() {
                         } : undefined}
                     />
                   </SectionErrorBoundary>
-                  </ConversationTabContent>
                 )}
               </div>
               {inbox.showDetails && (

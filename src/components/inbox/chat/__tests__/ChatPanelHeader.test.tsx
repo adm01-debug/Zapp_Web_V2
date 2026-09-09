@@ -1,15 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ChatPanelHeader } from '../ChatPanelHeader';
-import { Conversation } from '@/types/chat';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import type { ComponentProps } from 'react';
+import type { Conversation } from '@/types/chat';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ChatPanelHeader } from '../ChatPanelHeader';
 
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/lib/popupManager', () => ({ openChatPopup: vi.fn() }));
 vi.mock('@/components/inbox/SLAIndicator', () => ({ SLAIndicator: () => null }));
-vi.mock('@/components/inbox/VoiceSelector', () => ({ VoiceSelector: () => null }));
-vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }));
 
 const mockConversation = {
   id: 'conv-1',
@@ -18,15 +17,17 @@ const mockConversation = {
     name: 'Maria Silva',
     phone: '+5511999999999',
     avatar: '',
+    contact_type: 'cliente',
+    conversation_status: 'open',
+    tags: ['vip'],
   },
   lastMessage: { content: 'Olá', timestamp: new Date(), sender: 'contact' },
   unreadCount: 0,
   status: 'open',
-  priority: 'medium',
-  channel: 'whatsapp',
+  priority: 'high',
   tags: [],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
 } as unknown as Conversation;
 
 const baseProps = {
@@ -46,96 +47,79 @@ const baseProps = {
   onSpeedChange: vi.fn(),
 };
 
-const Wrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter>
-    <TooltipProvider>{children}</TooltipProvider>
-  </BrowserRouter>
-);
+function renderHeader(overrides: Partial<ComponentProps<typeof ChatPanelHeader>> = {}) {
+  return render(
+    <BrowserRouter>
+      <TooltipProvider>
+        <ChatPanelHeader {...baseProps} {...overrides} />
+      </TooltipProvider>
+    </BrowserRouter>,
+  );
+}
+
+function openActionsMenu() {
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais ações da conversa' }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
 
 describe('ChatPanelHeader', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders contact name', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} />
-      </Wrapper>
-    );
+  it('renderiza identidade e chips apenas a partir dos dados reais', () => {
+    const { container } = renderHeader();
+
     expect(screen.getByText('Maria Silva')).toBeInTheDocument();
-  });
-
-  it('renders avatar fallback initials', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} />
-      </Wrapper>
-    );
     expect(screen.getByText('MS')).toBeInTheDocument();
+    expect(screen.getByText('Em atendimento')).toBeInTheDocument();
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+    expect(screen.getByText('Cliente')).toBeInTheDocument();
+    expect(screen.getByText('VIP')).toBeInTheDocument();
+    expect(screen.getByText('Alta prioridade')).toBeInTheDocument();
+    expect(container.querySelector('header')).toHaveClass('h-[72px]');
   });
 
-  it('shows Online when contact is not typing', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} isContactTyping={false} />
-      </Wrapper>
-    );
-    expect(screen.getByText('Online')).toBeInTheDocument();
+  it('mantém exatamente quatro ações primárias de 40px', () => {
+    renderHeader();
+    const primaryActions = [
+      screen.getByRole('button', { name: 'Ligar' }),
+      screen.getByRole('button', { name: 'Transferir conversa' }),
+      screen.getByRole('button', { name: 'Detalhes do contato' }),
+      screen.getByRole('button', { name: 'Mais ações da conversa' }),
+    ];
+
+    expect(primaryActions).toHaveLength(4);
+    primaryActions.forEach((button) => expect(button).toHaveClass('h-10', 'w-10'));
   });
 
-  it('does NOT render summary button when onGenerateSummary is undefined', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} />
-      </Wrapper>
-    );
-    expect(screen.queryByLabelText(/resumo/i)).not.toBeInTheDocument();
+  it('alterna o favorito somente quando há handler real', () => {
+    const onToggleFavorite = vi.fn();
+    renderHeader({ onToggleFavorite, isFavorite: true });
+
+    const button = screen.getByRole('button', { name: 'Remover contato dos favoritos' });
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(button);
+    expect(onToggleFavorite).toHaveBeenCalledOnce();
   });
 
-  it('renders summary button when handler is provided', () => {
-    const onGenerate = vi.fn();
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
-      </Wrapper>
-    );
-    expect(screen.getByLabelText(/resumo/i)).toBeInTheDocument();
+  it('move busca e resumo para o menu sem perder seus handlers', async () => {
+    const onGenerateSummary = vi.fn();
+    renderHeader({ onGenerateSummary });
+    openActionsMenu();
+
+    fireEvent.click(await screen.findByRole('menuitem', { name: /buscar na conversa/i }));
+    expect(baseProps.onOpenSearch).toHaveBeenCalledOnce();
+
+    openActionsMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: /resumo da conversa/i }));
+    expect(onGenerateSummary).toHaveBeenCalledOnce();
   });
 
-  it('calls onGenerateSummary when clicked', () => {
-    const onGenerate = vi.fn();
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} canGenerateSummary={true} onGenerateSummary={onGenerate} />
-      </Wrapper>
-    );
-    fireEvent.click(screen.getByLabelText(/resumo/i));
-    expect(onGenerate).toHaveBeenCalledTimes(1);
-  });
+  it('desabilita o resumo enquanto ele está sendo gerado', async () => {
+    renderHeader({ onGenerateSummary: vi.fn(), isSummaryLoading: true });
+    openActionsMenu();
 
-  it('shows loader and disables button when isSummaryLoading=true', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader
-          {...baseProps}
-          canGenerateSummary={true}
-          onGenerateSummary={vi.fn()}
-          isSummaryLoading={true}
-        />
-      </Wrapper>
-    );
-    const summaryBtn = screen.getByLabelText(/resumo/i);
-    expect(summaryBtn).toBeDisabled();
-  });
-
-  it('calls onOpenSearch when search button is clicked', () => {
-    render(
-      <Wrapper>
-        <ChatPanelHeader {...baseProps} />
-      </Wrapper>
-    );
-    const buttons = screen.getAllByRole('button');
-    const searchBtn = buttons.find(b => b.querySelector('.lucide-search'));
-    fireEvent.click(searchBtn!);
-    expect(baseProps.onOpenSearch).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('menuitem', { name: /resumo da conversa/i })).toHaveAttribute('data-disabled');
   });
 });

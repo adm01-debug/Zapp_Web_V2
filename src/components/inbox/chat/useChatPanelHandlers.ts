@@ -161,16 +161,22 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     closeDialog('slashCommands'); setInputValue('');
     switch (command.id) {
       case 'transfer': openDialog('transferDialog'); break;
-      case 'resolve': toast({ title: '✅ Conversa Resolvida', description: 'A conversa foi marcada como resolvida.' }); break;
+      case 'resolve': openDialog('closeDialog'); break;
       case 'template': toast({ title: '📝 Templates', description: 'Use o botão de templates no input para selecionar.' }); break;
-      case 'note': toast({ title: '📝 Nota Privada', description: 'Funcionalidade de notas será aberta.' }); break;
-      case 'tag': toast({ title: subCommand === 'add' ? '🏷️ Adicionar Tag' : '🏷️ Remover Tag', description: subCommand === 'add' ? 'Selecione uma tag para adicionar.' : 'Selecione uma tag para remover.' }); break;
-      case 'priority': { const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' }; toast({ title: '⚡ Prioridade Definida', description: `Prioridade definida como ${labels[subCommand || ''] || subCommand}.` }); break; }
-      case 'assign': toast({ title: '👤 Atribuir Conversa', description: 'Selecione um agente para atribuir.' }); break;
-      case 'snooze': { const labels: Record<string, string> = { '1h': '1 hora', '3h': '3 horas', tomorrow: 'amanhã', nextweek: 'próxima semana' }; toast({ title: '⏰ Conversa Adiada', description: `Conversa adiada para ${labels[subCommand || ''] || subCommand}.` }); break; }
-      case 'star': toast({ title: '⭐ Conversa Favoritada', description: 'A conversa foi marcada como favorita.' }); break;
-      case 'archive': toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' }); break;
-      case 'remind': toast({ title: '🔔 Lembrete Criado', description: 'Um lembrete foi criado para esta conversa.' }); break;
+      case 'assign': openDialog('transferDialog'); break;
+      case 'note':
+      case 'tag':
+      case 'priority':
+      case 'snooze':
+      case 'star':
+      case 'archive':
+      case 'remind':
+        toast({
+          title: 'Ação não executada',
+          description: 'Use a seção correspondente para confirmar esta alteração.',
+          variant: 'destructive',
+        });
+        break;
       case 'quick': toast({ title: '⚡ Resposta Rápida', description: 'Use / seguido do atalho para respostas rápidas.' }); break;
       case 'summary': handleSetActiveTool('aiAssistant'); break;
       case 'produto': openDialog('catalogDirect'); break;
@@ -178,7 +184,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [closeDialog, openDialog, handleSetActiveTool]);
 
-  const handleSendProduct = useCallback((product: ExternalProduct) => {
+  const handleSendProduct = useCallback(async (product: ExternalProduct) => {
     const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);
     const lines = [
       `📦 *${product.name}*`, product.brand ? `🏷️ Marca: ${product.brand}` : '', `💰 Preço: ${price}`,
@@ -191,12 +197,18 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       (product.short_description || product.description) ? `\n${(product.short_description || product.description || '').slice(0, 300)}` : '',
       product.primary_image_url ? `\n🔗 ${product.primary_image_url}` : '',
     ].filter(Boolean).join('\n');
-    onSendMessage(lines);
-    toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
+    try {
+      await onSendMessage(lines);
+      toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
+    } catch (error) {
+      log.error('Failed to send product:', error);
+      toast({ title: 'Erro ao enviar produto', description: 'O produto não foi enviado.', variant: 'destructive' });
+    }
   }, [onSendMessage]);
 
   const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
-    toast({ title: 'Mensagem interativa enviada!', description: `Mensagem com ${interactive.buttons?.length || 0} botões enviada.` });
+    log.warn('Interactive message transport is unavailable', { buttonCount: interactive.buttons?.length ?? 0 });
+    toast({ title: 'Mensagem não enviada', description: 'O envio interativo ainda não está conectado ao transporte.', variant: 'destructive' });
   }, []);
 
   const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
@@ -204,8 +216,8 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, []);
 
   const handleSendLocation = useCallback((location: LocationMessage) => {
-    const liveUntilDate = location.liveUntil instanceof Date ? location.liveUntil : location.liveUntil ? new Date(location.liveUntil) : null;
-    toast({ title: 'Localização enviada!', description: location.isLive ? `Localização em tempo real por ${liveUntilDate ? Math.round((liveUntilDate.getTime() - Date.now()) / 60000) : 15} minutos` : location.name || 'Localização compartilhada' });
+    log.warn('Location message transport is unavailable', { isLive: Boolean(location.isLive) });
+    toast({ title: 'Localização não enviada', description: 'Este canal ainda não oferece envio de localização.', variant: 'destructive' });
   }, []);
 
   const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<void>) => {

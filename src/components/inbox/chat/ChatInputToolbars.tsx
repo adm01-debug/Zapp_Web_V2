@@ -58,7 +58,7 @@ export function SecondaryToolbar({
   };
 
   return (
-    <div className="flex items-center gap-0.5 shrink-0">
+    <div className="flex shrink-0 flex-wrap items-center gap-0.5">
       <AIRewriteButton inputValue={inputValue} onRewrite={handleRewrite} contactName={contactName} />
       <StickerPicker onSendSticker={onSendSticker} />
       <AudioMemePicker onSendAudio={onSendAudioMeme} />

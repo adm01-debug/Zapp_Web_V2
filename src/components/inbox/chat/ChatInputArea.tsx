@@ -1,25 +1,30 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RichTextToolbar } from './RichTextToolbar';
-import { AIRewriteButton } from './AIRewriteButton';
 import { MentionAutocomplete, useMentions } from './MentionAutocomplete';
 import { MarkdownPreview } from './MarkdownPreview';
 import { SlashCommands, SlashCommand } from '../SlashCommands';
 import { AudioRecorder } from '../AudioRecorder';
 import { FileUploaderRef } from '../FileUploader';
+import { FileUploader } from '../FileUploader';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SecondaryToolbar, TertiaryToolsMenu } from './ChatInputToolbars';
-import { StickerPicker } from '../StickerPicker';
-import { CustomEmojiPicker } from '../CustomEmojiPicker';
-import { RichTextToggle } from './RichTextToolbar';
-import { FileUploader } from '../FileUploader';
-import { Send, Mic, Check, Plus, Loader2 } from 'lucide-react';
-import { toast } from '@/hooks/ui/use-toast';
+import {
+  ArrowRight,
+  CalendarClock,
+  Check,
+  Loader2,
+  MessageSquareText,
+  Mic,
+  MoreHorizontal,
+  Send,
+  Sparkles,
+} from 'lucide-react';
 import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
 
@@ -60,6 +65,9 @@ interface ChatInputAreaProps {
   onAudioCancel: () => void;
   onOpenInteractiveBuilder: () => void;
   onOpenSchedule: () => void;
+  onOpenQuickReplies: () => void;
+  onOpenAssistant: () => void;
+  onOpenTransfer: () => void;
   onOpenLocationPicker: () => void;
   onSendProduct: (product: ExternalProduct) => void;
   onSendSticker: (stickerUrl: string) => void;
@@ -85,6 +93,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onInputChange, onKeyDown, onBlur, onSend, onCancelReply, onCancelEdit,
     onSlashCommand, onCloseSlashCommands, onQuickReply, onRecordToggle,
     onAudioSend, onAudioCancel, onOpenInteractiveBuilder, onOpenSchedule,
+    onOpenQuickReplies, onOpenAssistant, onOpenTransfer,
     onOpenLocationPicker, onSendProduct, onSendSticker, onSendAudioMeme,
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
@@ -94,6 +103,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
   });
+  const moreFileUploaderRef = useRef<FileUploaderRef>(null);
 
   const { isOpen: mentionOpen, cursorPos: mentionCursorPos, checkForMention, handleSelect: handleMentionSelect, close: closeMention } = useMentions(inputRef);
 
@@ -108,7 +118,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
       signatureName={signatureName} onToggleSignature={onToggleSignature}
       onPollSent={onPollSent} onContactSent={onContactSent}
     />
-  ), [instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, signatureEnabled, signatureName, onToggleSignature]);
+  ), [instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply, signatureEnabled, signatureName, onToggleSignature, onPollSent, onContactSent]);
 
   return (
     <>
@@ -123,7 +133,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         onCancelReply={onCancelReply} onCancelEdit={onCancelEdit}
       />
 
-      <div className={cn("px-4 py-3 border-t border-border bg-card", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
+      <div className={cn("border-t border-border bg-card px-3 py-2", logic.isMobile && "px-2.5 safe-area-bottom")}>
         <AnimatePresence>
           {isRecordingAudio && (
             <div className="mb-3"><AudioRecorder onSend={onAudioSend} onCancel={onAudioCancel} /></div>
@@ -132,18 +142,54 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
         <SlashCommands inputValue={inputValue} onSelectCommand={onSlashCommand} onClose={onCloseSlashCommands} isOpen={showSlashCommands} />
 
-        <div className="flex items-end gap-1.5" role="toolbar" aria-label="Barra de mensagem">
+        <div
+          className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none"
+          role="toolbar"
+          aria-label="Ações rápidas da conversa"
+        >
+          <Button type="button" variant="outline" size="sm" onClick={onOpenQuickReplies} className="h-9 shrink-0 gap-1.5 rounded-lg border-border bg-card px-3 text-xs shadow-none">
+            <MessageSquareText className="h-3.5 w-3.5" />Resposta rápida
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onOpenAssistant} className="h-9 shrink-0 gap-1.5 rounded-lg border-border bg-card px-3 text-xs shadow-none">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />Assistente IA
+          </Button>
+          <div className="shrink-0 rounded-lg border border-border bg-card text-xs [&_button]:h-9 [&_button]:w-auto [&_button]:rounded-lg [&_button]:px-3 [&_button]:text-xs [&_button]:shadow-none [&_button]:after:ml-1.5 [&_button]:after:content-['Anexar'] [&_svg]:h-3.5 [&_svg]:w-3.5">
+            <FileUploader
+              ref={fileUploaderRef}
+              instanceName={instanceName || ''}
+              recipientNumber={contactPhone}
+              contactId={contactId}
+              connectionId={undefined}
+            />
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={onOpenSchedule} className="h-9 shrink-0 gap-1.5 rounded-lg border-border bg-card px-3 text-xs shadow-none">
+            <CalendarClock className="h-3.5 w-3.5" />Agendar
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onOpenTransfer} className="h-9 shrink-0 gap-1.5 rounded-lg border-border bg-card px-3 text-xs shadow-none">
+            <ArrowRight className="h-3.5 w-3.5" />Transferir
+          </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon"
-                className={cn("text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 touch-manipulation active:scale-95", logic.isMobile ? "w-10 h-10" : "w-9 h-9")}
-                aria-label="Mais opções de mensagem">
-                <Plus className="w-[18px] h-[18px]" />
+              <Button type="button" variant="outline" size="sm" className="h-9 shrink-0 gap-1.5 rounded-lg border-border bg-card px-3 text-xs shadow-none" aria-label="Mais ferramentas de mensagem">
+                <MoreHorizontal className="h-3.5 w-3.5" />Mais
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-2 bg-popover border-border" align="start" side="top">{tertiaryTools}</PopoverContent>
+            <PopoverContent className="w-72 border-border bg-popover p-2" align="end" side="top">
+              <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-border pb-2">
+                <SecondaryToolbar inputRef={inputRef} inputValue={inputValue}
+                  showRichToolbar={logic.showRichToolbar} onToggleRichToolbar={() => logic.setShowRichToolbar(!logic.showRichToolbar)}
+                  isRecordingAudio={isRecordingAudio} onSendSticker={onSendSticker} onSendAudioMeme={onSendAudioMeme}
+                  onSendCustomEmoji={onSendCustomEmoji} onOpenCatalog={onOpenCatalog} onAudioSend={onAudioSend}
+                  fileUploaderRef={moreFileUploaderRef} instanceName={instanceName} contactPhone={contactPhone}
+                  contactId={contactId} contactName={contactName} onVoiceDictation={logic.handleVoiceDictation}
+                />
+              </div>
+              {tertiaryTools}
+            </PopoverContent>
           </Popover>
+        </div>
 
+        <div className="flex items-end gap-1.5" role="toolbar" aria-label="Barra de mensagem">
           <div className="flex-1 min-w-0 relative">
             <MentionAutocomplete inputValue={inputValue} cursorPosition={mentionCursorPos} onSelect={handleMentionSelect} onClose={closeMention} isOpen={mentionOpen} />
 
@@ -166,7 +212,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 "w-full bg-transparent border border-border/50 rounded-xl outline-none text-sm text-foreground",
                 "placeholder:text-muted-foreground resize-none transition-all",
                 "focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
-                logic.isMobile ? "px-3 py-2.5 text-[16px] min-h-[42px] max-h-[200px]" : "px-3 py-2 min-h-[40px] max-h-[200px]",
+                logic.isMobile ? "px-3 py-3 text-[16px] min-h-[52px] max-h-[200px]" : "px-4 py-3 min-h-[52px] max-h-[200px]",
                 logic.isOverLimit && "border-destructive/50 focus:border-destructive focus:ring-destructive/20"
               )}
               aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
@@ -188,7 +234,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                   size="icon"
                   className={cn("rounded-full shrink-0 disabled:opacity-40 touch-manipulation active:scale-95 transition-all",
                     "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40",
-                    logic.isMobile ? "w-11 h-11" : "w-10 h-10", logic.sendAnimation && "motion-safe:animate-pulse")}
+                    "h-11 w-11", logic.sendAnimation && "motion-safe:animate-pulse")}
                   aria-label={editingMessage ? "Confirmar edição" : "Enviar mensagem"}>
                   {isSending ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : editingMessage ? <Check className="w-[18px] h-[18px]" /> : <Send className="w-[18px] h-[18px]" />}
                 </Button>
@@ -199,7 +245,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
               <TooltipTrigger asChild>
                 <Button size="icon"
                   className={cn("shrink-0 touch-manipulation active:scale-95 rounded-full transition-all",
-                    logic.isMobile ? "w-11 h-11" : "w-10 h-10",
+                    "h-11 w-11",
                     isRecordingAudio ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 hover:bg-destructive/90" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30")}
                   onClick={onRecordToggle} aria-label={isRecordingAudio ? "Parar gravação" : "Gravar áudio"}>
                   <Mic className={cn("w-5 h-5", isRecordingAudio && "motion-safe:animate-pulse")} />
@@ -209,37 +255,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
             </Tooltip>
           </div>
 
-          {!logic.isMobile && (
-            <SecondaryToolbar inputRef={inputRef} inputValue={inputValue}
-              showRichToolbar={logic.showRichToolbar} onToggleRichToolbar={() => logic.setShowRichToolbar(!logic.showRichToolbar)}
-              isRecordingAudio={isRecordingAudio} onSendSticker={onSendSticker} onSendAudioMeme={onSendAudioMeme}
-              onSendCustomEmoji={onSendCustomEmoji} onOpenCatalog={onOpenCatalog} onAudioSend={onAudioSend}
-              fileUploaderRef={fileUploaderRef} instanceName={instanceName} contactPhone={contactPhone}
-              contactId={contactId} contactName={contactName} onVoiceDictation={logic.handleVoiceDictation}
-            />
-          )}
-
-          {logic.isMobile && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              <FileUploader ref={fileUploaderRef} instanceName={instanceName || ''} recipientNumber={contactPhone}
-                contactId={contactId} connectionId={undefined}
-                onFileSelect={(file, category) => toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` })}
-                onFileSent={() => toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso.' })}
-              />
-            </div>
-          )}
         </div>
-
-        {logic.isMobile && logic.hasText && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-1.5 mt-1.5 overflow-x-auto scrollbar-none pb-0.5">
-            <AIRewriteButton inputValue={inputValue} contactName={contactName}
-              onRewrite={(newText) => setNativeValue(inputRef, newText)} />
-            <RichTextToggle active={logic.showRichToolbar} onToggle={() => logic.setShowRichToolbar(!logic.showRichToolbar)} />
-            <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
-            <StickerPicker onSendSticker={onSendSticker} />
-          </motion.div>
-        )}
       </div>
     </>
   );

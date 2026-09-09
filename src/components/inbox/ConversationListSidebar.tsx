@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Search as SearchIcon, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useConversationActions } from '@/hooks/chat/useConversationActions';
+import type { useConversationActions } from '@/hooks/chat/useConversationActions';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -26,13 +26,13 @@ interface ConversationListSidebarProps {
   inboxFilters: any;
   bulkActions: any;
   pullToRefresh: any;
+  conversationActions: ReturnType<typeof useConversationActions>;
 }
 
-export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh }: ConversationListSidebarProps) {
+export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh, conversationActions }: ConversationListSidebarProps) {
   const isMobile = useIsMobile();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
-  const conversationActions = useConversationActions();
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {

@@ -16,9 +16,9 @@ interface UseInboxFiltersProps {
 
 export function useInboxFilters({ conversations, profileId }: UseInboxFiltersProps) {
   const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
-  const [chipTab, setChipTabState] = useState<ChipTab>('attending');
+  const [chipTab, setChipTabState] = useState<ChipTab>('all');
   const [mainTab, setMainTab] = useState<MainTab>('open');
-  const [subTab, setSubTab] = useState<SubTab | null>('attending');
+  const [subTab, setSubTab] = useState<SubTab | null>(null);
   // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
   // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
   // de contato pendente, fora do ciclo de vida dos chips.
