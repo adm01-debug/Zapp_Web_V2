@@ -57,3 +57,27 @@ export const staggeredNeonItem: Variants = {
   hidden: { opacity: 0, y: 20, filter: 'blur(4px)' },
   visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
 };
+
+// ── Talk X / Campanhas — E20 ──────────────────────────
+export const talkxFadeUp: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+};
+
+export const talkxScaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.93 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.18, ease: 'easeOut' } },
+  exit: { opacity: 0, scale: 0.93, transition: { duration: 0.12 } },
+};
+
+export const talkxFloat: Variants = {
+  animate: { y: [0, -5, 0], transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' } },
+};
+
+export function talkxStagger(delay = 0.04): Variants {
+  return {
+    hidden: {},
+    visible: { transition: { staggerChildren: delay } },
+  };
+}
