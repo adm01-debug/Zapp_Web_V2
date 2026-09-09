@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TasksTab } from '../TasksTab';
 import type { ConversationTask } from '@/hooks/chat/useConversationTasks';
 
@@ -22,12 +22,16 @@ function task(overrides: Partial<ConversationTask>): ConversationTask {
   };
 }
 
-function renderTab(overrides: Partial<{ overdue: ConversationTask[]; today: ConversationTask[]; upcoming: ConversationTask[]; completed7d: ConversationTask[] }> = {}) {
+function renderTab(
+  overrides: Partial<{ overdue: ConversationTask[]; today: ConversationTask[]; upcoming: ConversationTask[]; completed7d: ConversationTask[] }> = {},
+  state: Partial<{ isCreating: boolean; isLoading: boolean }> = {},
+) {
   mockUseAuth.mockReturnValue({ profile: { id: 'me' } });
   mockUseTeamProfiles.mockReturnValue({ data: [{ id: 'me', name: 'Agente Teste' }] });
   mockUseConversationTasks.mockReturnValue({
     overdue: overrides.overdue ?? [], today: overrides.today ?? [], upcoming: overrides.upcoming ?? [], completed7d: overrides.completed7d ?? [],
     toggleTask: mockToggleTask, deleteTask: mockDeleteTask, createTask: mockCreateTask,
+    isCreating: state.isCreating ?? false, isLoading: state.isLoading ?? false,
   });
   return render(<TasksTab contactId="c1" />);
 }
@@ -40,6 +44,7 @@ describe('TasksTab', () => {
     const strip = screen.getByTestId('kpi-strip');
     expect(strip).toHaveTextContent('1');
     expect(strip).toHaveTextContent('2');
+    expect(strip.tagName).toBe('DL');
   });
 
   it('colunas vazias mostram o empty state honesto', () => {
@@ -67,5 +72,35 @@ describe('TasksTab', () => {
     fireEvent.change(screen.getByPlaceholderText('Título da tarefa...'), { target: { value: 'Ligar para o cliente' } });
     fireEvent.click(screen.getByText('Salvar'));
     expect(mockCreateTask).toHaveBeenCalledWith({ title: 'Ligar para o cliente', createdBy: 'me', assignedTo: 'me' });
+  });
+
+  it('expõe rótulos acessíveis no filtro e no formulário', () => {
+    renderTab();
+    expect(screen.getByRole('combobox', { name: 'Filtrar tarefas por responsável' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '+ Nova tarefa' }));
+    expect(screen.getByRole('textbox', { name: 'Título da nova tarefa' })).toBeInTheDocument();
+  });
+
+  it('usa colunas auto-fit baseadas na largura disponível e listas semânticas', () => {
+    renderTab({ today: [task({ id: 'today', title: 'Responder cliente' })] });
+    const columns = screen.getByTestId('task-columns');
+    expect(columns.className).toContain('auto-fit');
+    expect(screen.getByText('Responder cliente').closest('li')).toBeInTheDocument();
+  });
+
+  it('anuncia o carregamento sem exibir empty states prematuros', () => {
+    renderTab({}, { isLoading: true });
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando tarefas…');
+    expect(screen.queryByText('Nenhuma tarefa para hoje')).not.toBeInTheDocument();
+  });
+
+  it('preserva o título quando a criação falha', async () => {
+    mockCreateTask.mockRejectedValueOnce(new Error('falha controlada'));
+    renderTab();
+    fireEvent.click(screen.getByRole('button', { name: '+ Nova tarefa' }));
+    const input = screen.getByRole('textbox', { name: 'Título da nova tarefa' });
+    fireEvent.change(input, { target: { value: 'Tentar novamente' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() => expect(input).toHaveValue('Tentar novamente'));
   });
 });
