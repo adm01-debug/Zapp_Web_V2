@@ -449,7 +449,7 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
-            20260909220000)
+            20260909220000|20260909240000)
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/message-delivery-phase1-runtime.sql)
               ;;
@@ -664,7 +664,7 @@ jobs:
               && proof.function_name_collision_count === 0
               && proof.trigger_name_collision_count === 0
               && proof.constraint_name_collision_count === 0
-              && proof.service_role_inherits_authenticated === true
+              && proof.service_role_inherits_authenticated === false
               && proof.authenticated_enqueue_effective === false
               && proof.authenticated_enqueue_direct === false
               && proof.authenticated_close_effective === false
@@ -675,6 +675,8 @@ jobs:
               && proof.service_close_direct === false
               && proof.authenticated_privileged_delivery === false
               && proof.authenticated_internal_guard_execute === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0
               && proof.anon_any_execute === false
               && proof.service_delivery_effective_count === 0
               && proof.service_delivery_direct_count === 0
@@ -697,13 +699,48 @@ jobs:
               && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
               && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
               && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
-              && proof.service_role_inherits_authenticated === true
+              && proof.service_role_inherits_authenticated === false
               && proof.authenticated_enqueue_effective === true
               && proof.authenticated_enqueue_direct === true
               && proof.authenticated_close_effective === true
               && proof.authenticated_close_direct === true
-              && proof.service_enqueue_effective === true
+              && proof.service_enqueue_effective === false
               && proof.service_enqueue_direct === false
+              && proof.service_close_effective === true
+              && proof.service_close_direct === true
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = process.env.NEEDS_APPLY === 'true' ? absent : applied;
+          } else if (process.env.TARGET_VERSION === '20260909240000') {
+            const commonMessageRuntime = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 8
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+              && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
+              && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
+              && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
+              && proof.service_role_inherits_authenticated === false
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.authenticated_close_effective === true
+              && proof.authenticated_close_direct === true
               && proof.service_close_effective === true
               && proof.service_close_direct === true
               && proof.authenticated_privileged_delivery === false
@@ -712,7 +749,19 @@ jobs:
               && proof.service_delivery_effective_count === 3
               && proof.service_delivery_direct_count === 3
               && proof.custom_guc_reference_count === 0;
-            targetOk = process.env.NEEDS_APPLY === 'true' ? absent : applied;
+            const preHardening = commonMessageRuntime
+              && proof.service_enqueue_effective === true
+              && proof.service_enqueue_direct === true
+              && proof.service_internal_guard_execute === true
+              && proof.service_internal_guard_direct_count === 3;
+            const hardened = commonMessageRuntime
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? preHardening
+              : hardened;
           } else if (process.env.TARGET_VERSION === '20260909230000') {
             const canonicalExceptSavedByAction = proof.table_count === 1
               && proof.variant_table_count === 1
@@ -1102,7 +1151,8 @@ jobs:
       - name: Validar primitivas atomicas de mensagens e encerramento
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909220000'
+          && (inputs.migration_version == '20260909220000'
+          || inputs.migration_version == '20260909240000')
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -1132,17 +1182,19 @@ jobs:
             && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
             && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
             && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
-            && proof.service_role_inherits_authenticated === true
+            && proof.service_role_inherits_authenticated === false
             && proof.authenticated_enqueue_effective === true
             && proof.authenticated_enqueue_direct === true
             && proof.authenticated_close_effective === true
             && proof.authenticated_close_direct === true
-            && proof.service_enqueue_effective === true
+            && proof.service_enqueue_effective === false
             && proof.service_enqueue_direct === false
             && proof.service_close_effective === true
             && proof.service_close_direct === true
             && proof.authenticated_privileged_delivery === false
             && proof.authenticated_internal_guard_execute === false
+            && proof.service_internal_guard_execute === false
+            && proof.service_internal_guard_direct_count === 0
             && proof.anon_any_execute === false
             && proof.service_delivery_effective_count === 3
             && proof.service_delivery_direct_count === 3
