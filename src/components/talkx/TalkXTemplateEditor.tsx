@@ -100,6 +100,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   };
 
   const loadTemplate = (t: TalkXTemplate) => {
+    setVersions([]); setShowVersions(false);
     if (isDirty && !window.confirm('Tem alteracoes nao salvas. Descartar?')) return;
     setActiveTemplateId(t.id);
     setVersions([]); setShowVersions(false);
