@@ -7,7 +7,7 @@
   ],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "94b522b1255b20ad4d9ca58232c1c5d209a9eab22fd9028a9764d0a1a258251e"
+    "sha256": "255d84c74413ab2582b74ee3406d3c26f7e30019b7f93ee2b894293774f5e739"
   },
   "summary": {
     "function_count": 64,
@@ -353,8 +353,8 @@
     },
     {
       "path": "supabase/functions/public-api/index.ts",
-      "bytes": 5230,
-      "sha256": "6b192f99db0da687d2886551de5be84dbcea3488e2e1391af379563e6ac23bc9"
+      "bytes": 321,
+      "sha256": "db0b93232b14432d92e609377e8536af241267450dbadd3c3ddb6c71f325555f"
     },
     {
       "path": "supabase/functions/recover-corrupted-audios/index.ts",
@@ -1032,10 +1032,8 @@
       "name": "public-api",
       "entrypoint": "supabase/functions/public-api/index.ts",
       "verify_jwt": false,
-      "source_sha256": "d2c56e6f3f8e9c8f396be3c85aa2d35973822dfc36a411c9c856805efb14cc94",
+      "source_sha256": "90f4ecdd36bc4af4d3613bf0e826bea885586309b3ec0a4dd424279fff0f6d93",
       "source_files": [
-        "supabase/functions/_shared/evolution-go-routes.ts",
-        "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/public-api/index.ts"
@@ -1221,5 +1219,5 @@
       ]
     }
   ],
-  "manifest_sha256": "6c119168e4b19eccad0a18981907ca3d22e344ed9994988cb55c1a1eeea4b4a5"
+  "manifest_sha256": "72a822a589578fab570730174c047d937fd35a10e1d8d0033166781948200237"
 }
