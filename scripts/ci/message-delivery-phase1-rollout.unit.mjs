@@ -22,6 +22,10 @@ const enqueueBody = migration.slice(
 const closeBody = migration.slice(
   migration.indexOf('CREATE OR REPLACE FUNCTION public.close_conversation_atomic'),
 );
+const richMigration = readFileSync(
+  new URL('../../supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql', import.meta.url),
+  'utf8',
+);
 
 test('message delivery phase 1 remains additive and deployment-order safe', () => {
   assert.doesNotMatch(executableMigration, /DROP\s+POLICY/i);
@@ -58,4 +62,17 @@ test('message delivery phase 1 remains additive and deployment-order safe', () =
 test('offline DB guard executes the PostgreSQL 17 behavioral harness', () => {
   assert.match(dbGuard, /message-delivery-phase1-behavior\.test\.sh/);
   assert.match(dbGuard, /MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:\s*postgres:17-alpine/);
+});
+
+test('rich outbound enqueue keeps provider payload immutable and non-service callable', () => {
+  assert.match(richMigration, /CREATE OR REPLACE FUNCTION public\.enqueue_rich_outbound_message/);
+  assert.match(richMigration, /pg_advisory_xact_lock/);
+  assert.ok(
+    richMigration.indexOf('public.is_contact_visible_to_user') < richMigration.indexOf('WHERE message.contact_id = p_contact_id'),
+    'rich idempotency replay must authorize before probing a message key',
+  );
+  assert.match(richMigration, /outbound_delivery_payload/);
+  assert.match(richMigration, /p_message_type NOT IN \('poll', 'contact'\)/);
+  assert.match(richMigration, /REVOKE ALL ON FUNCTION public\.enqueue_rich_outbound_message[\s\S]*FROM PUBLIC, anon, service_role/);
+  assert.match(richMigration, /GRANT EXECUTE ON FUNCTION public\.enqueue_rich_outbound_message[\s\S]*TO authenticated/);
 });

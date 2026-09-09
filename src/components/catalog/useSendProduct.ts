@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { getLogger } from '@/lib/logger';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
 
 const log = getLogger('useSendProduct');
 
@@ -75,86 +76,22 @@ export function useSendToContact(onSuccess: () => void) {
   ) => {
     setIsSending(true);
     try {
-      const { data: connections } = await supabase
-        .from('whatsapp_connections')
-        .select('id, name, instance_id')
-        .eq('status', 'connected')
-        .limit(1);
-
-      const connection = connections?.[0];
-      if (!connection) {
-        toast({ title: 'Nenhuma conexão ativa', description: 'Conecte uma instância do WhatsApp antes de enviar.', variant: 'destructive' });
-        return;
-      }
-
       // Send images
       let imageFailed = 0;
       for (const imgUrl of imageUrls) {
-        const { data: dbResult } = await supabase.from('messages').insert({
-          contact_id: contact.id,
-          content: imgUrl,
-          sender: 'agent',
-          message_type: 'image',
-          status: 'sending',
-          whatsapp_connection_id: connection?.id || null,
-        }).select('id').single();
-
-        const { data: apiResult, error: apiError } = await supabase.functions.invoke('evolution-api', {
-          body: {
-            action: 'send-media',
-            instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
-            number: contact.phone,
-            mediatype: 'image',
-            media: imgUrl,
-            caption: '',
-          },
-        });
-
-        const externalId = apiResult?.key?.id || null;
-        if (dbResult?.id) {
-          // Falha da API não pode deixar a mensagem em 'sending' para sempre
-          if (apiError || apiResult?.error) {
-            imageFailed++;
-            await supabase.from('messages').update({ status: 'failed' }).eq('id', dbResult.id);
-          } else {
-            const imgUpdate: Record<string, unknown> = { status: 'sent' };
-            if (externalId) imgUpdate.external_id = externalId;
-            await supabase.from('messages').update(imgUpdate).eq('id', dbResult.id);
-          }
+        try {
+          // Keep the old empty provider caption. The image URL is stored in
+          // media_url; it must never become customer-facing message text.
+          await sendOutboundMessage({ contactId: contact.id, content: '', messageType: 'image', mediaUrl: imgUrl });
+        } catch {
+          imageFailed++;
         }
       }
 
       // Send text
-      const { data: textDbResult } = await supabase.from('messages').insert({
-        contact_id: contact.id,
-        content: message,
-        sender: 'agent',
-        message_type: 'text',
-        status: 'sending',
-        whatsapp_connection_id: connection?.id || null,
-      }).select('id').single();
-
-      const { data: textApiResult, error: textApiError } = await supabase.functions.invoke('evolution-api', {
-        body: {
-          action: 'send-text',
-          instanceName: connection?.instance_id || connection?.name || 'PRINCIPAL',
-          number: contact.phone,
-          text: message,
-        },
-      });
-
-      const textExternalId = textApiResult?.key?.id || null;
       let textFailed = false;
-      if (textDbResult?.id) {
-        if (textApiError || textApiResult?.error) {
-          textFailed = true;
-          await supabase.from('messages').update({ status: 'failed' }).eq('id', textDbResult.id);
-        } else {
-          const txtUpdate: Record<string, unknown> = { status: 'sent' };
-          if (textExternalId) txtUpdate.external_id = textExternalId;
-          await supabase.from('messages').update(txtUpdate).eq('id', textDbResult.id);
-        }
-      }
+      try { await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' }); }
+      catch { textFailed = true; }
 
       const totalFailed = imageFailed + (textFailed ? 1 : 0);
       if (totalFailed > 0) {
