@@ -11,6 +11,13 @@ import React from 'react';
  * open travado em true e onOpenChange vazio — quando a seção
  * expandia, o overlay cobria tudo e o X não fechava. A correção
  * separa o corpo da galeria (inline) do wrapper de diálogo opcional.
+ *
+ * Painel tabbed (#287): a seção "Mídia Compartilhada" saiu do accordion
+ * de ContactAccordionSections e virou a aba "Arquivos" de ContactDetails.tsx
+ * (MediaGalleryContent lazy, fase 3). A cobertura da regressão continua
+ * garantida abaixo, exercitando diretamente o mesmo componente MediaGallery
+ * usado nessa aba: controlado externamente (open=false), nunca deve
+ * renderizar como Dialog travado aberto.
  */
 
 // ---- mocks (padrão do repo: ver ImagePreviewDownload.test.tsx) ----
@@ -49,87 +56,10 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (url: string) => ({ url, isLoading: false, refresh: vi.fn() }),
 }));
 
-vi.mock('@/components/ui/accordion', async () => {
-  const React = await import('react');
-  return {
-    Accordion: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
-    AccordionItem: ({ children, value }: { children: React.ReactNode; value?: string }) => React.createElement('div', { 'data-item': value }, children),
-    AccordionTrigger: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
-    AccordionContent: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
-  };
-});
-
-vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: false }));
-vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
-
-vi.mock('@/hooks/crm/useContactEnrichedData', () => ({
-  useContactEnrichedData: () => ({ enrichedData: null, aiTags: [], slaInfo: null }),
-}));
-
-vi.mock('@/hooks/chat/useConversationActions', () => ({
-  useConversationActions: () => ({ profileId: null }),
-}));
-
-vi.mock('@/components/contacts/CustomFieldsSection', () => ({ CustomFieldsSection: () => null }));
-vi.mock('../../PrivateNotes', () => ({ PrivateNotes: () => null }));
-vi.mock('../../ConversationHistory', () => ({ ConversationHistory: () => null }));
-vi.mock('../../ConversationTasksPanel', () => ({ ConversationTasksPanel: () => null }));
-vi.mock('../../RemindersPanel', () => ({ RemindersPanel: () => null }));
-vi.mock('../../ConversationMemoryPanel', () => ({ ConversationMemoryPanel: () => null }));
-vi.mock('../../LeadRiskScorePanel', () => ({ LeadRiskScorePanel: () => null }));
-vi.mock('../../ContactPurchasesPanel', () => ({ ContactPurchasesPanel: () => null }));
-vi.mock('../../ConversationTimeline', () => ({ ConversationTimeline: () => null }));
-vi.mock('../ContactInfoSection', () => ({
-  ContactInfoSection: () => React.createElement('div', { 'data-testid': 'info-section-stub' }, 'info'),
-}));
-vi.mock('../AssignmentSection', () => ({ AssignmentSection: () => null }));
-vi.mock('../ContactStatsSection', () => ({ ContactStatsSection: () => null }));
-vi.mock('../SLAAndAITagsSection', () => ({ SLAAndAITagsSection: () => null }));
-vi.mock('../ExternalContact360Panel', () => ({ ExternalContact360Panel: () => null }));
-vi.mock('../ContactIntelligencePanel', () => ({ ContactIntelligencePanel: () => null }));
-vi.mock('../WhatsAppStatusSection', () => ({ WhatsAppStatusSection: () => null }));
-vi.mock('../EvolutionContactProfileSection', () => ({ EvolutionContactProfileSection: () => null }));
-
-import { ContactAccordionSections } from '@/components/inbox/contact-details/ContactAccordionSections';
-
-const contact = {
-  id: 'c1', name: 'Contato Teste', phone: '+5511999999999', avatar: null, createdAt: '2025-01-15T10:00:00Z',
-  email: null, tags: [], last_seen: '2026-09-01T12:00:00Z', is_online: false, notes: null,
-} as never;
-
-const conversation = {
-  id: 'conv1', contact, tags: [], unread_count: 0, last_message: null,
-  status: 'open', is_pinned: false,
-} as never;
-
-function renderSections() {
-  return render(
-    React.createElement(ContactAccordionSections, {
-      contact, conversation, enrichedData: null, aiTags: [], slaInfo: null, profileId: null,
-    })
-  );
-}
-
-describe('ContactDetails — Galeria de Mídia inline (regressão bug modal)', () => {
+describe('MediaGallery — regressão bug modal travado (usado na aba Arquivos)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-  });
-
-  it('não renderiza galeria como modal/overlay quando a seção de mídia está aberta', () => {
-    renderSections();
-    // O bug: um Dialog modal (role=dialog) cobria a tela ao abrir Detalhes.
-    expect(screen.queryByRole('dialog')).toBeNull();
-    // Título da galeria agora é conteúdo INLINE da seção, não um modal.
-    expect(screen.getByRole('heading', { name: /Galeria de Mídia 2 itens/ })).toBeTruthy();
-  });
-
-  it('renderiza o conteúdo da galeria inline dentro da seção de mídia', () => {
-    renderSections();
-    expect(screen.getByText('2 itens')).toBeTruthy();
-    // imagem renderiza <img alt="foto.jpg">; documento mostra o nome como texto
-    expect(screen.getByAltText('foto.jpg')).toBeTruthy();
-    expect(screen.getByText('doc.pdf')).toBeTruthy();
   });
 
   it('wrapper de diálogo da galeria continua funcional quando controlado externamente', async () => {

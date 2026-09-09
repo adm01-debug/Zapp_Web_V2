@@ -1,8 +1,9 @@
+import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Tag, Sparkles, User, FileText, Clock, BarChart3, Brain, Info, TagsIcon, Smartphone, Image, ListTodo, Bell, TrendingUp, ShoppingBag, GitBranch, X, BadgeCheck } from 'lucide-react';
+import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, CheckSquare, Layers, Activity } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
@@ -13,18 +14,18 @@ import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { PrivateNotes } from '../PrivateNotes';
-import { ConversationHistory } from '../ConversationHistory';
-import { MediaGalleryContent } from '../MediaGallery';
-import { ConversationTasksPanel } from '../ConversationTasksPanel';
-import { RemindersPanel } from '../RemindersPanel';
+import { ComercialSummaryWidget } from './ComercialSummaryWidget';
+import { ContactTasksWidget } from './ContactTasksWidget';
+import { AIInsightsWidget } from './AIInsightsWidget';
+import { LastActivityWidget } from './LastActivityWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
 import { LeadRiskScorePanel } from '../LeadRiskScorePanel';
 import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { ConversationTimeline } from '../ConversationTimeline';
+import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
+import { AnalysisBadges } from '../AnalysisBadges';
 
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
-import { log } from '@/lib/logger';
 import type { EnrichedContactData, AIConversationTag, SLAInfo } from '@/hooks/crm/useContactEnrichedData';
 
 const sectionVariants = {
@@ -42,99 +43,101 @@ interface ContactAccordionSectionsProps {
   aiTags: AIConversationTag[];
   slaInfo: SLAInfo | null;
   profileId: string | null;
+  onPanelTabChange?: (tab: string) => void;
 }
 
-export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId }: ContactAccordionSectionsProps) {
+export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId, onPanelTabChange }: ContactAccordionSectionsProps) {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  const [infoExpanded, setInfoExpanded] = useState(false);
+  const hasMoreInfo = crmIntegrationEnabled || slaInfo || aiTags.length > 0;
+
   return (
     <>
-      <Section index={0} value="info" icon={<Info className="w-3.5 h-3.5 text-primary" />} label="Informações">
-        <ContactInfoSection contact={contact} enrichedData={enrichedData} />
+      <Section index={0} value="info" icon={<Info className="w-3.5 h-3.5" />} label="Informações">
+        <div className="space-y-2">
+          <ContactInfoSection contact={contact} enrichedData={enrichedData} />
+          {hasMoreInfo && (
+            <>
+              <Button variant="ghost" size="sm" className="h-6 text-xs w-full justify-center text-muted-foreground hover:text-primary" onClick={() => setInfoExpanded((v) => !v)}>
+                Ver mais <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${infoExpanded ? 'rotate-180' : ''}`} />
+              </Button>
+              {infoExpanded && (
+                <div className="space-y-2 pt-1 border-t border-border/30">
+                  {crmIntegrationEnabled && <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />}
+                  {(slaInfo || aiTags.length > 0) && <SLAAndAITagsSection slaInfo={slaInfo} aiTags={aiTags} />}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </Section>
 
-      <Section index={1} value="whatsapp-status" icon={<Smartphone className="w-3.5 h-3.5 text-primary" />} label="Status WhatsApp">
+      <Section index={1} value="whatsapp-status" icon={<MessageCircle className="w-3.5 h-3.5" />} label="Status WhatsApp">
         <WhatsAppStatusSection phone={contact.phone} />
       </Section>
 
-      {crmIntegrationEnabled && (
-        <Section index={1.5} value="evolution-profile" icon={<BadgeCheck className="w-3.5 h-3.5 text-primary" />} label="Perfil WhatsApp">
-          <EvolutionContactProfileSection phone={contact.phone} fallbackName={contact.name} />
-        </Section>
-      )}
-
-      {(slaInfo || aiTags.length > 0) && (
-        <Section index={1} value="sla-ai" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="SLA & Inteligência">
-          <SLAAndAITagsSection slaInfo={slaInfo} aiTags={aiTags} />
-        </Section>
-      )}
-
-      {crmIntegrationEnabled && (
-        <>
-          <Section index={2} value="crm-360" icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
-            <ExternalContact360Panel contactId={contact.id} />
-          </Section>
-          <Section index={2.5} value="intelligence" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
-            <ContactIntelligencePanel contactId={contact.id} />
-          </Section>
-        </>
-      )}
-
-      <Section index={3} value="tags" icon={<Tag className="w-3.5 h-3.5 text-primary" />} label="Tags"
-        badge={((contact.tags ?? []).length + conversation.tags.length) > 0 ? (contact.tags ?? []).length + conversation.tags.length : undefined}>
+      <Section index={2} value="tags" icon={<Tag className="w-3.5 h-3.5" />} label="Tags"
+        badge={((contact.tags ?? []).length + conversation.tags.length) > 0 ? (contact.tags ?? []).length + conversation.tags.length : undefined}
+        action={<Button variant="outline" size="sm" className="h-7 text-xs">Adicionar tag</Button>}>
         <TagsContent contact={contact} conversation={conversation} />
       </Section>
 
-      <Section index={4} value="assignment" icon={<User className="w-3.5 h-3.5 text-primary" />} label="Atribuição">
-        <AssignmentSection conversation={conversation} />
+      <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
+        <ComercialSummaryWidget contactId={contact.id} />
       </Section>
 
-      <Section index={5.5} value="tasks" icon={<ListTodo className="w-3.5 h-3.5 text-primary" />} label="Tarefas">
-        <ConversationTasksPanel contactId={contact.id} profileId={profileId} />
+      <Section index={4} value="tasks" icon={<CheckSquare className="w-3.5 h-3.5" />} label="Tarefas da Conversa"
+        action={<Button size="sm" className="h-7 text-xs bg-primary/15 text-primary hover:bg-primary/25" onClick={() => onPanelTabChange?.('tasks')}>+ Nova tarefa</Button>}>
+        <ContactTasksWidget contactId={contact.id} />
       </Section>
 
-      <Section index={5.7} value="reminders" icon={<Bell className="w-3.5 h-3.5 text-primary" />} label="Lembretes">
-        <RemindersPanel contactId={contact.id} profileId={profileId} />
+      <AIInsightsWidget contactId={contact.id} />
+
+      <Section index={6} value="last-activity" icon={<Activity className="w-3.5 h-3.5" />} label="Última atividade">
+        <LastActivityWidget contactId={contact.id} />
       </Section>
 
-      <Section index={5.9} value="memory" icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Memória Viva">
-        <ConversationMemoryPanel contactId={contact.id} profileId={profileId} />
-      </Section>
-
-      <Section index={6} value="scoring" icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
-        <LeadRiskScorePanel contactId={contact.id} />
-      </Section>
-
-      <Section index={6.2} value="purchases" icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
-        <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
-      </Section>
-
-      <Section index={6} value="notes" icon={<FileText className="w-3.5 h-3.5 text-primary" />} label="Notas Privadas">
-        <PrivateNotes contactId={contact.id} />
-      </Section>
-
-      <Section index={6.8} value="timeline" icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
-        <ConversationTimeline contactId={contact.id} />
-      </Section>
-
-      <Section index={7} value="history" icon={<Clock className="w-3.5 h-3.5 text-primary" />} label="Histórico">
-        <ConversationHistory contactId={contact.id} contactPhone={contact.phone} onSelectConversation={(id) => log.debug('Selected conversation:', id)} />
-      </Section>
-
-      <motion.div custom={8} initial="hidden" animate="visible" variants={sectionVariants}>
-        <AccordionItem value="stats" className="border-border/30">
-          <AccordionTrigger className="px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider hover:no-underline hover:bg-muted/10">
-            <div className="flex items-center gap-2"><BarChart3 className="w-3.5 h-3.5 text-primary" />Estatísticas</div>
+      <motion.div custom={7} initial="hidden" animate="visible" variants={sectionVariants}>
+        <AccordionItem value="more-details" className="mx-4 mb-3 rounded-xl border border-border bg-muted/20 overflow-hidden">
+          <AccordionTrigger className="px-3 py-3 hover:no-underline hover:bg-transparent [&>svg]:w-3.5 [&>svg]:h-3.5 [&>svg]:text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0"><Layers className="w-3.5 h-3.5" /></div>
+              <span className="text-sm font-semibold text-foreground">Mais detalhes</span>
+            </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <ContactStatsSection contactId={contact.id} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="media" className="border-border/30">
-          <AccordionTrigger className="px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider hover:no-underline hover:bg-muted/10">
-            <div className="flex items-center gap-2"><Image className="w-3.5 h-3.5" />Mídia Compartilhada</div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <MediaGalleryContent contactId={contact.id} />
+          <AccordionContent className="px-3 pb-3 space-y-4">
+            {crmIntegrationEnabled && (
+              <MoreDetailsBlock icon={<Sparkles className="w-3.5 h-3.5 text-primary" />} label="CRM 360°">
+                <ExternalContact360Panel contactId={contact.id} />
+              </MoreDetailsBlock>
+            )}
+            {crmIntegrationEnabled && (
+              <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Inteligência Comercial">
+                <ContactIntelligencePanel contactId={contact.id} />
+              </MoreDetailsBlock>
+            )}
+            <MoreDetailsBlock icon={<User className="w-3.5 h-3.5 text-primary" />} label="Atribuição">
+              <AssignmentSection conversation={conversation} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<Brain className="w-3.5 h-3.5 text-primary" />} label="Memória Viva">
+              <ConversationMemoryPanel contactId={contact.id} profileId={profileId} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
+              <LeadRiskScorePanel contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
+              <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
+              <ConversationTimeline contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<BarChart3 className="w-3.5 h-3.5 text-primary" />} label="Estatísticas">
+              <ContactStatsSection contactId={contact.id} />
+            </MoreDetailsBlock>
+            <MoreDetailsBlock icon={<BookOpen className="w-3.5 h-3.5 text-primary" />} label="Base de Conhecimento">
+              <KnowledgeBaseSearchPanel />
+            </MoreDetailsBlock>
+            <AnalysisBadges contactId={contact.id} />
           </AccordionContent>
         </AccordionItem>
       </motion.div>
@@ -142,23 +145,35 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
   );
 }
 
-// Reusable accordion section wrapper
-function Section({ index, value, icon, label, badge, children }: {
-  index: number; value: string; icon: React.ReactNode; label: string; badge?: number; children: React.ReactNode;
+function MoreDetailsBlock({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
+      {children}
+    </div>
+  );
+}
+
+// Reusable "card" section wrapper (§5.3): mx-4 mb-3 rounded-xl border bg-muted/20, tile 24 + título + ação opcional.
+function Section({ index, value, icon, label, badge, action, children }: {
+  index: number; value: string; icon: ReactNode; label: string; badge?: number; action?: ReactNode; children: ReactNode;
 }) {
   return (
     <motion.div custom={index} initial="hidden" animate="visible" variants={sectionVariants}>
-      <AccordionItem value={value} className="border-border/30">
-        <AccordionTrigger className="px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider hover:no-underline hover:bg-muted/10">
-          <div className="flex items-center gap-2">
-            {icon}
-            {label}
-            {badge !== undefined && (
-              <span className="ml-auto text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
-            )}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">{children}</AccordionContent>
+      <AccordionItem value={value} className="mx-4 mb-3 rounded-xl border border-border bg-muted/20 overflow-hidden">
+        <div className="flex items-center gap-1 pr-2">
+          <AccordionTrigger className="flex-1 px-3 py-3 hover:no-underline hover:bg-transparent [&>svg]:w-3.5 [&>svg]:h-3.5 [&>svg]:text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">{icon}</div>
+              <span className="text-sm font-semibold text-foreground">{label}</span>
+              {badge !== undefined && (
+                <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
+              )}
+            </div>
+          </AccordionTrigger>
+          {action && <div onClick={(e) => e.stopPropagation()} className="shrink-0">{action}</div>}
+        </div>
+        <AccordionContent className="px-3 pb-3">{children}</AccordionContent>
       </AccordionItem>
     </motion.div>
   );
