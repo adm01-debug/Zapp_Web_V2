@@ -52,3 +52,20 @@ test('Inbox authorization migration has caller-bound and post-apply contracts', 
   assert.match(workflow, /proof\.service_note_extra === false/);
   assert.match(workflow, /definition_sha256 === '[a-f0-9]{64}'/);
 });
+
+test('Talk X template history migration has ACL, atomicity and runtime contracts', () => {
+  assert.match(workflow, /20260909210000\)\n[\s\S]*talkx-template-history-runtime\.sql/);
+  assert.match(workflow, /TARGET_VERSION === '20260909210000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260909210000'/);
+  assert.match(workflow, /proof\.custom_variables_column_count === 1/);
+  assert.match(workflow, /proof\.canonical_select_policy_count === 1/);
+  assert.match(workflow, /proof\.validated_constraint_count === 3/);
+  assert.match(workflow, /proof\.foundation_constraint_count === 4/);
+  assert.match(workflow, /proof\.safe_function_count === 2/);
+  assert.match(workflow, /proof\.immutable_trigger_count === 1/);
+  assert.match(workflow, /proof\.anon_any_access === false/);
+  assert.match(workflow, /proof\.authenticated_any_mutation === false/);
+  assert.match(workflow, /proof\.authenticated_rpc_execute === true/);
+  assert.match(workflow, /proof\.authenticated_guard_execute === false/);
+  assert.match(workflow, /definition_sha256 === 'aed607c3f2eceee35f302b3418ece6294cd4a65f8643f24441f1c60bb26e31a1'/);
+});
