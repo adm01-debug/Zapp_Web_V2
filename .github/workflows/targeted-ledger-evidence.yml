@@ -40,9 +40,7 @@ jobs:
           node-version: '24'
 
       - name: Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+        run: bash scripts/ci/install-postgresql-client.sh
 
       - name: Exigir banco oficial e TLS autenticado
         env:
