@@ -2,6 +2,7 @@ import {
   Phone, PhoneCall, Headphones, MessageCircle, Mail, ArrowLeftRight,
   Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -51,26 +52,30 @@ function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
   );
 }
 
-function Tile({ icon, label, onClick, disabled, title, testId }: {
-  icon: React.ReactNode; label: string; onClick?: () => void; disabled?: boolean; title?: string; testId?: string;
-}) {
+type TileProps = React.ComponentPropsWithoutRef<'button'> & {
+  icon: React.ReactNode; label: string; testId?: string;
+};
+
+const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
+  { icon, label, testId, className, ...rest }, ref,
+) {
   return (
     <button
+      ref={ref}
       type="button"
       data-testid={testId ?? 'contact-action-tile'}
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
+      {...rest}
       className={cn(
         'w-14 h-14 rounded-xl bg-muted/40 border border-border flex flex-col items-center justify-center gap-1',
         'hover:bg-muted/70 transition-colors disabled:opacity-40 disabled:pointer-events-none',
+        className,
       )}
     >
       {icon}
       <span className="text-[11px] font-medium text-muted-foreground leading-none">{label}</span>
     </button>
   );
-}
+});
 
 export function ContactActionButtons({
   contact, conversation, hasExpandedSections, onCollapseAll, onQuickAction, onStartCall,
@@ -103,7 +108,7 @@ export function ContactActionButtons({
           icon={<MessageCircle className="w-[18px] h-[18px] text-success" />}
           label="WhatsApp"
           title="Abrir WhatsApp"
-          onClick={() => window.open(`https://wa.me/${contact.phone.replace(/\D/g, '')}`, '_blank')}
+          onClick={() => window.open(`https://wa.me/${contact.phone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
         />
 
         <Tile
