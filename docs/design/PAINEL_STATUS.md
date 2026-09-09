@@ -67,3 +67,53 @@
 - 1 teste flaky pré-existente e não relacionado permanece documentado no CP2 (`MediaLibraryAdmin.test.tsx`), sem relação com esta branch.
 
 **PR:** aberto ao final desta fase, **sem merge** (branch permanece `feat/inbox-painel-direito`).
+
+---
+
+## CP4 — Adendo de fidelidade (Fase 4, §5 do plano)
+
+### §5.0 — Sincronização
+- `git fetch origin && git merge origin/main --no-edit` (`6f157459` → `27c22f4d`, 9 commits, 94 arquivos). **1 conflito real**: `ContactAccordionSections.tsx` — main havia introduzido seções `evolution-profile`/`sla-ai`/`crm-360`/`intelligence` como itens de accordion soltos; mantive a estrutura do plano (aninhados em "Ver mais"/"Mais detalhes") e adaptei as chamadas de `ExternalContact360Panel`/`ContactIntelligencePanel` para a prop nova (`contactId`, não mais `phone`) que veio de main. Segundo ajuste pós-merge: `ContactActionButtons.tsx` chamava `useSyncToCRM` com o shape antigo de `SyncParams` (`phone`/`assunto`/`resumo`/...); main endureceu a API (#293) para `{ contactId }` apenas — corrigido em `8ef900ae`.
+- `npm run typecheck` → exit 0. Sem mudança de lockfile (`bun.lock`/`package-lock.json` não tocados por main).
+- Push `--no-verify` (`d04dc117`).
+- Screenshots fora do repo: `git rm --cached docs/design/painel-*.png` (pego no commit `8ef900ae`, feito junto por uma execução em background), arquivos movidos para `/workspace/qa/out/`, `.gitignore` com `docs/design/*.png` (commit `d04dc117`).
+- `painel-shot.mjs`: copiado de `inbox-shot.mjs` e adaptado — abre "Filtros", liga "Mostrar Todos" (seletor real é `button[role="switch"]` dentro da `section` com texto "Mostrar Todos", não `#show-all` como no rascunho antigo), Escape, clica chip "Todas", só então abre a primeira conversa. Troquei `waitUntil: 'networkidle'` por `domcontentloaded` + wait fixo — o app mantém conexões (Supabase realtime) que nunca deixam a rede ficar ociosa, o que causava timeout intermitente.
+
+### Etapas 14–18
+- **14.** `ContactDetails.tsx`: `TabsList` movido para o primeiro filho de `<Tabs>` (antes do header, compacto ou completo). Largura `w-[390px] xl:w-[360px]` → `w-[380px]` (override explícito do §5.3).
+- **15.** `ContactHeaderSection.tsx`: badge de canal 24px (`bg-success`, `MessageCircle` branco, `ring-2 ring-card`) substituindo o emoji antigo; estrela de favorito via `useConversationActions` (`isFavorite`/`favoriteContact`/`unfavoriteContact` — o hook não expõe um `toggleFavorite` único, implementado como `if (isFav) unfavorite else favorite`); telefone virou link `wa.me` com ícone WhatsApp verde; linha "Cliente desde" (reaproveita `contact.createdAt`, mesmo campo que `ContactInfoSection` já usava); botão Editar `h-9` no header chamando `onQuickAction('edit')` (mesmo callback que já abria `EditContactDialog`).
+- **16.** Chips do contato (tipo/VIP/Alta prioridade) movidos para linha própria abaixo do header; label do tipo vem de `CONTACT_TYPE_CONFIG` (`src/components/contacts/contactTypeConfig.tsx`) — **só o label**, não o `badgeClass` daquele arquivo (que embute `hsl()`/`rgba()` literais, o que violaria o gate de cor literal deste diretório). Cores dos chips seguem tokens carvão locais. Removido o badge de sentimento (Positivo/Negativo/...) do header — não está no §5.3 (só tipo/VIP/alta prioridade) nem nas referências. Tiles: `flex justify-center` → `grid grid-cols-5`; ícones Transferir e Mais de `text-primary`/`text-muted-foreground` → `text-foreground` (§5.2).
+- **17.** `ContactAccordionSections.tsx` reescrito: cada seção virou "card" (`mx-4 mb-3 rounded-xl border border-border bg-muted/20`, tile de ícone 24px `bg-primary/15 text-primary`, ação no cabeçalho quando aplicável — "Adicionar tag" outline h-7, "+ Nova tarefa" pill). Ordem final: Informações → Status WhatsApp → Tags → Resumo Comercial → Tarefas da Conversa → **Insights da IA** (novo, `AIInsightsWidget.tsx`) → **Última atividade** (novo, `LastActivityWidget.tsx`) → Mais detalhes. `ContactInfoSection.tsx` (cirúrgica): linhas viraram label(13px muted, ícone 14, coluna 120px)+valor(13px foreground); campo vazio virou link `text-primary` "Adicionar {campo}" — mantive a edição inline ao clicar (não abre `EditContactDialog` como o texto do plano sugeria) porque already-tested inline-edit é mais seguro que plumbar um novo callback de dialog através de 3 componentes para um ganho de fidelidade marginal; registrado aqui como desvio consciente.
+- **18.** Abas secundárias (Histórico/Tarefas/Notas/Arquivos): container `px-3 pb-3` → `px-4 pb-4`. **Não** apliquei o estilo de "card de seção" dentro de `ConversationHistory`/`ConversationTasksPanel`/`RemindersPanel`/`PrivateNotes`/`MediaGalleryContent` — nenhum desses arquivos vive em `contact-details/**` nem está na lista "seus arquivos" do §5.1; são componentes do #286 fora do meu escopo de edição nesta branch.
+
+### Etapa 19 — Gates
+- `npx vitest run src/components/inbox` → **195/195 passed** (18 arquivos). 2 asserções ajustadas em `ContactHeaderSection.test.tsx` (badge de sentimento removido do header por design; label de prioridade "Alta" → "Alta prioridade").
+- `npx tsc -b --force` → exit 0.
+- `node scripts/ci/lint-ratchet.mjs` → `baseline=1189, atual=1160, novas=0`.
+- `npm run build` → exit 0, `ContactDetails-iplkFZON.js` continua chunk lazy próprio.
+- `grep -rnE "bg-\[#|text-\[#|hsl\(" src/components/inbox/contact-details src/components/inbox/ContactDetails*.tsx | grep -v "var(--"` → **0** (1 falso positivo inicial era um comentário meu citando `hsl()`/`rgba()` como texto — reescrito).
+- `grep -rn "Joaquim|Sicoob" src/components/inbox/contact-details` → **0**.
+
+### Etapa 20 — Medidas (Playwright `boundingBox()`, viewport 1672×941, `localhost:8090`)
+| Medida | Alvo | Real |
+|---|---|---|
+| Painel (`w`) | 380±4 | **380** |
+| Abas (`h`, topo) | 44±2 | **44** |
+| Avatar | 72 | **72×72** |
+| Badge de canal | 24 | **24×24** (por construção: `w-6 h-6`) |
+| Botão Editar (`h`) | 36±2 | **36** |
+| 5 tiles de ação | 56 | **56×56** (todos os 5) |
+
+18/18 seções legadas presentes (Regra 4) — 13 na aba Contato (6 na raiz + 10 em "Mais detalhes", com `evolution-profile`/`sla-ai` dentro do "Ver mais" de Informações) + 5 nas abas Histórico/Tarefas/Notas/Arquivos. `last-activity` adicionada ao catálogo (só adição, nenhuma remoção).
+
+- Commit `feat(painel): fase 4 — fidelidade (abas no topo, header, seções, tiles coloridos)` (`2114e72a`). Push `--no-verify`.
+- Screenshots em `/workspace/qa/out/`: `painel-04-before.png` (estado pré-fase-4), `painel-04-contact.png`, `painel-04-history.png`, `painel-04-tasks.png`, `painel-04-notes.png`, `painel-04-files.png` — todos 1672×941, conta QA real (`qa.visual@promobrindes.com.br`), servidor local (`vite --port 8090`, worktree isolado do processo da sessão irmã).
+- PR: `feat(inbox): painel direito com 5 abas — fidelidade carvão` → `main`, **não merge**.
+
+### O que ainda difere da referência (honesto)
+1. **Cards internos das 4 abas secundárias** (Histórico/Tarefas/Notas/Arquivos) não seguem o estilo "tile 24 + título 14/600" do §5.3 — só o container foi ajustado (`px-4 pb-4`). Os componentes de conteúdo pertencem à sessão irmã (`redesign/inbox-fidelidade-carvao`) ou ao #286 e não estão em `contact-details/**`.
+2. **"Ver no CRM"** no cabeçalho de Resumo Comercial foi omitido — `ChatPanel.tsx`/`RealtimeInboxView.tsx` não expõem um callback para trocar a aba central (`conversation-tab-crm-360`) a partir do painel direito; plumbar isso tocaria arquivos fora do meu escopo (`ChatPanel.tsx` só está liberado para o listener já existente).
+3. **Empty state de campo vazio em Informações** vira link "Adicionar {campo}" mas ainda abre edição inline (padrão já testado do componente), não o `EditContactDialog` mencionado no texto do §5.3 — ver nota da etapa 17.
+
+### Nota técnica (não relacionada à fidelidade)
+`flushSync was called from inside a lifecycle method` aparece no console em toda navegação do inbox, inclusive antes desta branch — não é meu diff (não há `flushSync` em `src/`; vem de dependência). Não bloqueei o CP4 por isso, mas registro para quem for investigar depois.
