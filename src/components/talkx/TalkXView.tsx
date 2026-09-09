@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  HelpCircle, LayoutDashboard, Users,
+  LayoutDashboard, Users,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { ModuleHeader, IconTile } from './talkxShared';
-import { PrimaryButton, GhostButton } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXOverview } from './TalkXOverview';
 import { TalkXCampaignWizard } from './TalkXCampaignWizard';
 import { TalkXLiveMonitor } from './TalkXLiveMonitor';
@@ -90,7 +90,6 @@ export default function TalkXView() {
                 Ao vivo
               </span>
             )}
-            <GhostButton icon={HelpCircle} onClick={() => setActiveTab('help')} size="sm">Ajuda</GhostButton>
             <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
           </div>
         }
