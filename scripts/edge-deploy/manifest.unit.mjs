@@ -101,8 +101,8 @@ test('buildDeploymentAttestation accepts extra functions listed in legacy_unmana
     createdAt: '2026-08-31T00:00:00.000Z',
   };
   const remote = [
-    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false },
-    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true },
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
     { id: '3', slug: 'zombie', version: 1, status: 'ACTIVE', verify_jwt: true },
   ];
 
@@ -130,13 +130,16 @@ test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functio
     createdAt: '2026-08-31T00:00:00.000Z',
   };
   const remote = [
-    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false },
-    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true },
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
   ];
 
   const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
   assert.equal(attestation.function_count, 2);
   assert.equal(attestation.functions[0].remote_version, 3);
+  assert.equal(attestation.functions[0].local_source_sha256, manifest.functions[0].source_sha256);
+  assert.equal(attestation.functions[0].remote_bundle_sha256, 'a'.repeat(64));
+  assert.equal('source_sha256' in attestation.functions[0], false);
   assert.equal(attestation.source_manifest_sha256, manifest.manifest_sha256);
 
   assert.throws(
@@ -157,6 +160,13 @@ test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functio
     }),
     /verify_jwt mismatch/,
   );
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: remote.map((row) => row.slug === 'alpha' ? { ...row, ezbr_sha256: undefined } : row),
+    }),
+    /remote bundle digest is missing/,
+  );
 });
 
 test('buildDeploymentAttestation accepts known orphans via orphan_allowlist', async (t) => {
@@ -174,8 +184,8 @@ test('buildDeploymentAttestation accepts known orphans via orphan_allowlist', as
     createdAt: '2026-09-06T00:00:00.000Z',
   };
   const remote = [
-    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false },
-    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true },
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
     { id: '3', slug: 'legacy-fn', version: 1, status: 'ACTIVE', verify_jwt: true },
   ];
 

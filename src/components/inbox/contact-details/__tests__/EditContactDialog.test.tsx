@@ -31,6 +31,10 @@ vi.mock('@/hooks/crm/useExternalCargos', () => ({
   useExternalCargos: () => ({ data: ['Dev', 'CTO', 'Designer'] }),
 }));
 
+vi.mock('@/hooks/crm/useExternalEmpresas', () => ({
+  useExternalEmpresas: () => ({ data: [] }),
+}));
+
 const baseContact = {
   id: 'c1',
   name: 'John Doe',

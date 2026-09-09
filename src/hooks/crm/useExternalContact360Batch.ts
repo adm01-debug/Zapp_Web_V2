@@ -10,7 +10,7 @@
  * Returns a Map<phone, CRMBatchResult> for O(1) lookup per conversation item.
  */
 import { useQuery } from '@tanstack/react-query';
- import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
  import { ExternalCRMService } from '@/services/crm/external-crm.service';
 import { log } from '@/lib/logger';
 
@@ -30,13 +30,19 @@ function cleanPhone(phone: string): string {
 }
 
 export function useExternalContact360Batch(contacts: Array<{ id: string; phone: string }>) {
+  const crmEnabled = useCRMIntegrationEnabled();
   const stableContacts = [...new Map(contacts.map((contact) => [contact.id, contact])).values()];
-  const queryKey = stableContacts.map((contact) => contact.id).sort().join(',');
+  // Phone participates in the key because the external lookup still receives
+  // canonical IDs but resolves the current phone server-side.
+  const queryKey = stableContacts
+    .map((contact) => `${contact.id}:${cleanPhone(contact.phone)}`)
+    .sort()
+    .join(',');
 
   const query = useQuery<Map<string, CRMBatchResult>>({
     queryKey: ['external-contact-360-batch', queryKey],
      queryFn: () => ExternalCRMService.getContact360Batch(stableContacts),
-    enabled: isExternalConfigured && stableContacts.length > 0,
+    enabled: crmEnabled && stableContacts.length > 0,
     staleTime: 1000 * 60 * 10, // 10 min cache
     gcTime: 1000 * 60 * 30,
   });
@@ -52,6 +58,6 @@ export function useExternalContact360Batch(contacts: Array<{ id: string; phone: 
     batchData: query.data || new Map<string, CRMBatchResult>(),
     lookup,
     isLoading: query.isLoading,
-    isConfigured: isExternalConfigured,
+    isConfigured: crmEnabled,
   };
 }

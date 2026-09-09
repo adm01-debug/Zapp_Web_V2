@@ -11,7 +11,7 @@
  * Usage: call syncConversation() when a conversation is resolved/closed.
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { callCRMIntegration } from '@/lib/crmIntegration';
 import { log } from '@/lib/logger';
 
@@ -40,10 +40,11 @@ interface SyncResult {
 
 export function useSyncToCRM() {
   const queryClient = useQueryClient();
+  const crmEnabled = useCRMIntegrationEnabled();
 
   const mutation = useMutation<SyncResult | null, Error, SyncParams>({
     mutationFn: async (params) => {
-      if (!isExternalConfigured) return null;
+      if (!crmEnabled) return null;
 
       // Metadata is derived from canonical closure/contact rows by the backend.
       // The browser sends identity only so it cannot forge CRM interaction data.
@@ -65,6 +66,6 @@ export function useSyncToCRM() {
     syncConversationAsync: mutation.mutateAsync,
     isSyncing: mutation.isPending,
     lastResult: mutation.data,
-    isConfigured: isExternalConfigured,
+    isConfigured: crmEnabled,
   };
 }

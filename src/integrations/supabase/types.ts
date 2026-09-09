@@ -7976,6 +7976,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      cleanup_crm_sync_outbox: {
+        Args: {
+          p_dead_letter_days?: number
+          p_limit?: number
+          p_succeeded_days?: number
+        }
+        Returns: number
+      }
       cleanup_expired_challenges: { Args: never; Returns: undefined }
       cleanup_link_preview_cache: {
         Args: never
@@ -8256,6 +8264,14 @@ export type Database = {
         Args: { max_rows?: number; statements: string[] }
         Returns: Json
       }
+      merge_contacts_atomic: {
+        Args: {
+          p_merged_fields?: Json
+          p_primary_id: string
+          p_secondary_ids: string[]
+        }
+        Returns: Json
+      }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
@@ -8343,6 +8359,15 @@ export type Database = {
           p_signature?: string
         }
         Returns: boolean
+      }
+      upsert_crm_contact_link_guarded: {
+        Args: {
+          p_external_company_id: string
+          p_external_contact_id: string
+          p_normalized_phone: string
+          p_zapp_contact_id: string
+        }
+        Returns: undefined
       }
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }

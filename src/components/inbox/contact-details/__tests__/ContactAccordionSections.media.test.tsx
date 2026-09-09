@@ -60,6 +60,7 @@ vi.mock('@/components/ui/accordion', async () => {
 });
 
 vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: false }));
+vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 
 vi.mock('@/hooks/crm/useContactEnrichedData', () => ({
   useContactEnrichedData: () => ({ enrichedData: null, aiTags: [], slaInfo: null }),

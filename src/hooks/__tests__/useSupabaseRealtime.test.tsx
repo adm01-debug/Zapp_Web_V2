@@ -26,6 +26,7 @@ import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 
 describe('useSupabaseRealtime', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
     realtimeMocks.statusCallback = undefined;
     realtimeMocks.payloadCallback = undefined;
@@ -46,7 +47,6 @@ describe('useSupabaseRealtime', () => {
   });
 
   it('delegates channel recovery to the native client without recreating channels', () => {
-    vi.useFakeTimers();
     const { unmount } = renderHook(() => useSupabaseRealtime({
       channelName: 'queues-changes',
       table: 'queues',
@@ -61,8 +61,8 @@ describe('useSupabaseRealtime', () => {
     expect(realtimeMocks.removeChannel).not.toHaveBeenCalled();
 
     unmount();
+    act(() => vi.advanceTimersByTime(250));
     expect(realtimeMocks.removeChannel).toHaveBeenCalledTimes(1);
-    vi.useRealTimers();
   });
 
   it('omits an undefined filter from the Realtime binding', () => {
@@ -107,5 +107,50 @@ describe('useSupabaseRealtime', () => {
     }));
 
     expect(realtimeMocks.channel).not.toHaveBeenCalled();
+  });
+
+  it('keeps a shared channel alive until the final consumer unmounts', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const one = renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-shared', table: 'queues', onAll: first,
+    }));
+    const two = renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-shared', table: 'queues', onAll: second,
+    }));
+
+    expect(realtimeMocks.channel).toHaveBeenCalledTimes(1);
+    act(() => realtimeMocks.payloadCallback?.({ eventType: 'UPDATE', new: { id: 'q1' } }));
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+
+    one.unmount();
+    act(() => vi.advanceTimersByTime(250));
+    expect(realtimeMocks.removeChannel).not.toHaveBeenCalled();
+
+    act(() => realtimeMocks.payloadCallback?.({ eventType: 'UPDATE', new: { id: 'q2' } }));
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(2);
+
+    two.unmount();
+    act(() => vi.advanceTimersByTime(250));
+    expect(realtimeMocks.removeChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels deferred removal when StrictMode-style remount happens', () => {
+    const first = renderHook(() => useSupabaseRealtime({
+      channelName: 'strict-remount', table: 'messages',
+    }));
+    first.unmount();
+
+    const second = renderHook(() => useSupabaseRealtime({
+      channelName: 'strict-remount', table: 'messages',
+    }));
+    act(() => vi.advanceTimersByTime(250));
+
+    expect(realtimeMocks.channel).toHaveBeenCalledTimes(1);
+    expect(realtimeMocks.removeChannel).not.toHaveBeenCalled();
+    second.unmount();
+    act(() => vi.advanceTimersByTime(250));
   });
 });

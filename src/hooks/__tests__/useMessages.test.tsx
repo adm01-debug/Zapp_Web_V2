@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 const mockChannel = vi.fn().mockReturnValue({
@@ -116,5 +116,69 @@ describe('useMessages', () => {
     await waitFor(() => {
       expect(result.current.messages).toEqual([]);
     });
+  });
+
+  it('ignores a stale response after switching contacts', async () => {
+    let resolveC1: (value: unknown) => void = () => undefined;
+    let resolveC2: (value: unknown) => void = () => undefined;
+    const c1Promise = new Promise((resolve) => { resolveC1 = resolve; });
+    const c2Promise = new Promise((resolve) => { resolveC2 = resolve; });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn((_: string, contact: string) => ({
+          order: vi.fn(() => ({
+            range: vi.fn(() => contact === 'c1' ? c1Promise : c2Promise),
+          })),
+        })),
+      })),
+    }));
+
+    const { result, rerender } = renderHook(
+      ({ contactId }) => useMessages({ contactId }),
+      { initialProps: { contactId: 'c1' } },
+    );
+    rerender({ contactId: 'c2' });
+
+    await act(async () => {
+      resolveC2({ data: [{ id: 'm2', contact_id: 'c2', content: 'B', sender: 'contact', created_at: '2024-01-02' }], error: null });
+      await c2Promise;
+    });
+    await waitFor(() => expect(result.current.messages.map((message) => message.id)).toEqual(['m2']));
+
+    await act(async () => {
+      resolveC1({ data: [{ id: 'm1', contact_id: 'c1', content: 'A', sender: 'contact', created_at: '2024-01-01' }], error: null });
+      await c1Promise;
+    });
+    expect(result.current.messages.map((message) => message.id)).toEqual(['m2']);
+  });
+
+  it('invalidates an in-flight response while disabled and refreshes on re-enable', async () => {
+    let resolveFirst: (value: unknown) => void = () => undefined;
+    const first = new Promise((resolve) => { resolveFirst = resolve; });
+    let calls = 0;
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ order: vi.fn(() => ({
+          range: vi.fn(() => ++calls === 1
+            ? first
+            : Promise.resolve({ data: [{ id: 'fresh', contact_id: 'c1', content: 'Fresh', sender: 'contact', created_at: '2024-01-02' }], error: null })),
+        })) })),
+      })),
+    }));
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useMessages({ contactId: 'c1', enabled }),
+      { initialProps: { enabled: true } },
+    );
+    rerender({ enabled: false });
+    await act(async () => {
+      resolveFirst({ data: [{ id: 'stale', contact_id: 'c1', content: 'Stale', sender: 'contact', created_at: '2024-01-01' }], error: null });
+      await first;
+    });
+    expect(result.current.messages).toEqual([]);
+
+    rerender({ enabled: true });
+    await waitFor(() => expect(result.current.messages.map((message) => message.id)).toEqual(['fresh']));
+    expect(calls).toBe(2);
   });
 });
