@@ -47,7 +47,7 @@ describe('exportCampaignsCsv — integracao superficial', () => {
     vi.spyOn(document, 'createElement').mockReturnValue(mockA as unknown as HTMLElement);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
     vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
-    vi.spyOn(window, 'Blob').mockImplementation((parts) => ({ size: parts?.[0]?.length ?? 0 }) as Blob);
+    vi.spyOn(window, 'Blob').mockImplementation((_parts) => ({ size: 0 }) as Blob);
   });
 
   it('nao dispara nada com lista vazia', async () => {
