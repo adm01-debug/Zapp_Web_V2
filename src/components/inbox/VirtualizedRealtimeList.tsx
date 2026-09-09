@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useMemo, memo } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,10 +7,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive } from 'lucide-react';
+import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
+import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
 
 interface VirtualizedRealtimeListProps {
   conversations: ConversationWithMessages[];
@@ -26,14 +28,22 @@ interface VirtualizedRealtimeListProps {
   onResolve?: (contactId: string) => void;
   onTransfer?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
+  favoriteIds?: Set<string>;
   onSnooze?: (contactId: string) => void;
 }
 
-// py-2.5 (20) + conteudo (48 com avatar, ate ~60 com a linha de tags) + gap-1.5
-// (6) + faixa de acoes h-7 (28) + border-b (1). A faixa e escondida com opacity,
-// entao ocupa altura mesmo fora do hover.
-const ITEM_HEIGHT = 120;
+const ITEM_HEIGHT = 88;
+const HEADER_HEIGHT = 32;
 const EMPTY_SET = new Set<string>();
+
+type FlatRow =
+  | { kind: 'header'; key: string; label: string; count: number }
+  | { kind: 'item'; key: string; conversation: ConversationWithMessages; isPinned: boolean };
+
+function getConversationTime(c: ConversationWithMessages): number {
+  if (c.lastMessage) return new Date(c.lastMessage.created_at).getTime();
+  return new Date(c.contact.updated_at).getTime();
+}
 
 export function VirtualizedRealtimeList({
   conversations,
@@ -49,6 +59,7 @@ export function VirtualizedRealtimeList({
   onResolve,
   onTransfer,
   onFavorite,
+  favoriteIds = EMPTY_SET,
   onSnooze,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -58,26 +69,49 @@ export function VirtualizedRealtimeList({
     return conversations.filter(c => c?.contact?.id);
   }, [conversations]);
 
-  const sortedConversations = useMemo(() => {
-    return [...safeConversations].sort((a, b) => {
-      const aPin = pinnedIds.has(a.contact.id);
-      const bPin = pinnedIds.has(b.contact.id);
-      if (aPin && !bPin) return -1;
-      if (!aPin && bPin) return 1;
-      const aTime = a.lastMessage ? new Date(a.lastMessage.created_at).getTime() : 0;
-      const bTime = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
+  // Ordem interna preservada — só particiona em grupos (Fixadas / Hoje / Ontem /
+  // Mais antigas), não reordena dentro de cada grupo além do que o filtro já entrega.
+  const flatRows = useMemo<FlatRow[]>(() => {
+    const sorted = [...safeConversations].sort((a, b) => getConversationTime(b) - getConversationTime(a));
+
+    const pinned = sorted.filter(c => pinnedIds.has(c.contact.id));
+    const rest = sorted.filter(c => !pinnedIds.has(c.contact.id));
+
+    const today = rest.filter(c => isToday(new Date(getConversationTime(c))));
+    const yesterday = rest.filter(c => isYesterday(new Date(getConversationTime(c))));
+    const older = rest.filter(c => !isToday(new Date(getConversationTime(c))) && !isYesterday(new Date(getConversationTime(c))));
+
+    const rows: FlatRow[] = [];
+    if (pinned.length > 0) {
+      rows.push({ kind: 'header', key: 'group-pinned', label: 'Fixadas', count: pinned.length });
+      pinned.forEach(c => rows.push({ kind: 'item', key: c.contact.id, conversation: c, isPinned: true }));
+    }
+    if (today.length > 0) {
+      rows.push({ kind: 'header', key: 'group-today', label: 'Hoje', count: today.length });
+      today.forEach(c => rows.push({ kind: 'item', key: c.contact.id, conversation: c, isPinned: false }));
+    }
+    if (yesterday.length > 0) {
+      rows.push({ kind: 'header', key: 'group-yesterday', label: 'Ontem', count: yesterday.length });
+      yesterday.forEach(c => rows.push({ kind: 'item', key: c.contact.id, conversation: c, isPinned: false }));
+    }
+    if (older.length > 0) {
+      rows.push({ kind: 'header', key: 'group-older', label: 'Mais antigas', count: older.length });
+      older.forEach(c => rows.push({ kind: 'item', key: c.contact.id, conversation: c, isPinned: false }));
+    }
+    return rows;
   }, [safeConversations, pinnedIds]);
 
   const getScrollElement = useCallback(() => parentRef.current, []);
-  const estimateSize = useCallback(() => ITEM_HEIGHT, []);
+  const estimateSize = useCallback((index: number) => (flatRows[index]?.kind === 'header' ? HEADER_HEIGHT : ITEM_HEIGHT), [flatRows]);
 
+  // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma
+  // limitacao ja aceita na baseline do ratchet para este mesmo hook.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
-    count: sortedConversations.length,
+    count: flatRows.length,
     getScrollElement,
     estimateSize,
-    overscan: 5,
+    overscan: 8,
   });
 
   const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
@@ -89,7 +123,7 @@ export function VirtualizedRealtimeList({
     }
   }, [selectionMode, onToggleSelection, onSelectConversation]);
 
-  if (sortedConversations.length === 0) {
+  if (flatRows.length === 0) {
     return null;
   }
 
@@ -102,31 +136,47 @@ export function VirtualizedRealtimeList({
           position: 'relative',
         }}
       >
-        {virtualizer.getVirtualItems().map((virtualRow) => (
-          <ConversationRow
-            key={sortedConversations[virtualRow.index].contact.id}
-            conversation={sortedConversations[virtualRow.index]}
-            virtualRow={virtualRow}
-            selectedContactId={selectedContactId}
-            isSelected={selectedIds.has(sortedConversations[virtualRow.index].contact.id)}
-            isPinned={pinnedIds.has(sortedConversations[virtualRow.index].contact.id)}
-            selectionMode={selectionMode}
-            onToggleSelection={onToggleSelection}
-            handleClick={handleClick}
-            onResolve={onResolve}
-            onTransfer={onTransfer}
-            onPin={onPin}
-            onFavorite={onFavorite}
-            onSnooze={onSnooze}
-            onArchive={onArchive}
-          />
-        ))}
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const row = flatRows[virtualRow.index];
+          if (row.kind === 'header') {
+            return (
+              <div
+                key={row.key}
+                style={{
+                  position: 'absolute', top: 0, left: 0, width: '100%',
+                  height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <ConversationGroupHeader label={row.label} count={row.count} icon={row.key === 'group-pinned' ? Pin : undefined} />
+              </div>
+            );
+          }
+          const { conversation } = row;
+          return (
+            <ConversationRow
+              key={row.key}
+              conversation={conversation}
+              virtualRow={virtualRow}
+              selectedContactId={selectedContactId}
+              isSelected={selectedIds.has(conversation.contact.id)}
+              isPinned={row.isPinned}
+              isFavorite={favoriteIds.has(conversation.contact.id)}
+              selectionMode={selectionMode}
+              onToggleSelection={onToggleSelection}
+              handleClick={handleClick}
+              onResolve={onResolve}
+              onTransfer={onTransfer}
+              onPin={onPin}
+              onFavorite={onFavorite}
+              onSnooze={onSnooze}
+              onArchive={onArchive}
+            />
+          );
+        })}
       </div>
     </div>
   );
 }
-
-import { memo } from 'react';
 
 const SENTIMENT_LABEL: Record<string, string> = {
   positive: 'positivo',
@@ -140,6 +190,7 @@ interface ConversationRowProps {
   selectedContactId: string | null;
   isSelected: boolean;
   isPinned: boolean;
+  isFavorite: boolean;
   selectionMode: boolean;
   onToggleSelection?: (contactId: string) => void;
   handleClick: (contactId: string, e: React.SyntheticEvent) => void;
@@ -157,6 +208,7 @@ const ConversationRow = memo(({
   selectedContactId,
   isSelected,
   isPinned,
+  isFavorite,
   selectionMode,
   onToggleSelection,
   handleClick,
@@ -168,6 +220,10 @@ const ConversationRow = memo(({
   onArchive,
 }: ConversationRowProps) => {
   const contactId = conversation.contact.id;
+  const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
+  const isVip = (conversation.contact.tags ?? []).some(t => t.toLowerCase() === 'vip');
+  const isHighPriority = conversation.contact.ai_priority === 'high';
+  const isWhatsapp = !conversation.contact.channel_type || conversation.contact.channel_type === 'whatsapp';
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
     e.stopPropagation();
@@ -185,14 +241,14 @@ const ConversationRow = memo(({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      className="px-2"
+      className="px-3"
+      data-testid="conversation-item"
     >
       <div
         className={cn(
-          'w-full px-3 py-2.5 flex flex-col gap-1.5 transition-all text-left border-b border-border/50 group',
-          'hover:bg-muted/50',
-          selectedContactId === contactId && 'bg-primary/10 border-l-2 border-l-primary',
-          isSelected && 'bg-primary/15',
+          'w-full min-h-[72px] my-0.5 px-3 py-2.5 rounded-xl flex flex-col gap-1.5 transition-all text-left border group',
+          selectedContactId === contactId ? 'bg-accent border-primary/40' : 'border-transparent hover:bg-muted/40',
+          isSelected && 'bg-accent',
           isPinned && selectedContactId !== contactId && 'bg-muted/30'
         )}
       >
@@ -236,12 +292,17 @@ const ConversationRow = memo(({
                 {getInitials(conversation.contact.name || '?')}
               </AvatarFallback>
             </Avatar>
+            {isWhatsapp && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center ring-2 ring-card">
+                <MessageCircle className="w-2.5 h-2.5 text-success-foreground" />
+              </span>
+            )}
             {conversation.contact.ai_sentiment && (
               <span
                 role="img"
                 aria-label={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}
                 className={cn(
-                  'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
+                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
                   conversation.contact.ai_sentiment === 'positive' && 'bg-[hsl(var(--success))]',
                   conversation.contact.ai_sentiment === 'negative' && 'bg-destructive',
                   conversation.contact.ai_sentiment === 'neutral' && 'bg-[hsl(var(--warning))]'
@@ -254,60 +315,59 @@ const ConversationRow = memo(({
           <div className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                {isPinned && <Pin className="w-3 h-3 text-primary flex-shrink-0" />}
-                {conversation.contact.contact_type === 'sicoob_gifts' && (
-                  <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
-                )}
-                <span className="font-medium text-foreground truncate text-sm">
+                <span className="font-semibold text-foreground truncate text-[15px]">
                   {(() => {
                     const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
                     const company = conversation.contact.company;
                     return company ? `${firstName} · ${company}` : firstName;
                   })()}
                 </span>
-                {conversation.contact.ai_sentiment && conversation.contact.ai_sentiment !== 'neutral' && (
-                  <span className="text-xs flex-shrink-0" aria-hidden="true" title={`Sentimento: ${SENTIMENT_LABEL[conversation.contact.ai_sentiment] ?? conversation.contact.ai_sentiment}`}>
-                    {conversation.contact.ai_sentiment === 'positive' ? '😊' : conversation.contact.ai_sentiment === 'negative' ? '😟' : ''}
-                  </span>
-                )}
                 {conversation.contact.contact_type === 'sicoob_gifts' && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-info/40 text-info bg-info/10 flex-shrink-0">
-                    Sicoob Gifts
-                  </Badge>
+                  <Gift className="w-3.5 h-3.5 text-info flex-shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
                       addSuffix: false,
                       locale: ptBR,
                     })}
                   </span>
                 )}
-                {conversation.unreadCount > 0 && (
-                  <span className="min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                  </span>
-                )}
+                <button
+                  aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
+                  onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
+                  className="w-4 h-4 flex items-center justify-center text-muted-foreground/40 hover:text-warning transition-colors"
+                >
+                  <Star className={cn('w-3.5 h-3.5', isFavorite && 'fill-warning text-warning')} />
+                </button>
               </div>
             </div>
-            <p className="text-[13px] text-muted-foreground truncate">
-              {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
-                ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
-                : conversation.lastMessage?.content || 'Sem mensagens'}
-            </p>
-            {conversation.contact.tags && conversation.contact.tags.length > 0 && (
-              <div className="flex gap-1 mt-1">
-                {conversation.contact.tags.slice(0, 2).map((tag: string) => (
-                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                    {tag}
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[13px] text-muted-foreground truncate pr-2">
+                {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
+                  ? `${conversation.contact.company} · ${conversation.lastMessage?.content || 'Sem mensagens'}`
+                  : conversation.lastMessage?.content || 'Sem mensagens'}
+              </p>
+              {conversation.unreadCount > 0 && (
+                <span className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold bg-primary text-primary-foreground">
+                  {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                </span>
+              )}
+            </div>
+            {(typeConfig || isVip || isHighPriority) && (
+              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                {typeConfig && (
+                  <Badge variant="outline" className={cn('text-[11px] px-1.5 py-0 h-4 border', typeConfig.badgeClass)}>
+                    {typeConfig.label}
                   </Badge>
-                ))}
-                {conversation.contact.tags.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    +{conversation.contact.tags.length - 2}
-                  </span>
+                )}
+                {isVip && (
+                  <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-4 bg-warning/15 text-warning border-warning/40">VIP</Badge>
+                )}
+                {isHighPriority && (
+                  <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
                 )}
               </div>
             )}
@@ -353,18 +413,6 @@ const ConversationRow = memo(({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Favoritar conversa"
-                  onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-400/10 active:scale-90 transition-all duration-150"
-                >
-                  <Star className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Favoritar</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>

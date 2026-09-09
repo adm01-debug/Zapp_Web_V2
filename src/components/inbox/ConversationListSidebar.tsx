@@ -6,13 +6,13 @@ import { VirtualizedRealtimeList } from './VirtualizedRealtimeList';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { InboxFilters } from './InboxFilters';
-import { ContactTypeFilter, FILTER_OPTIONS } from './ContactTypeFilter';
-import { TicketTabs } from './TicketTabs';
+import { FILTER_OPTIONS } from './ContactTypeFilter';
+import { StatusChips } from './conversation-list/StatusChips';
+import type { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MessageSquare, RefreshCw, Search as SearchIcon, MessageSquarePlus, X } from 'lucide-react';
+import { MessageSquare, Search as SearchIcon, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SKELETON_WIDTHS = [
@@ -26,9 +26,10 @@ interface ConversationListSidebarProps {
   inboxFilters: any;
   bulkActions: any;
   pullToRefresh: any;
+  conversationActions?: ReturnType<typeof useConversationActions>;
 }
 
-export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh }: ConversationListSidebarProps) {
+export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pullToRefresh, conversationActions }: ConversationListSidebarProps) {
   const isMobile = useIsMobile();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
@@ -48,7 +49,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   return (
     <div className={cn(
       'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-card flex flex-col overflow-hidden',
-      isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[320px] min-w-[320px] max-w-[320px]'
+      isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[350px] min-w-[350px] max-w-[350px]'
     )}>
       <BulkActionsToolbar
         selectedCount={bulkActions.selectedIds.size}
@@ -59,92 +60,62 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
         isLoading={bulkActions.bulkLoading}
       />
 
-      <div className={cn("px-3 border-b border-border space-y-1.5 shrink-0", isMobile ? "pt-1.5 pb-1.5" : "pt-2.5 pb-1.5")}>
+      <div className="border-b border-border shrink-0">
         {!isMobile && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-xs font-semibold text-foreground tracking-tight">Conversas</h2>
-              <span className={cn('w-1.5 h-1.5 rounded-full', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
+          <div className="h-14 px-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
+                <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+              </div>
             </div>
-            <div className="flex items-center gap-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={inbox.refetch} disabled={inbox.loading} className="w-7 h-7 rounded-lg hover:bg-muted/60 active:scale-90 transition-all duration-150" aria-label="Atualizar">
-                    <RefreshCw className={cn('w-3.5 h-3.5', inbox.loading && 'animate-spin')} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[10px] font-medium">Atualizar</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => inbox.setShowNewConversation(true)} className="w-7 h-7 rounded-lg text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150" aria-label="Nova conversa">
-                    <MessageSquarePlus className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[10px] font-medium">Nova Conversa</TooltipContent>
-              </Tooltip>
-            </div>
+            <Button
+              onClick={() => inbox.setShowNewConversation(true)}
+              className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              Nova conversa
+            </Button>
           </div>
         )}
 
-        <div className="flex items-center gap-1.5">
-          {isMobile ? (
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
-              <Input
-                ref={contactSearchRef}
-                placeholder="Buscar contato..."
-                value={contactSearch}
-                onChange={(e) => handleContactSearch(e.target.value)}
-                className="pl-8 pr-7 bg-muted/40 border-0 rounded-lg h-8 text-xs placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-primary/30"
-                aria-label="Buscar contato pelo nome"
-              />
-              {contactSearch && (
-                <Button variant="ghost" size="icon" onClick={clearContactSearch}
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 w-6 h-6 hover:bg-transparent" aria-label="Limpar busca">
-                  <X className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
-              <Input
-                ref={contactSearchRef}
-                placeholder="Buscar contato..."
-                value={contactSearch}
-                onChange={(e) => handleContactSearch(e.target.value)}
-                className="pl-7 pr-7 bg-muted/40 border-0 rounded-md h-7 text-[11px] placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-primary/30"
-                aria-label="Buscar contato pelo nome"
-              />
-              {contactSearch && (
-                <Button variant="ghost" size="icon" onClick={clearContactSearch}
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 w-5 h-5 hover:bg-transparent" aria-label="Limpar busca">
-                  <X className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-          )}
-          <div className="shrink-0 w-[130px]">
-            <ContactTypeFilter value={inboxFilters.selectedContactType} onChange={inboxFilters.handleContactTypeChange} conversations={inbox.cachedConversations} />
+        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-2' : 'pb-3')}>
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+            <Input
+              ref={contactSearchRef}
+              placeholder="Buscar conversas…"
+              value={contactSearch}
+              onChange={(e) => handleContactSearch(e.target.value)}
+              className="pl-10 pr-8 h-10 rounded-xl bg-input border border-border text-sm placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
+              aria-label="Buscar contato pelo nome"
+            />
+            {contactSearch && (
+              <Button variant="ghost" size="icon" onClick={clearContactSearch}
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 hover:bg-transparent" aria-label="Limpar busca">
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </Button>
+            )}
           </div>
+          <InboxFilters
+            filters={inboxFilters.filters}
+            onFiltersChange={inboxFilters.setFilters}
+            showAll={inboxFilters.showAll}
+            onShowAllChange={inboxFilters.setShowAll}
+            selectedContactType={inboxFilters.selectedContactType}
+            onContactTypeChange={inboxFilters.handleContactTypeChange}
+            selectedQueueId={inboxFilters.selectedQueueId}
+            onQueueChange={inboxFilters.setSelectedQueueId}
+            onRefetch={inbox.refetch}
+            isRefetching={inbox.loading}
+          />
         </div>
 
-        <TicketTabs
+        <StatusChips
           conversations={inbox.conversations}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
-        />
-
-        <InboxFilters
-          filters={inboxFilters.filters}
-          onFiltersChange={inboxFilters.setFilters}
-          showAll={inboxFilters.showAll}
-          onShowAllChange={inboxFilters.setShowAll}
-          selectedContactType={inboxFilters.selectedContactType}
-          onContactTypeChange={inboxFilters.handleContactTypeChange}
-          selectedQueueId={inboxFilters.selectedQueueId}
-          onQueueChange={inboxFilters.setSelectedQueueId}
         />
       </div>
 
@@ -205,8 +176,11 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
             const msg = inboxFilters.search ? 'Nenhuma conversa encontrada' : emptyMessages[inboxFilters.selectedContactType || ''] || 'Sem conversas';
             return (
               <motion.div key={inboxFilters.selectedContactType || 'all'} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="p-8 text-center">
-                <EmptyIcon className={cn('w-10 h-10 mx-auto mb-3', activeOpt?.iconColor || 'text-muted-foreground/30')} />
-                <p className="text-sm text-muted-foreground">{msg}</p>
+                <div className="w-14 h-14 rounded-2xl bg-kpi-blue text-kpi-blue-fg flex items-center justify-center mx-auto mb-3">
+                  <EmptyIcon className="w-6 h-6" />
+                </div>
+                <p className="text-[15px] font-semibold text-foreground mb-1">{msg}</p>
+                <p className="text-[13px] text-muted-foreground">Novas conversas aparecerão aqui.</p>
               </motion.div>
             );
           })()
@@ -221,6 +195,16 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
               selectionMode={bulkActions.selectionMode}
               selectedIds={bulkActions.selectedIds}
               onToggleSelection={bulkActions.toggleSelection}
+              pinnedIds={conversationActions?.pinnedIds}
+              onPin={(contactId) => {
+                if (conversationActions?.isPinned(contactId)) conversationActions.unpinConversation(contactId);
+                else conversationActions?.pinConversation(contactId);
+              }}
+              favoriteIds={conversationActions?.favoriteIds}
+              onFavorite={(contactId) => {
+                if (conversationActions?.isFavorite(contactId)) conversationActions.unfavoriteContact(contactId);
+                else conversationActions?.favoriteContact(contactId);
+              }}
             />
           </ErrorBoundary>
         )}
