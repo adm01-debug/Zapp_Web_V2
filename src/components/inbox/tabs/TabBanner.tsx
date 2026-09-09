@@ -13,10 +13,12 @@ interface TabBannerProps {
   testId?: string;
   className?: string;
   children?: ReactNode;
+  /** Tile do ícone; default = bg-primary (Notas/Tarefas). Chat/IA usa bg-kpi-purple. */
+  iconClassName?: string;
 }
 
 /** Banner de destaque reaproveitado nas abas Chat, Notas e Tarefas (2.7/2.8/2.9). */
-export function TabBanner({ icon: Icon, title, description, action, dismissKey, testId, className, children }: TabBannerProps) {
+export function TabBanner({ icon: Icon, title, description, action, dismissKey, testId, className, children, iconClassName }: TabBannerProps) {
   const [dismissed, setDismissed] = useState(
     () => !!dismissKey && typeof window !== 'undefined' && window.localStorage.getItem(dismissKey) === '1'
   );
@@ -26,9 +28,9 @@ export function TabBanner({ icon: Icon, title, description, action, dismissKey, 
   return (
     <div
       data-testid={testId}
-      className={cn('rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3', className)}
+      className={cn('rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3 h-14', className)}
     >
-      <span className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+      <span className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', iconClassName || 'bg-primary text-white')}>
         <Icon className="w-4 h-4" />
       </span>
       <div className="min-w-0 flex-1">

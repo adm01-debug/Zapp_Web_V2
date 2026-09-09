@@ -173,6 +173,13 @@ export function RealtimeInboxView() {
                           }
                           inbox.setSelectedContactId(null);
                         } : undefined}
+                      isFavorite={conversationActions.isFavorite(inbox.legacyConversation.contact.id)}
+                      onToggleFavorite={() => {
+                        if (!inbox.legacyConversation) return;
+                        const id = inbox.legacyConversation.contact.id;
+                        if (conversationActions.isFavorite(id)) conversationActions.unfavoriteContact(id);
+                        else conversationActions.favoriteContact(id);
+                      }}
                     />
                   </SectionErrorBoundary>
                   </ConversationTabContent>

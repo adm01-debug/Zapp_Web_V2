@@ -39,7 +39,20 @@ Branch: redesign/inbox-fidelidade-carvao · Base: 27c22f4d · Worktree: /workspa
 - Referência: timeline com coluna de hora (12px) + dot colorido por tipo + tile de ícone 32 colorido + badge à direita (WhatsApp verde/Transferência/Concluída/Pendente/Visualizada).
 - event_types reais a mapear via grep no hook `useConversationHistoryTimeline` antes da etapa 43 (assign/unassign/transfer/queue_transfer/overload_reassign/absence_reassign/close/reopen + mensagens/notas/arquivos/tarefas).
 ## CP1 Lista      [x] sha=(commit fase 1, ver git log) · shot=BLOQUEADO (ver seção "BLOQUEIO — QA visual") · coluna=w-[350px] (ConversationListSidebar.tsx) · item=min-h-[72px] (VirtualizedRealtimeList.tsx ConversationRow) · avatar=w-12 h-12 =48px · busca=h-10=40px · btn Nova conversa=h-10=40px · btn filtro=w-10 h-10=40×40 · chips=5 (StatusChips, sem Spam — não existe no modelo) h-7=28px · grupos=Fixadas/Hoje/Ontem/Mais antigas via flatRows virtualizado · verificado por leitura de código + testes (`StatusChips.test.tsx` 7/7), não por screenshot (bloqueio de login) · o que ainda difere: dot "Online" não implementado (sem fonte de presença real — pendência já listada), star favorito/pin agora funcionais via `useConversationActions` (novo wiring em `RealtimeInboxView.tsx`), ChannelBadge é um dot verde 20px simplificado (não usa `ChannelBadge` do arquivo morto `ConversationItem.tsx`)
-## CP2 Header     [ ] sha= · shot=fid-02-header.png · header=_ avatar=_ btns=_ pill=_ banner=_ · tools antigos → novo lugar: (tabela)
+## CP2 Header     [x] sha=(commit fase 2) · shot=BLOQUEADO (ver "BLOQUEIO — QA visual" no CP1) · header=h-[72px] (ChatPanelHeader.tsx) · avatar=w-12 h-12=48px + dot 12px · btns=4× h-10 w-10=40×40 rounded-[10px] border-border (Ligar, Vídeo, Adicionar participante, ⋮) · pill=ConversationTabs h-9=36px bg-accent border-primary/40 · banner=TabBanner h-14, tile 36px bg-kpi-purple (Chat/IA) · tools antigos → novo lugar (nenhum handler perdido):
+  | Tool antigo | Novo lugar |
+  |---|---|
+  | Search (Ctrl+F) | ⋮ → "Buscar na conversa" |
+  | Radar (Objeções) | ⋮ → "Monitoramento de Objeções" |
+  | GraduationCap (Universitários) | ⋮ → "Ajuda dos Universitários" |
+  | VisionIcon | ⋮ → "Visão" |
+  | FileText (Resumo) | ⋮ → "Resumo da conversa" (só se `onGenerateSummary` existir) |
+  | Info (Detalhes do contato) | ⋮ → "Detalhes do contato" (só se `onToggleDetails` existir) |
+  | ArrowRight (Transferir, botão dedicado) | ⋮ → "Transferir" (handler preservado, `onOpenTransfer`) + acessível também pelo chip do agente atribuído |
+  | ChatAssignedBar ("Atribuído a: X · Transferir") | chip inline ao lado do nome (`h-5` avatar 14+nome, clique → transferir) — barra não é mais renderizada em `ChatPanel.tsx` (import/uso removidos, arquivo mantido) |
+  | — (novo) | Favoritar: estrela ao lado do nome, wired a `useConversationActions` via `RealtimeInboxView.tsx` → `ChatPanel` → `ChatPanelHeader` |
+  | — (novo) | "Adicionar participante": `UserPlus` abre Popover com `RealtimeCollaboration` (viewers + transferir + notas internas) — componente já existia mas não estava no header em produção |
+  Popup/Tag/Agendar/Resolver/Arquivar/Encerrar permanecem no ⋮ (já estavam no dropdown antigo, preservados).
 ## CP3 Input      [ ] sha= · shot=fid-03-input.png · chips=_ input=_ enviar=_ · ferramentas preservadas: N/N (lista)
 ## CP4 Primitivos [ ] sha= · testes: KpiStrip _ SectionCard _ TaskCard _
 ## CP5 Abas       [ ] sha= · shots=fid-05-{tasks,notes,ia,crm,files,history,chat}.png · por aba, o que ainda difere: _ · nomes inventados=0 · cores literais=0 · bundle Δ=_

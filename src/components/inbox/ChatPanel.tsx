@@ -17,7 +17,6 @@ import { useAmbientColor } from '@/hooks/ui/useAmbientColor';
 import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
-import { ChatAssignedBar } from './chat/ChatAssignedBar';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
 import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
@@ -48,6 +47,8 @@ interface ChatPanelProps {
   /** Texto vindo da aba IA ("Usar resposta") — aplicado ao input e consumido uma única vez. */
   pendingDraft?: string | null;
   onDraftConsumed?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -86,7 +87,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -224,6 +225,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             onVoiceChange={setVoiceId} onSpeedChange={setSpeed} onBack={onBack}
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}
             onCloseConversation={() => openDialog('closeDialog')}
+            isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}
             onSelectSuggestion={(text) => handlers.setInputValue(text)} />
@@ -235,7 +237,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onHighlightChange={(ids, activeId) => { setHighlightedMessageIds(ids); setActiveHighlightId(activeId); }}
           onSearchQueryChange={setSearchQuery} />
 
-        <ChatAssignedBar conversation={conversation} onOpenTransfer={() => openDialog('transferDialog')} />
+        {/* ChatAssignedBar removida da renderização — conteúdo migrou para o chip
+            de agente + estrela em ChatPanelHeader (fase 2, redesign carvão). */}
 
         <Suspense fallback={null}>
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
