@@ -207,6 +207,9 @@ if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true ]]; then
 fi
 
 psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" >/dev/null
+# Reaplicacao deliberada: prova idempotencia estrutural sobre o estado ja
+# canonico antes de executar os cenarios comportamentais.
+psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" >/dev/null
 
 structure="$(psql_test -At <<'SQL'
 SELECT concat_ws('|',

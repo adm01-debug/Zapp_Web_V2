@@ -85,7 +85,12 @@ WITH target_relation AS (
       JOIN target_relation relation ON relation.oid=policy.polrelid
       WHERE policy.polname='talkx_template_versions_select'
         AND policy.polcmd='r'
+        AND policy.polpermissive
         AND policy.polroles=ARRAY['authenticated'::regrole::oid]
+        AND policy.polwithcheck IS NULL
+        AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%auth.uid() IS NOT NULL%'
+        AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%talkx_templates%'
+        AND pg_get_expr(policy.polqual, policy.polrelid) LIKE '%template_id%'
     ),
     'constraint_count', (
       SELECT count(*) FROM pg_constraint constraint_row
@@ -152,24 +157,32 @@ WITH target_relation AS (
       SELECT count(*) FROM pg_trigger trigger_row
       JOIN target_relation relation ON relation.oid=trigger_row.tgrelid
       WHERE trigger_row.tgname='trg_guard_talkx_template_version_immutable'
+        AND trigger_row.tgtype=31
+        AND trigger_row.tgenabled='O'
         AND NOT trigger_row.tgisinternal
     ),
     'template_update_guard_count', (
       SELECT count(*) FROM pg_trigger trigger_row
       WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
         AND trigger_row.tgname='trg_guard_talkx_template_update'
+        AND trigger_row.tgtype=19
+        AND trigger_row.tgenabled='O'
         AND NOT trigger_row.tgisinternal
     ),
     'template_validation_trigger_count', (
       SELECT count(*) FROM pg_trigger trigger_row
       WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
         AND trigger_row.tgname='trg_validate_talkx_template_input'
+        AND trigger_row.tgtype=23
+        AND trigger_row.tgenabled='O'
         AND NOT trigger_row.tgisinternal
     ),
     'template_timestamp_trigger_count', (
       SELECT count(*) FROM pg_trigger trigger_row
       WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
         AND trigger_row.tgname='update_talkx_templates_updated_at'
+        AND trigger_row.tgtype=19
+        AND trigger_row.tgenabled='O'
         AND trigger_row.tgfoid=(
           SELECT oid FROM pg_proc
           WHERE pronamespace='public'::regnamespace

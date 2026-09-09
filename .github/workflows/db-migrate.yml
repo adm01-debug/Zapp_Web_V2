@@ -573,10 +573,12 @@ jobs:
                 && proof.immutable_trigger_count === 0
                 && proof.template_update_guard_count === 0
                 && proof.template_validation_trigger_count === 0
+                && proof.template_timestamp_trigger_count === 0
                 && proof.anon_any_access === true
                 && proof.authenticated_select === true
                 && proof.authenticated_any_mutation === true
                 && proof.authenticated_rpc_execute === false
+                && proof.authenticated_internal_function_execute_count === 0
               : base
                 && proof.history_description_column_count === 1
                 && proof.policy_count === 1
