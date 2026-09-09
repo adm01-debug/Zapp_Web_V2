@@ -57,6 +57,13 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessa
     media_type: null,
     media_meta: null,
     ptt: null,
+    client_message_id: null,
+    delivery_attempt_count: 0,
+    delivery_claim_expires_at: null,
+    delivery_claim_token: null,
+    delivery_claimed_at: null,
+    delivery_claimed_by: null,
+    delivery_last_claim_token: null,
     reply_to_id: null,
   };
 }
