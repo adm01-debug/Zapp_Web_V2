@@ -12,7 +12,11 @@ interface UseChatPanelHandlersOptions {
   contactId: string;
   contactPhone: string;
   instanceName?: string;
-  onSendMessage: (content: string) => void;
+  /**
+   * Envia a mensagem e resolve somente depois que o transporte a confirmou.
+   * O retorno síncrono continua aceito para preservar integrações legadas.
+   */
+  onSendMessage: (content: string) => void | Promise<void>;
   editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<any>;
   applySignature: (text: string) => string;
   handleTypingStart: () => void;
@@ -73,32 +77,51 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const currentInput = inputValueRef.current;
     if (!currentInput.trim() || isSendingRef.current) return;
 
+    // O ref fecha a janela entre dois eventos disparados antes do próximo render.
+    // Confiar apenas no state permitiria duas chamadas concorrentes neste intervalo.
+    isSendingRef.current = true;
+    setIsSending(true);
+
     const currentEditing = editingMessageRef.current;
     if (currentEditing) {
       const externalId = currentEditing.external_id;
       const contactJid = contactPhone ? `${contactPhone}@s.whatsapp.net` : '';
-      setIsSending(true);
       try {
         if (instanceName && externalId && contactJid) {
           await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
         }
-        await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        const { error } = await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        if (error) throw error;
         toast({ title: '✏️ Mensagem editada', description: 'A mensagem foi atualizada com sucesso.' });
+        setEditingMessage(null);
+        if (inputValueRef.current === currentInput) {
+          inputValueRef.current = '';
+          setInputValue('');
+        }
       } catch (err) {
         log.error('Failed to edit message:', err);
         toast({ title: 'Erro ao editar', description: 'Não foi possível editar a mensagem.', variant: 'destructive' });
-      } finally { setIsSending(false); }
-      setEditingMessage(null); setInputValue('');
+      } finally {
+        isSendingRef.current = false;
+        setIsSending(false);
+      }
       return;
     }
 
-    const messageContent = applySignature(currentInput.trim());
     const wasReply = replyToMessageRef.current;
-    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
     try {
-      onSendMessage(messageContent);
+      const messageContent = applySignature(currentInput.trim());
+      await onSendMessage(messageContent);
+
+      // Não apaga texto novo digitado enquanto o envio estava em andamento.
+      if (inputValueRef.current === currentInput) {
+        inputValueRef.current = '';
+        setInputValue('');
+        handleTypingStop();
+      }
+      setReplyToMessage(null);
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -109,9 +132,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      setInputValue(messageContent);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
-    } finally { setIsSending(false); }
+    } finally {
+      isSendingRef.current = false;
+      setIsSending(false);
+    }
   }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
@@ -130,9 +155,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (slashCommandsOpen && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
     if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); openDialog('globalSearch'); }
-    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSetActiveTool('chatSearch'); }
+    // Ctrl/Cmd+F pertence ao listener único do ChatPanel. Tratá-lo também aqui
+    // faria o mesmo evento alternar a busca duas vezes ao partir do textarea.
     if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
-  }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
+  }, [handleSend, openDialog, closeDialog]);
 
   const handleSlashCommand = useCallback((command: SlashCommand, subCommand?: string) => {
     closeDialog('slashCommands'); setInputValue('');
