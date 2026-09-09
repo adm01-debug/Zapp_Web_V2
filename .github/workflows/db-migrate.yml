@@ -350,6 +350,59 @@ jobs:
                   'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
                 ))::text FROM payload;")
               ;;
+            20260909120000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+                WITH expected_functions AS (
+                  SELECT p.oid, p.proname, p.prosecdef,
+                         COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path
+                  FROM pg_proc p
+                  JOIN pg_namespace n ON n.oid = p.pronamespace
+                  WHERE n.nspname='public'
+                    AND p.proname IN (
+                      'merge_contacts_atomic', 'upsert_crm_contact_link_guarded',
+                      'cleanup_crm_sync_outbox'
+                    )
+                ), payload AS (
+                  SELECT jsonb_build_object(
+                    'server_major', current_setting('server_version_num')::int / 10000,
+                    'database', current_database(),
+                    'table_count', (
+                      SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+                      WHERE n.nspname='public' AND c.relname IN ('crm_contact_links','crm_sync_outbox')
+                        AND c.relkind IN ('r','p')
+                    ),
+                    'constraint_count', (
+                      SELECT count(*) FROM pg_constraint
+                      WHERE conrelid='public.crm_sync_outbox'::regclass
+                        AND conname IN (
+                          'crm_sync_outbox_payload_size','crm_sync_outbox_external_ids_bounded',
+                          'crm_sync_outbox_lease_state','crm_sync_outbox_success_state',
+                          'crm_sync_outbox_phone_state'
+                        )
+                    ),
+                    'validated_constraint_count', (
+                      SELECT count(*) FROM pg_constraint
+                      WHERE conrelid='public.crm_sync_outbox'::regclass AND convalidated
+                        AND conname IN (
+                          'crm_sync_outbox_payload_size','crm_sync_outbox_external_ids_bounded',
+                          'crm_sync_outbox_lease_state','crm_sync_outbox_success_state',
+                          'crm_sync_outbox_phone_state'
+                        )
+                    ),
+                    'function_count', (SELECT count(*) FROM expected_functions),
+                    'safe_function_count', (
+                      SELECT count(*) FROM expected_functions WHERE prosecdef AND safe_path
+                    ),
+                    'flag_count', (SELECT count(*) FROM public.feature_flags WHERE key='crm.integration'),
+                    'flag_enabled', COALESCE((
+                      SELECT enabled FROM public.feature_flags WHERE key='crm.integration'
+                    ), false)
+                  ) AS value
+                )
+                SELECT (value || jsonb_build_object(
+                  'runtime_sha256', encode(sha256(convert_to(value::text, 'UTF8')), 'hex')
+                ))::text FROM payload;")
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -414,6 +467,19 @@ jobs:
                 && proof.old_complete_count === 0
                 && proof.new_fail_count === 1
                 && proof.state_constraint_count === 3;
+          } else if (process.env.TARGET_VERSION === '20260909120000') {
+            const base = proof.table_count === 2
+              && proof.constraint_count === 5
+              && proof.flag_enabled === false;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? base
+                && proof.function_count === 0
+                && proof.flag_count === 0
+              : base
+                && proof.validated_constraint_count === 5
+                && proof.function_count === 3
+                && proof.safe_function_count === 3
+                && proof.flag_count === 1;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -596,6 +662,93 @@ jobs:
           if (!(proof.lease_column === true && proof.old_complete_absent === true
             && proof.new_complete_service === true && proof.new_complete_auth === false
             && proof.contact_fk_delete_action === 'n' && proof.state_constraints === 3)) process.exit(1);
+          NODE
+
+      - name: Validar rollout seguro, ACL e funcoes atomicas do CRM
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909120000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            WITH expected_functions AS (
+              SELECT p.oid, p.proname, p.prosecdef,
+                     COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path
+              FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+              WHERE n.nspname='public' AND p.proname IN (
+                'merge_contacts_atomic','upsert_crm_contact_link_guarded','cleanup_crm_sync_outbox'
+              )
+            )
+            SELECT jsonb_build_object(
+              'validated_constraints', (
+                SELECT count(*) FROM pg_constraint
+                WHERE conrelid='public.crm_sync_outbox'::regclass AND convalidated
+                  AND conname IN (
+                    'crm_sync_outbox_payload_size','crm_sync_outbox_external_ids_bounded',
+                    'crm_sync_outbox_lease_state','crm_sync_outbox_success_state',
+                    'crm_sync_outbox_phone_state'
+                  )
+              ),
+              'safe_functions', (SELECT count(*) FROM expected_functions WHERE prosecdef AND safe_path),
+              'auth_links_select', has_table_privilege('authenticated','public.crm_contact_links','SELECT'),
+              'auth_links_mutate',
+                has_table_privilege('authenticated','public.crm_contact_links','INSERT') OR
+                has_table_privilege('authenticated','public.crm_contact_links','UPDATE') OR
+                has_table_privilege('authenticated','public.crm_contact_links','DELETE') OR
+                has_table_privilege('authenticated','public.crm_contact_links','TRUNCATE'),
+              'anon_links_access',
+                has_table_privilege('anon','public.crm_contact_links','SELECT') OR
+                has_table_privilege('anon','public.crm_contact_links','INSERT') OR
+                has_table_privilege('anon','public.crm_contact_links','UPDATE') OR
+                has_table_privilege('anon','public.crm_contact_links','DELETE') OR
+                has_table_privilege('anon','public.crm_contact_links','TRUNCATE'),
+              'auth_merge', has_function_privilege(
+                'authenticated','public.merge_contacts_atomic(uuid,uuid[],jsonb)','EXECUTE'
+              ),
+              'anon_merge', has_function_privilege(
+                'anon','public.merge_contacts_atomic(uuid,uuid[],jsonb)','EXECUTE'
+              ),
+              'service_guarded_link', has_function_privilege(
+                'service_role','public.upsert_crm_contact_link_guarded(uuid,text,text,text)','EXECUTE'
+              ),
+              'auth_guarded_link', has_function_privilege(
+                'authenticated','public.upsert_crm_contact_link_guarded(uuid,text,text,text)','EXECUTE'
+              ),
+              'service_cleanup', has_function_privilege(
+                'service_role','public.cleanup_crm_sync_outbox(integer,integer,integer)','EXECUTE'
+              ),
+              'auth_cleanup', has_function_privilege(
+                'authenticated','public.cleanup_crm_sync_outbox(integer,integer,integer)','EXECUTE'
+              ),
+              'delete_trigger_count', (
+                SELECT count(*) FROM pg_trigger
+                WHERE tgrelid='public.contacts'::regclass
+                  AND tgname='trg_redact_crm_sync_on_contact_delete' AND NOT tgisinternal
+              ),
+              'runtime_flag_disabled', (
+                SELECT enabled IS FALSE FROM public.feature_flags WHERE key='crm.integration'
+              )
+            )::text;
+          SQL
+          )
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.validated_constraints === 5
+            && proof.safe_functions === 3
+            && proof.auth_links_select === true
+            && proof.auth_links_mutate === false
+            && proof.anon_links_access === false
+            && proof.auth_merge === true
+            && proof.anon_merge === false
+            && proof.service_guarded_link === true
+            && proof.auth_guarded_link === false
+            && proof.service_cleanup === true
+            && proof.auth_cleanup === false
+            && proof.delete_trigger_count === 1
+            && proof.runtime_flag_disabled === true;
+          if (!ok) process.exit(1);
           NODE
 
       - name: Provar paridade integral apos aplicacao
