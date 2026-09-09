@@ -72,6 +72,9 @@ jobs:
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
 
+      - name: 🔒 Verify PR workflow secret boundary
+        run: node scripts/ci/check-pr-workflow-secrets.mjs
+
       - name: 🧾 Verify Edge deployment manifest freshness
         run: node scripts/edge-deploy/generate-manifest.mjs --check
 
@@ -254,7 +257,7 @@ jobs:
       - name: 📬 Open or update audit report PR
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          token: ${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}
+          token: ${{ github.token }}
           base: main
           branch: automation/audit-report
           delete-branch: true
