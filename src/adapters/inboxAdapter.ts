@@ -1,6 +1,24 @@
 import { Message, Conversation, ConversationContact, MessageRow } from '@/types/chat';
 import { RealtimeMessage, ConversationWithMessages, ConversationContact as RealtimeContact } from '@/hooks/chat/useRealtimeMessages';
 
+function parseLocation(content: string): Message['location'] | undefined {
+  try {
+    const value = JSON.parse(content) as Record<string, unknown>;
+    if (typeof value.latitude !== 'number' || !Number.isFinite(value.latitude) || value.latitude < -90 || value.latitude > 90 ||
+        typeof value.longitude !== 'number' || !Number.isFinite(value.longitude) || value.longitude < -180 || value.longitude > 180) {
+      return undefined;
+    }
+    return {
+      latitude: value.latitude,
+      longitude: value.longitude,
+      ...(typeof value.name === 'string' ? { name: value.name } : {}),
+      ...(typeof value.address === 'string' ? { address: value.address } : {}),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function mapMessageRowToMessage(row: MessageRow): Message {
   return {
     ...row,
@@ -13,6 +31,7 @@ export function mapMessageRowToMessage(row: MessageRow): Message {
     isEdited: !!(row as { is_edited?: boolean }).is_edited,
     is_deleted: row.is_deleted ?? false,
     external_id: row.external_id || undefined,
+    ...(row.message_type === 'location' ? { location: parseLocation(row.content) } : {}),
   };
 }
 
@@ -42,6 +61,7 @@ export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?
     is_deleted: rm.is_deleted ?? false,
     external_id: rm.external_id || undefined,
     created_at: rm.created_at,
+    ...(rm.message_type === 'location' ? { location: parseLocation(rm.content) } : {}),
   };
 }
 

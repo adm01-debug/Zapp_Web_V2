@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Message, MessageInsert } from '@/types/chat';
 import { getLogger } from '@/lib/logger';
+import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
 
 const log = getLogger('ChatService');
 
@@ -41,16 +42,23 @@ export class ChatService {
   }
 
   static async sendMessage(payload: MessageInsert) {
-    const result = await supabase.from('messages').insert(payload).select().single();
-    // Fire-and-forget link preview enrichment (only for text content without a preview already)
-    const row = result.data as { id?: string; content?: string | null; link_preview?: unknown } | null;
-    if (
-      row?.id &&
-      typeof row.content === 'string' &&
-      row.content.length > 0 &&
-      !row.link_preview
-    ) {
-      void enrichLinkPreview(row.id, row.content);
+    if (payload.sender !== 'agent' || !payload.contact_id || !payload.content) {
+      throw new Error('ChatService.sendMessage aceita apenas mensagens de agente com contato e conteúdo.');
+    }
+    const messageType = payload.message_type as OutboundMessageType;
+    if (!['text', 'image', 'audio', 'video', 'document', 'sticker', 'location'].includes(messageType)) {
+      throw new Error(`Tipo de mensagem não suportado pelo envio seguro: ${payload.message_type}`);
+    }
+    const result = await sendOutboundMessage({
+      contactId: payload.contact_id,
+      content: payload.content,
+      messageType,
+      mediaUrl: payload.media_url,
+      replyToId: payload.reply_to_id,
+      whatsappConnectionId: payload.whatsapp_connection_id,
+    });
+    if (messageType === 'text' && payload.content.length > 0 && !payload.link_preview) {
+      void enrichLinkPreview(result.id, payload.content);
     }
     return result;
   }

@@ -22,6 +22,14 @@ const enqueueBody = migration.slice(
 const closeBody = migration.slice(
   migration.indexOf('CREATE OR REPLACE FUNCTION public.close_conversation_atomic'),
 );
+const richMigration = readFileSync(
+  new URL('../../supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql', import.meta.url),
+  'utf8',
+);
+const phoneNormalizationMigration = readFileSync(
+  new URL('../../supabase/migrations/20260909270000_normalize_atomic_delivery_phone.sql', import.meta.url),
+  'utf8',
+);
 
 test('message delivery phase 1 remains additive and deployment-order safe', () => {
   assert.doesNotMatch(executableMigration, /DROP\s+POLICY/i);
@@ -58,4 +66,40 @@ test('message delivery phase 1 remains additive and deployment-order safe', () =
 test('offline DB guard executes the PostgreSQL 17 behavioral harness', () => {
   assert.match(dbGuard, /message-delivery-phase1-behavior\.test\.sh/);
   assert.match(dbGuard, /MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:\s*postgres:17-alpine/);
+});
+
+test('rich outbound enqueue keeps provider payload immutable and non-service callable', () => {
+  assert.match(richMigration, /CREATE OR REPLACE FUNCTION public\.enqueue_rich_outbound_message/);
+  assert.match(richMigration, /pg_advisory_xact_lock/);
+  assert.ok(
+    richMigration.indexOf('public.is_contact_visible_to_user') < richMigration.indexOf('WHERE message.contact_id = p_contact_id'),
+    'rich idempotency replay must authorize before probing a message key',
+  );
+  assert.match(richMigration, /outbound_delivery_payload/);
+  assert.match(richMigration, /p_message_type NOT IN \('poll', 'contact'\)/);
+  assert.match(richMigration, /p_message_type IS NULL/);
+  assert.match(richMigration, /jsonb_typeof\(v_payload->'selectableCount'\) <> 'number'/);
+  assert.match(richMigration, /regexp_replace\(v_payload->>'phoneNumber', '\\D', '', 'g'\)/);
+  assert.match(richMigration, /REVOKE ALL ON FUNCTION public\.enqueue_rich_outbound_message[\s\S]*FROM PUBLIC, anon, service_role/);
+  assert.match(richMigration, /GRANT EXECUTE ON FUNCTION public\.enqueue_rich_outbound_message[\s\S]*TO authenticated/);
+});
+
+test('base and rich enqueue serialize the same idempotency key and use a live connection', () => {
+  const locationMigration = readFileSync(
+    new URL('../../supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql', import.meta.url),
+    'utf8',
+  );
+  for (const migrationText of [locationMigration, richMigration]) {
+    assert.match(migrationText, /pg_advisory_xact_lock\(\s*hashtextextended\(p_contact_id::text \|\| ':' \|\| p_client_message_id::text, 0\)/);
+    assert.match(migrationText, /connection\.status = 'connected'/);
+    assert.match(migrationText, /selected_whatsapp_connection_unavailable/);
+  }
+  assert.match(locationMigration, /p_caption text DEFAULT NULL/);
+  assert.match(locationMigration, /DROP FUNCTION public\.enqueue_outbound_message\(uuid, uuid, text, text, text, uuid, uuid\)/);
+});
+
+test('delivery claim normalizes formatted contact phones inside the lease transaction', () => {
+  assert.match(phoneNormalizationMigration, /regexp_replace\(contact\.phone, '\\D', '', 'g'\)/);
+  assert.match(phoneNormalizationMigration, /REVOKE ALL ON FUNCTION public\.claim_outbound_message/);
+  assert.match(phoneNormalizationMigration, /TO service_role/);
 });
