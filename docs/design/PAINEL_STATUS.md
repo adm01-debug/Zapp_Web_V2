@@ -108,7 +108,7 @@
 
 - Commit `feat(painel): fase 4 — fidelidade (abas no topo, header, seções, tiles coloridos)` (`2114e72a`). Push `--no-verify`.
 - Screenshots em `/workspace/qa/out/`: `painel-04-before.png` (estado pré-fase-4), `painel-04-contact.png`, `painel-04-history.png`, `painel-04-tasks.png`, `painel-04-notes.png`, `painel-04-files.png` — todos 1672×941, conta QA real (`qa.visual@promobrindes.com.br`), servidor local (`vite --port 8090`, worktree isolado do processo da sessão irmã).
-- PR: `feat(inbox): painel direito com 5 abas — fidelidade carvão` → `main`, **não merge**.
+- PR: `feat(inbox): painel direito com 5 abas — fidelidade carvão` → `main`, **não merge**. https://github.com/adm01-debug/Zapp_Web_V2/pull/299
 
 ### O que ainda difere da referência (honesto)
 1. **Cards internos das 4 abas secundárias** (Histórico/Tarefas/Notas/Arquivos) não seguem o estilo "tile 24 + título 14/600" do §5.3 — só o container foi ajustado (`px-4 pb-4`). Os componentes de conteúdo pertencem à sessão irmã (`redesign/inbox-fidelidade-carvao`) ou ao #286 e não estão em `contact-details/**`.
