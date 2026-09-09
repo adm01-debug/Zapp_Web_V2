@@ -92,6 +92,47 @@ export function useTalkXTemplates() {
   };
 
 
+
+  const fetchVersionHistory = async (templateId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as unknown as any)
+      .from('talkx_template_versions')
+      .select('id,version_number,name,content,category,status,media_url,media_type,tags,custom_variables,created_at')
+      .eq('template_id', templateId)
+      .order('version_number', { ascending: false })
+      .limit(10);
+    return data ?? [];
+  };
+
+  const saveVersionSnapshot = async (templateId: string, payload: {
+    name: string; content: string; category: string; status: string;
+    media_url?: string | null; media_type?: string | null;
+    tags: string[]; custom_variables: string[];
+  }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: maxRow } = await (supabase as unknown as any)
+      .from('talkx_template_versions')
+      .select('version_number')
+      .eq('template_id', templateId)
+      .order('version_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const nextVersion = (maxRow?.version_number ?? 0) + 1;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as unknown as any).from('talkx_template_versions').insert({
+      template_id: templateId,
+      version_number: nextVersion,
+      name: payload.name, content: payload.content, category: payload.category,
+      status: payload.status,
+      media_url: payload.media_url ?? null,
+      media_type: payload.media_type ?? null,
+      tags: payload.tags, custom_variables: payload.custom_variables,
+      saved_by: profileRow?.id ?? null,
+    });
+  };
+
   const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone }: {
     templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string;
   }) => {
@@ -114,6 +155,8 @@ export function useTalkXTemplates() {
     error: query.error as Error | null,
     refetch: query.refetch,
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
-    testTemplate
+    testTemplate,
+    fetchVersionHistory,
+    saveVersionSnapshot,
   };
 }

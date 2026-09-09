@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle,
+  X, Check, Copy, Bold, Italic, List, Smile, Hash, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, saveVersionSnapshot } = useTalkXTemplates();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Inicializa campos do template sendo editado
@@ -46,6 +46,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
+  const [versions, setVersions] = useState<Array<{
+    id: string; version_number: number; name: string; content: string;
+    category: string; status: string; media_url: string|null; media_type: string|null;
+    tags: string[]; custom_variables: string[]; created_at: string;
+  }>>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
@@ -75,7 +82,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       custom_variables: eCustomVars,
     };
     try {
-      if (activeTemplateId) await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
+      if (activeTemplateId) {
+        await saveVersionSnapshot(activeTemplateId, { name: eName, content: eContent, category: eCat, status: eStatus, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, custom_variables: eCustomVars });
+        await updateTemplate.mutateAsync({ id: activeTemplateId, ...payload });
+      }
       else await createTemplate.mutateAsync(payload);
       onClose();
     } finally { setSaving(false); }
@@ -122,6 +132,25 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     } finally {
       setTesting(false);
     }
+  };
+
+
+  /** E46: usa hook para buscar historico de versoes */
+  const fetchVersions = async (templateId: string) => {
+    setLoadingVersions(true);
+    const data = await fetchVersionHistory(templateId);
+    setVersions(data);
+    setLoadingVersions(false);
+  };
+
+  /** E46: restaura campos de uma versao anterior */
+  const restoreVersion = (v: typeof versions[0]) => {
+    if (!confirm('Restaurar esta versao? Os campos atuais serao substituidos.')) return;
+    setEName(v.name); setEDesc(''); setECat(v.category); setEContent(v.content);
+    setEStatus(v.status as 'draft'|'review'|'approved');
+    setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
+    setETags(v.tags ?? []); setECustomVars(v.custom_variables ?? []);
+    setShowVersions(false);
   };
 
   const libFiltered = templates.filter((t) => {
@@ -394,6 +423,28 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             mediaType={eHasMedia ? eMediaType : null}
           />
         </RailCard>
+        <div className="rounded-2xl bg-card border border-border/70 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <History className="w-3.5 h-3.5 text-foreground-secondary" />
+              <p className="text-[12.5px] font-semibold text-foreground">Historico</p>
+            </div>
+            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>
+          </div>
+          {showVersions && (
+            <div className="space-y-1">
+              {loadingVersions ? <p className="text-[11px] text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-[11px] text-muted-foreground">Nenhuma versao salva.</p> : versions.map((v) => (
+                <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {editing && (
           <RailCard icon={BarChart3} title="Desempenho" subtitle={`${fmtInt(editing.use_count)} usos totais`}>
             <div className="grid grid-cols-2 gap-2 text-center">
