@@ -6,13 +6,14 @@ import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from 
 import { SlashCommand } from '../SlashCommands';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
 
 interface UseChatPanelHandlersOptions {
   conversationId: string;
   contactId: string;
   contactPhone: string;
   instanceName?: string;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => Promise<void> | void;
   editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<any>;
   applySignature: (text: string) => string;
   handleTypingStart: () => void;
@@ -24,7 +25,7 @@ interface UseChatPanelHandlersOptions {
 
 export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const {
-    contactPhone, instanceName, onSendMessage,
+    contactPhone, instanceName, onSendMessage, contactId,
     editMessageApi, applySignature, handleTypingStart, handleTypingStop,
     openDialog, closeDialog, handleSetActiveTool,
   } = opts;
@@ -98,7 +99,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
     try {
-      onSendMessage(messageContent);
+      await onSendMessage(messageContent);
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -155,7 +156,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [closeDialog, openDialog, handleSetActiveTool]);
 
-  const handleSendProduct = useCallback((product: ExternalProduct) => {
+  const handleSendProduct = useCallback(async (product: ExternalProduct) => {
     const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);
     const lines = [
       `📦 *${product.name}*`, product.brand ? `🏷️ Marca: ${product.brand}` : '', `💰 Preço: ${price}`,
@@ -168,7 +169,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       (product.short_description || product.description) ? `\n${(product.short_description || product.description || '').slice(0, 300)}` : '',
       product.primary_image_url ? `\n🔗 ${product.primary_image_url}` : '',
     ].filter(Boolean).join('\n');
-    onSendMessage(lines);
+    await onSendMessage(lines);
     toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
   }, [onSendMessage]);
 
@@ -180,10 +181,29 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
   }, []);
 
-  const handleSendLocation = useCallback((location: LocationMessage) => {
-    const liveUntilDate = location.liveUntil instanceof Date ? location.liveUntil : location.liveUntil ? new Date(location.liveUntil) : null;
-    toast({ title: 'Localização enviada!', description: location.isLive ? `Localização em tempo real por ${liveUntilDate ? Math.round((liveUntilDate.getTime() - Date.now()) / 60000) : 15} minutos` : location.name || 'Localização compartilhada' });
-  }, []);
+  const handleSendLocation = useCallback(async (location: LocationMessage) => {
+    if (location.isLive) {
+      toast({ title: 'Localização em tempo real indisponível', description: 'Envie uma localização pontual ou configure um canal que suporte atualização ao vivo.', variant: 'destructive' });
+      throw new Error('Live location is not supported by the configured delivery provider.');
+    }
+    try {
+      await sendOutboundMessage({
+        contactId,
+        content: JSON.stringify({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          ...(location.name ? { name: location.name } : {}),
+          ...(location.address ? { address: location.address } : {}),
+        }),
+        messageType: 'location',
+      });
+      toast({ title: 'Localização enviada!', description: location.name || 'Localização compartilhada' });
+    } catch (error) {
+      log.error('Failed to send location:', error);
+      toast({ title: 'Erro ao enviar localização', description: 'Tente novamente.', variant: 'destructive' });
+      throw error;
+    }
+  }, [contactId]);
 
   const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<void>) => {
     if (onSendAudio) {
