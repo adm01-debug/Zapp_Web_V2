@@ -22,7 +22,8 @@ export interface TalkXTemplate {
   creator?: { name: string | null } | null;
 }
 
-export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status'>>;
+export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
+type TemplateUpdateInput = TemplateInput & { id: string; expectedUpdatedAt: string };
 
 export function useTalkXTemplates() {
   const qc = useQueryClient();
@@ -55,13 +56,13 @@ export function useTalkXTemplates() {
   });
 
   const updateTemplate = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<TemplateInput> & { id: string }) => {
+    mutationFn: async ({ id, expectedUpdatedAt, ...updates }: TemplateUpdateInput) => {
       const current = query.data?.find((template) => template.id === id);
       if (!current) throw new Error('Template desatualizado; recarregue e tente novamente');
       const next = { ...current, ...updates };
       const { data, error } = await supabase.rpc('update_talkx_template_with_snapshot', {
         p_template_id: id,
-        p_expected_updated_at: current.updated_at,
+        p_expected_updated_at: expectedUpdatedAt,
         p_name: next.name,
         p_description: next.description,
         p_category: next.category,
@@ -109,8 +110,8 @@ export function useTalkXTemplates() {
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
-  const registerUse = async (id: string, current: number) => {
-    await fromTable('talkx_templates').update({ use_count: current + 1 }).eq('id', id);
+  const registerUse = async (id: string, _current: number) => {
+    await supabase.rpc('increment_talkx_template_use', { p_template_id: id });
     invalidate();
   };
 

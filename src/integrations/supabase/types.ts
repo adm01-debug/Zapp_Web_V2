@@ -6357,6 +6357,7 @@ export type Database = {
           content: string
           created_at: string
           custom_variables: string[]
+          description: string | null
           id: string
           media_type: string | null
           media_url: string | null
@@ -6372,6 +6373,7 @@ export type Database = {
           content: string
           created_at?: string
           custom_variables?: string[]
+          description?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -6387,6 +6389,7 @@ export type Database = {
           content?: string
           created_at?: string
           custom_variables?: string[]
+          description?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -8432,6 +8435,10 @@ export type Database = {
           p_signature?: string
         }
         Returns: boolean
+      }
+      increment_talkx_template_use: {
+        Args: { p_template_id: string }
+        Returns: number
       }
       update_talkx_template_with_snapshot: {
         Args: {

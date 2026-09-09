@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL('../../src/hooks/integrations/useTalkXTemplates.ts', import.meta.url),
   'utf8',
 );
+const component = readFileSync(
+  new URL('../../src/components/talkx/TalkXTemplates.tsx', import.meta.url),
+  'utf8',
+);
 
 const updateMutation = source.slice(
   source.indexOf('const updateTemplate = useMutation'),
@@ -14,7 +18,14 @@ const updateMutation = source.slice(
 
 test('Talk X editor updates only through the atomic snapshot RPC', () => {
   assert.match(updateMutation, /rpc\('update_talkx_template_with_snapshot'/);
-  assert.match(updateMutation, /p_expected_updated_at:\s*current\.updated_at/);
+  assert.match(updateMutation, /p_expected_updated_at:\s*expectedUpdatedAt/);
   assert.match(updateMutation, /updated_at:\s*persisted\.updated_at/);
   assert.doesNotMatch(updateMutation, /fromTable\('talkx_templates'\)\.update/);
+  assert.match(component, /expectedUpdatedAt:\s*editing\.updated_at/);
+  assert.match(component, /custom_variables:\s*editing\?\.custom_variables/);
+});
+
+test('Talk X usage counter uses its atomic RPC instead of table UPDATE', () => {
+  assert.match(source, /rpc\('increment_talkx_template_use'/);
+  assert.doesNotMatch(source, /fromTable\('talkx_templates'\)\.update/);
 });

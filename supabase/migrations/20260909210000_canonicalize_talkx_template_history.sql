@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.talkx_template_versions (
   template_id uuid NOT NULL REFERENCES public.talkx_templates(id) ON DELETE CASCADE,
   version_number integer NOT NULL,
   name text NOT NULL,
+  description text,
   content text NOT NULL,
   category text NOT NULL,
   status text NOT NULL DEFAULT 'draft',
@@ -29,6 +30,7 @@ ALTER TABLE public.talkx_template_versions
   ADD COLUMN IF NOT EXISTS template_id uuid,
   ADD COLUMN IF NOT EXISTS version_number integer,
   ADD COLUMN IF NOT EXISTS name text,
+  ADD COLUMN IF NOT EXISTS description text,
   ADD COLUMN IF NOT EXISTS content text,
   ADD COLUMN IF NOT EXISTS category text,
   ADD COLUMN IF NOT EXISTS status text DEFAULT 'draft',
@@ -249,11 +251,11 @@ BEGIN
   WHERE history.template_id = p_template_id;
 
   INSERT INTO public.talkx_template_versions (
-    template_id, version_number, name, content, category, status,
+    template_id, version_number, name, description, content, category, status,
     media_url, media_type, tags, custom_variables, saved_by, created_at
   ) VALUES (
-    v_template.id, v_version_number, v_template.name, v_template.content,
-    v_template.category, v_template.status, v_template.media_url,
+    v_template.id, v_version_number, v_template.name, v_template.description,
+    v_template.content, v_template.category, v_template.status, v_template.media_url,
     v_template.media_type, COALESCE(v_template.tags, '{}'::text[]),
     COALESCE(v_template.custom_variables, '{}'::text[]),
     v_actor_profile_id, v_updated_at
@@ -285,6 +287,81 @@ REVOKE ALL ON FUNCTION public.update_talkx_template_with_snapshot(
 GRANT EXECUTE ON FUNCTION public.update_talkx_template_with_snapshot(
   uuid, timestamptz, text, text, text, text, text, text, text[], text, text[]
 ) TO authenticated;
+
+-- The usage counter is a separate atomic operation. Keeping it out of the
+-- content snapshot RPC avoids noisy history while still closing direct UPDATE.
+CREATE OR REPLACE FUNCTION public.increment_talkx_template_use(
+  p_template_id uuid
+) RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_use_count integer;
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE public.talkx_templates AS template
+  SET use_count = template.use_count + 1
+  WHERE template.id = p_template_id
+  RETURNING template.use_count INTO v_use_count;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_template_not_found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN v_use_count;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.increment_talkx_template_use(uuid)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.increment_talkx_template_use(uuid)
+  TO authenticated;
+
+-- Enforce both canonical update paths at the table boundary. SECURITY INVOKER
+-- preserves the true SQL current_user: SECURITY DEFINER RPCs execute as their
+-- owner, while a PostgREST table update executes as authenticated.
+CREATE OR REPLACE FUNCTION public.guard_talkx_template_update()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_snapshot_rpc_owner name;
+  v_counter_rpc_owner name;
+BEGIN
+  SELECT role.rolname INTO v_snapshot_rpc_owner
+  FROM pg_proc AS procedure
+  JOIN pg_roles AS role ON role.oid = procedure.proowner
+  WHERE procedure.oid = 'public.update_talkx_template_with_snapshot(uuid,timestamptz,text,text,text,text,text,text,text[],text,text[])'::regprocedure;
+
+  SELECT role.rolname INTO v_counter_rpc_owner
+  FROM pg_proc AS procedure
+  JOIN pg_roles AS role ON role.oid = procedure.proowner
+  WHERE procedure.oid = 'public.increment_talkx_template_use(uuid)'::regprocedure;
+
+  IF current_user IS DISTINCT FROM v_snapshot_rpc_owner
+     AND current_user IS DISTINCT FROM v_counter_rpc_owner
+     AND current_user IS DISTINCT FROM 'service_role'::name THEN
+    RAISE EXCEPTION 'talkx_template_update_requires_authorized_rpc'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_guard_talkx_template_update
+  ON public.talkx_templates;
+CREATE TRIGGER trg_guard_talkx_template_update
+BEFORE UPDATE ON public.talkx_templates
+FOR EACH ROW EXECUTE FUNCTION public.guard_talkx_template_update();
+
+REVOKE ALL ON FUNCTION public.guard_talkx_template_update()
+  FROM PUBLIC, anon, authenticated;
 
 -- Defesa em profundidade: mesmo que uma policy/grant permissiva seja
 -- reintroduzida, clientes JWT nao fabricam nem reescrevem o historico.

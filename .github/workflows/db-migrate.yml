@@ -565,28 +565,35 @@ jobs:
               && proof.foundation_constraint_count === 4;
             targetOk = process.env.NEEDS_APPLY === 'true'
               ? base
+                && proof.history_description_column_count === 0
                 && proof.function_count === 0
                 && proof.safe_function_count === 0
                 && proof.constraint_count === 0
                 && proof.immutable_trigger_count === 0
+                && proof.template_update_guard_count === 0
                 && proof.anon_any_access === true
                 && proof.authenticated_select === true
                 && proof.authenticated_any_mutation === true
                 && proof.authenticated_rpc_execute === false
               : base
+                && proof.history_description_column_count === 1
                 && proof.canonical_select_policy_count === 1
                 && proof.constraint_count === 3
                 && proof.validated_constraint_count === 3
-                && proof.function_count === 2
-                && proof.safe_function_count === 2
-                && proof.definition_sha256 === '86d55f75aacb024be68ea7e859eb10966da55e4de84049c9b9023a446fd0ea1d'
+                && proof.function_count === 4
+                && proof.safe_function_count === 4
+                && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
                 && proof.immutable_trigger_count === 1
+                && proof.template_update_guard_count === 1
                 && proof.anon_any_access === false
                 && proof.authenticated_select === true
                 && proof.authenticated_any_mutation === false
                 && proof.authenticated_rpc_execute === true
                 && proof.anon_rpc_execute === false
-                && proof.authenticated_guard_execute === false;
+                && proof.authenticated_counter_execute === true
+                && proof.anon_counter_execute === false
+                && proof.authenticated_guard_execute === false
+                && proof.authenticated_update_guard_execute === false;
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -939,22 +946,27 @@ jobs:
             && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
             && proof.table_count === 1
             && proof.custom_variables_column_count === 1
+            && proof.history_description_column_count === 1
             && proof.rls_enabled === true
             && proof.policy_count === 1
             && proof.canonical_select_policy_count === 1
             && proof.constraint_count === 3
             && proof.validated_constraint_count === 3
             && proof.foundation_constraint_count === 4
-            && proof.function_count === 2
-            && proof.safe_function_count === 2
-            && proof.definition_sha256 === '86d55f75aacb024be68ea7e859eb10966da55e4de84049c9b9023a446fd0ea1d'
+            && proof.function_count === 4
+            && proof.safe_function_count === 4
+            && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
             && proof.immutable_trigger_count === 1
+            && proof.template_update_guard_count === 1
             && proof.anon_any_access === false
             && proof.authenticated_select === true
             && proof.authenticated_any_mutation === false
             && proof.authenticated_rpc_execute === true
             && proof.anon_rpc_execute === false
-            && proof.authenticated_guard_execute === false;
+            && proof.authenticated_counter_execute === true
+            && proof.anon_counter_execute === false
+            && proof.authenticated_guard_execute === false
+            && proof.authenticated_update_guard_execute === false;
           if (!ok) process.exit(1);
           NODE
 
