@@ -88,6 +88,7 @@ jobs:
           TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
 
       - name: Simular reconciliação segura do ledger
         env:

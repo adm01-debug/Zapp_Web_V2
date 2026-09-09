@@ -26,6 +26,8 @@ test('Talk X editor updates only through the atomic snapshot RPC', () => {
   assert.match(component, /expectedUpdatedAt,\s*\.\.\.payload/);
   assert.match(component, /setExpectedUpdatedAt\(t\.updated_at\)/);
   assert.doesNotMatch(component, /saveVersionSnapshot/);
+  assert.match(component, /!\/\^https:\\\/\\\/\/i\.test\(eMediaUrl\)/);
+  assert.doesNotMatch(component, /\^https\?:\\\/\\\//);
 });
 
 test('Talk X update errors are localized without exposing database messages', () => {

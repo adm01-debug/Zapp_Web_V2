@@ -22,6 +22,10 @@ WITH target_relation AS (
           AND pg_get_function_identity_arguments(p.oid) = 'p_template_id uuid')
       OR (p.proname = 'guard_talkx_template_update'
           AND pg_get_function_identity_arguments(p.oid) = '')
+      OR (p.proname = 'validate_talkx_template_input'
+          AND pg_get_function_identity_arguments(p.oid) = '')
+      OR (p.proname = 'set_talkx_template_updated_at'
+          AND pg_get_function_identity_arguments(p.oid) = '')
     )
 ), payload AS (
   SELECT jsonb_build_object(
@@ -32,6 +36,39 @@ WITH target_relation AS (
       SELECT count(*) FROM information_schema.columns
       WHERE table_schema='public' AND table_name='talkx_templates'
         AND column_name='custom_variables' AND data_type='ARRAY' AND is_nullable='NO'
+    ),
+    'invalid_live_template_count', (
+      SELECT count(*)
+      FROM public.talkx_templates AS template
+      WHERE template.name IS NULL
+         OR length(btrim(template.name)) NOT BETWEEN 1 AND 200
+         OR template.category IS NULL
+         OR length(btrim(template.category)) NOT BETWEEN 1 AND 100
+         OR template.content IS NULL
+         OR length(template.content) NOT BETWEEN 1 AND 65536
+         OR template.status IS NULL
+         OR template.status NOT IN ('draft', 'review', 'approved')
+         OR (template.description IS NOT NULL AND length(template.description) > 4000)
+         OR (template.media_url IS NOT NULL AND (
+           length(template.media_url) > 8192 OR template.media_url !~ '^https://'
+         ))
+         OR (template.media_type IS NOT NULL
+             AND template.media_type NOT IN ('image', 'video', 'document', 'audio'))
+         OR COALESCE(cardinality(template.tags), 0) > 50
+         OR EXISTS (
+           SELECT 1 FROM unnest(COALESCE(template.tags, '{}'::text[])) AS tag
+           WHERE length(tag) NOT BETWEEN 1 AND 64
+         )
+         OR COALESCE(cardinality(template.custom_variables), 0) > 100
+         OR EXISTS (
+           SELECT 1
+           FROM unnest(COALESCE(template.custom_variables, '{}'::text[])) AS variable
+           WHERE variable !~ '^[A-Za-z_][A-Za-z0-9_]{0,63}$'
+         )
+         OR cardinality(ARRAY(
+           SELECT DISTINCT value
+           FROM unnest(COALESCE(template.custom_variables, '{}'::text[])) AS value
+         )) IS DISTINCT FROM cardinality(COALESCE(template.custom_variables, '{}'::text[]))
     ),
     'history_description_column_count', (
       SELECT count(*) FROM information_schema.columns
@@ -99,7 +136,12 @@ WITH target_relation AS (
       SELECT count(*) FROM expected_functions
       WHERE (proname IN ('update_talkx_template_with_snapshot', 'increment_talkx_template_use')
              AND prosecdef AND safe_path)
-         OR (proname IN ('guard_talkx_template_version_immutable', 'guard_talkx_template_update')
+         OR (proname IN (
+               'guard_talkx_template_version_immutable',
+               'guard_talkx_template_update',
+               'validate_talkx_template_input',
+               'set_talkx_template_updated_at'
+             )
              AND NOT prosecdef AND safe_path)
     ),
     'definition_sha256', (
@@ -116,6 +158,24 @@ WITH target_relation AS (
       SELECT count(*) FROM pg_trigger trigger_row
       WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
         AND trigger_row.tgname='trg_guard_talkx_template_update'
+        AND NOT trigger_row.tgisinternal
+    ),
+    'template_validation_trigger_count', (
+      SELECT count(*) FROM pg_trigger trigger_row
+      WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
+        AND trigger_row.tgname='trg_validate_talkx_template_input'
+        AND NOT trigger_row.tgisinternal
+    ),
+    'template_timestamp_trigger_count', (
+      SELECT count(*) FROM pg_trigger trigger_row
+      WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
+        AND trigger_row.tgname='update_talkx_templates_updated_at'
+        AND trigger_row.tgfoid=(
+          SELECT oid FROM pg_proc
+          WHERE pronamespace='public'::regnamespace
+            AND proname='set_talkx_template_updated_at'
+            AND pg_get_function_identity_arguments(oid)=''
+        )
         AND NOT trigger_row.tgisinternal
     ),
     'anon_any_access', COALESCE((SELECT
@@ -161,7 +221,18 @@ WITH target_relation AS (
     'authenticated_update_guard_execute', COALESCE((SELECT
       has_function_privilege('authenticated', oid, 'EXECUTE')
       FROM expected_functions WHERE proname='guard_talkx_template_update'
-    ), false)
+    ), false),
+    'authenticated_internal_function_execute_count', (
+      SELECT count(*)
+      FROM expected_functions
+      WHERE proname IN (
+        'guard_talkx_template_version_immutable',
+        'guard_talkx_template_update',
+        'validate_talkx_template_input',
+        'set_talkx_template_updated_at'
+      )
+      AND has_function_privilege('authenticated', oid, 'EXECUTE')
+    )
   ) AS value
 )
 SELECT (value || jsonb_build_object(

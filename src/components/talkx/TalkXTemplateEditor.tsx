@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput } from '@/hooks/integrations/useTalkXTemplates';
 import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
@@ -78,10 +79,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const save = async () => {
     if (saving) return;
     if (!eName.trim() || !eContent.trim()) return;
+    if (eHasMedia && !/^https:\/\//i.test(eMediaUrl)) {
+      toast.error('Informe uma URL de mídia HTTPS válida.');
+      return;
+    }
     setSaving(true);
     const payload: TemplateInput = {
       name: eName, description: eDesc || null, category: eCat, content: eContent,
-      media_url: eHasMedia && eMediaUrl && /^https?:\/\//i.test(eMediaUrl) ? eMediaUrl : null,
+      media_url: eHasMedia ? eMediaUrl : null,
       media_type: eHasMedia && eMediaType ? eMediaType : null,
       tags: eTags, status: eStatus,
       custom_variables: eCustomVars,

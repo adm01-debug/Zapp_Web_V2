@@ -5,6 +5,51 @@
 ALTER TABLE public.talkx_templates
   ADD COLUMN IF NOT EXISTS custom_variables text[] NOT NULL DEFAULT '{}'::text[];
 
+-- A atualizacao canonica e a criacao devem aceitar exatamente o mesmo
+-- dominio. Dados legados invalidos exigem reparo explicito antes do rollout;
+-- nao convertemos URL, conteudo ou classificacao silenciosamente.
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM public.talkx_templates AS template
+    WHERE template.name IS NULL
+       OR length(btrim(template.name)) NOT BETWEEN 1 AND 200
+       OR template.category IS NULL
+       OR length(btrim(template.category)) NOT BETWEEN 1 AND 100
+       OR template.content IS NULL
+       OR length(template.content) NOT BETWEEN 1 AND 65536
+       OR template.status IS NULL
+       OR template.status NOT IN ('draft', 'review', 'approved')
+       OR (template.description IS NOT NULL AND length(template.description) > 4000)
+       OR (template.media_url IS NOT NULL AND (
+         length(template.media_url) > 8192 OR template.media_url !~ '^https://'
+       ))
+       OR (template.media_type IS NOT NULL
+           AND template.media_type NOT IN ('image', 'video', 'document', 'audio'))
+       OR COALESCE(cardinality(template.tags), 0) > 50
+       OR EXISTS (
+         SELECT 1 FROM unnest(COALESCE(template.tags, '{}'::text[])) AS tag
+         WHERE length(tag) NOT BETWEEN 1 AND 64
+       )
+       OR COALESCE(cardinality(template.custom_variables), 0) > 100
+       OR EXISTS (
+         SELECT 1
+         FROM unnest(COALESCE(template.custom_variables, '{}'::text[])) AS variable
+         WHERE variable !~ '^[A-Za-z_][A-Za-z0-9_]{0,63}$'
+       )
+       OR cardinality(ARRAY(
+         SELECT DISTINCT value
+         FROM unnest(COALESCE(template.custom_variables, '{}'::text[])) AS value
+       )) IS DISTINCT FROM cardinality(COALESCE(template.custom_variables, '{}'::text[]))
+  ) THEN
+    RAISE EXCEPTION 'talkx_templates_invalid_existing_rows'
+      USING ERRCODE = '23514',
+            HINT = 'Repare explicitamente os templates fora do contrato antes de reaplicar a migration.';
+  END IF;
+END;
+$migration$;
+
 CREATE TABLE IF NOT EXISTS public.talkx_template_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   template_id uuid NOT NULL REFERENCES public.talkx_templates(id) ON DELETE CASCADE,
@@ -202,6 +247,97 @@ USING (
     WHERE template.id = talkx_template_versions.template_id
   )
 );
+
+-- Valida INSERT e UPDATE no limite da tabela, inclusive clientes antigos que
+-- ainda criam templates pelo endpoint REST. A RPC repete a validacao para
+-- falhar antes do snapshot e manter um erro de dominio estavel.
+CREATE OR REPLACE FUNCTION public.validate_talkx_template_input()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF NEW.name IS NULL OR length(btrim(NEW.name)) NOT BETWEEN 1 AND 200
+     OR NEW.category IS NULL OR length(btrim(NEW.category)) NOT BETWEEN 1 AND 100
+     OR NEW.content IS NULL OR length(NEW.content) NOT BETWEEN 1 AND 65536
+     OR NEW.status IS NULL OR NEW.status NOT IN ('draft', 'review', 'approved')
+     OR (NEW.description IS NOT NULL AND length(NEW.description) > 4000)
+     OR (NEW.media_url IS NOT NULL AND (
+       length(NEW.media_url) > 8192 OR NEW.media_url !~ '^https://'
+     ))
+     OR (NEW.media_type IS NOT NULL
+         AND NEW.media_type NOT IN ('image', 'video', 'document', 'audio'))
+     OR COALESCE(cardinality(NEW.tags), 0) > 50
+     OR EXISTS (
+       SELECT 1 FROM unnest(COALESCE(NEW.tags, '{}'::text[])) AS tag
+       WHERE length(tag) NOT BETWEEN 1 AND 64
+     )
+     OR COALESCE(cardinality(NEW.custom_variables), 0) > 100
+     OR EXISTS (
+       SELECT 1
+       FROM unnest(COALESCE(NEW.custom_variables, '{}'::text[])) AS variable
+       WHERE variable !~ '^[A-Za-z_][A-Za-z0-9_]{0,63}$'
+     )
+     OR cardinality(ARRAY(
+       SELECT DISTINCT value
+       FROM unnest(COALESCE(NEW.custom_variables, '{}'::text[])) AS value
+     )) IS DISTINCT FROM cardinality(COALESCE(NEW.custom_variables, '{}'::text[])) THEN
+    RAISE EXCEPTION 'invalid_talkx_template' USING ERRCODE = '22023';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_validate_talkx_template_input
+  ON public.talkx_templates;
+CREATE TRIGGER trg_validate_talkx_template_input
+BEFORE INSERT OR UPDATE ON public.talkx_templates
+FOR EACH ROW EXECUTE FUNCTION public.validate_talkx_template_input();
+
+REVOKE ALL ON FUNCTION public.validate_talkx_template_input()
+  FROM PUBLIC, anon, authenticated;
+
+-- O contador de uso nao representa uma revisao de conteudo e, portanto, nao
+-- deve invalidar o optimistic-lock de um editor aberto. Substitui apenas o
+-- trigger de updated_at desta tabela; as demais tabelas continuam usando a
+-- funcao generica.
+CREATE OR REPLACE FUNCTION public.set_talkx_template_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF NEW.id IS NOT DISTINCT FROM OLD.id
+     AND NEW.name IS NOT DISTINCT FROM OLD.name
+     AND NEW.description IS NOT DISTINCT FROM OLD.description
+     AND NEW.category IS NOT DISTINCT FROM OLD.category
+     AND NEW.content IS NOT DISTINCT FROM OLD.content
+     AND NEW.media_url IS NOT DISTINCT FROM OLD.media_url
+     AND NEW.media_type IS NOT DISTINCT FROM OLD.media_type
+     AND NEW.tags IS NOT DISTINCT FROM OLD.tags
+     AND NEW.status IS NOT DISTINCT FROM OLD.status
+     AND NEW.custom_variables IS NOT DISTINCT FROM OLD.custom_variables
+     AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by
+     AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at
+     AND NEW.use_count = OLD.use_count + 1 THEN
+    NEW.updated_at := OLD.updated_at;
+  ELSE
+    NEW.updated_at := transaction_timestamp();
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS update_talkx_templates_updated_at
+  ON public.talkx_templates;
+CREATE TRIGGER update_talkx_templates_updated_at
+BEFORE UPDATE ON public.talkx_templates
+FOR EACH ROW EXECUTE FUNCTION public.set_talkx_template_updated_at();
+
+REVOKE ALL ON FUNCTION public.set_talkx_template_updated_at()
+  FROM PUBLIC, anon, authenticated;
 
 -- Snapshot e update sao uma unica transacao. O lock da linha do template
 -- serializa o MAX(version_number)+1 e o expected_updated_at evita lost update.

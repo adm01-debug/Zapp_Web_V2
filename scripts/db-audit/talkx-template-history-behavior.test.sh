@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 precreate_runtime="${TALKX_HISTORY_PRECREATE_RUNTIME:-true}"
 invalid_prestate="${TALKX_HISTORY_INVALID_PRESTATE:-false}"
+invalid_live_prestate="${TALKX_HISTORY_INVALID_LIVE_PRESTATE:-false}"
 container_name="zapp-talkx-history-$RANDOM-$$"
 test_password="talkx_history_test_only"
 concurrency_dir=""
@@ -29,8 +30,13 @@ docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password
   || fail 'TALKX_HISTORY_PRECREATE_RUNTIME deve ser true ou false'
 [[ "$invalid_prestate" == true || "$invalid_prestate" == false ]] \
   || fail 'TALKX_HISTORY_INVALID_PRESTATE deve ser true ou false'
+[[ "$invalid_live_prestate" == true || "$invalid_live_prestate" == false ]] \
+  || fail 'TALKX_HISTORY_INVALID_LIVE_PRESTATE deve ser true ou false'
 if [[ "$invalid_prestate" == true && "$precreate_runtime" != true ]]; then
   fail 'TALKX_HISTORY_INVALID_PRESTATE exige TALKX_HISTORY_PRECREATE_RUNTIME=true'
+fi
+if [[ "$invalid_prestate" == true && "$invalid_live_prestate" == true ]]; then
+  fail 'selecione apenas um pre-estado invalido por execucao'
 fi
 
 ready=false
@@ -45,7 +51,9 @@ for _ in $(seq 1 90); do
 done
 [ "$ready" = true ] || fail "PostgreSQL descartavel ($postgres_image) nao ficou pronto"
 
-psql_test -v precreate_runtime="$precreate_runtime" -v invalid_prestate="$invalid_prestate" >/dev/null <<'SQL'
+psql_test -v precreate_runtime="$precreate_runtime" \
+  -v invalid_prestate="$invalid_prestate" \
+  -v invalid_live_prestate="$invalid_live_prestate" >/dev/null <<'SQL'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
@@ -172,17 +180,29 @@ INSERT INTO public.talkx_template_versions(
   template_id, version_number, name, description, content, category, status
 ) VALUES (NULL, 99, 'Orphan', NULL, 'Unsafe', 'sales', 'draft');
 \endif
+
+\if :invalid_live_prestate
+UPDATE public.talkx_templates
+SET media_url = 'http://legacy.invalid/media.png', media_type = 'image'
+WHERE id = '30000000-0000-0000-0000-000000000001';
+\endif
 SQL
 
-if [[ "$invalid_prestate" == true ]]; then
+if [[ "$invalid_prestate" == true || "$invalid_live_prestate" == true ]]; then
   set +e
   invalid_output="$(psql_test < "$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql" 2>&1)"
   invalid_status=$?
   set -e
   [ "$invalid_status" -ne 0 ] || fail 'pre-estado irrecuperavel deveria abortar a migration'
-  grep -q 'talkx_template_history_irreconcilable_nulls' <<<"$invalid_output" \
-    || fail 'migration nao retornou diagnostico explicito para historico irrecuperavel'
-  printf '[OK] Talk X template history: pre-estado irrecuperavel abortado explicitamente, sem fabricar auditoria.\n'
+  if [[ "$invalid_prestate" == true ]]; then
+    grep -q 'talkx_template_history_irreconcilable_nulls' <<<"$invalid_output" \
+      || fail 'migration nao retornou diagnostico explicito para historico irrecuperavel'
+    printf '[OK] Talk X template history: pre-estado irrecuperavel abortado explicitamente, sem fabricar auditoria.\n'
+  else
+    grep -q 'talkx_templates_invalid_existing_rows' <<<"$invalid_output" \
+      || fail 'migration nao diagnosticou template legado fora do contrato'
+    printf '[OK] Talk X template history: template legado invalido bloqueado antes do rollout.\n'
+  fi
   exit 0
 fi
 
@@ -262,6 +282,7 @@ expect_failure 'talkx_template_not_authorized' "$auth_prefix SELECT set_config('
 expect_failure 'talkx_template_stale_version' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001','2026-09-09T10:00:00Z','Stale',NULL,'sales','X',NULL,NULL,'{}','draft','{}'); COMMIT;"
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Bad URL',NULL,'sales','X','http://127.0.0.1/private','image','{}','draft','{}'); COMMIT;"
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Null status',NULL,'sales','X',NULL,NULL,'{}',NULL,'{}'); COMMIT;"
+expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_templates(name,category,content,media_url,media_type,created_by) VALUES ('HTTP create','sales','X','http://legacy.invalid/media.png','image','10000000-0000-0000-0000-000000000001'); COMMIT;"
 expect_failure 'talkx_template_update_requires_authorized_rpc' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); UPDATE public.talkx_templates SET name='Direct bypass' WHERE id='30000000-0000-0000-0000-000000000001'; COMMIT;"
 expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_versions(template_id,version_number,name,content,category) VALUES ('30000000-0000-0000-0000-000000000001',99,'Forged','Forged','sales'); COMMIT;"
 
@@ -309,6 +330,7 @@ psql_test >/dev/null <<'SQL'
 DROP FUNCTION public.simulate_sibling_definer_bypass(uuid);
 SQL
 
+counter_token_before="$(psql_test -Atqc "SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'")"
 counter_result="$(psql_test -At <<'SQL'
 BEGIN;
 SET LOCAL ROLE authenticated;
@@ -316,12 +338,15 @@ SELECT set_config('request.jwt.claim.role','authenticated',true);
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
 SELECT public.increment_talkx_template_use('30000000-0000-0000-0000-000000000001');
 COMMIT;
-SELECT use_count FROM public.talkx_templates
+SELECT use_count || '|' || updated_at FROM public.talkx_templates
 WHERE id='30000000-0000-0000-0000-000000000001';
 SQL
 )"
-[ "$(grep -c '^1$' <<<"$counter_result")" -eq 2 ] \
-  || { printf '%s\n' "$counter_result" >&2; fail 'contador atomico nao incrementou exatamente uma vez'; }
+grep -q '^1$' <<<"$counter_result" \
+  || { printf '%s\n' "$counter_result" >&2; fail 'contador atomico nao retornou exatamente uma unidade'; }
+counter_row="$(grep '^1|' <<<"$counter_result")"
+[ "$counter_row" = "1|$counter_token_before" ] \
+  || { printf '%s\n' "$counter_result" >&2; fail 'contador alterou o token de revisao do conteudo'; }
 
 # Mesmo com grant + policy permissivos reintroduzidos, o trigger invoker bloqueia
 # o JWT. set_config em namespace customizado nao altera current_user.
@@ -401,6 +426,7 @@ const ok = proof.server_major === 17
   && proof.database === 'postgres'
   && proof.table_count === 1
   && proof.custom_variables_column_count === 1
+  && proof.invalid_live_template_count === 0
   && proof.history_description_column_count === 1
   && proof.rls_enabled === true
   && proof.policy_count === 1
@@ -408,10 +434,12 @@ const ok = proof.server_major === 17
   && proof.constraint_count === 3
   && proof.validated_constraint_count === 3
   && proof.foundation_constraint_count === 4
-  && proof.function_count === 4
-  && proof.safe_function_count === 4
+  && proof.function_count === 6
+  && proof.safe_function_count === 6
   && proof.immutable_trigger_count === 1
   && proof.template_update_guard_count === 1
+  && proof.template_validation_trigger_count === 1
+  && proof.template_timestamp_trigger_count === 1
   && proof.anon_any_access === false
   && proof.authenticated_select === true
   && proof.authenticated_any_mutation === false
@@ -421,7 +449,8 @@ const ok = proof.server_major === 17
   && proof.anon_counter_execute === false
   && proof.authenticated_guard_execute === false
   && proof.authenticated_update_guard_execute === false
-  && proof.definition_sha256 === 'fe8ee233b88420087f7fe0ddfa5edb4784a57af2df1188040f2acba9f77cc337'
+  && proof.authenticated_internal_function_execute_count === 0
+  && proof.definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 ?? '');
 if (!ok) {
   console.error(`runtime proof inesperado: definition_sha256=${proof.definition_sha256}`);

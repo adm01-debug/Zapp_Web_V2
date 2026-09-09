@@ -58,6 +58,7 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /TARGET_VERSION === '20260909210000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909210000'/);
   assert.match(workflow, /proof\.custom_variables_column_count === 1/);
+  assert.match(workflow, /proof\.invalid_live_template_count === 0/);
   assert.match(workflow, /proof\.history_description_column_count === 1/);
   assert.match(workflow, /\[0, 1\]\.includes\(proof\.history_description_column_count\)/);
   assert.match(workflow, /\[1, 2\]\.includes\(proof\.policy_count\)/);
@@ -65,14 +66,18 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
   assert.match(workflow, /proof\.canonical_select_policy_count === 1/);
   assert.match(workflow, /proof\.validated_constraint_count === 3/);
   assert.match(workflow, /proof\.foundation_constraint_count === 4/);
-  assert.match(workflow, /proof\.safe_function_count === 4/);
+  assert.match(workflow, /proof\.function_count === 6/);
+  assert.match(workflow, /proof\.safe_function_count === 6/);
   assert.match(workflow, /proof\.immutable_trigger_count === 1/);
   assert.match(workflow, /proof\.template_update_guard_count === 1/);
+  assert.match(workflow, /proof\.template_validation_trigger_count === 1/);
+  assert.match(workflow, /proof\.template_timestamp_trigger_count === 1/);
   assert.match(workflow, /proof\.anon_any_access === false/);
   assert.match(workflow, /proof\.authenticated_any_mutation === false/);
   assert.match(workflow, /proof\.authenticated_rpc_execute === true/);
   assert.match(workflow, /proof\.authenticated_counter_execute === true/);
   assert.match(workflow, /proof\.authenticated_guard_execute === false/);
   assert.match(workflow, /proof\.authenticated_update_guard_execute === false/);
-  assert.match(workflow, /definition_sha256 === 'fe8ee233b88420087f7fe0ddfa5edb4784a57af2df1188040f2acba9f77cc337'/);
+  assert.match(workflow, /proof\.authenticated_internal_function_execute_count === 0/);
+  assert.match(workflow, /definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'/);
 });
