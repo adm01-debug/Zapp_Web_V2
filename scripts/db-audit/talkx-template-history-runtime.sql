@@ -18,6 +18,10 @@ WITH target_relation AS (
          'p_template_id uuid, p_expected_updated_at timestamp with time zone, p_name text, p_description text, p_category text, p_content text, p_media_url text, p_media_type text, p_tags text[], p_status text, p_custom_variables text[]')
       OR (p.proname = 'guard_talkx_template_version_immutable'
           AND pg_get_function_identity_arguments(p.oid) = '')
+      OR (p.proname = 'increment_talkx_template_use'
+          AND pg_get_function_identity_arguments(p.oid) = 'p_template_id uuid')
+      OR (p.proname = 'guard_talkx_template_update'
+          AND pg_get_function_identity_arguments(p.oid) = '')
     )
 ), payload AS (
   SELECT jsonb_build_object(
@@ -28,6 +32,11 @@ WITH target_relation AS (
       SELECT count(*) FROM information_schema.columns
       WHERE table_schema='public' AND table_name='talkx_templates'
         AND column_name='custom_variables' AND data_type='ARRAY' AND is_nullable='NO'
+    ),
+    'history_description_column_count', (
+      SELECT count(*) FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='talkx_template_versions'
+        AND column_name='description' AND data_type='text'
     ),
     'rls_enabled', COALESCE((SELECT bool_and(relrowsecurity) FROM target_relation), false),
     'policy_count', (
@@ -88,8 +97,10 @@ WITH target_relation AS (
     'function_count', (SELECT count(*) FROM expected_functions),
     'safe_function_count', (
       SELECT count(*) FROM expected_functions
-      WHERE (proname='update_talkx_template_with_snapshot' AND prosecdef AND safe_path)
-         OR (proname='guard_talkx_template_version_immutable' AND NOT prosecdef AND safe_path)
+      WHERE (proname IN ('update_talkx_template_with_snapshot', 'increment_talkx_template_use')
+             AND prosecdef AND safe_path)
+         OR (proname IN ('guard_talkx_template_version_immutable', 'guard_talkx_template_update')
+             AND NOT prosecdef AND safe_path)
     ),
     'definition_sha256', (
       SELECT encode(sha256(convert_to(COALESCE(string_agg(definition, E'\n' ORDER BY proname), ''), 'UTF8')), 'hex')
@@ -99,6 +110,12 @@ WITH target_relation AS (
       SELECT count(*) FROM pg_trigger trigger_row
       JOIN target_relation relation ON relation.oid=trigger_row.tgrelid
       WHERE trigger_row.tgname='trg_guard_talkx_template_version_immutable'
+        AND NOT trigger_row.tgisinternal
+    ),
+    'template_update_guard_count', (
+      SELECT count(*) FROM pg_trigger trigger_row
+      WHERE trigger_row.tgrelid='public.talkx_templates'::regclass
+        AND trigger_row.tgname='trg_guard_talkx_template_update'
         AND NOT trigger_row.tgisinternal
     ),
     'anon_any_access', COALESCE((SELECT
@@ -129,9 +146,21 @@ WITH target_relation AS (
       has_function_privilege('anon', oid, 'EXECUTE')
       FROM expected_functions WHERE proname='update_talkx_template_with_snapshot'
     ), false),
+    'authenticated_counter_execute', COALESCE((SELECT
+      has_function_privilege('authenticated', oid, 'EXECUTE')
+      FROM expected_functions WHERE proname='increment_talkx_template_use'
+    ), false),
+    'anon_counter_execute', COALESCE((SELECT
+      has_function_privilege('anon', oid, 'EXECUTE')
+      FROM expected_functions WHERE proname='increment_talkx_template_use'
+    ), false),
     'authenticated_guard_execute', COALESCE((SELECT
       has_function_privilege('authenticated', oid, 'EXECUTE')
       FROM expected_functions WHERE proname='guard_talkx_template_version_immutable'
+    ), false),
+    'authenticated_update_guard_execute', COALESCE((SELECT
+      has_function_privilege('authenticated', oid, 'EXECUTE')
+      FROM expected_functions WHERE proname='guard_talkx_template_update'
     ), false)
   ) AS value
 )

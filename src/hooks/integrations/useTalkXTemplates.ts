@@ -20,10 +20,10 @@ export interface TalkXTemplate {
   created_at: string;
   updated_at: string;
   creator?: { name: string | null } | null;
-  custom_variables: string[];
 }
 
 export type TemplateInput = Pick<TalkXTemplate, 'name' | 'content'> & Partial<Pick<TalkXTemplate, 'description' | 'category' | 'media_url' | 'media_type' | 'tags' | 'status' | 'custom_variables'>>;
+type TemplateUpdateInput = TemplateInput & { id: string; expectedUpdatedAt: string };
 
 export function useTalkXTemplates() {
   const qc = useQueryClient();
@@ -56,13 +56,13 @@ export function useTalkXTemplates() {
   });
 
   const updateTemplate = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<TemplateInput> & { id: string }) => {
+    mutationFn: async ({ id, expectedUpdatedAt, ...updates }: TemplateUpdateInput) => {
       const current = query.data?.find((template) => template.id === id);
       if (!current) throw new Error('Template desatualizado; recarregue e tente novamente');
       const next = { ...current, ...updates };
       const { data, error } = await supabase.rpc('update_talkx_template_with_snapshot', {
         p_template_id: id,
-        p_expected_updated_at: current.updated_at,
+        p_expected_updated_at: expectedUpdatedAt,
         p_name: next.name,
         p_description: next.description,
         p_category: next.category,
@@ -110,8 +110,8 @@ export function useTalkXTemplates() {
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
-  const registerUse = async (id: string, current: number) => {
-    await fromTable('talkx_templates').update({ use_count: current + 1 }).eq('id', id);
+  const registerUse = async (id: string, _current: number) => {
+    await supabase.rpc('increment_talkx_template_use', { p_template_id: id });
     invalidate();
   };
 
@@ -120,38 +120,11 @@ export function useTalkXTemplates() {
   const fetchVersionHistory = async (templateId: string) => {
     const { data } = await supabase
       .from('talkx_template_versions')
-      .select('id,version_number,name,content,category,status,media_url,media_type,tags,custom_variables,created_at')
+      .select('id,version_number,name,description,content,category,status,media_url,media_type,tags,custom_variables,created_at')
       .eq('template_id', templateId)
       .order('version_number', { ascending: false })
       .limit(10);
     return data ?? [];
-  };
-
-  const saveVersionSnapshot = async (templateId: string, payload: {
-    name: string; content: string; category: string; status: string;
-    media_url?: string | null; media_type?: string | null;
-    tags: string[]; custom_variables: string[];
-  }) => {
-    const { data: maxRow } = await supabase
-      .from('talkx_template_versions')
-      .select('version_number')
-      .eq('template_id', templateId)
-      .order('version_number', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const nextVersion = (maxRow?.version_number ?? 0) + 1;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
-    await supabase.from('talkx_template_versions').insert({
-      template_id: templateId,
-      version_number: nextVersion,
-      name: payload.name, content: payload.content, category: payload.category,
-      status: payload.status,
-      media_url: payload.media_url ?? null,
-      media_type: payload.media_type ?? null,
-      tags: payload.tags, custom_variables: payload.custom_variables,
-      saved_by: profileRow?.id ?? null,
-    });
   };
 
   const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone, customVariables }: {
@@ -178,6 +151,5 @@ export function useTalkXTemplates() {
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
     testTemplate,
     fetchVersionHistory,
-    saveVersionSnapshot,
   };
 }

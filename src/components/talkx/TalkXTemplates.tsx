@@ -61,9 +61,9 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
   const save = async () => {
     if (!eName.trim() || !eContent.trim()) return;
     setSaving(true);
-    const payload: TemplateInput = { name: eName, description: eDesc || null, category: eCat, content: eContent, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, status: eStatus };
+    const payload: TemplateInput = { name: eName, description: eDesc || null, category: eCat, content: eContent, media_url: eHasMedia && eMediaUrl ? eMediaUrl : null, media_type: eHasMedia && eMediaType ? eMediaType : null, tags: eTags, status: eStatus, custom_variables: editing?.custom_variables ?? [] };
     try {
-      if (editing) await updateTemplate.mutateAsync({ id: editing.id, ...payload });
+      if (editing) await updateTemplate.mutateAsync({ id: editing.id, expectedUpdatedAt: editing.updated_at, ...payload });
       else await createTemplate.mutateAsync(payload);
       setMode('list');
     } finally { setSaving(false); }

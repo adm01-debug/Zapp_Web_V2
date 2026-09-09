@@ -103,6 +103,9 @@ $$;
 ALTER TABLE public.talkx_templates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY talkx_templates_select ON public.talkx_templates
   FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+CREATE POLICY talkx_templates_update ON public.talkx_templates
+  FOR UPDATE TO authenticated USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_templates TO authenticated;
 GRANT ALL ON public.profiles, public.talkx_templates TO service_role;
 
@@ -129,6 +132,7 @@ CREATE TABLE public.talkx_template_versions (
   template_id uuid NOT NULL REFERENCES public.talkx_templates(id) ON DELETE CASCADE,
   version_number integer NOT NULL,
   name text NOT NULL,
+  description text,
   content text NOT NULL,
   category text NOT NULL,
   status text NOT NULL DEFAULT 'draft',
@@ -189,7 +193,7 @@ SELECT * FROM public.update_talkx_template_with_snapshot(
 COMMIT;
 SELECT 'RPC|' || template_id || '|' || updated_at || '|' || version_number
 FROM rpc_result;
-SELECT name || '|' || content || '|' || version_number || '|' || saved_by
+SELECT name || '|' || COALESCE(description, '') || '|' || content || '|' || version_number || '|' || saved_by
 FROM public.talkx_template_versions;
 SELECT name || '|' || content || '|' || status || '|' || custom_variables[1]
 FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001';
@@ -199,7 +203,7 @@ SQL
 )"
 grep -q 'RPC|30000000-0000-0000-0000-000000000001|.*|1' <<<"$owner_result" \
   || fail 'RPC do owner nao retornou versao 1'
-grep -q 'Original|Old content|1|10000000-0000-0000-0000-000000000001' <<<"$owner_result" \
+grep -q 'Original|old description|Old content|1|10000000-0000-0000-0000-000000000001' <<<"$owner_result" \
   || fail 'snapshot nao preservou o estado anterior/autoria canonica'
 grep -q 'Updated|New content|review|customer_name' <<<"$owner_result" \
   || fail 'update atomico nao persistiu o novo estado'
@@ -224,7 +228,22 @@ auth_prefix="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt
 expect_failure 'talkx_template_not_authorized' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000002',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Hijack',NULL,'sales','X',NULL,NULL,'{}','draft','{}'); COMMIT;"
 expect_failure 'talkx_template_stale_version' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001','2026-09-09T10:00:00Z','Stale',NULL,'sales','X',NULL,NULL,'{}','draft','{}'); COMMIT;"
 expect_failure 'invalid_talkx_template' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); SELECT * FROM public.update_talkx_template_with_snapshot('30000000-0000-0000-0000-000000000001',(SELECT updated_at FROM public.talkx_templates WHERE id='30000000-0000-0000-0000-000000000001'),'Bad URL',NULL,'sales','X','http://127.0.0.1/private','image','{}','draft','{}'); COMMIT;"
+expect_failure 'talkx_template_update_requires_authorized_rpc' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); UPDATE public.talkx_templates SET name='Direct bypass' WHERE id='30000000-0000-0000-0000-000000000001'; COMMIT;"
 expect_failure 'permission denied' "$auth_prefix SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true); INSERT INTO public.talkx_template_versions(template_id,version_number,name,content,category) VALUES ('30000000-0000-0000-0000-000000000001',99,'Forged','Forged','sales'); COMMIT;"
+
+counter_result="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.increment_talkx_template_use('30000000-0000-0000-0000-000000000001');
+COMMIT;
+SELECT use_count FROM public.talkx_templates
+WHERE id='30000000-0000-0000-0000-000000000001';
+SQL
+)"
+[ "$(grep -c '^1$' <<<"$counter_result")" -eq 2 ] \
+  || { printf '%s\n' "$counter_result" >&2; fail 'contador atomico nao incrementou exatamente uma vez'; }
 
 # Mesmo com grant + policy permissivos reintroduzidos, o trigger invoker bloqueia
 # o JWT. set_config em namespace customizado nao altera current_user.
@@ -273,22 +292,27 @@ const ok = proof.server_major === 17
   && proof.database === 'postgres'
   && proof.table_count === 1
   && proof.custom_variables_column_count === 1
+  && proof.history_description_column_count === 1
   && proof.rls_enabled === true
   && proof.policy_count === 1
   && proof.canonical_select_policy_count === 1
   && proof.constraint_count === 3
   && proof.validated_constraint_count === 3
   && proof.foundation_constraint_count === 4
-  && proof.function_count === 2
-  && proof.safe_function_count === 2
+  && proof.function_count === 4
+  && proof.safe_function_count === 4
   && proof.immutable_trigger_count === 1
+  && proof.template_update_guard_count === 1
   && proof.anon_any_access === false
   && proof.authenticated_select === true
   && proof.authenticated_any_mutation === false
   && proof.authenticated_rpc_execute === true
   && proof.anon_rpc_execute === false
+  && proof.authenticated_counter_execute === true
+  && proof.anon_counter_execute === false
   && proof.authenticated_guard_execute === false
-  && proof.definition_sha256 === '86d55f75aacb024be68ea7e859eb10966da55e4de84049c9b9023a446fd0ea1d'
+  && proof.authenticated_update_guard_execute === false
+  && proof.definition_sha256 === '14b379851638447d9461cd07903f6bd32a3d18ce1a339fa2cad54b4ad3d29d54'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 ?? '');
 if (!ok) {
   console.error(`runtime proof inesperado: definition_sha256=${proof.definition_sha256}`);
