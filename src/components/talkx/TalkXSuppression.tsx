@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
-import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Download, Upload, Settings, X, AlertTriangle } from 'lucide-react';
+import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Download, Upload, Settings, X, AlertTriangle, Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -46,6 +46,8 @@ export function TalkXSuppression() {
   const [addCustomReason, setAddCustomReason] = useState('');
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
   const [contactSearch, setContactSearch] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<{ added: number; notFound: number; alreadyBlocked: number } | null>(null);
 
   const { data: blacklist = [], isLoading } = useQuery({
     queryKey: ['talkx-blacklist'],
@@ -95,9 +97,9 @@ export function TalkXSuppression() {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase.from('profiles').select('id').single();
+      const { data: { user } } = await supabase.auth.getUser();
       const finalReason = addReason === 'Outro' ? addCustomReason || 'Outro' : addReason;
-      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: profile?.id, origin: addOrigin });
+      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: user?.id ?? null, origin: addOrigin });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
@@ -108,6 +110,43 @@ export function TalkXSuppression() {
     mutationFn: async (id: string) => { const { error } = await supabase.from('talkx_blacklist').delete().eq('id', id); if (error) throw error; },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato removido da lista de supressão'); setRemoving(null); },
   });
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResults(null);
+    try {
+      const text = await file.text();
+      const phones = [...new Set(text.split(/[\n,;\t]/).map((l) => l.replace(/[^0-9]/g, '').trim()).filter((v) => v.length >= 8))];
+      if (phones.length === 0) { toast.error('Nenhum telefone encontrado no arquivo.'); return; }
+      const { data: contacts, error: lookupErr } = await supabase.from('contacts').select('id, phone').in('phone', phones);
+      if (lookupErr) throw lookupErr;
+      const found = contacts ?? [];
+      const alreadyBlockedSet = new Set(blacklistedIds);
+      const toInsert = found.filter((c) => c.phone && !alreadyBlockedSet.has(c.id));
+      if (toInsert.length === 0) {
+        setImportResults({ added: 0, notFound: phones.length - found.length, alreadyBlocked: found.length - toInsert.length });
+        toast.info('Nenhum contato novo para adicionar.');
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: profileRow?.id ?? null, origin: 'manual' as const }));
+      const { error } = await supabase.from('talkx_blacklist').upsert(rows, { onConflict: 'contact_id', ignoreDuplicates: true });
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ['talkx-blacklist'] });
+      const result = { added: toInsert.length, notFound: phones.length - found.length, alreadyBlocked: found.length - toInsert.length };
+      setImportResults(result);
+      const pl = result.added !== 1;
+      toast.success(result.added + ' contato' + (pl?'s':'') + ' adicionado' + (pl?'s':'') + ' à supressao');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro na importacao');
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
 
   const exportCSV = () => {
     const rows = blacklist.map((b) => ({ Nome: b.contacts?.name, Telefone: b.contacts?.phone, Origem: b.origin, Motivo: b.reason, Data: fmtDateTime(b.created_at) }));
@@ -198,7 +237,18 @@ export function TalkXSuppression() {
         </RailCard>
         <RailCard icon={Settings} title="Ações da lista">
           <div className="space-y-2">
-            <button type="button" onClick={() => setShowAdd(true)} className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-[12.5px] font-medium text-foreground"><Plus className="w-4 h-4 text-primary-glow" />Importar contatos (CSV, XLSX ou TXT)</button>
+            <label className={cn('w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-[12.5px] font-medium text-foreground cursor-pointer', importing && 'opacity-60 pointer-events-none')}>
+              {importing ? <Loader2 className="w-4 h-4 text-primary-glow animate-spin" /> : <Upload className="w-4 h-4 text-primary-glow" />}
+              {importing ? 'Importando...' : 'Importar lista (CSV / TXT de telefones)'}
+              <input type="file" className="sr-only" accept=".csv,.txt,.tsv" onChange={handleImportCSV} />
+            </label>
+            {importResults && (
+              <div className="text-[11.5px] text-foreground-secondary flex flex-col gap-0.5 px-1">
+                <span className="text-dash-green">✓ {importResults.added} adicionados</span>
+                {importResults.notFound > 0 && <span className="text-muted-foreground">{importResults.notFound} não encontrados na base</span>}
+                {importResults.alreadyBlocked > 0 && <span className="text-muted-foreground">{importResults.alreadyBlocked} já bloqueados</span>}
+              </div>
+            )}
             <button type="button" onClick={exportCSV} className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-[12.5px] font-medium text-foreground"><Download className="w-4 h-4 text-primary-glow" />Exportar lista (CSV)</button>
           </div>
         </RailCard>
