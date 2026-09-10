@@ -298,7 +298,7 @@ export async function handleIncomingMessage(
             source_message_id: tx.message_id ?? null,
           }).select().single();
           if (!suppErr) {
-            console.info('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
+            console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
             // E59: enviar mensagem de confirmacao ao contato
             try {
               const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
@@ -309,19 +309,21 @@ export async function handleIncomingMessage(
                   text: 'Você foi removido da lista de comunicações da Promo Brindes. Não receberemos mais mensagens para este número. Em caso de dúvidas, entre em contato pelo nosso site.',
                   delay: 500,
                 });
-                console.info('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
+                console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
               }
             } catch (notifErr) {
               console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
             }
           } else console.warn('[OPT-OUT] Falha:', suppErr?.message);
         } else {
-          console.info('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
+          console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
         }
       }
     }
   }
-}deno-lint-ignore no-explicit-any
+}
+
+// deno-lint-ignore no-explicit-any
 export async function handleStickerMedia(
   supabase: any, instance: string, data: Record<string, unknown>,
   message: Record<string, unknown> | undefined, key: { id: string }

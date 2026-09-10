@@ -121,7 +121,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
               {ed.lastAutosave && (
-                <span className="text-[10.5px] text-muted-foreground hidden xl:inline">
+                <span className="text-[10.5px] text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
                 </span>
               )}
