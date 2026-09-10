@@ -33,7 +33,11 @@ type SnapshotArgs = Omit<GeneratedSnapshotArgs, 'p_description' | 'p_media_url' 
 };
 
 function templateUpdateErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : '';
+  const message = error instanceof Error
+    ? error.message
+    : (typeof error === 'object' && error !== null && 'message' in error)
+      ? String((error as { message: unknown }).message)
+      : '';
   if (message.includes('talkx_template_stale_version')) {
     return 'Este template foi alterado por outra pessoa. Recarregue a lista antes de salvar novamente.';
   }
