@@ -85,3 +85,45 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | Relatório por variante | E84 |
 | Análise de resposta por variante A/B | após E88 |
 
+
+---
+
+## FASE 5 — SUPRESSÃO / OPT-OUT (E51–E59) · tela 06
+
+### Tela 06 — Lista de Supressão (`TalkXSuppression.tsx`)
+
+| Item do mock / plano | Status | Arquivo / evidência |
+|---|---|---|
+| Campo `phone` avulso (sem contact) | ✅ E51 | `talkx_blacklist.phone text`, nullable `contact_id`, CHECK phone OR contact_id |
+| Enum `reason_code` (opt_out/invalid_number/manual/lgpd/no_commercial_permission/bounce) | ✅ E51 | tipo `talkx_blacklist_reason` + migration 20260910090000 |
+| Campo `expires_at` (supressão temporária) | ✅ E51 | `expires_at timestamptz`; query ativa filtra expires_at IS NULL OR > now() |
+| Unique parcial em `phone` (WHERE removed_at IS NULL) | ✅ E51/CR | `talkx_blacklist_phone_active_unique` |
+| Hook `useTalkXSuppression` (isSuppressed 2 passos) | ✅ E51 | `src/hooks/integrations/useTalkXSuppression.ts` |
+| UI: phone avulso + reason_code pill + coluna Expira em | ✅ E52 | `TalkXSuppression.tsx` |
+| CSV import direto por phone (sem contact lookup) | ✅ E53 | `handleImportCSV` v2 |
+| Search digit guard | ✅ E53/CR | `qNum.length > 0` antes de phone.includes |
+| Export CSV com fallback `b.phone` | ✅ E53/CR | `b.contacts?.phone ?? b.phone ?? ''` |
+| Filtro phone-based no wizard + expires_at | ✅ E54 | `blacklistData.phones` em `useCampaignEditor.ts` |
+| Card Motivos (top 3 reason_code) + Card Expiram em breve | ✅ E55 | `TalkXSuppression.tsx` rail |
+| Soft-delete removed_by + removed_at | ✅ E56 | migration 20260910080000 + `removeMutation` UPDATE |
+| UPDATE RLS com `is_admin_or_supervisor` | ✅ E56/CR | policy `talkx_blacklist_update` |
+| removed_at IS NULL nos enforcement paths | ✅ E56/CR | `useCampaignEditor` + `talkx-send` |
+| auto_optout no CHECK constraint | ✅ E57 | migration 20260910080000 |
+| Opt-out por keyword (SAIR/STOP/CANCELAR/etc.) gateado 30d | ✅ E57/CR | `evolution-webhook-messages.ts` |
+| resolvedPhone via bestJid + r.contacts?.phone | ✅ E57/CR | `evolution-webhook-messages.ts` + `talkx-send` |
+| Notificação de confirmação ao contato após opt-out | ✅ E59 | `evoFetch` com texto PT-BR |
+| Toggle Ativas / Histórico + tabela removed_by profile | ✅ E58 | `TalkXSuppression.tsx` |
+
+### Migrações Fase 5 aplicadas
+
+| Migration | Conteúdo | Status |
+|---|---|---|
+| `20260910090000` | phone, reason_code enum, expires_at, source_message_id, unique index | ✅ |
+| `20260910080000` | removed_by, removed_at, auto_optout constraint, UPDATE RLS | ✅ |
+
+### EFs deployadas (Fase 5)
+
+| EF | Conteúdo |
+|---|---|
+| `talkx-send` | pickVariant A/B + filtro removed_at + blacklistPhones |
+| `evolution-webhook` | opt-out keyword + gate 30d + notificação E59 |

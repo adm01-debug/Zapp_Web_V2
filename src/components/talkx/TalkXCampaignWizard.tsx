@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
   Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
@@ -41,7 +41,24 @@ export type WizardState = ReturnType<typeof useCampaignEditor>;
 
 export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
+
+  // E61: beforeunload se campanha tem dados nao salvos
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { if (ed.name.trim().length > 0 || ed.selectedContacts.length > 0) { e.preventDefault(); } };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [ed.name, ed.selectedContacts.length]);
   const step = ed.step;
+
+  // E61: deep link ?wizard=<id>&step=N
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wizardId = campaign?.id ?? 'new';
+    params.set('wizard', wizardId);
+    params.set('step', String(step));
+    const newUrl = window.location.pathname + '?' + params.toString();
+    window.history.replaceState(null, '', newUrl);
+  }, [step, campaign?.id]);
   const next = () => ed.setStep(Math.min(4, step + 1) as WizardStep);
   const prev = () => ed.setStep(Math.max(1, step - 1) as WizardStep);
 
@@ -49,7 +66,18 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      {/* Header + stepper */}
+      {/* E61: Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground px-0.5">
+        <span>Talk X</span>
+        <span className="text-border">›</span>
+        <span>Campanhas</span>
+        <span className="text-border">›</span>
+        <span>Nova Campanha</span>
+        <span className="text-border">›</span>
+        <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
+      </nav>
+
+            {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
           <button type="button" onClick={onClose} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
@@ -80,7 +108,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
         </ol>
       </div>
 
-      <div className={cn('grid gap-4 min-w-0', step === 4 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]')}>
+      <div className={cn('grid gap-4 min-w-0', step === 4 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]')}>
         <div className="min-w-0 space-y-4">
           {step === 1 && <StepAudience ed={ed} campaign={campaign} />}
           {step === 2 && <StepMessage ed={ed} />}
