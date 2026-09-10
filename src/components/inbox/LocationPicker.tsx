@@ -18,7 +18,7 @@ import { useLocationPicker } from './location-picker/useLocationPicker';
 interface LocationPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSend: (location: LocationMessage) => void;
+  onSend: (location: LocationMessage) => Promise<void> | void;
 }
 
 export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerProps) {
@@ -28,13 +28,17 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
   const { mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
-    onSend({
-      latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address, isLive,
-      ...(isLive && { liveUntil: new Date(Date.now() + parseInt(liveDuration) * 60 * 1000) }),
-    });
-    handleClose();
+    try {
+      await onSend({
+        latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address, isLive,
+      });
+      handleClose();
+    } catch {
+      // The handler owns the user-facing error; preserve the selected point so
+      // the operator can retry after fixing connectivity or choosing static.
+    }
   };
 
   const handleClose = () => { reset(); setIsLive(false); setLiveDuration('15'); setActiveTab('current'); onOpenChange(false); };

@@ -2,8 +2,8 @@
 # ZAPP-WEB · Migration controlada do banco oficial
 # ==================================================================
 # Executa somente por workflow_dispatch na main. O dry-run e obrigatorio
-# antes de uma aplicacao: ele comprova o destino, exige que exista exatamente
-# uma migration local ausente e publica apenas hashes estruturais seguros.
+# antes de uma aplicacao: ele comprova o destino, exige uma migration local
+# ou um bundle explicitamente autorizado e publica apenas hashes estruturais.
 # Somente alvos com contrato runtime explicito neste arquivo sao aceitos. Para
 # aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
 # o runtime novamente para fechar a janela TOCTOU.
@@ -23,7 +23,7 @@ on:
         required: true
         type: string
       apply:
-        description: 'Desmarcado = dry-run; marcado = aplicar a unica migration ausente.'
+        description: 'Desmarcado = dry-run; marcado = aplicar o alvo ou bundle autorizado.'
         required: true
         default: false
         type: boolean
@@ -109,7 +109,7 @@ jobs:
           console.log('OK: destino oficial comprovado por fingerprint.');
           NODE
 
-      - name: Exigir exatamente uma migration ausente
+      - name: Exigir alvo unico ou bundle atomico conhecido
         id: preflight
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
@@ -132,10 +132,18 @@ jobs:
           comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
+          ATOMIC_DELIVERY_BUNDLE=$'20260909250000\n20260909260000\n20260909270000'
           if [ "$MISSING_COUNT" = "1" ] && [ "$MISSING_VERSION" = "$TARGET_VERSION" ]; then
             NEEDS_APPLY=true
+            APPLY_BUNDLE=false
+          elif [ "$TARGET_VERSION" = "20260909270000" ] \
+            && [ "$MISSING_COUNT" = "3" ] \
+            && diff -u <(printf '%s\n' "$ATOMIC_DELIVERY_BUNDLE") /tmp/missing-versions; then
+            NEEDS_APPLY=true
+            APPLY_BUNDLE=true
           elif [ "$MISSING_COUNT" = "0" ] && grep -Fxq "$TARGET_VERSION" /tmp/remote-versions; then
             NEEDS_APPLY=false
+            APPLY_BUNDLE=false
           else
             echo "::error::O conjunto de versions ausentes nao corresponde exatamente ao alvo informado."
             echo "missing_count=$MISSING_COUNT"
@@ -156,6 +164,7 @@ jobs:
             exit 1
           fi
           echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
+          echo "apply_bundle=$APPLY_BUNDLE" >> "$GITHUB_OUTPUT"
           echo "target_name=$TARGET_NAME" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
@@ -173,6 +182,7 @@ jobs:
           APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
+          APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
           case "$TARGET_VERSION" in
             20260830170000)
@@ -449,7 +459,7 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
-            20260909220000|20260909240000)
+            20260909220000|20260909240000|20260909250000|20260909260000|20260909270000)
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/message-delivery-phase1-runtime.sql)
               ;;
@@ -762,6 +772,129 @@ jobs:
             targetOk = process.env.NEEDS_APPLY === 'true'
               ? preHardening
               : hardened;
+          } else if (process.env.TARGET_VERSION === '20260909250000') {
+            // Location support only extends the enqueue contract; the
+            // structural delivery primitives and hardened grants remain.
+            const base = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 8
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.authenticated_rich_enqueue_effective === false
+              && proof.authenticated_rich_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = base && proof.definition_sha256 === (
+              process.env.NEEDS_APPLY === 'true'
+                ? '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+                : '7bfca6ba72e24deb3bb7d502b02583dddcf64e79760e316722e560a7f4375030'
+            );
+          } else if (process.env.TARGET_VERSION === '20260909260000') {
+            const preRich = proof.function_count === 8
+              && proof.safe_api_function_count === 5
+              && proof.trusted_owner_function_count === 8
+              && proof.authenticated_rich_enqueue_effective === false
+              && proof.authenticated_rich_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.anon_any_execute === false;
+            const richApplied = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 9
+              && proof.safe_api_function_count === 6
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 9
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'
+              && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
+              && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
+              && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.authenticated_rich_enqueue_effective === true
+              && proof.authenticated_rich_enqueue_direct === true
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = process.env.NEEDS_APPLY === 'true'
+              ? preRich && proof.definition_sha256 === '7bfca6ba72e24deb3bb7d502b02583dddcf64e79760e316722e560a7f4375030'
+              : richApplied;
+          } else if (process.env.TARGET_VERSION === '20260909270000') {
+            const base = proof.message_column_count === 7
+              && proof.closure_column_count === 1
+              && proof.event_column_count === 1
+              && proof.column_contract_count === 9
+              && proof.validated_constraint_count === 4
+              && proof.index_count === 4
+              && proof.function_count === 9
+              && proof.safe_api_function_count === 6
+              && proof.internal_guard_function_count === 3
+              && proof.internal_guard_trigger_count === 3
+              && proof.trusted_owner_function_count === 9
+              && proof.function_name_collision_count === 0
+              && proof.trigger_name_collision_count === 0
+              && proof.constraint_name_collision_count === 0
+              && proof.authenticated_enqueue_effective === true
+              && proof.authenticated_enqueue_direct === true
+              && proof.authenticated_rich_enqueue_effective === true
+              && proof.authenticated_rich_enqueue_direct === true
+              && proof.service_enqueue_effective === false
+              && proof.service_enqueue_direct === false
+              && proof.service_rich_enqueue_effective === false
+              && proof.service_rich_enqueue_direct === false
+              && proof.authenticated_privileged_delivery === false
+              && proof.authenticated_internal_guard_execute === false
+              && proof.service_internal_guard_execute === false
+              && proof.service_internal_guard_direct_count === 0
+              && proof.anon_any_execute === false
+              && proof.service_delivery_effective_count === 3
+              && proof.service_delivery_direct_count === 3
+              && proof.custom_guc_reference_count === 0;
+            targetOk = base && (
+              process.env.NEEDS_APPLY === 'true'
+                ? (
+                  process.env.APPLY_BUNDLE === 'true'
+                    ? proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
+                    : proof.definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'
+                )
+                : proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
+            );
           } else if (process.env.TARGET_VERSION === '20260909230000') {
             const canonicalExceptSavedByAction = proof.table_count === 1
               && proof.variant_table_count === 1
@@ -859,6 +992,22 @@ jobs:
           )
           test "$LEDGER_COUNT" = "1"
           echo "OK: ledger possui exatamente version=$TARGET_VERSION name=$TARGET_NAME."
+
+      - name: Validar ledger completo do bundle de entrega atomica
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909270000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          BUNDLE_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            SELECT count(*)
+            FROM supabase_migrations.schema_migrations
+            WHERE version IN ('20260909250000', '20260909260000', '20260909270000');
+          SQL
+          )
+          test "$BUNDLE_COUNT" = "3"
+          echo "OK: ledger possui todas as tres migrations do contrato atomico."
 
       - name: Validar comportamento de get_team_profiles
         if: >-
@@ -1199,6 +1348,34 @@ jobs:
             && proof.service_delivery_effective_count === 3
             && proof.service_delivery_direct_count === 3
             && proof.custom_guc_reference_count === 0;
+          if (!ok) process.exit(1);
+          NODE
+
+      - name: Validar entrega atomica de enquetes e contatos
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260909270000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/message-delivery-phase1-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && proof.function_count === 9
+            && proof.safe_api_function_count === 6
+            && proof.trusted_owner_function_count === 9
+            && proof.function_name_collision_count === 0
+            && proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
+            && proof.authenticated_rich_enqueue_effective === true
+            && proof.authenticated_rich_enqueue_direct === true
+            && proof.service_rich_enqueue_effective === false
+            && proof.service_rich_enqueue_direct === false
+            && proof.anon_any_execute === false;
           if (!ok) process.exit(1);
           NODE
 

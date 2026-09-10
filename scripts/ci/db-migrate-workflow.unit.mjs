@@ -65,7 +65,7 @@ test('Inbox authorization migration has caller-bound and post-apply contracts', 
 test('message delivery phase 1 has strict absent/applied runtime contracts', () => {
   assert.match(
     workflow,
-    /20260909220000\|20260909240000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
+    /20260909220000\|20260909240000\|20260909250000\|20260909260000\|20260909270000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
   );
   assert.match(workflow, /TARGET_VERSION === '20260909220000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909220000'/);
@@ -88,6 +88,19 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
   assert.match(workflow, /proof\.service_delivery_direct_count === 3/);
   assert.match(workflow, /TARGET_VERSION === '20260909240000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909240000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909250000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909260000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909270000'/);
+  assert.match(workflow, /ATOMIC_DELIVERY_BUNDLE=.*20260909250000/);
+  assert.match(workflow, /APPLY_BUNDLE/);
+  assert.match(workflow, /Validar ledger completo do bundle de entrega atomica/);
+  assert.match(workflow, /version IN \('20260909250000', '20260909260000', '20260909270000'\)/);
+  assert.match(workflow, /apply_bundle=\$APPLY_BUNDLE/);
+  assert.match(workflow, /definition_sha256 === '7bfca6ba72e24deb3bb7d502b02583dddcf64e79760e316722e560a7f4375030'/);
+  assert.match(workflow, /definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'/);
+  assert.match(workflow, /definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'/);
+  assert.match(workflow, /proof\.authenticated_rich_enqueue_effective === true/);
+  assert.match(workflow, /proof\.service_rich_enqueue_effective === false/);
   assert.match(workflow, /proof\.service_internal_guard_execute === false/);
   assert.match(workflow, /proof\.service_internal_guard_direct_count === 0/);
   assert.match(

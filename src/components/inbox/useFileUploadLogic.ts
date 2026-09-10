@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { toast } from 'sonner';
 import { validateFile, FileValidationResult } from '@/utils/whatsappFileTypes';
 import { compressImage, formatCompressionInfo } from '@/utils/imageCompression';
+import { sendOutboundMessage, type OutboundMessageType } from '@/services/outbound-message.service';
 
 interface FileMessageData {
   mediaUrl?: string;
@@ -19,7 +19,6 @@ interface FilePreview {
 }
 
 interface UploadedPrivateObject {
-  deliveryUrl: string;
   locatorUrl: string;
 }
 
@@ -43,7 +42,7 @@ export function useFileUploadLogic(opts: {
   onFileSelect?: (file: File, category: string) => void;
   onFileSent?: (messageData: FileMessageData) => void;
 }) {
-  const { instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent } = opts;
+  const { contactId, connectionId, onFileSelect, onFileSent } = opts;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
@@ -56,7 +55,7 @@ export function useFileUploadLogic(opts: {
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { sendMediaMessage, sendAudioMessage, isLoading: apiLoading } = useEvolutionApi();
+  const apiLoading = false;
 
   const processFilesToQueue = useCallback((files: File[]): QueuedFile[] => {
     const processed = files.slice(0, MAX_FILES).map((file, index) => {
@@ -88,11 +87,9 @@ export function useFileUploadLogic(opts: {
     const { error } = await supabase.storage.from('whatsapp-media').upload(filePath, fileToUpload, { cacheControl: '31536000', upsert: false });
     if (error) throw new Error(`Erro ao fazer upload: ${error.message}`);
 
-    const { data: signedData, error: signError } = await supabase.storage.from('whatsapp-media').createSignedUrl(filePath, 3600);
-    if (signError || !signedData?.signedUrl) throw new Error('Erro ao gerar URL do arquivo');
     const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(filePath);
     if (!locatorData?.publicUrl) throw new Error('Erro ao gerar referência durável do arquivo');
-    return { deliveryUrl: signedData.signedUrl, locatorUrl: locatorData.publicUrl };
+    return { locatorUrl: locatorData.publicUrl };
   }, []);
 
   const handleClose = useCallback(() => {
@@ -107,29 +104,22 @@ export function useFileUploadLogic(opts: {
   }, [filePreview, fileQueue]);
 
   const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
-    if (!instanceName || !recipientNumber) return null;
-    const { deliveryUrl, locatorUrl } = await uploadFileToStorage(file);
-    const messageContent = category === 'document' ? file.name : cap || `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : 'Arquivo'}]`;
-
-    const apiPromise = category === 'audio'
-      ? sendAudioMessage(instanceName, recipientNumber, deliveryUrl)
-      : sendMediaMessage({ instanceName, number: recipientNumber, mediaUrl: deliveryUrl, mediaType: category as 'image' | 'video' | 'audio' | 'document', caption: cap || undefined });
-
-    const dbPromise = contactId
-      ? supabase.from('messages').insert({ contact_id: contactId, whatsapp_connection_id: connectionId || null, content: messageContent, message_type: category || 'document', media_url: locatorUrl, sender: 'agent', status: 'sending' }).select('id').single()
-      : Promise.resolve(null);
-
-    const [result, dbResult] = await Promise.all([apiPromise, dbPromise]);
-    const externalId = result?.key?.id || null;
-    if (dbResult?.data?.id && externalId) {
-      supabase.from('messages').update({ external_id: externalId, status: 'sent' }).eq('id', dbResult.data.id).then(() => {});
-    }
-    return { result, mediaUrl: locatorUrl, category };
-  }, [instanceName, recipientNumber, contactId, connectionId, uploadFileToStorage, sendMediaMessage, sendAudioMessage]);
+    if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+    const { locatorUrl } = await uploadFileToStorage(file);
+    const messageContent = category === 'document' ? file.name : `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : category === 'sticker' ? 'Sticker' : 'Arquivo'}]`;
+    const messageType: OutboundMessageType = category === 'image' || category === 'video' || category === 'audio' || category === 'sticker'
+      ? category
+      : 'document';
+    const result = await sendOutboundMessage({
+      contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
+      caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
+    });
+    return { result, mediaUrl: locatorUrl, category: messageType };
+  }, [contactId, connectionId, uploadFileToStorage]);
 
   const handleSendFile = useCallback(async () => {
     if (!filePreview || !filePreview.validation.valid) return;
-    if (!instanceName || !recipientNumber) {
+    if (!contactId) {
       onFileSelect?.(filePreview.file, filePreview.validation.category || 'document');
       handleClose();
       return;
@@ -148,10 +138,10 @@ export function useFileUploadLogic(opts: {
       log.error('Error sending file:', error);
       toast.error(error.message || 'Erro ao enviar arquivo', { id: 'file-upload' });
     }
-  }, [filePreview, instanceName, recipientNumber, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent]);
+  }, [filePreview, contactId, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent]);
 
   const sendSingleQueueFile = useCallback(async (queuedFile: QueuedFile, index: number): Promise<boolean> => {
-    if (!queuedFile.validation.valid || !instanceName || !recipientNumber) return false;
+    if (!queuedFile.validation.valid || !contactId) return false;
     setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'uploading', progress: 0 } : f));
     try {
       const sent = await sendFileViaApi(queuedFile.file, queuedFile.validation.category, undefined);
@@ -164,7 +154,7 @@ export function useFileUploadLogic(opts: {
       setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'error', error: error.message } : f));
       return false;
     }
-  }, [instanceName, recipientNumber, sendFileViaApi, onFileSent]);
+  }, [contactId, sendFileViaApi, onFileSent]);
 
   const handleSendAllFiles = useCallback(async () => {
     if (fileQueue.length === 0) return;
@@ -230,7 +220,7 @@ export function useFileUploadLogic(opts: {
     });
   }, []);
 
-  const canSend = !!(instanceName && recipientNumber);
+  const canSend = !!contactId;
   const validFilesCount = fileQueue.filter(f => f.validation.valid).length;
   const totalQueueProgress = fileQueue.length > 0 ? Math.round(fileQueue.reduce((acc, f) => acc + f.progress, 0) / fileQueue.length) : 0;
 

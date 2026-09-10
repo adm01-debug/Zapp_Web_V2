@@ -38,7 +38,7 @@ if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
 interface ChatPanelProps {
   conversation: Conversation;
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => Promise<void> | void;
   onSendAudio?: (blob: Blob) => Promise<void>;
   showDetails?: boolean;
   onToggleDetails?: () => void;
@@ -116,7 +116,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const { editMessage } = useEvolutionApi();
   const { scheduleMessage } = useScheduledMessages(conversation.contact.id);
   const { signatureEnabled, agentName, toggleSignature, applySignature } = useMessageSignature();
-  const { instanceName, whatsappConnectionId, initResolve, handleSendSticker, handleSendCustomEmoji, handleSendAudioMeme } = useChatMediaSending(conversation.contact.id, conversation.contact.phone);
+  const { instanceName, initResolve, handleSendSticker, handleSendCustomEmoji, handleSendAudioMeme } = useChatMediaSending(conversation.contact.id, conversation.contact.phone);
 
   const handleVoiceChange = useCallback((v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
   const handleSpeedChange = useCallback((s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);
@@ -282,8 +282,6 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onOpenLocationPicker={() => openDialog('locationPicker')} onSendProduct={handlers.handleSendProduct} onSendSticker={handleSendSticker}
           onSendAudioMeme={handleSendAudioMeme} onSendCustomEmoji={handleSendCustomEmoji}
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
-          onPollSent={async (poll) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📊 *Enquete:* ${poll.name}\n${poll.options.map((o, i) => `${i + 1}. ${o}`).join('\n')}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
-          onContactSent={async (contactName) => { await supabase.from('messages').insert({ contact_id: conversation.contact.id, whatsapp_connection_id: whatsappConnectionId, content: `📇 Cartão de contato: ${contactName}`, message_type: 'text', sender: 'agent', status: 'sent' }); }}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
           fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef}
           onOpenAiAssistant={onSwitchToAiTab} onOpenTransfer={() => openDialog('transferDialog')} />

@@ -34,7 +34,7 @@ interface ChatDialogsProps {
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   onSendInteractiveMessage: (interactive: InteractiveMessage) => void;
   onForwardToTargets: (targetIds: string[], targetType: 'contact' | 'group') => void;
-  onSendLocation: (location: LocationMessage) => void;
+  onSendLocation: (location: LocationMessage) => Promise<void> | void;
   onSendProduct: (product: ExternalProduct) => void;
   onSetInputValue: (value: string | ((prev: string) => string)) => void;
 }
