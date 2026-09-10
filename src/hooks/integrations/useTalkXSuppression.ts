@@ -54,20 +54,24 @@ export function useTalkXSuppression() {
   /** Verifica se um número de telefone está na lista de supressão (incluindo expiração). */
   const isSuppressed = async (phone: string): Promise<boolean> => {
     const clean = phone.replace(/\D/g, '');
-    const { data } = await supabase
-      .from('talkx_blacklist')
-      .select('id, expires_at')
-      .or(`phone.eq.${clean},contact_id.in.(select id from contacts where phone = '${clean}')`)
-      .limit(1);
-    if (!data || data.length === 0) return false;
-    const entry = data[0] as { expires_at: string | null };
-    if (entry.expires_at && new Date(entry.expires_at) < new Date()) return false; // expirado
-    return true;
+    const now = new Date().toISOString();
+    const { data: byPhone } = await supabase.from('talkx_blacklist')
+      .select('id').eq('phone', clean).is('removed_at', null)
+      .or('expires_at.is.null,expires_at.gt.' + now).limit(1);
+    if (byPhone && byPhone.length > 0) return true;
+    const { data: contact } = await supabase.from('contacts').select('id').eq('phone', clean).maybeSingle();
+    if (!contact) return false;
+    const { data: byContact } = await supabase.from('talkx_blacklist')
+      .select('id').eq('contact_id', contact.id).is('removed_at', null)
+      .or('expires_at.is.null,expires_at.gt.' + now).limit(1);
+    return !!(byContact && byContact.length > 0);
   };
 
   const addEntry = useMutation({
     mutationFn: async (input: BlacklistInput) => {
       if (!input.phone && !input.contact_id) throw new Error('phone ou contact_id obrigatório');
+      if (input.phone) input = { ...input, phone: input.phone.replace(/\D/g, '') };
+      if (!input.phone && !input.contact_id) throw new Error('phone invalido apos normalizacao');
       const { error } = await supabase.from('talkx_blacklist').insert({
         phone: input.phone ?? null,
         contact_id: input.contact_id ?? null,

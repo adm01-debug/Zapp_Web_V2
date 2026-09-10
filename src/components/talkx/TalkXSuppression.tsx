@@ -88,7 +88,7 @@ export function TalkXSuppression() {
     let r = blacklist;
     if (filterOrigin !== 'all') r = r.filter((b) => b.origin === filterOrigin);
     if (filterMotivo !== 'all') r = r.filter((b) => b.reason_code === filterMotivo || (b.reason ?? '').toLowerCase().includes(filterMotivo.toLowerCase()));
-    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || b.phone?.includes(q.replace(/\D/g,'')) || (b.reason ?? '').toLowerCase().includes(q)); }
+    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => { const qNum = q.replace(/\D/g, ''); return b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || (qNum.length > 0 && b.phone?.includes(qNum)) || (b.reason ?? '').toLowerCase().includes(q); }); }
     return r;
   }, [blacklist, filterOrigin, filterMotivo, search]);
 
@@ -158,7 +158,7 @@ export function TalkXSuppression() {
   };
 
   const exportCSV = () => {
-    const rows = blacklist.map((b) => ({ Nome: b.contacts?.name, Telefone: b.contacts?.phone, Origem: b.origin, Motivo: b.reason, Data: fmtDateTime(b.created_at) }));
+    const rows = blacklist.map((b) => ({ Nome: b.contacts?.name ?? (b.phone ? 'Avulso' : ''), Telefone: b.contacts?.phone ?? b.phone ?? '', Origem: b.origin, Motivo: b.reason, Data: fmtDateTime(b.created_at) }));
     const headers = Object.keys(rows[0] ?? {});
     const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as Record<string, string>)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
     const a = document.createElement('a');
