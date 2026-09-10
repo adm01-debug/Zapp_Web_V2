@@ -268,16 +268,23 @@ Deno.serve(async (req) => {
 
       // E49: sortear variante A/B
       const existingVid = (recipient as Record<string, unknown>).variant_id as string | null;
-      const variant = existingVid
-        ? await supabase.from('talkx_template_variants').select('id,content,media_url,media_type,weight').eq('id', existingVid).single().then(({ data }) => data).catch(() => null)
-        : (campaign.template_id ? await pickVariant(supabase, campaign.template_id) : null);
+      let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
+      if (existingVid) {
+        const { data: vData, error: vErr } = await supabase
+          .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
+          .eq('id', existingVid).single();
+        if (!vErr && vData) variant = vData;
+        // em erro: variant fica null mas existingVid é preservado no update abaixo
+      } else if (campaign.template_id) {
+        variant = await pickVariant(supabase, campaign.template_id);
+      }
       const contentToSend = variant?.content ?? campaign.message_template;
       const effectiveMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
       const effectiveMediaType = variant?.media_type ?? campaign.media_type ?? null;
       const recipientHasMedia = !!effectiveMediaUrl && !!effectiveMediaType;
       const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
       await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, status: "sending", variant_id: variant?.id ?? null }).eq("id", recipient.id);
+        .update({ personalized_message: personalizedMsg, status: "sending", variant_id: variant?.id ?? existingVid ?? null }).eq("id", recipient.id);
 
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
