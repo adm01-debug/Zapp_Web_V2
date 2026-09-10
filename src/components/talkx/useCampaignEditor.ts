@@ -35,6 +35,28 @@ export const MEDIA_TYPES = [
 export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
+
+/**
+ * E69 fix: converte datetime-local string (sem TZ) para ISO UTC usando o fuso selecionado.
+ * Ex: localToUTCInTimezone('2026-09-15T10:00', 'America/New_York') -> '2026-09-15T14:00:00.000Z'
+ */
+function localToUTCInTimezone(localStr: string, tz: string): string {
+  if (!localStr) return '';
+  const [datePart, timePart] = localStr.split('T');
+  const [yr, mo, da] = datePart.split('-').map(Number);
+  const [hr, mi] = timePart.split(':').map(Number);
+  // Tratamos o input como UTC provisorio para obter o offset do fuso naquele instante
+  const approxMs = Date.UTC(yr, mo - 1, da, hr, mi, 0);
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
+  const p = Object.fromEntries(fmt.formatToParts(new Date(approxMs)).map(x => [x.type, x.value]));
+  const tzLocalMs = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  // offset = diferenca entre o instante UTC provisorio e o que o fuso le nele
+  const offsetMs = approxMs - tzLocalMs; // positivo = fuso atras do UTC
+  return new Date(approxMs + offsetMs).toISOString();
+}
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
   const { createCampaign, updateCampaign, addRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
@@ -271,11 +293,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     whatsapp_connection_id: connectionId || null,
     media_url: hasMedia ? mediaUrl || null : null,
     media_type: hasMedia ? mediaType || null : null,
-    scheduled_at: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
+    scheduled_at: isScheduled && scheduledAt ? localToUTCInTimezone(scheduledAt, scheduleTimezone) : null,
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
+  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const handleSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
