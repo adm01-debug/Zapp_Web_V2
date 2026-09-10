@@ -29,6 +29,20 @@ function personalize(template, contact, customVars = []) {
   }
   return result;
 }
+/** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
+async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
+  const { data: variants, error: varErr } = await supabase
+    .from('talkx_template_variants')
+    .select('id,content,media_url,media_type,weight')
+    .eq('template_id', templateId);
+  if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
+  if (!variants || variants.length === 0) return null;
+  const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
+  let roll = Math.random() * total;
+  for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
+  return variants[variants.length - 1];
+}
+
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -252,9 +266,25 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const personalizedMsg = personalize(campaign.message_template, contact as { name: string; nickname?: string; company?: string });
+      // E49: sortear variante A/B
+      const existingVid = (recipient as Record<string, unknown>).variant_id as string | null;
+      let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
+      if (existingVid) {
+        const { data: vData, error: vErr } = await supabase
+          .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
+          .eq('id', existingVid).single();
+        if (!vErr && vData) variant = vData;
+        // em erro: variant fica null mas existingVid é preservado no update abaixo
+      } else if (campaign.template_id) {
+        variant = await pickVariant(supabase, campaign.template_id);
+      }
+      const contentToSend = variant?.content ?? campaign.message_template;
+      const effectiveMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
+      const effectiveMediaType = variant?.media_type ?? campaign.media_type ?? null;
+      const recipientHasMedia = !!effectiveMediaUrl && !!effectiveMediaType;
+      const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
       await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, status: "sending" }).eq("id", recipient.id);
+        .update({ personalized_message: personalizedMsg, status: "sending", variant_id: variant?.id ?? existingVid ?? null }).eq("id", recipient.id);
 
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
@@ -271,12 +301,14 @@ Deno.serve(async (req) => {
         let sendResponse: Response;
         let sendResult: Record<string, unknown>;
 
-        if (hasMedia) {
-          const mediaEndpoint = getMediaEndpoint(campaign.media_type);
-          const mediaSource = await mediaForSend();
+        if (recipientHasMedia) {
+          const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
+          const mediaSource = (effectiveMediaUrl !== campaign.media_url)
+            ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
+            : await mediaForSend();
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
-            { number: phone, mediatype: campaign.media_type, media: mediaSource, caption: personalizedMsg, delay: 0 },
+            { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
             fetchWithRetry
           );
           sendResult = await sendResponse.json();

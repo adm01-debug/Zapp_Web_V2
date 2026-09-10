@@ -50,6 +50,12 @@ function templateUpdateErrorMessage(error: unknown): string {
   return 'Não foi possível atualizar o template. Tente novamente.';
 }
 
+export type TemplateVariant = {
+  id: string; template_id: string; label: 'A' | 'B' | 'C';
+  content: string; media_url: string | null; media_type: string | null;
+  weight: number; created_at: string;
+};
+
 export function useTalkXTemplates() {
   const qc = useQueryClient();
   const { profile } = useAuth();
@@ -173,6 +179,43 @@ export function useTalkXTemplates() {
     return json;
   };
 
+
+  // E49: busca variantes A/B de um template
+  const fetchVariants = async (templateId: string): Promise<TemplateVariant[]> => {
+    const { data, error: varErr } = await supabase
+      .from('talkx_template_variants')
+      .select('id,template_id,label,content,media_url,media_type,weight,created_at')
+      .eq('template_id', templateId).order('label', { ascending: true });
+    if (varErr) throw new Error(`Erro ao buscar variantes: ${varErr.message}`);
+    return (data ?? []) as TemplateVariant[];
+  };
+
+  const saveVariant = async (templateId: string, variant: Omit<TemplateVariant, 'id' | 'created_at'> & { id?: string }) => {
+    const { id, ...payload } = variant;
+    if (id) {
+      const { error } = await supabase.from('talkx_template_variants').update(payload).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('talkx_template_variants').insert({ ...payload, template_id: templateId });
+      if (error) throw error;
+    }
+    invalidate();
+  };
+
+  const deleteVariant = async (variantId: string) => {
+    const { error } = await supabase.from('talkx_template_variants').delete().eq('id', variantId);
+    if (error) throw error;
+    invalidate();
+  };
+
+  const countVariantRecipients = async (variantId: string): Promise<number> => {
+    const { count } = await supabase
+      .from('talkx_recipients')
+      .select('id', { count: 'exact', head: true })
+      .eq('variant_id', variantId);
+    return count ?? 0;
+  };
+
   return {
     templates: query.data ?? [],
     isLoading: query.isLoading,
@@ -182,5 +225,6 @@ export function useTalkXTemplates() {
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
     testTemplate,
     fetchVersionHistory,
+    fetchVariants, saveVariant, deleteVariant, countVariantRecipients,
   };
 }
