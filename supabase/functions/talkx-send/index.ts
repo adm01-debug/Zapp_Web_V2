@@ -240,7 +240,6 @@ Deno.serve(async (req) => {
 
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
-    const hasMedia = !!campaign.media_url && !!campaign.media_type;
     // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
     // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
     // com typingDelay por envio passam do TTL.
