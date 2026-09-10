@@ -27,8 +27,9 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
 /**
  * Login pela edge `auth-login` (ADR-006): o lockout e decidido no servidor.
  * 200 -> tokens para `supabase.auth.setSession`; 401/423 -> recusa com estado do lock.
- * Qualquer outra resposta (edge fora, 5xx, 429, corpo invalido) vira `unavailable`
- * e o chamador cai no `signInWithPassword` direto, que e o comportamento anterior.
+ * Qualquer outra resposta (edge fora, 5xx, 429, corpo invalido) vira `unavailable`.
+ * O chamador deve falhar fechado e nunca recorrer ao GoTrue diretamente, para que
+ * o lockout continue sendo aplicado pela Edge.
  */
 export async function serverLogin(email: string, password: string): Promise<ServerLoginResult> {
   let response: Response;
