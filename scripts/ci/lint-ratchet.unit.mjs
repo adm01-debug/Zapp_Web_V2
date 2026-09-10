@@ -4,7 +4,18 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { compareBaseline, createBaseline, main } from "./lint-ratchet.mjs";
+import { compareBaseline, createBaseline, eslintCommandArguments, main } from "./lint-ratchet.mjs";
+
+test("ignora artefatos gerados de coverage no comando do ESLint", () => {
+  assert.deepEqual(eslintCommandArguments("eslint.js"), [
+    "eslint.js",
+    ".",
+    "--format",
+    "json",
+    "--ignore-pattern",
+    "coverage/**",
+  ]);
+});
 
 function message(overrides = {}) {
   return {

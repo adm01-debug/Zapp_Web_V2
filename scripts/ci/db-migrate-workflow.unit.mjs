@@ -190,3 +190,12 @@ test('Talk X template history migration has ACL, atomicity and runtime contracts
     /definition_sha256 === '079e2bd466e89e58251c7d14596453256cade54b9f0eddd4ce6df86ae751c2be'/
   );
 });
+
+test('Talk X blacklist policy correction is forward-only and runtime-gated', () => {
+  assert.match(workflow, /20260910100000\)\n[\s\S]*talkx-blacklist-policy-runtime\.sql/);
+  assert.match(workflow, /TARGET_VERSION === '20260910100000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260910100000'/);
+  assert.match(workflow, /proof\.legacy_permissive_count === 1/);
+  assert.match(workflow, /proof\.restricted_policy_count === 1/);
+  assert.match(workflow, /proof\.authenticated_policy_count === 1/);
+});

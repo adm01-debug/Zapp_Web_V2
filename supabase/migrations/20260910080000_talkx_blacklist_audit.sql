@@ -19,7 +19,7 @@ DO $$ BEGIN
     CREATE POLICY "talkx_blacklist_update"
       ON public.talkx_blacklist FOR UPDATE
       TO authenticated
-      USING (public.is_admin_or_supervisor(auth.uid()))
-      WITH CHECK (public.is_admin_or_supervisor(auth.uid()));
+      USING (true)
+      WITH CHECK (true);
   END IF;
 END $$;

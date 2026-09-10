@@ -102,6 +102,11 @@ jobs:
           TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
           TALKX_HISTORY_FK_PRESTATE=ORPHAN bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
 
+      - name: Simular reconciliação forward-only da policy Talk X blacklist
+        env:
+          TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
+
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
