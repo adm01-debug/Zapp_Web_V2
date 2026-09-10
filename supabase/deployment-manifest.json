@@ -83,8 +83,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 19963,
-      "sha256": "8f15a86b1ff0a9825cc0c38f8fb826f919376cf071ef9e7ffda86ab12c107628"
+      "bytes": 20751,
+      "sha256": "07d71e6f07e86a4ca47ffe4597fcb3e580e92a633dfefaa802e8e0e60841ffee"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -403,8 +403,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 17255,
-      "sha256": "60ea093ea31f5124cb769b5bd4ed7a2c9e90d909616645b5e8c808169b8905b1"
+      "bytes": 17444,
+      "sha256": "2c3ddfbd26d09b5190c89a8027c30eb9bce0434b5a2097e34f17c08cd0583ad7"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -877,7 +877,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "627371fda1181279bc755dab400e61f572d28eafe4da2352018a25f04e84aba3",
+      "source_sha256": "230996f2862eb412155349123507158fa49d77c7f893487990a387d60b815d41",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1158,7 +1158,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "def77994534585b1c42a7ccce6fb6005e7757fe255659a31c96480db7dcf9426",
+      "source_sha256": "09ceca5133e12004e354d5b955afe5416ea2933179d3dd6f30c0429efd8f5cb8",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1238,5 +1238,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2094862095241d904a44e75bf6a0fa2c7fabe5aa4ae7d7db5a3062efbc5fa514"
+  "manifest_sha256": "39c11d24ec554a8ae63931d2b291d67b7c8b903e3ec66ccee5e07ad265c073eb"
 }
