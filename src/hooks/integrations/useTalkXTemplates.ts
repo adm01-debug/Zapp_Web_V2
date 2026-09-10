@@ -182,10 +182,11 @@ export function useTalkXTemplates() {
 
   // E49: busca variantes A/B de um template
   const fetchVariants = async (templateId: string): Promise<TemplateVariant[]> => {
-    const { data } = await supabase
+    const { data, error: varErr } = await supabase
       .from('talkx_template_variants')
       .select('id,template_id,label,content,media_url,media_type,weight,created_at')
       .eq('template_id', templateId).order('label', { ascending: true });
+    if (varErr) throw new Error(`Erro ao buscar variantes: ${varErr.message}`);
     return (data ?? []) as TemplateVariant[];
   };
 
