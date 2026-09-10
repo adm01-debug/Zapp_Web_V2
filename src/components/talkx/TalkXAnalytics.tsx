@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
+import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -57,6 +58,27 @@ export function TalkXAnalytics({ campaigns }: Props) {
     () => filtered.filter((c) => c.status === 'completed' || c.status === 'sending').map((c) => c.id),
     [filtered]
   );
+
+  // E76: analytics por segmento
+  const { segments: allSegments } = useTalkXSegments();
+  const top3Segments = useMemo(() => {
+    const map = new Map<string, { name: string; sent: number; total: number }>();
+    filtered.forEach((c) => {
+      if (!c.segment_id) return;
+      const existing = map.get(c.segment_id);
+      const name = allSegments?.find((sg) => sg.id === c.segment_id)?.name ?? c.segment_id.slice(0, 8);
+      map.set(c.segment_id, {
+        name,
+        sent: (existing?.sent ?? 0) + (c.sent_count ?? 0),
+        total: (existing?.total ?? 0) + (c.total_recipients ?? 0),
+      });
+    });
+    return [...map.values()]
+      .filter((sg) => sg.total > 0)
+      .map((sg) => ({ ...sg, rate: Math.round((sg.sent / sg.total) * 1000) / 10 }))
+      .sort((a, b) => b.rate - a.rate)
+      .slice(0, 3);
+  }, [filtered, allSegments]);
 
   const { data: replyData, isLoading: replyLoading } = useQuery({
     queryKey: ['talkx-reply-rate', period, sentCampaignIds.join(',')],
@@ -158,7 +180,13 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
         <DashboardKpiCard size="hero" index={1} label="Taxa de entrega" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
         <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
-        <DashboardKpiCard size="hero" index={3} label="Conversão por segmento" value="—" delta={null} tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
+        <DashboardKpiCard size="hero" index={3}
+          label="Conversão por segmento"
+          value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
+          delta={top3Segments.length > 0
+            ? { text: top3Segments.map((sg) => `${sg.name.slice(0, 14)}: ${sg.rate.toString().replace('.', ',')}%`).join(' | '), tone: 'muted' }
+            : { text: 'sem campanhas com segmento no período', tone: 'muted' }}
+          tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
         <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
       </div>
