@@ -12,7 +12,7 @@ vi.mock('@/lib/serverLogin', () => ({ serverLogin: (...a: unknown[]) => serverLo
 
 import { AuthService } from '@/services/auth.service';
 
-describe('AuthService.signIn (edge auth-login com fallback)', () => {
+describe('AuthService.signIn (edge auth-login fail-closed)', () => {
   beforeEach(() => {
     authMocks.setSession.mockReset().mockResolvedValue({ data: {}, error: null });
     authMocks.signInWithPassword.mockReset().mockResolvedValue({ data: {}, error: null });
@@ -38,12 +38,11 @@ describe('AuthService.signIn (edge auth-login com fallback)', () => {
     expect(r.lock).toBe(lock);
   });
 
-  it('edge indisponivel: cai no signInWithPassword direto (comportamento anterior)', async () => {
+  it('edge indisponivel: falha fechado e nunca contorna o lockout pelo cliente', async () => {
     serverLoginMock.mockResolvedValue({ ok: false, unavailable: true, error: 'auth-login: HTTP 502' });
-    const err = new Error('Invalid login credentials');
-    authMocks.signInWithPassword.mockResolvedValue({ data: {}, error: err });
     const r = await AuthService.signIn('a@b.co', 'pw');
-    expect(authMocks.signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.co', password: 'pw' });
-    expect(r).toEqual({ error: err, via: 'direct', lock: null });
+    expect(authMocks.signInWithPassword).not.toHaveBeenCalled();
+    expect(r).toMatchObject({ via: 'edge', lock: null });
+    expect(r.error?.message).toContain('temporariamente indisponível');
   });
 });

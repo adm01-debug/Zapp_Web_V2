@@ -6,8 +6,8 @@ import { Profile } from '@/types';
 
 export interface SignInResult {
   error: Error | null;
-  /** 'edge' = lockout ja tratado no servidor; 'direct' = fallback, o cliente registra a falha. */
-  via: 'edge' | 'direct';
+  /** Login e lockout sao sempre decididos pelo endpoint server-side. */
+  via: 'edge';
   lock: ServerLoginLock | null;
 }
 
@@ -80,8 +80,8 @@ export class AuthService {
 
   /**
    * Login pela edge `auth-login` (lockout server-side, ADR-006). Se a edge nao
-   * responder (fora do ar, 5xx, 429), cai no signInWithPassword direto — o
-   * comportamento anterior — e o chamador registra a falha pelo cliente.
+   * responder, falha fechado. Um fallback direto permitiria contornar o
+   * lockout por qualquer cliente que chame GoTrue sem passar pela Edge.
    */
   static async signIn(email: string, password: string): Promise<SignInResult> {
     const result = await serverLogin(email, password);
@@ -95,9 +95,12 @@ export class AuthService {
     if (!result.unavailable) {
       return { error: new Error(result.error), via: 'edge', lock: result.lock };
     }
-    log.warn('[AuthService] auth-login indisponivel, usando signInWithPassword direto', result.error);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error, via: 'direct', lock: null };
+    log.warn('[AuthService] auth-login indisponivel; login bloqueado para preservar o lockout', result.error);
+    return {
+      error: new Error('Login temporariamente indisponível. Tente novamente em instantes.'),
+      via: 'edge',
+      lock: null,
+    };
   }
 
   static async signUp(email: string, password: string, name: string) {
