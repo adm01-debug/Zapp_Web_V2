@@ -72,6 +72,23 @@ Deno.test("SSRF guard fails closed on a malformed redirect location", async () =
   assertEquals(result, null);
 });
 
+Deno.test("SSRF guard aborts a stalled DNS lookup before outbound fetch", async () => {
+  const controller = new AbortController();
+  let fetchCalls = 0;
+  const resultPromise = fetchPublicHttpUrl("https://slow.example.test/", {
+    signal: controller.signal,
+    resolver: () => new Promise<string[]>(() => {}),
+    fetcher: () => {
+      fetchCalls++;
+      return Promise.resolve(new Response("unexpected"));
+    },
+  });
+
+  controller.abort();
+  assertEquals(await resultPromise, null);
+  assertEquals(fetchCalls, 0);
+});
+
 Deno.test("SSRF guard permits a bounded public redirect chain", async () => {
   const seen: string[] = [];
   const result = await fetchPublicHttpUrl("https://example.test/start", {

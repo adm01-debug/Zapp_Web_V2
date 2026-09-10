@@ -128,13 +128,29 @@ async function resolveRecords(
   hostname: string,
   recordType: "A" | "AAAA",
   resolver: DnsResolver,
+  signal?: AbortSignal,
 ): Promise<string[]> {
+  if (signal?.aborted) return [];
+
+  let abortHandler: (() => void) | undefined;
   try {
-    return await resolver(hostname, recordType);
+    const resolution = resolver(hostname, recordType);
+    if (!signal) return await resolution;
+
+    return await Promise.race([
+      resolution,
+      new Promise<never>((_resolve, reject) => {
+        abortHandler = () =>
+          reject(new DOMException("DNS resolution aborted", "AbortError"));
+        signal.addEventListener("abort", abortHandler, { once: true });
+      }),
+    ]);
   } catch {
-    // A host can legitimately have only A or only AAAA. Failure is handled
-    // fail-closed below when neither record type produces a public address.
+    // A host can legitimately have only A or only AAAA. An aborted or failed
+    // resolution also fails closed below before any outbound fetch is made.
     return [];
+  } finally {
+    if (abortHandler) signal?.removeEventListener("abort", abortHandler);
   }
 }
 
@@ -146,7 +162,9 @@ export async function resolvePublicHttpUrl(
   raw: string,
   resolver: DnsResolver = (hostname, recordType) =>
     Deno.resolveDns(hostname, recordType),
+  signal?: AbortSignal,
 ): Promise<URL | null> {
+  if (signal?.aborted) return null;
   if (raw.length === 0 || raw.length > 2048) return null;
 
   let url: URL;
@@ -169,8 +187,8 @@ export async function resolvePublicHttpUrl(
   }
 
   const addresses = [
-    ...await resolveRecords(host, "A", resolver),
-    ...await resolveRecords(host, "AAAA", resolver),
+    ...await resolveRecords(host, "A", resolver, signal),
+    ...await resolveRecords(host, "AAAA", resolver, signal),
   ];
   if (addresses.length === 0 || addresses.some(isBlockedIpAddress)) return null;
 
@@ -195,7 +213,7 @@ export async function fetchPublicHttpUrl(
 ): Promise<{ url: URL; response: Response } | null> {
   const fetcher = options.fetcher ?? ((input, init) => fetch(input, init));
   const maxRedirects = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
-  let url = await resolvePublicHttpUrl(raw, options.resolver);
+  let url = await resolvePublicHttpUrl(raw, options.resolver, options.signal);
   if (!url) return null;
 
   for (let redirects = 0; redirects <= maxRedirects; redirects++) {
@@ -228,7 +246,11 @@ export async function fetchPublicHttpUrl(
     } catch {
       return null;
     }
-    url = await resolvePublicHttpUrl(redirectUrl, options.resolver);
+    url = await resolvePublicHttpUrl(
+      redirectUrl,
+      options.resolver,
+      options.signal,
+    );
     if (!url) return null;
   }
 

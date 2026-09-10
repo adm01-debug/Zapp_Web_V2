@@ -108,8 +108,8 @@
     },
     {
       "path": "supabase/functions/_shared/ssrf.ts",
-      "bytes": 7335,
-      "sha256": "3bb261c8feacf28ec526eaa4ab93bd98b4829f4094b10c03b6ae63b8b0983499"
+      "bytes": 8006,
+      "sha256": "2823dbf1fcf401fd86f9cecda3b57729042a8b9bcea4d9117de2806f2248a38f"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
@@ -558,7 +558,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eb62132b899a1d0e6eabf72de9d2d21158080a019a789aace87af095be6f6905",
+      "source_sha256": "6e30b5dc599db2e8f898a4f4f73dd530eb013646f8438da6504f4d1485133e80",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -927,7 +927,7 @@
       "name": "fetch-link-preview",
       "entrypoint": "supabase/functions/fetch-link-preview/index.ts",
       "verify_jwt": true,
-      "source_sha256": "569a5658be105516181132c16850863c8927d1738ef6ca811718287ac3f9d893",
+      "source_sha256": "540bca3d0996a917469e4987909da2b8c839eeba3b8f8fe8de93adbff7f6d20c",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -1245,5 +1245,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1ae315dbfbf5e922819cd68a901f8e6efe5636d315ad90a5dba5dee70d7a3a63"
+  "manifest_sha256": "fa4dd2cc1373b57a32e2d422787d9c7261787bdee9305b6d0bc3dd46ceaeae37"
 }
