@@ -136,7 +136,7 @@ export default function TalkXView() {
         <TabsContent value="overview" className="mt-4">
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
-            onNew={() => openNew()} onEdit={openEdit} onView={onView} onDuplicate={duplicateCampaign}
+            onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onDuplicate={duplicateCampaign}
             onStart={(id) => startCampaign(id)} onPause={(id) => pauseCampaign(id)} onCancel={(id) => cancelCampaign(id)} onDelete={(id) => deleteCampaign.mutate(id)}
             onGoTab={(tab) => { if (tab === 'templates') setActiveTab('templates'); else if (tab === 'segments') setActiveTab('segments'); }}
           />
