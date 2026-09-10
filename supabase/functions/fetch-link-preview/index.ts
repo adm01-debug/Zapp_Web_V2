@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getCorsHeaders, handleCors } from "../_shared/validation.ts";
-import { fetchPublicHttpUrl } from "../_shared/ssrf.ts";
+import { fetchPreviewViaSecureEgress } from "../_shared/secure-egress.ts";
 
 interface PreviewData {
   url: string;
@@ -143,13 +143,8 @@ function absolutize(
 async function fetchPreview(rawUrl: string): Promise<PreviewData | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  const result = await fetchPublicHttpUrl(rawUrl, {
+  const result = await fetchPreviewViaSecureEgress(rawUrl, undefined, {
     signal: ctrl.signal,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; ZAPPLinkPreview/1.0; +https://zapp.app)",
-      Accept: "text/html,application/xhtml+xml",
-    },
   });
   clearTimeout(timer);
   if (!result) return null;

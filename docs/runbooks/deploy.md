@@ -67,6 +67,9 @@ arquivos↔ledger.
 - [ ] Mexeu em edge → manifest regenerado (1.3)
 - [ ] Mexeu em DDL → paridade validada (1.4)
 - [ ] Secrets novos configurados (Vercel env / Supabase Edge Secrets)
+- [ ] Mexeu em `fetch-link-preview` → seguir integralmente o
+  [runbook do proxy de egress](./preview-egress-proxy.md); sem hostname TLS
+  válido e proxy saudável, não fazer deploy da função.
 
 ---
 
