@@ -56,13 +56,13 @@ export function useTalkXSuppression() {
     const clean = phone.replace(/\D/g, '');
     const now = new Date().toISOString();
     const { data: byPhone } = await supabase.from('talkx_blacklist')
-      .select('id').eq('phone', clean).is('removed_at', null)
+      .select('id').eq('phone', clean)
       .or('expires_at.is.null,expires_at.gt.' + now).limit(1);
     if (byPhone && byPhone.length > 0) return true;
     const { data: contact } = await supabase.from('contacts').select('id').eq('phone', clean).maybeSingle();
     if (!contact) return false;
     const { data: byContact } = await supabase.from('talkx_blacklist')
-      .select('id').eq('contact_id', contact.id).is('removed_at', null)
+      .select('id').eq('contact_id', contact.id)
       .or('expires_at.is.null,expires_at.gt.' + now).limit(1);
     return !!(byContact && byContact.length > 0);
   };
