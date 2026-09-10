@@ -1,0 +1,12 @@
+services:
+  preview-egress-proxy:
+    build: .
+    restart: unless-stopped
+    environment:
+      PREVIEW_EGRESS_LISTEN_ADDR: ":8080"
+      PREVIEW_EGRESS_SHARED_SECRET: ${PREVIEW_EGRESS_SHARED_SECRET:?required}
+    # TLS is terminated by the existing VPS ingress. Never expose this port on
+    # the public interface; the ingress must route its dedicated HTTPS hostname
+    # to this loopback listener.
+    ports:
+      - "127.0.0.1:18080:8080"
