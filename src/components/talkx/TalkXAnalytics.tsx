@@ -178,10 +178,17 @@ export function TalkXAnalytics({ campaigns }: Props) {
             onClick={async () => {
               // E75: buscar dados dos contatos que responderam e exportar CSV
               const ids = replyData.repliedIds ?? [];
-              const { data: contacts } = await supabase
-                .from('contacts')
-                .select('id, name, phone, company, tags')
-                .in('id', ids);
+              // Pagina em lotes de 200 para evitar limite do IN filter
+              const CHUNK = 200;
+              const contactPages: Record<string, unknown>[][] = [];
+              for (let i = 0; i < ids.length; i += CHUNK) {
+                const { data: page, error: cErr } = await supabase
+                  .from('contacts').select('id, name, phone, company')
+                  .in('id', ids.slice(i, i + CHUNK));
+                if (cErr) { console.warn('[E75] contacts page error:', cErr.message); break; }
+                if (page?.length) contactPages.push(page as Record<string, unknown>[]);
+              }
+              const contacts = contactPages.flat();
               const rows: RecipientRow[] = (contacts ?? []).map((c: Record<string, unknown>) => ({
                 name: String(c.name ?? ''),
                 phone: String(c.phone ?? ''),

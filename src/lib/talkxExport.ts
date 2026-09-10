@@ -6,7 +6,7 @@ function esc(v: string): string {
   // Prefixos que planilhas interpretam como formulas (incluindo full-width)
   const FORMULA_PREFIX = /^[=+\-@\t\r\n＝＋－＠]/u;
   let safe = v;
-  if (FORMULA_PREFIX.test(safe)) safe = '' + safe;
+  if (FORMULA_PREFIX.test(safe)) safe = "'" + safe; // apostrofe forca texto no Excel
   if (safe.includes(',') || safe.includes('"') || safe.includes('\r') || safe.includes('\n')) {
     return '"' + safe.replace(/"/g, '""') + '"';
   }
