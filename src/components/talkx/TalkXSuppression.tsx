@@ -21,15 +21,14 @@ import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeleton
 
 interface BlacklistEntry {
   id: string;
-  contact_id: string | null;
-  phone: string | null;
+  contact_id: string;
   reason: string | null;
-  reason_code: string | null;
   blocked_by: string | null;
   created_at: string;
   origin: string;
   campaign_id: string | null;
-  expires_at: string | null;
+  removed_by: string | null;
+  removed_at: string | null;
   contacts: { name: string; phone: string; company: string | null; avatar_url: string | null } | null;
 }
 
@@ -48,9 +47,6 @@ export function TalkXSuppression() {
   const [addReason, setAddReason] = useState(REASONS[0]);
   const [addCustomReason, setAddCustomReason] = useState('');
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
-  const [addPhone, setAddPhone] = useState('');
-  const [addReasonCode, setAddReasonCode] = useState('manual');
-  const [addExpiresAt, setAddExpiresAt] = useState('');
   const [contactSearch, setContactSearch] = useState('');
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<{ added: number; notFound: number; alreadyBlocked: number } | null>(null);
@@ -60,7 +56,8 @@ export function TalkXSuppression() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_blacklist')
-        .select('id, contact_id, phone, reason, reason_code, blocked_by, created_at, origin, campaign_id, expires_at, contacts:contact_id(name, phone, company, avatar_url)')
+        .select('*, contacts:contact_id(name, phone, company, avatar_url)')
+        .is('removed_at', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BlacklistEntry[];
@@ -87,8 +84,8 @@ export function TalkXSuppression() {
   const filtered = useMemo(() => {
     let r = blacklist;
     if (filterOrigin !== 'all') r = r.filter((b) => b.origin === filterOrigin);
-    if (filterMotivo !== 'all') r = r.filter((b) => b.reason_code === filterMotivo || (b.reason ?? '').toLowerCase().includes(filterMotivo.toLowerCase()));
-    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => { const qNum = q.replace(/\D/g, ''); return b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || (qNum.length > 0 && b.phone?.includes(qNum)) || (b.reason ?? '').toLowerCase().includes(q); }); }
+    if (filterMotivo !== 'all') r = r.filter((b) => (b.reason ?? '').toLowerCase().includes(filterMotivo.toLowerCase()));
+    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || (b.reason ?? '').toLowerCase().includes(q)); }
     return r;
   }, [blacklist, filterOrigin, filterMotivo, search]);
 
@@ -105,11 +102,7 @@ export function TalkXSuppression() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const finalReason = addReason === 'Outro' ? addCustomReason || 'Outro' : addReason;
-      const payload: Record<string,unknown> = { reason: finalReason, reason_code: addReasonCode, blocked_by: user?.id ?? null, origin: addOrigin };
-      if (addContactId) payload.contact_id = addContactId;
-      if (addPhone) payload.phone = addPhone.replace(/\D/g,'');
-      if (addExpiresAt) payload.expires_at = new Date(addExpiresAt).toISOString();
-      const { error } = await fromTable('talkx_blacklist').insert(payload);
+      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: user?.id ?? null, origin: addOrigin });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
@@ -117,7 +110,14 @@ export function TalkXSuppression() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from('talkx_blacklist').delete().eq('id', id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+      const { error } = await supabase.from('talkx_blacklist')
+        .update({ removed_by: profileRow?.id ?? null, removed_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato removido da lista de supressão'); setRemoving(null); },
   });
 
@@ -130,22 +130,23 @@ export function TalkXSuppression() {
       const text = await file.text();
       const phones = [...new Set(text.split(/[\n,;\t]/).map((l) => l.replace(/[^0-9]/g, '').trim()).filter((v) => v.length >= 8))];
       if (phones.length === 0) { toast.error('Nenhum telefone encontrado no arquivo.'); return; }
-      // E53 v2: inserir phone avulso diretamente sem busca em contacts
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
-      const { data: existing } = await supabase.from('talkx_blacklist').select('phone').not('phone','is',null).in('phone', phones);
-      const existingPhones = new Set((existing ?? []).map((r: { phone: string | null }) => r.phone ?? ''));
-      const toInsert = phones.filter((ph) => !existingPhones.has(ph));
+      const { data: contacts, error: lookupErr } = await supabase.from('contacts').select('id, phone').in('phone', phones);
+      if (lookupErr) throw lookupErr;
+      const found = contacts ?? [];
+      const alreadyBlockedSet = new Set(blacklistedIds);
+      const toInsert = found.filter((c) => c.phone && !alreadyBlockedSet.has(c.id));
       if (toInsert.length === 0) {
-        setImportResults({ added: 0, notFound: 0, alreadyBlocked: phones.length });
-        toast.info('Todos os telefones já estão na lista.');
+        setImportResults({ added: 0, notFound: phones.length - found.length, alreadyBlocked: found.length - toInsert.length });
+        toast.info('Nenhum contato novo para adicionar.');
         return;
       }
-      const rows = toInsert.map((ph) => ({ phone: ph, reason: 'Importação em lote', reason_code: 'manual' as const, blocked_by: profileRow?.id ?? null, origin: 'manual' as const }));
-      const { error } = await supabase.from('talkx_blacklist').insert(rows);
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+      const rows = toInsert.map((c) => ({ contact_id: c.id, reason: 'Importação em lote', blocked_by: profileRow?.id ?? null, origin: 'manual' as const }));
+      const { error } = await supabase.from('talkx_blacklist').upsert(rows, { onConflict: 'contact_id', ignoreDuplicates: true });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ['talkx-blacklist'] });
-      const result = { added: toInsert.length, notFound: 0, alreadyBlocked: phones.length - toInsert.length };
+      const result = { added: toInsert.length, notFound: phones.length - found.length, alreadyBlocked: found.length - toInsert.length };
       setImportResults(result);
       const pl = result.added !== 1;
       toast.success(result.added + ' contato' + (pl?'s':'') + ' adicionado' + (pl?'s':'') + ' à supressao');
@@ -158,7 +159,7 @@ export function TalkXSuppression() {
   };
 
   const exportCSV = () => {
-    const rows = blacklist.map((b) => ({ Nome: b.contacts?.name ?? (b.phone ? 'Avulso' : ''), Telefone: b.contacts?.phone ?? b.phone ?? '', Origem: b.origin, Motivo: b.reason, Data: fmtDateTime(b.created_at) }));
+    const rows = blacklist.map((b) => ({ Nome: b.contacts?.name, Telefone: b.contacts?.phone, Origem: b.origin, Motivo: b.reason, Data: fmtDateTime(b.created_at) }));
     const headers = Object.keys(rows[0] ?? {});
     const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as Record<string, string>)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
     const a = document.createElement('a');
@@ -196,7 +197,7 @@ export function TalkXSuppression() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
-                  <Th>Contato</Th><Th>Telefone</Th><Th>Origem</Th><Th>Motivo / Código</Th><Th>Expira em</Th><Th>Campanha</Th><Th>Data</Th><Th>Status</Th><Th className="text-right">Ações</Th>
+                  <Th>Contato</Th><Th>Telefone</Th><Th>Origem</Th><Th>Motivo</Th><Th>Campanha</Th><Th>Data</Th><Th>Status</Th><Th className="text-right">Ações</Th>
                 </tr></thead>
                 <tbody>
                   {paged.map((b) => {
@@ -205,13 +206,13 @@ export function TalkXSuppression() {
                       <tr key={b.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
                         <Td>
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-dash-red shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || b.phone || '?')[0].toUpperCase()}</div>
-                            <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name ?? (b.phone ? `+${b.phone}` : 'Avulso')}</p><p className="text-[11px] text-foreground-secondary truncate">{b.contacts?.company ?? (b.reason_code ?? b.reason ?? '')}</p></div>
+                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-dash-red shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
+                            <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-[11px] text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
-                        <Td><span className="text-[12.5px] text-foreground-secondary">{b.contacts?.phone ? `+${b.contacts.phone.replace(/\D/g,'')}` : b.phone ? `+${b.phone}` : '—'}</span></Td>
+                        <Td><span className="text-[12.5px] text-foreground-secondary">+{b.contacts?.phone?.replace(/\D/g,'')}</span></Td>
                         <Td><Pill label={om.label} tone={om.tone} /></Td>
-                        <Td><div className="flex items-center gap-1 flex-wrap">{b.reason_code && <span className="text-[10px] bg-input/40 border border-border/60 rounded px-1 text-muted-foreground shrink-0">{b.reason_code}</span>}<span className="text-[12px] text-foreground-secondary max-w-[140px] block truncate">{b.reason || '—'}</span></div></Td><Td><span className="text-[11px] text-foreground-secondary">{b.expires_at ? fmtDateTime(b.expires_at) : '—'}</span></Td>
+                        <Td><span className="text-[12px] text-foreground-secondary max-w-[180px] block truncate">{b.reason || '—'}</span></Td>
                         <Td><span className="text-[11.5px] text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
                         <Td><span className="text-[12px] text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>

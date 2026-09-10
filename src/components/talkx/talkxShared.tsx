@@ -62,6 +62,7 @@ export const SUPPRESSION_ORIGIN: Record<string, { label: string; tone: PillTone 
   system: { label: 'Número inválido', tone: 'muted' },
   lgpd: { label: 'LGPD', tone: 'violet' },
   list: { label: 'Sem permissão comercial', tone: 'info' },
+  auto_optout: { label: 'Opt-out automático', tone: 'danger' },
 };
 
 export const TEMPLATE_CATEGORIES = [

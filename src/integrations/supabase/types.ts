@@ -6042,6 +6042,8 @@ export type Database = {
           reason_code:
             | Database["public"]["Enums"]["talkx_blacklist_reason"]
             | null
+          removed_at: string | null
+          removed_by: string | null
           source_message_id: string | null
         }
         Insert: {
@@ -6057,6 +6059,8 @@ export type Database = {
           reason_code?:
             | Database["public"]["Enums"]["talkx_blacklist_reason"]
             | null
+          removed_at?: string | null
+          removed_by?: string | null
           source_message_id?: string | null
         }
         Update: {
@@ -6072,6 +6076,8 @@ export type Database = {
           reason_code?:
             | Database["public"]["Enums"]["talkx_blacklist_reason"]
             | null
+          removed_at?: string | null
+          removed_by?: string | null
           source_message_id?: string | null
         }
         Relationships: [
@@ -6101,6 +6107,20 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: true
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {

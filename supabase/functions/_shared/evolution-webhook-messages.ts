@@ -276,6 +276,25 @@ export async function handleIncomingMessage(
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
     void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
   }
+  // E57: opt-out automatico por palavra-chave
+  if (tx.outcome === 'inserted' && messageType === 'text' && content && !key.fromMe) {
+    const OPT_OUT_KEYWORDS = /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[ãa]o quero|optout|opt-out)\s*$/i;
+    if (OPT_OUT_KEYWORDS.test(content.trim())) {
+      const phone = (key.remoteJid ?? '').split('@')[0].replace(/\D/g, '');
+      if (phone.length >= 8) {
+        const { error: suppErr } = await supabase.from('talkx_blacklist').insert({
+          phone,
+          contact_id: tx.contact_id ?? null,
+          reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
+          reason_code: 'opt_out',
+          origin: 'auto_optout',
+          source_message_id: tx.message_id ?? null,
+        });
+        if (!suppErr) console.info('[OPT-OUT] ' + phone + ' adicionado a talkx_blacklist via keyword');
+        else console.warn('[OPT-OUT] Falha ao inserir supressao:', suppErr.message);
+      }
+    }
+  }
 }
 
 // deno-lint-ignore no-explicit-any
