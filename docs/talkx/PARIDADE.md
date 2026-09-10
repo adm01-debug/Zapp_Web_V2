@@ -127,3 +127,28 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 |---|---|
 | `talkx-send` | pickVariant A/B + filtro removed_at + blacklistPhones |
 | `evolution-webhook` | opt-out keyword + gate 30d + notificação E59 |
+
+---
+
+## FASE 6 — NOVA CAMPANHA / WIZARD (E61–E69)
+
+| Etapa | Item | Status | Arquivo |
+|---|---|---|---|
+| E61 | Grid 400px, breadcrumb, deep link, beforeunload | ✅ | TalkXCampaignWizard.tsx |
+| E62 | 3 cards radio Origem (ZAPP / CRM 360° / Segmento) | ✅ (existia) | TalkXCampaignWizard.tsx |
+| E63 | 6 filtros audiência (empresa, tag, cidade, grupo, inativo, aniversário) | ✅ | useCampaignEditor.ts |
+| E64 | Passo 2 Mensagem + aviso > 2 links | ✅ | TalkXCampaignWizard.tsx |
+| E65 | Passo 3 Entrega: conexão, velocidade, janela, horário comercial | ✅ (existia) | TalkXWizardDelivery.tsx |
+| E66 | Rail Resumo: 6 StatTiles | ✅ (existia) | TalkXCampaignWizard.tsx |
+| E67 | Modal “Confirmar disparo?” + 3 checkpoints | ✅ (existia) | TalkXWizardDelivery.tsx |
+| E68 | Autosave debounce 3s + snapshot inicial + banner Rascunhos | ✅ | useCampaignEditor.ts + TalkXOverview.tsx |
+| E69 | Agendamento data/horário + select de fuso (18 opções) | ✅ | TalkXWizardDelivery.tsx |
+
+### EFs entregues (Fase 5 / 6)
+
+| EF / migração | Conteúdo |
+|---|---|
+| `talkx-send` | pickVariant + filtro removed_at + blacklistPhones |
+| `evolution-webhook` | opt-out keyword E57 + confirmação E59 |
+| migration 20260910090000 | blacklist v2 (phone, reason_code, expires_at, unique index) |
+| migration 20260910080000 | removed_by, removed_at, auto_optout, UPDATE RLS is_admin_or_supervisor |

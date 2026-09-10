@@ -4,6 +4,7 @@ import {
   Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, X, AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -59,7 +60,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
             </div>
             <div>
               <Label className="text-[12px] text-foreground-secondary">Fuso horário</Label>
-              <div className="mt-1.5 h-10 rounded-md border border-border/70 bg-input/40 px-3 flex items-center text-[13px] text-foreground">{Intl.DateTimeFormat().resolvedOptions().timeZone} (local)</div>
+              <Select value={ed.scheduleTimezone} onValueChange={ed.setScheduleTimezone}><SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger><SelectContent><SelectItem key="America/Sao_Paulo" value="America/Sao_Paulo">America/Sao Paulo</SelectItem><SelectItem key="America/Manaus" value="America/Manaus">America/Manaus</SelectItem><SelectItem key="America/Belem" value="America/Belem">America/Belem</SelectItem><SelectItem key="America/Fortaleza" value="America/Fortaleza">America/Fortaleza</SelectItem><SelectItem key="America/Recife" value="America/Recife">America/Recife</SelectItem><SelectItem key="America/Cuiaba" value="America/Cuiaba">America/Cuiaba</SelectItem><SelectItem key="America/Porto_Velho" value="America/Porto_Velho">America/Porto Velho</SelectItem><SelectItem key="America/Rio_Branco" value="America/Rio_Branco">America/Rio Branco</SelectItem><SelectItem key="America/New_York" value="America/New_York">America/New York</SelectItem><SelectItem key="America/Chicago" value="America/Chicago">America/Chicago</SelectItem><SelectItem key="America/Los_Angeles" value="America/Los_Angeles">America/Los Angeles</SelectItem><SelectItem key="America/Buenos_Aires" value="America/Buenos_Aires">America/Buenos Aires</SelectItem><SelectItem key="America/Santiago" value="America/Santiago">America/Santiago</SelectItem><SelectItem key="America/Bogota" value="America/Bogota">America/Bogota</SelectItem><SelectItem key="America/Lima" value="America/Lima">America/Lima</SelectItem><SelectItem key="Europe/London" value="Europe/London">Europe/London</SelectItem><SelectItem key="Europe/Lisbon" value="Europe/Lisbon">Europe/Lisbon</SelectItem><SelectItem key="UTC" value="UTC">UTC</SelectItem></SelectContent></Select>
             </div>
           </div>
         )}

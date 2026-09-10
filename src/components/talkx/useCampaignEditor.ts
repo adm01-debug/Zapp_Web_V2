@@ -47,6 +47,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
+  const [scheduleTimezone, setScheduleTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone); // E69
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
@@ -369,6 +370,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
     lastAutosave, // E68
+    scheduleTimezone, setScheduleTimezone, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
