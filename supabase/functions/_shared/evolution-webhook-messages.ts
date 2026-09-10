@@ -301,7 +301,7 @@ export async function handleIncomingMessage(
             console.info('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
             // E59: enviar mensagem de confirmacao ao contato
             try {
-              const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(//+$/, '');
+              const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
               const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
               if (evolutionUrl && evolutionKey) {
                 await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
