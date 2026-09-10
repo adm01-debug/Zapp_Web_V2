@@ -76,6 +76,8 @@ test('rich outbound enqueue keeps provider payload immutable and non-service cal
     'rich idempotency replay must authorize before probing a message key',
   );
   assert.match(richMigration, /outbound_delivery_payload/);
+  assert.match(richMigration, /message_delivery_payload_immutable/);
+  assert.match(richMigration, /OLD\.client_message_id IS NOT NULL\s+AND OLD\.status = 'sending'\s+AND OLD\.external_id IS NULL/);
   assert.match(richMigration, /p_message_type NOT IN \('poll', 'contact'\)/);
   assert.match(richMigration, /p_message_type IS NULL/);
   assert.match(richMigration, /jsonb_typeof\(v_payload->'selectableCount'\) <> 'number'/);

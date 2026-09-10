@@ -832,7 +832,7 @@ jobs:
               && proof.function_name_collision_count === 0
               && proof.trigger_name_collision_count === 0
               && proof.constraint_name_collision_count === 0
-              && proof.definition_sha256 === 'd7d650d47eb8868f8f51073b83273d5e5a1702bd0fb3cc616c9fa83d16123e5d'
+              && proof.definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'
               && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
               && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
               && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
@@ -891,9 +891,9 @@ jobs:
                 ? (
                   process.env.APPLY_BUNDLE === 'true'
                     ? proof.definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'
-                    : proof.definition_sha256 === 'd7d650d47eb8868f8f51073b83273d5e5a1702bd0fb3cc616c9fa83d16123e5d'
+                    : proof.definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'
                 )
-                : proof.definition_sha256 === '756dbe21cd891977a80ef3ffd8dfd3f098221d62cc688e23f5258aefc38701bd'
+                : proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
             );
           } else if (process.env.TARGET_VERSION === '20260909230000') {
             const canonicalExceptSavedByAction = proof.table_count === 1
@@ -1370,7 +1370,7 @@ jobs:
             && proof.safe_api_function_count === 6
             && proof.trusted_owner_function_count === 9
             && proof.function_name_collision_count === 0
-            && proof.definition_sha256 === '756dbe21cd891977a80ef3ffd8dfd3f098221d62cc688e23f5258aefc38701bd'
+            && proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
             && proof.authenticated_rich_enqueue_effective === true
             && proof.authenticated_rich_enqueue_direct === true
             && proof.service_rich_enqueue_effective === false

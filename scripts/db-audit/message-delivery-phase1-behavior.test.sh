@@ -82,6 +82,7 @@ CREATE TABLE public.messages (
   sender text NOT NULL, content text NOT NULL,
   message_type text NOT NULL DEFAULT 'text', media_url text,
   caption text, media_filename text, media_mimetype text,
+  media_type text, media_size integer, ptt boolean NOT NULL DEFAULT false,
   is_read boolean DEFAULT false, agent_id uuid REFERENCES public.profiles(id),
   external_id text, status text DEFAULT 'sent',
   status_updated_at timestamptz DEFAULT now(),
@@ -270,7 +271,7 @@ if (!(proof.function_count === 9
   && proof.authenticated_rich_enqueue_direct === true
   && proof.service_enqueue_direct === false
   && proof.service_rich_enqueue_direct === false
-  && proof.definition_sha256 === 'd7d650d47eb8868f8f51073b83273d5e5a1702bd0fb3cc616c9fa83d16123e5d')) {
+  && proof.definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472')) {
   console.error('rich runtime proof inesperado: ' + JSON.stringify(proof));
   process.exit(1);
 }
@@ -365,6 +366,8 @@ SQL
 grep -Fx 'formatted-phone=ok' <<<"$formatted_phone_claim_output" >/dev/null || fail 'telefone formatado nao foi normalizado no claim'
 
 expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one UPDATE public.messages SET delivery_claim_token=gen_random_uuid() WHERE client_message_id='60000000-0000-0000-0000-000000000001'; COMMIT;"
+expect_failure 'message_delivery_payload_immutable' "$agent_one UPDATE public.messages SET content='tampered-after-enqueue' WHERE client_message_id='60000000-0000-0000-0000-000000000001'; COMMIT;"
+expect_failure 'message_delivery_payload_immutable' "$agent_one UPDATE public.messages SET media_meta=jsonb_build_object('outbound_delivery_payload', jsonb_build_object('name','tampered','values',jsonb_build_array('a','b'),'selectableCount',1)) WHERE client_message_id='60000000-0000-0000-0000-000000000010'; COMMIT;"
 
 expect_failure 'message_contact_not_authorized' "$agent_one SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000002',gen_random_uuid(),'idor','text',NULL,NULL,NULL); COMMIT;"
 expect_failure 'active_profile_not_found' "$inactive SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000004',gen_random_uuid(),'inactive','text',NULL,NULL,NULL); COMMIT;"
@@ -734,7 +737,7 @@ const ok = proof.server_major === 17
   && proof.service_internal_guard_execute === false
   && proof.service_internal_guard_direct_count === 0
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === '756dbe21cd891977a80ef3ffd8dfd3f098221d62cc688e23f5258aefc38701bd'
+  && proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'

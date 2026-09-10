@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -68,18 +68,29 @@ export function CloseConversationDialog({
   const [classification, setClassification] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const clientRequestIdRef = useRef<string | null>(null);
+
+  // A transport failure can occur after the RPC commits. Keep the same key for
+  // a retry while this dialog remains open; reset only for a newly opened form.
+  useEffect(() => {
+    if (open) clientRequestIdRef.current = null;
+  }, [open, contactId]);
 
 
   const handleClose = async () => {
-    if (!reason) {
-      toast.error('Selecione o motivo de encerramento');
+    if (!reason || saving) {
+      if (!reason) {
+        toast.error('Selecione o motivo de encerramento');
+      }
       return;
     }
+    const clientRequestId = clientRequestIdRef.current ?? crypto.randomUUID();
+    clientRequestIdRef.current = clientRequestId;
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc('close_conversation_atomic', {
         p_contact_id: contactId,
-        p_client_request_id: crypto.randomUUID(),
+        p_client_request_id: clientRequestId,
         p_close_reason: reason,
         p_outcome: outcome || undefined,
         p_classification: classification || undefined,
@@ -97,6 +108,7 @@ export function CloseConversationDialog({
       );
 
       toast.success('Conversa encerrada com registro');
+      clientRequestIdRef.current = null;
       onOpenChange(false);
       setReason('');
       setOutcome('');
