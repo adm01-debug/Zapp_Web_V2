@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---- Supabase client mock (hoisted) -----------------------------------------
-const { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock } = vi.hoisted(() => {
+const { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock, serverLoginMock } = vi.hoisted(() => {
   const channelMock = {
     on: vi.fn().mockReturnThis(),
     subscribe: vi.fn((cb?: (s: string) => void) => {
@@ -12,6 +12,7 @@ const { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, remo
   };
   const authMock = {
     signInWithPassword: vi.fn(),
+    setSession: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
@@ -34,7 +35,8 @@ const { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, remo
   const invokeMock = vi.fn().mockResolvedValue({ data: { messageId: 'msg-1', status: 'sent', externalId: 'ext-1' }, error: null });
   const rpcMock = vi.fn().mockResolvedValue({ data: { id: 'msg-1', status: 'sending', external_id: null }, error: null });
   const removeChannelMock = vi.fn();
-  return { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock };
+  const serverLoginMock = vi.fn();
+  return { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock, serverLoginMock };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -47,6 +49,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     rpc: rpcMock,
   },
 }));
+vi.mock('@/lib/serverLogin', () => ({ serverLogin: (...args: unknown[]) => serverLoginMock(...args) }));
 
 import { supabase } from '@/integrations/supabase/client';
 import { AuthService } from '@/services/auth.service';
@@ -56,21 +59,16 @@ beforeEach(() => {
 });
 
 describe('smoke: login', () => {
-  it('signs in with email/password', async () => {
-    authMock.signInWithPassword.mockResolvedValueOnce({
-      data: { user: { id: 'u1' }, session: { access_token: 't' } },
-      error: null,
-    });
+  it('sets the session returned by the lockout-aware edge', async () => {
+    serverLoginMock.mockResolvedValueOnce({ ok: true, accessToken: 't', refreshToken: 'r' });
     const res = await AuthService.signIn('a@b.com', 'pw123456');
-    expect(authMock.signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'pw123456' });
+    expect(authMock.signInWithPassword).not.toHaveBeenCalled();
+    expect(authMock.setSession).toHaveBeenCalledWith({ access_token: 't', refresh_token: 'r' });
     expect(res.error).toBeNull();
   });
 
   it('surfaces invalid credentials', async () => {
-    authMock.signInWithPassword.mockResolvedValueOnce({
-      data: { user: null, session: null },
-      error: { message: 'Invalid login credentials' } as never,
-    });
+    serverLoginMock.mockResolvedValueOnce({ ok: false, unavailable: false, error: 'Invalid login credentials', lock: { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 } });
     const res = await AuthService.signIn('a@b.com', 'wrong');
     expect(res.error).toBeTruthy();
   });
