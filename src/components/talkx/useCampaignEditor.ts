@@ -45,6 +45,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
+  const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
@@ -192,9 +193,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
   /** Bloqueados por supressão dentro do público selecionado (só calculável para seleção manual). */
   const suppressedCount = useMemo(() => {
-    if (!blacklistIds || audienceSource !== 'contacts') return 0;
-    return selectedContacts.filter((id) => blacklistIds.has(id)).length;
-  }, [blacklistIds, selectedContacts, audienceSource]);
+    if (audienceSource !== 'contacts') return 0;
+    const byId = blacklistIds ? selectedContacts.filter((id) => blacklistIds.has(id)).length : 0;
+    return byId + suppressedByPhoneCount; // E63: inclui phone-based
+  }, [blacklistIds, selectedContacts, audienceSource, suppressedByPhoneCount]);
   const eligibleCount = Math.max(0, audienceTotal - suppressedCount);
 
   const previewMessage = useMemo(() => {
@@ -300,7 +302,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
           if (blacklistPhones && blacklistPhones.size > 0) {
             const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
             const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
-            if (byPhone.size > 0) contactIds = contactIds.filter((id) => !byPhone.has(id));
+            if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((id) => !byPhone.has(id)); }
           }
         }
         if (contactIds.length > 0) await addRecipients.mutateAsync({ campaignId: id, contactIds });

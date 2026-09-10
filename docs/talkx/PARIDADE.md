@@ -100,7 +100,7 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 | Unique parcial em `phone` (WHERE removed_at IS NULL) | ✅ E51/CR | `talkx_blacklist_phone_active_unique` |
 | Hook `useTalkXSuppression` (isSuppressed 2 passos) | ✅ E51 | `src/hooks/integrations/useTalkXSuppression.ts` |
 | UI: phone avulso + reason_code pill + coluna Expira em | ✅ E52 | `TalkXSuppression.tsx` |
-| CSV import direto por phone (sem contact lookup) | ✅ E53 | `handleImportCSV` v2 |
+| CSV import por phone (lookup em contacts + insert contact_id) | ⚠️ E53 parcial | phone-only direto ainda pendente |
 | Search digit guard | ✅ E53/CR | `qNum.length > 0` antes de phone.includes |
 | Export CSV com fallback `b.phone` | ✅ E53/CR | `b.contacts?.phone ?? b.phone ?? ''` |
 | Filtro phone-based no wizard + expires_at | ✅ E54 | `blacklistData.phones` em `useCampaignEditor.ts` |
