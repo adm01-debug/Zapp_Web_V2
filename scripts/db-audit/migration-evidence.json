@@ -583,6 +583,19 @@
             "reason": "ledger-summary",
             "related_migration": null,
             "justification": "Coleta forense cifrada e read-only do run 34397154909 confirmou que o ledger preserva apenas tres resumos nao executaveis. O arquivo foi recuperado byte a byte do commit historico db840e0e ainda preservado na branch remota origin/feat/talkx-f4-e49-ab-variants; a migration forward-only 20260909210000 substitui a policy historica ampla pelo hardening canonico no runtime. Fonte recuperada, ledger e forma SQL ficam fixados por hashes independentes."
+        },
+        {
+            "version": "20260910080000",
+            "filename": "20260910080000_talkx_blacklist_audit.sql",
+            "file_sha256": "034c99f69d78f759562cc95830ba03c1848330bbf36cb186da9208edfaa742f4",
+            "file_sql_sha256": "69cab015768cf1fab73e787d09330506db9d48cb61092485e10aa112875328fd",
+            "ledger_name": "talkx_blacklist_audit",
+            "ledger_statements_sha256": "0458cf869dd81052f3dc8a1b37f68a3fa5e444d310edd91175c5a47a82d1fd96",
+            "ledger_sql_sha256": "50ce7118357cbc201959563aef4beab34e47bb2aa41e2544e891c056afb166fa",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "ledger-summary",
+            "related_migration": null,
+            "justification": "Nenhuma das sete revisoes conhecidas no Git produz o hash canonico do ledger. O replay preserva apenas o DDL local recuperavel; nome, bytes locais, SQL local, array historico e SQL historico ficam fixados por hashes independentes, sem reescrever o ledger."
         }
     ]
 }
