@@ -9,12 +9,12 @@
       "description": "Max initial CSS bundle"
     },
     "largest-chunk": {
-      "maxKB": 200,
-      "description": "Max single lazy-loaded chunk"
+      "maxKB": 700,
+      "description": "Ratchet baseline: largest JavaScript chunk (including lazy chunks), gzip-compressed; reduce after splitting vendor-heavy route chunks"
     },
     "total-assets": {
-      "maxKB": 2000,
-      "description": "Max total assets (all JS + CSS + images)"
+      "maxKB": 4200,
+      "description": "Ratchet baseline: all deployable assets gzip-compressed, excluding source maps; reduce after removing unused lazy features"
     }
   },
   "web-vitals": {

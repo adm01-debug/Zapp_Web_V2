@@ -61,6 +61,14 @@ Deno.test("secure egress fails closed for bad configuration and malformed proxy 
     }),
     null,
   );
+  for (const malformed of [null, [], { url: "https://example.test/" }]) {
+    assertEquals(
+      await fetchPreviewViaSecureEgress("https://example.test", config, {
+        fetcher: () => Promise.resolve(Response.json(malformed)),
+      }),
+      null,
+    );
+  }
   for (const status of [204, 205, 304]) {
     assertEquals(
       await fetchPreviewViaSecureEgress("https://example.test", config, {

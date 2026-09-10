@@ -32,9 +32,13 @@ function fixture(sizeKB) {
   mkdirSync(path.join(dir, "assets"));
   // Conteudo aleatorio nao comprime: gzip ~= tamanho bruto.
   const noise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => Math.floor(Math.random() * 256)));
+  const secondNoise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => Math.floor(Math.random() * 256)));
   writeFileSync(path.join(dir, "assets", "index-abc.js"), noise);
   writeFileSync(path.join(dir, "assets", "vendor-core-abc.js"), noise);
   writeFileSync(path.join(dir, "assets", "index-abc.css"), "body{margin:0}");
+  writeFileSync(path.join(dir, "assets", "lazy-module.js"), Buffer.concat([noise, secondNoise]));
+  writeFileSync(path.join(dir, "assets", "lazy-image.png"), noise);
+  writeFileSync(path.join(dir, "assets", "ignored.js.map"), noise);
   writeFileSync(path.join(dir, "index.html"), html);
   return dir;
 }
@@ -44,10 +48,23 @@ test("soma gzip dos chunks iniciais e compara com o budget", () => {
   const result = measure(dir, html);
   assert.equal(result.js.length, 2);
   assert.ok(result.jsKB > 7.5 && result.jsKB < 9, `jsKB inesperado: ${result.jsKB}`);
-  assert.deepEqual(evaluate(result, { "initial-js": { maxKB: 10 }, "initial-css": { maxKB: 1 } }), []);
-  const failures = evaluate(result, { "initial-js": { maxKB: 5 } });
-  assert.equal(failures.length, 1);
+  assert.ok(result.largestChunkKB > 7.5 && result.largestChunkKB < 9);
+  assert.ok(result.totalAssetsKB > 20 && result.totalAssetsKB < 21);
+  assert.deepEqual(evaluate(result, {
+    "initial-js": { maxKB: 10 },
+    "initial-css": { maxKB: 1 },
+    "largest-chunk": { maxKB: 10 },
+    "total-assets": { maxKB: 22 },
+  }), []);
+  const failures = evaluate(result, {
+    "initial-js": { maxKB: 5 },
+    "largest-chunk": { maxKB: 5 },
+    "total-assets": { maxKB: 20 },
+  });
+  assert.equal(failures.length, 3);
   assert.match(failures[0], /initial-js: .* > budget 5 KB/u);
+  assert.match(failures[1], /largest-chunk: .* > budget 5 KB/u);
+  assert.match(failures[2], /total-assets: .* > budget 20 KB/u);
 });
 
 test("main falha com exit 1 acima do budget e 0 dentro dele", () => {
