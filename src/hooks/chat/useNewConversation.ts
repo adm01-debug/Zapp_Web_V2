@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
 
 interface ContactResult {
   id: string;
@@ -38,17 +39,34 @@ export function useNewConversation(
   }, [open]);
 
   useEffect(() => {
-    if (!searchQuery.trim() || mode !== 'search') { setContacts([]); return; }
+    let cancelled = false;
+    if (!searchQuery.trim() || mode !== 'search') {
+      const clearResults = setTimeout(() => {
+        if (!cancelled) {
+          setContacts([]);
+          setIsLoading(false);
+        }
+      }, 0);
+      return () => {
+        cancelled = true;
+        clearTimeout(clearResults);
+      };
+    }
     const timeout = setTimeout(async () => {
       setIsLoading(true);
       const { data } = await supabase.from('contacts')
         .select('id, name, phone, avatar_url')
         .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
         .limit(10);
-      setContacts(data || []);
-      setIsLoading(false);
+      if (!cancelled) {
+        setContacts(data || []);
+        setIsLoading(false);
+      }
     }, 300);
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [searchQuery, mode]);
 
   const resetForm = () => {
@@ -78,14 +96,9 @@ export function useNewConversation(
         await supabase.functions.invoke('batch-fetch-avatars');
       }
       if (!contactId) { toast.error('Selecione um contato'); setIsSending(false); return; }
-      const { error: msgError } = await supabase.from('messages').insert({
-        contact_id: contactId, content: messageText.trim(), sender: 'agent',
-        message_type: 'text', status: 'sending', whatsapp_connection_id: selectedConnection || null,
-      });
-      if (msgError) throw msgError;
-      await supabase.functions.invoke('evolution-api', {
-        body: { action: 'send-text', instanceName: connections.find(c => c.id === selectedConnection)?.name || 'PRINCIPAL',
-          number: selectedContact?.phone || newPhone, text: messageText.trim() },
+      await sendOutboundMessage({
+        contactId, content: messageText.trim(), messageType: 'text',
+        whatsappConnectionId: selectedConnection || null,
       });
       toast.success('Mensagem enviada!');
       await supabase.functions.invoke('batch-fetch-avatars');

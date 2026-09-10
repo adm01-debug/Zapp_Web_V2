@@ -6,6 +6,13 @@ const workflow = await readFile(
   new URL('../../.github/workflows/db-migrate.yml', import.meta.url),
   'utf8'
 );
+const messageAclHardening = await readFile(
+  new URL(
+    '../../supabase/migrations/20260909240000_revoke_service_role_message_enqueue_and_guards.sql',
+    import.meta.url
+  ),
+  'utf8'
+);
 
 test('CRM rollout migration has preflight and post-deploy runtime contracts', () => {
   assert.match(workflow, /20260909120000\)\n[\s\S]*validated_constraint_count/);
@@ -58,7 +65,7 @@ test('Inbox authorization migration has caller-bound and post-apply contracts', 
 test('message delivery phase 1 has strict absent/applied runtime contracts', () => {
   assert.match(
     workflow,
-    /20260909220000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
+    /20260909220000\|20260909240000\|20260909250000\|20260909260000\|20260909270000\)\n[\s\S]*message-delivery-phase1-runtime\.sql/
   );
   assert.match(workflow, /TARGET_VERSION === '20260909220000'/);
   assert.match(workflow, /inputs\.migration_version == '20260909220000'/);
@@ -73,12 +80,29 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
   assert.match(workflow, /proof\.trigger_name_collision_count === 0/);
   assert.match(workflow, /proof\.constraint_name_collision_count === 0/);
   assert.match(workflow, /proof\.authenticated_internal_guard_execute === false/);
-  assert.match(workflow, /proof\.service_role_inherits_authenticated === true/);
+  assert.match(workflow, /proof\.service_role_inherits_authenticated === false/);
   assert.match(workflow, /proof\.authenticated_enqueue_direct === true/);
   assert.match(workflow, /proof\.service_enqueue_effective === true/);
   assert.match(workflow, /proof\.service_enqueue_direct === false/);
   assert.match(workflow, /proof\.service_delivery_effective_count === 3/);
   assert.match(workflow, /proof\.service_delivery_direct_count === 3/);
+  assert.match(workflow, /TARGET_VERSION === '20260909240000'/);
+  assert.match(workflow, /inputs\.migration_version == '20260909240000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909250000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909260000'/);
+  assert.match(workflow, /TARGET_VERSION === '20260909270000'/);
+  assert.match(workflow, /ATOMIC_DELIVERY_BUNDLE=.*20260909250000/);
+  assert.match(workflow, /APPLY_BUNDLE/);
+  assert.match(workflow, /Validar ledger completo do bundle de entrega atomica/);
+  assert.match(workflow, /version IN \('20260909250000', '20260909260000', '20260909270000'\)/);
+  assert.match(workflow, /apply_bundle=\$APPLY_BUNDLE/);
+  assert.match(workflow, /definition_sha256 === '7bfca6ba72e24deb3bb7d502b02583dddcf64e79760e316722e560a7f4375030'/);
+  assert.match(workflow, /definition_sha256 === '3911c42177edfdba13af479b404a05fc8e9453f5f81538a1892db6e195b31472'/);
+  assert.match(workflow, /definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'/);
+  assert.match(workflow, /proof\.authenticated_rich_enqueue_effective === true/);
+  assert.match(workflow, /proof\.service_rich_enqueue_effective === false/);
+  assert.match(workflow, /proof\.service_internal_guard_execute === false/);
+  assert.match(workflow, /proof\.service_internal_guard_direct_count === 0/);
   assert.match(
     workflow,
     /definition_sha256 === '60eb2a557b53775727d57bd7e74ee2497e69d105ab1a7dc1c20eef5cefff7883'/
@@ -95,6 +119,27 @@ test('message delivery phase 1 has strict absent/applied runtime contracts', () 
     workflow,
     /trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'/
   );
+});
+
+test('message delivery ACL hardening revokes only implicit service entry points', () => {
+  assert.match(
+    messageAclHardening,
+    /REVOKE EXECUTE ON FUNCTION public\.enqueue_outbound_message\([^;]*FROM service_role;/
+  );
+  for (const guard of [
+    'guard_message_delivery_internal_fields',
+    'guard_conversation_closure_request_id',
+    'guard_conversation_event_closure_id',
+  ]) {
+    assert.match(
+      messageAclHardening,
+      new RegExp(`REVOKE EXECUTE ON FUNCTION public\\.${guard}\\(\\)[^;]*FROM service_role;`)
+    );
+  }
+  assert.doesNotMatch(messageAclHardening, /claim_outbound_message/);
+  assert.doesNotMatch(messageAclHardening, /complete_outbound_message/);
+  assert.doesNotMatch(messageAclHardening, /fail_outbound_message/);
+  assert.doesNotMatch(messageAclHardening, /close_conversation_atomic/);
 });
 
 test('Talk X template history migration has ACL, atomicity and runtime contracts', () => {

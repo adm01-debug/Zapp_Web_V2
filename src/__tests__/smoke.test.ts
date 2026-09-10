@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---- Supabase client mock (hoisted) -----------------------------------------
-const { channelMock, authMock, insertSingle, fromMock, invokeMock, removeChannelMock } = vi.hoisted(() => {
+const { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock, serverLoginMock } = vi.hoisted(() => {
   const channelMock = {
     on: vi.fn().mockReturnThis(),
     subscribe: vi.fn((cb?: (s: string) => void) => {
@@ -12,6 +12,7 @@ const { channelMock, authMock, insertSingle, fromMock, invokeMock, removeChannel
   };
   const authMock = {
     signInWithPassword: vi.fn(),
+    setSession: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
@@ -31,9 +32,11 @@ const { channelMock, authMock, insertSingle, fromMock, invokeMock, removeChannel
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
   }));
-  const invokeMock = vi.fn().mockResolvedValue({ data: { key: { id: 'ext-1' } }, error: null });
+  const invokeMock = vi.fn().mockResolvedValue({ data: { messageId: 'msg-1', status: 'sent', externalId: 'ext-1' }, error: null });
+  const rpcMock = vi.fn().mockResolvedValue({ data: { id: 'msg-1', status: 'sending', external_id: null }, error: null });
   const removeChannelMock = vi.fn();
-  return { channelMock, authMock, insertSingle, fromMock, invokeMock, removeChannelMock };
+  const serverLoginMock = vi.fn();
+  return { channelMock, authMock, insertSingle, fromMock, invokeMock, rpcMock, removeChannelMock, serverLoginMock };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -43,9 +46,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     channel: vi.fn(() => channelMock),
     removeChannel: removeChannelMock,
     functions: { invoke: invokeMock },
-    rpc: vi.fn().mockResolvedValue({ error: null }),
+    rpc: rpcMock,
   },
 }));
+vi.mock('@/lib/serverLogin', () => ({ serverLogin: (...args: unknown[]) => serverLoginMock(...args) }));
 
 import { supabase } from '@/integrations/supabase/client';
 import { AuthService } from '@/services/auth.service';
@@ -55,21 +59,16 @@ beforeEach(() => {
 });
 
 describe('smoke: login', () => {
-  it('signs in with email/password', async () => {
-    authMock.signInWithPassword.mockResolvedValueOnce({
-      data: { user: { id: 'u1' }, session: { access_token: 't' } },
-      error: null,
-    });
+  it('sets the session returned by the lockout-aware edge', async () => {
+    serverLoginMock.mockResolvedValueOnce({ ok: true, accessToken: 't', refreshToken: 'r' });
     const res = await AuthService.signIn('a@b.com', 'pw123456');
-    expect(authMock.signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'pw123456' });
+    expect(authMock.signInWithPassword).not.toHaveBeenCalled();
+    expect(authMock.setSession).toHaveBeenCalledWith({ access_token: 't', refresh_token: 'r' });
     expect(res.error).toBeNull();
   });
 
   it('surfaces invalid credentials', async () => {
-    authMock.signInWithPassword.mockResolvedValueOnce({
-      data: { user: null, session: null },
-      error: { message: 'Invalid login credentials' } as never,
-    });
+    serverLoginMock.mockResolvedValueOnce({ ok: false, unavailable: false, error: 'Invalid login credentials', lock: { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 } });
     const res = await AuthService.signIn('a@b.com', 'wrong');
     expect(res.error).toBeTruthy();
   });
@@ -83,55 +82,12 @@ describe('smoke: logout', () => {
 });
 
 describe('smoke: conversation creation (send message)', () => {
-  it('inserts a message row for the contact', async () => {
-    // Patch from('contacts').single to return a connected contact
-    const calls: Record<string, unknown> = {};
-    fromMock.mockImplementation(((table: string) => {
-      calls[table] = true;
-      if (table === 'contacts') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { phone: '5511999999999', whatsapp_connection_id: 'conn-1' },
-            error: null,
-          }),
-        } as never;
-      }
-      if (table === 'whatsapp_connections') {
-        // limit(1) sem single(): resolve como array (formato usado por
-        // resolveConnection em messageSender.ts). maybeSingle() fica anexado
-        // ao resultado para servir a query de fallback, que ainda a usa.
-        const limitResult = Object.assign(
-          Promise.resolve({ data: [{ instance_id: 'inst', status: 'connected' }], error: null }),
-          { maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }
-        );
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          order: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockReturnValue(limitResult),
-        } as never;
-      }
-      if (table === 'messages') {
-        return {
-          insert: vi.fn(() => ({ select: () => ({ single: insertSingle }) })),
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-        } as never;
-      }
-      // profiles
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: 'p1' }, error: null }),
-      } as never;
-    }) as never);
-
+  it('enqueues then dispatches a message through the atomic gateway', async () => {
     const { sendMessageToContact } = await import('@/hooks/realtime/messageSender');
     const res = await sendMessageToContact('c1', 'hi');
     expect(res.id).toBe('msg-1');
-    expect(insertSingle).toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({ p_contact_id: 'c1', p_content: 'hi' }));
+    expect(invokeMock).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'msg-1' } });
   });
 });
 

@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { sendOutboundMessage, sendRichOutboundMessage } from '@/services/outbound-message.service';
 import { toast } from 'sonner';
 import {
   MoreHorizontal,
@@ -34,13 +35,14 @@ interface PollData {
 }
 
 interface AdvancedMessageMenuProps {
+  contactId: string;
   instanceName: string;
   recipientNumber: string;
   onPollSent?: (poll: PollData) => void;
   onContactSent?: (contactName: string) => void;
 }
 
-export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent, onContactSent }: AdvancedMessageMenuProps) {
+export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, onPollSent, onContactSent }: AdvancedMessageMenuProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [stickerDialog, setStickerDialog] = useState(false);
   const [pollDialog, setPollDialog] = useState(false);
@@ -65,20 +67,27 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
 
   // Status state
   const [statusText, setStatusText] = useState('');
+  const [isSendingOutbound, setIsSendingOutbound] = useState(false);
 
-  const { sendStickerMessage, sendPollMessage, sendContactMessage, sendStatusMessage, isLoading } = useEvolutionApi();
+  const { sendStatusMessage, isLoading } = useEvolutionApi();
 
   const handleSendSticker = useCallback(async () => {
     if (!stickerUrl.trim()) return;
+    if (isSendingOutbound) return;
+    setIsSendingOutbound(true);
     try {
-      await sendStickerMessage(instanceName, recipientNumber, stickerUrl);
+      await sendOutboundMessage({
+        contactId, content: '[Sticker]', messageType: 'sticker', mediaUrl: stickerUrl,
+      });
       toast.success('Figurinha enviada!');
       setStickerUrl('');
       setStickerDialog(false);
     } catch {
       toast.error('Erro ao enviar figurinha');
+    } finally {
+      setIsSendingOutbound(false);
     }
-  }, [stickerUrl, instanceName, recipientNumber, sendStickerMessage]);
+  }, [contactId, stickerUrl, isSendingOutbound]);
 
   const handleSendPoll = useCallback(async () => {
     const validOptions = pollOptions.filter(o => o.trim());
@@ -86,13 +95,14 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
       toast.error('Preencha o título e pelo menos 2 opções');
       return;
     }
+    if (isSendingOutbound) return;
+    setIsSendingOutbound(true);
     try {
-      await sendPollMessage({
-        instanceName,
-        number: recipientNumber,
-        name: pollName,
-        selectableCount: pollSelectableCount,
-        values: validOptions,
+      await sendRichOutboundMessage({
+        contactId,
+        displayContent: `📊 *Enquete:* ${pollName}\n${validOptions.map((option, index) => `${index + 1}. ${option}`).join('\n')}`,
+        messageType: 'poll',
+        deliveryPayload: { name: pollName, selectableCount: pollSelectableCount, values: validOptions },
       });
       onPollSent?.({ name: pollName, options: validOptions, selectableCount: pollSelectableCount });
       toast.success('Enquete enviada!');
@@ -101,30 +111,40 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
       setPollDialog(false);
     } catch {
       toast.error('Erro ao enviar enquete');
+    } finally {
+      setIsSendingOutbound(false);
     }
-  }, [pollName, pollOptions, pollSelectableCount, instanceName, recipientNumber, sendPollMessage, onPollSent]);
+  }, [contactId, pollName, pollOptions, pollSelectableCount, onPollSent, isSendingOutbound]);
 
   const handleSendContact = useCallback(async () => {
     if (!contactCard.fullName.trim() || !contactCard.phoneNumber.trim()) {
       toast.error('Nome e telefone são obrigatórios');
       return;
     }
+    if (isSendingOutbound) return;
+    setIsSendingOutbound(true);
     try {
-      await sendContactMessage(instanceName, recipientNumber, [{
-        fullName: contactCard.fullName,
-        wuid: contactCard.phoneNumber,
-        phoneNumber: contactCard.phoneNumber,
-        organization: contactCard.organization || undefined,
-        email: contactCard.email || undefined,
-      }]);
+      await sendRichOutboundMessage({
+        contactId,
+        displayContent: `📇 Cartão de contato: ${contactCard.fullName}`,
+        messageType: 'contact',
+        deliveryPayload: {
+          fullName: contactCard.fullName,
+          phoneNumber: contactCard.phoneNumber,
+          ...(contactCard.organization ? { organization: contactCard.organization } : {}),
+          ...(contactCard.email ? { email: contactCard.email } : {}),
+        },
+      });
       onContactSent?.(contactCard.fullName);
       toast.success('Cartão de contato enviado!');
       setContactCard({ fullName: '', phoneNumber: '', organization: '', email: '' });
       setContactDialog(false);
     } catch {
       toast.error('Erro ao enviar contato');
+    } finally {
+      setIsSendingOutbound(false);
     }
-  }, [contactCard, instanceName, recipientNumber, sendContactMessage, onContactSent]);
+  }, [contactId, contactCard, onContactSent, isSendingOutbound]);
 
   const handleSendStatus = useCallback(async () => {
     if (!statusText.trim()) return;
@@ -187,7 +207,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
                 placeholder="https://exemplo.com/sticker.webp"
               />
             </div>
-            <Button onClick={handleSendSticker} disabled={isLoading || !stickerUrl.trim()} className="w-full">
+            <Button onClick={handleSendSticker} disabled={isSendingOutbound || !stickerUrl.trim()} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Enviar
             </Button>
           </div>
@@ -249,7 +269,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
                 </Button>
               )}
             </div>
-            <Button onClick={handleSendPoll} disabled={isLoading} className="w-full">
+            <Button onClick={handleSendPoll} disabled={isSendingOutbound} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Enviar Enquete
             </Button>
           </div>
@@ -282,7 +302,7 @@ export function AdvancedMessageMenu({ instanceName, recipientNumber, onPollSent,
               <Label>E-mail</Label>
               <Input value={contactCard.email} onChange={(e) => setContactCard({ ...contactCard, email: e.target.value })} placeholder="joao@empresa.com" />
             </div>
-            <Button onClick={handleSendContact} disabled={isLoading} className="w-full">
+            <Button onClick={handleSendContact} disabled={isSendingOutbound} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Enviar Contato
             </Button>
           </div>

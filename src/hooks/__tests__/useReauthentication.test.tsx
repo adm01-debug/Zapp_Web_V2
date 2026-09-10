@@ -1,16 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-const mockGetUser = vi.fn();
-const mockSignInWithPassword = vi.fn();
+const { mockGetUser, mockSetSession, mockServerLogin } = vi.hoisted(() => ({
+  mockGetUser: vi.fn(),
+  mockSetSession: vi.fn(),
+  mockServerLogin: vi.fn(),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
-      getUser: (...args: any[]) => mockGetUser(...args),
-      signInWithPassword: (...args: any[]) => mockSignInWithPassword(...args),
+      getUser: (...args: unknown[]) => mockGetUser(...args),
+      setSession: (...args: unknown[]) => mockSetSession(...args),
     },
   },
+}));
+
+vi.mock('@/lib/serverLogin', () => ({
+  serverLogin: (...args: unknown[]) => mockServerLogin(...args),
 }));
 
 vi.mock('sonner', () => ({
@@ -25,6 +32,7 @@ import { useReauthentication } from '@/hooks/auth/useReauthentication';
 describe('useReauthentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSetSession.mockResolvedValue({ data: {}, error: null });
   });
 
   it('initializes with correct default state', () => {
@@ -39,19 +47,24 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({ error: null });
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
     const { result } = renderHook(() => useReauthentication());
 
-    let reauthResult: any;
+    let reauthResult: { success: boolean; error?: string } | undefined;
     await act(async () => {
       reauthResult = await result.current.reauthenticate('correctpass');
     });
 
-    expect(reauthResult.success).toBe(true);
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({
-      email: 'test@example.com',
-      password: 'correctpass',
+    expect(reauthResult).toMatchObject({ success: true });
+    expect(mockServerLogin).toHaveBeenCalledWith('test@example.com', 'correctpass');
+    expect(mockSetSession).toHaveBeenCalledWith({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
     });
   });
 
@@ -59,19 +72,44 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({
-      error: new Error('Invalid credentials'),
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: false,
+      error: 'Invalid credentials',
+      lock: null,
     });
 
     const { result } = renderHook(() => useReauthentication());
 
-    let reauthResult: any;
+    let reauthResult: { success: boolean; error?: string } | undefined;
     await act(async () => {
       reauthResult = await result.current.reauthenticate('wrongpass');
     });
 
-    expect(reauthResult.success).toBe(false);
-    expect(reauthResult.error).toBe('Senha incorreta');
+    expect(reauthResult).toMatchObject({ success: false, error: 'Senha incorreta' });
+  });
+
+  it('reauthenticate preserves an auth-edge outage instead of reporting a wrong password', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { email: 'test@example.com' } },
+    });
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: true,
+      error: 'auth-login: HTTP 503',
+    });
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let reauthResult: { success: boolean; error?: string } | undefined;
+    await act(async () => {
+      reauthResult = await result.current.reauthenticate('correctpass');
+    });
+
+    expect(reauthResult).toMatchObject({
+      success: false,
+      error: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.',
+    });
   });
 
   it('reauthenticate fails when no user found', async () => {
@@ -81,13 +119,12 @@ describe('useReauthentication', () => {
 
     const { result } = renderHook(() => useReauthentication());
 
-    let reauthResult: any;
+    let reauthResult: { success: boolean; error?: string } | undefined;
     await act(async () => {
       reauthResult = await result.current.reauthenticate('anypass');
     });
 
-    expect(reauthResult.success).toBe(false);
-    expect(reauthResult.error).toBe('Usuário não encontrado');
+    expect(reauthResult).toMatchObject({ success: false, error: 'Usuário não encontrado' });
   });
 
   it('requireReauth sets pending action and shows dialog', () => {
@@ -132,7 +169,11 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({ error: null });
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
     const callback = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useReauthentication());

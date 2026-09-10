@@ -8,8 +8,13 @@ WITH expected_functions AS (
   WHERE namespace.nspname = 'public'
     AND (
       (procedure.proname = 'enqueue_outbound_message'
+       AND pg_get_function_identity_arguments(procedure.oid) IN (
+         'p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid',
+         'p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text'
+       ))
+      OR (procedure.proname = 'enqueue_rich_outbound_message'
        AND pg_get_function_identity_arguments(procedure.oid) =
-         'p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid')
+         'p_contact_id uuid, p_client_message_id uuid, p_display_content text, p_message_type text, p_delivery_payload jsonb, p_reply_to_id uuid, p_whatsapp_connection_id uuid')
       OR (procedure.proname = 'claim_outbound_message'
        AND pg_get_function_identity_arguments(procedure.oid) =
          'p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer')
@@ -188,6 +193,7 @@ WITH expected_functions AS (
       WHERE namespace.nspname = 'public'
         AND procedure.proname IN (
           'enqueue_outbound_message', 'claim_outbound_message',
+          'enqueue_rich_outbound_message',
           'complete_outbound_message', 'fail_outbound_message',
           'close_conversation_atomic',
           'guard_message_delivery_internal_fields',
@@ -234,6 +240,15 @@ WITH expected_functions AS (
         AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'authenticated')
         AND privilege_type = 'EXECUTE'
     ),
+    'authenticated_rich_enqueue_effective', COALESCE((SELECT has_function_privilege(
+      'authenticated', oid, 'EXECUTE'
+    ) FROM expected_functions WHERE proname = 'enqueue_rich_outbound_message'), false),
+    'authenticated_rich_enqueue_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'enqueue_rich_outbound_message'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'authenticated')
+        AND privilege_type = 'EXECUTE'
+    ),
     'authenticated_close_effective', COALESCE((SELECT has_function_privilege(
       'authenticated', oid, 'EXECUTE'
     ) FROM expected_functions WHERE proname = 'close_conversation_atomic'), false),
@@ -249,6 +264,15 @@ WITH expected_functions AS (
     'service_enqueue_direct', EXISTS (
       SELECT 1 FROM expected_function_acl
       WHERE proname = 'enqueue_outbound_message'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
+    'service_rich_enqueue_effective', COALESCE((SELECT has_function_privilege(
+      'service_role', oid, 'EXECUTE'
+    ) FROM expected_functions WHERE proname = 'enqueue_rich_outbound_message'), false),
+    'service_rich_enqueue_direct', EXISTS (
+      SELECT 1 FROM expected_function_acl
+      WHERE proname = 'enqueue_rich_outbound_message'
         AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
         AND privilege_type = 'EXECUTE'
     ),
@@ -270,6 +294,15 @@ WITH expected_functions AS (
     'authenticated_internal_guard_execute', COALESCE((SELECT bool_or(
       has_function_privilege('authenticated', oid, 'EXECUTE')
     ) FROM expected_functions WHERE proname LIKE 'guard_%'), false),
+    'service_internal_guard_execute', COALESCE((SELECT bool_or(
+      has_function_privilege('service_role', oid, 'EXECUTE')
+    ) FROM expected_functions WHERE proname LIKE 'guard_%'), false),
+    'service_internal_guard_direct_count', (
+      SELECT count(DISTINCT proname) FROM expected_function_acl
+      WHERE proname LIKE 'guard_%'
+        AND grantee = (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+        AND privilege_type = 'EXECUTE'
+    ),
     'anon_any_execute', COALESCE((SELECT bool_or(
       has_function_privilege('anon', oid, 'EXECUTE')
     ) FROM expected_functions), false),

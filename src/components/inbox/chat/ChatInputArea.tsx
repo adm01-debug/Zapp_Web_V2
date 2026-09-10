@@ -113,7 +113,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
   const tertiaryTools = useMemo(() => (
     <TertiaryToolsMenu
-      instanceName={instanceName} contactPhone={contactPhone} contactName={contactName}
+      contactId={contactId} instanceName={instanceName} contactPhone={contactPhone} contactName={contactName}
       messages={messages} quickReplies={quickReplies}
       onOpenInteractiveBuilder={onOpenInteractiveBuilder} onOpenLocationPicker={onOpenLocationPicker}
       onOpenSchedule={onOpenSchedule} onSendProduct={onSendProduct}
@@ -122,7 +122,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
       signatureName={signatureName} onToggleSignature={onToggleSignature}
       onPollSent={onPollSent} onContactSent={onContactSent}
     />
-  ), [instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, signatureEnabled, signatureName, onToggleSignature]);
+  ), [contactId, instanceName, contactPhone, contactName, messages, quickReplies, onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule, onSendProduct, onSelectSuggestion, onSelectTemplate, onQuickReply, onPollSent, onContactSent, signatureEnabled, signatureName, onToggleSignature]);
 
   return (
     <>

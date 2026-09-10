@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { CheckCircle2 } from 'lucide-react';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 interface CloseConversationDialogProps {
   open: boolean;
@@ -61,72 +60,64 @@ export function CloseConversationDialog({
   open,
   onOpenChange,
   contactId,
-  profileId,
+  profileId: _profileId,
   onClosed,
 }: CloseConversationDialogProps) {
-  const { profile } = useAuth();
   const [reason, setReason] = useState('');
   const [outcome, setOutcome] = useState('');
   const [classification, setClassification] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const clientRequestIdRef = useRef<string | null>(null);
 
-  const resolvedProfileId = profileId ?? profile?.id ?? null;
+  // A transport failure can occur after the RPC commits. Keep the same key for
+  // a retry while this dialog remains open; reset only for a newly opened form.
+  useEffect(() => {
+    if (open) clientRequestIdRef.current = null;
+  }, [open, contactId]);
+
 
   const handleClose = async () => {
-    if (!reason) {
-      toast.error('Selecione o motivo de encerramento');
+    if (!reason || saving) {
+      if (!reason) {
+        toast.error('Selecione o motivo de encerramento');
+      }
       return;
     }
+    const clientRequestId = clientRequestIdRef.current ?? crypto.randomUUID();
+    clientRequestIdRef.current = clientRequestId;
     setSaving(true);
     try {
-      // 1. Registrar encerramento
-      const { error: closureError } = await supabase
-        .from('conversation_closures')
-        .insert({
-          contact_id: contactId,
-          closed_by: resolvedProfileId,
-          close_reason: reason,
-          outcome: outcome || null,
-          classification: classification || null,
-          notes: notes || null,
-        });
-
-      if (closureError) {
-        toast.error('Erro ao registrar encerramento');
-        return;
+      const { data, error } = await supabase.rpc('close_conversation_atomic', {
+        p_contact_id: contactId,
+        p_client_request_id: clientRequestId,
+        p_close_reason: reason,
+        p_outcome: outcome || undefined,
+        p_classification: classification || undefined,
+        p_notes: notes || undefined,
+      });
+      if (error || data?.length !== 1 || data[0]?.conversation_status !== 'resolved') {
+        throw error ?? new Error('Encerramento não confirmado pelo servidor');
       }
 
-      // 2. Atualizar conversation_status para 'resolved'
-      // .select('id') permite detectar atualizacao sem linhas (RLS silencioso)
-      const { data: updatedContacts, error: updateError } = await supabase
-        .from('contacts')
-        .update({ conversation_status: 'resolved' })
-        .eq('id', contactId)
-        .select('id');
-
-      if (updateError || updatedContacts?.length !== 1) {
-        // Nao bloqueia o fluxo — closure ja foi salvo
-        console.warn(
-          '[CloseConversationDialog] Falha ao atualizar conversation_status:',
-          updateError ?? `RLS filtrou a linha (0 linhas atualizadas)`
-        );
-      } else {
-        // Patch otimista in-memory: contact sai da aba Abertos sem refetch
-        window.dispatchEvent(
-          new CustomEvent('zapp:contact-status-changed', {
-            detail: { contactId, status: 'resolved' },
-          })
-        );
-      }
+      // The RPC commits closure, FSM transition and timeline event together.
+      window.dispatchEvent(
+        new CustomEvent('zapp:contact-status-changed', {
+          detail: { contactId, status: 'resolved' },
+        })
+      );
 
       toast.success('Conversa encerrada com registro');
+      clientRequestIdRef.current = null;
       onOpenChange(false);
       setReason('');
       setOutcome('');
       setClassification('');
       setNotes('');
       onClosed?.();
+    } catch (error) {
+      console.warn('[CloseConversationDialog] Falha no encerramento atômico:', error);
+      toast.error('Não foi possível encerrar a conversa. Nenhuma alteração parcial foi salva.');
     } finally {
       setSaving(false);
     }

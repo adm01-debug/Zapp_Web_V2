@@ -3,7 +3,7 @@ import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeMediaUrl } from '@/utils/normalizeMediaUrl';
 import { toast } from '@/hooks/ui/use-toast';
-import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
 
 /**
  * Encapsulates WhatsApp instance resolution and media-message sending
@@ -13,8 +13,6 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
   const [instanceName, setInstanceName] = useState('');
   const [whatsappConnectionId, setWhatsappConnectionId] = useState<string | null>(null);
   const resolvedRef = useRef(false);
-
-  const { sendStickerMessage } = useEvolutionApi();
 
   const resolveInstance = useCallback(async (): Promise<string> => {
     if (instanceName) return instanceName;
@@ -77,38 +75,10 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
     if (!inst) return;
 
     try {
-      const phone = contactPhone!.replace(/\D/g, '');
-      const { data: dbData } = await supabase.from('messages').insert({
-        contact_id: contactId,
-        whatsapp_connection_id: whatsappConnectionId,
-        content: '[Sticker]',
-        message_type: 'sticker',
-        media_url: stickerUrl,
-        sender: 'agent',
-        status: 'sending',
-      }).select('id').single();
-
-      const messageId = dbData?.id;
-      let externalId: string | null = null;
-
-      try {
-        const result = await sendStickerMessage(inst, phone, stickerUrl);
-        externalId = result?.key?.id || null;
-      } catch (err: unknown) {
-        if (messageId) await supabase.from('messages').update({ status: 'failed' }).eq('id', messageId);
-        toast({ title: 'Erro ao enviar figurinha', description: err instanceof Error ? err.message : 'Falha na API', variant: 'destructive' });
-        return;
-      }
-
-      if (!externalId) {
-        if (messageId) await supabase.from('messages').update({ status: 'failed' }).eq('id', messageId);
-        toast({ title: 'Erro ao enviar figurinha', description: 'Falha na API', variant: 'destructive' });
-        return;
-      }
-
-      if (messageId) {
-        supabase.from('messages').update({ external_id: externalId, status: 'sent' }).eq('id', messageId).then(() => {});
-      }
+      void inst;
+      await sendOutboundMessage({
+        contactId, content: '[Sticker]', messageType: 'sticker', mediaUrl: stickerUrl,
+      });
 
       // Auto-save sticker
       supabase.from('stickers').select('id').eq('image_url', stickerUrl).maybeSingle().then(async ({ data: existing }) => {
@@ -125,81 +95,42 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
     } catch {
       toast({ title: 'Erro ao enviar figurinha', variant: 'destructive' });
     }
-  }, [ensureInstance, contactId, contactPhone, whatsappConnectionId, sendStickerMessage]);
+  }, [ensureInstance, contactId]);
 
   const handleSendCustomEmoji = useCallback(async (emojiUrl: string) => {
     const inst = await ensureInstance();
     if (!inst) return;
 
     try {
-      const phone = contactPhone!.replace(/\D/g, '');
       const isUrl = emojiUrl.startsWith('http');
-
-      const apiPromise = isUrl
-        ? supabase.functions.invoke('evolution-api', { method: 'POST', body: { action: 'send-media', instanceName: inst, number: phone, mediaUrl: emojiUrl, mediaType: 'image' } })
-        : supabase.functions.invoke('evolution-api', { method: 'POST', body: { action: 'send-text', instanceName: inst, number: phone, text: emojiUrl } });
-
-      const dbPromise = supabase.from('messages').insert({
-        contact_id: contactId, whatsapp_connection_id: whatsappConnectionId,
-        content: isUrl ? '[Emoji]' : emojiUrl, message_type: isUrl ? 'image' : 'text',
-        media_url: isUrl ? emojiUrl : null, sender: 'agent', status: 'sending',
-      }).select('id').single();
-
-      const [apiResult, dbResult] = await Promise.all([apiPromise, dbPromise]);
-      const messageId = dbResult?.data?.id;
-      const externalId = apiResult?.data?.key?.id || null;
-
-      if (apiResult?.error || !externalId) {
-        if (messageId) await supabase.from('messages').update({ status: 'failed' }).eq('id', messageId);
-        toast({ title: 'Erro ao enviar emoji', description: 'Falha na API', variant: 'destructive' });
-        return;
-      }
-
-      if (messageId) {
-        supabase.from('messages').update({ external_id: externalId, status: 'sent' }).eq('id', messageId).then(() => {});
-      }
+      void inst;
+      await sendOutboundMessage({
+        contactId,
+        content: isUrl ? '[Emoji]' : emojiUrl,
+        messageType: isUrl ? 'image' : 'text',
+        mediaUrl: isUrl ? emojiUrl : null,
+      });
       toast({ title: 'Emoji enviado!' });
     } catch {
       toast({ title: 'Erro ao enviar emoji', variant: 'destructive' });
     }
-  }, [ensureInstance, contactId, contactPhone, whatsappConnectionId]);
+  }, [ensureInstance, contactId]);
 
   const handleSendAudioMeme = useCallback(async (audioUrl: string) => {
     const inst = await ensureInstance();
     if (!inst) return;
 
     try {
-      const phone = contactPhone!.replace(/\D/g, '');
       const normalizedAudioUrl = normalizeMediaUrl(audioUrl);
-
-      const apiPromise = supabase.functions.invoke('evolution-api', {
-        body: { action: 'send-audio', instanceName: inst, number: phone, audioUrl: normalizedAudioUrl },
+      void inst;
+      await sendOutboundMessage({
+        contactId, content: '[Áudio Meme]', messageType: 'audio', mediaUrl: normalizedAudioUrl,
       });
-
-      const dbPromise = supabase.from('messages').insert({
-        contact_id: contactId, whatsapp_connection_id: whatsappConnectionId,
-        content: '[Áudio Meme]', message_type: 'audio',
-        media_url: normalizedAudioUrl, sender: 'agent', status: 'sending',
-      }).select('id').single();
-
-      const [apiResult, dbResult] = await Promise.all([apiPromise, dbPromise]);
-      const messageId = dbResult?.data?.id;
-
-      if (apiResult?.error || !apiResult?.data?.key?.id) {
-        if (messageId) await supabase.from('messages').update({ status: 'failed' }).eq('id', messageId);
-        toast({ title: 'Erro ao enviar áudio meme', description: 'Falha na API', variant: 'destructive' });
-        return;
-      }
-
-      const externalId = apiResult.data.key.id;
-      if (messageId) {
-        supabase.from('messages').update({ external_id: externalId, status: 'sent' }).eq('id', messageId).then(() => {});
-      }
       toast({ title: '🔊 Áudio meme enviado!' });
     } catch {
       toast({ title: 'Erro ao enviar áudio meme', variant: 'destructive' });
     }
-  }, [ensureInstance, contactId, contactPhone, whatsappConnectionId]);
+  }, [ensureInstance, contactId]);
 
   return {
     instanceName,
