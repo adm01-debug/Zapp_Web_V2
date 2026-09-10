@@ -16,8 +16,9 @@ import { TalkXSegments } from './TalkXSegments';
 import { TalkXTemplates } from './TalkXTemplates';
 import { TalkXSuppression } from './TalkXSuppression';
 import { TalkXAnalytics } from './TalkXAnalytics';
+import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled';
 
 export default function TalkXView() {
   const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
@@ -27,12 +28,14 @@ export default function TalkXView() {
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
+  const [scheduledCampaign, setScheduledCampaign] = useState<TalkXCampaign | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
 
   const openNew = useCallback((initial?: { segmentId?: string; templateId?: string }) => { setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard'); }, []);
   const openEdit = useCallback((c: TalkXCampaign) => { setEditingCampaign(c); setWizardInitial(undefined); setTopView('wizard'); }, []);
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
-  const backToList = useCallback(() => { setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setWizardInitial(undefined); }, []);
+  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaign(c); setTopView('scheduled'); }, []);
+  const backToList = useCallback(() => { setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaign(null); setWizardInitial(undefined); }, []);
 
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
@@ -46,9 +49,22 @@ export default function TalkXView() {
     setTopView('wizard');
   }, []);
 
+  // E72: routing por status
   const onView = useCallback((c: TalkXCampaign) => {
+    if (c.status === 'scheduled') { openScheduled(c); return; }
     openMonitor(c);
-  }, [openMonitor]);
+  }, [openMonitor, openScheduled]);
+
+  if (topView === 'scheduled' && scheduledCampaign) {
+    return (
+      <TalkXCampaignScheduled
+        campaign={scheduledCampaign}
+        onBack={backToList}
+        onEdit={(c) => { setScheduledCampaign(null); openEdit(c); }}
+        onLaunch={(id) => { setScheduledCampaign(null); setMonitorId(id); setTopView('monitor'); }}
+      />
+    );
+  }
 
   if (topView === 'wizard') {
     return (
