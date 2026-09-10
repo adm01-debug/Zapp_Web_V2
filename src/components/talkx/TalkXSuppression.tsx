@@ -27,6 +27,9 @@ interface BlacklistEntry {
   created_at: string;
   origin: string;
   campaign_id: string | null;
+  removed_by: string | null;
+  removed_at: string | null;
+  removed_by_profile?: { full_name: string | null } | null;
   contacts: { name: string; phone: string; company: string | null; avatar_url: string | null } | null;
 }
 
@@ -40,6 +43,7 @@ export function TalkXSuppression() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showAdd, setShowAdd] = useState(false);
+  const [tab, setTab] = useState<'active' | 'history'>('active');
   const [removing, setRemoving] = useState<BlacklistEntry | null>(null);
   const [addContactId, setAddContactId] = useState('');
   const [addReason, setAddReason] = useState(REASONS[0]);
@@ -49,12 +53,28 @@ export function TalkXSuppression() {
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<{ added: number; notFound: number; alreadyBlocked: number } | null>(null);
 
-  const { data: blacklist = [], isLoading } = useQuery({
+  const { data: history = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['talkx-blacklist-history'],
+    enabled: tab === 'history',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('talkx_blacklist')
+        .select('*, contacts:contact_id(name, phone, company, avatar_url), removed_by_profile:removed_by(full_name)')
+        .not('removed_at', 'is', null)
+        .order('removed_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as BlacklistEntry[];
+    },
+  });
+
+    const { data: blacklist = [], isLoading } = useQuery({
     queryKey: ['talkx-blacklist'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_blacklist')
         .select('*, contacts:contact_id(name, phone, company, avatar_url)')
+        .is('removed_at', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BlacklistEntry[];
@@ -179,7 +199,17 @@ export function TalkXSuppression() {
           )}
         />
 
-        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+        {/* E58: tab toggle */}
+        <div className="flex gap-1 bg-card border border-border/70 rounded-xl p-1 w-fit">
+          {(['active', 'history'] as const).map((t) => (
+            <button key={t} type="button" onClick={() => setTab(t)}
+              className={`h-7 px-3 rounded-lg text-[12px] font-medium transition-colors ${tab === t ? 'bg-primary text-white' : 'text-foreground-secondary hover:bg-muted/40'}`}>
+              {t === 'active' ? `Ativas (${fmtInt(blacklist.length)})` : `Histórico (${fmtInt(history.length)})`}
+            </button>
+          ))}
+        </div>
+
+{tab === 'active' && (<section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           {isLoading ? (<div className="p-4"><TalkXSkeletonRows rows={5} /></div>)
            : blacklist.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={ShieldCheck} title="Nenhum contato na lista de supressão" description="Contatos suprimidos são automaticamente excluídos de todos os envios de campanhas, segmentos e automações." /></div>)
            : filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum resultado" /></div>)
@@ -220,6 +250,7 @@ export function TalkXSuppression() {
           )}
           {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="contatos suprimidos" /></div>}
         </section>
+      )}
       </div>
 
       {/* Centro de proteção */}
@@ -297,7 +328,18 @@ export function TalkXSuppression() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
+
+      {tab === 'history' && (<section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+        <div className="p-4 border-b border-border/50 flex items-center justify-between">
+          <p className="text-[13px] font-semibold text-foreground">Removidos da supressao</p>
+          <span className="text-[11px] text-muted-foreground">{fmtInt(history.length)} entradas</span>
+        </div>
+        {historyLoading ? <TalkXSkeletonRows rows={5} /> : history.length === 0 ? (
+          <div className="p-8 text-center text-[12px] text-muted-foreground">Nenhuma entrada removida ainda.</div>
+        ) : (<div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="border-b border-border/50 bg-muted/10"><Th>Contato</Th><Th>Telefone</Th><Th>Motivo</Th><Th>Removido em</Th><Th>Por</Th></tr></thead><tbody>{history.map((b) => (<tr key={b.id} className="border-b border-border/30 hover:bg-muted/10"><Td><span className="text-[13px] font-medium text-foreground">{b.contacts?.name ?? 'Avulso'}</span></Td><Td><span className="text-[12px] text-foreground-secondary">{b.contacts?.phone ?? '—'}</span></Td><Td><span className="text-[12px] text-foreground-secondary">{b.reason ?? '—'}</span></Td><Td><span className="text-[11px] text-foreground-secondary">{b.removed_at ? fmtDateTime(b.removed_at) : '—'}</span></Td><Td><span className="text-[11px] text-foreground-secondary">{b.removed_by_profile?.full_name ?? '—'}</span></Td></tr>))}</tbody></table></div>)}
+      </section>)}
+
+            <AlertDialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
         <AlertDialogContent className="rounded-2xl border-border/70">
           <AlertDialogHeader><AlertDialogTitle>Remover da lista de supressão?</AlertDialogTitle><AlertDialogDescription><b className="text-foreground">{removing?.contacts?.name}</b> poderá receber mensagens do Talk X nas próximas campanhas.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => removing && removeMutation.mutate(removing.id)}>Remover</AlertDialogAction></AlertDialogFooter>
