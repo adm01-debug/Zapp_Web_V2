@@ -54,3 +54,41 @@ export function exportCampaignsCsv(
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * E72: exporta destinatarios de uma campanha como CSV (BOM UTF-8).
+ */
+export type RecipientRow = {
+  name: string | null;
+  phone: string | null;
+  status: string;
+  sent_at: string | null;
+  delivered_at: string | null;
+  error_message: string | null;
+  personalized_message: string | null;
+};
+
+export function exportRecipientsCsv(rows: RecipientRow[], campaignName: string): void {
+  if (rows.length === 0) return;
+  const COLS: Array<{ label: string; key: keyof RecipientRow }> = [
+    { label: 'Nome', key: 'name' },
+    { label: 'Telefone', key: 'phone' },
+    { label: 'Status', key: 'status' },
+    { label: 'Enviada em', key: 'sent_at' },
+    { label: 'Entregue em', key: 'delivered_at' },
+    { label: 'Erro', key: 'error_message' },
+    { label: 'Mensagem personalizada', key: 'personalized_message' },
+  ];
+  const lines = [
+    COLS.map((c) => esc(c.label)).join(','),
+    ...rows.map((r) => COLS.map((c) => esc(String(r[c.key] ?? ''))).join(',')),
+  ].join('\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + lines], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `talkx-${campaignName.replace(/[^\w\s-]/g, '').slice(0, 40)}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
