@@ -309,7 +309,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
             </div>
           </div>
         </div>
-        {ed.hasMedia && (
+                {ed.hasMedia && (
           <div className="mt-3 rounded-xl border border-border/70 bg-input/30 p-3 flex items-center gap-3">
             <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
@@ -323,6 +323,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
           </div>
         )}
       </SectionCard>
+
+      {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
+      {(ed.messageTemplate.split('http').length - 1) > 2 && (
+        <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
+          <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <p className="text-[12px] text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
+        </div>
+      )}
 
       {ed.templates.length > 0 && (
         <SectionCard icon={Sparkles} title="Sugestões da biblioteca" subtitle="Templates aprovados mais usados.">
