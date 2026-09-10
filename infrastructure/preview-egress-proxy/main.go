@@ -257,7 +257,7 @@ func signature(secret []byte, timestamp, nonce string, body []byte) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-func (s *service) reserveNonce(nonce string, now time.Time) bool {
+func (s *service) reserveNonce(nonce string, now, expiry time.Time) bool {
 	s.nonceMu.Lock()
 	defer s.nonceMu.Unlock()
 	for value, expiry := range s.nonces {
@@ -268,9 +268,7 @@ func (s *service) reserveNonce(nonce string, now time.Time) bool {
 	if _, exists := s.nonces[nonce]; exists || len(s.nonces) >= maxNonces {
 		return false
 	}
-	// Retain the nonce until its timestamp can no longer pass the ±replayWindow
-	// check; the extra second covers Unix-second truncation of the timestamp.
-	s.nonces[nonce] = now.Add(2*replayWindow + time.Second)
+	s.nonces[nonce] = expiry
 	return true
 }
 
@@ -287,7 +285,9 @@ func (s *service) authorized(r *http.Request, body []byte, now time.Time) bool {
 	if subtle.ConstantTimeCompare([]byte(expected), []byte(provided)) != 1 {
 		return false
 	}
-	return s.reserveNonce(nonce, now)
+	// Retain the nonce until its signed timestamp can no longer pass the
+	// ±replayWindow check; the extra second covers Unix-second truncation.
+	return s.reserveNonce(nonce, now, time.Unix(seconds, 0).Add(replayWindow+time.Second))
 }
 
 func abs(value int64) int64 {

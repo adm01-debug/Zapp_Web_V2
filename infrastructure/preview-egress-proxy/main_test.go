@@ -77,23 +77,31 @@ func TestNonceOutlivesTimestampAcceptanceWindow(t *testing.T) {
 	}
 	body := []byte(`{"url":"https://example.test/"}`)
 	received := time.Unix(1_700_000_000, 500_000_000)
-	// Client clock ahead by the whole window: the first request is still accepted.
-	timestamp := strconvFormat(received.Unix() + int64(replayWindow/time.Second))
-	nonce := "nonce-with-at-least-sixteen-bytes"
-	signed := func() *http.Request {
+	signed := func(timestamp, nonce string) *http.Request {
 		request := httptest.NewRequest(http.MethodPost, "/v1/fetch", strings.NewReader(string(body)))
 		request.Header.Set("X-Zapp-Egress-Timestamp", timestamp)
 		request.Header.Set("X-Zapp-Egress-Nonce", nonce)
 		request.Header.Set("X-Zapp-Egress-Signature", signature(s.secret, timestamp, nonce, body))
 		return request
 	}
-	if !s.authorized(signed(), body, received) {
+	// Client clock ahead by the whole window: the first request is still accepted.
+	skewed := strconvFormat(received.Unix() + int64(replayWindow/time.Second))
+	nonce := "nonce-with-at-least-sixteen-bytes"
+	if !s.authorized(signed(skewed, nonce), body, received) {
 		t.Fatal("expected first request inside the window to be accepted")
 	}
 	for _, offset := range []time.Duration{replayWindow + time.Second, 2 * replayWindow, 2*replayWindow + 200*time.Millisecond} {
-		if s.authorized(signed(), body, received.Add(offset)) {
+		if s.authorized(signed(skewed, nonce), body, received.Add(offset)) {
 			t.Fatalf("replay accepted %s after the first request", offset)
 		}
+	}
+	// Unskewed requests must not pay the worst-case retention (nonce map capacity).
+	fresh := "fresh-nonce-with-at-least-sixteen-bytes"
+	if !s.authorized(signed(strconvFormat(received.Unix()), fresh), body, received) {
+		t.Fatal("expected unskewed request to be accepted")
+	}
+	if retained := s.nonces[fresh].Sub(received); retained > replayWindow+time.Second {
+		t.Fatalf("unskewed nonce retained for %s", retained)
 	}
 }
 
