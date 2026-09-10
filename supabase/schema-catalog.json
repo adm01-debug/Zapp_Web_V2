@@ -1292,6 +1292,8 @@
         "talkx_blacklist.reason_code:talkx_blacklist_reason:nullable",
         "talkx_blacklist.expires_at:timestamp with time zone:nullable",
         "talkx_blacklist.source_message_id:uuid:nullable",
+        "talkx_blacklist.removed_by:uuid:nullable",
+        "talkx_blacklist.removed_at:timestamp with time zone:nullable",
         "talkx_campaign_events.id:uuid:not-null",
         "talkx_campaign_events.campaign_id:uuid:not-null",
         "talkx_campaign_events.event_type:text:not-null",
