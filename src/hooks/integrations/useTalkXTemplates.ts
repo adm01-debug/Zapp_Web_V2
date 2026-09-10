@@ -208,6 +208,14 @@ export function useTalkXTemplates() {
     invalidate();
   };
 
+  const countVariantRecipients = async (variantId: string): Promise<number> => {
+    const { count } = await supabase
+      .from('talkx_recipients')
+      .select('id', { count: 'exact', head: true })
+      .eq('variant_id', variantId);
+    return count ?? 0;
+  };
+
   return {
     templates: query.data ?? [],
     isLoading: query.isLoading,
@@ -217,6 +225,6 @@ export function useTalkXTemplates() {
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
     testTemplate,
     fetchVersionHistory,
-    fetchVariants, saveVariant, deleteVariant,
+    fetchVariants, saveVariant, deleteVariant, countVariantRecipients,
   };
 }

@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import {
@@ -26,7 +25,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Inicializa campos do template sendo editado
@@ -435,7 +434,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       </div>
 
       {/* === COLUNA DIREITA: preview === */}
-      <aside className="flex flex-col w-[300px] flex-shrink-0 gap-3">
+      <aside className="hidden xl:flex flex-col w-[300px] flex-shrink-0 gap-3">
         <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
           <PhoneFrame
             text={personalizePreview(eContent)}
@@ -455,7 +454,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-primary">Variante {v.label} · {v.weight}%</span>
-                        <button type="button" onClick={async () => { const { count: rc } = await supabase.from('talkx_recipients').select('id', { count: 'exact', head: true }).eq('variant_id', v.id); if (rc && rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-[10px]">×</button>
+                        <button type="button" onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-[10px]">×</button>
                       </div>
                       <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-[11px] bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
                     </div>
