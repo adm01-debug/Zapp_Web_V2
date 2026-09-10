@@ -143,6 +143,41 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
           }
         />
 
+        {/* E68: Rascunhos pendentes */}
+        {(() => {
+          const drafts = campaigns.filter((c) => c.status === 'draft');
+          if (drafts.length === 0) return null;
+          return (
+            <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-dash-amber" />
+                  <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
+                  <span className="text-[11px] text-muted-foreground">({drafts.length})</span>
+                </div>
+              </div>
+              <div className="divide-y divide-border/50">
+                {drafts.slice(0, 5).map((c) => (
+                  <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-lg bg-dash-amber/20 border border-dash-amber/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-dash-amber" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-medium text-foreground truncate">{c.name || 'Sem nome'}</p>
+                        <p className="text-[11px] text-muted-foreground">{fmtAgo(c.updated_at)}</p>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-[12px] font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
+                      <Pencil className="w-3.5 h-3.5" />Retomar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           {isLoading ? (

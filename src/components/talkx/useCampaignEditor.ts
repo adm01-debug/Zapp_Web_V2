@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -46,6 +46,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
+  const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
@@ -109,6 +111,20 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
+
+  // E68: autosave -- salva rascunho 3s apos ultima mudanca
+  const autosaveFields = JSON.stringify({ name, messageTemplate, audienceSource, segmentId, selectedContacts, templateId, connectionId });
+  useEffect(() => {
+    // Apenas para campanhas com nome e em modo edicao ativa (nao durante o launch)
+    if (!name.trim() || !campaign) return;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(async () => {
+      const id = await handleSave('draft').catch(() => null);
+      if (id) setLastAutosave(new Date());
+    }, 3000);
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosaveFields]); // nao incluir handleSave para evitar loop
 
   const { data: contacts } = useQuery({
     queryKey: ['contacts-talkx'],
@@ -337,6 +353,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
+    lastAutosave, // E68
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,

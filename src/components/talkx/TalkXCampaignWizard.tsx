@@ -120,6 +120,11 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
+              {ed.lastAutosave && (
+                <span className="text-[10.5px] text-muted-foreground hidden xl:inline">
+                  Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
+                </span>
+              )}
             </div>
             {step < 4 && (
               <PrimaryButton size="lg" onClick={next} className={cn(!ed.canProceed[step] && 'opacity-50 pointer-events-none')}>
