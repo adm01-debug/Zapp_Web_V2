@@ -59,9 +59,12 @@ evidence.forEach(line => {
 // Saida deterministica. Sem isto o jsPDF grava /CreationDate e /ID novos a cada
 // execucao: o PDF passa a diferir do commitado sem nenhuma mudanca de conteudo,
 // o job audit-report ve "drift" e reabre o PR automation/audit-report para sempre.
+// A string PDF preserva o fuso explicitamente. Um objeto Date seria serializado
+// no fuso local pelo jsPDF e geraria um blob diferente em runners/maquinas distintos.
 // A data e a mesma ja impressa na capa do relatorio (14/05/2026).
-doc.setCreationDate(new Date(Date.UTC(2026, 4, 14)));
+doc.setCreationDate("D:20260514000000+00'00'");
 doc.setFileId("5a415050574542415544495452455030");
 
- doc.save("docs/audit_report.pdf");
- console.log("PDF gerado em docs/audit_report.pdf");
+const outputPath = process.env.AUDIT_PDF_OUTPUT_PATH ?? 'docs/audit_report.pdf';
+doc.save(outputPath);
+process.stdout.write(`PDF gerado em ${outputPath}\n`);
