@@ -115,14 +115,22 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     },
   });
 
-  const { data: blacklistIds } = useQuery({
+  // E54: inclui phone-based e respeita removed_at + expires_at
+  const { data: blacklistData } = useQuery({
     queryKey: ['talkx-blacklist-ids'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data } = await supabase.from('talkx_blacklist').select('contact_id').is('removed_at', null).or('expires_at.is.null,expires_at.gt.' + now);
-      return new Set((data || []).map((b) => b.contact_id));
+      const { data } = await supabase.from('talkx_blacklist')
+        .select('contact_id, phone').is('removed_at', null)
+        .or('expires_at.is.null,expires_at.gt.' + now);
+      return {
+        ids: new Set((data || []).map((b) => b.contact_id).filter(Boolean) as string[]),
+        phones: new Set((data || []).map((b) => b.phone?.replace(/\D/g,'') || null).filter(Boolean) as string[]),
+      };
     },
   });
+  const blacklistIds = blacklistData?.ids;
+  const blacklistPhones = blacklistData?.phones;
 
   const selectedSegment = useMemo(() => segments.find((s) => s.id === segmentId) ?? null, [segments, segmentId]);
   const selectedTemplate = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
@@ -266,7 +274,17 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         } else {
           contactIds = selectedContacts;
         }
-        if (respectSuppression && blacklistIds) contactIds = contactIds.filter((c) => !blacklistIds.has(c));
+        if (respectSuppression && (blacklistIds || blacklistPhones)) {
+          if (blacklistIds) contactIds = contactIds.filter((c) => !blacklistIds.has(c));
+          if (blacklistPhones && blacklistPhones.size > 0) {
+            const { data: contactPhones } = await supabase
+              .from('contacts').select('id, phone').in('id', contactIds);
+            const suppByPhone = new Set(
+              (contactPhones ?? []).filter((c) => c.phone && blacklistPhones.has(c.phone.replace(/\D/g,''))).map((c) => c.id)
+            );
+            if (suppByPhone.size > 0) contactIds = contactIds.filter((c) => !suppByPhone.has(c));
+          }
+        }
         if (contactIds.length > 0) await addRecipients.mutateAsync({ campaignId: id, contactIds });
         if (selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
       }

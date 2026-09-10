@@ -58,6 +58,7 @@ export function TalkXSuppression() {
         .from('talkx_blacklist')
         .select('*, contacts:contact_id(name, phone, company, avatar_url)')
         .is('removed_at', null)
+        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BlacklistEntry[];
