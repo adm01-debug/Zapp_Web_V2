@@ -276,6 +276,51 @@ export async function handleIncomingMessage(
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
     void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
   }
+  // E57: opt-out automatico por palavra-chave (gateado por campanha recente 30 dias)
+  if ((tx.outcome === 'inserted' || tx.outcome === 'updated') && messageType === 'text' && content && !key.fromMe) {
+    const OPT_OUT_KEYWORDS = /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[\u00e3a]o quero|optout|opt-out)\s*$/i;
+    if (OPT_OUT_KEYWORDS.test(content.trim()) && tx.contact_id) {
+      // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
+      const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
+      if (resolvedPhone && resolvedPhone.length >= 8) {
+        // Gate: verificar se ha campanha recente (30 dias) para o contato
+        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentSend } = await supabase.from('talkx_recipients')
+          .select('id').eq('contact_id', tx.contact_id)
+          .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
+        if (recentSend && recentSend.length > 0) {
+          const { error: suppErr } = await supabase.from('talkx_blacklist').insert({
+            phone: resolvedPhone,
+            contact_id: tx.contact_id,
+            reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
+            reason_code: 'opt_out',
+            origin: 'auto_optout',
+            source_message_id: tx.message_id ?? null,
+          }).select().single();
+          if (!suppErr) {
+            console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
+            // E59: enviar mensagem de confirmacao ao contato
+            try {
+              const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
+              const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
+              if (evolutionUrl && evolutionKey) {
+                await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
+                  number: resolvedPhone,
+                  text: 'Você foi removido da lista de comunicações da Promo Brindes. Não receberemos mais mensagens para este número. Em caso de dúvidas, entre em contato pelo nosso site.',
+                  delay: 500,
+                });
+                console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
+              }
+            } catch (notifErr) {
+              console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
+            }
+          } else console.warn('[OPT-OUT] Falha:', suppErr?.message);
+        } else {
+          console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
+        }
+      }
+    }
+  }
 }
 
 // deno-lint-ignore no-explicit-any

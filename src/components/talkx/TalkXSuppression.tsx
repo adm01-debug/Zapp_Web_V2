@@ -27,6 +27,8 @@ interface BlacklistEntry {
   created_at: string;
   origin: string;
   campaign_id: string | null;
+  removed_by: string | null;
+  removed_at: string | null;
   contacts: { name: string; phone: string; company: string | null; avatar_url: string | null } | null;
 }
 
@@ -55,6 +57,7 @@ export function TalkXSuppression() {
       const { data, error } = await supabase
         .from('talkx_blacklist')
         .select('*, contacts:contact_id(name, phone, company, avatar_url)')
+        .is('removed_at', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BlacklistEntry[];
@@ -107,7 +110,14 @@ export function TalkXSuppression() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from('talkx_blacklist').delete().eq('id', id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileRow } = await supabase.from('profiles').select('id').eq('user_id', user?.id ?? '').maybeSingle();
+      const { error } = await supabase.from('talkx_blacklist')
+        .update({ removed_by: profileRow?.id ?? null, removed_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato removido da lista de supressão'); setRemoving(null); },
   });
 

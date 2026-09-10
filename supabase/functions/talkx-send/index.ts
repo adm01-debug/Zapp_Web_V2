@@ -219,12 +219,20 @@ Deno.serve(async (req) => {
       .order("created_at");
 
     // Get blacklisted contact IDs
-    const { data: blacklisted } = await supabase.from("talkx_blacklist").select("contact_id");
-    const blacklistSet = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.contact_id));
+    const now = new Date().toISOString();
+    const { data: blacklisted } = await supabase.from("talkx_blacklist")
+      .select("contact_id, phone")
+      .is("removed_at", null)
+      .or(`expires_at.is.null,expires_at.gt.${now}`);
+    const blacklistSet = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.contact_id).filter(Boolean));
+    const blacklistPhones = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.phone).filter(Boolean));
 
     // Filter out blacklisted recipients
     const eligibleRecipients = (recipients || []).filter((r: Record<string, unknown>) => {
-      if (blacklistSet.has(r.contact_id)) {
+      // Fix P1: phone do recipient vem do join contacts:contact_id, nao do campo raiz
+        const recipientContacts = (r as Record<string, unknown>).contacts as Record<string, unknown> | null;
+        const recipientPhone = (recipientContacts?.phone as string | undefined)?.replace(/\D/g, '');
+        if (blacklistSet.has(r.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone))) {
         supabase.from("talkx_recipients")
           .update({ status: "skipped", error_message: "Contato na lista negra (opt-out)" }).eq("id", r.id);
         return false;
@@ -240,7 +248,6 @@ Deno.serve(async (req) => {
 
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
-    const hasMedia = !!campaign.media_url && !!campaign.media_type;
     // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
     // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
     // com typingDelay por envio passam do TTL.
