@@ -222,10 +222,13 @@ export async function fetchPublicHttpUrl(
       // The response body is best-effort cleanup; validation remains fail-closed.
     }
     if (!location || redirects === maxRedirects) return null;
-    url = await resolvePublicHttpUrl(
-      new URL(location, url).toString(),
-      options.resolver,
-    );
+    let redirectUrl: string;
+    try {
+      redirectUrl = new URL(location, url).toString();
+    } catch {
+      return null;
+    }
+    url = await resolvePublicHttpUrl(redirectUrl, options.resolver);
     if (!url) return null;
   }
 

@@ -58,6 +58,20 @@ Deno.test("SSRF guard validates every redirect target before fetching it", async
   assertEquals(seen, ["https://example.test/start"]);
 });
 
+Deno.test("SSRF guard fails closed on a malformed redirect location", async () => {
+  const result = await fetchPublicHttpUrl("https://example.test/start", {
+    resolver: publicDns,
+    fetcher: () =>
+      Promise.resolve(
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://[" },
+        }),
+      ),
+  });
+  assertEquals(result, null);
+});
+
 Deno.test("SSRF guard permits a bounded public redirect chain", async () => {
   const seen: string[] = [];
   const result = await fetchPublicHttpUrl("https://example.test/start", {
@@ -83,7 +97,11 @@ Deno.test("SSRF guard permits a bounded public redirect chain", async () => {
 
 Deno.test("approved audio storage URLs require exact project origin and safe paths", () => {
   const projectUrl = "https://tnnnlkbymytvtqngbbqh.supabase.co";
-  const allowedBuckets = ["whatsapp-media", "audio-messages"];
+  const allowedBuckets = [
+    "whatsapp-media",
+    "audio-messages",
+    "audio-memes",
+  ];
 
   assertEquals(
     parseApprovedStorageUrl(
@@ -92,6 +110,14 @@ Deno.test("approved audio storage URLs require exact project origin and safe pat
       allowedBuckets,
     ),
     { bucket: "audio-messages", path: "2026/voice.ogg" },
+  );
+  assertEquals(
+    parseApprovedStorageUrl(
+      `${projectUrl}/storage/v1/object/public/audio-memes/voice-changer/voice.mp3`,
+      projectUrl,
+      allowedBuckets,
+    ),
+    { bucket: "audio-memes", path: "voice-changer/voice.mp3" },
   );
 
   for (

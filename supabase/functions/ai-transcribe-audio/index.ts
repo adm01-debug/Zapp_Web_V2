@@ -18,10 +18,14 @@ import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
-const APPROVED_AUDIO_BUCKETS = ["whatsapp-media", "audio-messages"] as const;
+const APPROVED_AUDIO_BUCKETS = [
+  "whatsapp-media",
+  "audio-messages",
+  "audio-memes",
+] as const;
 
 /**
- * Only accepts an exact URL for the project's approved private media buckets.
+ * Only accepts an exact URL for the project's approved media buckets.
  * Service-role storage reads must never be reachable through an arbitrary URL.
  */
 async function downloadAudio(
