@@ -118,7 +118,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const { data: blacklistIds } = useQuery({
     queryKey: ['talkx-blacklist-ids'],
     queryFn: async () => {
-      const { data } = await supabase.from('talkx_blacklist').select('contact_id');
+      const now = new Date().toISOString();
+      const { data } = await supabase.from('talkx_blacklist').select('contact_id').is('removed_at', null).or('expires_at.is.null,expires_at.gt.' + now);
       return new Set((data || []).map((b) => b.contact_id));
     },
   });
