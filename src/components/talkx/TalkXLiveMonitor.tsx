@@ -22,6 +22,7 @@ import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalk
 import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
+import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
 
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
