@@ -98,9 +98,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     let offset = 0;
     const allRows: RecipientRow[] = [];
     for (;;) {
-      const { data } = await fromTable('talkx_recipients')
+      const { data, error } = await fromTable('talkx_recipients')
         .select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('created_at').range(offset, offset + PAGE - 1);
+        .eq('campaign_id', campaignId).order('created_at').order('id').range(offset, offset + PAGE - 1);
+      if (error) { console.warn('[export] page error:', error.message); break; }
       if (!data?.length) break;
       allRows.push(...(data as Record<string, unknown>[]).map((r) => ({
         name: (r.contacts as { name: string } | null)?.name ?? null,
