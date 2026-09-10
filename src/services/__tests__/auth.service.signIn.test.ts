@@ -24,7 +24,7 @@ describe('AuthService.signIn (edge auth-login fail-closed)', () => {
     const r = await AuthService.signIn('a@b.co', 'pw');
     expect(authMocks.setSession).toHaveBeenCalledWith({ access_token: 'at', refresh_token: 'rt' });
     expect(authMocks.signInWithPassword).not.toHaveBeenCalled();
-    expect(r).toEqual({ error: null, via: 'edge', lock: null });
+    expect(r).toEqual({ error: null, via: 'edge', lock: null, unavailable: false });
   });
 
   it('edge recusou: devolve o erro e o lock, sem tocar no GoTrue pelo cliente', async () => {
@@ -42,7 +42,7 @@ describe('AuthService.signIn (edge auth-login fail-closed)', () => {
     serverLoginMock.mockResolvedValue({ ok: false, unavailable: true, error: 'auth-login: HTTP 502' });
     const r = await AuthService.signIn('a@b.co', 'pw');
     expect(authMocks.signInWithPassword).not.toHaveBeenCalled();
-    expect(r).toMatchObject({ via: 'edge', lock: null });
+    expect(r).toMatchObject({ via: 'edge', lock: null, unavailable: true });
     expect(r.error?.message).toContain('temporariamente indisponível');
   });
 });

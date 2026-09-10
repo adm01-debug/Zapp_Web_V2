@@ -63,6 +63,7 @@ describe('smoke: login', () => {
     serverLoginMock.mockResolvedValueOnce({ ok: true, accessToken: 't', refreshToken: 'r' });
     const res = await AuthService.signIn('a@b.com', 'pw123456');
     expect(authMock.signInWithPassword).not.toHaveBeenCalled();
+    expect(authMock.setSession).toHaveBeenCalledWith({ access_token: 't', refresh_token: 'r' });
     expect(res.error).toBeNull();
   });
 

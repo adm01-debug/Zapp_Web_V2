@@ -89,6 +89,29 @@ describe('useReauthentication', () => {
     expect(reauthResult).toMatchObject({ success: false, error: 'Senha incorreta' });
   });
 
+  it('reauthenticate preserves an auth-edge outage instead of reporting a wrong password', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { email: 'test@example.com' } },
+    });
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: true,
+      error: 'auth-login: HTTP 503',
+    });
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let reauthResult: { success: boolean; error?: string } | undefined;
+    await act(async () => {
+      reauthResult = await result.current.reauthenticate('correctpass');
+    });
+
+    expect(reauthResult).toMatchObject({
+      success: false,
+      error: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.',
+    });
+  });
+
   it('reauthenticate fails when no user found', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },

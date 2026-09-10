@@ -9,6 +9,8 @@ export interface SignInResult {
   /** Login e lockout sao sempre decididos pelo endpoint server-side. */
   via: 'edge';
   lock: ServerLoginLock | null;
+  /** A Edge ou a persistencia local da sessao falhou; nao confundir com senha invalida. */
+  unavailable: boolean;
 }
 
 export class AuthService {
@@ -90,16 +92,17 @@ export class AuthService {
         access_token: result.accessToken,
         refresh_token: result.refreshToken,
       });
-      return { error, via: 'edge', lock: null };
+      return { error, via: 'edge', lock: null, unavailable: error !== null };
     }
     if (!result.unavailable) {
-      return { error: new Error(result.error), via: 'edge', lock: result.lock };
+      return { error: new Error(result.error), via: 'edge', lock: result.lock, unavailable: false };
     }
     log.warn('[AuthService] auth-login indisponivel; login bloqueado para preservar o lockout', result.error);
     return {
       error: new Error('Login temporariamente indisponível. Tente novamente em instantes.'),
       via: 'edge',
       lock: null,
+      unavailable: true,
     };
   }
 

@@ -30,6 +30,12 @@ export function useReauthentication() {
       const result = await AuthService.signIn(user.email, password);
 
       if (result.error) {
+        if (result.unavailable) {
+          return { success: false, error: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.' };
+        }
+        if (result.lock?.isLocked) {
+          return { success: false, error: 'Conta temporariamente bloqueada. Tente novamente mais tarde.' };
+        }
         return { success: false, error: 'Senha incorreta' };
       }
 
