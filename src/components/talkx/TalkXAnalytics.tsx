@@ -57,7 +57,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
     [filtered]
   );
 
-  const { data: replyData } = useQuery({
+  const { data: replyData, isLoading: replyLoading } = useQuery({
     queryKey: ['talkx-reply-rate', period, sentCampaignIds.join(',')],
     queryFn: async () => {
       if (sentCampaignIds.length === 0) return { replied: 0, sent: 0 };
@@ -65,20 +65,25 @@ export function TalkXAnalytics({ campaigns }: Props) {
         .select('contact_id, sent_at').in('campaign_id', sentCampaignIds)
         .eq('status', 'sent').not('sent_at', 'is', null).limit(5000);
       if (!recips?.length) return { replied: 0, sent: 0 };
-      const recipMap = new Map<string, string>();
+      // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
+      const recipMap = new Map<string, number[]>();
       (recips as { contact_id: string; sent_at: string }[]).forEach((r) => {
-        if (!recipMap.has(r.contact_id) || r.sent_at < (recipMap.get(r.contact_id) ?? '')) recipMap.set(r.contact_id, r.sent_at);
+        const ts = new Date(r.sent_at).getTime();
+        if (!recipMap.has(r.contact_id)) recipMap.set(r.contact_id, []);
+        recipMap.get(r.contact_id)!.push(ts);
       });
       const contactIds = Array.from(recipMap.keys());
       const { data: msgs } = await supabase.from('messages')
         .select('contact_id, created_at').in('contact_id', contactIds)
         .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
       const replied = new Set<string>();
+      const WINDOW = 24 * 3_600_000;
       (msgs ?? []).forEach((m: { contact_id: string; created_at: string }) => {
-        const sentAt = recipMap.get(m.contact_id);
-        if (!sentAt) return;
-        const diff = new Date(m.created_at).getTime() - new Date(sentAt).getTime();
-        if (diff >= 0 && diff <= 24 * 3_600_000) replied.add(m.contact_id);
+        const sentTimes = recipMap.get(m.contact_id);
+        if (!sentTimes) return;
+        const mt = new Date(m.created_at).getTime();
+        // Conta se a resposta esta dentro de 24h de QUALQUER envio do contato
+        if (sentTimes.some((st) => mt - st >= 0 && mt - st <= WINDOW)) replied.add(m.contact_id);
       });
       return { replied: replied.size, sent: contactIds.length };
     },
@@ -151,7 +156,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
       <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
         <DashboardKpiCard size="hero" index={1} label="Taxa de entrega" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'coleta em andamento', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
+        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
         <DashboardKpiCard size="hero" index={3} label="Conversão por segmento" value="—" delta={null} tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
         <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />

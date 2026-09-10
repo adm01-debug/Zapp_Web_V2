@@ -1,12 +1,13 @@
 // talkxExport.ts — E29: exportar campanhas como CSV (BOM UTF-8, sem lib)
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
-/** Escapa para CSV e neutraliza formula-injection (P1 fix). */
+/** Escapa para CSV e neutraliza formula-injection (P1 fix + CR/tab/full-width). */
 function esc(v: string): string {
-  const FORMULA_CHARS = ['=', '+', '-', '@'];
+  // Prefixos que planilhas interpretam como formulas (incluindo full-width)
+  const FORMULA_PREFIX = /^[=+\-@\t\r\n＝＋－＠]/u;
   let safe = v;
-  if (FORMULA_CHARS.some((c) => safe.startsWith(c))) safe = "'" + safe;
-  if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+  if (FORMULA_PREFIX.test(safe)) safe = '' + safe;
+  if (safe.includes(',') || safe.includes('"') || safe.includes('\r') || safe.includes('\n')) {
     return '"' + safe.replace(/"/g, '""') + '"';
   }
   return safe;
