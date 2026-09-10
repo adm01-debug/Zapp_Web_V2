@@ -61,6 +61,7 @@ jobs:
       - name: 🧪 Run executable Edge handler contracts
         run: >-
           deno test --allow-env
+          supabase/functions/_shared/__tests__/ssrf.test.ts
           supabase/functions/_shared/__tests__/crm-integration-contract.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/message-delivery/index.test.ts

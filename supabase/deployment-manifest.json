@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 65,
-    "source_file_count": 84,
+    "source_file_count": 85,
     "verify_jwt_true": 56,
     "verify_jwt_false": 9
   },
@@ -107,6 +107,11 @@
       "sha256": "c92f93103040c39d9d2ff864ab6306110e0156a32896c249ddd3473efff1ca53"
     },
     {
+      "path": "supabase/functions/_shared/ssrf.ts",
+      "bytes": 8006,
+      "sha256": "2823dbf1fcf401fd86f9cecda3b57729042a8b9bcea4d9117de2806f2248a38f"
+    },
+    {
       "path": "supabase/functions/_shared/validation.ts",
       "bytes": 12230,
       "sha256": "03aa3a33cf64f9eced980b45b1ca2d77add9dbd895af9273e48cd450ab03b7f9"
@@ -153,8 +158,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 7028,
-      "sha256": "de62425434f2b5cf1a68be413c3ab4cd6715283e01c6dde6986d274bc80f83d0"
+      "bytes": 6572,
+      "sha256": "3ccf538506abf26b7b1c0eb0cddfa5f5b93487ee73e791767ba57b6b4681e544"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -303,8 +308,8 @@
     },
     {
       "path": "supabase/functions/fetch-link-preview/index.ts",
-      "bytes": 8535,
-      "sha256": "04fcb629a39f78dc4aa912dd54e49f67f23e2a69a5053a82df98a09f5068e6c1"
+      "bytes": 8056,
+      "sha256": "ddc899b8d59d6cdf741478786182b2d19329238d3aaac932ebffe0d72282d85c"
     },
     {
       "path": "supabase/functions/get-mapbox-token/index.ts",
@@ -553,11 +558,12 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0d59a3fb5ce2666e3d26ddc15bf54f124f24dac06a2491190ccb770e8434c9fd",
+      "source_sha256": "6e30b5dc599db2e8f898a4f4f73dd530eb013646f8438da6504f4d1485133e80",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-transcribe-audio/index.ts"
       ]
@@ -921,9 +927,10 @@
       "name": "fetch-link-preview",
       "entrypoint": "supabase/functions/fetch-link-preview/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f0a8937a2f10fe07b1ee76f51f005b6907a5627def8195ae513ae1016e7060a2",
+      "source_sha256": "540bca3d0996a917469e4987909da2b8c839eeba3b8f8fe8de93adbff7f6d20c",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/fetch-link-preview/index.ts"
       ]
@@ -1238,5 +1245,5 @@
       ]
     }
   ],
-  "manifest_sha256": "5f38f546b0b7ba90ea42780abb5d78a27e646903929547e5916f7d4a11ec95e2"
+  "manifest_sha256": "7ccbd2ac605610a7e29b25a01811bc7d40ec0b96b1e27e34bad5c50ac1686955"
 }
