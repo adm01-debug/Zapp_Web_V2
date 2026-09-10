@@ -55,6 +55,12 @@ ALTER TABLE public.talkx_blacklist ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, UPDATE ON public.talkx_blacklist TO authenticated;
 CREATE POLICY talkx_blacklist_select
   ON public.talkx_blacklist FOR SELECT TO authenticated USING (true);
+-- A policy permissiva e preexistente no estado legado canônico. A migration
+-- 20260910080000 registrada no ledger adicionou somente as colunas de audit;
+-- nunca simular que ela criou SQL que não está no ledger.
+CREATE POLICY talkx_blacklist_update
+  ON public.talkx_blacklist FOR UPDATE TO authenticated
+  USING (true) WITH CHECK (true);
 
 CREATE FUNCTION public.is_admin_or_supervisor(p_user uuid)
 RETURNS boolean
@@ -78,7 +84,7 @@ runtime_contract="$repo_root/scripts/db-audit/talkx-blacklist-policy-runtime.sql
 psql_test < "$legacy_migration" >/dev/null
 
 legacy_policy="$(psql_test -Atqc "SELECT pg_get_expr(polqual, polrelid) || '|' || pg_get_expr(polwithcheck, polrelid) FROM pg_policy WHERE polname='talkx_blacklist_update' AND polrelid='public.talkx_blacklist'::regclass")"
-[[ "$legacy_policy" == 'true|true' ]] || fail "migration historica nao preservou policy aplicada: $legacy_policy"
+[[ "$legacy_policy" == 'true|true' ]] || fail "pre-condicao permissiva legada nao foi preservada: $legacy_policy"
 
 legacy_runtime="$(psql_test -At < "$runtime_contract")"
 PROOF="$legacy_runtime" node --input-type=module <<'NODE'
