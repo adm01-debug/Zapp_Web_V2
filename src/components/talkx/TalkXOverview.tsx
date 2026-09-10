@@ -29,6 +29,7 @@ interface Props {
   onNew: () => void;
   onEdit: (c: TalkXCampaign) => void;
   onView: (c: TalkXCampaign) => void;
+  onViewScheduled?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
   onStart: (id: string) => void;
   onPause: (id: string) => void;
@@ -39,7 +40,7 @@ interface Props {
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onViewScheduled, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
@@ -243,7 +244,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>
+                              {c.status === 'scheduled' && onViewScheduled
+                                ? <DropdownMenuItem onClick={() => onViewScheduled(c)}><Eye className="w-4 h-4 mr-2" />Ver agendamento</DropdownMenuItem>
+                                : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
                               {c.status === 'completed' && <DropdownMenuItem onClick={async () => { const { data } = await fromTable('talkx_recipients').select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)').eq('campaign_id', c.id).order('created_at'); if (!data?.length) return; exportRecipientsCsv((data as Record<string, unknown>[]).map((r) => ({ name: (r.contacts as { name: string } | null)?.name ?? null, phone: (r.contacts as { phone: string } | null)?.phone ?? null, status: String(r.status ?? ''), sent_at: r.sent_at ? String(r.sent_at) : null, delivered_at: r.delivered_at ? String(r.delivered_at) : null, error_message: r.error_message ? String(r.error_message) : null, personalized_message: r.personalized_message ? String(r.personalized_message) : null }) satisfies RecipientRow), c.name); }}><Download className="w-4 h-4 mr-2" />Exportar destinatários</DropdownMenuItem>}
