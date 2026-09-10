@@ -133,7 +133,10 @@ export async function fetchPreviewViaSecureEgress(
   } catch {
     return null;
   }
-  if (!proxyResponse.ok) return null;
+  if (!proxyResponse.ok) {
+    await proxyResponse.body?.cancel().catch(() => {});
+    return null;
+  }
 
   let payload: EgressPayload;
   try {
@@ -141,9 +144,11 @@ export async function fetchPreviewViaSecureEgress(
   } catch {
     return null;
   }
+  // 204/205 are null-body statuses; building a Response with a body would throw.
   if (
     typeof payload.url !== "string" || typeof payload.status !== "number" ||
     !Number.isInteger(payload.status) || payload.status < 200 ||
+    payload.status === 204 || payload.status === 205 ||
     payload.status > 599 || typeof payload.content_type !== "string" ||
     typeof payload.body_base64 !== "string"
   ) {

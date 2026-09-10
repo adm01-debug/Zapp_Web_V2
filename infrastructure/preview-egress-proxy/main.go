@@ -77,7 +77,7 @@ func isBlockedAddress(address netip.Addr) bool {
 		v4 := address.As4()
 		if v4[0] == 0 || v4[0] == 127 || v4[0] >= 224 ||
 			(v4[0] == 100 && v4[1] >= 64 && v4[1] <= 127) ||
-			(v4[0] == 192 && v4[1] == 0) ||
+			(v4[0] == 192 && v4[1] == 0 && (v4[2] == 0 || v4[2] == 2)) ||
 			(v4[0] == 198 && v4[1] == 51 && v4[2] == 100) ||
 			(v4[0] == 203 && v4[1] == 0 && v4[2] == 113) {
 			return true
@@ -268,7 +268,9 @@ func (s *service) reserveNonce(nonce string, now time.Time) bool {
 	if _, exists := s.nonces[nonce]; exists || len(s.nonces) >= maxNonces {
 		return false
 	}
-	s.nonces[nonce] = now.Add(replayWindow)
+	// Retain the nonce until its timestamp can no longer pass the ±replayWindow
+	// check; the extra second covers Unix-second truncation of the timestamp.
+	s.nonces[nonce] = now.Add(2*replayWindow + time.Second)
 	return true
 }
 

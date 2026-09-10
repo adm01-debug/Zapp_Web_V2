@@ -18,14 +18,16 @@ import (
 const testSecret = "0123456789abcdef0123456789abcdef"
 
 func TestBlockedAddresses(t *testing.T) {
-	for _, raw := range []string{"0.1.2.3", "127.0.0.1", "10.0.0.1", "169.254.169.254", "100.64.0.1", "192.0.0.1", "198.18.0.1", "240.0.0.1", "::1", "fc00::1", "2001:db8::1"} {
+	for _, raw := range []string{"0.1.2.3", "127.0.0.1", "10.0.0.1", "169.254.169.254", "100.64.0.1", "192.0.0.1", "192.0.2.1", "198.18.0.1", "240.0.0.1", "::1", "fc00::1", "2001:db8::1"} {
 		address := netip.MustParseAddr(raw)
 		if !isBlockedAddress(address) {
 			t.Fatalf("expected %s to be blocked", raw)
 		}
 	}
-	if isBlockedAddress(netip.MustParseAddr("93.184.216.34")) {
-		t.Fatal("public IPv4 address was blocked")
+	for _, raw := range []string{"93.184.216.34", "192.0.78.9"} {
+		if isBlockedAddress(netip.MustParseAddr(raw)) {
+			t.Fatalf("public IPv4 address %s was blocked", raw)
+		}
 	}
 }
 
@@ -68,13 +70,46 @@ func TestRequestAuthenticationAndReplay(t *testing.T) {
 	}
 }
 
+func TestNonceOutlivesTimestampAcceptanceWindow(t *testing.T) {
+	s, err := newService(testSecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := []byte(`{"url":"https://example.test/"}`)
+	received := time.Unix(1_700_000_000, 500_000_000)
+	// Client clock ahead by the whole window: the first request is still accepted.
+	timestamp := strconvFormat(received.Unix() + int64(replayWindow/time.Second))
+	nonce := "nonce-with-at-least-sixteen-bytes"
+	signed := func() *http.Request {
+		request := httptest.NewRequest(http.MethodPost, "/v1/fetch", strings.NewReader(string(body)))
+		request.Header.Set("X-Zapp-Egress-Timestamp", timestamp)
+		request.Header.Set("X-Zapp-Egress-Nonce", nonce)
+		request.Header.Set("X-Zapp-Egress-Signature", signature(s.secret, timestamp, nonce, body))
+		return request
+	}
+	if !s.authorized(signed(), body, received) {
+		t.Fatal("expected first request inside the window to be accepted")
+	}
+	for _, offset := range []time.Duration{replayWindow + time.Second, 2 * replayWindow, 2*replayWindow + 200*time.Millisecond} {
+		if s.authorized(signed(), body, received.Add(offset)) {
+			t.Fatalf("replay accepted %s after the first request", offset)
+		}
+	}
+}
+
 func TestPinnedDialUsesValidatedAddressAndPreservesHost(t *testing.T) {
 	calledHost := ""
-	target := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	serverName := ""
+	target := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calledHost = r.Host
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte("<title>safe preview</title>"))
 	}))
+	target.TLS = &tls.Config{GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
+		serverName = hello.ServerName
+		return nil, nil
+	}}
+	target.StartTLS()
 	defer target.Close()
 	targetAddress := target.Listener.Addr().String()
 	var dialed string
@@ -102,6 +137,9 @@ func TestPinnedDialUsesValidatedAddressAndPreservesHost(t *testing.T) {
 	}
 	if calledHost != "public.example.test" {
 		t.Fatalf("original Host header was not preserved: %q", calledHost)
+	}
+	if serverName != "public.example.test" {
+		t.Fatalf("original SNI was not preserved: %q", serverName)
 	}
 	body, decodeErr := base64.StdEncoding.DecodeString(response.BodyBase64)
 	if decodeErr != nil || response.Status != http.StatusOK || !strings.Contains(string(body), "safe preview") {
