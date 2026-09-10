@@ -1,16 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-const mockGetUser = vi.fn();
-const mockSignInWithPassword = vi.fn();
+const { mockGetUser, mockSetSession, mockServerLogin } = vi.hoisted(() => ({
+  mockGetUser: vi.fn(),
+  mockSetSession: vi.fn(),
+  mockServerLogin: vi.fn(),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
       getUser: (...args: any[]) => mockGetUser(...args),
-      signInWithPassword: (...args: any[]) => mockSignInWithPassword(...args),
+      setSession: (...args: any[]) => mockSetSession(...args),
     },
   },
+}));
+
+vi.mock('@/lib/serverLogin', () => ({
+  serverLogin: (...args: unknown[]) => mockServerLogin(...args),
 }));
 
 vi.mock('sonner', () => ({
@@ -25,6 +32,7 @@ import { useReauthentication } from '@/hooks/auth/useReauthentication';
 describe('useReauthentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSetSession.mockResolvedValue({ data: {}, error: null });
   });
 
   it('initializes with correct default state', () => {
@@ -39,7 +47,11 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({ error: null });
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
     const { result } = renderHook(() => useReauthentication());
 
@@ -49,9 +61,10 @@ describe('useReauthentication', () => {
     });
 
     expect(reauthResult.success).toBe(true);
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({
-      email: 'test@example.com',
-      password: 'correctpass',
+    expect(mockServerLogin).toHaveBeenCalledWith('test@example.com', 'correctpass');
+    expect(mockSetSession).toHaveBeenCalledWith({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
     });
   });
 
@@ -59,8 +72,11 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({
-      error: new Error('Invalid credentials'),
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: false,
+      error: 'Invalid credentials',
+      lock: null,
     });
 
     const { result } = renderHook(() => useReauthentication());
@@ -132,7 +148,11 @@ describe('useReauthentication', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { email: 'test@example.com' } },
     });
-    mockSignInWithPassword.mockResolvedValue({ error: null });
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
     const callback = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useReauthentication());

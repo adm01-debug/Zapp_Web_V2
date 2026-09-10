@@ -5,6 +5,8 @@ import { useAuth, AuthProvider } from '../auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import React from 'react';
 
+const mockServerLogin = vi.hoisted(() => vi.fn());
+
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -13,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       onAuthStateChange: vi.fn(() => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
+      setSession: vi.fn(),
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
@@ -25,6 +28,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/lib/serverLogin', () => ({
+  serverLogin: (...args: unknown[]) => mockServerLogin(...args),
+}));
+
 describe('useAuth hook', () => {
   // Uma instancia por teste: recriar o client a cada render do wrapper jogaria
   // fora o cache em qualquer re-render e mascararia o efeito do queryClient.clear().
@@ -32,6 +39,7 @@ describe('useAuth hook', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (supabase.auth.setSession as any).mockResolvedValue({ data: {}, error: null });
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   });
 
@@ -53,9 +61,10 @@ describe('useAuth hook', () => {
   });
 
   it('handles sign in successfully', async () => {
-    (supabase.auth.signInWithPassword as any).mockResolvedValue({ 
-      data: { user: { id: '123' } }, 
-      error: null 
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
     });
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -65,10 +74,12 @@ describe('useAuth hook', () => {
       response = await result.current.signIn('test@test.com', 'password123');
     });
     
-    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-      email: 'test@test.com',
-      password: 'password123'
+    expect(mockServerLogin).toHaveBeenCalledWith('test@test.com', 'password123');
+    expect(supabase.auth.setSession).toHaveBeenCalledWith({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
     });
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
     expect((response as any).error).toBeNull();
   });
 
