@@ -158,8 +158,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 6572,
-      "sha256": "3ccf538506abf26b7b1c0eb0cddfa5f5b93487ee73e791767ba57b6b4681e544"
+      "bytes": 7085,
+      "sha256": "91af890162c6b7573ca40f67d43d24d931da2e5e008726d00c1e1443e3d329e5"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -558,7 +558,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6e30b5dc599db2e8f898a4f4f73dd530eb013646f8438da6504f4d1485133e80",
+      "source_sha256": "40fb953974cbd23b5ca74ae61791bc34414603aed3997b157ccce32f8526607d",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1245,5 +1245,5 @@
       ]
     }
   ],
-  "manifest_sha256": "7ccbd2ac605610a7e29b25a01811bc7d40ec0b96b1e27e34bad5c50ac1686955"
+  "manifest_sha256": "1470a4819570398731b65fdecca5ef8d1a48d95aa086a152c88fad95fb638c1d"
 }

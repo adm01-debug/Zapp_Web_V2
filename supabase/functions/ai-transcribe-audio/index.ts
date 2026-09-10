@@ -63,15 +63,25 @@ async function downloadAudio(
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
-  if (authCheck instanceof Response) return authCheck;
-  const __uid = (authCheck as { userId: string }).userId;
-  const __guard = await enforceAiGuards({
-    functionName: "ai-transcribe-audio",
-    userId: __uid,
-    req,
-  });
-  if (__guard) return __guard;
+
+  // Service-to-service bypass: evolution-webhook chama com service role key para auto-transcrição.
+  // Guards de rate limit e quota de usuário só se aplicam a chamadas vindas do browser.
+  const _authHeader = req.headers.get("authorization") ?? "";
+  const _token = _authHeader.startsWith("Bearer ") ? _authHeader.slice(7).trim() : "";
+  const _svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const _isService = _svcKey !== "" && _token === _svcKey;
+
+  if (!_isService) {
+    const authCheck = await requireAuth(req);
+    if (authCheck instanceof Response) return authCheck;
+    const __uid = (authCheck as { userId: string }).userId;
+    const __guard = await enforceAiGuards({
+      functionName: "ai-transcribe-audio",
+      userId: __uid,
+      req,
+    });
+    if (__guard) return __guard;
+  }
 
   const log = new Logger("ai-transcribe-audio");
 
