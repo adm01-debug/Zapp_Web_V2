@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -85,7 +86,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         // Conta se a resposta esta dentro de 24h de QUALQUER envio do contato
         if (sentTimes.some((st) => mt - st >= 0 && mt - st <= WINDOW)) replied.add(m.contact_id);
       });
-      return { replied: replied.size, sent: contactIds.length };
+      return { replied: replied.size, sent: contactIds.length, repliedIds: Array.from(replied) };
     },
     enabled: sentCampaignIds.length > 0,
     staleTime: 120_000,
@@ -161,6 +162,43 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
       </div>
+
+      {/* E75: segmentacao de respondentes */}
+      {replyData && (replyData.repliedIds ?? []).length > 0 && (
+        <section className="rounded-2xl bg-card border border-dash-violet/30 p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <IconTile icon={Users} color="violet" size={36} />
+            <div>
+              <p className="text-[14px] font-bold text-foreground">{replyData.replied} contatos responderam</p>
+              <p className="text-[12px] text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              // E75: buscar dados dos contatos que responderam e exportar CSV
+              const ids = replyData.repliedIds ?? [];
+              const { data: contacts } = await supabase
+                .from('contacts')
+                .select('id, name, phone, company, tags')
+                .in('id', ids);
+              const rows: RecipientRow[] = (contacts ?? []).map((c: Record<string, unknown>) => ({
+                name: String(c.name ?? ''),
+                phone: String(c.phone ?? ''),
+                status: 'respondeu',
+                sent_at: null,
+                delivered_at: null,
+                error_message: null,
+                personalized_message: String(c.company ?? ''),
+              }));
+              exportRecipientsCsv(rows, `respondentes-${period}`);
+            }}
+            className="h-9 px-4 rounded-lg border border-dash-violet/40 bg-dash-violet/10 text-dash-violet text-[12.5px] font-semibold flex items-center gap-2 hover:bg-dash-violet/20 shrink-0"
+          >
+            <Download className="w-4 h-4" />Exportar CSV
+          </button>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {barData.length > 0 && (
