@@ -65,6 +65,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [saving, setSaving] = useState(false);
   const [companyFilter, setCompanyFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('all');      // E63
+  const [groupFilter, setGroupFilter] = useState('all');    // E63
+  const [inactiveFilter, setInactiveFilter] = useState(false); // E63: sem interacao nos ultimos N dias
+  const [birthdayFilter, setBirthdayFilter] = useState(''); // E63: 'this_month' | 'next_30d' | ''
   const [mediaUrl, setMediaUrl] = useState(campaign?.media_url || '');
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
@@ -115,14 +119,22 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     },
   });
 
-  const { data: blacklistIds } = useQuery({
+  // E54: filtragem por phone + contact_id com soft-delete e expiração
+  const { data: blacklistData } = useQuery({
     queryKey: ['talkx-blacklist-ids'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data } = await supabase.from('talkx_blacklist').select('contact_id').is('removed_at', null).or('expires_at.is.null,expires_at.gt.' + now);
-      return new Set((data || []).map((b) => b.contact_id));
+      const { data } = await supabase.from('talkx_blacklist')
+        .select('contact_id, phone').is('removed_at', null)
+        .or('expires_at.is.null,expires_at.gt.' + now);
+      return {
+        ids: new Set((data || []).map((b) => b.contact_id).filter(Boolean) as string[]),
+        phones: new Set((data || []).map((b) => b.phone?.replace(/\D/g, '') || null).filter(Boolean) as string[]),
+      };
     },
   });
+  const blacklistIds = blacklistData?.ids;
+  const blacklistPhones = blacklistData?.phones;
 
   const selectedSegment = useMemo(() => segments.find((s) => s.id === segmentId) ?? null, [segments, segmentId]);
   const selectedTemplate = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
@@ -149,6 +161,23 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     let result = contacts;
     if (companyFilter !== 'all') result = result.filter((c) => c.company === companyFilter);
     if (tagFilter !== 'all') result = result.filter((c) => c.tags && Array.isArray(c.tags) && c.tags.includes(tagFilter));
+    if (cityFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).city === cityFilter); // E63
+    if (groupFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).group === groupFilter); // E63
+    if (inactiveFilter) result = result.filter((c) => {
+      const lastContact = (c as Record<string,unknown>).last_contact as string | null | undefined;
+      if (!lastContact) return true; // sem contato = inativo
+      return new Date().getTime() - new Date(lastContact).getTime() > 30 * 24 * 60 * 60 * 1000;
+    }); // E63
+    if (birthdayFilter) {
+      const now = new Date(); const mm = now.getMonth() + 1;
+      result = result.filter((c) => {
+        const bm = (c as Record<string,unknown>).birth_month as number | null | undefined;
+        if (!bm) return false;
+        if (birthdayFilter === 'this_month') return bm === mm;
+        if (birthdayFilter === 'next_30d') return bm === mm || bm === (mm % 12) + 1;
+        return false;
+      });
+    } // E63
     if (contactSearch.trim()) {
       const q = contactSearch.toLowerCase();
       result = result.filter((c) =>
@@ -157,7 +186,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       );
     }
     return result;
-  }, [contacts, contactSearch, companyFilter, tagFilter]);
+  }, [contacts, contactSearch, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter]); // E63
 
   /** Público total antes da supressão. */
   const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
@@ -224,7 +253,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
     audience_source: audienceSource,
-    audience_filters: audienceSource === 'contacts' ? { company: companyFilter, tag: tagFilter, search: contactSearch } : {},
+    audience_filters: audienceSource === 'contacts' ? { company: companyFilter, tag: tagFilter, city: cityFilter, group: groupFilter, inactive: inactiveFilter, birthday: birthdayFilter, search: contactSearch } : {}, // E63
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
     typing_delay_min: Math.round(typingDelay[0] * 1000), typing_delay_max: Math.round(typingDelay[1] * 1000),
@@ -266,7 +295,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         } else {
           contactIds = selectedContacts;
         }
-        if (respectSuppression && blacklistIds) contactIds = contactIds.filter((c) => !blacklistIds.has(c));
+        if (respectSuppression && (blacklistIds || blacklistPhones)) {
+          if (blacklistIds) contactIds = contactIds.filter((id) => !blacklistIds.has(id));
+          if (blacklistPhones && blacklistPhones.size > 0) {
+            const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
+            const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
+            if (byPhone.size > 0) contactIds = contactIds.filter((id) => !byPhone.has(id));
+          }
+        }
         if (contactIds.length > 0) await addRecipients.mutateAsync({ campaignId: id, contactIds });
         if (selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
       }
@@ -282,7 +318,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, campaign, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, addRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [buildPayload, campaign, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, addRecipients, selectedTemplate, registerUse, startCampaign]);
 
   const clearFilters = useCallback(() => { setCompanyFilter('all'); setTagFilter('all'); }, []);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
@@ -297,7 +333,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
-    tagFilter, setTagFilter, mediaUrl, setMediaUrl, mediaType, setMediaType,
+    tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
+    inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
+    mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
