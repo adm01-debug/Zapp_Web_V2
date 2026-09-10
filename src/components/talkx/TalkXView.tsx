@@ -28,13 +28,13 @@ export default function TalkXView() {
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
-  const [scheduledCampaign, setScheduledCampaign] = useState<TalkXCampaign | null>(null);
+  const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
 
   const openNew = useCallback((initial?: { segmentId?: string; templateId?: string }) => { setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard'); }, []);
   const openEdit = useCallback((c: TalkXCampaign) => { setEditingCampaign(c); setWizardInitial(undefined); setTopView('wizard'); }, []);
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
-  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaign(c); setTopView('scheduled'); }, []);
+  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
   const backToList = useCallback(() => { setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaign(null); setWizardInitial(undefined); }, []);
 
   const creators = useMemo(() => {
@@ -55,13 +55,13 @@ export default function TalkXView() {
     openMonitor(c);
   }, [openMonitor, openScheduled]);
 
-  if (topView === 'scheduled' && scheduledCampaign) {
+  if (topView === 'scheduled' && scheduledCampaignId) {
     return (
       <TalkXCampaignScheduled
-        campaign={scheduledCampaign}
+        campaignId={scheduledCampaignId!}
         onBack={backToList}
-        onEdit={(c) => { setScheduledCampaign(null); openEdit(c); }}
-        onLaunch={(id) => { setScheduledCampaign(null); setMonitorId(id); setTopView('monitor'); }}
+        onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
+        onLaunch={(id) => { setScheduledCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
       />
     );
   }

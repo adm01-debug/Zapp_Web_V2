@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
   Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2,
@@ -50,21 +50,28 @@ function localInputToISO(val: string): string {
 }
 
 interface Props {
-  campaign: TalkXCampaign;
+  campaignId: string; // P1: recebe ID, deriva da query -- evita stale
   onBack: () => void;
   onEdit: (c: TalkXCampaign) => void;
   onLaunch: (id: string) => void;
 }
 
-export function TalkXCampaignScheduled({ campaign, onBack, onEdit, onLaunch }: Props) {
-  const { updateCampaign, startCampaign } = useTalkX();
+export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onLaunch }: Props) {
+  const { campaigns, updateCampaign, startCampaign } = useTalkX();
+  // P1: deriva sempre da query -- nunca stale
+  const campaign = campaigns.find((c) => c.id === campaignId) ?? null;
 
-  const [localDate, setLocalDate] = useState<string>(isoToLocalInput(campaign.scheduled_at));
+  // P1: sai da view quando campanha deixa de ser scheduled (ex: lancou / cancelou)
+  useEffect(() => {
+    if (campaign && campaign.status !== 'scheduled') onLaunch(campaign.id);
+  }, [campaign, onLaunch]);
+
+  const [localDate, setLocalDate] = useState<string>(isoToLocalInput(campaign?.scheduled_at ?? ''));
   const [localTz, setLocalTz] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign.send_window_start);
-  const [windowStart, setWindowStart] = useState<string>(campaign.send_window_start?.slice(0, 5) ?? '08:00');
-  const [windowEnd, setWindowEnd] = useState<string>(campaign.send_window_end?.slice(0, 5) ?? '18:00');
-  const [bizHours, setBizHours] = useState<boolean>(campaign.business_hours_only ?? false);
+  const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign?.send_window_start);
+  const [windowStart, setWindowStart] = useState<string>(campaign?.send_window_start?.slice(0, 5) ?? '08:00');
+  const [windowEnd, setWindowEnd] = useState<string>(campaign?.send_window_end?.slice(0, 5) ?? '18:00');
+  const [bizHours, setBizHours] = useState<boolean>(campaign?.business_hours_only ?? false);
   const [saving, setSaving] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -76,7 +83,8 @@ export function TalkXCampaignScheduled({ campaign, onBack, onEdit, onLaunch }: P
     if (!localDate) { toast.error('Defina a data e hora do agendamento.'); return; }
     setSaving(true);
     try {
-      await updateCampaign.mutateAsync({
+      if (!campaign) return;
+    await updateCampaign.mutateAsync({
         id: campaign.id,
         scheduled_at: localInputToISO(localDate),
         send_window_start: windowEnabled ? `${windowStart}:00` : null,
@@ -89,35 +97,32 @@ export function TalkXCampaignScheduled({ campaign, onBack, onEdit, onLaunch }: P
     } finally {
       setSaving(false);
     }
-  }, [campaign.id, localDate, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign]);
+  }, [campaign, localDate, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign]);
 
-  const handleLaunch = useCallback(async () => {
+  const handleLaunch = useCallback(() => {
     setLaunchOpen(false);
+    if (!campaign) return;
     setLaunching(true);
-    try {
-      await startCampaign(campaign.id);
-      onLaunch(campaign.id);
-    } catch {
-      toast.error('Erro ao iniciar campanha.');
-    } finally {
-      setLaunching(false);
-    }
-  }, [campaign.id, startCampaign, onLaunch]);
+    // P2: fire-and-forget -- talkx-send bloqueia ate o loop completo;
+    // a navegacao ocorre via useEffect quando status mudar para 'sending'
+    void startCampaign(campaign.id).finally(() => setLaunching(false));
+  }, [campaign, startCampaign]);
 
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
     try {
-      await updateCampaign.mutateAsync({ id: campaign.id, scheduled_at: null, status: 'draft' });
+      if (!campaign) return; await updateCampaign.mutateAsync({ id: campaign.id, scheduled_at: null, status: 'draft' });
       toast.info('Agendamento cancelado. Campanha voltou para Rascunhos.');
       onBack();
     } catch {
       toast.error('Erro ao cancelar agendamento.');
     }
-  }, [campaign.id, updateCampaign, onBack]);
+  }, [campaign, updateCampaign, onBack]);
 
-  const scheduledLabel = campaign.scheduled_at
+  const scheduledLabel = campaign?.scheduled_at
     ? fmtDateTime(campaign.scheduled_at)
     : localDate ? fmtDateTime(localInputToISO(localDate)) : '—';
+  if (!campaign) return null; // espera a query
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
