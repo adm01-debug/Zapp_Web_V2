@@ -229,8 +229,10 @@ Deno.serve(async (req) => {
 
     // Filter out blacklisted recipients
     const eligibleRecipients = (recipients || []).filter((r: Record<string, unknown>) => {
-      const recipientPhone = (r as Record<string, unknown>).phone as string | undefined;
-        if (blacklistSet.has(r.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone.replace(/\D/g, '')))) {
+      // Fix P1: phone do recipient vem do join contacts:contact_id, nao do campo raiz
+        const recipientContacts = (r as Record<string, unknown>).contacts as Record<string, unknown> | null;
+        const recipientPhone = (recipientContacts?.phone as string | undefined)?.replace(/\D/g, '');
+        if (blacklistSet.has(r.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone))) {
         supabase.from("talkx_recipients")
           .update({ status: "skipped", error_message: "Contato na lista negra (opt-out)" }).eq("id", r.id);
         return false;
