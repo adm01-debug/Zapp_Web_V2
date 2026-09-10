@@ -61,6 +61,19 @@ Deno.test("secure egress fails closed for bad configuration and malformed proxy 
     }),
     null,
   );
+  for (const status of [204, 205, 304]) {
+    assertEquals(
+      await fetchPreviewViaSecureEgress("https://example.test", config, {
+        fetcher: () => Promise.resolve(new Response(JSON.stringify({
+          url: "https://example.test/",
+          status,
+          content_type: "text/html",
+          body_base64: "",
+        }), { status: 200 })),
+      }),
+      null,
+    );
+  }
 });
 
 Deno.test("secure egress configuration requires HTTPS and a strong shared secret", () => {

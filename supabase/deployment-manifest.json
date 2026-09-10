@@ -108,8 +108,8 @@
     },
     {
       "path": "supabase/functions/_shared/secure-egress.ts",
-      "bytes": 5072,
-      "sha256": "110c062a02901cc1a88307a5d29cbcebfa9d7e7dd5504c9f2bb1ce97179e9889"
+      "bytes": 5297,
+      "sha256": "5d3f5c7f0107d57146dc3d8ebdd4c5c91fb3c14ee3dbb3cac6b6d213c3808cd3"
     },
     {
       "path": "supabase/functions/_shared/ssrf.ts",
@@ -932,7 +932,7 @@
       "name": "fetch-link-preview",
       "entrypoint": "supabase/functions/fetch-link-preview/index.ts",
       "verify_jwt": true,
-      "source_sha256": "906f8e27e92a4129178236d661403889138e8d7e280e16a204af07e1bb98e9ff",
+      "source_sha256": "8b01572a54d49612924d7cbf645e59ecb481b74df4e4105250882b0d0455b8eb",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/secure-egress.ts",
@@ -1250,5 +1250,5 @@
       ]
     }
   ],
-  "manifest_sha256": "750f675aede242a3f4e569e10ca32fd4c1c1219e98257df5751d8b7c95fa656a"
+  "manifest_sha256": "627e8fb5ea958c28d6efb6293786c3460943a4027a6234d76af826556415705b"
 }
