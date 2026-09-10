@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -46,6 +46,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
+  const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
+  const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
+  const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
@@ -109,6 +113,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
+
+
 
   const { data: contacts } = useQuery({
     queryKey: ['contacts-talkx'],
@@ -268,7 +274,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
+  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const handleSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -322,7 +328,32 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     }
   }, [buildPayload, campaign, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, addRecipients, selectedTemplate, registerUse, startCampaign]);
 
-  const clearFilters = useCallback(() => { setCompanyFilter('all'); setTagFilter('all'); }, []);
+  // E68: sincronizar ref -- useEffect garante nao acessa ref durante render
+  useEffect(() => { handleSaveRef.current = handleSave; }, [handleSave]);
+
+  // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
+  const autosaveFields = JSON.stringify({
+    name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
+    audienceSource, segmentId, templateId, connectionId, speedProfile,
+    typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
+    isScheduled, scheduledAt, respectSuppression,
+  });
+  useEffect(() => {
+    // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
+    if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; return; }
+    if (!name.trim()) return;
+    if (autosaveFields === autosaveInitialRef.current) return; // sem mudanca
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(async () => {
+      // handleSaveRef.current e sempre o callback mais recente (nao sofre de closure stale)
+      const id = await handleSaveRef.current?.('draft').catch(() => null);
+      if (id) setLastAutosave(new Date());
+    }, 3000);
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
+
+    const clearFilters = useCallback(() => { setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
   const toggleSchedule = useCallback((v: boolean) => { setIsScheduled(v); if (!v) setScheduledAt(''); }, []);
 
@@ -337,6 +368,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
+    lastAutosave, // E68
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
