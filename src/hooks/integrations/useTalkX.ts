@@ -223,29 +223,19 @@ export function useTalkX() {
   }, [queryClient]);
 
   const pauseCampaign = useCallback(async (campaignId: string) => {
-    try {
-      await supabase.functions.invoke('talkx-send', {
-        body: { campaignId, action: 'pause' },
-      });
-      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.info('Campanha pausada');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
-      toast.error(`Erro ao pausar: ${msg}`);
-    }
+    const { error } = await supabase.functions.invoke('talkx-send', {
+      body: { campaignId, action: 'pause' },
+    });
+    if (error) throw error; // P1: relanca para o chamador tratar
+    queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
   const cancelCampaign = useCallback(async (campaignId: string) => {
-    try {
-      await supabase.functions.invoke('talkx-send', {
-        body: { campaignId, action: 'cancel' },
-      });
-      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.info('Campanha cancelada');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
-      toast.error(`Erro ao cancelar: ${msg}`);
-    }
+    const { error } = await supabase.functions.invoke('talkx-send', {
+      body: { campaignId, action: 'cancel' },
+    });
+    if (error) throw error; // P1: relanca para o chamador tratar
+    queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
   return {
