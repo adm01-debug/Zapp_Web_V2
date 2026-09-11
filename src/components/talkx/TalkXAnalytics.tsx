@@ -107,7 +107,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
       const replied = new Set<string>();
       const WINDOW = 24 * 3_600_000;
-      (msgs ?? []).forEach((m) => {
+      (msgs ?? []).forEach((m: { contact_id: string | null; created_at: string }) => {
         if (!m.contact_id) return;
         const sentTimes = recipMap.get(m.contact_id);
         if (!sentTimes) return;
