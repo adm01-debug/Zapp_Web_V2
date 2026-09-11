@@ -4,6 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 
+// A função é introduzida pela migration desta mesma mudança. O types-sync gera
+// a assinatura canônica somente depois que o banco canônico receber a migration.
+// Não editar o arquivo gerado `types.ts` antecipadamente, pois isso mascararia
+// drift entre código e banco.
+type PendingDatabaseRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
 export interface TalkXCampaign {
   id: string;
   name: string;
@@ -207,6 +216,32 @@ export function useTalkX() {
     },
   });
 
+  /**
+   * Substitui o snapshot de destinatários de um rascunho em uma única transação
+   * no banco. A RPC rejeita campanhas que já começaram a ser enviadas.
+   */
+  const replaceDraftRecipients = useMutation({
+    mutationFn: async ({
+      campaignId,
+      contactIds,
+    }: {
+      campaignId: string;
+      contactIds: string[];
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('replace_talkx_draft_recipients', {
+        p_campaign_id: campaignId,
+        p_contact_ids: contactIds,
+      });
+      if (error) throw error;
+      return data as number;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
   const startCampaign = useCallback(async (campaignId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('talkx-send', {
@@ -250,6 +285,7 @@ export function useTalkX() {
     updateCampaign,
     deleteCampaign,
     addRecipients,
+    replaceDraftRecipients,
     startCampaign,
     pauseCampaign,
     cancelCampaign,

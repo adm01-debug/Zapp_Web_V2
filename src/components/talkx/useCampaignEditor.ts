@@ -35,6 +35,25 @@ export const MEDIA_TYPES = [
 export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
+const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+
+function initialWizardStep(): WizardStep {
+  const raw = new URLSearchParams(window.location.search).get('step');
+  const step = Number(raw);
+  return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
+}
+
+function utcToLocalInTimezone(utc: string, tz: string): string {
+  if (!utc) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date(utc));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+}
+
 
 /**
  * E69 fix: converte datetime-local string (sem TZ) para ISO UTC usando o fuso selecionado.
@@ -58,18 +77,18 @@ function localToUTCInTimezone(localStr: string, tz: string): string {
   return new Date(approxMs + offsetMs).toISOString();
 }
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
-  const { createCampaign, updateCampaign, addRecipients, startCampaign } = useTalkX();
+  const { createCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates, registerUse } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
-  const [step, setStep] = useState<WizardStep>(1);
+  const [step, setStep] = useState<WizardStep>(initialWizardStep);
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
-  const [scheduleTimezone, setScheduleTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone); // E69
+  const [scheduleTimezone, setScheduleTimezone] = useState(DEFAULT_SCHEDULE_TIMEZONE); // E69
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
@@ -88,6 +107,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id ?? null);
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
   const [saving, setSaving] = useState(false);
@@ -102,7 +122,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
   const [isScheduled, setIsScheduled] = useState(!!campaign?.scheduled_at);
   const [scheduledAt, setScheduledAt] = useState(
-    campaign?.scheduled_at ? new Date(campaign.scheduled_at).toISOString().slice(0, 16) : ''
+    campaign?.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, DEFAULT_SCHEDULE_TIMEZONE) : ''
   );
   const [sendWindowEnabled, setSendWindowEnabled] = useState(!!campaign?.send_window_start);
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
@@ -268,6 +288,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setSelectedContacts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   }, []);
 
+  const changeScheduleTimezone = useCallback((nextTimezone: string) => {
+    setScheduledAt((current) => {
+      if (!current) return current;
+      return utcToLocalInTimezone(localToUTCInTimezone(current, scheduleTimezone), nextTimezone);
+    });
+    setScheduleTimezone(nextTimezone);
+  }, [scheduleTimezone]);
+
   const selectAll = useCallback(() => {
     const ids = filteredContacts.map((c) => c.id);
     const allSelected = ids.every((id) => selectedContacts.includes(id));
@@ -308,35 +336,37 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
 
       let id: string;
-      if (campaign) {
-        await updateCampaign.mutateAsync({ id: campaign.id, ...payload });
-        id = campaign.id;
+      const persistedCampaignId = campaign?.id ?? draftCampaignId;
+      if (persistedCampaignId) {
+        await updateCampaign.mutateAsync({ id: persistedCampaignId, ...payload });
+        id = persistedCampaignId;
         await logEvent(id, 'updated', 'Campanha atualizada');
       } else {
         const created = await createCampaign.mutateAsync(payload);
         if (!created) return null;
         id = created.id;
+        setDraftCampaignId(id);
         await logEvent(id, 'created', 'Campanha criada');
-
-        let contactIds: string[] = [];
-        if (audienceSource === 'segment' && selectedSegment) {
-          const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
-          contactIds = audience.map((c) => c.id);
-          await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
-        } else {
-          contactIds = selectedContacts;
-        }
-        if (respectSuppression && (blacklistIds || blacklistPhones)) {
-          if (blacklistIds) contactIds = contactIds.filter((id) => !blacklistIds.has(id));
-          if (blacklistPhones && blacklistPhones.size > 0) {
-            const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
-            const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
-            if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((id) => !byPhone.has(id)); }
-          }
-        }
-        if (contactIds.length > 0) await addRecipients.mutateAsync({ campaignId: id, contactIds });
-        if (selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
       }
+
+      let contactIds: string[] = [];
+      if (audienceSource === 'segment' && selectedSegment) {
+        const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
+        contactIds = audience.map((c) => c.id);
+        await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
+      } else {
+        contactIds = selectedContacts;
+      }
+      if (respectSuppression && (blacklistIds || blacklistPhones)) {
+        if (blacklistIds) contactIds = contactIds.filter((contactId) => !blacklistIds.has(contactId));
+        if (blacklistPhones && blacklistPhones.size > 0) {
+          const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
+          const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
+          if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((contactId) => !byPhone.has(contactId)); }
+        }
+      }
+      await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
+      if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
 
       if (mode === 'schedule' && payload.scheduled_at) await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
       if (mode === 'launch') {
@@ -349,7 +379,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, campaign, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, addRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [buildPayload, campaign?.id, campaign?.status, draftCampaignId, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
 
   // E68: sincronizar ref -- useEffect garante nao acessa ref durante render
   useEffect(() => { handleSaveRef.current = handleSave; }, [handleSave]);
@@ -359,7 +389,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
     audienceSource, segmentId, templateId, connectionId, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
-    isScheduled, scheduledAt, respectSuppression,
+    isScheduled, scheduledAt, respectSuppression, selectedContacts,
   });
   useEffect(() => {
     // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
@@ -376,7 +406,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
 
-    const clearFilters = useCallback(() => { setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
+  const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
   const toggleSchedule = useCallback((v: boolean) => { setIsScheduled(v); if (!v) setScheduledAt(''); }, []);
 
@@ -392,7 +422,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
     lastAutosave, // E68
-    scheduleTimezone, setScheduleTimezone, // E69
+    scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
