@@ -93,20 +93,30 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const { rateByMinute: chartData } = useTalkXMonitor(campaignId, statusFilter);
 
   const handleExport = async () => {
-    const { data } = await fromTable('talkx_recipients')
-      .select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)')
-      .eq('campaign_id', campaignId).order('created_at');
-    if (!data?.length) return;
-    const rows = (data as Record<string, unknown>[]).map((r) => ({
-      name: (r.contacts as { name: string } | null)?.name ?? null,
-      phone: (r.contacts as { phone: string } | null)?.phone ?? null,
-      status: String(r.status ?? ''),
-      sent_at: r.sent_at ? String(r.sent_at) : null,
-      delivered_at: r.delivered_at ? String(r.delivered_at) : null,
-      error_message: r.error_message ? String(r.error_message) : null,
-      personalized_message: r.personalized_message ? String(r.personalized_message) : null,
-    }) satisfies RecipientRow);
-    exportRecipientsCsv(rows, campaign?.name ?? 'campanha');
+    // P1 fix: pagina em lotes de 1000 ate esgotar os destinatarios
+    const PAGE = 1000;
+    let offset = 0;
+    const allRows: RecipientRow[] = [];
+    for (;;) {
+      const { data, error } = await fromTable('talkx_recipients')
+        .select('status, sent_at, delivered_at, error_message, personalized_message, contacts:contact_id(name, phone)')
+        .eq('campaign_id', campaignId).order('created_at').order('id').range(offset, offset + PAGE - 1);
+      if (error) { console.warn('[export] page error:', error.message); return; } // aborta: nao exporta parcial
+      if (!data?.length) break;
+      allRows.push(...(data as Record<string, unknown>[]).map((r) => ({
+        name: (r.contacts as { name: string } | null)?.name ?? null,
+        phone: (r.contacts as { phone: string } | null)?.phone ?? null,
+        status: String(r.status ?? ''),
+        sent_at: r.sent_at ? String(r.sent_at) : null,
+        delivered_at: r.delivered_at ? String(r.delivered_at) : null,
+        error_message: r.error_message ? String(r.error_message) : null,
+        personalized_message: r.personalized_message ? String(r.personalized_message) : null,
+      }) as RecipientRow));
+      if (data.length < PAGE) break; // ultima pagina
+      offset += PAGE;
+    }
+    if (allRows.length === 0) return;
+    exportRecipientsCsv(allRows, campaign?.name ?? 'campanha');
   };
 
   if (!campaign) return <div className="space-y-4 animate-pulse">{Array.from({length:3}).map((_,i) => <div key={i} className="h-24 bg-muted rounded-2xl"/>)}</div>;

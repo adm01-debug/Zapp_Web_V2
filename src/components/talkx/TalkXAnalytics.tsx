@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { exportRecipientsCsv, type RecipientRow } from '@/lib/talkxExport';
+import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -18,6 +20,7 @@ const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export function TalkXAnalytics({ campaigns }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
   const days = DAYS[period];
   // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
   const [pageLoadTime] = useState<number>(() => Date.now());
@@ -49,6 +52,90 @@ export function TalkXAnalytics({ campaigns }: Props) {
     },
     staleTime: 60_000,
   });
+
+  // E73: taxa de resposta real
+  const sentCampaignIds = useMemo(
+    () => filtered.filter((c) => c.status === 'completed' || c.status === 'sending').map((c) => c.id),
+    [filtered]
+  );
+
+  // E76: analytics por segmento
+  const { segments: allSegments } = useTalkXSegments();
+  const top3Segments = useMemo(() => {
+    const map = new Map<string, { name: string; sent: number; total: number }>();
+    filtered.forEach((c) => {
+      if (!c.segment_id) return;
+      const existing = map.get(c.segment_id);
+      const name = allSegments?.find((sg) => sg.id === c.segment_id)?.name ?? c.segment_id.slice(0, 8);
+      map.set(c.segment_id, {
+        name,
+        sent: (existing?.sent ?? 0) + (c.sent_count ?? 0),
+        total: (existing?.total ?? 0) + (c.total_recipients ?? 0),
+      });
+    });
+    return [...map.values()]
+      .filter((sg) => sg.total > 0)
+      .map((sg) => ({ ...sg, rate: Math.round((sg.sent / sg.total) * 1000) / 10 }))
+      .sort((a, b) => b.rate - a.rate)
+      .slice(0, 3);
+  }, [filtered, allSegments]);
+
+  const { data: replyData, isLoading: replyLoading } = useQuery({
+    queryKey: ['talkx-reply-rate', period, sentCampaignIds.join(',')],
+    queryFn: async () => {
+      if (sentCampaignIds.length === 0) return { replied: 0, sent: 0 };
+      const { data: recips } = await fromTable('talkx_recipients')
+        .select('contact_id, sent_at').in('campaign_id', sentCampaignIds)
+        .eq('status', 'sent').not('sent_at', 'is', null).limit(5000);
+      if (!recips?.length) return { replied: 0, sent: 0 };
+      // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
+      const recipMap = new Map<string, number[]>();
+      (recips as { contact_id: string; sent_at: string }[]).forEach((r) => {
+        const ts = new Date(r.sent_at).getTime();
+        if (!recipMap.has(r.contact_id)) recipMap.set(r.contact_id, []);
+        recipMap.get(r.contact_id)!.push(ts);
+      });
+      const contactIds = Array.from(recipMap.keys());
+      const { data: msgs } = await supabase.from('messages')
+        .select('contact_id, created_at').in('contact_id', contactIds)
+        .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
+      const replied = new Set<string>();
+      const WINDOW = 24 * 3_600_000;
+      (msgs ?? []).forEach((m: { contact_id: string; created_at: string }) => {
+        const sentTimes = recipMap.get(m.contact_id);
+        if (!sentTimes) return;
+        const mt = new Date(m.created_at).getTime();
+        // Conta se a resposta esta dentro de 24h de QUALQUER envio do contato
+        if (sentTimes.some((st) => mt - st >= 0 && mt - st <= WINDOW)) replied.add(m.contact_id);
+      });
+      return { replied: replied.size, sent: contactIds.length, repliedIds: Array.from(replied) };
+    },
+    enabled: sentCampaignIds.length > 0,
+    staleTime: 120_000,
+  });
+  const replyRate = replyData && replyData.sent > 0
+    ? Math.round((replyData.replied / replyData.sent) * 1000) / 10 : null;
+
+  // E74: recipients do painel lateral
+  const { data: panelRecipients, isLoading: panelLoading } = useQuery({
+    queryKey: ['talkx-campaign-detail', selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+      const { data } = await fromTable('talkx_recipients')
+        .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .eq('campaign_id', selectedCampaignId).order('created_at', { ascending: false }).limit(200);
+      return (data ?? []) as Array<{
+        status: string; sent_at: string | null; delivered_at: string | null;
+        error_message: string | null; contacts: { name: string; phone: string } | null;
+      }>;
+    },
+    enabled: !!selectedCampaignId,
+    staleTime: 60_000,
+  });
+  const panelCampaign = useMemo(
+    () => campaigns.find((c) => c.id === selectedCampaignId) ?? null,
+    [campaigns, selectedCampaignId]
+  );
 
   const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
   const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
@@ -92,11 +179,61 @@ export function TalkXAnalytics({ campaigns }: Props) {
       <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
         <DashboardKpiCard size="hero" index={1} label="Taxa de entrega" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value="—" delta={{ text: 'sem dados de resposta', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
-        <DashboardKpiCard size="hero" index={3} label="Conversão por segmento" value="—" delta={null} tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
+        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
+        <DashboardKpiCard size="hero" index={3}
+          label="Conversão por segmento"
+          value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
+          delta={top3Segments.length > 0
+            ? { text: top3Segments.map((sg) => `${sg.name.slice(0, 14)}: ${sg.rate.toString().replace('.', ',')}%`).join(' | '), tone: 'muted' }
+            : { text: 'sem campanhas com segmento no período', tone: 'muted' }}
+          tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
         <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
       </div>
+
+      {/* E75: segmentacao de respondentes */}
+      {replyData && (replyData.repliedIds ?? []).length > 0 && (
+        <section className="rounded-2xl bg-card border border-dash-violet/30 p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <IconTile icon={Users} color="violet" size={36} />
+            <div>
+              <p className="text-[14px] font-bold text-foreground">{replyData.replied} contatos responderam</p>
+              <p className="text-[12px] text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              // E75: buscar dados dos contatos que responderam e exportar CSV
+              const ids = replyData.repliedIds ?? [];
+              // Pagina em lotes de 200 para evitar limite do IN filter
+              const CHUNK = 200;
+              const contactPages: Record<string, unknown>[][] = [];
+              for (let i = 0; i < ids.length; i += CHUNK) {
+                const { data: page, error: cErr } = await supabase
+                  .from('contacts').select('id, name, phone, company')
+                  .in('id', ids.slice(i, i + CHUNK));
+                if (cErr) { console.warn('[E75] contacts page error:', cErr.message); break; }
+                if (page?.length) contactPages.push(page as Record<string, unknown>[]);
+              }
+              const contacts = contactPages.flat();
+              const rows: RecipientRow[] = (contacts ?? []).map((c: Record<string, unknown>) => ({
+                name: String(c.name ?? ''),
+                phone: String(c.phone ?? ''),
+                status: 'respondeu',
+                sent_at: null,
+                delivered_at: null,
+                error_message: null,
+                personalized_message: String(c.company ?? ''),
+              }));
+              exportRecipientsCsv(rows, `respondentes-${period}`);
+            }}
+            className="h-9 px-4 rounded-lg border border-dash-violet/40 bg-dash-violet/10 text-dash-violet text-[12.5px] font-semibold flex items-center gap-2 hover:bg-dash-violet/20 shrink-0"
+          >
+            <Download className="w-4 h-4" />Exportar CSV
+          </button>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {barData.length > 0 && (
@@ -227,7 +364,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
                 {topCampaigns.map((c, i) => (
                   <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
                     <td className="px-3 py-2.5 text-[12px] text-muted-foreground">{i + 1}</td>
-                    <td className="px-3 py-2.5"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></td>
+                    <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
                     <td className="px-3 py-2.5"><span className="text-[12px] text-whatsapp">WhatsApp</span></td>
                     <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
                     <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count + c.failed_count > 0 ? fmtPct(c.sent_count, c.sent_count + c.failed_count) : '—'}</td>
@@ -237,6 +374,59 @@ export function TalkXAnalytics({ campaigns }: Props) {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+      {/* E74: painel de detalhe por campanha */}
+      {selectedCampaignId && (
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <IconTile icon={BarChart3} color="blue" size={36} />
+              <div className="min-w-0">
+                <p className="text-[15px] font-bold text-foreground truncate max-w-[360px]">{panelCampaign?.name ?? 'Campanha'}</p>
+                <p className="text-[12px] text-foreground-secondary">{panelLoading ? 'Carregando…' : `${panelRecipients?.length ?? 0} destinatários (amostra)`}</p>
+              </div>
+            </div>
+            <button type="button" onClick={() => setSelectedCampaignId(null)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium hover:bg-muted/50">Fechar</button>
+          </div>
+          {panelCampaign && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {([['Enviadas', fmtInt(panelCampaign.sent_count), 'text-primary'], ['Entregues', fmtInt(panelCampaign.delivered_count), 'text-dash-green'], ['Falhas', fmtInt(panelCampaign.failed_count), 'text-dash-red']] as [string, string, string][]).map(([label, value, color]) => (
+                <div key={label} className="rounded-xl border border-border/60 bg-input/20 p-3 text-center">
+                  <p className={`text-[22px] font-bold ${color}`}>{value}</p>
+                  <p className="text-[11px] text-foreground-secondary mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {panelLoading ? (
+            <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-9 bg-muted/40 rounded-lg animate-pulse" />)}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] border-collapse">
+                <thead><tr>
+                  {([['Contato', '180px'], ['Telefone', '130px'], ['Status', '80px'], ['Enviada em', '130px'], ['Entregue em', '130px']] as [string, string][]).map(([h, w]) => (
+                    <th key={h} style={{ minWidth: w }} className="text-left text-[11px] font-semibold text-foreground-secondary px-2 py-2">{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {(panelRecipients ?? []).map((r, i) => {
+                    const tone = r.status === 'sent' ? 'text-dash-green' : r.status === 'failed' ? 'text-dash-red' : 'text-foreground-secondary';
+                    return (
+                      <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
+                        <td className="px-2 py-2 text-[12.5px] font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
+                        <td className="px-2 py-2 text-[12px] text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
+                        <td className={`px-2 py-2 text-[12px] font-semibold ${tone}`}>{r.status || '—'}</td>
+                        <td className="px-2 py-2 text-[11.5px] text-muted-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</td>
+                        <td className="px-2 py-2 text-[11.5px] text-muted-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {(panelRecipients?.length ?? 0) >= 200 && <p className="text-[11px] text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros. Use CSV para o conjunto completo.</p>}
+            </div>
+          )}
         </section>
       )}
     </div>
