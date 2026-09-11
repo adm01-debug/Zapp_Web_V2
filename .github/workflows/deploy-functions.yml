@@ -122,6 +122,8 @@ jobs:
           PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY }}
           EXTERNAL_SUPABASE_URL: ${{ secrets.EXTERNAL_SUPABASE_URL }}
           EXTERNAL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY }}
+          PREVIEW_EGRESS_PROXY_URL: ${{ secrets.PREVIEW_EGRESS_PROXY_URL }}
+          PREVIEW_EGRESS_SHARED_SECRET: ${{ secrets.PREVIEW_EGRESS_SHARED_SECRET }}
           FN: ${{ inputs.function_name }}
         run: |
           if [ -n "$CRON_SECRET" ]; then
@@ -180,6 +182,32 @@ jobs:
             supabase secrets set \
               PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
               PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+              --project-ref "$PROJECT_REF"
+          fi
+          # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
+          # seu segredo HMAC. Sem eles, a funcao fica segura mas deixa de
+          # produzir previews, o que seria um deploy funcionalmente incompleto.
+          if [ "$FN" = "fetch-link-preview" ] || [ -z "$FN" ]; then
+            if [ -z "$PREVIEW_EGRESS_PROXY_URL" ] || [ -z "$PREVIEW_EGRESS_SHARED_SECRET" ]; then
+              echo "::error::PREVIEW_EGRESS_PROXY_URL e PREVIEW_EGRESS_SHARED_SECRET sao obrigatorios para fetch-link-preview."
+              exit 1
+            fi
+            node --input-type=module <<'NODE'
+          const endpoint = new URL(process.env.PREVIEW_EGRESS_PROXY_URL);
+          if (
+            endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.port ||
+            endpoint.pathname !== '/v1/fetch' || endpoint.search || endpoint.hash
+          ) {
+            throw new Error('PREVIEW_EGRESS_PROXY_URL deve ser HTTPS, sem credenciais/porta/query/fragmento e terminar em /v1/fetch');
+          }
+          if (process.env.PREVIEW_EGRESS_SHARED_SECRET.length < 32) {
+            throw new Error('PREVIEW_EGRESS_SHARED_SECRET deve ter pelo menos 32 caracteres');
+          }
+          console.log('OK: configuracao do proxy de previews validada.');
+          NODE
+            supabase secrets set \
+              PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
+              PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
               --project-ref "$PROJECT_REF"
           fi
 

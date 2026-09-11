@@ -12,6 +12,21 @@ test('full Edge deploy runs CRM secret preflight', () => {
   );
 });
 
+test('fetch-link-preview deploy fails closed without a valid secure egress configuration', () => {
+  assert.match(workflow, /PREVIEW_EGRESS_PROXY_URL: \$\{\{ secrets\.PREVIEW_EGRESS_PROXY_URL \}\}/);
+  assert.match(workflow, /PREVIEW_EGRESS_SHARED_SECRET: \$\{\{ secrets\.PREVIEW_EGRESS_SHARED_SECRET \}\}/);
+  assert.match(
+    workflow,
+    /if \[ "\$FN" = "fetch-link-preview" \] \|\| \[ -z "\$FN" \]; then/,
+    'deploy-all must not bypass fetch-link-preview preflight',
+  );
+  assert.match(workflow, /PREVIEW_EGRESS_PROXY_URL e PREVIEW_EGRESS_SHARED_SECRET sao obrigatorios/);
+  assert.match(workflow, /endpoint\.protocol !== 'https:'/);
+  assert.match(workflow, /endpoint\.pathname !== '\/v1\/fetch'/);
+  assert.match(workflow, /PREVIEW_EGRESS_SHARED_SECRET\.length < 32/);
+  assert.match(workflow, /supabase secrets set[\s\\]+PREVIEW_EGRESS_PROXY_URL=/);
+});
+
 test('rollback deploy is pinned to a historical ancestor and attests deployed SHA', () => {
   assert.match(workflow, /source_ref:/);
   assert.match(workflow, /git merge-base --is-ancestor "\$DEPLOYED_GIT_SHA" "\$GITHUB_SHA"/);
