@@ -30,6 +30,7 @@ interface Props {
   onEdit: (c: TalkXCampaign) => void;
   onView: (c: TalkXCampaign) => void;
   onViewScheduled?: (c: TalkXCampaign) => void;
+  onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
   onStart: (id: string) => void;
   onPause: (id: string) => void;
@@ -40,7 +41,7 @@ interface Props {
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onViewScheduled, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
@@ -246,6 +247,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                             <DropdownMenuContent align="end" className="w-48">
                               {c.status === 'scheduled' && onViewScheduled
                                 ? <DropdownMenuItem onClick={() => onViewScheduled(c)}><Eye className="w-4 h-4 mr-2" />Ver agendamento</DropdownMenuItem>
+                                : (c.status === 'sending' || c.status === 'paused') && onViewRunning
+                                ? <DropdownMenuItem onClick={() => onViewRunning(c)}><Eye className="w-4 h-4 mr-2" />Em andamento</DropdownMenuItem>
                                 : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}

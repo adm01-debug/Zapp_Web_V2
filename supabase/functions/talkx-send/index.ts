@@ -248,6 +248,8 @@ Deno.serve(async (req) => {
 
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
+    let processedCount = 0; // E78: reler parametros a cada RELOAD_EVERY envios
+    const RELOAD_EVERY = 20;
     // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
     // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
     // com typingDelay por envio passam do TTL.
@@ -346,6 +348,17 @@ Deno.serve(async (req) => {
       await supabase.from("talkx_campaigns")
         .update({ sent_count: sentCount, failed_count: failedCount }).eq("id", campaignId);
 
+      processedCount++;
+      // E78: reler parametros de campanha a cada RELOAD_EVERY envios
+      if (processedCount % RELOAD_EVERY === 0) {
+        const { data: fresh } = await supabase
+          .from("talkx_campaigns")
+          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile")
+          .eq("id", campaignId).single();
+        if (fresh) {
+          campaign = { ...campaign, ...fresh };
+        }
+      }
       const sendInterval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
       await sleep(sendInterval);
     }

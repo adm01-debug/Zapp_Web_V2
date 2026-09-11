@@ -6,11 +6,11 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles, Download } from 'lucide-react';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, TalkXEmptyState, barsByDay, fmtInt, fmtPct, pct } from './talkxShared';
+import { IconTile, TalkXEmptyState, barsByDay, fmtInt, fmtPct, fmtDateTime, pct } from './talkxShared';
 
 interface Props { campaigns: TalkXCampaign[] }
 type Period = '7d' | '30d' | '90d';
@@ -101,7 +101,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
         .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
       const replied = new Set<string>();
       const WINDOW = 24 * 3_600_000;
-      (msgs ?? []).forEach((m: { contact_id: string; created_at: string }) => {
+      (msgs ?? []).forEach((m: { contact_id: string | null; created_at: string }) => {
+        if (!m.contact_id) return;
         const sentTimes = recipMap.get(m.contact_id);
         if (!sentTimes) return;
         const mt = new Date(m.created_at).getTime();
