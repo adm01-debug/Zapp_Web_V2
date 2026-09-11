@@ -185,6 +185,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
     }
 
+    if (campaignAction !== "start") {
+      return new Response(JSON.stringify({ error: "Invalid campaign action" }), { status: 400, headers });
+    }
+
     // Get campaign
     let { data: campaign, error: campErr } = await supabase
       .from("talkx_campaigns").select("*").eq("id", campaignId).single();

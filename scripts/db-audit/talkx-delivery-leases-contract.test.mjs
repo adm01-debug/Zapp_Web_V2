@@ -23,6 +23,7 @@ test('talkx-send claims before touching the provider and completes with its leas
   assert.match(edgeFunction, /p_claim_token:\s*claim\.claim_token/);
   assert.match(edgeFunction, /transition_talkx_campaign/);
   assert.doesNotMatch(edgeFunction, /\.update\(\{ status: newStatus \}\)/);
+  assert.match(edgeFunction, /campaignAction !== "start"/);
 });
 
 test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {
