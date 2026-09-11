@@ -210,6 +210,50 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
   );
 }
 
+
+// ─── Tab: Resultados ───────────────────────────────────────────────────────────────
+function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time: string; Enviadas: number; Entregues: number }[] }) {
+  const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
+  const failRate = c.sent_count > 0 ? Math.round((c.failed_count / c.sent_count) * 1000) / 10 : null;
+  const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : null;
+  const pending = Math.max(0, c.total_recipients - c.sent_count - c.failed_count);
+  // Velocidade real: avg msgs/min a partir do historico
+  const avgRate = sentHistory.length >= 2
+    ? Math.round(sentHistory.slice(-10).reduce((a, b) => a + b.Enviadas, 0) / Math.min(10, sentHistory.length))
+    : null;
+
+  const METRICS: { label: string; value: string; sub?: string }[] = [
+    { label: 'Total de destinatários', value: fmtInt(c.total_recipients) },
+    { label: 'Enviadas', value: fmtInt(c.sent_count), sub: c.total_recipients > 0 ? `${Math.round((c.sent_count / c.total_recipients) * 100)}% do total` : undefined },
+    { label: 'Entregues', value: fmtInt(c.delivered_count), sub: deliveryRate !== null ? `${deliveryRate.toString().replace('.', ',')}% das enviadas` : undefined },
+    { label: 'Falhas', value: fmtInt(c.failed_count), sub: failRate !== null ? `${failRate.toString().replace('.', ',')}% de erro` : undefined },
+    { label: 'Pendentes', value: fmtInt(pending) },
+    { label: 'Tempo decorrido', value: elapsed !== null ? `${elapsed} min` : '—' },
+    { label: 'Ritmo médio (últ. 10 min)', value: avgRate !== null ? `${avgRate} msgs/min` : '—' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {METRICS.map(({ label, value, sub }) => (
+          <div key={label} className="rounded-xl border border-border/60 bg-card p-3">
+            <p className="text-[22px] font-bold text-foreground">{value}</p>
+            <p className="text-[11px] font-semibold text-foreground-secondary mt-0.5">{label}</p>
+            {sub && <p className="text-[10.5px] text-muted-foreground mt-0.5">{sub}</p>}
+          </div>
+        ))}
+      </div>
+      {c.started_at && c.status === 'sending' && pending > 0 && avgRate && avgRate > 0 && (
+        <div className="rounded-2xl bg-card border border-border/70 p-4">
+          <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
+          <p className="text-[22px] font-bold text-primary">{Math.ceil(pending / avgRate)} min</p>
+          <p className="text-[11.5px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Tab placeholder ───────────────────────────────────────────────────────────
 function TabComingSoon({ label }: { label: string }) {
   return (
@@ -228,7 +272,7 @@ interface Props {
 }
 
 export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId }: Props) {
-  const { campaigns, updateCampaign, pauseCampaign, cancelCampaign } = useTalkX();
+  const { campaigns, updateCampaign, pauseCampaign, cancelCampaign, startCampaign, refetchCampaigns } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
@@ -244,6 +288,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [lWinEnd, setLWinEnd] = useState<string>('');
   const [lBizHours, setLBizHours] = useState<boolean>(false);
   const [lSaving, setLSaving] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   const campaign = useMemo(() => campaigns.find((c) => c.id === selectedId) ?? null, [campaigns, selectedId]);
 
@@ -287,6 +332,10 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   const handleSaveLimits = useCallback(async () => {
     if (!campaign) return;
+    if (!Number.isFinite(lIntMin) || lIntMin < 1 || !Number.isFinite(lIntMax) || lIntMax < 1) {
+      toast.error('Intervalos devem ser números inteiros positivos (mínimo: 1s).');
+      return;
+    }
     setLSaving(true);
     try {
       await updateCampaign.mutateAsync({
@@ -310,16 +359,24 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const handlePause = useCallback(async () => {
     if (!campaign) return;
     setPauseOpen(false);
-    await pauseCampaign(campaign.id);
-    toast.info('Campanha pausada.');
+    try {
+      await pauseCampaign(campaign.id);
+      toast.info('Campanha pausada.');
+    } catch {
+      toast.error('Erro ao pausar a campanha.');
+    }
   }, [campaign, pauseCampaign]);
 
   const handleCancel = useCallback(async () => {
     if (!campaign) return;
     setCancelOpen(false);
-    await cancelCampaign(campaign.id);
-    toast.warning('Campanha cancelada.');
-    onBack();
+    try {
+      await cancelCampaign(campaign.id);
+      toast.warning('Campanha cancelada.');
+      onBack();
+    } catch {
+      toast.error('Erro ao cancelar a campanha.');
+    }
   }, [campaign, cancelCampaign, onBack]);
 
   return (
@@ -348,7 +405,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               <option key={c.id} value={c.id}>{c.name} [{c.status}]</option>
             ))}
           </select>
-          <button type="button" onClick={() => setSelectedId((id) => id)} title="Atualizar" className="h-9 w-9 flex items-center justify-center rounded-lg border border-border/70 bg-input/40 hover:bg-muted/50">
+          <button type="button" onClick={() => { void refetchCampaigns(); }} title="Atualizar" className="h-9 w-9 flex items-center justify-center rounded-lg border border-border/70 bg-input/40 hover:bg-muted/50">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
@@ -386,7 +443,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {activeTab === 'config' && <TabConfig c={campaign} />}
             {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
             {activeTab === 'messages' && <TabComingSoon label="Mensagens" />}
-            {activeTab === 'results' && <TabComingSoon label="Resultados" />}
+            {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} />}
             {activeTab === 'logs' && <TabComingSoon label="Logs em Tempo Real" />}
           </div>
 
@@ -401,9 +458,17 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 </button>
               )}
               {campaign.status === 'paused' && (
-                <button type="button" onClick={() => toast.info('Use o botão Retomar na lista de campanhas.')}
-                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold flex items-center gap-2 hover:bg-primary/20">
-                  <Zap className="w-4 h-4" />Retomar
+                <button type="button" disabled={resuming} onClick={async () => {
+                  setResuming(true);
+                  try {
+                    void startCampaign(campaign.id);
+                    toast.success('Campanha retomada!');
+                  } catch {
+                    toast.error('Erro ao retomar campanha.');
+                  } finally { setResuming(false); }
+                }}
+                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
+                  <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
                 </button>
               )}
               <button type="button" onClick={handleOpenLimits}

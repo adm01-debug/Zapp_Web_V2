@@ -70,6 +70,17 @@ export default function TalkXView() {
     );
   }
 
+
+  if (topView === 'running') {
+    return (
+      <TalkXCampaignRunning
+        initialCampaignId={runningCampaignId}
+        onBack={backToList}
+        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+      />
+    );
+  }
+
   if (topView === 'wizard') {
     return (
       <div className="min-h-full bg-background p-3 md:p-4 lg:p-6">
