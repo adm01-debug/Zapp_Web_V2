@@ -8,6 +8,29 @@ import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch } from "../_shared/evolution-send.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 
+
+// ─── E83: window helper ───────────────────────────────────────────────────────
+function isWithinSendWindow(campaign: {
+  send_window_start?: string | null;
+  send_window_end?: string | null;
+  business_hours_only?: boolean;
+}): boolean {
+  const nowBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const hBR = nowBR.getHours();
+  const mBR = nowBR.getMinutes();
+  const dowBR = nowBR.getDay(); // 0=Dom, 6=Sab
+  const hmBR = hBR * 60 + mBR;
+  if (campaign.send_window_start && campaign.send_window_end) {
+    const [wsh, wsm] = campaign.send_window_start.split(":").map(Number);
+    const [weh, wem] = campaign.send_window_end.split(":").map(Number);
+    if (hmBR < wsh * 60 + wsm || hmBR >= weh * 60 + wem) return false;
+  }
+  if (campaign.business_hours_only) {
+    if (dowBR === 0 || dowBR === 6 || hBR < 8 || hBR >= 18) return false;
+  }
+  return true;
+}
+
 function getGreeting(): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "numeric", hour12: false });
   const h = parseInt(hour, 10);
@@ -187,23 +210,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
     }
 
-    // Enforce send_window and business_hours_only before marking as sending.
-    const nowBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const hBR = nowBR.getHours(); const mBR = nowBR.getMinutes(); const dowBR = nowBR.getDay();
-    const hmBR = hBR * 60 + mBR;
-    if (campaign.send_window_start && campaign.send_window_end) {
-      const [ws_h, ws_m] = campaign.send_window_start.split(":").map(Number);
-      const [we_h, we_m] = campaign.send_window_end.split(":").map(Number);
-      const ws = ws_h * 60 + ws_m; const we = we_h * 60 + we_m;
-      if (hmBR < ws || hmBR >= we) {
-        return new Response(JSON.stringify({ ok: false, reason: "outside_send_window", next_window: campaign.send_window_start }), { headers });
-      }
-    }
-    if (campaign.business_hours_only) {
-      // Mon–Fri (1–5), 08:00–18:00 Brasília
-      if (dowBR === 0 || dowBR === 6 || hBR < 8 || hBR >= 18) {
-        return new Response(JSON.stringify({ ok: false, reason: "outside_business_hours" }), { headers });
-      }
+    // E83: Enforce send_window and business_hours_only before marking as sending.
+    if (!isWithinSendWindow(campaign)) {
+      const reason = (campaign.send_window_start && campaign.send_window_end) ? "outside_send_window" : "outside_business_hours";
+      return new Response(JSON.stringify({ ok: false, reason, next_window: campaign.send_window_start ?? "08:00" }), { headers });
     }
 
     // Mark as sending
@@ -331,9 +341,11 @@ Deno.serve(async (req) => {
         }
 
         if (sendResponse.ok && !sendResult.error) {
+          // E87: gravar external_id para rastreio de DELIVERY_ACK via webhook
+          const extId = (sendResult as Record<string, Record<string, string>>)?.key?.id ?? null;
           sentCount++;
           await supabase.from("talkx_recipients")
-            .update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", recipient.id);
+            .update({ status: "sent", sent_at: new Date().toISOString(), external_id: extId }).eq("id", recipient.id);
         } else {
           failedCount++;
           await supabase.from("talkx_recipients")
@@ -357,6 +369,14 @@ Deno.serve(async (req) => {
           .eq("id", campaignId).single();
         if (fresh) {
           campaign = { ...campaign, ...fresh };
+          // E83: verificar se ainda estamos dentro da janela de envio apos reload
+          if (!isWithinSendWindow(campaign)) {
+            log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
+            await supabase.from("talkx_campaigns")
+              .update({ status: "paused", paused_at: new Date().toISOString() })
+              .eq("id", campaignId);
+            break;
+          }
         }
       }
       const sendInterval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
