@@ -248,12 +248,21 @@ export function useTalkX() {
         body: { campaignId, action: 'start' },
       });
       if (error) throw error;
+      // A Edge Function usa HTTP 200 para recusas operacionais, como fora da
+      // janela de envio. Não trate uma resposta `{ ok: false }` como início.
+      if (!data || typeof data !== 'object' || (data as { success?: unknown }).success !== true) {
+        const reason = typeof data === 'object' && data !== null && typeof (data as { reason?: unknown }).reason === 'string'
+          ? (data as { reason: string }).reason
+          : 'Solicitação de envio não foi aceita';
+        throw new Error(reason);
+      }
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Campanha Talk X iniciada! 🚀');
-      return data;
+      toast.success('Processamento da campanha confirmado.');
+      return true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro desconhecido';
       toast.error(`Erro ao iniciar: ${msg}`);
+      return false;
     }
   }, [queryClient]);
 

@@ -370,9 +370,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
       if (mode === 'schedule' && payload.scheduled_at) await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
       if (mode === 'launch') {
-        // A edge function talkx-send processa a fila inteira na mesma request;
-        // não bloqueia a UI esperando o loop terminar (o realtime atualiza o status).
-        void startCampaign(id);
+        // A trilha de auditoria só é gravada após a Edge Function confirmar a
+        // solicitação; isso impede um falso "iniciado" quando o invoke falha.
+        const started = await startCampaign(id);
+        if (!started) throw new Error('A campanha não foi iniciada. Verifique a conexão e tente novamente.');
         await logEvent(id, 'started', 'Envio iniciado manualmente');
       }
       return id;

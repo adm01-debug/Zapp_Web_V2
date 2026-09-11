@@ -240,17 +240,20 @@ interface PrimaryButtonProps {
   className?: string;
   testid?: string;
   size?: 'sm' | 'md' | 'lg';
+  /** Usa semântica nativa para impedir ações inválidas, inclusive por teclado. */
+  disabled?: boolean;
 }
 
 /** Botão azul sólido dos mockups ("+ Novo Relatório", "+ Novo SLA", "Selecionar outro período"). */
-export function PrimaryButton({ children, onClick, icon: Icon, className, testid, size = 'md' }: PrimaryButtonProps) {
+export function PrimaryButton({ children, onClick, icon: Icon, className, testid, size = 'md', disabled = false }: PrimaryButtonProps) {
   const h = size === 'lg' ? 'h-11 px-5 text-[14px]' : size === 'sm' ? 'h-8 px-3 text-[12px]' : 'h-9 px-4 text-[13px]';
   return (
     <button
       type="button"
       data-testid={testid}
       onClick={onClick}
-      className={cn('inline-flex items-center gap-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition-colors shrink-0', h, className)}
+      disabled={disabled}
+      className={cn('inline-flex items-center gap-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition-colors shrink-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50', h, className)}
     >
       {Icon && <Icon className="w-4 h-4" />}
       {children}

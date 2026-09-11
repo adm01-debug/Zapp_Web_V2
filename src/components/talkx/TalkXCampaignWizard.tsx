@@ -59,7 +59,10 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
     const newUrl = window.location.pathname + '?' + params.toString();
     window.history.replaceState(null, '', newUrl);
   }, [step, campaign?.id]);
-  const next = () => ed.setStep(Math.min(4, step + 1) as WizardStep);
+  const next = () => {
+    if (!ed.canProceed[step]) return;
+    ed.setStep(Math.min(4, step + 1) as WizardStep);
+  };
   const prev = () => ed.setStep(Math.max(1, step - 1) as WizardStep);
 
   const saveDraft = async () => { const id = await ed.handleSave('draft'); if (id) onClose(); };
@@ -127,7 +130,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
               )}
             </div>
             {step < 4 && (
-              <PrimaryButton size="lg" onClick={next} className={cn(!ed.canProceed[step] && 'opacity-50 pointer-events-none')}>
+              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
                 Continuar <ArrowRight className="w-4 h-4" />
               </PrimaryButton>
             )}

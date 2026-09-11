@@ -156,8 +156,10 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && ed.messageTemplate.trim().length > 0;
+  const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
 
   const launch = async () => {
+    if (!launchAllowed) return;
     setError(null);
     try {
       const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
@@ -216,7 +218,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className={cn('w-full justify-center h-12 text-[15px]', (!allGood || !ed.canProceed[4]) && 'opacity-50 pointer-events-none')} onClick={() => setConfirmOpen(true)}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-[15px]" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
         {error && <p className="text-[12px] text-dash-red">{error}</p>}
@@ -243,7 +245,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <GhostButton icon={X} onClick={() => setConfirmOpen(false)}>Cancelar</GhostButton>
-            <PrimaryButton icon={Send} onClick={launch} className={cn(ed.saving && 'opacity-60 pointer-events-none')}>{ed.saving ? 'Lançando…' : ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}</PrimaryButton>
+            <PrimaryButton icon={Send} onClick={launch} disabled={!launchAllowed}>{ed.saving ? 'Lançando…' : ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}</PrimaryButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

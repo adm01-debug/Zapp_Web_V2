@@ -256,7 +256,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       </AlertDialog>
       <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Retomar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios serão continuados a partir de onde pararam.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async()=>{await startCampaign(campaignId);await logEvent(campaignId,'resumed');setConfirmResume(false);}}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async()=>{const started=await startCampaign(campaignId);if(!started)return;await logEvent(campaignId,'resumed');setConfirmResume(false);}}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
     </div>
   );

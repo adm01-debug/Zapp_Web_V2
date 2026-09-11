@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const f = vi.hoisted(() => ({
@@ -33,6 +33,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 import { useCampaignEditor } from '@/components/talkx/useCampaignEditor';
+import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 
 describe('useCampaignEditor — draft integrity', () => {
   beforeEach(() => {
@@ -41,6 +42,7 @@ describe('useCampaignEditor — draft integrity', () => {
     f.create.mockResolvedValue({ id: 'draft-1' });
     f.update.mockResolvedValue({});
     f.replace.mockResolvedValue(1);
+    f.start.mockResolvedValue(true);
     f.log.mockResolvedValue({});
     f.blacklist.ids.clear();
     f.blacklist.phones.clear();
@@ -58,6 +60,11 @@ describe('useCampaignEditor — draft integrity', () => {
     window.history.replaceState(null, '', '/?step=99');
     const invalid = renderHook(() => useCampaignEditor(null, vi.fn()));
     expect(invalid.result.current.step).toBe(1);
+  });
+
+  it('uses a real disabled control while the current step is invalid', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /continuar/i })).toBeDisabled();
   });
 
   it('creates one draft and atomically replaces its recipient snapshot on later saves', async () => {
@@ -102,5 +109,23 @@ describe('useCampaignEditor — draft integrity', () => {
 
     await act(async () => { await result.current.handleSave('draft'); });
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ scheduled_at: '2026-09-15T12:00:00.000Z' }));
+  });
+
+  it('does not record a false started event when the send request is rejected', async () => {
+    f.start.mockResolvedValue(false);
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha de teste');
+      result.current.toggleContact('contact-1');
+      result.current.setMessageTemplate('Olá {{nome}}');
+      result.current.setConfirmConsent(true);
+      result.current.setConfirmContent(true);
+      result.current.setConfirmSuppression(true);
+    });
+
+    await expect(result.current.handleSave('launch')).rejects.toThrow('A campanha não foi iniciada');
+    expect(f.start).toHaveBeenCalledWith('draft-1');
+    expect(f.log).toHaveBeenCalledWith('draft-1', 'created', 'Campanha criada');
+    expect(f.log).not.toHaveBeenCalledWith('draft-1', 'started', 'Envio iniciado manualmente');
   });
 });

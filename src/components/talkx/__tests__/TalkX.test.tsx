@@ -46,6 +46,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { supabase } from '@/integrations/supabase/client';
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -101,6 +102,16 @@ describe('useTalkX', () => {
   it('exposes refetchCampaigns', () => {
     const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
     expect(typeof result.current.refetchCampaigns).toBe('function');
+  });
+
+  it('rejects an operationally refused start even when the edge function returns HTTP 200', async () => {
+    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+      data: { ok: false, reason: 'outside_send_window' },
+      error: null,
+    } as never);
+    const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
+
+    await expect(result.current.startCampaign('campaign-1')).resolves.toBe(false);
   });
 });
 
