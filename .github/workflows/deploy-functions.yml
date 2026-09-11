@@ -196,7 +196,7 @@ jobs:
           const endpoint = new URL(process.env.PREVIEW_EGRESS_PROXY_URL);
           if (
             endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.port ||
-            endpoint.pathname !== '/v1/fetch' || endpoint.search || endpoint.hash
+            !endpoint.pathname.endsWith('/v1/fetch') || endpoint.search || endpoint.hash
           ) {
             throw new Error('PREVIEW_EGRESS_PROXY_URL deve ser HTTPS, sem credenciais/porta/query/fragmento e terminar em /v1/fetch');
           }
