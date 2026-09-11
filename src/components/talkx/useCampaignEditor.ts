@@ -108,7 +108,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const restoredRecipientCampaignRef = useRef<string | null>(null);
-  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id ?? null);
+  // Estado React sozinho não é suficiente para saves enfileirados: o callback
+  // seguinte pode ter capturado o render anterior, ainda sem o ID recém-criado.
+  const draftCampaignIdRef = useRef<string | null>(campaign?.id ?? null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
   const [saving, setSaving] = useState(false);
@@ -349,7 +352,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
-  const handleSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+  const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
     setSaving(true);
     try {
       const payload = buildPayload();
@@ -357,7 +360,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
 
       let id: string;
-      const persistedCampaignId = campaign?.id ?? draftCampaignId;
+      const persistedCampaignId = campaign?.id ?? draftCampaignIdRef.current;
       if (persistedCampaignId) {
         await updateCampaign.mutateAsync({ id: persistedCampaignId, ...payload });
         id = persistedCampaignId;
@@ -366,7 +369,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         const created = await createCampaign.mutateAsync(payload);
         if (!created) return null;
         id = created.id;
-        setDraftCampaignId(id);
+        draftCampaignIdRef.current = id;
         await logEvent(id, 'created', 'Campanha criada');
       }
 
@@ -401,7 +404,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, campaign?.id, campaign?.status, draftCampaignId, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
+
+  // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
+  // próxima operação, mas nenhuma mutação posterior começa antes do término da
+  // anterior — eliminando create/create ou update fora de ordem.
+  const handleSave = useCallback((mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+    const task = saveQueueRef.current.then(
+      () => persistSave(mode),
+      () => persistSave(mode),
+    );
+    saveQueueRef.current = task.then(() => undefined, () => undefined);
+    return task;
+  }, [persistSave]);
 
   // E68: sincronizar ref -- useEffect garante nao acessa ref durante render
   useEffect(() => { handleSaveRef.current = handleSave; }, [handleSave]);

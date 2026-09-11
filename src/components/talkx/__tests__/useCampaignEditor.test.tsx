@@ -103,6 +103,37 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
   });
 
+  it('serializes overlapping saves and reuses the ID created by the first request', async () => {
+    let resolveCreate: ((value: { id: string }) => void) | undefined;
+    f.create.mockImplementationOnce(() => new Promise((resolve) => { resolveCreate = resolve; }));
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => result.current.setName('Primeira versão'));
+
+    const first = result.current.handleSave('draft');
+    await act(async () => {});
+    act(() => result.current.setName('Versão mais recente'));
+    const second = result.current.handleSave('draft');
+
+    await act(async () => { resolveCreate?.({ id: 'draft-1' }); await first; await second; });
+    expect(f.create).toHaveBeenCalledTimes(1);
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1', name: 'Versão mais recente' }));
+  });
+
+  it('keeps processing queued saves after an earlier save fails', async () => {
+    f.create.mockRejectedValueOnce(new Error('Falha transitória')).mockResolvedValueOnce({ id: 'draft-2' });
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => result.current.setName('Campanha resiliente'));
+
+    const first = result.current.handleSave('draft');
+    const second = result.current.handleSave('draft');
+
+    await act(async () => {
+      await expect(first).rejects.toThrow('Falha transitória');
+      await expect(second).resolves.toBe('draft-2');
+    });
+    expect(f.create).toHaveBeenCalledTimes(2);
+  });
+
   it('clears text search together with the other audience filters', () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => result.current.setContactSearch('ausente'));
