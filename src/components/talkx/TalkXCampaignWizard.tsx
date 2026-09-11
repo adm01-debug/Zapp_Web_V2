@@ -113,7 +113,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
 
       <div className={cn('grid gap-4 min-w-0', step === 4 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]')}>
         <div className="min-w-0 space-y-4">
-          {step === 1 && <StepAudience ed={ed} campaign={campaign} />}
+          {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
           {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id) => { onLaunched?.(id); onClose(); }} />}
@@ -179,7 +179,7 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   );
 }
 
-function StepAudience({ ed, campaign }: { ed: WizardState; campaign: TalkXCampaign | null }) {
+function StepAudience({ ed }: { ed: WizardState }) {
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
@@ -234,7 +234,6 @@ function StepAudience({ ed, campaign }: { ed: WizardState; campaign: TalkXCampai
       {ed.audienceSource === 'contacts' && (
         <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com filtros e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-[12px] font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
           <TalkXContactSelector
-            campaign={campaign}
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
             selectedContacts={ed.selectedContacts}

@@ -107,6 +107,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const restoredRecipientCampaignRef = useRef<string | null>(null);
   const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id ?? null);
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
@@ -168,6 +169,26 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       return data || [];
     },
   });
+
+  // Um draft existente precisa reabrir a sua audiência real. Sem este
+  // round-trip, um autosave posterior poderia substituir destinatários por uma
+  // seleção vazia mesmo sem o usuário ter alterado o público.
+  const { data: persistedRecipientIds } = useQuery({
+    queryKey: ['talkx-draft-recipient-ids', campaign?.id],
+    enabled: !!campaign?.id && (campaign.status === 'draft' || campaign.status === 'scheduled'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('talkx_recipients')
+        .select('contact_id').eq('campaign_id', campaign!.id);
+      if (error) throw error;
+      return [...new Set((data ?? []).map((recipient) => recipient.contact_id))];
+    },
+  });
+
+  useEffect(() => {
+    if (!campaign?.id || !persistedRecipientIds || restoredRecipientCampaignRef.current === campaign.id) return;
+    restoredRecipientCampaignRef.current = campaign.id;
+    setSelectedContacts(persistedRecipientIds);
+  }, [campaign?.id, persistedRecipientIds]);
 
   // E54: filtragem por phone + contact_id com soft-delete e expiração
   const { data: blacklistData } = useQuery({

@@ -6,6 +6,7 @@ const f = vi.hoisted(() => ({
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
+  persistedRecipientIds: [] as { contact_id: string }[],
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
@@ -28,6 +29,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: ({ queryKey }: { queryKey: string[] }) => ({
     data: queryKey[0] === 'wa-connections-talkx' ? f.connections
       : queryKey[0] === 'contacts-talkx' ? f.contacts
+      : queryKey[0] === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds.map((recipient) => recipient.contact_id)
         : queryKey[0] === 'talkx-blacklist-ids' ? f.blacklist : undefined,
   }),
 }));
@@ -46,6 +48,7 @@ describe('useCampaignEditor — draft integrity', () => {
     f.log.mockResolvedValue({});
     f.blacklist.ids.clear();
     f.blacklist.phones.clear();
+    f.persistedRecipientIds = [];
     window.history.replaceState(null, '', '/');
   });
 
@@ -78,6 +81,14 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'draft-1' }));
     expect(f.replace).toHaveBeenCalledTimes(2);
     expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
+  });
+
+  it('restores the persisted recipient snapshot before editing an existing draft', async () => {
+    f.persistedRecipientIds = [{ contact_id: 'contact-1' }];
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    expect(result.current.selectedContacts).toEqual(['contact-1']);
   });
 
   it('autosaves a changed manual selection against the existing draft identity', async () => {
