@@ -10,9 +10,9 @@
     "sha256": "3c8f9c68452a8223778f300936f8f8deac8720918002e078084c1f1b6fff7d14"
   },
   "summary": {
-    "function_count": 65,
-    "source_file_count": 86,
-    "verify_jwt_true": 56,
+    "function_count": 66,
+    "source_file_count": 87,
+    "verify_jwt_true": 57,
     "verify_jwt_false": 9
   },
   "source_files": [
@@ -405,6 +405,11 @@
       "path": "supabase/functions/sicoob-bridge/index.ts",
       "bytes": 5593,
       "sha256": "840fed7638a0a27d9d3afdd8c6442ae6b3a41457b48608dbe270fc1317ac585e"
+    },
+    {
+      "path": "supabase/functions/talkx-report/index.ts",
+      "bytes": 13565,
+      "sha256": "48fa87e8100c4145ee0a67c594e3a00ad72ce18c114deeec04dcba8f5ece4721"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
@@ -1156,6 +1161,17 @@
       ]
     },
     {
+      "name": "talkx-report",
+      "entrypoint": "supabase/functions/talkx-report/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "45af8296a1e79ff26696486d70d1f5d206b9763088fbceb2b933eec0cdb33fed",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/talkx-report/index.ts"
+      ]
+    },
+    {
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
@@ -1250,5 +1266,5 @@
       ]
     }
   ],
-  "manifest_sha256": "c2420c69755c387e96dabf986df4f50ef1790eea0948dca502fa2c8f80dc1202"
+  "manifest_sha256": "be291d283269b2623af1324c130e81801f01b66238de4929e299febfe8aba466"
 }
