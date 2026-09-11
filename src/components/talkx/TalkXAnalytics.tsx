@@ -146,6 +146,21 @@ export function TalkXAnalytics({ campaigns }: Props) {
 
   const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
   const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
+
+  // E82: comparativo taxa de entrega
+  const compareData = useMemo(() => {
+    const comp = filtered
+      .filter((c) => c.status === 'completed' && c.sent_count > 0)
+      .sort((a, b) => new Date(b.completed_at ?? b.updated_at).getTime() - new Date(a.completed_at ?? a.updated_at).getTime())
+      .slice(0, 5)
+      .map((c) => ({
+        name: c.name.length > 16 ? c.name.slice(0, 15) + '…' : c.name,
+        'Entrega (%)': c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : 0,
+        'Falha (%)': (c.sent_count + c.failed_count) > 0 ? Math.round((c.failed_count / (c.sent_count + c.failed_count)) * 1000) / 10 : 0,
+      }))
+      .reverse();
+    return comp;
+  }, [filtered]);
   const funnelData = useMemo(() => {
     const total = filtered.reduce((a, c) => a + c.total_recipients, 0);
     return [
@@ -383,6 +398,37 @@ export function TalkXAnalytics({ campaigns }: Props) {
           </div>
         </section>
       )}
+      {/* E82: comparativo taxa de entrega */}
+      {compareData.length >= 2 && (
+        <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <IconTile icon={TrendingUp} color="green" size={36} />
+            <div>
+              <p className="text-[15px] font-bold text-foreground">Comparativo de Campanhas</p>
+              <p className="text-[12px] text-foreground-secondary">{`Últimas ${compareData.length} concluídas — entrega vs falha`}</p>
+            </div>
+          </div>
+          <div className="h-[240px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={compareData} margin={{ top: 4, right: 4, left: -12, bottom: 32 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
+                <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v) => [String(v) + '%', '']} />
+                <Bar dataKey="Entrega (%)" fill="hsl(var(--dash-green))" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                  <LabelList dataKey="Entrega (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} />
+                </Bar>
+                <Bar dataKey="Falha (%)" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} maxBarSize={48} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center gap-4 justify-end">
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-[11px] text-foreground-secondary">Taxa de entrega</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-red" /><span className="text-[11px] text-foreground-secondary">Taxa de falha</span></div>
+          </div>
+        </section>
+      )}
+
       {/* E74: painel de detalhe por campanha */}
       {selectedCampaignId && (
         <section className="rounded-2xl bg-card border border-border/70 p-4">
