@@ -10,10 +10,15 @@ import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, 
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import type { Database } from '@/integrations/supabase/types';
 import { IconTile, TalkXEmptyState, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 
 interface Props { campaigns: TalkXCampaign[] }
 type Period = '7d' | '30d' | '90d';
+type TalkXRecipientReplyRow = Pick<
+  Database['public']['Tables']['talkx_recipients']['Row'],
+  'contact_id' | 'sent_at'
+>;
 const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
 const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -90,8 +95,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
       if (!recips?.length) return { replied: 0, sent: 0 };
       // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
       const recipMap = new Map<string, number[]>();
-      recips.forEach((r) => {
-        if (!r.contact_id) return;
+      (recips as TalkXRecipientReplyRow[]).forEach((r) => {
+        if (!r.contact_id || !r.sent_at) return;
         const ts = new Date(r.sent_at).getTime();
         if (!recipMap.has(r.contact_id)) recipMap.set(r.contact_id, []);
         recipMap.get(r.contact_id)!.push(ts);
