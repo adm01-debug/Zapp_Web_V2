@@ -3,7 +3,7 @@
  * Simulates typing, personalized messages with {{nome}}, {{apelido}}, {{empresa}}, {{saudacao}}
  * Supports text + media (image, video, document, audio)
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch } from "../_shared/evolution-send.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
@@ -16,7 +16,11 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
-function personalize(template, contact, customVars = []) {
+function personalize(
+  template: string,
+  contact: { name?: string | null; nickname?: string | null; company?: string | null },
+  customVars: string[] = [],
+): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
   let result = template
     .replace(/\{\{nome\}\}/gi, firstName)
@@ -172,11 +176,14 @@ Deno.serve(async (req) => {
     }
 
     // Get campaign
-    const { data: campaign, error: campErr } = await supabase
+    let { data: campaign, error: campErr } = await supabase
       .from("talkx_campaigns").select("*").eq("id", campaignId).single();
 
     if (campErr || !campaign) {
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
+    }
+    if (campaign.status === "completed" || campaign.status === "cancelled") {
+      return new Response(JSON.stringify({ error: "Campaign cannot be started from its current status" }), { status: 409, headers });
     }
 
     // Get WhatsApp connection instance
@@ -250,6 +257,10 @@ Deno.serve(async (req) => {
     let failedCount = campaign.failed_count || 0;
     let processedCount = 0; // E78: reler parametros a cada RELOAD_EVERY envios
     const RELOAD_EVERY = 20;
+    // Cada invocação só pode enviar depois de reivindicar o destinatário no
+    // Postgres. O lease impede que dois workers concorrentes disparem para o
+    // mesmo contato; uma execução morta expira e pode ser recuperada.
+    const workerId = `talkx-send:${crypto.randomUUID()}`;
     // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
     // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
     // com typingDelay por envio passam do TTL.
@@ -268,10 +279,26 @@ Deno.serve(async (req) => {
 
       if (currentCampaign?.status === "paused" || currentCampaign?.status === "cancelled") break;
 
+      const { data: claimRows, error: claimError } = await supabase.rpc("claim_talkx_recipient", {
+        p_campaign_id: campaignId,
+        p_recipient_id: recipient.id,
+        p_worker: workerId,
+        p_lease_seconds: 90,
+      });
+      if (claimError) throw new Error(`talkx_recipient_claim_failed: ${claimError.message}`);
+      const claim = Array.isArray(claimRows) ? claimRows[0] : null;
+      // Outro worker já concluiu ou ainda possui o lease deste destinatário.
+      if (!claim?.claim_token) continue;
+
       const contact = recipient.contacts as Record<string, unknown>;
       if (!contact?.phone) {
-        await supabase.from("talkx_recipients")
-          .update({ status: "skipped", error_message: "Sem número de telefone" }).eq("id", recipient.id);
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "skipped",
+          p_error_message: "Sem número de telefone",
+        });
+        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
         continue;
       }
 
@@ -293,7 +320,8 @@ Deno.serve(async (req) => {
       const recipientHasMedia = !!effectiveMediaUrl && !!effectiveMediaType;
       const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
       await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, status: "sending", variant_id: variant?.id ?? existingVid ?? null }).eq("id", recipient.id);
+        .update({ personalized_message: personalizedMsg, variant_id: variant?.id ?? existingVid ?? null })
+        .eq("id", recipient.id).eq("delivery_claim_token", claim.claim_token);
 
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
@@ -332,21 +360,36 @@ Deno.serve(async (req) => {
 
         if (sendResponse.ok && !sendResult.error) {
           sentCount++;
-          await supabase.from("talkx_recipients")
-            .update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", recipient.id);
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "sent",
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
         } else {
           failedCount++;
-          await supabase.from("talkx_recipients")
-            .update({ status: "failed", error_message: (sendResult?.message || sendResult?.error || "Erro ao enviar") as string }).eq("id", recipient.id);
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
         }
       } catch (err) {
+        // A chamada ao provedor pode ter sido aceita quando a confirmação no
+        // banco falhou. Não a reclassifique como falha: preserve o lease para
+        // recuperação/auditoria, evitando sobrescrever um possível "sent".
+        if (err instanceof Error && err.message.startsWith("talkx_recipient_completion_failed:")) throw err;
         failedCount++;
-        await supabase.from("talkx_recipients")
-          .update({ status: "failed", error_message: err instanceof Error ? err.message : "Erro desconhecido" }).eq("id", recipient.id);
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "failed",
+          p_error_message: err instanceof Error ? err.message : "Erro desconhecido",
+        });
+        if (completionError) throw new Error(`talkx_recipient_failure_completion_failed: ${completionError.message}`);
       }
-
-      await supabase.from("talkx_campaigns")
-        .update({ sent_count: sentCount, failed_count: failedCount }).eq("id", campaignId);
 
       processedCount++;
       // E78: reler parametros de campanha a cada RELOAD_EVERY envios
@@ -369,7 +412,7 @@ Deno.serve(async (req) => {
 
     if (finalCampaign?.status === "sending") {
       await supabase.from("talkx_campaigns")
-        .update({ status: "completed", completed_at: new Date().toISOString(), sent_count: sentCount, failed_count: failedCount })
+        .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", campaignId);
     }
 

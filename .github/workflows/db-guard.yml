@@ -112,6 +112,11 @@ jobs:
           TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/talkx-draft-recipients.test.sh
 
+      - name: Simular leases de entrega concorrente do Talk X
+        env:
+          TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/talkx-delivery-leases.test.sh
+
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
