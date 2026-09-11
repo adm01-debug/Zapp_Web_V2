@@ -145,7 +145,7 @@ const Row = ({ icon, label, value, sub, ok, step, ed }: { icon: React.ElementTyp
     </div>
   );
 
-export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string) => void }) {
+export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const sample = ed.contacts?.[0];
@@ -163,7 +163,10 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
     setError(null);
     try {
       const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-      if (id) { setConfirmOpen(false); onLaunched(id); }
+      if (id) {
+        setConfirmOpen(false);
+        onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
     }

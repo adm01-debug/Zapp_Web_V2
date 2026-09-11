@@ -3,6 +3,9 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20260911130000_add_talkx_recipient_delivery_leases.sql"
+completion_migration="$repo_root/supabase/migrations/20260911170000_add_talkx_campaign_completion_rpc.sql"
+quarantine_migration="$repo_root/supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql"
+outcome_counter_migration="$repo_root/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql"
 postgres_image="${TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-delivery-leases-test-$$"
 test_password="talkx_delivery_leases_test_only"
@@ -33,6 +36,7 @@ CREATE TABLE public.talkx_campaigns (
   status text NOT NULL,
   sent_count integer NOT NULL DEFAULT 0,
   failed_count integer NOT NULL DEFAULT 0,
+  completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 CREATE TABLE public.talkx_recipients (
@@ -53,6 +57,9 @@ INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, create
 SQL
 
 psql_test < "$migration" >/dev/null
+psql_test < "$completion_migration" >/dev/null
+psql_test < "$quarantine_migration" >/dev/null
+psql_test < "$outcome_counter_migration" >/dev/null
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
 user_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated';"
 
@@ -89,4 +96,19 @@ reclaimed="$(psql_test -Atqc "$service_session SELECT recipient_id || ':' || del
 invalid="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT * FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'worker invalido', 90);" 2>&1 || true)"
 [[ "$invalid" == *invalid_talkx_delivery_claim* ]] || fail 'worker inválido foi aceito'
 
-printf 'PASS: Talk X delivery leases reject unauthorized access, isolate concurrent claims, fence stale completion and recover expired work\n'
+not_drained="$(psql_test -Atqc "$service_session SELECT public.complete_talkx_campaign_if_drained('40000000-0000-0000-0000-000000000001');")"
+[[ "$not_drained" == 'f' ]] || fail 'campanha com lease ativo foi concluída'
+
+second_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000002'")"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.complete_talkx_recipient('50000000-0000-0000-0000-000000000002', '$second_token'::uuid, 'outcome_unknown', 'Confirmação do provedor indisponível');
+SQL
+[[ "$(psql_test -Atqc "SELECT r.status || ':' || c.sent_count || ':' || c.failed_count || ':' || c.outcome_unknown_count FROM public.talkx_recipients r JOIN public.talkx_campaigns c ON c.id=r.campaign_id WHERE r.id='50000000-0000-0000-0000-000000000002'")" == 'outcome_unknown:1:0:1' ]] || fail 'resultado ambíguo não foi colocado em quarentena sem contaminar contadores'
+unknown_claim="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'edge-retry', 90);")"
+[[ "$unknown_claim" == '0' ]] || fail 'resultado ambíguo voltou automaticamente para a fila e poderia duplicar um envio'
+drained="$(psql_test -Atqc "$service_session SELECT public.complete_talkx_campaign_if_drained('40000000-0000-0000-0000-000000000001');")"
+[[ "$drained" == 't' ]] || fail 'campanha drenada não foi concluída'
+[[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000001'")" == 'completed' ]] || fail 'estado final não foi persistido'
+
+printf 'PASS: Talk X delivery leases reject unauthorized access, isolate concurrent claims, fence stale completion, recover expired work and quarantine ambiguous provider outcomes\n'

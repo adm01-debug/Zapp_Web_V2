@@ -66,7 +66,15 @@ export default function TalkXView() {
         campaignId={scheduledCampaignId!}
         onBack={backToList}
         onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
-        onLaunch={(id) => { setScheduledCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        onStatusChange={(campaign) => {
+          setScheduledCampaignId(null);
+          if (campaign.status === 'sending') {
+            setMonitorId(campaign.id);
+            setTopView('monitor');
+            return;
+          }
+          backToList();
+        }}
       />
     );
   }
@@ -88,7 +96,15 @@ export default function TalkXView() {
         <TalkXCampaignWizard
           campaign={editingCampaign}
           onClose={backToList}
-          onLaunched={(id) => { setMonitorId(id); setTopView('monitor'); }}
+          onLaunched={(id, status) => {
+            if (status === 'scheduled') {
+              setScheduledCampaignId(id);
+              setTopView('scheduled');
+              return;
+            }
+            setMonitorId(id);
+            setTopView('monitor');
+          }}
           initial={wizardInitial}
         />
       </div>

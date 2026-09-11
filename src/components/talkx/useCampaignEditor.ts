@@ -43,7 +43,7 @@ function initialWizardStep(): WizardStep {
   return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
 }
 
-function utcToLocalInTimezone(utc: string, tz: string): string {
+export function utcToLocalInTimezone(utc: string, tz: string): string {
   if (!utc) return '';
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -59,7 +59,7 @@ function utcToLocalInTimezone(utc: string, tz: string): string {
  * E69 fix: converte datetime-local string (sem TZ) para ISO UTC usando o fuso selecionado.
  * Ex: localToUTCInTimezone('2026-09-15T10:00', 'America/New_York') -> '2026-09-15T14:00:00.000Z'
  */
-function localToUTCInTimezone(localStr: string, tz: string): string {
+export function localToUTCInTimezone(localStr: string, tz: string): string {
   if (!localStr) return '';
   const [datePart, timePart] = localStr.split('T');
   const [yr, mo, da] = datePart.split('-').map(Number);
@@ -74,7 +74,14 @@ function localToUTCInTimezone(localStr: string, tz: string): string {
   const tzLocalMs = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
   // offset = diferenca entre o instante UTC provisorio e o que o fuso le nele
   const offsetMs = approxMs - tzLocalMs; // positivo = fuso atras do UTC
-  return new Date(approxMs + offsetMs).toISOString();
+  const iso = new Date(approxMs + offsetMs).toISOString();
+  // Horários inexistentes ocorrem quando o relógio avança no início do DST.
+  // Não convertemos silenciosamente 02:30 em 03:30: o operador precisa
+  // escolher um instante que exista no fuso selecionado.
+  if (utcToLocalInTimezone(iso, tz) !== localStr) {
+    throw new Error('O horário selecionado não existe no fuso informado devido ao horário de verão. Escolha outro horário.');
+  }
+  return iso;
 }
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
   const { createCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
@@ -107,10 +114,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const restoredRecipientCampaignRef = useRef<string | null>(null);
+  const [hydratedRecipientCampaignId, setHydratedRecipientCampaignId] = useState<string | null>(null);
   // Estado React sozinho não é suficiente para saves enfileirados: o callback
   // seguinte pode ter capturado o render anterior, ainda sem o ID recém-criado.
-  const draftCampaignIdRef = useRef<string | null>(campaign?.id ?? null);
+  const draftCampaignIdRef = useRef<string | null>(campaign?.id || null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
@@ -188,10 +195,18 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   });
 
   useEffect(() => {
-    if (!campaign?.id || !persistedRecipientIds || restoredRecipientCampaignRef.current === campaign.id) return;
-    restoredRecipientCampaignRef.current = campaign.id;
+    if (!campaign?.id || !persistedRecipientIds || hydratedRecipientCampaignId === campaign.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates a remote snapshot only when its query key changes.
     setSelectedContacts(persistedRecipientIds);
-  }, [campaign?.id, persistedRecipientIds]);
+    setHydratedRecipientCampaignId(campaign.id);
+  }, [campaign?.id, persistedRecipientIds, hydratedRecipientCampaignId]);
+
+  // A ausência de `data` é diferente de uma audiência vazia: antes da
+  // hidratação, um save poderia substituir um snapshot existente por `[]`.
+  // A referência só é marcada depois que o efeito aplicou o resultado ao estado.
+  const recipientSnapshotReady = !campaign?.id
+    || (campaign.status !== 'draft' && campaign.status !== 'scheduled')
+    || hydratedRecipientCampaignId === campaign.id;
 
   // E54: filtragem por phone + contact_id com soft-delete e expiração
   const { data: blacklistData } = useQuery({
@@ -304,7 +319,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setTemplateId(id);
     if (t) {
       setMessageTemplate(t.content);
-      if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); }
+      if (t.media_url) {
+        setHasMedia(true);
+        setMediaUrl(t.media_url);
+        setMediaType(t.media_type || 'image');
+      } else {
+        setHasMedia(false);
+        setMediaUrl('');
+        setMediaType('');
+      }
     }
   }, [templates]);
 
@@ -327,11 +350,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 || !!campaign : false),
+    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     2: messageTemplate.trim().length > 0,
     3: !isScheduled || !!scheduledAt,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, campaign, messageTemplate, isScheduled, scheduledAt, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, isScheduled, scheduledAt, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -355,12 +378,17 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
     setSaving(true);
     try {
+      if (!recipientSnapshotReady) {
+        throw new Error('A audiência deste rascunho ainda está carregando. Aguarde antes de salvar.');
+      }
+      if (mode === 'launch' && (!canProceed[1] || !canProceed[2] || !canProceed[3] || !canProceed[4])) {
+        throw new Error('Revise público, mensagem, agendamento e confirmações antes de lançar.');
+      }
       const payload = buildPayload();
-      if (mode === 'schedule' && payload.scheduled_at) payload.status = 'scheduled';
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
 
       let id: string;
-      const persistedCampaignId = campaign?.id ?? draftCampaignIdRef.current;
+      const persistedCampaignId = campaign?.id || draftCampaignIdRef.current;
       if (persistedCampaignId) {
         await updateCampaign.mutateAsync({ id: persistedCampaignId, ...payload });
         id = persistedCampaignId;
@@ -392,7 +420,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
       if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
 
-      if (mode === 'schedule' && payload.scheduled_at) await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
+      if (mode === 'schedule' && payload.scheduled_at) {
+        await updateCampaign.mutateAsync({ id, status: 'scheduled' });
+        await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
+      }
       if (mode === 'launch') {
         // A trilha de auditoria só é gravada após a Edge Function confirmar a
         // solicitação; isso impede um falso "iniciado" quando o invoke falha.
@@ -404,7 +435,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -426,7 +457,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
     audienceSource, segmentId, templateId, connectionId, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
-    isScheduled, scheduledAt, respectSuppression, selectedContacts,
+    isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
+    companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
   });
   useEffect(() => {
     // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
@@ -437,7 +469,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     autosaveTimerRef.current = setTimeout(async () => {
       // handleSaveRef.current e sempre o callback mais recente (nao sofre de closure stale)
       const id = await handleSaveRef.current?.('draft').catch(() => null);
-      if (id) setLastAutosave(new Date());
+      if (id) {
+        // O baseline deve acompanhar o último snapshot confirmado. Caso o
+        // usuário reverta um filtro ao valor de abertura, essa reversão também
+        // precisa ser persistida — não pode ser tratada como "sem alteração".
+        autosaveInitialRef.current = autosaveFields;
+        setLastAutosave(new Date());
+      }
     }, 3000);
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps

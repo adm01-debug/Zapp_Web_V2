@@ -4,6 +4,8 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 snapshot_migration="$repo_root/supabase/migrations/20260911120000_replace_talkx_draft_recipients.sql"
 migration="$repo_root/supabase/migrations/20260911140000_harden_talkx_campaign_state_transitions.sql"
+forward_hardening_migration="$repo_root/supabase/migrations/20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql"
+outcome_counter_migration="$repo_root/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql"
 postgres_image="${TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-campaign-state-test-$$"
 test_password="talkx_campaign_state_test_only"
@@ -50,6 +52,8 @@ SQL
 
 psql_test < "$snapshot_migration" >/dev/null
 psql_test < "$migration" >/dev/null
+psql_test < "$forward_hardening_migration" >/dev/null
+psql_test < "$outcome_counter_migration" >/dev/null
 
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
@@ -62,23 +66,42 @@ direct_recipient="$(psql_test -v VERBOSITY=verbose -c "$owner_session INSERT INT
 direct_count="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET total_recipients=99 WHERE id='$campaign_id';" 2>&1 || true)"
 [[ "$direct_count" == *talkx_recipient_count_managed* ]] || fail 'contador de audiência foi alterado diretamente'
 
+direct_unknown_count="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET outcome_unknown_count=99 WHERE id='$campaign_id';" 2>&1 || true)"
+[[ "$direct_unknown_count" == *talkx_delivery_state_managed_by_worker* ]] || fail 'contador de resultado ambíguo foi alterado diretamente'
+
 sending="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET status='sending' WHERE id='$campaign_id';" 2>&1 || true)"
 [[ "$sending" == *talkx_campaign_transition_denied* ]] || fail 'navegador conseguiu iniciar campanha diretamente'
 
+fabricated_insert="$(psql_test -v VERBOSITY=verbose -c "$owner_session INSERT INTO public.talkx_campaigns (id, created_by, status, total_recipients, sent_count) VALUES ('40000000-0000-0000-0000-000000000099', '10000000-0000-0000-0000-000000000001', 'sending', 99, 99);" 2>&1 || true)"
+[[ "$fabricated_insert" == *talkx_campaign_insert_must_be_draft* ]] || fail 'insert autenticado fabricou estado de entrega'
+
 unscheduled="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$campaign_id';" 2>&1 || true)"
-[[ "$unscheduled" == *talkx_schedule_requires_timestamp* ]] || fail 'agendamento sem instante foi aceito'
+[[ "$unscheduled" == *talkx_schedule_requires_audience_and_timestamp* ]] || fail 'agendamento sem instante/audiência foi aceito'
 
 psql_test >/dev/null <<SQL
 $owner_session
-UPDATE public.talkx_campaigns SET status='scheduled', scheduled_at='2026-10-01T12:00:00Z' WHERE id='$campaign_id';
 SELECT public.replace_talkx_draft_recipients('$campaign_id', ARRAY['$contact_id'::uuid]);
+SELECT public.replace_talkx_draft_recipients('$campaign_id', ARRAY['$contact_id'::uuid]);
+UPDATE public.talkx_campaigns SET status='scheduled', scheduled_at='2026-10-01T12:00:00Z' WHERE id='$campaign_id';
 SQL
 [[ "$(psql_test -Atqc "SELECT c.status || ':' || c.total_recipients || ':' || count(r.contact_id) FROM public.talkx_campaigns c LEFT JOIN public.talkx_recipients r ON r.campaign_id=c.id WHERE c.id='$campaign_id' GROUP BY c.id")" == 'scheduled:1:1' ]] || fail 'RPC não atualizou snapshot agendado de forma atômica'
 
 psql_test >/dev/null <<SQL
-$service_session
-UPDATE public.talkx_campaigns SET status='sending', started_at=statement_timestamp(), sent_count=1 WHERE id='$campaign_id';
+$owner_session
+UPDATE public.talkx_campaigns SET status='draft' WHERE id='$campaign_id';
+DELETE FROM public.talkx_campaigns WHERE id='$campaign_id';
 SQL
-[[ "$(psql_test -Atqc "SELECT status || ':' || sent_count FROM public.talkx_campaigns WHERE id='$campaign_id'")" == 'sending:1' ]] || fail 'worker service_role não conseguiu atualizar entrega'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='$campaign_id'")" == '0' ]] || fail 'delete autorizado de draft não fez cascade de recipients'
+
+psql_test >/dev/null <<'SQL'
+INSERT INTO public.talkx_campaigns (id, created_by, status) VALUES
+  ('40000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'draft');
+SQL
+
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.talkx_campaigns SET status='sending', started_at=statement_timestamp(), sent_count=1 WHERE id='40000000-0000-0000-0000-000000000002';
+SQL
+[[ "$(psql_test -Atqc "SELECT status || ':' || sent_count FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000002'")" == 'sending:1' ]] || fail 'worker service_role não conseguiu atualizar entrega'
 
 printf 'PASS: Talk X blocks browser-managed delivery state and requires atomic recipient snapshots\n'

@@ -113,6 +113,19 @@ describe('useTalkX', () => {
 
     await expect(result.current.startCampaign('campaign-1')).resolves.toBe(false);
   });
+
+  it.each(['pauseCampaign', 'cancelCampaign'] as const)(
+    'rejects an operationally refused %s even when the edge function returns HTTP 200',
+    async (action) => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: { success: false, reason: 'transition_denied' },
+        error: null,
+      } as never);
+      const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
+
+      await expect(result.current[action]('campaign-1')).rejects.toThrow('transition_denied');
+    },
+  );
 });
 
 describe('Talk X — Personalization Engine', () => {

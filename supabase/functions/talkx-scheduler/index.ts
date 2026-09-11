@@ -48,9 +48,22 @@ Deno.serve(async (req) => {
             body: JSON.stringify({ campaignId: campaign.id, action: "start" }),
           }
         );
-        const result = await response.json();
-        results.push({ campaignId: campaign.id, name: campaign.name, success: response.ok, result });
-        log.info(`Scheduled campaign started: ${campaign.name} (${campaign.id})`);
+        const result = await response.json().catch(() => null);
+        // `talkx-send` may use a 2xx status for an operational rejection. A
+        // scheduler run is successful only after the function explicitly
+        // accepted the lifecycle transition, never merely because HTTP did.
+        const accepted = response.ok
+          && !!result
+          && typeof result === "object"
+          && (result as { success?: unknown }).success === true;
+        results.push({ campaignId: campaign.id, name: campaign.name, success: accepted, result });
+        if (accepted) {
+          log.info(`Scheduled campaign started: ${campaign.name} (${campaign.id})`);
+        } else {
+          log.warn(`Scheduled campaign was not accepted: ${campaign.name} (${campaign.id})`, {
+            httpStatus: response.status,
+          });
+        }
       } catch (err) {
         log.error(`Failed to start campaign ${campaign.id}`, { error: err instanceof Error ? err.message : String(err) });
         results.push({ campaignId: campaign.id, name: campaign.name, success: false, error: err instanceof Error ? err.message : "Unknown error" });

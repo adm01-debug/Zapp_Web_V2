@@ -55,24 +55,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 2): Promise<Response> {
-  let lastError: Error | null = null;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(url, options);
-      if (response.ok || (response.status >= 400 && response.status < 500)) return response;
-      lastError = new Error(`HTTP ${response.status}`);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-    }
-    if (attempt < maxRetries) {
-      const backoff = Math.pow(2, attempt) * 1000 + Math.random() * 500;
-      await sleep(backoff);
-    }
-  }
-  throw lastError || new Error("Fetch failed after retries");
-}
-
 function getMediaEndpoint(mediaType: string): string {
   switch (mediaType) {
     case "audio": return "sendWhatsAppAudio";
@@ -190,7 +172,7 @@ Deno.serve(async (req) => {
     }
 
     // Get campaign
-    let { data: campaign, error: campErr } = await supabase
+    const { data: campaign, error: campErr } = await supabase
       .from("talkx_campaigns").select("*").eq("id", campaignId).single();
 
     if (campErr || !campaign) {
@@ -198,7 +180,8 @@ Deno.serve(async (req) => {
     }
     // Get WhatsApp connection instance
     const { data: connection } = await supabase
-      .from("whatsapp_connections").select("instance_id").eq("id", campaign.whatsapp_connection_id).single();
+      .from("whatsapp_connections").select("instance_id")
+      .eq("id", campaign.whatsapp_connection_id).eq("status", "connected").single();
 
     if (!connection?.instance_id) {
       return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
@@ -234,43 +217,28 @@ Deno.serve(async (req) => {
     }
 
     // Get pending recipients with contact info
-    const { data: recipients } = await supabase
+    const { data: recipients, error: recipientsError } = await supabase
       .from("talkx_recipients")
       .select("*, contacts:contact_id(name, nickname, phone, company)")
       .eq("campaign_id", campaignId)
       .in("status", ["pending", "sending"])
       .order("created_at");
+    if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
 
     // Get blacklisted contact IDs
     const now = new Date().toISOString();
-    const { data: blacklisted } = await supabase.from("talkx_blacklist")
+    const { data: blacklisted, error: blacklistError } = await supabase.from("talkx_blacklist")
       .select("contact_id, phone")
       .is("removed_at", null)
       .or(`expires_at.is.null,expires_at.gt.${now}`);
+    if (blacklistError) throw new Error(`talkx_blacklist_lookup_failed: ${blacklistError.message}`);
     const blacklistSet = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.contact_id).filter(Boolean));
     const blacklistPhones = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.phone).filter(Boolean));
 
-    // Filter out blacklisted recipients
-    const eligibleRecipients = (recipients || []).filter((r: Record<string, unknown>) => {
-      // Fix P1: phone do recipient vem do join contacts:contact_id, nao do campo raiz
-        const recipientContacts = (r as Record<string, unknown>).contacts as Record<string, unknown> | null;
-        const recipientPhone = (recipientContacts?.phone as string | undefined)?.replace(/\D/g, '');
-        if (blacklistSet.has(r.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone))) {
-        supabase.from("talkx_recipients")
-          .update({ status: "skipped", error_message: "Contato na lista negra (opt-out)" }).eq("id", r.id);
-        return false;
-      }
-      return true;
-    });
-
-    if (eligibleRecipients.length === 0) {
-      await supabase.from("talkx_campaigns")
-        .update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", campaignId);
-      return new Response(JSON.stringify({ success: true, message: "No eligible recipients to send" }), { headers });
-    }
-
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
+    let blacklistedCount = 0;
+    let outcomeUnknownCount = 0;
     let processedCount = 0; // E78: reler parametros a cada RELOAD_EVERY envios
     const RELOAD_EVERY = 20;
     // Cada invocação só pode enviar depois de reivindicar o destinatário no
@@ -288,7 +256,7 @@ Deno.serve(async (req) => {
       return signedMedia.url;
     };
 
-    for (const recipient of eligibleRecipients) {
+    for (const recipient of recipients || []) {
       // Check if campaign was paused/cancelled
       const { data: currentCampaign } = await supabase
         .from("talkx_campaigns").select("status").eq("id", campaignId).single();
@@ -307,6 +275,18 @@ Deno.serve(async (req) => {
       if (!claim?.claim_token) continue;
 
       const contact = recipient.contacts as Record<string, unknown>;
+      const recipientPhone = (contact?.phone as string | undefined)?.replace(/\D/g, '');
+      if (blacklistSet.has(recipient.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone))) {
+        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_status: "skipped",
+          p_error_message: "Contato na lista negra (opt-out)",
+        });
+        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        blacklistedCount++;
+        continue;
+      }
       if (!contact?.phone) {
         const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
           p_recipient_id: recipient.id,
@@ -339,6 +319,7 @@ Deno.serve(async (req) => {
         .update({ personalized_message: personalizedMsg, variant_id: variant?.id ?? existingVid ?? null })
         .eq("id", recipient.id).eq("delivery_claim_token", claim.claim_token);
 
+      let providerPostAttempted = false;
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
         const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
@@ -351,27 +332,44 @@ Deno.serve(async (req) => {
 
         await sleep(typingDelay);
 
+        // Pause/cancel can race with the presence update or typing delay. Do
+        // not begin a provider POST after the campaign has left `sending`.
+        const { data: beforeSend, error: beforeSendError } = await supabase
+          .from("talkx_campaigns").select("status").eq("id", campaignId).single();
+        if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
+        if (beforeSend?.status !== "sending") break;
+
         let sendResponse: Response;
-        let sendResult: Record<string, unknown>;
 
         if (recipientHasMedia) {
           const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
           const mediaSource = (effectiveMediaUrl !== campaign.media_url)
             ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
             : await mediaForSend();
+          providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
-            { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
-            fetchWithRetry
+            { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 }
           );
-          sendResult = await sendResponse.json();
         } else {
+          providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/sendText/${connection.instance_id}`,
-            { number: phone, text: personalizedMsg, delay: 0 },
-            fetchWithRetry
+            { number: phone, text: personalizedMsg, delay: 0 }
           );
+        }
+
+        // POST retries are unsafe without a provider idempotency contract. A
+        // 5xx/connection/parser ambiguity keeps the lease for reconciliation
+        // instead of classifying or resending a message blindly.
+        if (sendResponse.status >= 500) {
+          throw new Error(`talkx_provider_outcome_unknown: HTTP ${sendResponse.status}`);
+        }
+        let sendResult: Record<string, unknown>;
+        try {
           sendResult = await sendResponse.json();
+        } catch {
+          throw new Error("talkx_provider_outcome_unknown: invalid_response_body");
         }
 
         if (sendResponse.ok && !sendResult.error) {
@@ -394,9 +392,28 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         // A chamada ao provedor pode ter sido aceita quando a confirmação no
-        // banco falhou. Não a reclassifique como falha: preserve o lease para
-        // recuperação/auditoria, evitando sobrescrever um possível "sent".
-        if (err instanceof Error && err.message.startsWith("talkx_recipient_completion_failed:")) throw err;
+        // banco falhou. Ela nunca pode voltar automaticamente para `pending`:
+        // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
+        if (providerPostAttempted) {
+          const reason = err instanceof Error ? err.message : "request_failed";
+          const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "outcome_unknown",
+            p_error_message: `Provider outcome unknown: ${reason}`.slice(0, 1000),
+          });
+          if (quarantineError) {
+            // Do not lie about the outcome. A failed quarantine keeps the
+            // lease intact, so it remains visible instead of being retried in
+            // the same invocation.
+            throw new Error(`talkx_recipient_quarantine_failed: ${quarantineError.message}`);
+          }
+          outcomeUnknownCount++;
+          processedCount++;
+          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+          await sleep(interval);
+          continue;
+        }
         failedCount++;
         const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
           p_recipient_id: recipient.id,
@@ -422,23 +439,21 @@ Deno.serve(async (req) => {
       await sleep(sendInterval);
     }
 
-    // Check final status
-    const { data: finalCampaign } = await supabase
-      .from("talkx_campaigns").select("status").eq("id", campaignId).single();
+    const { data: completed, error: completionError } = await supabase.rpc(
+      "complete_talkx_campaign_if_drained",
+      { p_campaign_id: campaignId },
+    );
+    if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
 
-    if (finalCampaign?.status === "sending") {
-      await supabase.from("talkx_campaigns")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id", campaignId);
-    }
-
-    log.done(200, { sent: sentCount, failed: failedCount });
+    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
 
     return new Response(
       JSON.stringify({
         success: true, sent: sentCount, failed: failedCount,
-        total: eligibleRecipients.length,
-        blacklisted: (recipients || []).length - eligibleRecipients.length,
+        total: (recipients || []).length,
+        blacklisted: blacklistedCount,
+        outcome_unknown: outcomeUnknownCount,
+        completed: completed === true,
       }),
       { headers }
     );

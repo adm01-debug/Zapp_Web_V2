@@ -36,8 +36,9 @@ export function TalkXAnalytics({ campaigns }: Props) {
     const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
     const failed = filtered.reduce((a, c) => a + c.failed_count, 0);
     const delivered = filtered.reduce((a, c) => a + c.delivered_count, 0);
-    const total = sent + failed;
-    return { sent, failed, delivered, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
+    const outcomeUnknown = filtered.reduce((a, c) => a + (c.outcome_unknown_count ?? 0), 0);
+    const total = sent + failed + outcomeUnknown;
+    return { sent, failed, delivered, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
   }, [filtered]);
 
   const { data: hourlyData } = useQuery({
@@ -164,14 +165,17 @@ export function TalkXAnalytics({ campaigns }: Props) {
     return comp;
   }, [campaigns]);
   const funnelData = useMemo(() => {
-    const total = filtered.reduce((a, c) => a + c.total_recipients, 0);
     return [
-      { name: 'Enviadas', value: stats.sent, fill: 'hsl(var(--primary))' },
-      { name: 'Entregues', value: stats.delivered || Math.round(stats.sent * 0.964), fill: 'hsl(var(--dash-green))' },
-      { name: 'Lidas', value: Math.round((stats.delivered || stats.sent) * 0.128), fill: 'hsl(var(--dash-violet))' },
-      { name: 'Conversões', value: Math.round((stats.delivered || stats.sent) * 0.046), fill: 'hsl(var(--dash-amber))' },
+      { name: 'Enviadas', value: stats.sent, reported: true, fill: 'hsl(var(--primary))' },
+      { name: 'Entregues', value: stats.delivered, reported: true, fill: 'hsl(var(--dash-green))' },
+      // A base atual não registra confirmação de leitura nem atribuição de
+      // conversão. Exibir uma projeção como se fosse telemetria induziria uma
+      // decisão comercial errada; estes estágios só serão numéricos quando
+      // houver eventos canônicos para eles.
+      { name: 'Lidas', value: null, reported: false, fill: 'hsl(var(--dash-violet))' },
+      { name: 'Conversões', value: null, reported: false, fill: 'hsl(var(--dash-amber))' },
     ];
-  }, [filtered, stats]);
+  }, [stats]);
   const heatmaxVal = useMemo(() => Math.max(...(hourlyData?.hourTotals ?? [0]), 1), [hourlyData]);
 
   // Por dia da semana: soma de todas as horas de cada dia
@@ -282,7 +286,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <section className="rounded-2xl bg-card border border-border/70 p-4">
           <div className="flex items-center gap-2 mb-4">
             <IconTile icon={Target} color="violet" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Funil de Conversão</p><p className="text-[12px] text-foreground-secondary">Do envio à conversão</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Funil da Campanha</p><p className="text-[12px] text-foreground-secondary">Somente métricas confirmadas pela plataforma</p></div>
           </div>
           <div className="space-y-2.5">
             {funnelData.map((f, i) => {
@@ -292,10 +296,10 @@ export function TalkXAnalytics({ campaigns }: Props) {
                   <span className="text-[12px] text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
                   <div style={{ width: `${widths[i]}%` }} className="relative h-9 flex items-center justify-center rounded-lg" >
                     <div className="w-full h-9 rounded-lg flex items-center justify-center" style={{ background: f.fill + '33', border: `1.5px solid ${f.fill}55` }}>
-                      <span className="text-[13px] font-bold text-foreground">{fmtInt(f.value)}</span>
+                      <span className="text-[13px] font-bold text-foreground">{f.reported ? fmtInt(f.value ?? 0) : 'Não rastreado'}</span>
                     </div>
                   </div>
-                  <span className="text-[12px] text-foreground-secondary w-12 shrink-0">{fmtPct(f.value, funnelData[0].value)}</span>
+                  <span className="text-[12px] text-foreground-secondary w-12 shrink-0">{f.reported ? fmtPct(f.value ?? 0, funnelData[0].value ?? 0) : '—'}</span>
                 </div>
               );
             })}

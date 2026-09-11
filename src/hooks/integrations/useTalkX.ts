@@ -27,6 +27,7 @@ export interface TalkXCampaign {
   sent_count: number;
   failed_count: number;
   delivered_count: number;
+  outcome_unknown_count?: number;
   whatsapp_connection_id: string | null;
   created_by: string | null;
   started_at: string | null;
@@ -67,6 +68,29 @@ export interface TalkXRecipient {
     company: string | null;
     avatar_url: string | null;
   };
+}
+
+type TalkXActionResponse = {
+  success?: unknown;
+  reason?: unknown;
+  error?: unknown;
+};
+
+/**
+ * Edge Functions can deliberately return HTTP 200 for an operational refusal
+ * (for example, a campaign outside its send window). Supabase exposes that as
+ * `error: null`, so every lifecycle action must validate the body as well.
+ */
+function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse & { success: true } {
+  if (data && typeof data === 'object' && (data as TalkXActionResponse).success === true) return;
+
+  const response = data && typeof data === 'object' ? data as TalkXActionResponse : null;
+  const reason = typeof response?.reason === 'string'
+    ? response.reason
+    : typeof response?.error === 'string'
+      ? response.error
+      : 'Solicitação de campanha não foi aceita';
+  throw new Error(reason);
 }
 
 type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updated_at'>;
@@ -144,13 +168,15 @@ export function useTalkX() {
 
   const createCampaign = useMutation({
     mutationFn: async (campaign: CampaignPayload) => {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .single();
+      if (profileError) throw profileError;
+      if (!profile?.id) throw new Error('Perfil ativo não encontrado para criar a campanha.');
 
       const { data, error } = await fromTable('talkx_campaigns')
-        .insert({ ...campaign, created_by: profile?.id })
+        .insert({ ...campaign, created_by: profile.id })
         .select()
         .single();
       if (error) throw error;
@@ -197,22 +223,20 @@ export function useTalkX() {
       campaignId: string;
       contactIds: string[];
     }) => {
-      const rows = contactIds.map((contact_id) => ({
-        campaign_id: campaignId,
-        contact_id,
-      }));
-      const { error } = await fromTable('talkx_recipients')
-        .insert(rows);
+      // Compatibilidade do hook antigo: destinatários agora só podem ser
+      // gravados pelo snapshot transacional. Insert direto violaria o trigger
+      // de integridade e permitiria contador/audiência divergentes.
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { error } = await rpc('replace_talkx_draft_recipients', {
+        p_campaign_id: campaignId,
+        p_contact_ids: contactIds,
+      });
       if (error) throw error;
-
-      await fromTable('talkx_campaigns')
-        .update({ total_recipients: contactIds.length })
-        .eq('id', campaignId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Contatos adicionados!');
+      toast.success('Audiência atualizada!');
     },
   });
 
@@ -248,14 +272,7 @@ export function useTalkX() {
         body: { campaignId, action: 'start' },
       });
       if (error) throw error;
-      // A Edge Function usa HTTP 200 para recusas operacionais, como fora da
-      // janela de envio. Não trate uma resposta `{ ok: false }` como início.
-      if (!data || typeof data !== 'object' || (data as { success?: unknown }).success !== true) {
-        const reason = typeof data === 'object' && data !== null && typeof (data as { reason?: unknown }).reason === 'string'
-          ? (data as { reason: string }).reason
-          : 'Solicitação de envio não foi aceita';
-        throw new Error(reason);
-      }
+      assertTalkXActionAccepted(data);
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
       toast.success('Processamento da campanha confirmado.');
       return true;
@@ -267,18 +284,20 @@ export function useTalkX() {
   }, [queryClient]);
 
   const pauseCampaign = useCallback(async (campaignId: string) => {
-    const { error } = await supabase.functions.invoke('talkx-send', {
+    const { data, error } = await supabase.functions.invoke('talkx-send', {
       body: { campaignId, action: 'pause' },
     });
-    if (error) throw error; // P1: relanca para o chamador tratar
+    if (error) throw error;
+    assertTalkXActionAccepted(data);
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
   const cancelCampaign = useCallback(async (campaignId: string) => {
-    const { error } = await supabase.functions.invoke('talkx-send', {
+    const { data, error } = await supabase.functions.invoke('talkx-send', {
       body: { campaignId, action: 'cancel' },
     });
-    if (error) throw error; // P1: relanca para o chamador tratar
+    if (error) throw error;
+    assertTalkXActionAccepted(data);
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 

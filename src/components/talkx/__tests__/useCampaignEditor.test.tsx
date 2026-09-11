@@ -6,7 +6,8 @@ const f = vi.hoisted(() => ({
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
-  persistedRecipientIds: [] as { contact_id: string }[],
+  persistedRecipientIds: [] as { contact_id: string }[] | undefined,
+  templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number }[],
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
@@ -21,7 +22,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   useTalkXSegments: () => ({ segments: [] }),
   resolveAudience: vi.fn(), countAudience: vi.fn(),
 }));
-vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [], registerUse: vi.fn() }) }));
+vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: f.templates, registerUse: vi.fn() }) }));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
@@ -29,12 +30,12 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: ({ queryKey }: { queryKey: string[] }) => ({
     data: queryKey[0] === 'wa-connections-talkx' ? f.connections
       : queryKey[0] === 'contacts-talkx' ? f.contacts
-      : queryKey[0] === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds.map((recipient) => recipient.contact_id)
+      : queryKey[0] === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
         : queryKey[0] === 'talkx-blacklist-ids' ? f.blacklist : undefined,
   }),
 }));
 
-import { useCampaignEditor } from '@/components/talkx/useCampaignEditor';
+import { localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 
 describe('useCampaignEditor — draft integrity', () => {
@@ -49,10 +50,16 @@ describe('useCampaignEditor — draft integrity', () => {
     f.blacklist.ids.clear();
     f.blacklist.phones.clear();
     f.persistedRecipientIds = [];
+    f.templates = [];
     window.history.replaceState(null, '', '/');
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it('rejects a nonexistent local DST time instead of silently moving the scheduled instant', () => {
+    expect(() => localToUTCInTimezone('2026-03-08T02:30', 'America/New_York'))
+      .toThrow('horário selecionado não existe');
+  });
 
   it('uses the requested valid wizard step and rejects an invalid value', () => {
     window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=3');
@@ -83,6 +90,17 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
   });
 
+  it('uses the created identity after opening a duplicate with an empty id', async () => {
+    const duplicate = { id: '', name: 'Cópia', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(duplicate as never, vi.fn()));
+
+    await act(async () => { await result.current.handleSave('draft'); });
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.create).toHaveBeenCalledTimes(1);
+    expect(f.update).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'draft-1' }));
+  });
+
   it('restores the persisted recipient snapshot before editing an existing draft', async () => {
     f.persistedRecipientIds = [{ contact_id: 'contact-1' }];
     const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
@@ -101,6 +119,40 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(f.create).toHaveBeenCalledTimes(1);
     expect(f.update).toHaveBeenCalledTimes(1);
     expect(f.replace).toHaveBeenLastCalledWith({ campaignId: 'draft-1', contactIds: ['contact-1'] });
+  });
+
+  it('autosaves all persisted audience filters', async () => {
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    f.update.mockClear();
+
+    act(() => result.current.setCompanyFilter('Acme'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'draft-1',
+      audience_filters: expect.objectContaining({ company: 'Acme' }),
+    }));
+
+    f.update.mockClear();
+    act(() => result.current.setCompanyFilter('all'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'draft-1',
+      audience_filters: expect.objectContaining({ company: 'all' }),
+    }));
+  });
+
+  it('does not overwrite an existing audience before its snapshot hydrates', async () => {
+    f.persistedRecipientIds = undefined;
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+
+    await act(async () => {
+      await expect(result.current.handleSave('draft')).rejects.toThrow('audiência deste rascunho ainda está carregando');
+    });
+    expect(f.replace).not.toHaveBeenCalled();
   });
 
   it('serializes overlapping saves and reuses the ID created by the first request', async () => {
@@ -165,9 +217,36 @@ describe('useCampaignEditor — draft integrity', () => {
       result.current.setConfirmSuppression(true);
     });
 
-    await expect(result.current.handleSave('launch')).rejects.toThrow('A campanha não foi iniciada');
+    await act(async () => {
+      await expect(result.current.handleSave('launch')).rejects.toThrow('A campanha não foi iniciada');
+    });
     expect(f.start).toHaveBeenCalledWith('draft-1');
     expect(f.log).toHaveBeenCalledWith('draft-1', 'created', 'Campanha criada');
     expect(f.log).not.toHaveBeenCalledWith('draft-1', 'started', 'Envio iniciado manualmente');
+  });
+
+  it('rejects direct launch when required review confirmations or content are missing', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha de teste');
+      result.current.toggleContact('contact-1');
+    });
+
+    await act(async () => {
+      await expect(result.current.handleSave('launch')).rejects.toThrow('Revise público, mensagem, agendamento e confirmações');
+    });
+    expect(f.start).not.toHaveBeenCalled();
+  });
+
+  it('clears existing media when applying a text-only template', () => {
+    f.templates = [{ id: 'text-only', content: 'Apenas texto', media_url: null, use_count: 0 }];
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft', media_url: 'old-image.png', media_type: 'image' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+
+    act(() => result.current.applyTemplate('text-only'));
+
+    expect(result.current.messageTemplate).toBe('Apenas texto');
+    expect(result.current.hasMedia).toBe(false);
+    expect(result.current.mediaUrl).toBe('');
   });
 });

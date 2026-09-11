@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const migration = await readFile(new URL('../../supabase/migrations/20260911130000_add_talkx_recipient_delivery_leases.sql', import.meta.url), 'utf8');
+const completionMigration = await readFile(new URL('../../supabase/migrations/20260911170000_add_talkx_campaign_completion_rpc.sql', import.meta.url), 'utf8');
+const quarantineMigration = await readFile(new URL('../../supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
+const outcomeCounterMigration = await readFile(new URL('../../supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
 const edgeFunction = await readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8');
 
 test('Talk X leases are service-role-only and fence claim completion', () => {
@@ -24,6 +27,31 @@ test('talkx-send claims before touching the provider and completes with its leas
   assert.match(edgeFunction, /transition_talkx_campaign/);
   assert.doesNotMatch(edgeFunction, /\.update\(\{ status: newStatus \}\)/);
   assert.match(edgeFunction, /campaignAction !== "start"/);
+  assert.match(edgeFunction, /complete_talkx_campaign_if_drained/);
+  assert.match(edgeFunction, /p_status:\s*"outcome_unknown"/);
+  assert.match(edgeFunction, /talkx_recipient_quarantine_failed/);
+  assert.doesNotMatch(edgeFunction, /fetchWithRetry/);
+});
+
+test('ambiguous provider outcomes are terminal and cannot be re-claimed automatically', () => {
+  assert.match(quarantineMigration, /'outcome_unknown'/);
+  assert.match(quarantineMigration, /p_status NOT IN \('sent', 'failed', 'skipped', 'outcome_unknown'\)/);
+  assert.match(quarantineMigration, /REVOKE ALL ON FUNCTION public\.complete_talkx_recipient[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(quarantineMigration, /GRANT EXECUTE ON FUNCTION public\.complete_talkx_recipient[\s\S]*TO service_role/i);
+});
+
+test('only the delivery worker can account for quarantined provider outcomes', () => {
+  assert.match(outcomeCounterMigration, /ADD COLUMN IF NOT EXISTS outcome_unknown_count integer NOT NULL DEFAULT 0/i);
+  assert.match(outcomeCounterMigration, /NEW\.outcome_unknown_count IS DISTINCT FROM OLD\.outcome_unknown_count/i);
+  assert.match(outcomeCounterMigration, /outcome_unknown_count = campaign\.outcome_unknown_count \+ CASE WHEN p_status = 'outcome_unknown' THEN 1 ELSE 0 END/i);
+});
+
+test('Talk X completion is service-only, locked and requires a drained queue', () => {
+  assert.match(completionMigration, /FOR UPDATE/i);
+  assert.match(completionMigration, /recipient\.status IN \('pending', 'sending'\)/i);
+  assert.match(completionMigration, /status = 'completed'/i);
+  assert.match(completionMigration, /REVOKE ALL ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(completionMigration, /GRANT EXECUTE ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*TO service_role/i);
 });
 
 test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {

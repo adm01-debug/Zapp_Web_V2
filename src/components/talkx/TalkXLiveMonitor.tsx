@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Pause, Square, Play, Download, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
-  SkipForward, BarChart3, Activity, RefreshCw, Zap,
+  SkipForward, BarChart3, Activity, RefreshCw, Zap, AlertTriangle,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -86,9 +86,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m ${elapsedSec % 60}s`;
   })();
 
-  const progress = campaign && campaign.total_recipients > 0 ? pct(campaign.sent_count + campaign.failed_count, campaign.total_recipients) : 0;
-  const remaining = campaign ? campaign.total_recipients - campaign.sent_count - campaign.failed_count : 0;
-  const successRate = campaign && campaign.sent_count + campaign.failed_count > 0 ? pct(campaign.sent_count, campaign.sent_count + campaign.failed_count) : 0;
+  const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
+  const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
+  const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
+  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
+  const successRate = campaign && processed > 0 ? pct(campaign.sent_count, processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData } = useTalkXMonitor(campaignId, statusFilter);
@@ -151,14 +153,14 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         </div>
         <Progress value={progress} className="h-3 mb-1.5"/>
         <div className="flex items-center justify-between text-[11.5px] text-foreground-secondary">
-          <span>{progress}% concluído · {fmtInt(campaign.sent_count + campaign.failed_count)} de {fmtInt(campaign.total_recipients)}</span>
+          <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-        {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'A confirmar',v:fmtInt(outcomeUnknown),I:AlertTriangle,c:'text-dash-amber'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
           <motion.div key={l} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.05}} className="rounded-xl bg-card border border-border/70 p-3 flex items-center gap-2">
             <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-[17px] font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary truncate">{l}</p></div>
           </motion.div>

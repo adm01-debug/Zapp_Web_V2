@@ -33,7 +33,7 @@ const STEPS: { n: WizardStep; label: string; hint: string }[] = [
 interface Props {
   campaign: TalkXCampaign | null;
   onClose: () => void;
-  onLaunched?: (campaignId: string) => void;
+  onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
   initial?: { segmentId?: string; templateId?: string };
 }
 
@@ -116,7 +116,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
           {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id) => { onLaunched?.(id); onClose(); }} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} />}
 
           {/* Footer */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
