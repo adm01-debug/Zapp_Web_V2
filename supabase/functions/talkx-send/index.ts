@@ -168,11 +168,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "campaignId required" }), { status: 400, headers });
     }
 
-    // Handle pause/cancel
-    if (action === "pause" || action === "cancel") {
-      const newStatus = action === "pause" ? "paused" : "cancelled";
-      await supabase.from("talkx_campaigns").update({ status: newStatus }).eq("id", campaignId);
-      return new Response(JSON.stringify({ success: true, status: newStatus }), { headers });
+    const campaignAction = action ?? "start";
+
+    // Pause/cancel share the same locked database transition used by start.
+    // An update without this lock could resurrect a campaign cancelled by a
+    // concurrent request between its read and write.
+    if (campaignAction === "pause" || campaignAction === "cancel") {
+      const { data, error } = await supabase.rpc("transition_talkx_campaign", {
+        p_campaign_id: campaignId,
+        p_action: campaignAction,
+      });
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
+      }
+      const transition = Array.isArray(data) ? data[0] : data;
+      return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
     }
 
     // Get campaign
@@ -182,10 +192,6 @@ Deno.serve(async (req) => {
     if (campErr || !campaign) {
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
     }
-    if (campaign.status === "completed" || campaign.status === "cancelled") {
-      return new Response(JSON.stringify({ error: "Campaign cannot be started from its current status" }), { status: 409, headers });
-    }
-
     // Get WhatsApp connection instance
     const { data: connection } = await supabase
       .from("whatsapp_connections").select("instance_id").eq("id", campaign.whatsapp_connection_id).single();
@@ -213,9 +219,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Mark as sending
-    await supabase.from("talkx_campaigns")
-      .update({ status: "sending", started_at: new Date().toISOString() }).eq("id", campaignId);
+    // The transition RPC locks the campaign row and revalidates the state and
+    // minimum launch invariants immediately before any recipient can be claimed.
+    const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
+      p_campaign_id: campaignId,
+      p_action: "start",
+    });
+    if (transitionError) {
+      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
 
     // Get pending recipients with contact info
     const { data: recipients } = await supabase

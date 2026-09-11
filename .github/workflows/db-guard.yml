@@ -122,6 +122,11 @@ jobs:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/talkx-campaign-state-transitions.test.sh
 
+      - name: Simular transições concorrentes de campanha Talk X
+        env:
+          TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/talkx-campaign-transitions.test.sh
+
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine

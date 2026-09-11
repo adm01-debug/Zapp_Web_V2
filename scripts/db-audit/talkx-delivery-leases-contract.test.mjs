@@ -21,5 +21,15 @@ test('talkx-send claims before touching the provider and completes with its leas
   assert.ok(claim >= 0 && provider >= 0 && claim < provider, 'claim must precede provider send');
   assert.ok(completion > provider, 'completion must follow provider send');
   assert.match(edgeFunction, /p_claim_token:\s*claim\.claim_token/);
-  assert.match(edgeFunction, /Campaign cannot be started from its current status/);
+  assert.match(edgeFunction, /transition_talkx_campaign/);
+  assert.doesNotMatch(edgeFunction, /\.update\(\{ status: newStatus \}\)/);
+});
+
+test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {
+  const transitionMigration = await readFile(new URL('../../supabase/migrations/20260911150000_add_talkx_campaign_transition_rpc.sql', import.meta.url), 'utf8');
+  assert.match(transitionMigration, /FOR UPDATE/i);
+  assert.match(transitionMigration, /talkx_campaign_start_denied_from_/i);
+  assert.match(transitionMigration, /talkx_campaign_recipients_required/i);
+  assert.match(transitionMigration, /REVOKE ALL ON FUNCTION public\.transition_talkx_campaign[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(transitionMigration, /GRANT EXECUTE ON FUNCTION public\.transition_talkx_campaign[\s\S]*TO service_role/i);
 });
