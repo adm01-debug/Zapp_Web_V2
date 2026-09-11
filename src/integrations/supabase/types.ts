@@ -6323,6 +6323,7 @@ export type Database = {
           created_at: string
           delivered_at: string | null
           error_message: string | null
+          external_id: string | null
           id: string
           personalized_message: string | null
           sent_at: string | null
@@ -6336,6 +6337,7 @@ export type Database = {
           created_at?: string
           delivered_at?: string | null
           error_message?: string | null
+          external_id?: string | null
           id?: string
           personalized_message?: string | null
           sent_at?: string | null
@@ -6349,6 +6351,7 @@ export type Database = {
           created_at?: string
           delivered_at?: string | null
           error_message?: string | null
+          external_id?: string | null
           id?: string
           personalized_message?: string | null
           sent_at?: string | null
@@ -8820,6 +8823,10 @@ export type Database = {
           p_account_id: string
           p_refresh_token?: string
         }
+        Returns: undefined
+      }
+      talkx_increment_delivered: {
+        Args: { p_campaign_id: string }
         Returns: undefined
       }
       update_own_profile: {
