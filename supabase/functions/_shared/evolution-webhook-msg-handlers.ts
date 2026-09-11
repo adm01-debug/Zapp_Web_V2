@@ -110,6 +110,23 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
+      }
+      // E87: rastreio de entrega Talk X via external_id
+      if (newStatus === 'delivered' && key?.id) {
+        const { data: talkxRecip } = await supabase
+          .from('talkx_recipients')
+          .select('id, campaign_id')
+          .eq('external_id', key.id)
+          .is('delivered_at', null) // idempotente
+          .maybeSingle();
+        if (talkxRecip) {
+          await supabase.from('talkx_recipients')
+            .update({ status: 'delivered', delivered_at: now })
+            .eq('id', talkxRecip.id);
+          // RPC atomica -- evita race condition entre webhooks concorrentes
+          await supabase.rpc('talkx_increment_delivered', { p_campaign_id: talkxRecip.campaign_id });
+          console.warn(`TalkX delivered: recipient ${talkxRecip.id} campaign ${talkxRecip.campaign_id}`);
+        }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a
