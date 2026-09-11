@@ -1,11 +1,16 @@
 // talkxExport.ts — E29: exportar campanhas como CSV (BOM UTF-8, sem lib)
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
+/** Escapa para CSV e neutraliza formula-injection (P1 fix + CR/tab/full-width). */
 function esc(v: string): string {
-  if (v.includes(',') || v.includes('"') || v.includes('\n')) {
-    return '"' + v.replace(/"/g, '""') + '"';
+  // Prefixos que planilhas interpretam como formulas (incluindo full-width)
+  const FORMULA_PREFIX = /^[=+\-@\t\r\n＝＋－＠]/u;
+  let safe = v;
+  if (FORMULA_PREFIX.test(safe)) safe = "'" + safe; // apostrofe forca texto no Excel
+  if (safe.includes(',') || safe.includes('"') || safe.includes('\r') || safe.includes('\n')) {
+    return '"' + safe.replace(/"/g, '""') + '"';
   }
-  return v;
+  return safe;
 }
 
 const HEADERS = [

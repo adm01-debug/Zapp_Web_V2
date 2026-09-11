@@ -77,7 +77,7 @@ func isBlockedAddress(address netip.Addr) bool {
 		v4 := address.As4()
 		if v4[0] == 0 || v4[0] == 127 || v4[0] >= 224 ||
 			(v4[0] == 100 && v4[1] >= 64 && v4[1] <= 127) ||
-			(v4[0] == 192 && v4[1] == 0) ||
+			(v4[0] == 192 && v4[1] == 0 && (v4[2] == 0 || v4[2] == 2)) ||
 			(v4[0] == 198 && v4[1] == 51 && v4[2] == 100) ||
 			(v4[0] == 203 && v4[1] == 0 && v4[2] == 113) {
 			return true
@@ -257,7 +257,7 @@ func signature(secret []byte, timestamp, nonce string, body []byte) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-func (s *service) reserveNonce(nonce string, now time.Time) bool {
+func (s *service) reserveNonce(nonce string, now, expiry time.Time) bool {
 	s.nonceMu.Lock()
 	defer s.nonceMu.Unlock()
 	for value, expiry := range s.nonces {
@@ -268,7 +268,7 @@ func (s *service) reserveNonce(nonce string, now time.Time) bool {
 	if _, exists := s.nonces[nonce]; exists || len(s.nonces) >= maxNonces {
 		return false
 	}
-	s.nonces[nonce] = now.Add(replayWindow)
+	s.nonces[nonce] = expiry
 	return true
 }
 
@@ -285,7 +285,9 @@ func (s *service) authorized(r *http.Request, body []byte, now time.Time) bool {
 	if subtle.ConstantTimeCompare([]byte(expected), []byte(provided)) != 1 {
 		return false
 	}
-	return s.reserveNonce(nonce, now)
+	// Retain the nonce until its signed timestamp can no longer pass the
+	// ±replayWindow check; the extra second covers Unix-second truncation.
+	return s.reserveNonce(nonce, now, time.Unix(seconds, 0).Add(replayWindow+time.Second))
 }
 
 func abs(value int64) int64 {

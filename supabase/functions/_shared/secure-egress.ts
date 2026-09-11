@@ -23,6 +23,14 @@ interface EgressPayload {
   body_base64: string;
 }
 
+function isEgressPayload(value: unknown): value is EgressPayload {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const payload = value as Record<string, unknown>;
+  return typeof payload.url === "string" && typeof payload.status === "number" &&
+    Number.isInteger(payload.status) && typeof payload.content_type === "string" &&
+    typeof payload.body_base64 === "string";
+}
+
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((byte) => byte.toString(16).padStart(2, "0"))
@@ -133,17 +141,21 @@ export async function fetchPreviewViaSecureEgress(
   } catch {
     return null;
   }
-  if (!proxyResponse.ok) return null;
+  if (!proxyResponse.ok) {
+    await proxyResponse.body?.cancel().catch(() => {});
+    return null;
+  }
 
-  let payload: EgressPayload;
+  let payload: unknown;
   try {
-    payload = await proxyResponse.json() as EgressPayload;
+    payload = await proxyResponse.json();
   } catch {
     return null;
   }
+  // 204/205/304 are null-body statuses; a Response with a body would throw.
   if (
-    typeof payload.url !== "string" || typeof payload.status !== "number" ||
-    !Number.isInteger(payload.status) || payload.status < 200 ||
+    !isEgressPayload(payload) || payload.status < 200 ||
+    payload.status === 204 || payload.status === 205 || payload.status === 304 ||
     payload.status > 599 || typeof payload.content_type !== "string" ||
     typeof payload.body_base64 !== "string"
   ) {

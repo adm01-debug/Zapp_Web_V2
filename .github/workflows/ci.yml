@@ -211,6 +211,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -228,10 +229,16 @@ jobs:
       - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
         run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt
 
-      - name: 🔍 Check for secrets in code
-        run: |
-          echo "Checking for potential secrets..."
-          ! grep -rn "SUPABASE_SERVICE_ROLE_KEY\|sk_live_\|sk_test_\|password\s*=\s*[\"']" --include="*.ts" --include="*.tsx" --include="*.js" src/
+      - name: 🔍 Detect secrets introduced in commits
+        # v3 roda em Node 24. O action calcula o intervalo do evento e falha
+        # fechado para segredos novos, sem reabrir findings históricos já
+        # inventariados. Não recebe secrets privilegiados em pull_request.
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'false'
 
   # ===========================================
   # JOB 5: Audit Report Generation
