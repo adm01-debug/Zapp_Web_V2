@@ -22,9 +22,17 @@ test('fetch-link-preview deploy fails closed without a valid secure egress confi
   );
   assert.match(workflow, /PREVIEW_EGRESS_PROXY_URL e PREVIEW_EGRESS_SHARED_SECRET sao obrigatorios/);
   assert.match(workflow, /endpoint\.protocol !== 'https:'/);
-  assert.match(workflow, /endpoint\.pathname !== '\/v1\/fetch'/);
+  assert.match(workflow, /!\/\(\?:\^\|\\\/\)v1\\\/fetch\$\/\.test\(endpoint\.pathname\)/);
   assert.match(workflow, /PREVIEW_EGRESS_SHARED_SECRET\.length < 32/);
   assert.match(workflow, /supabase secrets set[\s\\]+PREVIEW_EGRESS_PROXY_URL=/);
+});
+
+test('secure egress route accepts a Traefik prefix only on a path boundary', () => {
+  const route = /(?:^|\/)v1\/fetch$/;
+  assert.equal(route.test('/v1/fetch'), true);
+  assert.equal(route.test('/preview-egress/v1/fetch'), true);
+  assert.equal(route.test('/preview-egressv1/fetch'), false);
+  assert.equal(route.test('/v1/fetch/extra'), false);
 });
 
 test('rollback deploy is pinned to a historical ancestor and attests deployed SHA', () => {
