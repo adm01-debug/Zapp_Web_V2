@@ -1,0 +1,8 @@
+title = "Zapp Web V2 secret scanning exceptions"
+
+[[allowlists]]
+description = "Hash estrutural de FK no manifesto de schema; nao e credencial"
+regexTarget = "match"
+regexes = [
+  '''"relation:talkx_blacklist\.talkx_blacklist_removed_by_fkey":\s*"[a-f0-9]{32}"''',
+]
