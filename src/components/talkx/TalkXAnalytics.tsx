@@ -148,19 +148,21 @@ export function TalkXAnalytics({ campaigns }: Props) {
   const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
 
   // E82: comparativo taxa de entrega
+  // E82: usa campaigns (nao filtered) — periodo nao deve excluir campanhas antigas do comparativo
+  // Envio (%) = sent_count/total_recipients (dado rastreado; delivered aguarda E87)
   const compareData = useMemo(() => {
-    const comp = filtered
-      .filter((c) => c.status === 'completed' && c.sent_count > 0)
+    const comp = campaigns
+      .filter((c) => c.status === 'completed' && c.total_recipients > 0)
       .sort((a, b) => new Date(b.completed_at ?? b.updated_at).getTime() - new Date(a.completed_at ?? a.updated_at).getTime())
       .slice(0, 5)
       .map((c) => ({
         name: c.name.length > 16 ? c.name.slice(0, 15) + '…' : c.name,
-        'Entrega (%)': c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : 0,
+        'Envio (%)': c.total_recipients > 0 ? Math.round((c.sent_count / c.total_recipients) * 1000) / 10 : 0,
         'Falha (%)': (c.sent_count + c.failed_count) > 0 ? Math.round((c.failed_count / (c.sent_count + c.failed_count)) * 1000) / 10 : 0,
       }))
       .reverse();
     return comp;
-  }, [filtered]);
+  }, [campaigns]);
   const funnelData = useMemo(() => {
     const total = filtered.reduce((a, c) => a + c.total_recipients, 0);
     return [
@@ -200,7 +202,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
 
       <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
-        <DashboardKpiCard size="hero" index={1} label="Taxa de entrega" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
+        <DashboardKpiCard size="hero" index={1} label="Taxa de envio" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
         <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
         <DashboardKpiCard size="hero" index={3}
           label="Conversão por segmento"
@@ -405,7 +407,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <IconTile icon={TrendingUp} color="green" size={36} />
             <div>
               <p className="text-[15px] font-bold text-foreground">Comparativo de Campanhas</p>
-              <p className="text-[12px] text-foreground-secondary">{`Últimas ${compareData.length} concluídas — entrega vs falha`}</p>
+              <p className="text-[12px] text-foreground-secondary">{`Últimas ${compareData.length} concluídas — envio vs falha`}</p>
             </div>
           </div>
           <div className="h-[240px] w-full">
@@ -415,8 +417,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
                 <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v) => [String(v) + '%', '']} />
-                <Bar dataKey="Entrega (%)" fill="hsl(var(--dash-green))" radius={[4, 4, 0, 0]} maxBarSize={48}>
-                  <LabelList dataKey="Entrega (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} />
+                <Bar dataKey="Envio (%)" fill="hsl(var(--dash-green))" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                  <LabelList dataKey="Envio (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} />
                 </Bar>
                 <Bar dataKey="Falha (%)" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
