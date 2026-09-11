@@ -9,7 +9,7 @@
 // Uso: node scripts/ci/bundle-budget.mjs [--dist dist] [--budget performance-budget.json]
 
 import { gzipSync } from "node:zlib";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -40,6 +40,15 @@ export function gzipKB(buffer) {
   return gzipSync(buffer, { level: 9 }).length / 1024;
 }
 
+function allAssetFiles(root, directory = root) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) return allAssetFiles(root, file);
+    if (!entry.isFile() || entry.name.endsWith(".map")) return [];
+    return [{ file, href: `/${path.relative(root, file).replaceAll(path.sep, "/")}` }];
+  });
+}
+
 export function measure(distDir, html) {
   const assets = extractInitialAssets(html);
   const resolve = (href) => path.join(distDir, href.replace(/^\//u, ""));
@@ -51,7 +60,24 @@ export function measure(distDir, html) {
   const js = size(assets.js);
   const css = size(assets.css);
   const sum = (items) => items.reduce((total, item) => total + item.kb, 0);
-  return { js, css, jsKB: sum(js), cssKB: sum(css) };
+  const allAssets = allAssetFiles(distDir).map(({ file, href }) => ({
+    href,
+    gzipKB: gzipKB(readFileSync(file)),
+  }));
+  // Diferentemente de initial-js, este limite tambem cobre chunks lazy. Eles
+  // afetam diretamente a latencia percebida na primeira navegacao daquela rota.
+  const largestChunkKB = allAssets
+    .filter(({ href }) => href.endsWith(".js"))
+    .reduce((largest, item) => Math.max(largest, item.gzipKB), 0);
+  const totalAssetsKB = allAssets.reduce((total, item) => total + item.gzipKB, 0);
+  return {
+    js,
+    css,
+    jsKB: sum(js),
+    cssKB: sum(css),
+    largestChunkKB,
+    totalAssetsKB,
+  };
 }
 
 export function evaluate(result, budgets) {
@@ -63,6 +89,14 @@ export function evaluate(result, budgets) {
   }
   if (typeof cssMax === "number" && result.cssKB > cssMax) {
     failures.push(`initial-css: ${result.cssKB.toFixed(1)} KB gzip > budget ${cssMax} KB`);
+  }
+  const largestChunkMax = budgets["largest-chunk"]?.maxKB;
+  if (typeof largestChunkMax === "number" && result.largestChunkKB > largestChunkMax) {
+    failures.push(`largest-chunk: ${result.largestChunkKB.toFixed(1)} KB gzip > budget ${largestChunkMax} KB`);
+  }
+  const totalAssetsMax = budgets["total-assets"]?.maxKB;
+  if (typeof totalAssetsMax === "number" && result.totalAssetsKB > totalAssetsMax) {
+    failures.push(`total-assets: ${result.totalAssetsKB.toFixed(1)} KB gzip > budget ${totalAssetsMax} KB`);
   }
   return failures;
 }
@@ -94,6 +128,8 @@ export function main(argv = process.argv.slice(2), root = process.cwd()) {
   }
   console.log(`  JS inicial:  ${result.jsKB.toFixed(1)} KB (budget ${budgets["initial-js"]?.maxKB ?? "-"} KB, ${result.js.length} chunks)`);
   console.log(`  CSS inicial: ${result.cssKB.toFixed(1)} KB (budget ${budgets["initial-css"]?.maxKB ?? "-"} KB)`);
+  console.log(`  Maior chunk JS (inclui lazy): ${result.largestChunkKB.toFixed(1)} KB gzip (budget ${budgets["largest-chunk"]?.maxKB ?? "-"} KB)`);
+  console.log(`  Assets totais: ${result.totalAssetsKB.toFixed(1)} KB gzip, sem maps (budget ${budgets["total-assets"]?.maxKB ?? "-"} KB)`);
 
   const failures = evaluate(result, budgets);
   if (failures.length) {

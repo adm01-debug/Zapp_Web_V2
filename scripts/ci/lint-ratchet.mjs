@@ -9,6 +9,10 @@ import { spawnSync } from "node:child_process";
 const SCHEMA_VERSION = 1;
 const DEFAULT_BASELINE = "scripts/ci/eslint-baseline.json";
 const MAX_REPORTED_ISSUES = 50;
+// Artefatos produzidos por testes nao sao fonte do projeto. O ESLint nao le o
+// .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os
+// exclui explicitamente para que uma execucao de coverage nao altere o gate.
+const GENERATED_ARTIFACT_IGNORES = ["coverage/**"];
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -397,13 +401,23 @@ function parseArguments(argv) {
   return options;
 }
 
+export function eslintCommandArguments(eslintEntry) {
+  return [
+    eslintEntry,
+    ".",
+    "--format",
+    "json",
+    ...GENERATED_ARTIFACT_IGNORES.flatMap((pattern) => ["--ignore-pattern", pattern]),
+  ];
+}
+
 function runEslint(root) {
   const eslintEntry = path.join(root, "node_modules", "eslint", "bin", "eslint.js");
   if (!existsSync(eslintEntry)) {
     throw new Error("ESLint local nao encontrado. Execute a instalacao das dependencias primeiro.");
   }
 
-  const result = spawnSync(process.execPath, [eslintEntry, ".", "--format", "json"], {
+  const result = spawnSync(process.execPath, eslintCommandArguments(eslintEntry), {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
