@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Pause, Square, Play, Download, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
@@ -247,11 +248,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
 
       <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Pausar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios em andamento serão concluídos, mas novos envios não serão iniciados.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async()=>{await pauseCampaign(campaignId);await logEvent(campaignId,'paused');setConfirmPause(false);}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async()=>{try { await pauseCampaign(campaignId); } catch(e: unknown) { toast.error(`Erro ao pausar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }await logEvent(campaignId,'paused');setConfirmPause(false);}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Cancelar campanha?</AlertDialogTitle><AlertDialogDescription>O envio será interrompido e contatos pendentes não receberão mensagens.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={async()=>{await cancelCampaign(campaignId);await logEvent(campaignId,'cancelled');setConfirmCancel(false);}}>Cancelar campanha</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={async()=>{try { await cancelCampaign(campaignId); } catch(e: unknown) { toast.error(`Erro ao cancelar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }await logEvent(campaignId,'cancelled');setConfirmCancel(false);}}>Cancelar campanha</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
         <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Retomar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios serão continuados a partir de onde pararam.</AlertDialogDescription></AlertDialogHeader>

@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
@@ -152,7 +153,10 @@ export default function TalkXView() {
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
             onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={openRunning} onDuplicate={duplicateCampaign}
-            onStart={(id) => startCampaign(id)} onPause={(id) => pauseCampaign(id)} onCancel={(id) => cancelCampaign(id)} onDelete={(id) => deleteCampaign.mutate(id)}
+            onStart={(id) => { void startCampaign(id); }}
+            onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
+            onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
+            onDelete={(id) => deleteCampaign.mutate(id)}
             onGoTab={(tab) => { if (tab === 'templates') setActiveTab('templates'); else if (tab === 'segments') setActiveTab('segments'); }}
           />
         </TabsContent>

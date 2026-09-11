@@ -1,10 +1,10 @@
 // TalkXCampaignRunning.tsx — E77: Tela "Campanha em Andamento"
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import {
   Zap, CheckCircle2, AlertTriangle, Users, ChevronLeft,
-  Pause, Square, Eye, RefreshCw, Activity, Settings2,
+  Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -16,6 +16,7 @@ import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -211,10 +212,101 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
 }
 
 
+
+// ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
+type LogEvent = { id: string; contact: string; phone: string; status: string; ts: string; error?: string | null };
+const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
+const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
+
+function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
+  const [events, setEvents] = useState<LogEvent[]>([]);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    if (!active || !campaignId) return;
+    // Buscar ultimos 50 eventos para inicializar
+    void (async () => {
+      const { data } = await fromTable('talkx_recipients')
+        .select('id, status, updated_at, error_message, contacts:contact_id(name, phone)')
+        .eq('campaign_id', campaignId)
+        .not('status', 'eq', 'pending')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (data) {
+        setEvents((data as Record<string, unknown>[]).map((r) => ({
+          id: r.id as string,
+          contact: (r.contacts as { name: string } | null)?.name ?? '—',
+          phone: (r.contacts as { phone: string } | null)?.phone ?? '—',
+          status: r.status as string,
+          ts: r.updated_at as string,
+          error: r.error_message as string | null,
+        })));
+      }
+    })();
+
+    // Subscription realtime nos talkx_recipients desta campanha
+    const ch = supabase
+      .channel(`talkx-logs-${campaignId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'talkx_recipients',
+        filter: `campaign_id=eq.${campaignId}`,
+      }, (payload) => {
+        const r = payload.new as Record<string, unknown>;
+        if (r.status === 'pending') return;
+        const ev: LogEvent = {
+          id: r.id as string,
+          contact: '—', // sem join em realtime; enriquece se ja temos o contato
+          phone: '—',
+          status: r.status as string,
+          ts: r.updated_at as string,
+          error: r.error_message as string | null,
+        };
+        setEvents((prev) => [ev, ...prev.filter((e) => e.id !== ev.id)].slice(0, 50));
+      })
+      .subscribe();
+    channelRef.current = ch;
+
+    return () => { void supabase.removeChannel(ch); };
+  }, [campaignId, active]);
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+        <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-dash-green">
+          <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
+        </span>
+      </div>
+      {events.length === 0 ? (
+        <p className="text-[12px] text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>
+      ) : (
+        <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
+          {events.map((ev) => (
+            <div key={`${ev.id}-${ev.ts}`} className="flex items-start gap-3 px-4 py-2.5 hover:bg-muted/10">
+              <span className={`text-[15px] leading-none mt-0.5 ${LOG_TONE[ev.status] ?? 'text-muted-foreground'}`}>{LOG_ICON[ev.status] ?? '●'}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[12.5px] font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
+                  <span className={`text-[11px] font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
+                </div>
+                {ev.error && <p className="text-[11px] text-dash-red mt-0.5 truncate">{ev.error}</p>}
+                <p className="text-[10.5px] text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Tab: Resultados ───────────────────────────────────────────────────────────────
 function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time: string; Enviadas: number; Entregues: number }[] }) {
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
-  const failRate = c.sent_count > 0 ? Math.round((c.failed_count / c.sent_count) * 1000) / 10 : null;
+  const totalProcessed = c.sent_count + c.failed_count;
+  const failRate = totalProcessed > 0 ? Math.round((c.failed_count / totalProcessed) * 1000) / 10 : null;
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : null;
   const pending = Math.max(0, c.total_recipients - c.sent_count - c.failed_count);
   // Velocidade real: avg msgs/min a partir do historico
@@ -226,7 +318,7 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
     { label: 'Total de destinatários', value: fmtInt(c.total_recipients) },
     { label: 'Enviadas', value: fmtInt(c.sent_count), sub: c.total_recipients > 0 ? `${Math.round((c.sent_count / c.total_recipients) * 100)}% do total` : undefined },
     { label: 'Entregues', value: fmtInt(c.delivered_count), sub: deliveryRate !== null ? `${deliveryRate.toString().replace('.', ',')}% das enviadas` : undefined },
-    { label: 'Falhas', value: fmtInt(c.failed_count), sub: failRate !== null ? `${failRate.toString().replace('.', ',')}% de erro` : undefined },
+    { label: 'Falhas', value: fmtInt(c.failed_count), sub: failRate !== null ? `${failRate.toString().replace('.', ',')}% do total processado` : undefined },
     { label: 'Pendentes', value: fmtInt(pending) },
     { label: 'Tempo decorrido', value: elapsed !== null ? `${elapsed} min` : '—' },
     { label: 'Ritmo médio (últ. 10 min)', value: avgRate !== null ? `${avgRate} msgs/min` : '—' },
@@ -290,7 +382,20 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [lSaving, setLSaving] = useState(false);
   const [resuming, setResuming] = useState(false);
 
-  const campaign = useMemo(() => campaigns.find((c) => c.id === selectedId) ?? null, [campaigns, selectedId]);
+  // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
+  const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
+  // Auto-navegar de volta quando a campanha sair de sending/paused
+  const prevCampaignRef = React.useRef(campaign);
+  React.useEffect(() => {
+    prevCampaignRef.current = campaign;
+  }, [campaign]);
+  React.useEffect(() => {
+    if (selectedId && !sending.find((c) => c.id === selectedId) && prevCampaignRef.current !== null) {
+      // Campanha saiu da lista ativa (concluiu ou foi cancelada remotamente)
+      toast.info('Campanha concluída ou cancelada.');
+      setSelectedId(null);
+    }
+  }, [sending, selectedId]);
 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
   const { data: sentHistory } = useQuery({
@@ -444,7 +549,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
             {activeTab === 'messages' && <TabComingSoon label="Mensagens" />}
             {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} />}
-            {activeTab === 'logs' && <TabComingSoon label="Logs em Tempo Real" />}
+            {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
           </div>
 
           {/* Card Ações */}
@@ -461,8 +566,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 <button type="button" disabled={resuming} onClick={async () => {
                   setResuming(true);
                   try {
-                    void startCampaign(campaign.id);
-                    toast.success('Campanha retomada!');
+                    // startCampaign aguarda o invoke e mostra toasts internamente
+                    await startCampaign(campaign.id);
                   } catch {
                     toast.error('Erro ao retomar campanha.');
                   } finally { setResuming(false); }
@@ -479,6 +584,19 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-muted/50">
                 <Eye className="w-4 h-4" />Ver Monitor
               </button>
+              {(campaign.status === 'completed' || campaign.status === 'paused') && (
+                <button type="button" onClick={async () => {
+                  try {
+                    await invokeEdge('talkx-report', { campaignId: campaign.id });
+                    toast.success('Relatório enviado por e-mail!');
+                  } catch {
+                    toast.error('Erro ao enviar relatório.');
+                  }
+                }}
+                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold flex items-center gap-2 hover:bg-primary/20">
+                  <Mail className="w-4 h-4" />Enviar Relatório
+                </button>
+              )}
               <button type="button" onClick={() => setCancelOpen(true)}
                 className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
                 <Square className="w-4 h-4" />Cancelar campanha
