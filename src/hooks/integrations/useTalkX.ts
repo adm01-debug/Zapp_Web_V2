@@ -4,6 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 
+// A função é introduzida pela migration desta mesma mudança. O types-sync gera
+// a assinatura canônica somente depois que o banco canônico receber a migration.
+// Não editar o arquivo gerado `types.ts` antecipadamente, pois isso mascararia
+// drift entre código e banco.
+type PendingDatabaseRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
 export interface TalkXCampaign {
   id: string;
   name: string;
@@ -18,6 +27,7 @@ export interface TalkXCampaign {
   sent_count: number;
   failed_count: number;
   delivered_count: number;
+  outcome_unknown_count?: number;
   whatsapp_connection_id: string | null;
   created_by: string | null;
   started_at: string | null;
@@ -27,6 +37,9 @@ export interface TalkXCampaign {
   media_url: string | null;
   media_type: string | null;
   scheduled_at: string | null;
+  // Introduzido por 20260911200000. Mantido opcional até o types-sync ser
+  // gerado a partir do banco canônico após a migration ser aplicada.
+  schedule_timezone?: string | null;
   // migration 20260908120000 — wizard / agendamento / supressao
   description?: string | null;
   objective?: string;
@@ -39,6 +52,9 @@ export interface TalkXCampaign {
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  // Introduzido por 20260912130000. Opcional até o types-sync canônico após
+  // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
+  revision?: number;
 }
 
 export interface TalkXRecipient {
@@ -60,7 +76,52 @@ export interface TalkXRecipient {
   };
 }
 
+type TalkXActionResponse = {
+  success?: unknown;
+  reason?: unknown;
+  error?: unknown;
+};
+
+/**
+ * Edge Functions can deliberately return HTTP 200 for an operational refusal
+ * (for example, a campaign outside its send window). Supabase exposes that as
+ * `error: null`, so every lifecycle action must validate the body as well.
+ */
+function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse & { success: true } {
+  if (data && typeof data === 'object' && (data as TalkXActionResponse).success === true) return;
+
+  const response = data && typeof data === 'object' ? data as TalkXActionResponse : null;
+  const reason = typeof response?.reason === 'string'
+    ? response.reason
+    : typeof response?.error === 'string'
+      ? response.error
+      : 'Solicitação de campanha não foi aceita';
+  throw new Error(reason);
+}
+
 type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updated_at'>;
+
+export type TalkXDraftSaveResult = {
+  campaignId: string;
+  revision: number;
+  creationReplayed: boolean;
+};
+
+function parseDraftSaveResult(data: unknown): TalkXDraftSaveResult {
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== 'object') throw new Error('O banco não confirmou o salvamento do rascunho.');
+  const result = row as Record<string, unknown>;
+  const campaignId = result.campaign_id;
+  const revision = result.revision;
+  if (typeof campaignId !== 'string' || !Number.isInteger(revision) || (revision as number) < 1) {
+    throw new Error('Resposta inválida ao salvar o rascunho Talk X.');
+  }
+  return {
+    campaignId,
+    revision: revision as number,
+    creationReplayed: result.creation_replayed === true,
+  };
+}
 
 export function useTalkX() {
   const queryClient = useQueryClient();
@@ -135,13 +196,15 @@ export function useTalkX() {
 
   const createCampaign = useMutation({
     mutationFn: async (campaign: CampaignPayload) => {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .single();
+      if (profileError) throw profileError;
+      if (!profile?.id) throw new Error('Perfil ativo não encontrado para criar a campanha.');
 
       const { data, error } = await fromTable('talkx_campaigns')
-        .insert({ ...campaign, created_by: profile?.id })
+        .insert({ ...campaign, created_by: profile.id })
         .select()
         .single();
       if (error) throw error;
@@ -169,6 +232,37 @@ export function useTalkX() {
     },
   });
 
+  /**
+   * Authoritative editor save path. The database derives authorship from the
+   * session, recovers an idempotent create, and rejects a stale revision.
+   */
+  const saveDraftCampaign = useMutation({
+    mutationFn: async ({
+      campaignId,
+      expectedRevision,
+      creationKey,
+      payload,
+    }: {
+      campaignId: string | null;
+      expectedRevision: number | null;
+      creationKey: string | null;
+      payload: CampaignPayload;
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('save_talkx_campaign_draft', {
+        p_campaign_id: campaignId,
+        p_expected_revision: expectedRevision,
+        p_creation_key: creationKey,
+        p_payload: payload,
+      });
+      if (error) throw error;
+      return parseDraftSaveResult(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
   const deleteCampaign = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('talkx_campaigns').delete().eq('id', id);
@@ -188,22 +282,46 @@ export function useTalkX() {
       campaignId: string;
       contactIds: string[];
     }) => {
-      const rows = contactIds.map((contact_id) => ({
-        campaign_id: campaignId,
-        contact_id,
-      }));
-      const { error } = await fromTable('talkx_recipients')
-        .insert(rows);
+      // Compatibilidade do hook antigo: destinatários agora só podem ser
+      // gravados pelo snapshot transacional. Insert direto violaria o trigger
+      // de integridade e permitiria contador/audiência divergentes.
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { error } = await rpc('replace_talkx_draft_recipients', {
+        p_campaign_id: campaignId,
+        p_contact_ids: contactIds,
+      });
       if (error) throw error;
-
-      await fromTable('talkx_campaigns')
-        .update({ total_recipients: contactIds.length })
-        .eq('id', campaignId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Contatos adicionados!');
+      toast.success('Audiência atualizada!');
+    },
+  });
+
+  /**
+   * Substitui o snapshot de destinatários de um rascunho em uma única transação
+   * no banco. A RPC rejeita campanhas que já começaram a ser enviadas.
+   */
+  const replaceDraftRecipients = useMutation({
+    mutationFn: async ({
+      campaignId,
+      contactIds,
+    }: {
+      campaignId: string;
+      contactIds: string[];
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('replace_talkx_draft_recipients', {
+        p_campaign_id: campaignId,
+        p_contact_ids: contactIds,
+      });
+      if (error) throw error;
+      return data as number;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
     },
   });
 
@@ -213,28 +331,32 @@ export function useTalkX() {
         body: { campaignId, action: 'start' },
       });
       if (error) throw error;
+      assertTalkXActionAccepted(data);
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Campanha Talk X iniciada! 🚀');
-      return data;
+      toast.success('Processamento da campanha confirmado.');
+      return true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro desconhecido';
       toast.error(`Erro ao iniciar: ${msg}`);
+      return false;
     }
   }, [queryClient]);
 
   const pauseCampaign = useCallback(async (campaignId: string) => {
-    const { error } = await supabase.functions.invoke('talkx-send', {
+    const { data, error } = await supabase.functions.invoke('talkx-send', {
       body: { campaignId, action: 'pause' },
     });
-    if (error) throw error; // P1: relanca para o chamador tratar
+    if (error) throw error;
+    assertTalkXActionAccepted(data);
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
   const cancelCampaign = useCallback(async (campaignId: string) => {
-    const { error } = await supabase.functions.invoke('talkx-send', {
+    const { data, error } = await supabase.functions.invoke('talkx-send', {
       body: { campaignId, action: 'cancel' },
     });
-    if (error) throw error; // P1: relanca para o chamador tratar
+    if (error) throw error;
+    assertTalkXActionAccepted(data);
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
@@ -248,8 +370,10 @@ export function useTalkX() {
     setSelectedCampaignId,
     createCampaign,
     updateCampaign,
+    saveDraftCampaign,
     deleteCampaign,
     addRecipients,
+    replaceDraftRecipients,
     startCampaign,
     pauseCampaign,
     cancelCampaign,

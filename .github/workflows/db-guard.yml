@@ -47,7 +47,7 @@ jobs:
         run: node --test scripts/db-audit/*.test.mjs
 
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
-        run: bash scripts/db-audit/catalog-manifest.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
       - name: Testar normalizacao deterministica dos tipos gerados
         run: bash scripts/db-audit/gen-types.test.sh
@@ -62,57 +62,87 @@ jobs:
       - name: Simular regressões do contrato mcp_exec
         env:
           ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/check-mcp-exec-acl.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-mcp-exec-acl.test.sh
 
       - name: Simular regressões da ACL de webhook failures
         env:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/check-webhook-failures-acl.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/public-api-disable.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/public-api-disable.test.sh
 
       - name: Simular concorrência e integridade da fila CRM
         env:
           CRM_OUTBOX_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/crm-sync-outbox-behavior.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/crm-sync-outbox-behavior.test.sh
 
       - name: Simular autorização canônica do Inbox
         env:
           INBOX_AUTHZ_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/inbox-contact-authorization.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-contact-authorization.test.sh
 
       - name: Simular histórico atômico de templates Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: |
-          TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/talkx-template-history-behavior.test.sh
-          TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
-          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
-          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
-          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=false bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
+          TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
 
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: |
-          TALKX_HISTORY_FK_PRESTATE=NO_ACTION bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
-          TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
-          TALKX_HISTORY_FK_PRESTATE=ORPHAN bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+          TALKX_HISTORY_FK_PRESTATE=NO_ACTION bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+          TALKX_HISTORY_FK_PRESTATE=SET_NULL bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
+          TALKX_HISTORY_FK_PRESTATE=ORPHAN bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-history-saved-by-fk.test.sh
 
       - name: Simular reconciliação forward-only da policy Talk X blacklist
         env:
           TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
+
+      - name: Simular snapshot atômico de destinatários Talk X
+        env:
+          TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-draft-recipients.test.sh
+
+      - name: Simular identidade e revisão otimista de rascunhos Talk X
+        env:
+          TALKX_DRAFT_SAVE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-draft-save.test.sh
+
+      - name: Simular leases de entrega concorrente do Talk X
+        env:
+          TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-delivery-leases.test.sh
+
+      - name: Simular snapshot imutável de mensagem e variante Talk X
+        env:
+          TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-message-snapshot.test.sh
+
+      - name: Simular estados e audiencia canônicos do Talk X
+        env:
+          TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-state-transitions.test.sh
+
+      - name: Simular transições concorrentes de campanha Talk X
+        env:
+          TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-transitions.test.sh
 
       - name: Simular primitivas atômicas de mensagens e encerramento
         env:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
       - name: Simular reconciliação segura do ledger
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
-        run: bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-reconcile-ledger-drift.test.sh

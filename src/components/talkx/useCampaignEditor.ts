@@ -35,41 +35,160 @@ export const MEDIA_TYPES = [
 export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
+export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+const DRAFT_CREATION_KEY_STORAGE = 'talkx:draft-creation-key:v1';
+
+/**
+ * A Talk X campaign can only be configured against a connection that the
+ * delivery worker can actually address. The database repeats this check in
+ * `save_talkx_campaign_draft`; keeping it here avoids presenting a choice
+ * which is guaranteed to fail when the user saves.
+ */
+export function isLiveTalkXConnection(connection: {
+  status: string | null;
+  instance_id: string | null;
+}): boolean {
+  return connection.status === 'connected' && Boolean(connection.instance_id?.trim());
+}
+
+type LocalDateTimeParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+};
+
+const LOCAL_DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+
+function parseLocalDateTime(value: string): LocalDateTimeParts {
+  const match = LOCAL_DATE_TIME_PATTERN.exec(value);
+  if (!match) throw new Error('Informe uma data e hora locais válidas.');
+
+  const [, yearText, monthText, dayText, hourText, minuteText] = match;
+  const parts = {
+    year: Number(yearText), month: Number(monthText), day: Number(dayText),
+    hour: Number(hourText), minute: Number(minuteText),
+  };
+  const probe = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute));
+  if (
+    probe.getUTCFullYear() !== parts.year || probe.getUTCMonth() !== parts.month - 1
+    || probe.getUTCDate() !== parts.day || probe.getUTCHours() !== parts.hour
+    || probe.getUTCMinutes() !== parts.minute
+  ) {
+    throw new Error('Informe uma data e hora locais válidas.');
+  }
+  return parts;
+}
+
+function zonedParts(instantMs: number, timezone: string): LocalDateTimeParts & { second: number } {
+  try {
+    const values = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      calendar: 'iso8601',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).formatToParts(new Date(instantMs)).map((part) => [part.type, part.value]));
+    return {
+      year: Number(values.year), month: Number(values.month), day: Number(values.day),
+      hour: Number(values.hour), minute: Number(values.minute), second: Number(values.second),
+    };
+  } catch {
+    throw new Error('O fuso horário selecionado é inválido.');
+  }
+}
+
+function initialWizardStep(): WizardStep {
+  const raw = new URLSearchParams(window.location.search).get('step');
+  const step = Number(raw);
+  return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
+}
+
+function newDraftCreationKey(): string {
+  if (typeof globalThis.crypto?.randomUUID !== 'function') {
+    throw new Error('O navegador não oferece uma fonte segura para identificar o rascunho.');
+  }
+  return globalThis.crypto.randomUUID();
+}
+
+/**
+ * A create response can be lost after PostgreSQL committed it. Keep the key in
+ * the browser tab so refresh/retry can ask the server for that exact draft,
+ * rather than creating a second one. It is not an authorization credential.
+ */
+function restoreOrCreateDraftCreationKey(): string {
+  try {
+    const stored = window.sessionStorage.getItem(DRAFT_CREATION_KEY_STORAGE);
+    if (stored && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(stored)) return stored;
+    const key = newDraftCreationKey();
+    window.sessionStorage.setItem(DRAFT_CREATION_KEY_STORAGE, key);
+    return key;
+  } catch {
+    // Storage may be unavailable in hardened browser contexts. The server still
+    // protects a retry within this mounted editor via the in-memory key.
+    return newDraftCreationKey();
+  }
+}
+
+export function utcToLocalInTimezone(utc: string, tz: string): string {
+  if (!utc) return '';
+  const instantMs = new Date(utc).getTime();
+  if (!Number.isFinite(instantMs)) throw new Error('O instante UTC informado é inválido.');
+  const parts = zonedParts(instantMs, tz);
+  return `${String(parts.year).padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}T${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
+}
+
 
 /**
  * E69 fix: converte datetime-local string (sem TZ) para ISO UTC usando o fuso selecionado.
  * Ex: localToUTCInTimezone('2026-09-15T10:00', 'America/New_York') -> '2026-09-15T14:00:00.000Z'
  */
-function localToUTCInTimezone(localStr: string, tz: string): string {
+export function localToUTCInTimezone(localStr: string, tz: string): string {
   if (!localStr) return '';
-  const [datePart, timePart] = localStr.split('T');
-  const [yr, mo, da] = datePart.split('-').map(Number);
-  const [hr, mi] = timePart.split(':').map(Number);
-  // Tratamos o input como UTC provisorio para obter o offset do fuso naquele instante
-  const approxMs = Date.UTC(yr, mo - 1, da, hr, mi, 0);
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  });
-  const p = Object.fromEntries(fmt.formatToParts(new Date(approxMs)).map(x => [x.type, x.value]));
-  const tzLocalMs = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
-  // offset = diferenca entre o instante UTC provisorio e o que o fuso le nele
-  const offsetMs = approxMs - tzLocalMs; // positivo = fuso atras do UTC
-  return new Date(approxMs + offsetMs).toISOString();
+  const parts = parseLocalDateTime(localStr);
+  const localAsUtcMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, 0);
+
+  // A offset único calculado no horário "equivalente em UTC" falha depois de
+  // uma transição de DST. Coletamos os offsets vigentes numa janela de 72 h e
+  // aceitamos somente o instante que reconstrói exatamente a parede local.
+  const offsets = new Set<number>();
+  for (let deltaMinutes = -2160; deltaMinutes <= 2160; deltaMinutes += 30) {
+    const sampleMs = localAsUtcMs + deltaMinutes * 60_000;
+    const local = zonedParts(sampleMs, tz);
+    offsets.add(Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute, local.second) - sampleMs);
+  }
+  const candidates = [...offsets]
+    .map((offsetMs) => localAsUtcMs - offsetMs)
+    .filter((candidateMs) => utcToLocalInTimezone(new Date(candidateMs).toISOString(), tz) === localStr)
+    .sort((left, right) => left - right);
+
+  if (candidates.length === 0) {
+    throw new Error('O horário selecionado não existe no fuso informado devido ao horário de verão. Escolha outro horário.');
+  }
+  if (candidates.length > 1) {
+    throw new Error('O horário selecionado é ambíguo devido ao horário de verão. Escolha outro horário.');
+  }
+  return new Date(candidates[0]).toISOString();
 }
-export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
-  const { createCampaign, updateCampaign, addRecipients, startCampaign } = useTalkX();
+export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
+  const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates, registerUse } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
-  const [step, setStep] = useState<WizardStep>(1);
+  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
-  const [scheduleTimezone, setScheduleTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone); // E69
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'error' | 'offline'>('idle');
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const [persistedAutosaveSnapshot, setPersistedAutosaveSnapshot] = useState<string | null>(null);
+  const initialScheduleTimezone = campaign?.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
+  const [scheduleTimezone, setScheduleTimezone] = useState(initialScheduleTimezone); // E69
+  const [scheduleConfigError, setScheduleConfigError] = useState<string | null>(null);
+  const [scheduleNowMs, setScheduleNowMs] = useState(() => Date.now());
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
@@ -88,6 +207,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [hydratedRecipientCampaignId, setHydratedRecipientCampaignId] = useState<string | null>(null);
+  // Estado React sozinho não é suficiente para saves enfileirados: o callback
+  // seguinte pode ter capturado o render anterior, ainda sem o ID recém-criado.
+  const draftCampaignIdRef = useRef<string | null>(campaign?.id || null);
+  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id || null);
+  const draftRevisionRef = useRef<number>(campaign?.revision ?? 1);
+  const [draftRevision, setDraftRevision] = useState<number>(campaign?.revision ?? 1);
+  const [draftCreationKey] = useState<string | null>(() => campaign?.id ? null : restoreOrCreateDraftCreationKey());
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
   const [saving, setSaving] = useState(false);
@@ -101,8 +229,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
   const [isScheduled, setIsScheduled] = useState(!!campaign?.scheduled_at);
-  const [scheduledAt, setScheduledAt] = useState(
-    campaign?.scheduled_at ? new Date(campaign.scheduled_at).toISOString().slice(0, 16) : ''
+  const [scheduledAt, setScheduledAtState] = useState(
+    campaign?.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialScheduleTimezone) : ''
   );
   const [sendWindowEnabled, setSendWindowEnabled] = useState(!!campaign?.send_window_start);
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
@@ -112,6 +240,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [confirmConsent, setConfirmConsent] = useState(false);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
+
+  useEffect(() => {
+    if (!isScheduled) return undefined;
+    const timer = window.setInterval(() => setScheduleNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [isScheduled]);
 
   // Template inicial (vindo da galeria) preenche a mensagem uma vez.
   useEffect(() => {
@@ -123,14 +257,25 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
 
-  const { data: connections } = useQuery({
+  const { data: connectionCandidates } = useQuery({
     queryKey: ['wa-connections-talkx'],
     queryFn: async () => {
       const { data } = await supabase.from('whatsapp_connections')
-        .select('id, name, phone_number, status').eq('status', 'connected');
+        .select('id, name, phone_number, status, instance_id')
+        .eq('status', 'connected')
+        .not('instance_id', 'is', null)
+        .neq('instance_id', '');
       return data || [];
     },
   });
+
+  // The query excludes the common bad states. This in-memory guard covers
+  // whitespace-only instance IDs and protects callers/tests that hydrate a
+  // stale query result while the connection changes in real time.
+  const connections = useMemo(
+    () => (connectionCandidates ?? []).filter(isLiveTalkXConnection),
+    [connectionCandidates],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -148,6 +293,34 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       return data || [];
     },
   });
+
+  // Um draft existente precisa reabrir a sua audiência real. Sem este
+  // round-trip, um autosave posterior poderia substituir destinatários por uma
+  // seleção vazia mesmo sem o usuário ter alterado o público.
+  const { data: persistedRecipientIds } = useQuery({
+    queryKey: ['talkx-draft-recipient-ids', campaign?.id],
+    enabled: !!campaign?.id && (campaign.status === 'draft' || campaign.status === 'scheduled'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('talkx_recipients')
+        .select('contact_id').eq('campaign_id', campaign!.id);
+      if (error) throw error;
+      return [...new Set((data ?? []).map((recipient) => recipient.contact_id))];
+    },
+  });
+
+  useEffect(() => {
+    if (!campaign?.id || !persistedRecipientIds || hydratedRecipientCampaignId === campaign.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates a remote snapshot only when its query key changes.
+    setSelectedContacts(persistedRecipientIds);
+    setHydratedRecipientCampaignId(campaign.id);
+  }, [campaign?.id, persistedRecipientIds, hydratedRecipientCampaignId]);
+
+  // A ausência de `data` é diferente de uma audiência vazia: antes da
+  // hidratação, um save poderia substituir um snapshot existente por `[]`.
+  // A referência só é marcada depois que o efeito aplicou o resultado ao estado.
+  const recipientSnapshotReady = !campaign?.id
+    || (campaign.status !== 'draft' && campaign.status !== 'scheduled')
+    || hydratedRecipientCampaignId === campaign.id;
 
   // E54: filtragem por phone + contact_id com soft-delete e expiração
   const { data: blacklistData } = useQuery({
@@ -260,13 +433,58 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setTemplateId(id);
     if (t) {
       setMessageTemplate(t.content);
-      if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); }
+      if (t.media_url) {
+        setHasMedia(true);
+        setMediaUrl(t.media_url);
+        setMediaType(t.media_type || 'image');
+      } else {
+        setHasMedia(false);
+        setMediaUrl('');
+        setMediaType('');
+      }
     }
   }, [templates]);
 
   const toggleContact = useCallback((id: string) => {
     setSelectedContacts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   }, []);
+
+  const setScheduledAt = useCallback((nextScheduledAt: string) => {
+    setScheduledAtState(nextScheduledAt);
+    setScheduleConfigError(null);
+  }, []);
+
+  const changeScheduleTimezone = useCallback((nextTimezone: string) => {
+    if (!scheduledAt) {
+      setScheduleTimezone(nextTimezone);
+      setScheduleConfigError(null);
+      return;
+    }
+    try {
+      const instant = localToUTCInTimezone(scheduledAt, scheduleTimezone);
+      setScheduledAtState(utcToLocalInTimezone(instant, nextTimezone));
+      setScheduleTimezone(nextTimezone);
+      setScheduleConfigError(null);
+    } catch (error) {
+      setScheduleConfigError(error instanceof Error ? error.message : 'Não foi possível converter o horário no fuso selecionado.');
+    }
+  }, [scheduleTimezone, scheduledAt]);
+
+  const scheduleConfigIsValid = useMemo(() => {
+    if (!isScheduled) return true;
+    if (!scheduledAt) return false;
+    if (sendWindowEnabled && sendWindowStart >= sendWindowEnd) return false;
+    try {
+      return new Date(localToUTCInTimezone(scheduledAt, scheduleTimezone)).getTime() > scheduleNowMs;
+    } catch {
+      return false;
+    }
+  }, [isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, scheduleNowMs]);
+
+  const minimumScheduledAt = useMemo(
+    () => utcToLocalInTimezone(new Date(scheduleNowMs).toISOString(), scheduleTimezone),
+    [scheduleNowMs, scheduleTimezone],
+  );
 
   const selectAll = useCallback(() => {
     const ids = filteredContacts.map((c) => c.id);
@@ -275,11 +493,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 || !!campaign : false),
+    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     2: messageTemplate.trim().length > 0,
-    3: !isScheduled || !!scheduledAt,
+    3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, campaign, messageTemplate, isScheduled, scheduledAt, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -294,73 +512,112 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     media_url: hasMedia ? mediaUrl || null : null,
     media_type: hasMedia ? mediaType || null : null,
     scheduled_at: isScheduled && scheduledAt ? localToUTCInTimezone(scheduledAt, scheduleTimezone) : null,
+    schedule_timezone: scheduleTimezone,
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
   }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
-  const handleSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+  const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
     setSaving(true);
     try {
+      if (!recipientSnapshotReady) {
+        throw new Error('A audiência deste rascunho ainda está carregando. Aguarde antes de salvar.');
+      }
+      if (mode === 'launch' && (!canProceed[1] || !canProceed[2] || !canProceed[3] || !canProceed[4])) {
+        throw new Error('Revise público, mensagem, agendamento e confirmações antes de lançar.');
+      }
+      if (mode === 'schedule' && (!canProceed[1] || !canProceed[2] || !canProceed[3])) {
+        throw new Error('Revise público, mensagem e agendamento antes de salvar a programação.');
+      }
       const payload = buildPayload();
-      if (mode === 'schedule' && payload.scheduled_at) payload.status = 'scheduled';
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
 
-      let id: string;
-      if (campaign) {
-        await updateCampaign.mutateAsync({ id: campaign.id, ...payload });
-        id = campaign.id;
+      const persistedCampaignId = campaign?.id || draftCampaignIdRef.current;
+      const savedDraft = await saveDraftCampaign.mutateAsync({
+        campaignId: persistedCampaignId,
+        expectedRevision: persistedCampaignId ? draftRevisionRef.current : null,
+        creationKey: persistedCampaignId ? null : draftCreationKey,
+        payload,
+      });
+      const id = savedDraft.campaignId;
+      draftRevisionRef.current = savedDraft.revision;
+      setDraftRevision(savedDraft.revision);
+      if (persistedCampaignId) {
         await logEvent(id, 'updated', 'Campanha atualizada');
       } else {
-        const created = await createCampaign.mutateAsync(payload);
-        if (!created) return null;
-        id = created.id;
+        draftCampaignIdRef.current = id;
+        setDraftCampaignId(id);
         await logEvent(id, 'created', 'Campanha criada');
-
-        let contactIds: string[] = [];
-        if (audienceSource === 'segment' && selectedSegment) {
-          const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
-          contactIds = audience.map((c) => c.id);
-          await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
-        } else {
-          contactIds = selectedContacts;
-        }
-        if (respectSuppression && (blacklistIds || blacklistPhones)) {
-          if (blacklistIds) contactIds = contactIds.filter((id) => !blacklistIds.has(id));
-          if (blacklistPhones && blacklistPhones.size > 0) {
-            const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
-            const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
-            if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((id) => !byPhone.has(id)); }
-          }
-        }
-        if (contactIds.length > 0) await addRecipients.mutateAsync({ campaignId: id, contactIds });
-        if (selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
       }
 
-      if (mode === 'schedule' && payload.scheduled_at) await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
+      let contactIds: string[] = [];
+      if (audienceSource === 'segment' && selectedSegment) {
+        const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
+        contactIds = audience.map((c) => c.id);
+        await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
+      } else {
+        contactIds = selectedContacts;
+      }
+      if (respectSuppression && (blacklistIds || blacklistPhones)) {
+        if (blacklistIds) contactIds = contactIds.filter((contactId) => !blacklistIds.has(contactId));
+        if (blacklistPhones && blacklistPhones.size > 0) {
+          const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
+          const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
+          if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((contactId) => !byPhone.has(contactId)); }
+        }
+      }
+      await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
+      if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
+
+      if (mode === 'schedule' && payload.scheduled_at) {
+        await updateCampaign.mutateAsync({ id, status: 'scheduled' });
+        await logEvent(id, 'scheduled', `Agendada para ${utcToLocalInTimezone(payload.scheduled_at, scheduleTimezone)} (${scheduleTimezone})`);
+      }
       if (mode === 'launch') {
-        // A edge function talkx-send processa a fila inteira na mesma request;
-        // não bloqueia a UI esperando o loop terminar (o realtime atualiza o status).
-        void startCampaign(id);
+        // A trilha de auditoria só é gravada após a Edge Function confirmar a
+        // solicitação; isso impede um falso "iniciado" quando o invoke falha.
+        const started = await startCampaign(id);
+        if (!started) throw new Error('A campanha não foi iniciada. Verifique a conexão e tente novamente.');
         await logEvent(id, 'started', 'Envio iniciado manualmente');
       }
       return id;
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, campaign, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, addRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
+
+  // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
+  // próxima operação, mas nenhuma mutação posterior começa antes do término da
+  // anterior — eliminando create/create ou update fora de ordem.
+  const handleSave = useCallback((mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+    const task = saveQueueRef.current.then(
+      () => persistSave(mode),
+      () => persistSave(mode),
+    );
+    saveQueueRef.current = task.then(() => undefined, () => undefined);
+    return task;
+  }, [persistSave]);
 
   // E68: sincronizar ref -- useEffect garante nao acessa ref durante render
   useEffect(() => { handleSaveRef.current = handleSave; }, [handleSave]);
+
+  useEffect(() => {
+    if (!draftCampaignId) return;
+    try { window.sessionStorage.removeItem(DRAFT_CREATION_KEY_STORAGE); } catch { /* storage is optional */ }
+  }, [draftCampaignId]);
 
   // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
   const autosaveFields = JSON.stringify({
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
     audienceSource, segmentId, templateId, connectionId, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
-    isScheduled, scheduledAt, respectSuppression,
+    isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
+    companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
   });
+  const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
+
   useEffect(() => {
     // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
     if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; return; }
@@ -369,19 +626,57 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(async () => {
       // handleSaveRef.current e sempre o callback mais recente (nao sofre de closure stale)
-      const id = await handleSaveRef.current?.('draft').catch(() => null);
-      if (id) setLastAutosave(new Date());
+      setAutosaveStatus('saving');
+      setAutosaveError(null);
+      try {
+        const id = await handleSaveRef.current?.('draft');
+        if (!id) return;
+        // O baseline deve acompanhar o último snapshot confirmado. Caso o
+        // usuário reverta um filtro ao valor de abertura, essa reversão também
+        // precisa ser persistida — não pode ser tratada como "sem alteração".
+        autosaveInitialRef.current = autosaveFields;
+        setPersistedAutosaveSnapshot(autosaveFields);
+        setLastAutosave(new Date());
+        setAutosaveStatus('idle');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Não foi possível salvar automaticamente.';
+        setAutosaveError(message);
+        setAutosaveStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error');
+      }
     }, 3000);
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
 
-    const clearFilters = useCallback(() => { setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
+  const retryAutosave = useCallback(async () => {
+    setAutosaveStatus('saving');
+    setAutosaveError(null);
+    try {
+      const id = await handleSave('draft');
+      if (!id) return null;
+      autosaveInitialRef.current = autosaveFields;
+      setPersistedAutosaveSnapshot(autosaveFields);
+      setLastAutosave(new Date());
+      setAutosaveStatus('idle');
+      return id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar automaticamente.';
+      setAutosaveError(message);
+      setAutosaveStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error');
+      return null;
+    }
+  }, [autosaveFields, handleSave]);
+
+  const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
-  const toggleSchedule = useCallback((v: boolean) => { setIsScheduled(v); if (!v) setScheduledAt(''); }, []);
+  const toggleSchedule = useCallback((v: boolean) => {
+    setIsScheduled(v);
+    setScheduleConfigError(null);
+    if (!v) setScheduledAtState('');
+  }, []);
 
   return {
-    step, setStep, canProceed,
+    step, setStep, canProceed, draftCampaignId, draftRevision,
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,
@@ -391,8 +686,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
-    lastAutosave, // E68
-    scheduleTimezone, setScheduleTimezone, // E69
+    lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
+    scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,

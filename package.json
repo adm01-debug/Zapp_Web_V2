@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc -b --force",
+    "db:guard": "node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs",
     "implicit-any-check": "node scripts/ci/implicit-any-ratchet.mjs",
     "preview": "vite preview",
     "test:contracts": "vitest run --config vitest.contracts.config.ts",

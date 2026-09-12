@@ -17,6 +17,7 @@ import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared'
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -37,15 +38,16 @@ const SPEED_LABEL: Record<string, string> = {
 };
 
 // ─── Donut SVG ─────────────────────────────────────────────────────────────────
-function DonutChart({ sent, delivered, failed, total }: { sent: number; delivered: number; failed: number; total: number }) {
+function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: number; delivered: number; failed: number; outcomeUnknown: number; total: number }) {
   const R = 72, CX = 88, CY = 88, STROKE = 18;
   const circ = 2 * Math.PI * R;
   const pct = (n: number) => total > 0 ? (n / total) * circ : 0;
-  const pending = Math.max(0, total - sent - failed);
+  const pending = Math.max(0, total - sent - failed - outcomeUnknown);
   const segments = [
     { val: delivered, color: 'hsl(var(--dash-green))', label: 'Entregues' },
     { val: sent - delivered, color: 'hsl(var(--primary))', label: 'Enviadas' },
     { val: failed, color: 'hsl(var(--dash-red))', label: 'Falhas' },
+    { val: outcomeUnknown, color: 'hsl(var(--dash-amber))', label: 'A confirmar' },
     { val: pending, color: 'hsl(var(--muted))', label: 'Pendentes' },
   ];
   let offset = 0;
@@ -65,7 +67,7 @@ function DonutChart({ sent, delivered, failed, total }: { sent: number; delivere
               return el;
             })
         }
-        <text x={CX} y={CY - 6} textAnchor="middle" className="fill-foreground" fontSize={22} fontWeight={700}>{total > 0 ? Math.round(((sent + failed) / total) * 100) : 0}%</text>
+        <text x={CX} y={CY - 6} textAnchor="middle" className="fill-foreground" fontSize={22} fontWeight={700}>{total > 0 ? Math.round(((sent + failed + outcomeUnknown) / total) * 100) : 0}%</text>
         <text x={CX} y={CY + 14} textAnchor="middle" className="fill-foreground-secondary" fontSize={11}>concluído</text>
       </svg>
       <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
@@ -83,22 +85,25 @@ function DonutChart({ sent, delivered, failed, total }: { sent: number; delivere
 
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
 function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: string; Enviadas: number; Entregues: number }[] }) {
-  const pending = Math.max(0, c.total_recipients - c.sent_count - c.failed_count);
+  const outcomeUnknown = c.outcome_unknown_count ?? 0;
+  const processed = c.sent_count + c.failed_count + outcomeUnknown;
+  const pending = Math.max(0, c.total_recipients - processed);
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : 0;
   return (
     <div className="space-y-4">
       {/* Donut + KPIs lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(c.sent_count + c.failed_count)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
+        <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(processed)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
           <div className="pt-2">
-            <DonutChart sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} total={c.total_recipients} />
+            <DonutChart sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} outcomeUnknown={outcomeUnknown} total={c.total_recipients} />
           </div>
         </RailCard>
         <div className="grid grid-cols-2 gap-3 content-start">
           <DashboardKpiCard size="compact" index={0} label="Enviadas" value={fmtInt(c.sent_count)} delta={{ text: `de ${fmtInt(c.total_recipients)} prev.`, tone: 'muted' }} tile="blue" icon={Zap} bars={null} barsColor="blue" chart="none" />
           <DashboardKpiCard size="compact" index={1} label="Entregues" value={fmtInt(c.delivered_count)} delta={{ text: c.sent_count > 0 ? `${Math.round((c.delivered_count / c.sent_count) * 100)}% das enviadas` : '—', tone: 'muted' }} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
           <DashboardKpiCard size="compact" index={2} label="Falhas" value={fmtInt(c.failed_count)} delta={c.sent_count > 0 ? { text: `${Math.round((c.failed_count / c.sent_count) * 100)}% de erro`, tone: 'muted' } : null} tile="red" icon={AlertTriangle} bars={null} barsColor="red" chart="none" />
-          <DashboardKpiCard size="compact" index={3} label="Restantes" value={fmtInt(pending)} delta={{ text: `${elapsed}min decorridos`, tone: 'muted' }} tile="amber" icon={Users} bars={null} barsColor="amber" chart="none" />
+          <DashboardKpiCard size="compact" index={3} label="A confirmar" value={fmtInt(outcomeUnknown)} delta={{ text: 'Sem reenvio automático', tone: 'muted' }} tile="amber" icon={AlertTriangle} bars={null} barsColor="amber" chart="none" />
+          <DashboardKpiCard size="compact" index={4} label="Restantes" value={fmtInt(pending)} delta={{ text: `${elapsed}min decorridos`, tone: 'muted' }} tile="amber" icon={Users} bars={null} barsColor="amber" chart="none" />
         </div>
       </div>
       {/* Barra de progresso */}
@@ -106,10 +111,10 @@ function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: st
         <div className="rounded-2xl bg-card border border-border/70 p-4 space-y-2">
           <div className="flex justify-between text-[12px] text-foreground-secondary">
             <span>Progresso geral</span>
-            <span>{fmtInt(c.sent_count + c.failed_count)} / {fmtInt(c.total_recipients)} contatos</span>
+            <span>{fmtInt(processed)} / {fmtInt(c.total_recipients)} contatos</span>
           </div>
           <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, ((c.sent_count + c.failed_count) / c.total_recipients) * 100)}%` }} />
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (processed / c.total_recipients) * 100)}%` }} />
           </div>
         </div>
       )}
@@ -160,8 +165,8 @@ function TabConfig({ c }: { c: TalkXCampaign }) {
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
 type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
-const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary' };
-const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue' };
+const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
+const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
 function TabRecipients({ campaignId }: { campaignId: string }) {
   const { data: recips, isLoading } = useQuery({
@@ -207,6 +212,112 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
           {(recips?.length ?? 0) >= 200 && <p className="text-[11px] text-muted-foreground text-center p-3">Mostrando 200 mais recentes. Use Exportar CSV no Monitor para o conjunto completo.</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Tab: Mensagens ────────────────────────────────────────────────────────────
+// A campanha pode ser alterada depois de iniciada. Por isso, esta tela só mostra
+// o snapshot individual gravado pelo worker; nunca reconstitui conteúdo usando o
+// template atual da campanha.
+type MessageRow = {
+  id: string;
+  status: string;
+  personalized_message: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  error_message: string | null;
+  contacts: { name: string; phone: string } | null;
+};
+
+function TabMessages({ campaignId }: { campaignId: string }) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const { data: messages, isLoading, isError } = useQuery({
+    queryKey: ['talkx-running-messages', campaignId],
+    queryFn: async () => {
+      const { data, error } = await fromTable('talkx_recipients')
+        .select('id, status, personalized_message, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .eq('campaign_id', campaignId)
+        .order('updated_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return (data ?? []) as MessageRow[];
+    },
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+  });
+
+  const snapshotCount = messages?.filter((message) => Boolean(message.personalized_message?.trim())).length ?? 0;
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
+          <p className="text-[11.5px] text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground-secondary">
+          <Send className="h-3.5 w-3.5 text-primary" />
+          {isLoading ? 'Carregando…' : `${snapshotCount} com conteúdo`}
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>
+      ) : isError ? (
+        <div className="p-8 text-center">
+          <p className="text-[12.5px] font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
+          <p className="text-[11.5px] text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
+        </div>
+      ) : (messages?.length ?? 0) === 0 ? (
+        <div className="p-8 text-center">
+          <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
+          <p className="text-[12.5px] font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/40">
+          {messages?.map((message) => {
+            const materialized = message.personalized_message?.trim() ?? '';
+            const canExpand = materialized.length > 360;
+            const isExpanded = expandedIds.has(message.id);
+            const content = talkXMessageSnapshotDisplay(message.personalized_message, message.status);
+            const shownContent = canExpand && !isExpanded ? `${content.slice(0, 360)}…` : content;
+            const eventAt = message.delivered_at ?? message.sent_at;
+
+            return (
+              <article key={message.id} className="px-4 py-3 hover:bg-muted/10">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="text-[12.5px] font-semibold text-foreground">{message.contacts?.name ?? 'Contato indisponível'}</p>
+                  <span className="text-[11px] font-mono text-foreground-secondary">{message.contacts?.phone ?? '—'}</span>
+                  <span className={`ml-auto text-[11px] font-semibold ${STATUS_TONE[message.status] ?? 'text-foreground-secondary'}`}>
+                    {STATUS_LABEL[message.status] ?? message.status}
+                  </span>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap break-words text-[12px] leading-5 text-foreground-secondary">{shownContent}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-muted-foreground">
+                  {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
+                  {canExpand && (
+                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
+                      {isExpanded ? 'Mostrar menos' : 'Ler mensagem completa'}
+                    </button>
+                  )}
+                </div>
+                {message.error_message && <p className="mt-2 text-[11px] text-dash-red break-words">Falha: {message.error_message}</p>}
+              </article>
+            );
+          })}
+        </div>
+      )}
+      {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-[11px] text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
     </div>
   );
 }
@@ -305,10 +416,11 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
 // ─── Tab: Resultados ───────────────────────────────────────────────────────────────
 function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time: string; Enviadas: number; Entregues: number }[] }) {
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
-  const totalProcessed = c.sent_count + c.failed_count;
+  const outcomeUnknown = c.outcome_unknown_count ?? 0;
+  const totalProcessed = c.sent_count + c.failed_count + outcomeUnknown;
   const failRate = totalProcessed > 0 ? Math.round((c.failed_count / totalProcessed) * 1000) / 10 : null;
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : null;
-  const pending = Math.max(0, c.total_recipients - c.sent_count - c.failed_count);
+  const pending = Math.max(0, c.total_recipients - totalProcessed);
   // Velocidade real: avg msgs/min a partir do historico
   const avgRate = sentHistory.length >= 2
     ? Math.round(sentHistory.slice(-10).reduce((a, b) => a + b.Enviadas, 0) / Math.min(10, sentHistory.length))
@@ -319,6 +431,7 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
     { label: 'Enviadas', value: fmtInt(c.sent_count), sub: c.total_recipients > 0 ? `${Math.round((c.sent_count / c.total_recipients) * 100)}% do total` : undefined },
     { label: 'Entregues', value: fmtInt(c.delivered_count), sub: deliveryRate !== null ? `${deliveryRate.toString().replace('.', ',')}% das enviadas` : undefined },
     { label: 'Falhas', value: fmtInt(c.failed_count), sub: failRate !== null ? `${failRate.toString().replace('.', ',')}% do total processado` : undefined },
+    { label: 'A confirmar', value: fmtInt(outcomeUnknown), sub: outcomeUnknown > 0 ? 'Sem reenvio automático' : undefined },
     { label: 'Pendentes', value: fmtInt(pending) },
     { label: 'Tempo decorrido', value: elapsed !== null ? `${elapsed} min` : '—' },
     { label: 'Ritmo médio (últ. 10 min)', value: avgRate !== null ? `${avgRate} msgs/min` : '—' },
@@ -342,16 +455,6 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
           <p className="text-[11.5px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Tab placeholder ───────────────────────────────────────────────────────────
-function TabComingSoon({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-border/50 bg-muted/30 p-8 text-center">
-      <p className="text-[14px] font-semibold text-foreground mb-1">{label}</p>
-      <p className="text-[12px] text-foreground-secondary">Disponível em breve</p>
     </div>
   );
 }
@@ -547,7 +650,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             )}
             {activeTab === 'config' && <TabConfig c={campaign} />}
             {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
-            {activeTab === 'messages' && <TabComingSoon label="Mensagens" />}
+            {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
             {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} />}
             {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
           </div>

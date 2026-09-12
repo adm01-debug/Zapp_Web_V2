@@ -111,10 +111,23 @@ function ruleToFilter(r: SegmentRule): string | null {
   }
 }
 
-/** Converte as regras num filtro PostgREST (`.or(...)`). Retorna null se não há regra válida (= toda a base). */
+/**
+ * Converte regras válidas em filtro PostgREST. Um conjunto explicitamente
+ * vazio ainda representa a base inteira, mas uma regra inválida nunca pode ser
+ * silenciosamente removida: isso ampliaria a audiência sem consentimento.
+ */
 export function rulesToPostgrest(rules: SegmentRules | null | undefined): string | null {
-  const groups = (rules?.groups ?? [])
-    .map((g) => ({ match: g.match, filters: g.rules.map(ruleToFilter).filter((f): f is string => !!f) }))
+  const rawGroups = rules?.groups ?? [];
+  const groups = rawGroups
+    .map((g) => {
+      if (g.match !== 'and' && g.match !== 'or') throw new Error('Grupo de segmento inválido');
+      const filters = g.rules.map((rule) => {
+        const filter = ruleToFilter(rule);
+        if (!filter) throw new Error(`Regra de segmento inválida: ${rule.field}`);
+        return filter;
+      });
+      return { match: g.match, filters };
+    })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
   const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));

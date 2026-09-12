@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble } from './talkxShared';
+import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
 
@@ -38,70 +39,105 @@ const TIMEZONES = [
   ['UTC', 'UTC'],
 ] as const;
 
-function isoToLocalInput(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function localInputToISO(val: string): string {
-  return new Date(val).toISOString();
-}
-
 interface Props {
   campaignId: string; // P1: recebe ID, deriva da query -- evita stale
   onBack: () => void;
   onEdit: (c: TalkXCampaign) => void;
-  onLaunch: (id: string) => void;
+  onStatusChange: (campaign: TalkXCampaign) => void;
 }
 
-export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onLaunch }: Props) {
-  const { campaigns, updateCampaign, startCampaign } = useTalkX();
+export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onStatusChange }: Props) {
+  const { campaigns } = useTalkX();
   // P1: deriva sempre da query -- nunca stale
   const campaign = campaigns.find((c) => c.id === campaignId) ?? null;
 
-  // P1: sai da view quando campanha deixa de ser scheduled (ex: lancou / cancelou)
+  // Não confunda uma campanha cancelada com uma campanha em execução: cada
+  // estado possui um destino de navegação próprio no contêiner pai.
   useEffect(() => {
-    if (campaign && campaign.status !== 'scheduled') onLaunch(campaign.id);
-  }, [campaign, onLaunch]);
+    if (campaign && campaign.status !== 'scheduled') onStatusChange(campaign);
+  }, [campaign, onStatusChange]);
 
-  const [localDate, setLocalDate] = useState<string>(isoToLocalInput(campaign?.scheduled_at ?? ''));
-  const [localTz, setLocalTz] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign?.send_window_start);
-  const [windowStart, setWindowStart] = useState<string>(campaign?.send_window_start?.slice(0, 5) ?? '08:00');
-  const [windowEnd, setWindowEnd] = useState<string>(campaign?.send_window_end?.slice(0, 5) ?? '18:00');
-  const [bizHours, setBizHours] = useState<boolean>(campaign?.business_hours_only ?? false);
+  // A query chega de forma assíncrona. Montar o editor somente depois de
+  // localizar a campanha permite derivar o estado inicial sem um efeito que
+  // sobrescreva alterações que o operador ainda não salvou.
+  if (!campaign) return null;
+
+  return (
+    <TalkXCampaignScheduledEditor
+      key={campaign.id}
+      campaign={campaign}
+      onBack={onBack}
+      onEdit={onEdit}
+    />
+  );
+}
+
+interface ScheduledEditorProps {
+  campaign: TalkXCampaign;
+  onBack: () => void;
+  onEdit: (campaign: TalkXCampaign) => void;
+}
+
+function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
+  const { updateCampaign, startCampaign } = useTalkX();
+  const initialTimezone = campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
+  const [localTz, setLocalTz] = useState<string>(initialTimezone);
+  const [localDate, setLocalDate] = useState<string>(() => (
+    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone) : ''
+  ));
+  const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign.send_window_start);
+  const [windowStart, setWindowStart] = useState<string>(campaign.send_window_start?.slice(0, 5) ?? '08:00');
+  const [windowEnd, setWindowEnd] = useState<string>(campaign.send_window_end?.slice(0, 5) ?? '18:00');
+  const [bizHours, setBizHours] = useState<boolean>(campaign.business_hours_only ?? false);
   const [saving, setSaving] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [launchOpen, setLaunchOpen] = useState(false);
 
+  const handleTimezoneChange = useCallback((nextTimezone: string) => {
+    try {
+      const nextDate = localDate
+        ? utcToLocalInTimezone(localToUTCInTimezone(localDate, localTz), nextTimezone)
+        : localDate;
+      setLocalDate(nextDate);
+      setLocalTz(nextTimezone);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível alterar o fuso horário.');
+    }
+  }, [localDate, localTz]);
+
   const calDate = localDate ? new Date(localDate) : undefined;
 
   const handleSave = useCallback(async () => {
     if (!localDate) { toast.error('Defina a data e hora do agendamento.'); return; }
+    if (windowEnabled && windowStart >= windowEnd) {
+      toast.error('O fim da janela de envio deve ser posterior ao início.');
+      return;
+    }
     setSaving(true);
     try {
-      if (!campaign) return;
-    await updateCampaign.mutateAsync({
+      const scheduledAt = localToUTCInTimezone(localDate, localTz);
+      if (new Date(scheduledAt).getTime() <= Date.now()) {
+        throw new Error('O agendamento deve estar no futuro no fuso selecionado.');
+      }
+      await updateCampaign.mutateAsync({
         id: campaign.id,
-        scheduled_at: localInputToISO(localDate),
+        scheduled_at: scheduledAt,
+        schedule_timezone: localTz,
         send_window_start: windowEnabled ? `${windowStart}:00` : null,
         send_window_end: windowEnabled ? `${windowEnd}:00` : null,
         business_hours_only: bizHours,
       });
       toast.success('Agendamento atualizado.');
-    } catch {
-      toast.error('Erro ao salvar agendamento.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar agendamento.');
     } finally {
       setSaving(false);
     }
-  }, [campaign, localDate, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign]);
+  }, [campaign, localDate, localTz, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign]);
 
   const handleLaunch = useCallback(() => {
     setLaunchOpen(false);
-    if (!campaign) return;
     setLaunching(true);
     // P2: fire-and-forget -- talkx-send bloqueia ate o loop completo;
     // a navegacao ocorre via useEffect quando status mudar para 'sending'
@@ -111,7 +147,7 @@ export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onLaunch }:
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
     try {
-      if (!campaign) return; await updateCampaign.mutateAsync({ id: campaign.id, scheduled_at: null, status: 'draft' });
+      await updateCampaign.mutateAsync({ id: campaign.id, scheduled_at: null, status: 'draft' });
       toast.info('Agendamento cancelado. Campanha voltou para Rascunhos.');
       onBack();
     } catch {
@@ -121,8 +157,7 @@ export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onLaunch }:
 
   const scheduledLabel = campaign?.scheduled_at
     ? fmtDateTime(campaign.scheduled_at)
-    : localDate ? fmtDateTime(localInputToISO(localDate)) : '—';
-  if (!campaign) return null; // espera a query
+    : localDate ? fmtDateTime(localToUTCInTimezone(localDate, localTz)) : '—';
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -183,7 +218,7 @@ export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onLaunch }:
 
             <div>
               <Label className="text-[11.5px] text-muted-foreground mb-1.5 block">Fuso horário</Label>
-              <Select value={localTz} onValueChange={setLocalTz}>
+              <Select value={localTz} onValueChange={handleTimezoneChange}>
                 <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>

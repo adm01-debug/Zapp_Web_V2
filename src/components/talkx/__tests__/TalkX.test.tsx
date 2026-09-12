@@ -46,6 +46,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { supabase } from '@/integrations/supabase/client';
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -102,6 +103,29 @@ describe('useTalkX', () => {
     const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
     expect(typeof result.current.refetchCampaigns).toBe('function');
   });
+
+  it('rejects an operationally refused start even when the edge function returns HTTP 200', async () => {
+    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+      data: { ok: false, reason: 'outside_send_window' },
+      error: null,
+    } as never);
+    const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
+
+    await expect(result.current.startCampaign('campaign-1')).resolves.toBe(false);
+  });
+
+  it.each(['pauseCampaign', 'cancelCampaign'] as const)(
+    'rejects an operationally refused %s even when the edge function returns HTTP 200',
+    async (action) => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: { success: false, reason: 'transition_denied' },
+        error: null,
+      } as never);
+      const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
+
+      await expect(result.current[action]('campaign-1')).rejects.toThrow('transition_denied');
+    },
+  );
 });
 
 describe('Talk X — Personalization Engine', () => {

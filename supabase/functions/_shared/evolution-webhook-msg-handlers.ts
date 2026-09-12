@@ -111,21 +111,18 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       }
-      // E87: rastreio de entrega Talk X via external_id
-      if (newStatus === 'delivered' && key?.id) {
-        const { data: talkxRecip } = await supabase
-          .from('talkx_recipients')
-          .select('id, campaign_id')
-          .eq('external_id', key.id)
-          .is('delivered_at', null) // idempotente
-          .maybeSingle();
-        if (talkxRecip) {
-          await supabase.from('talkx_recipients')
-            .update({ status: 'delivered', delivered_at: now })
-            .eq('id', talkxRecip.id);
-          // RPC atomica -- evita race condition entre webhooks concorrentes
-          await supabase.rpc('talkx_increment_delivered', { p_campaign_id: talkxRecip.campaign_id });
-          console.warn(`TalkX delivered: recipient ${talkxRecip.id} campaign ${talkxRecip.campaign_id}`);
+      // Acknowledge Talk X only for an outbound receipt on the connection that
+      // emitted it. The RPC locks the recipient and increments delivered_count
+      // in the same transaction, so concurrent DELIVERY_ACK events are idempotent.
+      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
+        const { data: recorded, error: deliveryError } = await supabase.rpc('record_talkx_recipient_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+        });
+        if (deliveryError) {
+          console.error(`TalkX delivery acknowledgement failed for ${key.id}: ${deliveryError.message}`);
+        } else if (recorded === true) {
+          console.warn(`TalkX delivery acknowledged: ${key.id}`);
         }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com

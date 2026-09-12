@@ -37,6 +37,7 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
   sent: { label: 'Enviada', tone: 'info' },
   delivered: { label: 'Entregue', tone: 'success' },
   failed: { label: 'Falha', tone: 'danger' },
+  outcome_unknown: { label: 'Confirmação pendente', tone: 'warning' },
   skipped: { label: 'Suprimido', tone: 'muted' },
 };
 

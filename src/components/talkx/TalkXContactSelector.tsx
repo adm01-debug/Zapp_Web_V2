@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Search, X, Building2, Tag } from 'lucide-react';
-import { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
 interface ContactItem {
   id: string;
@@ -19,7 +18,6 @@ interface ContactItem {
 }
 
 interface Props {
-  campaign: TalkXCampaign | null;
   contacts: ContactItem[];
   filteredContacts: ContactItem[];
   selectedContacts: string[];
@@ -37,7 +35,7 @@ interface Props {
 }
 
 export const TalkXContactSelector: React.FC<Props> = ({
-  campaign, contacts, filteredContacts, selectedContacts,
+  contacts, filteredContacts, selectedContacts,
   contactSearch, setContactSearch, companyFilter, setCompanyFilter,
   tagFilter, setTagFilter, companies, tags,
   toggleContact, selectAll, clearFilters,
@@ -57,8 +55,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
             {filteredContacts.length > 0 && filteredContacts.every((c) => selectedContacts.includes(c.id)) ? 'Desmarcar' : 'Todos'}
           </Button>
         </div>
-        {!campaign && (
-          <div className="space-y-2 mt-2">
+        <div className="space-y-2 mt-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} placeholder="Buscar por nome, telefone, empresa..." className="pl-9 h-9 text-sm" />
@@ -93,18 +90,14 @@ export const TalkXContactSelector: React.FC<Props> = ({
               )}
             </div>
             <p className="text-[10px] text-muted-foreground">{filteredContacts.length} contatos filtrados • {selectedContacts.length} selecionados</p>
-          </div>
-        )}
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto min-h-0">
-        {campaign ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Ver destinatários no monitor.</p>
-        ) : (
-          <div className="space-y-0.5">
-            {filteredContacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>
-            ) : (
-              filteredContacts.map((contact) => {
+        <div className="space-y-0.5">
+          {filteredContacts.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>
+          ) : (
+            filteredContacts.map((contact) => {
                 const isSelected = selectedContacts.includes(contact.id);
                 return (
                   <label key={contact.id} className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'}`}>
@@ -121,10 +114,9 @@ export const TalkXContactSelector: React.FC<Props> = ({
                     </div>
                   </label>
                 );
-              })
-            )}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </CardContent>
     </Card>
   );

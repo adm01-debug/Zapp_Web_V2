@@ -20,6 +20,7 @@ import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
 
@@ -33,13 +34,17 @@ const STEPS: { n: WizardStep; label: string; hint: string }[] = [
 interface Props {
   campaign: TalkXCampaign | null;
   onClose: () => void;
-  onLaunched?: (campaignId: string) => void;
-  initial?: { segmentId?: string; templateId?: string };
+  onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
+  initial?: { segmentId?: string; templateId?: string; step?: WizardStep };
+  /** URL state is owned by TalkXView; this component only requests transitions. */
+  routeStep?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  onDraftIdentity?: (campaignId: string) => void;
 }
 
 export type WizardState = ReturnType<typeof useCampaignEditor>;
 
-export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: Props) {
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
 
   // E61: beforeunload se campanha tem dados nao salvos
@@ -50,19 +55,46 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
   }, [ed.name, ed.selectedContacts.length]);
   const step = ed.step;
 
-  // E61: deep link ?wizard=<id>&step=N
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wizardId = campaign?.id ?? 'new';
-    params.set('wizard', wizardId);
-    params.set('step', String(step));
-    const newUrl = window.location.pathname + '?' + params.toString();
-    window.history.replaceState(null, '', newUrl);
-  }, [step, campaign?.id]);
-  const next = () => ed.setStep(Math.min(4, step + 1) as WizardStep);
-  const prev = () => ed.setStep(Math.max(1, step - 1) as WizardStep);
+  const maximumAllowedStep = (() => {
+    if (!ed.canProceed[1]) return 1;
+    if (!ed.canProceed[2]) return 2;
+    if (!ed.canProceed[3]) return 3;
+    return 4;
+  })() as WizardStep;
 
-  const saveDraft = async () => { const id = await ed.handleSave('draft'); if (id) onClose(); };
+  const requestStep = (requestedStep: WizardStep, replace = false) => {
+    const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
+    ed.setStep(safeStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+  };
+
+  // O estado da URL pode mudar por histórico do navegador ou por um link
+  // copiado. Nunca aceita salto acima do último pré-requisito válido.
+  useEffect(() => {
+    if (routeStep === undefined || routeStep === step) return;
+    requestStep(routeStep, true);
+  // `requestStep` is intentionally rebuilt from the latest form validity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeStep, maximumAllowedStep, step]);
+
+  useEffect(() => {
+    if (ed.draftCampaignId) onDraftIdentity?.(ed.draftCampaignId);
+  }, [ed.draftCampaignId, onDraftIdentity]);
+
+  const next = () => {
+    if (!ed.canProceed[step]) return;
+    requestStep(Math.min(4, step + 1) as WizardStep);
+  };
+  const prev = () => requestStep(Math.max(1, step - 1) as WizardStep);
+
+  const saveDraft = async () => {
+    try {
+      const id = await ed.handleSave('draft');
+      if (id) onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+    }
+  };
 
   return (
     <div className="w-full min-w-0 space-y-4">
@@ -92,7 +124,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
             const done = step > s.n; const active = step === s.n;
             return (
               <li key={s.n} className="flex items-center">
-                <button type="button" onClick={() => (done || s.n < step) && ed.setStep(s.n)} className="flex items-center gap-2.5 group">
+                <button type="button" onClick={() => (done || s.n < step) && requestStep(s.n)} className="flex items-center gap-2.5 group">
                   <span className={cn('w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border transition-colors', active ? 'bg-primary border-primary text-white shadow-[0_0_0_4px_hsl(var(--primary)/.2)]' : done ? 'bg-dash-green border-dash-green text-white' : 'border-border/70 text-muted-foreground bg-input/40')}>
                     {done ? <Check className="w-4 h-4" /> : s.n}
                   </span>
@@ -110,24 +142,36 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
 
       <div className={cn('grid gap-4 min-w-0', step === 4 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]')}>
         <div className="min-w-0 space-y-4">
-          {step === 1 && <StepAudience ed={ed} campaign={campaign} />}
+          {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id) => { onLaunched?.(id); onClose(); }} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} />}
 
           {/* Footer */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
-              {ed.lastAutosave && (
+              {ed.autosaveStatus === 'saving' && <span className="text-[10.5px] text-muted-foreground" role="status">Salvando alterações…</span>}
+              {ed.autosaveStatus === 'offline' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-[10.5px] text-dash-amber hover:underline">
+                  Sem conexão — tentar novamente
+                </button>
+              )}
+              {ed.autosaveStatus === 'error' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-[10.5px] text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                  Não salvo — tentar novamente
+                </button>
+              )}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-[10.5px] text-dash-amber">Alterações não salvas</span>}
+              {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
                 <span className="text-[10.5px] text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
                 </span>
               )}
             </div>
             {step < 4 && (
-              <PrimaryButton size="lg" onClick={next} className={cn(!ed.canProceed[step] && 'opacity-50 pointer-events-none')}>
+              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
                 Continuar <ArrowRight className="w-4 h-4" />
               </PrimaryButton>
             )}
@@ -176,7 +220,7 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   );
 }
 
-function StepAudience({ ed, campaign }: { ed: WizardState; campaign: TalkXCampaign | null }) {
+function StepAudience({ ed }: { ed: WizardState }) {
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
@@ -231,7 +275,6 @@ function StepAudience({ ed, campaign }: { ed: WizardState; campaign: TalkXCampai
       {ed.audienceSource === 'contacts' && (
         <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com filtros e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-[12px] font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
           <TalkXContactSelector
-            campaign={campaign}
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
             selectedContacts={ed.selectedContacts}
