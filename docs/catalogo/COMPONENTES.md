@@ -27,3 +27,4 @@ Nenhum token novo — todas usam `hsl(var(--…))` das variáveis carvão já ex
 | `formatPrice`, `formatStock` | E04 | `Intl.NumberFormat` BRL; "N un." |
 | `handleImageError`, `ProductImage` | E04 | fallback de imagem em cascata (substituído por `ProductThumb` na E15) |
 | `ProductBadge` + `resolveProductBadge` | E12 | 5 estados, prioridade esgotado > mais vendido > novidade > destaque > em estoque |
+| `ColorChips` + `ColorSwatch` | E13 | chips de cor no card (+"+N"); bolinha com hex ou chip de texto (sem hex) |

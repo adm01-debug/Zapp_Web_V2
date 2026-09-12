@@ -34,3 +34,5 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 - E11 · Classes `.catalog-*` em `components.css`: card, media (fundo branco), 5 badges de status, chip de cor, chip de categoria (+ativo), preço, rail (300/320px), thumb de galeria, moldura de preview WhatsApp. Nenhum token novo — só `hsl(var(--…))` do carvão existente. `COMPONENTES.md` criado. Build OK · 2026-09-12
 
 - E12 · `ProductBadge` + `resolveProductBadge`: 5 estados com prioridade real (esgotado > mais vendido > novidade > destaque > em estoque); renderiza correto mesmo com flags `undefined` (cai em instock/out). 8 testes de prioridade. tsc 0 · 2026-09-12
+
+- E13 · `ColorChips`/`ColorSwatch`: chips do card ("+N" quando excede max) e bolinha de cor do detalhe; aceita string ou objeto (`color_swatches` da E21). Sem `TooltipProvider` global no app — usa `title` nativo em vez de Radix Tooltip. 13 testes (5 novos). tsc 0 · 2026-09-12
