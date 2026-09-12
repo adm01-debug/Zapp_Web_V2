@@ -17,6 +17,7 @@ import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared'
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -215,6 +216,112 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
   );
 }
 
+// ─── Tab: Mensagens ────────────────────────────────────────────────────────────
+// A campanha pode ser alterada depois de iniciada. Por isso, esta tela só mostra
+// o snapshot individual gravado pelo worker; nunca reconstitui conteúdo usando o
+// template atual da campanha.
+type MessageRow = {
+  id: string;
+  status: string;
+  personalized_message: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  error_message: string | null;
+  contacts: { name: string; phone: string } | null;
+};
+
+function TabMessages({ campaignId }: { campaignId: string }) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const { data: messages, isLoading, isError } = useQuery({
+    queryKey: ['talkx-running-messages', campaignId],
+    queryFn: async () => {
+      const { data, error } = await fromTable('talkx_recipients')
+        .select('id, status, personalized_message, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .eq('campaign_id', campaignId)
+        .order('updated_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return (data ?? []) as MessageRow[];
+    },
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+  });
+
+  const snapshotCount = messages?.filter((message) => Boolean(message.personalized_message?.trim())).length ?? 0;
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
+          <p className="text-[11.5px] text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground-secondary">
+          <Send className="h-3.5 w-3.5 text-primary" />
+          {isLoading ? 'Carregando…' : `${snapshotCount} com conteúdo`}
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>
+      ) : isError ? (
+        <div className="p-8 text-center">
+          <p className="text-[12.5px] font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
+          <p className="text-[11.5px] text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
+        </div>
+      ) : (messages?.length ?? 0) === 0 ? (
+        <div className="p-8 text-center">
+          <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
+          <p className="text-[12.5px] font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/40">
+          {messages?.map((message) => {
+            const materialized = message.personalized_message?.trim() ?? '';
+            const canExpand = materialized.length > 360;
+            const isExpanded = expandedIds.has(message.id);
+            const content = talkXMessageSnapshotDisplay(message.personalized_message, message.status);
+            const shownContent = canExpand && !isExpanded ? `${content.slice(0, 360)}…` : content;
+            const eventAt = message.delivered_at ?? message.sent_at;
+
+            return (
+              <article key={message.id} className="px-4 py-3 hover:bg-muted/10">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="text-[12.5px] font-semibold text-foreground">{message.contacts?.name ?? 'Contato indisponível'}</p>
+                  <span className="text-[11px] font-mono text-foreground-secondary">{message.contacts?.phone ?? '—'}</span>
+                  <span className={`ml-auto text-[11px] font-semibold ${STATUS_TONE[message.status] ?? 'text-foreground-secondary'}`}>
+                    {STATUS_LABEL[message.status] ?? message.status}
+                  </span>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap break-words text-[12px] leading-5 text-foreground-secondary">{shownContent}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-muted-foreground">
+                  {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
+                  {canExpand && (
+                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
+                      {isExpanded ? 'Mostrar menos' : 'Ler mensagem completa'}
+                    </button>
+                  )}
+                </div>
+                {message.error_message && <p className="mt-2 text-[11px] text-dash-red break-words">Falha: {message.error_message}</p>}
+              </article>
+            );
+          })}
+        </div>
+      )}
+      {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-[11px] text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+    </div>
+  );
+}
+
 
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
@@ -348,16 +455,6 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
           <p className="text-[11.5px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Tab placeholder ───────────────────────────────────────────────────────────
-function TabComingSoon({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-border/50 bg-muted/30 p-8 text-center">
-      <p className="text-[14px] font-semibold text-foreground mb-1">{label}</p>
-      <p className="text-[12px] text-foreground-secondary">Disponível em breve</p>
     </div>
   );
 }
@@ -553,7 +650,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             )}
             {activeTab === 'config' && <TabConfig c={campaign} />}
             {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
-            {activeTab === 'messages' && <TabComingSoon label="Mensagens" />}
+            {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
             {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} />}
             {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
           </div>
