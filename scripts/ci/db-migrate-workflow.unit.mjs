@@ -13,6 +13,10 @@ const messageAclHardening = await readFile(
   ),
   'utf8'
 );
+const talkXRecoveryRuntime = await readFile(
+  new URL('../db-audit/talkx-recovery-runtime.sql', import.meta.url),
+  'utf8'
+);
 
 test('CRM rollout migration has preflight and post-deploy runtime contracts', () => {
   assert.match(workflow, /20260909120000\)\n[\s\S]*validated_constraint_count/);
@@ -198,4 +202,53 @@ test('Talk X blacklist policy correction is forward-only and runtime-gated', () 
   assert.match(workflow, /proof\.legacy_permissive_count === 1/);
   assert.match(workflow, /proof\.restricted_policy_count === 1/);
   assert.match(workflow, /proof\.authenticated_policy_count === 1/);
+});
+
+test('Talk X recovery rollout is an exact ordered bundle with pre/post attestation', () => {
+  const versions = [
+    '20260911130000',
+    '20260911140000',
+    '20260911150000',
+    '20260911160000',
+    '20260911170000',
+    '20260911180000',
+    '20260911190000',
+    '20260911200000',
+    '20260912110000',
+    '20260912120000',
+    '20260912130000',
+  ];
+  for (const version of versions) {
+    assert.match(workflow, new RegExp(version));
+  }
+  assert.match(workflow, /TALKX_RECOVERY_BUNDLE=/);
+  const bundleMatch = workflow.match(/TALKX_RECOVERY_BUNDLE=\$'([^']+)'/);
+  assert.ok(bundleMatch, 'TALKX_RECOVERY_BUNDLE must be a literal ordered list');
+  const bundleVersions = bundleMatch[1].split('\\n');
+  assert.deepEqual(bundleVersions, versions);
+  assert.match(workflow, /MISSING_COUNT" = "11"/);
+  assert.match(workflow, /talkx-recovery-runtime\.sql/);
+  assert.match(workflow, /TARGET_VERSION === '20260912130000'/);
+  assert.match(workflow, /proof\.recipient_rollout_column_count === 0/);
+  assert.match(workflow, /proof\.recipient_rollout_column_count === 11/);
+  assert.match(workflow, /proof\.campaign_rollout_column_count === 4/);
+  assert.match(workflow, /proof\.function_count === 15/);
+  assert.match(workflow, /proof\.anonymous_execute_count === 0/);
+  assert.match(workflow, /Validar ledger completo do bundle de recuperacao Talk X/);
+  assert.match(workflow, /Runtime Talk X pos-migration divergiu/);
+
+  assert.match(talkXRecoveryRuntime, /current_setting\('server_version_num'\)/);
+  assert.match(talkXRecoveryRuntime, /has_function_privilege\('anon'/);
+  assert.match(talkXRecoveryRuntime, /security_definer_match_count/);
+  assert.match(talkXRecoveryRuntime, /safe_path_count/);
+  assert.match(talkXRecoveryRuntime, /pg_get_functiondef/);
+  assert.match(talkXRecoveryRuntime, /pg_get_triggerdef/);
+  assert.match(talkXRecoveryRuntime, /pg_get_constraintdef/);
+  assert.match(talkXRecoveryRuntime, /pg_get_indexdef/);
+  assert.match(talkXRecoveryRuntime, /tgenabled/);
+  assert.match(talkXRecoveryRuntime, /convalidated/);
+  assert.match(talkXRecoveryRuntime, /indisvalid/);
+  assert.match(talkXRecoveryRuntime, /indisready/);
+  assert.match(talkXRecoveryRuntime, /runtime_sha256/);
+  assert.doesNotMatch(talkXRecoveryRuntime, /SELECT \* FROM public\.talkx_/i);
 });
