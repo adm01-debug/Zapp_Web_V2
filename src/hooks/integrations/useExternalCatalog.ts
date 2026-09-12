@@ -134,17 +134,24 @@ async function invokeAction<T = unknown>(action: string, params: Record<string, 
 // ─── Hook ─────────────────────────────────────────────────────
 export function useExternalCatalog() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<CatalogFilters>({});
-  const [ready, setReady] = useState(false);
+  // null = ainda nao pedido (nenhuma query dispara). Vira {} ou os filtros
+  // explicitos assim que fetchProducts/fetchCategories/fetchSuppliers e
+  // chamado pela primeira vez - substitui o antigo par filters+ready por
+  // um unico sinal, preservando o acoplamento atual: qualquer um dos 3
+  // fetch* libera as 3 queries (useExternalCatalog.test.ts depende disso
+  // em 'handles concurrent fetchProducts and fetchCategories').
+  const [filters, setFilters] = useState<CatalogFilters | null>(null);
+  const ready = filters !== null;
+  const activeFilters = filters ?? {};
 
-  // Products query - auto-fetches when filters change and ready=true
+  // Products query - auto-fetches quando filters muda e ready=true
   const productsQuery = useQuery({
-    queryKey: ['external-catalog', 'products', filters],
+    queryKey: ['external-catalog', 'products', activeFilters],
     queryFn: async () => {
-      log.debug('Fetching products with filters:', JSON.stringify(filters));
+      log.debug('Fetching products with filters:', JSON.stringify(activeFilters));
       const result = await invokeAction<{ data: ExternalProduct[]; meta: { total: number; duration_ms: number } }>(
         'list_products',
-        filters as Record<string, unknown>
+        activeFilters as Record<string, unknown>
       );
       log.debug('Got', result.data?.length, 'products, total:', result.meta?.total);
       return result;
@@ -182,7 +189,6 @@ export function useExternalCatalog() {
   // Called by component to set filters and trigger fetch
   const fetchProducts = useCallback((newFilters: CatalogFilters = {}) => {
     setFilters(newFilters);
-    setReady(true);
   }, []);
 
   const fetchProduct = useCallback(async (productId: string): Promise<ExternalProduct | null> => {
@@ -202,13 +208,22 @@ export function useExternalCatalog() {
     }
   }, [queryClient]);
 
+  // No-op de compatibilidade: so existem para marcar "ready" sem mudar os
+  // filtros de produtos ja definidos (mesmo comportamento do ready
+  // compartilhado anterior). Nao fazem fetch proprio - categories/suppliers
+  // sao carregados por list_categories/list_suppliers, que a propria query
+  // acima ja dispara quando ready vira true.
   const fetchCategories = useCallback(() => {
-    setReady(true);
+    setFilters((f) => f ?? {});
   }, []);
 
   const fetchSuppliers = useCallback(() => {
-    setReady(true);
+    setFilters((f) => f ?? {});
   }, []);
+
+  const invalidate = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey: ['external-catalog'] });
+  }, [queryClient]);
 
   return {
     products: productsQuery.data?.data || [],
@@ -216,10 +231,15 @@ export function useExternalCatalog() {
     categories: categoriesQuery.data || [],
     suppliers: suppliersQuery.data || [],
     loading: productsQuery.isLoading || productsQuery.isFetching,
+    /** true so durante a carga inicial (sem dado ainda) - use para nao piscar skeleton na paginacao. */
+    isInitialLoading: productsQuery.isLoading,
+    /** true durante qualquer fetch, incl. paginacao/refetch - use para indicador discreto de progresso. */
+    isFetching: productsQuery.isFetching,
     error: productsQuery.error?.message || null,
     fetchProducts,
     fetchProduct,
     fetchCategories,
     fetchSuppliers,
+    invalidate,
   };
 }
