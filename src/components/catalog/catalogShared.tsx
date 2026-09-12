@@ -39,3 +39,51 @@ export const ProductImage: React.FC<ProductImageProps> = ({ src, alt, iconSize =
     <div className="w-full h-full flex items-center justify-center"><Package className={`${iconSize} text-muted-foreground`} /></div>
   );
 };
+
+// ─── ProductBadge (E12) ─────────────────────────────────────────
+import { Check, Flame, Sparkles, Star, XCircle } from 'lucide-react';
+import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+
+export type ProductBadgeKind = 'out' | 'bestseller' | 'new' | 'featured' | 'instock';
+
+const BADGE_CONFIG: Record<ProductBadgeKind, { label: string; Icon: typeof Check }> = {
+  out: { label: 'Esgotado', Icon: XCircle },
+  bestseller: { label: 'Mais vendido', Icon: Flame },
+  new: { label: 'Novidade', Icon: Sparkles },
+  featured: { label: 'Destaque', Icon: Star },
+  instock: { label: 'Em estoque', Icon: Check },
+};
+
+/**
+ * Resolve qual badge mostrar, por prioridade: esgotado > mais vendido >
+ * novidade > destaque > em estoque. Antes da E21/E48 (flags e expiração
+ * completas) os campos vêm `undefined` e o produto cai em instock/out.
+ */
+export function resolveProductBadge(
+  p: Pick<ExternalProduct, 'is_stockout' | 'is_bestseller' | 'is_new' | 'is_featured'>
+): ProductBadgeKind {
+  if (p.is_stockout) return 'out';
+  if (p.is_bestseller) return 'bestseller';
+  if (p.is_new) return 'new';
+  if (p.is_featured) return 'featured';
+  return 'instock';
+}
+
+interface ProductBadgeProps {
+  kind: ProductBadgeKind;
+  size?: 'sm' | 'md';
+}
+
+export function ProductBadge({ kind, size = 'md' }: ProductBadgeProps) {
+  const { label, Icon } = BADGE_CONFIG[kind];
+  return (
+    <span
+      className={`catalog-badge catalog-badge--${kind}`}
+      style={size === 'sm' ? { height: 18, fontSize: 10, padding: '0 0.375rem' } : undefined}
+      aria-label={label}
+    >
+      <Icon className={size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+      {label}
+    </span>
+  );
+}
