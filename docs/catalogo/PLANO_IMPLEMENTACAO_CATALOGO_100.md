@@ -411,22 +411,22 @@
 - [ ] toggle lista/grade
 - [ ] commit
 
-### E19 · Botões e ações: `RowActions`, `RailBanner`, `MetaTile`, `SectionCard`
-**Objetivo:** "Enviar" com glow, "Ver detalhes" bordado, ações rápidas do rail, tiles de meta (Qtd. mínima/Prazo/Origem).
+### E19 · Botões e ações: `MetaTile`, `SectionCard` (+ reuso de RailAction/RailCard)
+**Objetivo:** tiles de meta (Qtd. mínima/Prazo/Origem) e card com título para o detalhe; confirmar que os botões e as ações do rail já existem prontos no Talk X.
 **Arquivos:** `catalogShared.tsx`
-1. Reusar `TalkXPrimaryButton` (glow) como `Enviar`; reusar `GhostButton` como `Ver detalhes` (h-8, ícone `Eye`).
-2. `RailActionRow({icon, label, onClick, external?})` → linha com chevron (mock "Ações rápidas").
-3. `RailBanner({title, text, ctaLabel, onCta, image?})` → card `bg-card-elevated` com gradiente `--gradient-primary` a 12% no canto e foto opcional.
-4. `MetaTile({icon, label, value, color})` → tile `IconTile soft` + label 11 px + valor 14 px semibold (3 colunas no detalhe).
-5. `SectionCard({title, children})` → card interno (Descrição, Ficha técnica).
-6. Teste de render dos 5.
-7. `tsc`.
-8. `COMPONENTES.md`.
-9. CHANGELOG.
-10. Commit `feat(catalog): E19 botões, rail e tiles`.
+1. Reusar `TalkXPrimaryButton` (glow) como `Enviar`; reusar `GhostButton` como `Ver detalhes` (h-8, ícone `Eye`) — direto nos pontos de uso (F6/F7), sem wrapper novo.
+2. Confirmado: `RailAction` (linha com chevron) e `RailCard` (com prop `glow`, cobre o banner) **já existem** em `talkxShared.tsx` — nada a criar; reusados direto no rail (F5). `RailBanner`/`RailActionRow` cancelados do escopo original.
+3. `MetaTile({icon, label, value})` → tile com borda + label 10,5 px + valor 13 px semibold (grade de 3 colunas no detalhe).
+4. `SectionCard({title, children})` → card interno com título (Descrição, Ficha técnica).
+5. Teste de render dos 2 primitivos novos.
+6. `tsc`.
+7. `COMPONENTES.md`.
+8. CHANGELOG.
+9. Reconferir gates do módulo inteiro.
+10. Commit `feat(catalog): E19 MetaTile/SectionCard + reuso confirmado de RailAction/RailCard`.
 **Checklist**
-- [ ] reuso, não duplicação, dos botões do Talk X/Dashboard
-- [ ] 5 primitivos
+- [ ] reuso confirmado, zero duplicação, dos botões e do rail do Talk X/Dashboard
+- [ ] 2 primitivos novos (MetaTile, SectionCard)
 - [ ] testes
 - [ ] commit
 
