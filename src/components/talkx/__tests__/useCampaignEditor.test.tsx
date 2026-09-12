@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
-  connections: [{ id: 'connection-1', name: 'Principal', status: 'connected' }],
+  connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number }[],
@@ -64,6 +64,7 @@ describe('useCampaignEditor — draft integrity', () => {
     f.blacklist.phones.clear();
     f.persistedRecipientIds = [];
     f.templates = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -99,6 +100,18 @@ describe('useCampaignEditor — draft integrity', () => {
   it('uses a real disabled control while the current step is invalid', () => {
     render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
     expect(screen.getByRole('button', { name: /continuar/i })).toBeDisabled();
+  });
+
+  it('does not offer a stale or instance-less WhatsApp connection for campaign delivery', () => {
+    f.connections = [
+      { id: 'offline', name: 'Offline', status: 'disconnected', instance_id: 'evolution-offline' },
+      { id: 'blank', name: 'Sem instância', status: 'connected', instance_id: '   ' },
+    ];
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+
+    expect(result.current.connections).toEqual([]);
+    expect(result.current.connectionId).toBe('');
+    expect(result.current.canProceed[1]).toBe(false);
   });
 
   it('creates one draft and atomically replaces its recipient snapshot on later saves', async () => {

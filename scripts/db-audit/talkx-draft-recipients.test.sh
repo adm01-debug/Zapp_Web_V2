@@ -13,12 +13,23 @@ trap cleanup EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
-docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null
+docker run -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null
+postgres_ready=false
 for _ in $(seq 1 30); do
-  if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then break; fi
+  if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+    postgres_ready=true
+    break
+  fi
   sleep 1
 done
-docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1 || fail 'PostgreSQL de teste não iniciou'
+if [[ "$postgres_ready" != true ]]; then
+  # A retry without the container diagnostics turns a real image/runtime
+  # failure into an opaque CI flake. Logs are safe here: this disposable
+  # instance has no project credentials or production data.
+  docker ps -a --filter "name=^/${container_name}$" --format 'talkx-test-container {{.Status}}' >&2 || true
+  docker logs "$container_name" >&2 || true
+  fail 'PostgreSQL de teste não iniciou'
+fi
 
 psql_test >/dev/null <<'SQL'
 CREATE SCHEMA auth;

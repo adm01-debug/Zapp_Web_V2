@@ -38,6 +38,19 @@ export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
 const DRAFT_CREATION_KEY_STORAGE = 'talkx:draft-creation-key:v1';
 
+/**
+ * A Talk X campaign can only be configured against a connection that the
+ * delivery worker can actually address. The database repeats this check in
+ * `save_talkx_campaign_draft`; keeping it here avoids presenting a choice
+ * which is guaranteed to fail when the user saves.
+ */
+export function isLiveTalkXConnection(connection: {
+  status: string | null;
+  instance_id: string | null;
+}): boolean {
+  return connection.status === 'connected' && Boolean(connection.instance_id?.trim());
+}
+
 type LocalDateTimeParts = {
   year: number;
   month: number;
@@ -244,14 +257,25 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
 
-  const { data: connections } = useQuery({
+  const { data: connectionCandidates } = useQuery({
     queryKey: ['wa-connections-talkx'],
     queryFn: async () => {
       const { data } = await supabase.from('whatsapp_connections')
-        .select('id, name, phone_number, status').eq('status', 'connected');
+        .select('id, name, phone_number, status, instance_id')
+        .eq('status', 'connected')
+        .not('instance_id', 'is', null)
+        .neq('instance_id', '');
       return data || [];
     },
   });
+
+  // The query excludes the common bad states. This in-memory guard covers
+  // whitespace-only instance IDs and protects callers/tests that hydrate a
+  // stale query result while the connection changes in real time.
+  const connections = useMemo(
+    () => (connectionCandidates ?? []).filter(isLiveTalkXConnection),
+    [connectionCandidates],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
