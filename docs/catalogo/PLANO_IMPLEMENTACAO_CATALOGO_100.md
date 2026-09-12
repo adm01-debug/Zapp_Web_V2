@@ -203,8 +203,11 @@
 3. Verificar em `messages` a linha `image` com `media_url` e a `text`; verificar `status` após 30 s.
 4. Verificar no WhatsApp real que imagem e texto chegaram.
 5. Se falhar: registrar causa raiz em `docs/catalogo/ENVIO_E2E.md` e corrigir dentro da E08 (diff mínimo no service).
-6. Confirmar `useSendProduct` grava `external_id` (fix do #209).
-7. Decidir: caption da 1ª imagem = mensagem (1 envio em vez de N+1)? Documentar; **não** mudar ainda (E85).
+6. Confirmado por leitura de código (sem enviar nada): `external_id` é gravado pelo backend
+   (`message-delivery`, via RPC de conclusão), independente do que o frontend faz com o
+   retorno de `sendOutboundMessage` — não há fix pendente aqui.
+7. Decidir: caption da 1ª imagem = mensagem (1 envio em vez de N+1)? Documentado em
+   `docs/catalogo/ENVIO_E2E.md`; **não** mudar ainda (E85).
 8. Apagar as mensagens de teste ou marcar `is_deleted`.
 9. CHANGELOG.
 10. Commit `docs(catalog): E08 envio e2e verificado`.
