@@ -6,34 +6,9 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Package, Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
+import { Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
 import { ExternalProduct, useExternalCatalog } from '@/hooks/integrations/useExternalCatalog';
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
-
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.style.display = 'none';
-  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-  if (fallback) fallback.style.display = 'flex';
-};
-
-const ProductImage: React.FC<{ src: string | null; alt: string; iconSize?: string }> = ({ src, alt, iconSize = 'w-6 h-6' }) => (
-  <>
-    {src ? (
-      <>
-        <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
-        <div className="w-full h-full items-center justify-center hidden">
-          <Package className={`${iconSize} text-muted-foreground`} />
-        </div>
-      </>
-    ) : (
-      <div className="w-full h-full flex items-center justify-center">
-        <Package className={`${iconSize} text-muted-foreground`} />
-      </div>
-    )}
-  </>
-);
+import { formatPrice, ProductImage, handleImageError } from './catalogShared';
 
 interface ProductDetailDialogProps {
   product: ExternalProduct;

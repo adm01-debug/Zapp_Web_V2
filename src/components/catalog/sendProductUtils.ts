@@ -13,12 +13,7 @@ export interface VariantGroup {
   images: string[];
 }
 
-export interface ContactResult {
-  id: string;
-  name: string;
-  phone: string;
-  avatar_url: string | null;
-}
+export type { ContactResult } from './useSendProduct';
 
 export const templateLabels: Record<MessageTemplate, string> = {
   formal: 'Formal',
