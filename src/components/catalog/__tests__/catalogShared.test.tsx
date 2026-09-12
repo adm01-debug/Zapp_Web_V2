@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard } from '../catalogShared';
+import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Layers } from 'lucide-react';
 
 describe('catalogShared', () => {
@@ -199,36 +200,44 @@ describe('FavoriteButton', () => {
   });
 });
 
+const mockStats = (overrides: Partial<CatalogStats> = {}): CatalogStats => ({
+  total: 7576, in_stock: 6040, featured: 2147, new_30d: 252, bestseller: 596,
+  kits: 978, low_stock: 308, categories_root: 27, suppliers_active: 4,
+  last_sync_at: '2026-09-05T15:40:00Z', last_update_at: '2026-09-12T10:20:00Z',
+  by_month: [],
+  ...overrides,
+});
+
 describe('CatalogKpiStrip', () => {
   it('sem stats (undefined), não renderiza nada', () => {
     const { container } = render(<CatalogKpiStrip stats={undefined} />);
     expect(container.firstChild).toBeNull();
   });
 
-  it('com stats parcial, renderiza só os campos numéricos presentes', () => {
-    render(<CatalogKpiStrip stats={{ total: 7576, in_stock: 6040 }} />);
+  it('com stats completo, renderiza os 6 KPIs', () => {
+    render(<CatalogKpiStrip stats={mockStats()} />);
     expect(screen.getByText('Produtos no total')).toBeInTheDocument();
     expect(screen.getByText('7.576')).toBeInTheDocument();
     expect(screen.getByText('Em estoque')).toBeInTheDocument();
-    expect(screen.queryByText('Categorias')).not.toBeInTheDocument();
-    expect(screen.queryByText('Fornecedores')).not.toBeInTheDocument();
+    expect(screen.getByText('Categorias')).toBeInTheDocument();
+    expect(screen.getByText('Fornecedores')).toBeInTheDocument();
   });
 
   it('loading=true, mostra 6 skeletons em vez dos KPIs', () => {
-    const { container } = render(<CatalogKpiStrip stats={{ total: 7576 }} loading />);
+    const { container } = render(<CatalogKpiStrip stats={mockStats()} loading />);
     expect(screen.queryByText('Produtos no total')).not.toBeInTheDocument();
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(6);
   });
 
   it('clique num KPI chama onSelect com a chave certa', () => {
     const onSelect = vi.fn();
-    render(<CatalogKpiStrip stats={{ featured: 2147 }} onSelect={onSelect} />);
+    render(<CatalogKpiStrip stats={mockStats()} onSelect={onSelect} />);
     fireEvent.click(screen.getByText('Em destaque').closest('button')!);
     expect(onSelect).toHaveBeenCalledWith('featured');
   });
 
   it('sem onSelect, os cards não são clicáveis (botão desabilitado)', () => {
-    render(<CatalogKpiStrip stats={{ total: 100 }} />);
+    render(<CatalogKpiStrip stats={mockStats()} />);
     expect(screen.getByText('Produtos no total').closest('button')).toBeDisabled();
   });
 });

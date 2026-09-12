@@ -276,3 +276,31 @@ export function useExternalProduct(productId: string | undefined, options: { ena
     staleTime: 5 * 60 * 1000,
   });
 }
+
+/** Formato exato de public.zapp_catalog_stats() (E24), retornado pela ação catalog_stats. */
+export interface CatalogStats {
+  total: number;
+  in_stock: number;
+  featured: number;
+  new_30d: number;
+  bestseller: number;
+  kits: number;
+  low_stock: number;
+  categories_root: number;
+  suppliers_active: number;
+  last_sync_at: string | null;
+  last_update_at: string | null;
+  by_month: { month: string; count: number }[];
+}
+
+/** KPIs, sincronização e série mensal do rail/topo do Catálogo (E24). */
+export function useCatalogStats() {
+  return useQuery({
+    queryKey: ['external-catalog', 'stats'],
+    queryFn: async () => {
+      const res = await invokeAction<{ data: CatalogStats }>('catalog_stats');
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}

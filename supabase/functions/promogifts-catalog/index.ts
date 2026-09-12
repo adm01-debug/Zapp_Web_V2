@@ -53,7 +53,7 @@ const GetProductSchema = z.object({
 });
 
 const ActionSchema = z.object({
-  action: z.enum(["list_products", "get_product", "list_categories", "list_suppliers"]),
+  action: z.enum(["list_products", "get_product", "list_categories", "list_suppliers", "catalog_stats"]),
   params: z.record(z.unknown()).optional().default({}),
 });
 
@@ -90,6 +90,12 @@ const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_pric
   order_count, view_count, created_at, updated_at, last_sync_at,
   category_id, supplier_id, slug, capacity_ml, ncm_code,
   ${PRODUCT_RELATIONS}`;
+
+// E24 — cache em memória do isolate (curto: 60s), evita bater no banco a
+// cada abertura da tela. Isolates reciclam periodicamente; pior caso é
+// só um cache-miss extra, sem risco de dado defasado por muito tempo.
+let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
+const CATALOG_STATS_TTL_MS = 60_000;
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 60;
@@ -276,6 +282,16 @@ Deno.serve(async (req) => {
       const { data, error } = await extClient.from("suppliers").select("id, name").order("name");
       if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
+    }
+
+    if (action === "catalog_stats") {
+      if (catalogStatsCache && catalogStatsCache.expiresAt > Date.now()) {
+        return jsonRes({ data: catalogStatsCache.data, meta: { cached: true } }, 200, req);
+      }
+      const { data, error } = await extClient.rpc("zapp_catalog_stats");
+      if (error) return externalDatabaseErrorResponse(error, req, log);
+      catalogStatsCache = { data, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data, meta: { cached: false } }, 200, req);
     }
 
     return jsonRes({ error: "Invalid action" }, 400, req);
