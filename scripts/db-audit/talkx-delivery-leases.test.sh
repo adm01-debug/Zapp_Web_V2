@@ -55,11 +55,34 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT statement_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
+CREATE TABLE public.contacts (
+  id uuid PRIMARY KEY,
+  phone text
+);
+CREATE TABLE public.talkx_blacklist (
+  contact_id uuid,
+  phone text,
+  removed_at timestamptz,
+  expires_at timestamptz
+);
 INSERT INTO public.talkx_campaigns (id, status, whatsapp_connection_id) VALUES
   ('40000000-0000-0000-0000-000000000001', 'sending', '60000000-0000-0000-0000-000000000001');
+INSERT INTO public.contacts (id, phone) VALUES
+  ('30000000-0000-0000-0000-000000000001', '+55 (11) 99000-0001'),
+  ('30000000-0000-0000-0000-000000000002', '+55 (11) 99000-0002'),
+  ('30000000-0000-0000-0000-000000000003', '+55 (11) 99000-0003'),
+  ('30000000-0000-0000-0000-000000000004', '+55 (11) 99000-0004'),
+  ('30000000-0000-0000-0000-000000000006', '+55 (11) 99000-0006');
+INSERT INTO public.talkx_blacklist (contact_id) VALUES
+  ('30000000-0000-0000-0000-000000000004'),
+  ('30000000-0000-0000-0000-000000000005');
 INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, created_at) VALUES
   ('50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'pending', statement_timestamp()),
-  ('50000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 'pending', statement_timestamp() + interval '1 second');
+  ('50000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 'pending', statement_timestamp() + interval '1 second'),
+  ('50000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003', 'pending', statement_timestamp() + interval '2 seconds'),
+  ('50000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000004', 'pending', statement_timestamp() + interval '3 seconds'),
+  ('50000000-0000-0000-0000-000000000005', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000005', 'pending', statement_timestamp() + interval '4 seconds'),
+  ('50000000-0000-0000-0000-000000000006', '40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000006', 'pending', statement_timestamp() + interval '5 seconds');
 SQL
 
 psql_test < "$migration" >/dev/null
@@ -73,6 +96,8 @@ user_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'
 
 unauthorized="$(psql_test -v VERBOSITY=verbose -c "$user_session SELECT * FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'edge-a', 90);" 2>&1 || true)"
 [[ "$unauthorized" == *permission*denied* || "$unauthorized" == *service_role_required* ]] || fail 'authenticated conseguiu obter lease'
+unauthorized_suppression="$(psql_test -v VERBOSITY=verbose -c "$user_session SELECT public.talkx_recipient_is_suppressed('30000000-0000-0000-0000-000000000004', '+55 (11) 99000-0004');" 2>&1 || true)"
+[[ "$unauthorized_suppression" == *permission*denied* || "$unauthorized_suppression" == *service_role_required* ]] || fail 'authenticated consultou supressão de outro escopo'
 
 first_id="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'edge-a', 90);")"
 [[ "$first_id" == '50000000-0000-0000-0000-000000000001' ]] || fail 'primeiro claim não selecionou destinatário pendente'
@@ -86,6 +111,7 @@ none="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talk
 first_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000001'")"
 psql_test >/dev/null <<SQL
 $service_session
+SELECT public.mark_talkx_recipient_dispatch_started('50000000-0000-0000-0000-000000000001', '$first_token'::uuid);
 SELECT public.record_talkx_recipient_sent('50000000-0000-0000-0000-000000000001', '$first_token'::uuid, 'provider-message-1');
 SQL
 [[ "$(psql_test -Atqc "SELECT r.status || ':' || r.external_id || ':' || c.sent_count || ':' || c.failed_count FROM public.talkx_recipients r JOIN public.talkx_campaigns c ON c.id=r.campaign_id WHERE r.id='50000000-0000-0000-0000-000000000001'")" == 'sent:provider-message-1:1:0' ]] || fail 'recibo de envio não foi persistido atomicamente'
@@ -96,22 +122,51 @@ repeated_ack="$(psql_test -Atqc "$service_session SELECT public.record_talkx_rec
 [[ "$repeated_ack" == 'f' ]] || fail 'DELIVERY_ACK duplicado incrementou a métrica novamente'
 [[ "$(psql_test -Atqc "SELECT r.status || ':' || c.delivered_count FROM public.talkx_recipients r JOIN public.talkx_campaigns c ON c.id=r.campaign_id WHERE r.id='50000000-0000-0000-0000-000000000001'")" == 'delivered:1' ]] || fail 'ack não atualizou destinatário e contador na mesma transação'
 
+duplicate_id="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000006', 'edge-duplicate-receipt', 90);")"
+[[ "$duplicate_id" == '50000000-0000-0000-0000-000000000006' ]] || fail 'destinatário para simulação de recibo duplicado não foi reivindicado'
+duplicate_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000006'")"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_talkx_recipient_dispatch_started('50000000-0000-0000-0000-000000000006', '$duplicate_token'::uuid);
+SQL
+duplicate_receipt="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT public.record_talkx_recipient_sent('50000000-0000-0000-0000-000000000006', '$duplicate_token'::uuid, 'provider-message-1');" 2>&1 || true)"
+[[ "$duplicate_receipt" == *talkx_provider_receipt_already_recorded* ]] || fail 'recibo do provedor duplicado foi aceito para outro destinatário'
+
 stale="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT public.complete_talkx_recipient('50000000-0000-0000-0000-000000000001', '$first_token'::uuid, 'sent');" 2>&1 || true)"
 [[ "$stale" == *talkx_delivery_claim_conflict* ]] || fail 'conclusão com lease antigo foi aceita'
 
+second_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000002'")"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_talkx_recipient_dispatch_started('50000000-0000-0000-0000-000000000002', '$second_token'::uuid);
+SQL
 psql_test >/dev/null <<'SQL'
 UPDATE public.talkx_recipients
 SET delivery_claim_expires_at = statement_timestamp() - interval '1 second'
 WHERE id = '50000000-0000-0000-0000-000000000002';
 SQL
-reclaimed="$(psql_test -Atqc "$service_session SELECT recipient_id || ':' || delivery_attempt_count FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'edge-recovery', 90);")"
-[[ "$reclaimed" == '50000000-0000-0000-0000-000000000002:2' ]] || fail 'lease expirado não foi recuperado uma única vez'
+post_attempt_reclaim="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'edge-unsafe-retry', 90);")"
+[[ "$post_attempt_reclaim" == '0' ]] || fail 'lease expirado após início do POST voltou à fila e permitiria duplicação'
 
-reclaimed_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000002'")"
-released="$(psql_test -Atqc "$service_session SELECT public.release_talkx_recipient_claim('50000000-0000-0000-0000-000000000002', '$reclaimed_token'::uuid);")"
+third_id="$(psql_test -Atqc "$service_session SELECT recipient_id FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000003', 'edge-recovery', 90);")"
+[[ "$third_id" == '50000000-0000-0000-0000-000000000003' ]] || fail 'claim seguro para destinatário ainda não despachado falhou'
+psql_test >/dev/null <<'SQL'
+UPDATE public.talkx_recipients
+SET delivery_claim_expires_at = statement_timestamp() - interval '1 second'
+WHERE id = '50000000-0000-0000-0000-000000000003';
+SQL
+reclaimed="$(psql_test -Atqc "$service_session SELECT recipient_id || ':' || delivery_attempt_count FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000003', 'edge-recovery-2', 90);")"
+[[ "$reclaimed" == '50000000-0000-0000-0000-000000000003:2' ]] || fail 'lease expirado sem POST não foi recuperado uma única vez'
+reclaimed_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000003'")"
+released="$(psql_test -Atqc "$service_session SELECT public.release_talkx_recipient_claim('50000000-0000-0000-0000-000000000003', '$reclaimed_token'::uuid);")"
 [[ "$released" == 't' ]] || fail 'claim sem POST não foi liberado antes de pausar a campanha'
-released_reclaim="$(psql_test -Atqc "$service_session SELECT delivery_attempt_count FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'edge-resume', 90);")"
+released_reclaim="$(psql_test -Atqc "$service_session SELECT delivery_attempt_count FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000003', 'edge-resume', 90);")"
 [[ "$released_reclaim" == '3' ]] || fail 'claim liberado não voltou imediatamente à fila'
+psql_test >/dev/null <<'SQL'
+INSERT INTO public.talkx_blacklist (phone) VALUES ('5511990000003');
+SQL
+late_phone_opt_out="$(psql_test -Atqc "$service_session SELECT public.talkx_recipient_is_suppressed('30000000-0000-0000-0000-000000000003', '+55 (11) 99000-0003');")"
+[[ "$late_phone_opt_out" == 't' ]] || fail 'opt-out por telefone formatado não foi detectado após o claim'
 
 invalid="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT * FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'worker invalido', 90);" 2>&1 || true)"
 [[ "$invalid" == *invalid_talkx_delivery_claim* ]] || fail 'worker inválido foi aceito'
@@ -119,7 +174,6 @@ invalid="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT * FROM pub
 not_drained="$(psql_test -Atqc "$service_session SELECT public.complete_talkx_campaign_if_drained('40000000-0000-0000-0000-000000000001');")"
 [[ "$not_drained" == 'f' ]] || fail 'campanha com lease ativo foi concluída'
 
-second_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000002'")"
 psql_test >/dev/null <<SQL
 $service_session
 SELECT public.complete_talkx_recipient('50000000-0000-0000-0000-000000000002', '$second_token'::uuid, 'outcome_unknown', 'Confirmação do provedor indisponível');
@@ -127,8 +181,21 @@ SQL
 [[ "$(psql_test -Atqc "SELECT r.status || ':' || c.sent_count || ':' || c.failed_count || ':' || c.outcome_unknown_count FROM public.talkx_recipients r JOIN public.talkx_campaigns c ON c.id=r.campaign_id WHERE r.id='50000000-0000-0000-0000-000000000002'")" == 'outcome_unknown:1:0:1' ]] || fail 'resultado ambíguo não foi colocado em quarentena sem contaminar contadores'
 unknown_claim="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'edge-retry', 90);")"
 [[ "$unknown_claim" == '0' ]] || fail 'resultado ambíguo voltou automaticamente para a fila e poderia duplicar um envio'
+third_token="$(psql_test -Atqc "SELECT delivery_claim_token FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000003'")"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.complete_talkx_recipient('50000000-0000-0000-0000-000000000003', '$third_token'::uuid, 'skipped', 'Teste de encerramento seguro');
+SELECT public.complete_talkx_recipient('50000000-0000-0000-0000-000000000006', '$duplicate_token'::uuid, 'outcome_unknown', 'Recibo duplicado requer reconciliação manual');
+SQL
+blacklisted_claim="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000004', 'edge-blacklist', 90);")"
+[[ "$blacklisted_claim" == '0' ]] || fail 'contato suprimido recebeu lease de envio'
+[[ "$(psql_test -Atqc "SELECT status || ':' || delivery_attempt_count FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000004'")" == 'skipped:0' ]] || fail 'rechecagem de supressão não saltou o contato antes do POST'
+orphaned_blacklisted_claim="$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_talkx_recipient('40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000005', 'edge-orphaned-blacklist', 90);")"
+[[ "$orphaned_blacklisted_claim" == '0' ]] || fail 'supressão por contact_id falhou quando o perfil do contato não estava disponível'
+[[ "$(psql_test -Atqc "SELECT status || ':' || delivery_attempt_count FROM public.talkx_recipients WHERE id='50000000-0000-0000-0000-000000000005'")" == 'skipped:0' ]] || fail 'contato suprimido sem perfil foi encaminhado para envio'
 drained="$(psql_test -Atqc "$service_session SELECT public.complete_talkx_campaign_if_drained('40000000-0000-0000-0000-000000000001');")"
 [[ "$drained" == 't' ]] || fail 'campanha drenada não foi concluída'
 [[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000001'")" == 'completed' ]] || fail 'estado final não foi persistido'
+[[ "$(psql_test -Atqc "SELECT outcome_unknown_count FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000001'")" == '2' ]] || fail 'recibos ambíguos não foram contabilizados separadamente'
 
-printf 'PASS: Talk X delivery leases fence duplicates, atomically persist provider receipts/acks, release unsent claims, and quarantine ambiguous outcomes\n'
+printf 'PASS: Talk X delivery leases fence duplicate dispatches, recheck suppression at claim time, atomically persist provider receipts/acks, release unsent claims, and quarantine ambiguous outcomes\n'

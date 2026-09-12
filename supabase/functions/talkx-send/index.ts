@@ -285,19 +285,19 @@ Deno.serve(async (req) => {
       .order("created_at");
     if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
 
-    // Get blacklisted contact IDs
-    const now = new Date().toISOString();
-    const { data: blacklisted, error: blacklistError } = await supabase.from("talkx_blacklist")
-      .select("contact_id, phone")
-      .is("removed_at", null)
-      .or(`expires_at.is.null,expires_at.gt.${now}`);
-    if (blacklistError) throw new Error(`talkx_blacklist_lookup_failed: ${blacklistError.message}`);
-    const blacklistSet = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.contact_id).filter(Boolean));
-    const blacklistPhones = new Set(
-      (blacklisted || [])
-        .map((b: Record<string, unknown>) => typeof b.phone === "string" ? b.phone.replace(/\D/g, "") : null)
-        .filter(Boolean),
-    );
+    // Check against the source of truth for every recipient. This makes a
+    // phone-only, formatted legacy opt-out equivalent to the contact phone
+    // and lets us repeat the check immediately before a provider POST.
+    const isRecipientSuppressed = async (contactId: string | null, phone: string | null) => {
+      const { data, error } = await supabase.rpc("talkx_recipient_is_suppressed", {
+        p_contact_id: contactId,
+        p_phone: phone,
+      });
+      if (error || typeof data !== "boolean") {
+        throw new Error(`talkx_suppression_check_failed: ${error?.message ?? "invalid_response"}`);
+      }
+      return data;
+    };
 
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
 
       const contact = recipient.contacts as Record<string, unknown>;
       const recipientPhone = (contact?.phone as string | undefined)?.replace(/\D/g, '');
-      if (blacklistSet.has(recipient.contact_id) || (recipientPhone && blacklistPhones.has(recipientPhone))) {
+      if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
         const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
           p_recipient_id: recipient.id,
           p_claim_token: claim.claim_token,
@@ -440,19 +440,45 @@ Deno.serve(async (req) => {
           break;
         }
 
+        // A contact may opt out after this worker claimed its lease, while it
+        // was waiting for the humanized typing delay. Recheck the normalized,
+        // server-side predicate immediately before a provider request.
+        if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: "Contato na lista negra (opt-out)",
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+          blacklistedCount++;
+          continue;
+        }
+
         let sendResponse: Response;
+        const markProviderDispatch = async () => {
+          const { error } = await supabase.rpc("mark_talkx_recipient_dispatch_started", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+          });
+          if (error) throw new Error(`talkx_provider_dispatch_mark_failed: ${error.message}`);
+        };
 
         if (recipientHasMedia) {
           const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
           const mediaSource = (effectiveMediaUrl !== campaign.media_url)
             ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
             : await mediaForSend();
+          await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/${mediaEndpoint}/${connection.instance_id}`,
-            { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 }
+            effectiveMediaType === "audio"
+              ? { number: phone, audio: mediaSource, delay: 0 }
+              : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
           );
         } else {
+          await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/sendText/${connection.instance_id}`,

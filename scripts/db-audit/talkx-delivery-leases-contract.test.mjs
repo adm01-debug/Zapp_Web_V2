@@ -58,11 +58,22 @@ test('Talk X completion is service-only, locked and requires a drained queue', (
 test('Talk X persists provider receipts and delivery acknowledgements atomically', () => {
   assert.match(receiptMigration, /record_talkx_recipient_sent/i);
   assert.match(receiptMigration, /record_talkx_recipient_delivered/i);
+  assert.match(receiptMigration, /mark_talkx_recipient_dispatch_started/i);
+  assert.match(receiptMigration, /provider_dispatch_started_at IS NOT NULL/i);
+  assert.match(receiptMigration, /provider_dispatch_started_at IS NULL/i);
+  assert.match(receiptMigration, /talkx_recipient_is_suppressed/i);
+  assert.match(receiptMigration, /public\.talkx_blacklist/i);
   assert.match(receiptMigration, /pg_advisory_xact_lock/i);
   assert.match(receiptMigration, /delivered_count = campaign\.delivered_count \+ 1/i);
   assert.match(receiptMigration, /whatsapp_connection_id = p_connection_id/i);
   assert.match(receiptMigration, /REVOKE ALL ON FUNCTION public\.record_talkx_recipient_sent[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(receiptMigration, /GRANT EXECUTE ON FUNCTION public\.record_talkx_recipient_delivered[\s\S]*TO service_role/i);
+  assert.match(edgeFunction, /mark_talkx_recipient_dispatch_started/);
+  assert.match(edgeFunction, /record_talkx_recipient_sent/);
+  const typingDelay = edgeFunction.indexOf('await sleep(typingDelay)');
+  const recheck = edgeFunction.indexOf('await isRecipientSuppressed', typingDelay);
+  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', recheck);
+  assert.ok(typingDelay >= 0 && recheck > typingDelay && dispatchMark > recheck, 'suppression must be rechecked after typing and before the provider dispatch marker');
 });
 
 test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {
