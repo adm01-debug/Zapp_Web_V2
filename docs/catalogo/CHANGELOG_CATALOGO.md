@@ -44,3 +44,5 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 Total do módulo: 150/150. tsc 0 · lint-ratchet 0 novas · 2026-09-12
 
 - E17 · `CatalogKpiStrip` (reuso de `KpiCard`): `KpiCard`/`KpiCardSkeleton` ganham prop `compact` opcional (72px, sem mini-barras, ícone à esquerda) sem quebrar os 9 usos existentes no Talk X (confirmado: 37 testes de TalkX.test.tsx/talkxExport continuam verdes). Strip renderiza só os 6 campos numéricos presentes em `CatalogStats` (nada de "—" decorativo) — hoje sempre oculto, já que `catalog_stats` só existe na E24. 5 testes novos. Total do módulo: 155/155. tsc 0 · lint-ratchet 0 novas · 2026-09-12
+
+- E18 · `CategoryChips` + `CatalogFilterBar`: chips de categoria ordenados por `products_count`, excedente em `DropdownMenu` ("Mais"). `CatalogFilterBar` compõe `FilterBarV2` do Talk X 100% via `rightSlot` (switch "Em estoque" + botão "Filtros avançados" com contador) — **zero mudança em `FilterBarV2`**, mais simples do que as props extras que o plano original previa (`switches[]`/`extraRight`), corrigido no plano. 14 testes novos. Total do módulo: 164/164. tsc 0 · lint-ratchet 0 novas · 2026-09-12

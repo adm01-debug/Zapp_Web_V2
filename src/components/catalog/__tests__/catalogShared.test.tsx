@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip } from '../catalogShared';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar } from '../catalogShared';
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -229,5 +229,89 @@ describe('CatalogKpiStrip', () => {
   it('sem onSelect, os cards não são clicáveis (botão desabilitado)', () => {
     render(<CatalogKpiStrip stats={{ total: 100 }} />);
     expect(screen.getByText('Produtos no total').closest('button')).toBeDisabled();
+  });
+});
+
+describe('CategoryChips', () => {
+  const cats = [
+    { id: 'c1', name: 'Agro', products_count: 50 },
+    { id: 'c2', name: 'Chapéus', products_count: 200 },
+    { id: 'c3', name: 'Canetas', products_count: 500 },
+    { id: 'c4', name: 'Garrafas', products_count: 150 },
+    { id: 'c5', name: 'Mochilas', products_count: 90 },
+    { id: 'c6', name: 'Camisetas', products_count: 300 },
+    { id: 'c7', name: 'Squeezes', products_count: 120 },
+    { id: 'c8', name: 'Chaveiros', products_count: 400 },
+    { id: 'c9', name: 'Ecobags', products_count: 60 },
+  ];
+
+  it('sempre mostra o chip "Todos"', () => {
+    render(<CategoryChips categories={[]} activeId={null} onChange={vi.fn()} />);
+    expect(screen.getByText('Todos')).toBeInTheDocument();
+  });
+
+  it('9 categorias com max=7: mostra as 7 mais populosas + chip "Mais"', () => {
+    render(<CategoryChips categories={cats} activeId={null} onChange={vi.fn()} max={7} />);
+    expect(screen.getByText('Canetas')).toBeInTheDocument(); // 500, a maior
+    expect(screen.getByText('Chaveiros')).toBeInTheDocument(); // 400
+    expect(screen.queryByText('Agro')).not.toBeInTheDocument(); // 50, a menor, fora do top 7
+    expect(screen.getByText('Mais')).toBeInTheDocument();
+  });
+
+  it('clicar num chip chama onChange com o id', () => {
+    const onChange = vi.fn();
+    render(<CategoryChips categories={cats} activeId={null} onChange={onChange} />);
+    fireEvent.click(screen.getByText('Canetas'));
+    expect(onChange).toHaveBeenCalledWith('c3');
+  });
+
+  it('clicar em "Todos" chama onChange(null)', () => {
+    const onChange = vi.fn();
+    render(<CategoryChips categories={cats} activeId="c3" onChange={onChange} />);
+    fireEvent.click(screen.getByText('Todos'));
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('sem categoria nenhuma exceder max, não mostra o chip "Mais"', () => {
+    render(<CategoryChips categories={cats.slice(0, 3)} activeId={null} onChange={vi.fn()} max={7} />);
+    expect(screen.queryByText('Mais')).not.toBeInTheDocument();
+  });
+});
+
+describe('CatalogFilterBar', () => {
+  const baseProps = {
+    search: '', onSearch: vi.fn(),
+    categories: [{ id: 'c1', name: 'Canetas' }],
+    categoryId: 'all', onCategoryChange: vi.fn(),
+    suppliers: [{ id: 's1', name: 'Spot' }],
+    supplierId: 'all', onSupplierChange: vi.fn(),
+    onlyInStock: false, onOnlyInStockChange: vi.fn(),
+    view: 'grid' as const, onViewChange: vi.fn(),
+  };
+
+  it('renderiza a busca com o placeholder do catálogo', () => {
+    render(<CatalogFilterBar {...baseProps} />);
+    expect(screen.getByPlaceholderText('Buscar por nome, SKU ou marca…')).toBeInTheDocument();
+  });
+
+  it('switch "Em estoque" chama onOnlyInStockChange', () => {
+    const onOnlyInStockChange = vi.fn();
+    render(<CatalogFilterBar {...baseProps} onOnlyInStockChange={onOnlyInStockChange} />);
+    fireEvent.click(screen.getByRole('switch'));
+    expect(onOnlyInStockChange).toHaveBeenCalledWith(true);
+  });
+
+  it('sem onAdvancedFilters, o botão "Filtros avançados" não aparece', () => {
+    render(<CatalogFilterBar {...baseProps} />);
+    expect(screen.queryByText('Filtros avançados')).not.toBeInTheDocument();
+  });
+
+  it('com onAdvancedFilters, o botão aparece e mostra o contador', () => {
+    const onAdvancedFilters = vi.fn();
+    render(<CatalogFilterBar {...baseProps} onAdvancedFilters={onAdvancedFilters} advancedFiltersCount={3} />);
+    const btn = screen.getByText('Filtros avançados').closest('button')!;
+    expect(screen.getByText('3')).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onAdvancedFilters).toHaveBeenCalledTimes(1);
   });
 });
