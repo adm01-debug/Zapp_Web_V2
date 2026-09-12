@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -6,34 +6,9 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Package, Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
-import { ExternalProduct, useExternalCatalog } from '@/hooks/integrations/useExternalCatalog';
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
-
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.style.display = 'none';
-  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-  if (fallback) fallback.style.display = 'flex';
-};
-
-const ProductImage: React.FC<{ src: string | null; alt: string; iconSize?: string }> = ({ src, alt, iconSize = 'w-6 h-6' }) => (
-  <>
-    {src ? (
-      <>
-        <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
-        <div className="w-full h-full items-center justify-center hidden">
-          <Package className={`${iconSize} text-muted-foreground`} />
-        </div>
-      </>
-    ) : (
-      <div className="w-full h-full flex items-center justify-center">
-        <Package className={`${iconSize} text-muted-foreground`} />
-      </div>
-    )}
-  </>
-);
+import { Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
+import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import { formatPrice, ProductImage, handleImageError } from './catalogShared';
 
 interface ProductDetailDialogProps {
   product: ExternalProduct;
@@ -43,20 +18,11 @@ interface ProductDetailDialogProps {
 }
 
 export function ProductDetailDialog({ product, open, onOpenChange, onSend }: ProductDetailDialogProps) {
-  const { fetchProduct } = useExternalCatalog();
-  const [fullProduct, setFullProduct] = useState<ExternalProduct>(product);
-  const [loadingVariants, setLoadingVariants] = useState(false);
-
-  useEffect(() => {
-    if (open && !product.variants?.length) {
-      setLoadingVariants(true);
-      fetchProduct(product.id).then((p) => {
-        if (p) setFullProduct(p);
-      }).finally(() => setLoadingVariants(false));
-    } else {
-      setFullProduct(product);
-    }
-  }, [open, product.id]);
+  const needsFullProduct = !product.variants?.length;
+  const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
+    enabled: open && needsFullProduct,
+  });
+  const fullProduct: ExternalProduct = fetchedProduct ?? product;
 
   const dp = fullProduct;
 

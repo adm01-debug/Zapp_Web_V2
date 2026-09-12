@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ import {
   Send, ChevronDown, Package, Copy, Download, Palette, Check,
   Pencil, User,
 } from 'lucide-react';
-import { ExternalProduct, useExternalCatalog } from '@/hooks/integrations/useExternalCatalog';
+import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -42,9 +42,11 @@ const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   product, open, onOpenChange, onConfirmSend,
 }) => {
-  const { fetchProduct } = useExternalCatalog();
-  const [fullProduct, setFullProduct] = useState<ExternalProduct>(product);
-  const [loadingVariants, setLoadingVariants] = useState(false);
+  const needsFullProduct = !product.variants || product.variants.length === 0;
+  const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
+    enabled: open && needsFullProduct,
+  });
+  const fullProduct: ExternalProduct = fetchedProduct ?? product;
   const [template, setTemplate] = useState<MessageTemplate>('informal');
   const [isEditing, setIsEditing] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
@@ -64,15 +66,6 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     setStep('configure');
     resetContactSelection();
   });
-
-  useEffect(() => {
-    if (open && (!product.variants || product.variants.length === 0)) {
-      setLoadingVariants(true);
-      fetchProduct(product.id).then((p) => { if (p) setFullProduct(p); }).finally(() => setLoadingVariants(false));
-    } else {
-      setFullProduct(product);
-    }
-  }, [open, product.id]);
 
   const variantGroups = useMemo(
     () => groupVariantsByColor(fullProduct.variants || []),
@@ -96,8 +89,18 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     return allImages;
   }, [sendMode, activeGroup, allImages, fullProduct.primary_image_url]);
 
-  const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
-  useEffect(() => { setSelectedImages(new Set(visibleImages.map((i) => i.url))); }, [visibleImages]);
+  // Reseta a selecao de fotos sempre que o conjunto de imagens visiveis
+  // muda (produto carregado, troca de modo produto/variante ou de cor) -
+  // sem efeito e sem ref (o linter deste repo bane ref-durante-render):
+  // duas useState comparadas no proprio corpo do render, no padrao
+  // documentado em https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
+  const visibleImagesKey = visibleImages.map((i) => i.url).join('|');
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(visibleImages.map((i) => i.url)));
+  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(visibleImagesKey);
+  if (prevVisibleImagesKey !== visibleImagesKey) {
+    setPrevVisibleImagesKey(visibleImagesKey);
+    setSelectedImages(new Set(visibleImages.map((i) => i.url)));
+  }
 
   const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null);
 

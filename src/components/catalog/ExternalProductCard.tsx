@@ -2,38 +2,17 @@ import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Package, Send, Eye, Palette } from 'lucide-react';
+import { Send, Eye, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { ProductDetailDialog } from './ProductDetailDialog';
+import { formatPrice, ProductImage } from './catalogShared';
 
 interface ExternalProductCardProps {
   product: ExternalProduct;
   onSend?: (product: ExternalProduct) => void;
   compact?: boolean;
 }
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
-
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.style.display = 'none';
-  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-  if (fallback) fallback.style.display = 'flex';
-};
-
-const ProductImage: React.FC<{ src: string | null; alt: string; iconSize?: string }> = ({ src, alt, iconSize = 'w-6 h-6' }) => (
-  <>
-    {src ? (
-      <>
-        <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
-        <div className="w-full h-full items-center justify-center hidden"><Package className={`${iconSize} text-muted-foreground`} /></div>
-      </>
-    ) : (
-      <div className="w-full h-full flex items-center justify-center"><Package className={`${iconSize} text-muted-foreground`} /></div>
-    )}
-  </>
-);
 
 export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({ product, onSend, compact = false }) => {
   const [showDetails, setShowDetails] = useState(false);

@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1096,15 +1098,18 @@ describe('Architectural Gaps', () => {
     // RECOMMENDATION: Create a ProductMessage and send via Evolution API
   });
 
-  it('GAP: Old ProductCatalog and ProductManagement still exist but are unused', () => {
-    // The old components are still in the codebase but no longer imported
-    const orphanedFiles = [
+  it('RESOLVED (E03): legacy local-product components removed from the codebase', () => {
+    // ProductCatalog.tsx, ProductManagement.tsx, ProductCard.tsx, ProductForm.tsx,
+    // ShoppingCart.tsx, ProductMessage.tsx and useProductManagement.ts were orphaned
+    // (no route/consumer reached them) and were removed in E03.
+    const removedFiles = [
       'src/components/catalog/ProductCatalog.tsx',
       'src/components/catalog/ProductManagement.tsx',
       'src/components/catalog/ProductCard.tsx',
     ];
-    expect(orphanedFiles.length).toBe(3);
-    // RECOMMENDATION: Keep as fallback or remove to avoid confusion
+    for (const f of removedFiles) {
+      expect(fs.existsSync(path.resolve(__dirname, '../../..', f))).toBe(false);
+    }
   });
 
   it('GAP: No image loading error handling', () => {
