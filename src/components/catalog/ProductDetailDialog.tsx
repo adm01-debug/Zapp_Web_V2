@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
 import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
-import { formatPrice, ProductImage, handleImageError } from './catalogShared';
+import { formatPrice, ProductThumb, handleImageError } from './catalogShared';
 
 interface ProductDetailDialogProps {
   product: ExternalProduct;
@@ -37,7 +37,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
             {/* Image + Basic Info */}
             <div className="flex gap-4">
               <div className="w-40 h-40 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                <ProductImage src={dp.primary_image_url} alt={dp.name} iconSize="w-10 h-10" />
+                <ProductThumb src={dp.primary_image_url} fallbackSrc={dp.primary_image_fallback_url} alt={dp.name} iconSize="w-10 h-10" sizes="160px" />
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap gap-1.5">
