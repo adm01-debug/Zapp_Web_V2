@@ -16,6 +16,12 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
 import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables } from './talkxShared';
 
+function formatLocalSchedule(localDateTime: string, timezone: string): string {
+  const [date = '', time = ''] = localDateTime.split('T');
+  const [year = '', month = '', day = ''] = date.split('-');
+  return `${day}/${month}/${year} ${time} (${timezone})`;
+}
+
 function Section({ icon, color = 'blue', title, subtitle, right, children }: { icon: React.ElementType; color?: 'blue' | 'green' | 'red' | 'violet' | 'amber'; title: string; subtitle?: string; right?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
@@ -42,11 +48,13 @@ function OptionPill({ active, label, onClick }: { active: boolean; label: string
 /* ------------------------------------------------------------------ */
 
 export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
-  const [minLocal] = useState<string>(() => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+  const scheduleLabel = ed.isScheduled && ed.scheduledAt
+    ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)
+    : 'Envio imediato ao lançar';
   return (
     <>
       <Section icon={CalendarDays} title="Configurações de agendamento" subtitle="Defina quando, como e em que condições a campanha será enviada."
-        right={<Pill label={ed.isScheduled && ed.scheduledAt ? `Agendada para ${fmtDateTime(new Date(ed.scheduledAt).toISOString())}` : 'Envio imediato ao lançar'} tone={ed.isScheduled ? 'success' : 'info'} dot />}
+        right={<Pill label={ed.isScheduled ? `Agendada para ${scheduleLabel}` : scheduleLabel} tone={ed.isScheduled ? 'success' : 'info'} dot />}
       >
         <div className="flex flex-wrap gap-2 mb-4">
           <OptionPill active={!ed.isScheduled} label="Enviar ao lançar" onClick={() => ed.toggleSchedule(false)} />
@@ -56,7 +64,8 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
               <Label className="text-[12px] text-foreground-secondary">Data e horário de início</Label>
-              <Input type="datetime-local" value={ed.scheduledAt} min={minLocal} onChange={(e) => ed.setScheduledAt(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+              <Input type="datetime-local" value={ed.scheduledAt} min={ed.minimumScheduledAt} onChange={(e) => ed.setScheduledAt(e.target.value)} aria-invalid={!!ed.scheduleConfigError} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-[11.5px] text-dash-red">{ed.scheduleConfigError}</p>}
             </div>
             <div>
               <Label className="text-[12px] text-foreground-secondary">Fuso horário</Label>
@@ -74,13 +83,13 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           <div><Label className="text-[12px] text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
             <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-            <div><p className="text-[12.5px] font-semibold text-foreground">Envios apenas neste período</p><p className="text-[11.5px] text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no horário de Brasília.</p></div>
+            <div><p className="text-[12.5px] font-semibold text-foreground">Envios apenas neste período</p><p className="text-[11.5px] text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
           <div className="flex items-center gap-3">
             <IconTile icon={CalendarDays as never} size={36} />
-            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-[11.5px] text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 (Brasília).</p></div>
+            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-[11.5px] text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
           </div>
           <div className="flex items-center gap-2"><span className={cn('text-[12px] font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
         </div>
@@ -183,7 +192,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
         <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} ed={ed} />
         <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} ed={ed} />
         <Row icon={Gauge} label="Velocidade de entrega" value={SPEED_PROFILES.find((p) => p.value === ed.speedProfile)?.label ?? ed.speedProfile} sub={`~${ed.messagesPerMinute} mensagens/min`} step={3} ed={ed} />
-        <Row icon={CalendarDays} label="Agendamento" value={ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato ao lançar'} sub={ed.sendWindowEnabled ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ' · horário comercial' : ''}` : ed.businessHoursOnly ? 'Somente horário comercial' : 'Sem janela de envio'} step={3} ed={ed} />
+        <Row icon={CalendarDays} label="Agendamento" value={ed.isScheduled && ed.scheduledAt ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato ao lançar'} sub={ed.sendWindowEnabled ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ` · horário comercial (${ed.scheduleTimezone})` : ''}` : ed.businessHoursOnly ? `Somente horário comercial (${ed.scheduleTimezone})` : 'Sem janela de envio'} step={3} ed={ed} />
         <Row icon={Smartphone} label="Conexão WhatsApp" value={connection ? `${connection.name} (${connection.phone_number || 'sem número'})` : 'Nenhuma conexão'} sub={connection ? 'Conectada e pronta' : 'Selecione uma conexão ativa'} ok={waOk} step={1} ed={ed} />
         <Row icon={ShieldCheck} label="Conformidade" value="LGPD e políticas do WhatsApp" sub={ed.respectSuppression && ed.confirmConsent ? 'Verificações confirmadas' : 'Confirme as verificações abaixo'} ok={ed.respectSuppression && ed.confirmConsent} step={3} ed={ed} />
       </Section>
@@ -233,7 +242,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center mb-2"><Send className="w-7 h-7 text-primary-glow" /></div>
             <DialogTitle className="text-center text-[20px] font-bold">Confirmar disparo?</DialogTitle>
             <DialogDescription className="text-center text-[12.5px]">
-              {ed.isScheduled && ed.scheduledAt ? `A campanha ficará agendada para ${fmtDateTime(new Date(ed.scheduledAt).toISOString())}` : 'Após o lançamento, a campanha será enviada'} para <b className="text-foreground">{fmtInt(ed.eligibleCount)} contatos</b>. Esta ação não pode ser desfeita.
+              {ed.isScheduled && ed.scheduledAt ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)}` : 'Após o lançamento, a campanha será enviada'} para <b className="text-foreground">{fmtInt(ed.eligibleCount)} contatos</b>. Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-1.5 text-[12.5px]">

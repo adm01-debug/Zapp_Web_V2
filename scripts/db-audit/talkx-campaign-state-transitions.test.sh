@@ -6,6 +6,7 @@ snapshot_migration="$repo_root/supabase/migrations/20260911120000_replace_talkx_
 migration="$repo_root/supabase/migrations/20260911140000_harden_talkx_campaign_state_transitions.sql"
 forward_hardening_migration="$repo_root/supabase/migrations/20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql"
 outcome_counter_migration="$repo_root/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql"
+schedule_timezone_migration="$repo_root/supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql"
 postgres_image="${TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-campaign-state-test-$$"
 test_password="talkx_campaign_state_test_only"
@@ -37,6 +38,7 @@ CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY, created_by uuid, status text NOT NULL DEFAULT 'draft', scheduled_at timestamptz,
   total_recipients integer NOT NULL DEFAULT 0, sent_count integer NOT NULL DEFAULT 0,
   failed_count integer NOT NULL DEFAULT 0, delivered_count integer NOT NULL DEFAULT 0,
+  send_window_start time, send_window_end time, business_hours_only boolean NOT NULL DEFAULT false,
   started_at timestamptz, completed_at timestamptz, updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 CREATE TABLE public.contacts (id uuid PRIMARY KEY, visible boolean NOT NULL DEFAULT true);
@@ -54,6 +56,7 @@ psql_test < "$snapshot_migration" >/dev/null
 psql_test < "$migration" >/dev/null
 psql_test < "$forward_hardening_migration" >/dev/null
 psql_test < "$outcome_counter_migration" >/dev/null
+psql_test < "$schedule_timezone_migration" >/dev/null
 
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
@@ -72,17 +75,30 @@ direct_unknown_count="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE
 sending="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET status='sending' WHERE id='$campaign_id';" 2>&1 || true)"
 [[ "$sending" == *talkx_campaign_transition_denied* ]] || fail 'navegador conseguiu iniciar campanha diretamente'
 
+psql_test >/dev/null <<SQL
+$owner_session
+INSERT INTO public.talkx_campaigns (id, created_by, status)
+VALUES ('40000000-0000-0000-0000-000000000098', '10000000-0000-0000-0000-000000000001', 'draft');
+SQL
+[[ "$(psql_test -Atqc "SELECT status || ':' || schedule_timezone FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000098'")" == 'draft:America/Sao_Paulo' ]] || fail 'insert autenticado de draft não preservou o estado permitido ou o fuso padrão'
+
 fabricated_insert="$(psql_test -v VERBOSITY=verbose -c "$owner_session INSERT INTO public.talkx_campaigns (id, created_by, status, total_recipients, sent_count) VALUES ('40000000-0000-0000-0000-000000000099', '10000000-0000-0000-0000-000000000001', 'sending', 99, 99);" 2>&1 || true)"
 [[ "$fabricated_insert" == *talkx_campaign_insert_must_be_draft* ]] || fail 'insert autenticado fabricou estado de entrega'
 
 unscheduled="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$campaign_id';" 2>&1 || true)"
 [[ "$unscheduled" == *talkx_schedule_requires_audience_and_timestamp* ]] || fail 'agendamento sem instante/audiência foi aceito'
 
+invalid_timezone="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET schedule_timezone='Mars/Olympus' WHERE id='$campaign_id';" 2>&1 || true)"
+[[ "$invalid_timezone" == *talkx_campaigns_schedule_timezone_valid* ]] || fail 'fuso IANA inválido foi aceito'
+
+inverted_window="$(psql_test -v VERBOSITY=verbose -c "$owner_session UPDATE public.talkx_campaigns SET send_window_start='18:00', send_window_end='08:00' WHERE id='$campaign_id';" 2>&1 || true)"
+[[ "$inverted_window" == *talkx_campaigns_send_window_valid* ]] || fail 'janela invertida foi aceita'
+
 psql_test >/dev/null <<SQL
 $owner_session
 SELECT public.replace_talkx_draft_recipients('$campaign_id', ARRAY['$contact_id'::uuid]);
 SELECT public.replace_talkx_draft_recipients('$campaign_id', ARRAY['$contact_id'::uuid]);
-UPDATE public.talkx_campaigns SET status='scheduled', scheduled_at='2026-10-01T12:00:00Z' WHERE id='$campaign_id';
+UPDATE public.talkx_campaigns SET status='scheduled', scheduled_at=statement_timestamp() + interval '1 day', schedule_timezone='America/New_York' WHERE id='$campaign_id';
 SQL
 [[ "$(psql_test -Atqc "SELECT c.status || ':' || c.total_recipients || ':' || count(r.contact_id) FROM public.talkx_campaigns c LEFT JOIN public.talkx_recipients r ON r.campaign_id=c.id WHERE c.id='$campaign_id' GROUP BY c.id")" == 'scheduled:1:1' ]] || fail 'RPC não atualizou snapshot agendado de forma atômica'
 
@@ -95,7 +111,8 @@ SQL
 
 psql_test >/dev/null <<'SQL'
 INSERT INTO public.talkx_campaigns (id, created_by, status) VALUES
-  ('40000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'draft');
+  ('40000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'draft'),
+  ('40000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'draft');
 SQL
 
 psql_test >/dev/null <<SQL
@@ -104,4 +121,10 @@ UPDATE public.talkx_campaigns SET status='sending', started_at=statement_timesta
 SQL
 [[ "$(psql_test -Atqc "SELECT status || ':' || sent_count FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000002'")" == 'sending:1' ]] || fail 'worker service_role não conseguiu atualizar entrega'
 
-printf 'PASS: Talk X blocks browser-managed delivery state and requires atomic recipient snapshots\n'
+psql_test >/dev/null <<SQL
+$service_session
+DELETE FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000003';
+SQL
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.talkx_campaigns WHERE id='40000000-0000-0000-0000-000000000003'")" == '0' ]] || fail 'delete service_role foi convertido em no-op pelo trigger'
+
+printf 'PASS: Talk X blocks browser-managed delivery state, preserves permitted draft CRUD, and requires atomic recipient snapshots\n'

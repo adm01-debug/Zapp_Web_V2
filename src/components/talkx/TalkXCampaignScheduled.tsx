@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble } from './talkxShared';
-import { localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
+import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
 
@@ -38,8 +38,6 @@ const TIMEZONES = [
   ['Europe/Lisbon', 'Europe/Lisboa'],
   ['UTC', 'UTC'],
 ] as const;
-
-const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
 interface Props {
   campaignId: string; // P1: recebe ID, deriva da query -- evita stale
@@ -82,9 +80,10 @@ interface ScheduledEditorProps {
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign, startCampaign } = useTalkX();
-  const [localTz, setLocalTz] = useState<string>(BROWSER_TIMEZONE);
+  const initialTimezone = campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
+  const [localTz, setLocalTz] = useState<string>(initialTimezone);
   const [localDate, setLocalDate] = useState<string>(() => (
-    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, BROWSER_TIMEZONE) : ''
+    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone) : ''
   ));
   const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign.send_window_start);
   const [windowStart, setWindowStart] = useState<string>(campaign.send_window_start?.slice(0, 5) ?? '08:00');
@@ -111,18 +110,27 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
 
   const handleSave = useCallback(async () => {
     if (!localDate) { toast.error('Defina a data e hora do agendamento.'); return; }
+    if (windowEnabled && windowStart >= windowEnd) {
+      toast.error('O fim da janela de envio deve ser posterior ao início.');
+      return;
+    }
     setSaving(true);
     try {
+      const scheduledAt = localToUTCInTimezone(localDate, localTz);
+      if (new Date(scheduledAt).getTime() <= Date.now()) {
+        throw new Error('O agendamento deve estar no futuro no fuso selecionado.');
+      }
       await updateCampaign.mutateAsync({
         id: campaign.id,
-        scheduled_at: localToUTCInTimezone(localDate, localTz),
+        scheduled_at: scheduledAt,
+        schedule_timezone: localTz,
         send_window_start: windowEnabled ? `${windowStart}:00` : null,
         send_window_end: windowEnabled ? `${windowEnd}:00` : null,
         business_hours_only: bizHours,
       });
       toast.success('Agendamento atualizado.');
-    } catch {
-      toast.error('Erro ao salvar agendamento.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar agendamento.');
     } finally {
       setSaving(false);
     }

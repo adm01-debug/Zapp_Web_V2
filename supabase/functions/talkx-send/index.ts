@@ -5,11 +5,13 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
-import { evoFetch } from "../_shared/evolution-send.ts";
+import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 
-function getGreeting(): string {
-  const hour = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "numeric", hour12: false });
+const DEFAULT_SCHEDULE_TIMEZONE = "America/Sao_Paulo";
+
+function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
+  const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
   const h = parseInt(hour, 10);
   if (h >= 5 && h < 12) return "Bom dia";
   if (h >= 12 && h < 18) return "Boa tarde";
@@ -20,6 +22,7 @@ function personalize(
   template: string,
   contact: { name?: string | null; nickname?: string | null; company?: string | null },
   customVars: string[] = [],
+  timeZone = DEFAULT_SCHEDULE_TIMEZONE,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
   let result = template
@@ -27,11 +30,67 @@ function personalize(
     .replace(/\{\{nome_completo\}\}/gi, contact.name || '')
     .replace(/\{\{apelido\}\}/gi, contact.nickname || firstName)
     .replace(/\{\{empresa\}\}/gi, contact.company || '')
-    .replace(/\{\{saudacao\}\}/gi, getGreeting());
+    .replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
   for (const v of customVars) {
     result = result.split('{{' + v + '}}').join('[' + v + ']');
   }
   return result;
+}
+
+type ScheduleGuardCampaign = {
+  schedule_timezone?: unknown;
+  send_window_start?: string | null;
+  send_window_end?: string | null;
+  business_hours_only?: boolean | null;
+};
+
+type LocalClock = { hour: number; minute: number; weekday: number };
+
+function localClockInTimezone(timeZone: string, now = new Date()): LocalClock | null {
+  try {
+    const values = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).formatToParts(now).map((part) => [part.type, part.value]),
+    );
+    const weekdayText = values.weekday;
+    if (typeof weekdayText !== "string") return null;
+    const weekday = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[weekdayText];
+    const hour = Number(values.hour);
+    const minute = Number(values.minute);
+    return typeof weekday === "number" && Number.isInteger(hour) && Number.isInteger(minute)
+      ? { weekday, hour, minute }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function deliveryWindowStatus(campaign: ScheduleGuardCampaign, now = new Date()): { allowed: true } | { allowed: false; reason: string; next_window?: string } {
+  const timeZone = typeof campaign.schedule_timezone === "string"
+    ? campaign.schedule_timezone
+    : DEFAULT_SCHEDULE_TIMEZONE;
+  const clock = localClockInTimezone(timeZone, now);
+  if (!clock) return { allowed: false, reason: "invalid_schedule_timezone" };
+
+  const currentMinutes = clock.hour * 60 + clock.minute;
+  if (campaign.send_window_start && campaign.send_window_end) {
+    const [startHour, startMinute] = campaign.send_window_start.split(":").map(Number);
+    const [endHour, endMinute] = campaign.send_window_end.split(":").map(Number);
+    const start = startHour * 60 + startMinute;
+    const end = endHour * 60 + endMinute;
+    if (!Number.isInteger(start) || !Number.isInteger(end) || currentMinutes < start || currentMinutes >= end) {
+      return { allowed: false, reason: "outside_send_window", next_window: campaign.send_window_start };
+    }
+  }
+  if (campaign.business_hours_only && (clock.weekday === 0 || clock.weekday === 6 || clock.hour < 8 || clock.hour >= 18)) {
+    return { allowed: false, reason: "outside_business_hours" };
+  }
+  return { allowed: true };
 }
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
 async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
@@ -127,10 +186,16 @@ Deno.serve(async (req) => {
       const cleanPhone = phone.replace(/\D/g, "");
       try {
         let sendRes: Response;
-        if (mediaUrl && mediaType && mediaType !== "audio") {
-          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendMedia/${conn.instance_id}`, {
-            number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText,
-          });
+        if (mediaUrl && mediaType) {
+          const isAudio = mediaType === "audio";
+          sendRes = await evoFetch(
+            evolutionUrl,
+            evolutionKey,
+            `/message/${isAudio ? "sendWhatsAppAudio" : "sendMedia"}/${conn.instance_id}`,
+            isAudio
+              ? { number: cleanPhone, audio: mediaUrl }
+              : { number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText },
+          );
         } else {
           sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
             number: cleanPhone, text: personalizedText,
@@ -140,7 +205,12 @@ Deno.serve(async (req) => {
           const body = await sendRes.text().catch(() => '');
           return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
         }
-        return new Response(JSON.stringify({ success: true }), { headers });
+        const providerResult = await sendRes.json().catch(() => null);
+        const providerMessageId = extractMessageId(providerResult);
+        if (!providerMessageId || providerMessageId.length > 512) {
+          return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
+        }
+        return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
       } catch (e) {
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
       }
@@ -172,12 +242,13 @@ Deno.serve(async (req) => {
     }
 
     // Get campaign
-    const { data: campaign, error: campErr } = await supabase
+    const { data: initialCampaign, error: campErr } = await supabase
       .from("talkx_campaigns").select("*").eq("id", campaignId).single();
 
-    if (campErr || !campaign) {
+    if (campErr || !initialCampaign) {
       return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
     }
+    let campaign = initialCampaign;
     // Get WhatsApp connection instance
     const { data: connection } = await supabase
       .from("whatsapp_connections").select("instance_id")
@@ -187,23 +258,12 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
     }
 
-    // Enforce send_window and business_hours_only before marking as sending.
-    const nowBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const hBR = nowBR.getHours(); const mBR = nowBR.getMinutes(); const dowBR = nowBR.getDay();
-    const hmBR = hBR * 60 + mBR;
-    if (campaign.send_window_start && campaign.send_window_end) {
-      const [ws_h, ws_m] = campaign.send_window_start.split(":").map(Number);
-      const [we_h, we_m] = campaign.send_window_end.split(":").map(Number);
-      const ws = ws_h * 60 + ws_m; const we = we_h * 60 + we_m;
-      if (hmBR < ws || hmBR >= we) {
-        return new Response(JSON.stringify({ ok: false, reason: "outside_send_window", next_window: campaign.send_window_start }), { headers });
-      }
-    }
-    if (campaign.business_hours_only) {
-      // Mon–Fri (1–5), 08:00–18:00 Brasília
-      if (dowBR === 0 || dowBR === 6 || hBR < 8 || hBR >= 18) {
-        return new Response(JSON.stringify({ ok: false, reason: "outside_business_hours" }), { headers });
-      }
+    // Enforce delivery limits in the selected IANA timezone before the locked
+    // transition. An invalid legacy timezone fails closed instead of falling
+    // back to Brasília and sending at an unintended local hour.
+    const windowStatus = deliveryWindowStatus(campaign);
+    if (!windowStatus.allowed) {
+      return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }
 
     // The transition RPC locks the campaign row and revalidates the state and
@@ -233,7 +293,11 @@ Deno.serve(async (req) => {
       .or(`expires_at.is.null,expires_at.gt.${now}`);
     if (blacklistError) throw new Error(`talkx_blacklist_lookup_failed: ${blacklistError.message}`);
     const blacklistSet = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.contact_id).filter(Boolean));
-    const blacklistPhones = new Set((blacklisted || []).map((b: Record<string, unknown>) => b.phone).filter(Boolean));
+    const blacklistPhones = new Set(
+      (blacklisted || [])
+        .map((b: Record<string, unknown>) => typeof b.phone === "string" ? b.phone.replace(/\D/g, "") : null)
+        .filter(Boolean),
+    );
 
     let sentCount = campaign.sent_count || 0;
     let failedCount = campaign.failed_count || 0;
@@ -314,7 +378,12 @@ Deno.serve(async (req) => {
       const effectiveMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
       const effectiveMediaType = variant?.media_type ?? campaign.media_type ?? null;
       const recipientHasMedia = !!effectiveMediaUrl && !!effectiveMediaType;
-      const personalizedMsg = personalize(contentToSend, contact as { name: string; nickname?: string; company?: string });
+      const personalizedMsg = personalize(
+        contentToSend,
+        contact as { name: string; nickname?: string; company?: string },
+        [],
+        typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+      );
       await supabase.from("talkx_recipients")
         .update({ personalized_message: personalizedMsg, variant_id: variant?.id ?? existingVid ?? null })
         .eq("id", recipient.id).eq("delivery_claim_token", claim.claim_token);
@@ -372,7 +441,8 @@ Deno.serve(async (req) => {
           throw new Error("talkx_provider_outcome_unknown: invalid_response_body");
         }
 
-        if (sendResponse.ok && !sendResult.error) {
+        const providerMessageId = extractMessageId(sendResult);
+        if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
           sentCount++;
           const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
             p_recipient_id: recipient.id,
@@ -380,6 +450,8 @@ Deno.serve(async (req) => {
             p_status: "sent",
           });
           if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+        } else if (sendResponse.ok && !sendResult.error) {
+          throw new Error("talkx_provider_outcome_unknown: missing_provider_message_id");
         } else {
           failedCount++;
           const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
@@ -429,7 +501,7 @@ Deno.serve(async (req) => {
       if (processedCount % RELOAD_EVERY === 0) {
         const { data: fresh } = await supabase
           .from("talkx_campaigns")
-          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile")
+          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
           .eq("id", campaignId).single();
         if (fresh) {
           campaign = { ...campaign, ...fresh };

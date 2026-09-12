@@ -37,6 +37,9 @@ export interface TalkXCampaign {
   media_url: string | null;
   media_type: string | null;
   scheduled_at: string | null;
+  // Introduzido por 20260911200000. Mantido opcional até o types-sync ser
+  // gerado a partir do banco canônico após a migration ser aplicada.
+  schedule_timezone?: string | null;
   // migration 20260908120000 — wizard / agendamento / supressao
   description?: string | null;
   objective?: string;

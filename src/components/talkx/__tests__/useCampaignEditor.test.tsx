@@ -61,6 +61,16 @@ describe('useCampaignEditor — draft integrity', () => {
       .toThrow('horário selecionado não existe');
   });
 
+  it('converts a valid time after the DST transition using the offset in effect at that time', () => {
+    expect(localToUTCInTimezone('2026-03-08T03:30', 'America/New_York'))
+      .toBe('2026-03-08T07:30:00.000Z');
+  });
+
+  it('rejects an ambiguous local DST time instead of arbitrarily choosing one occurrence', () => {
+    expect(() => localToUTCInTimezone('2026-11-01T01:30', 'America/New_York'))
+      .toThrow('horário selecionado é ambíguo');
+  });
+
   it('uses the requested valid wizard step and rejects an invalid value', () => {
     window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=3');
     const { result, unmount } = renderHook(() => useCampaignEditor(null, vi.fn()));
@@ -203,6 +213,34 @@ describe('useCampaignEditor — draft integrity', () => {
 
     await act(async () => { await result.current.handleSave('draft'); });
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ scheduled_at: '2026-09-15T12:00:00.000Z' }));
+  });
+
+  it('restores and persists the campaign IANA timezone instead of the browser timezone', async () => {
+    const campaign = {
+      id: 'scheduled-ny-1', name: 'Nova York', status: 'scheduled',
+      scheduled_at: '2026-09-15T12:00:00.000Z', schedule_timezone: 'America/New_York',
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    expect(result.current.scheduleTimezone).toBe('America/New_York');
+    expect(result.current.scheduledAt).toBe('2026-09-15T08:00');
+
+    await act(async () => { await result.current.handleSave('draft'); });
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      schedule_timezone: 'America/New_York',
+      scheduled_at: '2026-09-15T12:00:00.000Z',
+    }));
+  });
+
+  it('blocks an inverted send window before a scheduled campaign can advance', () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.toggleSchedule(true);
+      result.current.setScheduledAt('2026-12-01T10:00');
+      result.current.setSendWindowEnabled(true);
+      result.current.setSendWindowStart('18:00');
+      result.current.setSendWindowEnd('08:00');
+    });
+    expect(result.current.canProceed[3]).toBe(false);
   });
 
   it('does not record a false started event when the send request is rejected', async () => {

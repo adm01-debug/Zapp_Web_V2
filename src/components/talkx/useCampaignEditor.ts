@@ -35,7 +35,54 @@ export const MEDIA_TYPES = [
 export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
-const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+
+type LocalDateTimeParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+};
+
+const LOCAL_DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+
+function parseLocalDateTime(value: string): LocalDateTimeParts {
+  const match = LOCAL_DATE_TIME_PATTERN.exec(value);
+  if (!match) throw new Error('Informe uma data e hora locais válidas.');
+
+  const [, yearText, monthText, dayText, hourText, minuteText] = match;
+  const parts = {
+    year: Number(yearText), month: Number(monthText), day: Number(dayText),
+    hour: Number(hourText), minute: Number(minuteText),
+  };
+  const probe = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute));
+  if (
+    probe.getUTCFullYear() !== parts.year || probe.getUTCMonth() !== parts.month - 1
+    || probe.getUTCDate() !== parts.day || probe.getUTCHours() !== parts.hour
+    || probe.getUTCMinutes() !== parts.minute
+  ) {
+    throw new Error('Informe uma data e hora locais válidas.');
+  }
+  return parts;
+}
+
+function zonedParts(instantMs: number, timezone: string): LocalDateTimeParts & { second: number } {
+  try {
+    const values = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      calendar: 'iso8601',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).formatToParts(new Date(instantMs)).map((part) => [part.type, part.value]));
+    return {
+      year: Number(values.year), month: Number(values.month), day: Number(values.day),
+      hour: Number(values.hour), minute: Number(values.minute), second: Number(values.second),
+    };
+  } catch {
+    throw new Error('O fuso horário selecionado é inválido.');
+  }
+}
 
 function initialWizardStep(): WizardStep {
   const raw = new URLSearchParams(window.location.search).get('step');
@@ -45,13 +92,10 @@ function initialWizardStep(): WizardStep {
 
 export function utcToLocalInTimezone(utc: string, tz: string): string {
   if (!utc) return '';
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(new Date(utc));
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+  const instantMs = new Date(utc).getTime();
+  if (!Number.isFinite(instantMs)) throw new Error('O instante UTC informado é inválido.');
+  const parts = zonedParts(instantMs, tz);
+  return `${String(parts.year).padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}T${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
 }
 
 
@@ -61,27 +105,30 @@ export function utcToLocalInTimezone(utc: string, tz: string): string {
  */
 export function localToUTCInTimezone(localStr: string, tz: string): string {
   if (!localStr) return '';
-  const [datePart, timePart] = localStr.split('T');
-  const [yr, mo, da] = datePart.split('-').map(Number);
-  const [hr, mi] = timePart.split(':').map(Number);
-  // Tratamos o input como UTC provisorio para obter o offset do fuso naquele instante
-  const approxMs = Date.UTC(yr, mo - 1, da, hr, mi, 0);
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  });
-  const p = Object.fromEntries(fmt.formatToParts(new Date(approxMs)).map(x => [x.type, x.value]));
-  const tzLocalMs = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
-  // offset = diferenca entre o instante UTC provisorio e o que o fuso le nele
-  const offsetMs = approxMs - tzLocalMs; // positivo = fuso atras do UTC
-  const iso = new Date(approxMs + offsetMs).toISOString();
-  // Horários inexistentes ocorrem quando o relógio avança no início do DST.
-  // Não convertemos silenciosamente 02:30 em 03:30: o operador precisa
-  // escolher um instante que exista no fuso selecionado.
-  if (utcToLocalInTimezone(iso, tz) !== localStr) {
+  const parts = parseLocalDateTime(localStr);
+  const localAsUtcMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, 0);
+
+  // A offset único calculado no horário "equivalente em UTC" falha depois de
+  // uma transição de DST. Coletamos os offsets vigentes numa janela de 72 h e
+  // aceitamos somente o instante que reconstrói exatamente a parede local.
+  const offsets = new Set<number>();
+  for (let deltaMinutes = -2160; deltaMinutes <= 2160; deltaMinutes += 30) {
+    const sampleMs = localAsUtcMs + deltaMinutes * 60_000;
+    const local = zonedParts(sampleMs, tz);
+    offsets.add(Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute, local.second) - sampleMs);
+  }
+  const candidates = [...offsets]
+    .map((offsetMs) => localAsUtcMs - offsetMs)
+    .filter((candidateMs) => utcToLocalInTimezone(new Date(candidateMs).toISOString(), tz) === localStr)
+    .sort((left, right) => left - right);
+
+  if (candidates.length === 0) {
     throw new Error('O horário selecionado não existe no fuso informado devido ao horário de verão. Escolha outro horário.');
   }
-  return iso;
+  if (candidates.length > 1) {
+    throw new Error('O horário selecionado é ambíguo devido ao horário de verão. Escolha outro horário.');
+  }
+  return new Date(candidates[0]).toISOString();
 }
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
   const { createCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
@@ -95,7 +142,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
-  const [scheduleTimezone, setScheduleTimezone] = useState(DEFAULT_SCHEDULE_TIMEZONE); // E69
+  const initialScheduleTimezone = campaign?.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
+  const [scheduleTimezone, setScheduleTimezone] = useState(initialScheduleTimezone); // E69
+  const [scheduleConfigError, setScheduleConfigError] = useState<string | null>(null);
+  const [scheduleNowMs, setScheduleNowMs] = useState(() => Date.now());
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
@@ -132,8 +182,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
   const [isScheduled, setIsScheduled] = useState(!!campaign?.scheduled_at);
-  const [scheduledAt, setScheduledAt] = useState(
-    campaign?.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, DEFAULT_SCHEDULE_TIMEZONE) : ''
+  const [scheduledAt, setScheduledAtState] = useState(
+    campaign?.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialScheduleTimezone) : ''
   );
   const [sendWindowEnabled, setSendWindowEnabled] = useState(!!campaign?.send_window_start);
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
@@ -143,6 +193,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [confirmConsent, setConfirmConsent] = useState(false);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
+
+  useEffect(() => {
+    if (!isScheduled) return undefined;
+    const timer = window.setInterval(() => setScheduleNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [isScheduled]);
 
   // Template inicial (vindo da galeria) preenche a mensagem uma vez.
   useEffect(() => {
@@ -335,13 +391,42 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setSelectedContacts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   }, []);
 
+  const setScheduledAt = useCallback((nextScheduledAt: string) => {
+    setScheduledAtState(nextScheduledAt);
+    setScheduleConfigError(null);
+  }, []);
+
   const changeScheduleTimezone = useCallback((nextTimezone: string) => {
-    setScheduledAt((current) => {
-      if (!current) return current;
-      return utcToLocalInTimezone(localToUTCInTimezone(current, scheduleTimezone), nextTimezone);
-    });
-    setScheduleTimezone(nextTimezone);
-  }, [scheduleTimezone]);
+    if (!scheduledAt) {
+      setScheduleTimezone(nextTimezone);
+      setScheduleConfigError(null);
+      return;
+    }
+    try {
+      const instant = localToUTCInTimezone(scheduledAt, scheduleTimezone);
+      setScheduledAtState(utcToLocalInTimezone(instant, nextTimezone));
+      setScheduleTimezone(nextTimezone);
+      setScheduleConfigError(null);
+    } catch (error) {
+      setScheduleConfigError(error instanceof Error ? error.message : 'Não foi possível converter o horário no fuso selecionado.');
+    }
+  }, [scheduleTimezone, scheduledAt]);
+
+  const scheduleConfigIsValid = useMemo(() => {
+    if (!isScheduled) return true;
+    if (!scheduledAt) return false;
+    if (sendWindowEnabled && sendWindowStart >= sendWindowEnd) return false;
+    try {
+      return new Date(localToUTCInTimezone(scheduledAt, scheduleTimezone)).getTime() > scheduleNowMs;
+    } catch {
+      return false;
+    }
+  }, [isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, scheduleNowMs]);
+
+  const minimumScheduledAt = useMemo(
+    () => utcToLocalInTimezone(new Date(scheduleNowMs).toISOString(), scheduleTimezone),
+    [scheduleNowMs, scheduleTimezone],
+  );
 
   const selectAll = useCallback(() => {
     const ids = filteredContacts.map((c) => c.id);
@@ -352,9 +437,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const canProceed = useMemo(() => ({
     1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     2: messageTemplate.trim().length > 0,
-    3: !isScheduled || !!scheduledAt,
+    3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, isScheduled, scheduledAt, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -369,6 +454,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     media_url: hasMedia ? mediaUrl || null : null,
     media_type: hasMedia ? mediaType || null : null,
     scheduled_at: isScheduled && scheduledAt ? localToUTCInTimezone(scheduledAt, scheduleTimezone) : null,
+    schedule_timezone: scheduleTimezone,
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
@@ -383,6 +469,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       }
       if (mode === 'launch' && (!canProceed[1] || !canProceed[2] || !canProceed[3] || !canProceed[4])) {
         throw new Error('Revise público, mensagem, agendamento e confirmações antes de lançar.');
+      }
+      if (mode === 'schedule' && (!canProceed[1] || !canProceed[2] || !canProceed[3])) {
+        throw new Error('Revise público, mensagem e agendamento antes de salvar a programação.');
       }
       const payload = buildPayload();
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
@@ -422,7 +511,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
-        await logEvent(id, 'scheduled', `Agendada para ${new Date(payload.scheduled_at).toLocaleString('pt-BR')}`);
+        await logEvent(id, 'scheduled', `Agendada para ${utcToLocalInTimezone(payload.scheduled_at, scheduleTimezone)} (${scheduleTimezone})`);
       }
       if (mode === 'launch') {
         // A trilha de auditoria só é gravada após a Edge Function confirmar a
@@ -435,7 +524,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -483,7 +572,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
-  const toggleSchedule = useCallback((v: boolean) => { setIsScheduled(v); if (!v) setScheduledAt(''); }, []);
+  const toggleSchedule = useCallback((v: boolean) => {
+    setIsScheduled(v);
+    setScheduleConfigError(null);
+    if (!v) setScheduledAtState('');
+  }, []);
 
   return {
     step, setStep, canProceed,
@@ -497,7 +590,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
     lastAutosave, // E68
-    scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, // E69
+    scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
