@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
   LayoutDashboard, Users,
@@ -28,7 +28,7 @@ export default function TalkXView() {
   const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
-  const [topView, setTopView] = useState<TalkXTopView>('tabs');
+  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export default function TalkXView() {
   // A campaign just created locally may not have reached the campaigns query
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
-  const localDraftRouteIdRef = useRef<string | null>(null);
+  const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
 
   const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
     if (replace) replaceTalkXWizardRoute(route);
@@ -47,64 +47,63 @@ export default function TalkXView() {
     setWizardRoute(route);
   }, []);
 
+  const syncFromBrowserHistory = useCallback(() => {
+    const parsed = parseTalkXWizardRoute(window.location.search);
+    if (parsed.needsNormalization) replaceTalkXWizardRoute(parsed.route);
+
+    // The browser history event, rather than a render effect, is the source of
+    // truth for back/forward. Resetting here also guarantees a draft from the
+    // previous route cannot survive navigation to another campaign.
+    setLocalDraftRouteId(null);
+    setWizardRoute(parsed.route);
+    setWizardInitial(undefined);
+
+    if (!parsed.route) {
+      setEditingCampaign(null);
+      setTopView('tabs');
+      return;
+    }
+    if (parsed.route.campaignId === 'new') {
+      setEditingCampaign(null);
+      setTopView('wizard');
+      return;
+    }
+
+    const campaign = campaigns.find((candidate) => candidate.id === parsed.route?.campaignId);
+    setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+    setTopView('wizard');
+  }, [campaigns]);
+
   useEffect(() => {
-    const syncFromBrowserHistory = () => {
-      const parsed = parseTalkXWizardRoute(window.location.search);
-      if (parsed.needsNormalization) replaceTalkXWizardRoute(parsed.route);
-      setWizardRoute(parsed.route);
-    };
     const initial = parseTalkXWizardRoute(window.location.search);
     if (initial.needsNormalization) replaceTalkXWizardRoute(initial.route);
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, []);
+  }, [syncFromBrowserHistory]);
+
+  const routedCampaign = wizardRoute?.campaignId && wizardRoute.campaignId !== 'new'
+    ? campaigns.find((candidate) => candidate.id === wizardRoute.campaignId) ?? null
+    : null;
+  const routedCampaignIsEditable = routedCampaign?.status === 'draft' || routedCampaign?.status === 'scheduled';
+  const wizardCampaign = editingCampaign?.id ? editingCampaign : routedCampaignIsEditable ? routedCampaign : editingCampaign;
 
   useEffect(() => {
-    if (!wizardRoute) {
-      if (topView === 'wizard') {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Browser history is an external state source; leaving the route must also leave the editor.
-        setEditingCampaign(null);
-        setWizardInitial(undefined);
-        setTopView('tabs');
-      }
-      return;
-    }
-    if (wizardRoute.campaignId === 'new') {
-      // A duplicate is intentionally represented by an unsaved campaign with
-      // an empty ID. A browser navigation to `new`, however, must not retain
-      // the configuration of a previously opened persisted campaign.
-      if (topView !== 'wizard' || !!editingCampaign?.id) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Browser history is an external state source; a `new` URL must reset a persisted editor.
-        setEditingCampaign(null);
-        setWizardInitial(undefined);
-        setTopView('wizard');
-      }
-      return;
-    }
-    if (localDraftRouteIdRef.current === wizardRoute.campaignId && topView === 'wizard') return;
-    if (isLoading) return;
+    if (!wizardRoute || wizardRoute.campaignId === 'new' || isLoading) return;
+    if (localDraftRouteId === wizardRoute.campaignId && topView === 'wizard') return;
+    if (routedCampaignIsEditable) return;
 
-    const campaign = campaigns.find((candidate) => candidate.id === wizardRoute.campaignId);
-    if (!campaign || (campaign.status !== 'draft' && campaign.status !== 'scheduled')) {
-      toast.error(campaign ? 'Somente rascunhos ou campanhas agendadas podem ser editados.' : 'Campanha não encontrada ou sem acesso.');
-      writeWizardRoute(null, true);
-      setTopView('tabs');
-      setEditingCampaign(null);
-      return;
-    }
-    localDraftRouteIdRef.current = null;
-    setEditingCampaign(campaign);
-    setWizardInitial(undefined);
-    setTopView('wizard');
-  }, [campaigns, editingCampaign?.id, isLoading, topView, wizardRoute, writeWizardRoute]);
+    toast.error(routedCampaign ? 'Somente rascunhos ou campanhas agendadas podem ser editados.' : 'Campanha não encontrada ou sem acesso.');
+    replaceTalkXWizardRoute(null);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [isLoading, localDraftRouteId, routedCampaign, routedCampaignIsEditable, topView, wizardRoute]);
 
   const openNew = useCallback((initial?: { segmentId?: string; templateId?: string }) => {
-    localDraftRouteIdRef.current = null;
+    setLocalDraftRouteId(null);
     setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard');
     writeWizardRoute({ campaignId: 'new', step: 1 });
   }, [writeWizardRoute]);
   const openEdit = useCallback((c: TalkXCampaign) => {
-    localDraftRouteIdRef.current = null;
+    setLocalDraftRouteId(null);
     setEditingCampaign(c); setWizardInitial(undefined); setTopView('wizard');
     writeWizardRoute({ campaignId: c.id, step: 1 });
   }, [writeWizardRoute]);
@@ -112,7 +111,7 @@ export default function TalkXView() {
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
   const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); }, []);
   const backToList = useCallback(() => {
-    localDraftRouteIdRef.current = null;
+    setLocalDraftRouteId(null);
     setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
   }, [writeWizardRoute]);
@@ -124,7 +123,7 @@ export default function TalkXView() {
   }, [campaigns]);
 
   const duplicateCampaign = useCallback(async (c: TalkXCampaign) => {
-    localDraftRouteIdRef.current = null;
+    setLocalDraftRouteId(null);
     setEditingCampaign({ ...c, id: '', name: `${c.name} (cópia)`, status: 'draft', sent_count: 0, failed_count: 0, delivered_count: 0, total_recipients: 0, started_at: null, completed_at: null });
     setWizardInitial(undefined);
     setTopView('wizard');
@@ -137,7 +136,7 @@ export default function TalkXView() {
   }, [wizardRoute, writeWizardRoute]);
 
   const onDraftIdentity = useCallback((campaignId: string) => {
-    localDraftRouteIdRef.current = campaignId;
+    setLocalDraftRouteId(campaignId);
     if (wizardRoute?.campaignId === 'new') {
       writeWizardRoute({ campaignId, step: wizardRoute.step }, true);
     }
@@ -181,11 +180,17 @@ export default function TalkXView() {
   }
 
   if (topView === 'wizard') {
+    const awaitingRoutedCampaign = wizardRoute?.campaignId && wizardRoute.campaignId !== 'new'
+      && localDraftRouteId !== wizardRoute.campaignId
+      && isLoading;
+    if (awaitingRoutedCampaign) {
+      return <div className="min-h-full bg-background p-6 text-sm text-muted-foreground" role="status">Carregando campanha…</div>;
+    }
     return (
       <div className="min-h-full bg-background p-3 md:p-4 lg:p-6">
         <TalkXCampaignWizard
-          key={`talkx-wizard:${editingCampaign?.id ?? 'new'}`}
-          campaign={editingCampaign}
+          key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
+          campaign={wizardCampaign}
           onClose={backToList}
           onLaunched={(id, status) => {
             writeWizardRoute(null, true);
