@@ -2,7 +2,6 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-snapshot_migration="$repo_root/supabase/migrations/20260911120000_replace_talkx_draft_recipients.sql"
 migration="$repo_root/supabase/migrations/20260911140000_harden_talkx_campaign_state_transitions.sql"
 forward_hardening_migration="$repo_root/supabase/migrations/20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql"
 outcome_counter_migration="$repo_root/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql"
@@ -52,7 +51,6 @@ INSERT INTO public.contacts (id) VALUES ('30000000-0000-0000-0000-000000000001')
 INSERT INTO public.talkx_campaigns (id, created_by, status) VALUES ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'draft');
 SQL
 
-psql_test < "$snapshot_migration" >/dev/null
 psql_test < "$migration" >/dev/null
 psql_test < "$forward_hardening_migration" >/dev/null
 psql_test < "$outcome_counter_migration" >/dev/null

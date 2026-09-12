@@ -321,11 +321,24 @@ Deno.serve(async (req) => {
     };
 
     for (const recipient of recipients || []) {
-      // Check if campaign was paused/cancelled
-      const { data: currentCampaign } = await supabase
-        .from("talkx_campaigns").select("status").eq("id", campaignId).single();
-
-      if (currentCampaign?.status === "paused" || currentCampaign?.status === "cancelled") break;
+      // Re-read the state and send limits before each claim. A single initial
+      // check is not enough when a campaign crosses a local-time boundary.
+      const { data: currentCampaign, error: currentCampaignError } = await supabase
+        .from("talkx_campaigns")
+        .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
+        .eq("id", campaignId).single();
+      if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
+      if (currentCampaign?.status !== "sending") break;
+      campaign = { ...campaign, ...currentCampaign };
+      const currentWindowStatus = deliveryWindowStatus(campaign);
+      if (!currentWindowStatus.allowed) {
+        const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+        });
+        if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+        break;
+      }
 
       const { data: claimRows, error: claimError } = await supabase.rpc("claim_talkx_recipient", {
         p_campaign_id: campaignId,
@@ -404,9 +417,28 @@ Deno.serve(async (req) => {
         // Pause/cancel can race with the presence update or typing delay. Do
         // not begin a provider POST after the campaign has left `sending`.
         const { data: beforeSend, error: beforeSendError } = await supabase
-          .from("talkx_campaigns").select("status").eq("id", campaignId).single();
+          .from("talkx_campaigns")
+          .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
+          .eq("id", campaignId).single();
         if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
-        if (beforeSend?.status !== "sending") break;
+        const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend) : { allowed: false as const, reason: "campaign_not_found" };
+        if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed) {
+          if (beforeSend?.status === "sending") {
+            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+              p_campaign_id: campaignId,
+              p_action: "pause",
+            });
+            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+          }
+          const { data: released, error: releaseError } = await supabase.rpc("release_talkx_recipient_claim", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+          });
+          if (releaseError || released !== true) {
+            throw new Error(`talkx_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
+          }
+          break;
+        }
 
         let sendResponse: Response;
 
@@ -444,10 +476,10 @@ Deno.serve(async (req) => {
         const providerMessageId = extractMessageId(sendResult);
         if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
           sentCount++;
-          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+          const { error: completionError } = await supabase.rpc("record_talkx_recipient_sent", {
             p_recipient_id: recipient.id,
             p_claim_token: claim.claim_token,
-            p_status: "sent",
+            p_external_id: providerMessageId,
           });
           if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
         } else if (sendResponse.ok && !sendResult.error) {
@@ -505,6 +537,18 @@ Deno.serve(async (req) => {
           .eq("id", campaignId).single();
         if (fresh) {
           campaign = { ...campaign, ...fresh };
+          // Recheck the campaign's own IANA window after configuration reload.
+          // The locked transition preserves a concurrent manual pause/cancel.
+          const refreshedWindowStatus = deliveryWindowStatus(campaign);
+          if (!refreshedWindowStatus.allowed) {
+            log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
+            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
+              p_campaign_id: campaignId,
+              p_action: "pause",
+            });
+            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+            break;
+          }
         }
       }
       const sendInterval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);

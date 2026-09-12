@@ -19,6 +19,7 @@
 | [COMPLETE_SYSTEM_FEATURES.md](./COMPLETE_SYSTEM_FEATURES.md) | Funcionalidades do sistema (45KB) |
 | [FUNCTIONALITIES_INVENTORY.md](./FUNCTIONALITIES_INVENTORY.md) | Inventário de funcionalidades |
 | [architecture/](./architecture/) | Diagramas de arquitetura |
+| [catalogo/](./catalogo/README.md) | Módulo Catálogo — plano de 100 etapas, estado inicial, paridade com os mocks |
 
 ### 🔌 Integrações
 | Documento | Descrição |

@@ -110,6 +110,20 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
+      }
+      // Acknowledge Talk X only for an outbound receipt on the connection that
+      // emitted it. The RPC locks the recipient and increments delivered_count
+      // in the same transaction, so concurrent DELIVERY_ACK events are idempotent.
+      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
+        const { data: recorded, error: deliveryError } = await supabase.rpc('record_talkx_recipient_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+        });
+        if (deliveryError) {
+          console.error(`TalkX delivery acknowledgement failed for ${key.id}: ${deliveryError.message}`);
+        } else if (recorded === true) {
+          console.warn(`TalkX delivery acknowledged: ${key.id}`);
+        }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a

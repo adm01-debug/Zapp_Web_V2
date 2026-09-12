@@ -6,6 +6,7 @@ const migration = await readFile(new URL('../../supabase/migrations/202609111300
 const completionMigration = await readFile(new URL('../../supabase/migrations/20260911170000_add_talkx_campaign_completion_rpc.sql', import.meta.url), 'utf8');
 const quarantineMigration = await readFile(new URL('../../supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
 const outcomeCounterMigration = await readFile(new URL('../../supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
+const receiptMigration = await readFile(new URL('../../supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql', import.meta.url), 'utf8');
 const edgeFunction = await readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8');
 
 test('Talk X leases are service-role-only and fence claim completion', () => {
@@ -52,6 +53,16 @@ test('Talk X completion is service-only, locked and requires a drained queue', (
   assert.match(completionMigration, /status = 'completed'/i);
   assert.match(completionMigration, /REVOKE ALL ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(completionMigration, /GRANT EXECUTE ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*TO service_role/i);
+});
+
+test('Talk X persists provider receipts and delivery acknowledgements atomically', () => {
+  assert.match(receiptMigration, /record_talkx_recipient_sent/i);
+  assert.match(receiptMigration, /record_talkx_recipient_delivered/i);
+  assert.match(receiptMigration, /pg_advisory_xact_lock/i);
+  assert.match(receiptMigration, /delivered_count = campaign\.delivered_count \+ 1/i);
+  assert.match(receiptMigration, /whatsapp_connection_id = p_connection_id/i);
+  assert.match(receiptMigration, /REVOKE ALL ON FUNCTION public\.record_talkx_recipient_sent[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(receiptMigration, /GRANT EXECUTE ON FUNCTION public\.record_talkx_recipient_delivered[\s\S]*TO service_role/i);
 });
 
 test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {

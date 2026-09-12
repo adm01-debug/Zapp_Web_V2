@@ -31,6 +31,23 @@ export interface ExternalProductVariant {
   capacity_ml: number | null;
   selected_thumbnail: string | null;
   is_active: boolean;
+  // E21 — vêm de get_product (select *); ausentes na lista.
+  images?: string[] | null;
+  supplier_sku?: string | null;
+  next_entry_date?: string | null;
+  next_entry_quantity?: number | null;
+}
+
+/** Item de products.color_swatches (jsonb) no PromoGifts. */
+export interface ExternalColorSwatch {
+  sku?: string | null;
+  color_id?: string | null;
+  color_name?: string | null;
+  color_hex?: string | null;
+  image_url?: string | null;
+  variant_id?: string | null;
+  is_in_stock?: boolean | null;
+  stock_quantity?: number | null;
 }
 
 export interface ExternalProduct {
@@ -65,6 +82,29 @@ export interface ExternalProduct {
   categories: ExternalCategory | null;
   suppliers: ExternalSupplier | null;
   variants?: ExternalProductVariant[];
+  // E21 — campos da edge v2. Opcionais: list_products com compact=true não os traz.
+  primary_image_fallback_url?: string | null;
+  images?: string[] | null;
+  color_swatches?: ExternalColorSwatch[] | null;
+  materials?: string[] | null;
+  tags?: string[] | null;
+  is_featured?: boolean | null;
+  is_new?: boolean | null;
+  is_bestseller?: boolean | null;
+  is_on_sale?: boolean | null;
+  is_closeout?: boolean | null;
+  has_gift_box?: boolean | null;
+  is_featured_expires_at?: string | null;
+  is_new_expires_at?: string | null;
+  is_bestseller_expires_at?: string | null;
+  engraving_type?: string | null;
+  engraving_description?: string | null;
+  main_category_id?: string | null;
+  order_count?: number | null;
+  view_count?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  last_sync_at?: string | null;
 }
 
 export interface CatalogFilters {
@@ -77,6 +117,8 @@ export interface CatalogFilters {
   offset?: number;
   order_by?: string;
   ascending?: boolean;
+  /** Payload enxuto do card; default false (comportamento anterior). */
+  compact?: boolean;
 }
 
 // ─── API invoke ───────────────────────────────────────────────
