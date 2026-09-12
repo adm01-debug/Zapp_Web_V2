@@ -477,7 +477,7 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-blacklist-policy-runtime.sql)
               ;;
-            20260912130000)
+            20260912130000|20260912140000)
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-recovery-runtime.sql)
               ;;
@@ -1001,7 +1001,7 @@ jobs:
               && proof.trigger_count === 2
               && proof.enabled_trigger_count === 2
               && proof.constraint_count === 7
-              && proof.validated_constraint_count === 3
+              && proof.validated_constraint_count === 7
               && proof.index_count === 3
               && proof.valid_ready_index_count === 3
               && ['function', 'trigger', 'constraint', 'index'].every((kind) =>
@@ -1009,6 +1009,33 @@ jobs:
               );
             targetOk = commonTalkX && (
               process.env.NEEDS_APPLY === 'true' ? beforeRollout : afterRollout
+            );
+          } else if (process.env.TARGET_VERSION === '20260912140000') {
+            const commonTalkX = proof.table_count === 2
+              && proof.rls_table_count === 2
+              && proof.recipient_rollout_column_count === 11
+              && proof.campaign_rollout_column_count === 4
+              && proof.function_count === 15
+              && proof.security_definer_match_count === 15
+              && proof.safe_path_count === 15
+              && proof.trigger_count === 2
+              && proof.enabled_trigger_count === 2
+              && proof.constraint_count === 7
+              && proof.index_count === 3
+              && proof.valid_ready_index_count === 3
+              && ['function', 'trigger', 'constraint', 'index'].every((kind) =>
+                /^[a-f0-9]{64}$/.test(proof[`${kind}_definition_sha256`] || '')
+              );
+            const beforeHardening = proof.anonymous_execute_count === 3
+              && proof.authenticated_execute_match_count === 13
+              && proof.service_execute_match_count === 11
+              && proof.validated_constraint_count === 2;
+            const afterHardening = proof.anonymous_execute_count === 0
+              && proof.authenticated_execute_match_count === 15
+              && proof.service_execute_match_count === 15
+              && proof.validated_constraint_count === 7;
+            targetOk = commonTalkX && (
+              process.env.NEEDS_APPLY === 'true' ? beforeHardening : afterHardening
             );
           }
           const ok = common && targetOk;
@@ -1076,7 +1103,7 @@ jobs:
       - name: Validar ledger completo do bundle de recuperacao Talk X
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260912130000'
+          && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -1097,7 +1124,7 @@ jobs:
       - name: Validar runtime completo do bundle Talk X
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260912130000'
+          && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -1122,7 +1149,7 @@ jobs:
             && proof.trigger_count === 2
             && proof.enabled_trigger_count === 2
             && proof.constraint_count === 7
-            && proof.validated_constraint_count === 3
+            && proof.validated_constraint_count === 7
             && proof.index_count === 3
             && proof.valid_ready_index_count === 3
             && ['function', 'trigger', 'constraint', 'index'].every((kind) =>
