@@ -130,13 +130,13 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
   }
   return new Date(candidates[0]).toISOString();
 }
-export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string }) {
+export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
   const { createCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates, registerUse } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
 
-  const [step, setStep] = useState<WizardStep>(initialWizardStep);
+  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
@@ -168,6 +168,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // Estado React sozinho não é suficiente para saves enfileirados: o callback
   // seguinte pode ter capturado o render anterior, ainda sem o ID recém-criado.
   const draftCampaignIdRef = useRef<string | null>(campaign?.id || null);
+  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id || null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
@@ -487,6 +488,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         if (!created) return null;
         id = created.id;
         draftCampaignIdRef.current = id;
+        setDraftCampaignId(id);
         await logEvent(id, 'created', 'Campanha criada');
       }
 
@@ -579,7 +581,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, []);
 
   return {
-    step, setStep, canProceed,
+    step, setStep, canProceed, draftCampaignId,
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,

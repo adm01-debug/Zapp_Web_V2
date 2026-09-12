@@ -34,12 +34,16 @@ interface Props {
   campaign: TalkXCampaign | null;
   onClose: () => void;
   onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
-  initial?: { segmentId?: string; templateId?: string };
+  initial?: { segmentId?: string; templateId?: string; step?: WizardStep };
+  /** URL state is owned by TalkXView; this component only requests transitions. */
+  routeStep?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  onDraftIdentity?: (campaignId: string) => void;
 }
 
 export type WizardState = ReturnType<typeof useCampaignEditor>;
 
-export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: Props) {
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
 
   // E61: beforeunload se campanha tem dados nao salvos
@@ -50,20 +54,37 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
   }, [ed.name, ed.selectedContacts.length]);
   const step = ed.step;
 
-  // E61: deep link ?wizard=<id>&step=N
+  const maximumAllowedStep = (() => {
+    if (!ed.canProceed[1]) return 1;
+    if (!ed.canProceed[2]) return 2;
+    if (!ed.canProceed[3]) return 3;
+    return 4;
+  })() as WizardStep;
+
+  const requestStep = (requestedStep: WizardStep, replace = false) => {
+    const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
+    ed.setStep(safeStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+  };
+
+  // O estado da URL pode mudar por histórico do navegador ou por um link
+  // copiado. Nunca aceita salto acima do último pré-requisito válido.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wizardId = campaign?.id ?? 'new';
-    params.set('wizard', wizardId);
-    params.set('step', String(step));
-    const newUrl = window.location.pathname + '?' + params.toString();
-    window.history.replaceState(null, '', newUrl);
-  }, [step, campaign?.id]);
+    if (routeStep === undefined || routeStep === step) return;
+    requestStep(routeStep, true);
+  // `requestStep` is intentionally rebuilt from the latest form validity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeStep, maximumAllowedStep, step]);
+
+  useEffect(() => {
+    if (ed.draftCampaignId) onDraftIdentity?.(ed.draftCampaignId);
+  }, [ed.draftCampaignId, onDraftIdentity]);
+
   const next = () => {
     if (!ed.canProceed[step]) return;
-    ed.setStep(Math.min(4, step + 1) as WizardStep);
+    requestStep(Math.min(4, step + 1) as WizardStep);
   };
-  const prev = () => ed.setStep(Math.max(1, step - 1) as WizardStep);
+  const prev = () => requestStep(Math.max(1, step - 1) as WizardStep);
 
   const saveDraft = async () => { const id = await ed.handleSave('draft'); if (id) onClose(); };
 
@@ -95,7 +116,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial }: 
             const done = step > s.n; const active = step === s.n;
             return (
               <li key={s.n} className="flex items-center">
-                <button type="button" onClick={() => (done || s.n < step) && ed.setStep(s.n)} className="flex items-center gap-2.5 group">
+                <button type="button" onClick={() => (done || s.n < step) && requestStep(s.n)} className="flex items-center gap-2.5 group">
                   <span className={cn('w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border transition-colors', active ? 'bg-primary border-primary text-white shadow-[0_0_0_4px_hsl(var(--primary)/.2)]' : done ? 'bg-dash-green border-dash-green text-white' : 'border-border/70 text-muted-foreground bg-input/40')}>
                     {done ? <Check className="w-4 h-4" /> : s.n}
                   </span>
