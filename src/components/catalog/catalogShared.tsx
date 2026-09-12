@@ -6,6 +6,12 @@
  */
 import React, { useState } from 'react';
 import { Package } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FilterBarV2, type FilterDefinition } from '@/components/talkx/talkxShared';
 
 /** R$ 63,78 (pt-BR, BRL). */
 export const formatPrice = (price: number) =>
@@ -366,5 +372,145 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
         </button>
       ))}
     </div>
+  );
+}
+
+// ─── CategoryChips (E18) ────────────────────────────────────────
+export interface CatalogCategoryLike {
+  id: string;
+  name: string;
+  products_count?: number | null;
+}
+
+interface CategoryChipsProps {
+  categories: CatalogCategoryLike[];
+  activeId: string | null;
+  onChange: (id: string | null) => void;
+  max?: number;
+}
+
+/** Linha "Todos · Agro · Chapéus · … · Mais ▾" ordenada por products_count. */
+export function CategoryChips({ categories, activeId, onChange, max = 7 }: CategoryChipsProps) {
+  const sorted = [...categories].sort((a, b) => (b.products_count ?? 0) - (a.products_count ?? 0));
+  const visible = sorted.slice(0, max);
+  const rest = sorted.slice(max);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className={`catalog-category-chip ${activeId === null ? 'catalog-category-chip--active' : ''}`}
+      >
+        Todos
+      </button>
+      {visible.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onChange(c.id)}
+          title={c.products_count != null ? `${c.products_count} produtos` : undefined}
+          className={`catalog-category-chip ${activeId === c.id ? 'catalog-category-chip--active' : ''}`}
+        >
+          {c.name}
+        </button>
+      ))}
+      {rest.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="catalog-category-chip">
+              Mais <ChevronDown className="w-3 h-3 ml-1" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+            {rest.map((c) => (
+              <DropdownMenuItem key={c.id} onSelect={() => onChange(c.id)}>
+                {c.name}
+                {c.products_count != null && (
+                  <span className="ml-auto text-xs text-muted-foreground tabular-nums">{c.products_count}</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
+// ─── CatalogFilterBar (E18) ─────────────────────────────────────
+interface CatalogFilterBarProps {
+  search: string;
+  onSearch: (v: string) => void;
+  categories: CatalogCategoryLike[];
+  categoryId: string;
+  onCategoryChange: (id: string) => void;
+  suppliers: { id: string; name: string }[];
+  supplierId: string;
+  onSupplierChange: (id: string) => void;
+  onlyInStock: boolean;
+  onOnlyInStockChange: (v: boolean) => void;
+  view: 'grid' | 'list';
+  onViewChange: (v: 'grid' | 'list') => void;
+  hasActiveFilters?: boolean;
+  onClear?: () => void;
+  onAdvancedFilters?: () => void;
+  advancedFiltersCount?: number;
+}
+
+/**
+ * Composição da tela A: busca + categoria + fornecedor + "Em estoque" +
+ * "Filtros avançados" + toggle grade/lista. Reusa FilterBarV2 via
+ * rightSlot (switch + botão) — sem novas props no componente do Talk X.
+ */
+export function CatalogFilterBar({
+  search, onSearch, categories, categoryId, onCategoryChange,
+  suppliers, supplierId, onSupplierChange,
+  onlyInStock, onOnlyInStockChange, view, onViewChange,
+  hasActiveFilters, onClear, onAdvancedFilters, advancedFiltersCount,
+}: CatalogFilterBarProps) {
+  const filters: FilterDefinition[] = [
+    {
+      key: 'category', label: 'Categoria',
+      options: categories.map((c) => ({ value: c.id, label: c.name })),
+    },
+    {
+      key: 'supplier', label: 'Fornecedor',
+      options: suppliers.map((s) => ({ value: s.id, label: s.name })),
+    },
+  ];
+  return (
+    <FilterBarV2
+      search={search}
+      onSearch={onSearch}
+      placeholder="Buscar por nome, SKU ou marca…"
+      filters={filters}
+      values={{ category: categoryId, supplier: supplierId }}
+      onFilter={(key, val) => (key === 'category' ? onCategoryChange(val) : onSupplierChange(val))}
+      hasActive={hasActiveFilters}
+      onClear={onClear}
+      view={view === 'grid' ? 'grid' : 'list'}
+      onView={(v) => onViewChange(v)}
+      rightSlot={
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch id="catalog-only-in-stock" checked={onlyInStock} onCheckedChange={onOnlyInStockChange} />
+            <Label htmlFor="catalog-only-in-stock" className="text-[12.5px] text-muted-foreground cursor-pointer">
+              Em estoque
+            </Label>
+          </div>
+          {onAdvancedFilters && (
+            <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5" onClick={onAdvancedFilters}>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filtros avançados
+              {!!advancedFiltersCount && (
+                <span className="ml-0.5 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 leading-4">
+                  {advancedFiltersCount}
+                </span>
+              )}
+            </Button>
+          )}
+        </div>
+      }
+    />
   );
 }

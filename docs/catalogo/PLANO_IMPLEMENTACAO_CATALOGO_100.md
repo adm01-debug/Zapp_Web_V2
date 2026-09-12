@@ -397,7 +397,7 @@
 **Arquivos:** `catalogShared.tsx`, `talkxShared.tsx`
 1. `CategoryChips({categories, activeId, onChange, max=7})` → primeiros `max` por `products_count` desc; resto em `DropdownMenu` "Mais".
 2. Chip ativo `.catalog-category-chip--active`; scroll horizontal com fade nas bordas em telas menores.
-3. `FilterBarV2` ganha props opcionais `switches[]` (Em estoque) e `extraRight` (botão Filtros avançados).
+3. Executado na E18: `FilterBarV2` não muda — o switch "Em estoque" e o botão "Filtros avançados" entram pelo `rightSlot` genérico que o componente já tinha (mais simples do que as props extras previstas aqui).
 4. `CatalogFilterBar` compõe: busca (placeholder "Buscar por nome, SKU ou marca…", `⌘K` hint), select categoria (árvore), select fornecedor, switch Em estoque, `SegmentedToggle` grade/lista, `GhostButton` "Filtros avançados".
 5. Larguras do mock: busca flex-1, selects 180/170 px.
 6. Teste: chips limitam e "Mais" lista o restante.
