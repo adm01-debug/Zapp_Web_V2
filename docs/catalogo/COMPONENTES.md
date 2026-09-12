@@ -25,8 +25,10 @@ Nenhum token novo — todas usam `hsl(var(--…))` das variáveis carvão já ex
 | Primitivo | Entregue em | Descrição |
 |---|---|---|
 | `formatPrice`, `formatStock` | E04 | `Intl.NumberFormat` BRL; "N un." |
-| `handleImageError`, `ProductImage` | E04 | fallback de imagem em cascata (substituído por `ProductThumb` na E15) |
+| `handleImageError` | E04 | onError da miniatura de variante no detalhe (`ProductImage` foi removido na E15, substituído por `ProductThumb`) |
 | `ProductBadge` + `resolveProductBadge` | E12 | 5 estados, prioridade esgotado > mais vendido > novidade > destaque > em estoque |
+| `ProductThumb` | E15 | skeleton, srcSet real do Cloudflare Images (5 larguras: 150/300/400/600/1200), fallback em cascata src→fallbackSrc→ícone |
+| `FavoriteButton` | E16 | coração com aria-pressed; sem persistência até a E27 |
 | `ColorChips` + `ColorSwatch` | E13 | chips de cor no card (+"+N"); bolinha com hex ou chip de texto (sem hex) |
 | `PriceTag` | E14 | preço + sugerido riscado (só se diferente) |
 | `StockPill` | E14 | "N em estoque" (verde) / "Esgotado" (vermelho, qty<=0 ou flag) |

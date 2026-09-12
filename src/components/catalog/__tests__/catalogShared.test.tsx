@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill } from '../catalogShared';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton } from '../catalogShared';
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -120,5 +120,80 @@ describe('LowStockPill', () => {
   it('threshold customizado', () => {
     render(<LowStockPill qty={15} threshold={20} />);
     expect(screen.getByText('15 un.')).toBeInTheDocument();
+  });
+});
+
+describe('ProductThumb', () => {
+  it('sem src nem fallback, renderiza o ícone genérico direto (sem <img>)', () => {
+    const { container } = render(<ProductThumb src={null} alt="Produto sem foto" />);
+    expect(document.querySelector('img')).toBeNull();
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+
+  it('com src, renderiza <img> com o src', () => {
+    render(<ProductThumb src="https://example.com/a.jpg" alt="Açucareiro" />);
+    const img = screen.getByAltText('Açucareiro') as HTMLImageElement;
+    expect(img.src).toBe('https://example.com/a.jpg');
+  });
+
+  it('erro no src cai para fallbackSrc; erro no fallback cai para o ícone', () => {
+    render(<ProductThumb src="https://example.com/quebrada.jpg" fallbackSrc="https://example.com/fallback.jpg" alt="Produto" />);
+    const img = screen.getByAltText('Produto') as HTMLImageElement;
+    fireEvent.error(img);
+    expect((screen.getByAltText('Produto') as HTMLImageElement).src).toBe('https://example.com/fallback.jpg');
+    fireEvent.error(screen.getByAltText('Produto'));
+    expect(document.querySelector('img')).toBeNull();
+  });
+
+  it('URL do Cloudflare Images gera srcSet com as 5 larguras reais', () => {
+    render(<ProductThumb src="https://imagedelivery.net/vKMs9Ow8bA_enuhLXZ2HAw/sm-po-13153-main/public" alt="Açucareiro" />);
+    const img = screen.getByAltText('Açucareiro') as HTMLImageElement;
+    expect(img.srcset).toContain('thumbnail 150w');
+    expect(img.srcset).toContain('large 1200w');
+    expect(img.srcset).not.toContain('public');
+  });
+
+  it('URL fora do Cloudflare Images não gera srcSet', () => {
+    render(<ProductThumb src="https://example.com/foto.jpg" alt="Produto externo" />);
+    const img = screen.getByAltText('Produto externo') as HTMLImageElement;
+    expect(img.srcset).toBe('');
+  });
+});
+
+describe('FavoriteButton', () => {
+  it('inativo: aria-pressed=false e chama onToggle ao clicar', () => {
+    const onToggle = vi.fn();
+    render(<FavoriteButton active={false} onToggle={onToggle} />);
+    const btn = screen.getByRole('button', { name: 'Adicionar aos favoritos' });
+    expect(btn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('ativo: aria-pressed=true e label de remover', () => {
+    render(<FavoriteButton active onToggle={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Remover dos favoritos' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('busy: desabilita o botão e não chama onToggle', () => {
+    const onToggle = vi.fn();
+    render(<FavoriteButton active={false} onToggle={onToggle} busy />);
+    const btn = screen.getByRole('button');
+    expect(btn).toBeDisabled();
+    fireEvent.click(btn);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it('clique não propaga para o elemento pai (card clicável)', () => {
+    const onParentClick = vi.fn();
+    const onToggle = vi.fn();
+    render(
+      <div onClick={onParentClick}>
+        <FavoriteButton active={false} onToggle={onToggle} />
+      </div>
+    );
+    fireEvent.click(screen.getByRole('button'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(onParentClick).not.toHaveBeenCalled();
   });
 });

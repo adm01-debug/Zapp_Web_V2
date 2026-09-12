@@ -38,3 +38,7 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 - E13 · `ColorChips`/`ColorSwatch`: chips do card ("+N" quando excede max) e bolinha de cor do detalhe; aceita string ou objeto (`color_swatches` da E21). Sem `TooltipProvider` global no app — usa `title` nativo em vez de Radix Tooltip. 13 testes (5 novos). tsc 0 · 2026-09-12
 
 - E14 · `PriceTag`/`StockPill`/`LowStockPill`: preço com sugerido riscado condicional; estoque verde/vermelho (trata qty<=0 e flag stockout inconsistentes com "ou"); baixo estoque âmbar só entre 1 e threshold (10 por padrão, o mesmo limiar dos 308 produtos reais). 10 testes novos (23 no arquivo). tsc 0 · 2026-09-12
+
+- E15 · `ProductThumb`: skeleton até `onLoad`, `srcSet` real do Cloudflare Images (variantes confirmadas via CF Images API: thumbnail 150, small 300, card 400, medium/public 600, large 1200 — todas JPEG), fallback em cascata `src`→`fallbackSrc`→ícone. Substitui `ProductImage` (removido, sem consumidor) nos 3 usos reais (2 em `ExternalProductCard.tsx`, 1 em `ProductDetailDialog.tsx`). 5 testes novos.
+- E16 · `FavoriteButton`: coração com `aria-pressed`, animação de escala respeitando `useReducedMotion`, `stopPropagation` (não abre o card ao favoritar), estado `busy`. Ainda sem persistência (E27) — não montado em nenhum card. 4 testes novos.
+Total do módulo: 150/150. tsc 0 · lint-ratchet 0 novas · 2026-09-12

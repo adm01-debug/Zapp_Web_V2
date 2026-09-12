@@ -4,7 +4,7 @@
  * Ponto único para evitar duplicação entre ExternalProductCard,
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Package } from 'lucide-react';
 
 /** R$ 63,78 (pt-BR, BRL). */
@@ -20,25 +20,7 @@ export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   if (fallback) fallback.style.display = 'flex';
 };
 
-interface ProductImageProps {
-  src: string | null;
-  alt: string;
-  iconSize?: string;
-  /** E21 — fallback secundário (primary_image_fallback_url) antes do ícone genérico. */
-  fallbackSrc?: string | null;
-}
-
-export const ProductImage: React.FC<ProductImageProps> = ({ src, alt, iconSize = 'w-6 h-6', fallbackSrc }) => {
-  const effectiveSrc = src ?? fallbackSrc ?? null;
-  return effectiveSrc ? (
-    <>
-      <img src={effectiveSrc} alt={alt} className="w-full h-full object-cover" loading="lazy" onError={handleImageError} />
-      <div className="w-full h-full items-center justify-center hidden"><Package className={`${iconSize} text-muted-foreground`} /></div>
-    </>
-  ) : (
-    <div className="w-full h-full flex items-center justify-center"><Package className={`${iconSize} text-muted-foreground`} /></div>
-  );
-};
+// ProductImage removido na E15 — substituído por ProductThumb (skeleton + srcSet real + fallback em cascata).
 
 // ─── ProductBadge (E12) ─────────────────────────────────────────
 import { Check, Flame, Sparkles, Star, XCircle } from 'lucide-react';
@@ -185,4 +167,128 @@ export function StockPill({ qty, stockout }: StockPillProps) {
 export function LowStockPill({ qty, threshold = 10 }: { qty: number; threshold?: number }) {
   if (qty < 1 || qty > threshold) return null;
   return <span className="catalog-badge catalog-badge--featured tabular-nums">{formatStock(qty)}</span>;
+}
+
+// ─── ProductThumb (E15) ─────────────────────────────────────────
+/**
+ * Variantes reais do Cloudflare Images da conta do PromoGifts, confirmadas
+ * via CF Images API em 2026-09-12 (todas JPEG): thumbnail 150×150,
+ * small 300×300, card 400×400, medium/public 600×600, large 1200×1200.
+ */
+const CF_IMAGES_HOST = 'imagedelivery.net';
+const CF_VARIANT_WIDTHS: Record<string, number> = {
+  thumbnail: 150,
+  small: 300,
+  card: 400,
+  medium: 600,
+  public: 600,
+  large: 1200,
+};
+
+function cfImagesSrcSet(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname !== CF_IMAGES_HOST) return null;
+  const parts = parsed.pathname.split('/').filter(Boolean); // [accountHash, imageId, variant]
+  if (parts.length < 3) return null;
+  const base = `${parsed.origin}/${parts.slice(0, -1).join('/')}`;
+  return Object.entries(CF_VARIANT_WIDTHS)
+    .filter(([variant]) => variant !== 'public') // 'public' == 'medium' (mesmo byte a byte); evita w duplicado
+    .map(([variant, w]) => `${base}/${variant} ${w}w`)
+    .join(', ');
+}
+
+interface ProductThumbProps {
+  src: string | null;
+  fallbackSrc?: string | null;
+  alt: string;
+  ratio?: 'square' | '4/3';
+  priority?: boolean;
+  iconSize?: string;
+  sizes?: string;
+}
+
+/**
+ * Imagem do card/galeria com skeleton até carregar, srcSet real do
+ * Cloudflare Images (quando aplicável) e fallback em cascata
+ * src -> fallbackSrc -> ícone Package. Substitui ProductImage (E04) nos
+ * dois usos existentes; ProductImage continua exportado (sem uso restante
+ * após esta etapa, mas outros pontos futuros podem precisar do fallback simples).
+ */
+export function ProductThumb({ src, fallbackSrc, alt, ratio = 'square', priority, iconSize = 'w-8 h-8', sizes }: ProductThumbProps) {
+  const [stage, setStage] = useState<'loading' | 'loaded' | 'error-src' | 'error-fallback'>(
+    src ? 'loading' : fallbackSrc ? 'loading' : 'error-fallback'
+  );
+  const effectiveSrc = stage === 'error-src' ? fallbackSrc : src ?? fallbackSrc;
+
+  if (!effectiveSrc || stage === 'error-fallback') {
+    return (
+      <div className={`w-full h-full flex items-center justify-center ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
+        <Package className={`${iconSize} text-muted-foreground`} />
+      </div>
+    );
+  }
+
+  const srcSet = cfImagesSrcSet(effectiveSrc);
+
+  return (
+    <div className={`relative w-full h-full ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
+      {stage === 'loading' && <div className="absolute inset-0 animate-pulse bg-muted/40" />}
+      <img
+        src={effectiveSrc}
+        srcSet={srcSet ?? undefined}
+        sizes={srcSet ? sizes ?? '(min-width: 1280px) 220px, (min-width: 768px) 33vw, 50vw' : undefined}
+        alt={alt}
+        className={`w-full h-full object-contain transition-opacity ${stage === 'loading' ? 'opacity-0' : 'opacity-100'}`}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={priority ? 'high' : undefined}
+        onLoad={() => setStage('loaded')}
+        onError={() => setStage((s) => (s === 'error-src' ? 'error-fallback' : 'error-src'))}
+      />
+    </div>
+  );
+}
+
+// ─── FavoriteButton (E16) ───────────────────────────────────────
+import { Heart } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+
+interface FavoriteButtonProps {
+  active: boolean;
+  onToggle: () => void;
+  busy?: boolean;
+  size?: number;
+}
+
+/**
+ * Coração do canto superior direito (card e galeria). Sem persistência
+ * até a E27 (catalog_favorites) — não montar nos cards antes disso.
+ */
+export function FavoriteButton({ active, onToggle, busy, size = 32 }: FavoriteButtonProps) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!busy) onToggle();
+      }}
+      disabled={busy}
+      aria-pressed={active}
+      aria-label={active ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      className="flex items-center justify-center rounded-full bg-background/70 backdrop-blur disabled:opacity-60"
+      style={{ width: size, height: size }}
+      animate={!prefersReducedMotion && active ? { scale: [1, 1.2, 1] } : undefined}
+      transition={{ duration: 0.3 }}
+    >
+      <Heart
+        className={active ? 'w-4 h-4 fill-destructive text-destructive' : 'w-4 h-4 text-foreground/70'}
+      />
+    </motion.button>
+  );
 }
