@@ -40,6 +40,15 @@ CREATE FUNCTION public.get_profile_id_for_user(uuid) RETURNS uuid LANGUAGE sql S
 $$;
 CREATE FUNCTION public.is_admin_or_supervisor(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
 CREATE FUNCTION public.is_valid_talkx_schedule_timezone(text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT $1 = 'America/Sao_Paulo' $$;
+CREATE TABLE public.whatsapp_connections (
+  id uuid PRIMARY KEY,
+  status text NOT NULL,
+  instance_id text
+);
+INSERT INTO public.whatsapp_connections (id, status, instance_id) VALUES
+  ('50000000-0000-0000-0000-000000000001', 'connected', 'evolution-live'),
+  ('50000000-0000-0000-0000-000000000002', 'disconnected', 'evolution-offline'),
+  ('50000000-0000-0000-0000-000000000003', 'connected', '   ');
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -124,11 +133,23 @@ forbidden="$(psql_test -v VERBOSITY=verbose -c "$other_session SELECT * FROM pub
 invalid="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000009'::uuid, '{\"name\":\"x\"}'::jsonb);" 2>&1 || true)"
 [[ "$invalid" == *invalid_talkx_campaign_draft* ]] || fail 'payload incompleto foi aceito'
 
+connected_payload="$(printf '%s' "$payload" | sed 's/"whatsapp_connection_id":null/"whatsapp_connection_id":"50000000-0000-0000-0000-000000000001"/')"
+connected="$(psql_test -Atqc "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000010'::uuid, '$connected_payload'::jsonb);")"
+[[ "$connected" == *':1:false' ]] || fail 'conexão WhatsApp viva foi rejeitada'
+
+unavailable_payload="$(printf '%s' "$payload" | sed 's/"whatsapp_connection_id":null/"whatsapp_connection_id":"50000000-0000-0000-0000-000000000002"/')"
+unavailable_connection="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000011'::uuid, '$unavailable_payload'::jsonb);" 2>&1 || true)"
+[[ "$unavailable_connection" == *selected_whatsapp_connection_unavailable* ]] || fail 'conexão WhatsApp indisponível foi aceita'
+
+blank_instance_payload="$(printf '%s' "$payload" | sed 's/"whatsapp_connection_id":null/"whatsapp_connection_id":"50000000-0000-0000-0000-000000000003"/')"
+blank_instance="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000012'::uuid, '$blank_instance_payload'::jsonb);" 2>&1 || true)"
+[[ "$blank_instance" == *selected_whatsapp_connection_unavailable* ]] || fail 'conexão WhatsApp sem instância foi aceita'
+
 whitespace_payload="$(printf '%s' "$payload" | sed 's/"message_template":"[^"]*"/"message_template":"   "/')"
-whitespace_message="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000010'::uuid, '$whitespace_payload'::jsonb);" 2>&1 || true)"
+whitespace_message="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000013'::uuid, '$whitespace_payload'::jsonb);" 2>&1 || true)"
 [[ "$whitespace_message" == *invalid_talkx_campaign_draft* ]] || fail 'mensagem composta apenas de espaços foi aceita'
 
-inactive_profile="$(psql_test -v VERBOSITY=verbose -c "UPDATE public.profiles SET is_active=false WHERE user_id='20000000-0000-0000-0000-000000000001'; $owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000011'::uuid, '$payload'::jsonb);" 2>&1 || true)"
+inactive_profile="$(psql_test -v VERBOSITY=verbose -c "UPDATE public.profiles SET is_active=false WHERE user_id='20000000-0000-0000-0000-000000000001'; $owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000014'::uuid, '$payload'::jsonb);" 2>&1 || true)"
 [[ "$inactive_profile" == *active_profile_not_found* ]] || fail 'perfil inativo ainda conseguiu salvar rascunho'
 
-printf 'PASS: Talk X draft save enforces RPC grants and active identity, recovers idempotent creates, scopes keys per actor, rejects divergent retries, and fences stale writes\n'
+printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, and fences stale writes\n'

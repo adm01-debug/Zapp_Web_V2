@@ -120,6 +120,20 @@ BEGIN
     RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
   END IF;
 
+  -- A draft may omit a connection while it is being composed, but a supplied
+  -- ID must be a live Evolution-backed connection. This prevents a direct RPC
+  -- caller from storing a stale or unusable connection ID.
+  IF v_connection_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1
+         FROM public.whatsapp_connections connection
+        WHERE connection.id = v_connection_id
+          AND connection.status = 'connected'
+          AND NULLIF(btrim(connection.instance_id), '') IS NOT NULL
+     ) THEN
+    RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
+  END IF;
+
   IF p_campaign_id IS NULL THEN
     IF p_creation_key IS NULL THEN
       RAISE EXCEPTION 'talkx_draft_creation_key_required' USING ERRCODE = '22023';
