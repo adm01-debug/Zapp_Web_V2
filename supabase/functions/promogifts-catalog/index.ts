@@ -22,6 +22,18 @@ const ListProductsSchema = z.object({
   only_active: z.boolean().default(true),
   only_in_stock: z.boolean().default(false),
   compact: z.boolean().default(false),
+  // E22 — filtros avançados
+  is_featured: z.boolean().optional(),
+  is_new: z.boolean().optional(),
+  is_bestseller: z.boolean().optional(),
+  is_kit: z.boolean().optional(),
+  allows_personalization: z.boolean().optional(),
+  low_stock: z.boolean().optional(), // 1 <= stock_quantity <= 10
+  price_min: z.number().min(0).optional(),
+  price_max: z.number().min(0).optional(),
+  color: z.string().max(60).optional(),
+  material: z.string().max(60).optional(),
+  has_engraving: z.boolean().optional(),
 }).default({});
 
 const GetProductSchema = z.object({
@@ -151,13 +163,52 @@ Deno.serve(async (req) => {
       if (!paramsParse.success) {
         return jsonRes({ error: "Invalid parameters", details: paramsParse.error.flatten().fieldErrors }, 400, req);
       }
-      const { search, category_id, supplier_id, limit, offset, order_by, ascending, only_active, only_in_stock, compact } = paramsParse.data;
+      const {
+        search, category_id, supplier_id, limit, offset, order_by, ascending, only_active, only_in_stock, compact,
+        is_featured, is_new, is_bestseller, is_kit, allows_personalization, low_stock,
+        price_min, price_max, color, material, has_engraving,
+      } = paramsParse.data;
 
       let query = extClient.from("products").select(compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS, { count: "exact" });
       if (only_active) query = query.eq("is_active", true);
       if (only_in_stock) query = query.eq("is_stockout", false);
-      if (category_id) query = query.eq("category_id", category_id);
       if (supplier_id) query = query.eq("supplier_id", supplier_id);
+      if (category_id) {
+        // Categoria + descendentes: path e um caminho materializado por
+        // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
+        const { data: cat } = await extClient.from("categories").select("path").eq("id", category_id).maybeSingle();
+        if (cat?.path) {
+          const { data: descendants } = await extClient.from("categories").select("id").like("path", `${cat.path}%`);
+          const ids = (descendants || []).map((d: { id: string }) => d.id);
+          query = ids.length > 0 ? query.in("category_id", ids) : query.eq("category_id", category_id);
+        } else {
+          query = query.eq("category_id", category_id);
+        }
+      }
+      if (is_featured) query = query.eq("is_featured", true);
+      if (is_new) query = query.eq("is_new", true);
+      if (is_bestseller) query = query.eq("is_bestseller", true);
+      if (is_kit) query = query.eq("is_kit", true);
+      if (allows_personalization) query = query.eq("allows_personalization", true);
+      if (low_stock) query = query.gte("stock_quantity", 1).lte("stock_quantity", 10);
+      if (price_min != null) query = query.gte("sale_price", price_min);
+      if (price_max != null) query = query.lte("sale_price", price_max);
+      if (has_engraving) query = query.not("engraving_type", "is", null);
+      if (color) {
+        // colors e jsonb; a maioria dos itens e string ("BAMBU"), ~4% (XBZ)
+        // e objeto {"nome": "..."} - contains cobre os dois formatos, sem
+        // ilike direto em jsonb (o Postgres rejeita ilike sem cast em jsonb).
+        const safeColor = sanitizeSearch(color).toUpperCase();
+        if (safeColor.length > 0) {
+          query = query.or(`colors.cs.${JSON.stringify([safeColor])},colors.cs.${JSON.stringify([{ nome: safeColor }])}`);
+        }
+      }
+      if (material) {
+        const safeMaterial = sanitizeSearch(material).toUpperCase();
+        if (safeMaterial.length > 0) {
+          query = query.or(`materials.cs.${JSON.stringify([safeMaterial])},materials.cs.${JSON.stringify([{ nome: safeMaterial }])}`);
+        }
+      }
       if (search) {
         const safe = sanitizeSearch(search);
         if (safe.length > 0) query = query.or(`name.ilike.%${safe}%,sku.ilike.%${safe}%,brand.ilike.%${safe}%`);

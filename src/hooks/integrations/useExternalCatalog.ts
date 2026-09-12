@@ -119,6 +119,19 @@ export interface CatalogFilters {
   ascending?: boolean;
   /** Payload enxuto do card; default false (comportamento anterior). */
   compact?: boolean;
+  // E22 — filtros avançados (edge promogifts-catalog)
+  is_featured?: boolean;
+  is_new?: boolean;
+  is_bestseller?: boolean;
+  is_kit?: boolean;
+  allows_personalization?: boolean;
+  /** 1 <= estoque <= 10 */
+  low_stock?: boolean;
+  price_min?: number;
+  price_max?: number;
+  color?: string;
+  material?: string;
+  has_engraving?: boolean;
 }
 
 // ─── API invoke ───────────────────────────────────────────────
