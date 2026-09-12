@@ -252,3 +252,28 @@ test('Talk X recovery rollout is an exact ordered bundle with pre/post attestati
   assert.match(talkXRecoveryRuntime, /runtime_sha256/);
   assert.doesNotMatch(talkXRecoveryRuntime, /SELECT \* FROM public\.talkx_/i);
 });
+
+test('Talk X ACL and constraint validation hardening has a two-phase runtime contract', async () => {
+  const hardening = await readFile(
+    new URL(
+      '../../supabase/migrations/20260912140000_harden_talkx_runtime_acl_and_validate_constraints.sql',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  assert.match(workflow, /20260912130000\|20260912140000\)/);
+  assert.match(
+    workflow,
+    /Validar runtime completo do bundle Talk X[\s\S]*inputs\.migration_version == '20260912130000' \|\| inputs\.migration_version == '20260912140000'/
+  );
+  assert.match(workflow, /TARGET_VERSION === '20260912140000'/);
+  assert.match(workflow, /proof\.anonymous_execute_count === 3/);
+  assert.match(workflow, /proof\.anonymous_execute_count === 0/);
+  assert.match(workflow, /proof\.validated_constraint_count === 2/);
+  assert.match(workflow, /proof\.validated_constraint_count === 7/);
+  assert.match(hardening, /FROM PUBLIC, anon, authenticated, service_role/);
+  assert.match(hardening, /talkx_constraint_validation_preflight_failed/);
+  assert.equal((hardening.match(/VALIDATE CONSTRAINT/g) || []).length, 5);
+  assert.match(hardening, /SET lock_timeout = '5s'/);
+  assert.match(hardening, /SET statement_timeout = '60s'/);
+});
