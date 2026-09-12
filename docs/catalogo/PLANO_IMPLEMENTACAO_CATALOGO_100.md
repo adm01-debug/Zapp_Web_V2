@@ -520,7 +520,7 @@
 5. Delta mensal = `(m0 - m-1)/m-1` calculado no client; renderiza só se `m-1 > 0`.
 6. Testes: RPC no MCP retorna 7.576/6.040/2.147.
 7. Deploy + manifest.
-8. `ARQUITETURA.md` mapa métrica→fonte atualizado.
+8. `ARQUITETURA.md` — **não foi criado na hora certa**; feito retroativamente na E25 (`docs/catalogo/ARQUITETURA.md`, com diagrama Mermaid, mapa métrica→fonte e riscos conhecidos até aqui).
 9. CHANGELOG.
 10. Commit `feat(catalog): E24 catalog_stats`.
 **Checklist**
@@ -539,7 +539,7 @@
 5. Cache client 30 min mantido.
 6. Teste Deno.
 7. Deploy + manifest.
-8. Verificado na E24: **27 raiz ativas** (não 28 — 1 é inativa/soft-deleted, achado por SQL), 4 fornecedores com produto.
+8. Conferir os números reais desta etapa: 27 raiz ativas (achado na E24, corrigido nesta linha do plano — a estimativa original da seção 0 dizia 28), 4 fornecedores com produto.
 9. CHANGELOG.
 10. Commit `feat(catalog): E25 categorias e fornecedores enriquecidos`.
 **Checklist**

@@ -11,11 +11,27 @@ export interface ExternalCategory {
   name: string;
   slug: string;
   parent_id: string | null;
+  // E25 — enriquecidos; opcionais pq CategoryChips (E18) já usava o tipo
+  // básico e algumas categorias legadas (ex.: "Outros") não têm icon/color_hex.
+  level?: number;
+  path?: string;
+  full_path_readable?: string | null;
+  icon?: string | null;
+  color_hex?: string | null;
+  image_url?: string | null;
+  products_count?: number;
+  display_order?: number;
 }
 
 export interface ExternalSupplier {
   id: string;
   name: string;
+  // E25 — enriquecidos. logo_url hoje é sempre null (nenhum fornecedor
+  // tem logo cadastrado no PromoGifts) — UI precisa de fallback sem logo.
+  trading_name?: string | null;
+  logo_url?: string | null;
+  is_product_supplier?: boolean;
+  low_stock_threshold?: number | null;
 }
 
 export interface ExternalProductVariant {

@@ -273,13 +273,23 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list_categories") {
-      const { data, error } = await extClient.from("categories").select("id, name, slug, parent_id").order("name");
+      const { data, error } = await extClient
+        .from("categories")
+        .select("id, name, slug, parent_id, level, path, full_path_readable, icon, color_hex, image_url, products_count, display_order")
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
       if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
     }
 
     if (action === "list_suppliers") {
-      const { data, error } = await extClient.from("suppliers").select("id, name").order("name");
+      const { data, error } = await extClient
+        .from("suppliers")
+        .select("id, name, trading_name, logo_url, is_product_supplier, low_stock_threshold")
+        .eq("active", true)
+        .order("name", { ascending: true });
       if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
     }
