@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { ModuleHeader, IconTile } from './talkxShared';
@@ -19,6 +20,7 @@ import { TalkXSuppression } from './TalkXSuppression';
 import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { duplicateTalkXCampaignDraft } from './talkxCampaignDraft';
 import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
 import type { WizardStep } from './useCampaignEditor';
 
@@ -26,6 +28,7 @@ export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'runnin
 
 export default function TalkXView() {
   const { campaigns, isLoading, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
+  const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
@@ -118,13 +121,18 @@ export default function TalkXView() {
 
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
-    campaigns.forEach((c) => { if (c.created_by) m[c.created_by] = c.name; });
+    for (const rawProfile of teamProfiles) {
+      const profile = rawProfile as { id?: unknown; name?: unknown };
+      if (typeof profile.id === 'string' && typeof profile.name === 'string' && profile.name.trim()) {
+        m[profile.id] = profile.name.trim();
+      }
+    }
     return m;
-  }, [campaigns]);
+  }, [teamProfiles]);
 
-  const duplicateCampaign = useCallback(async (c: TalkXCampaign) => {
+  const duplicateCampaign = useCallback((c: TalkXCampaign) => {
     setLocalDraftRouteId(null);
-    setEditingCampaign({ ...c, id: '', name: `${c.name} (cópia)`, status: 'draft', sent_count: 0, failed_count: 0, delivered_count: 0, total_recipients: 0, started_at: null, completed_at: null });
+    setEditingCampaign(duplicateTalkXCampaignDraft(c));
     setWizardInitial(undefined);
     setTopView('wizard');
     writeWizardRoute({ campaignId: 'new', step: 1 });

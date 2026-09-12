@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-migration="$repo_root/supabase/migrations/20260911120000_replace_talkx_draft_recipients.sql"
+migration="$repo_root/supabase/migrations/20260911140000_harden_talkx_campaign_state_transitions.sql"
 postgres_image="${TALKX_DRAFT_RECIPIENTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-draft-recipients-test-$$"
 test_password="talkx_draft_recipients_test_only"
@@ -41,6 +41,12 @@ CREATE TABLE public.talkx_campaigns (
   created_by uuid,
   status text NOT NULL,
   total_recipients integer NOT NULL DEFAULT 0,
+  sent_count integer NOT NULL DEFAULT 0,
+  failed_count integer NOT NULL DEFAULT 0,
+  delivered_count integer NOT NULL DEFAULT 0,
+  scheduled_at timestamptz,
+  started_at timestamptz,
+  completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 CREATE TABLE public.contacts (id uuid PRIMARY KEY, visible boolean NOT NULL DEFAULT true);
