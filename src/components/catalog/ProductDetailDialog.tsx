@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,7 +7,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Send, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box } from 'lucide-react';
-import { ExternalProduct, useExternalCatalog } from '@/hooks/integrations/useExternalCatalog';
+import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { formatPrice, ProductImage, handleImageError } from './catalogShared';
 
 interface ProductDetailDialogProps {
@@ -18,20 +18,11 @@ interface ProductDetailDialogProps {
 }
 
 export function ProductDetailDialog({ product, open, onOpenChange, onSend }: ProductDetailDialogProps) {
-  const { fetchProduct } = useExternalCatalog();
-  const [fullProduct, setFullProduct] = useState<ExternalProduct>(product);
-  const [loadingVariants, setLoadingVariants] = useState(false);
-
-  useEffect(() => {
-    if (open && !product.variants?.length) {
-      setLoadingVariants(true);
-      fetchProduct(product.id).then((p) => {
-        if (p) setFullProduct(p);
-      }).finally(() => setLoadingVariants(false));
-    } else {
-      setFullProduct(product);
-    }
-  }, [open, product.id]);
+  const needsFullProduct = !product.variants?.length;
+  const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
+    enabled: open && needsFullProduct,
+  });
+  const fullProduct: ExternalProduct = fetchedProduct ?? product;
 
   const dp = fullProduct;
 

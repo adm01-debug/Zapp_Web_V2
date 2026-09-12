@@ -126,19 +126,11 @@
     },
     {
       "path": "src/components/catalog/ExternalProductCatalog.tsx",
-      "sha256": "3ada612aad8bc5c0a4acbfa68d6c51c5f0eaa4309d789617e1bae877fed1be7a"
+      "sha256": "1e35fd33049bc79408aab1efce2da262c47fe8e0908aa4c5975f87edf07900a6"
     },
     {
       "path": "src/components/catalog/ExternalProductManagement.tsx",
       "sha256": "38e0f160103e8cf95d2decf87a26649ff251b4d89261ae9d5b11f9055dcaff3d"
-    },
-    {
-      "path": "src/components/catalog/ProductDetailDialog.tsx",
-      "sha256": "5b79e8d651261a9c99f6ce27f254a01e7f7ba601c36232fe3994b664d9900629"
-    },
-    {
-      "path": "src/components/catalog/SendProductDialog.tsx",
-      "sha256": "44be771b6f66c620d74689b662286e72935088c2593c8575b4edd2f6a80cc164"
     },
     {
       "path": "src/components/catalog/useSendProduct.ts",
@@ -2694,37 +2686,9 @@
     },
     {
       "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 106,
-      "column": 5,
-      "endLine": 106,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/catalog/ExternalProductCatalog.tsx:106:5 104 | doFetch({ offset: 0 }); 105 | }, 300); > 106 | setSearchTimeout(t); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 107 | return () => clearTimeout(t); 108 | }, [search, categoryId, supplierId, onlyInStock]); 109 |",
-      "spanHash": "b49049a310c93054c9d260b199fbcefbf1cc9845f636047618309d58c76e18c0",
-      "lineHash": "3b31a4a4d2deaf9471b7bb3c20b78555f9833dd63ea5e3607a0824d875ba245a",
-      "contextHash": "611646734581c5bdaada1053db5c273d6ffbd92caf689a098b4702d6aa018836"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 108,
+      "line": 120,
       "column": 6,
-      "endLine": 108,
-      "endColumn": 51,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'doFetch', 'isOpen', and 'searchTimeout'. Either include them or remove the dependency array.",
-      "spanHash": "84d0b41babf712c249475ea64161cfe86519829288e0bbeb114a6e8b4661f4e1",
-      "lineHash": "6268f6ef5c17c1276febc70643cce809642ccdb5ff6f5b624230b7c43a972751",
-      "contextHash": "94eaa2d9d8703f69fa3702c7da6798f6014de0e00460ce1e7af1157f3c47392a"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 113,
-      "column": 6,
-      "endLine": 113,
+      "endLine": 120,
       "endColumn": 12,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -2736,9 +2700,9 @@
     },
     {
       "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 96,
+      "line": 95,
       "column": 6,
-      "endLine": 96,
+      "endLine": 95,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -2746,7 +2710,7 @@
       "message": "React Hook useEffect has missing dependencies: 'doFetch', 'fetchCategories', and 'fetchSuppliers'. Either include them or remove the dependency array.",
       "spanHash": "94a017696a89a5ac7af887cc0ffc7ca5b0d7d256ce6fd8f5297fecd8fa333220",
       "lineHash": "977b375c9ab2b617eca46dc749d62f0c3d8af9f3f621a275b482d0b032fd1c0e",
-      "contextHash": "f88ecce4b4976b039de8818ba05682e64836a687991491cb5c187837e01c14e4"
+      "contextHash": "56ccdcb18b4be26d041fd0a6d382cfb69320152a0bdf1174f23998d4fb5c38ec"
     },
     {
       "file": "src/components/catalog/ExternalProductManagement.tsx",
@@ -2789,76 +2753,6 @@
       "spanHash": "9ac80c1431a21f37a17d43de8b21dc179888a81a8935137e7f74c213fbc7e22f",
       "lineHash": "38b5e0274e1540e512e5b416471ec7285d54803c4ac85a743d10d083e1312107",
       "contextHash": "9c0fc228aa7241de61f2bc89b4579774ec332ab4069be785214d29b43b2e2025"
-    },
-    {
-      "file": "src/components/catalog/ProductDetailDialog.tsx",
-      "line": 27,
-      "column": 7,
-      "endLine": 27,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/catalog/ProductDetailDialog.tsx:27:7 25 | useEffect(() => { 26 | if (open && !product.variants?.length) { > 27 | setLoadingVariants(true); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 28 | fetchProduct(product.id).then((p) => { 29 | if (p) setFullProduct(p); 30 | }).finally(() => setLoadingVariants(false));",
-      "spanHash": "b39acf4ab16a201fccd5b047177cbeb88e6d6db0cdf7f909b8685e422f215a0c",
-      "lineHash": "b2f134744fcb56428748290f7c88bc5fa6cc51e1c301b750cc8d3982dad81b79",
-      "contextHash": "c740b7601c56128beb23f81278f8ee215c2b11d164db09d0a81f5f7e12f3030d"
-    },
-    {
-      "file": "src/components/catalog/ProductDetailDialog.tsx",
-      "line": 34,
-      "column": 6,
-      "endLine": 34,
-      "endColumn": 24,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'fetchProduct' and 'product'. Either include them or remove the dependency array. If 'setFullProduct' needs the current value of 'product', you can also switch to useReducer instead of useState and read 'product' in the reducer.",
-      "spanHash": "a4a2c965a70cd5380d37965aa74f89826b99267fa37ecc92cab0e53d26ec4da9",
-      "lineHash": "a16f60783b8a0dec70f650568cd948225a6d120d13192e890d69f74bda58829b",
-      "contextHash": "c220759fd62d3bee6066e345e269f16085341674c9b64a602a85713249263408"
-    },
-    {
-      "file": "src/components/catalog/SendProductDialog.tsx",
-      "line": 100,
-      "column": 21,
-      "endLine": 100,
-      "endColumn": 38,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/catalog/SendProductDialog.tsx:100:21 98 | 99 | const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set()); > 100 | useEffect(() => { setSelectedImages(new Set(visibleImages.map((i) => i.url))); }, [visibleImages]); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 101 | 102 | const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null); 103 |",
-      "spanHash": "039aef2b64bcef397b5e1b698f449d37d2ad158987d2de146b2fb66890504eaa",
-      "lineHash": "1594feb40d00b9978d6b688a366cd4482f97acd08a64762fc7bedba78a1745dc",
-      "contextHash": "35da89387bc210e333d701ec01273fd3c703da1b3aaaad35aee9540e6e59f8e8"
-    },
-    {
-      "file": "src/components/catalog/SendProductDialog.tsx",
-      "line": 70,
-      "column": 7,
-      "endLine": 70,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/catalog/SendProductDialog.tsx:70:7 68 | useEffect(() => { 69 | if (open && (!product.variants || product.variants.length === 0)) { > 70 | setLoadingVariants(true); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 71 | fetchProduct(product.id).then((p) => { if (p) setFullProduct(p); }).finally(() => setLoadingVariants(false)); 72 | } else { 73 | setFullProduct(product);",
-      "spanHash": "b39acf4ab16a201fccd5b047177cbeb88e6d6db0cdf7f909b8685e422f215a0c",
-      "lineHash": "b2f134744fcb56428748290f7c88bc5fa6cc51e1c301b750cc8d3982dad81b79",
-      "contextHash": "2be01a357f043cf5bcc7ff6731877b5368601ef2ca2df41f155be614cbed0e3c"
-    },
-    {
-      "file": "src/components/catalog/SendProductDialog.tsx",
-      "line": 75,
-      "column": 6,
-      "endLine": 75,
-      "endColumn": 24,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'fetchProduct' and 'product'. Either include them or remove the dependency array. If 'setFullProduct' needs the current value of 'product', you can also switch to useReducer instead of useState and read 'product' in the reducer.",
-      "spanHash": "a4a2c965a70cd5380d37965aa74f89826b99267fa37ecc92cab0e53d26ec4da9",
-      "lineHash": "a16f60783b8a0dec70f650568cd948225a6d120d13192e890d69f74bda58829b",
-      "contextHash": "8b835c6c23d2d03cb1b4ad42bcacf5e83464cb3afc0bc050941d34e99044e451"
     },
     {
       "file": "src/components/catalog/useSendProduct.ts",

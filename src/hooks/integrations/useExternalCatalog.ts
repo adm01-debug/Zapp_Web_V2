@@ -243,3 +243,23 @@ export function useExternalCatalog() {
     invalidate,
   };
 }
+
+/**
+ * Detalhe completo de um produto (com variantes) - usado por
+ * ProductDetailDialog e SendProductDialog para carregar o produto
+ * inteiro quando o resumido (da grade) ainda nao tem variants.
+ * Substitui o antigo padrao useState+useEffect+fetchProduct: o
+ * cache do react-query (por productId) elimina o efeito e o
+ * set-state-in-effect associado.
+ */
+export function useExternalProduct(productId: string | undefined, options: { enabled: boolean }) {
+  return useQuery({
+    queryKey: ['external-catalog', 'product', productId],
+    queryFn: async () => {
+      const res = await invokeAction<{ data: ExternalProduct }>('get_product', { product_id: productId });
+      return res.data ?? null;
+    },
+    enabled: options.enabled && !!productId,
+    staleTime: 5 * 60 * 1000,
+  });
+}

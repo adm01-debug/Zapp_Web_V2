@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { fetchCatalogContactResults } from '@/hooks/integrations/useCatalogContactSearch';
 
 const log = getLogger('useSendProduct');
 
@@ -33,20 +33,9 @@ export function useContactSearch(step: 'configure' | 'selectContact') {
       }
 
       setSearchingContacts(true);
-      const request = query
-        ? supabase
-          .from('contacts')
-          .select('id, name, phone, avatar_url')
-          .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
-          .limit(15)
-        : supabase
-          .from('contacts')
-          .select('id, name, phone, avatar_url')
-          .order('updated_at', { ascending: false })
-          .limit(15);
-      const { data } = await request;
+      const data = await fetchCatalogContactResults(query);
       if (!cancelled) {
-        setContactResults(data || []);
+        setContactResults(data);
         setSearchingContacts(false);
       }
     }, query ? 300 : 0);
