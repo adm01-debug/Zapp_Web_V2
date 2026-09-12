@@ -5,7 +5,7 @@
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
 import React, { useState } from 'react';
-import { Package } from 'lucide-react';
+import { Package, type LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -512,5 +512,35 @@ export function CatalogFilterBar({
         </div>
       }
     />
+  );
+}
+
+// ─── MetaTile / SectionCard (E19) ───────────────────────────────
+/**
+ * Tile de metadado do detalhe do produto (Qtd. mínima / Prazo / Origem),
+ * em grade de 3 colunas. RailCard/RailAction/MetaRow (rail) e
+ * GhostButton/TalkXPrimaryButton (botões) já existem em talkxShared.tsx
+ * e DashboardCard.tsx — reusados diretamente nos pontos de uso (F5/F6),
+ * sem wrapper novo aqui.
+ */
+export function MetaTile({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5">
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+      <div className="min-w-0">
+        <p className="text-[10.5px] text-muted-foreground uppercase tracking-wide leading-none mb-1">{label}</p>
+        <p className="text-[13px] font-semibold text-foreground leading-tight truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Card interno com título (Descrição, Ficha técnica) para o modal de detalhes. */
+export function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4">
+      <h4 className="text-[13px] font-semibold text-foreground mb-2">{title}</h4>
+      {children}
+    </div>
   );
 }

@@ -32,6 +32,8 @@ Nenhum token novo — todas usam `hsl(var(--…))` das variáveis carvão já ex
 | `CatalogKpiStrip` | E17 | 6 KPIs (compact), só renderiza os campos numéricos presentes em `stats`; loading→skeleton; clique opcional |
 | `CategoryChips` | E18 | linha "Todos · … · Mais ▾" ordenada por products_count, "Mais" em DropdownMenu |
 | `CatalogFilterBar` | E18 | compõe `FilterBarV2` (Talk X) via `rightSlot` — sem novas props no componente compartilhado |
+| `MetaTile` | E19 | tile de metadado (Qtd. mínima/Prazo/Origem), grade de 3 colunas |
+| `SectionCard` | E19 | card interno com título (Descrição, Ficha técnica) |
 | `ColorChips` + `ColorSwatch` | E13 | chips de cor no card (+"+N"); bolinha com hex ou chip de texto (sem hex) |
 | `PriceTag` | E14 | preço + sugerido riscado (só se diferente) |
 | `StockPill` | E14 | "N em estoque" (verde) / "Esgotado" (vermelho, qty<=0 ou flag) |

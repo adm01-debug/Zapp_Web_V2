@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar } from '../catalogShared';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard } from '../catalogShared';
+import { Layers } from 'lucide-react';
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -313,5 +314,21 @@ describe('CatalogFilterBar', () => {
     expect(screen.getByText('3')).toBeInTheDocument();
     fireEvent.click(btn);
     expect(onAdvancedFilters).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('MetaTile', () => {
+  it('renderiza label e valor', () => {
+    render(<MetaTile icon={Layers} label="Qtd. mínima" value="50 unidades" />);
+    expect(screen.getByText('Qtd. mínima')).toBeInTheDocument();
+    expect(screen.getByText('50 unidades')).toBeInTheDocument();
+  });
+});
+
+describe('SectionCard', () => {
+  it('renderiza o título e o conteúdo', () => {
+    render(<SectionCard title="Descrição"><p>Texto do produto</p></SectionCard>);
+    expect(screen.getByText('Descrição')).toBeInTheDocument();
+    expect(screen.getByText('Texto do produto')).toBeInTheDocument();
   });
 });
