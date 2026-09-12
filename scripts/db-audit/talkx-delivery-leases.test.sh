@@ -17,12 +17,34 @@ trap cleanup EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
-docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null
-for _ in $(seq 1 30); do
-  if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then break; fi
-  sleep 1
-done
-docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1 || fail 'PostgreSQL de teste não iniciou'
+start_postgres() {
+  # A single successful probe is insufficient on GitHub-hosted runners: the
+  # container may restart immediately afterwards. Retry only the disposable
+  # bootstrap and require two consecutive healthy probes; SQL/assertion
+  # failures below remain fail-fast.
+  for attempt in 1 2 3; do
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    if ! docker run -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null; then
+      printf 'WARN: PostgreSQL container failed to start (attempt %s/3)\n' "$attempt" >&2
+      continue
+    fi
+    for _ in $(seq 1 15); do
+      if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+        sleep 1
+        if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+          return 0
+        fi
+      fi
+      sleep 1
+    done
+    printf 'WARN: PostgreSQL bootstrap was not stable (attempt %s/3)\n' "$attempt" >&2
+    docker ps -a --filter "name=^/${container_name}$" --format 'talkx-test-container {{.Status}}' >&2 || true
+    docker logs "$container_name" >&2 || true
+  done
+  return 1
+}
+
+start_postgres || fail 'PostgreSQL de teste não iniciou'
 
 psql_test >/dev/null <<'SQL'
 CREATE SCHEMA auth;
