@@ -38,3 +38,33 @@ Nenhum token novo — todas usam `hsl(var(--…))` das variáveis carvão já ex
 | `PriceTag` | E14 | preço + sugerido riscado (só se diferente) |
 | `StockPill` | E14 | "N em estoque" (verde) / "Esgotado" (vermelho, qty<=0 ou flag) |
 | `LowStockPill` | E14 | "N un." em âmbar, só 1..threshold (padrão 10) |
+
+## Regras de motion, densidade e responsivo (E20)
+
+Fixadas aqui porque as telas reais (F3–F9) ainda não existem — servem de contrato para quando
+forem construídas, e para os testes de a11y/perf (E93/E94) cobrarem exatamente isto.
+
+**Motion**
+- Stagger de entrada dos cards: `delay = Math.min(index, 12) * 0.02` (confirmado igual ao
+  `DashboardCard.tsx:40`, `duration: 0.15`). `AnimatePresence` com `mode="popLayout"` na grade.
+- Hover do card: `translateY(-2px)` + `--glow-primary-sm` (já em `.catalog-card:hover`, E11).
+  **Nunca** `scale` no card — o `object-contain` da foto gera jitter perceptível ao escalar o
+  container inteiro.
+- Todo componente com animação usa `useReducedMotion` (padrão já seguido por `FavoriteButton`,
+  E16) — anima só se `!prefersReducedMotion`.
+
+**Breakpoints da grade** (mobile-first, `grid-cols-*` do Tailwind)
+- `<640px` (sm): 2 colunas, sem rail
+- `640–1024px` (md/lg): 3–4 colunas, sem rail
+- `1280–1536px` (xl): 4 colunas + rail 300px (`.catalog-rail`, E11)
+- `≥1536px` (2xl): 5 colunas + rail 320px
+- Rail desaparece `<1280px` e vira `Accordion` acima da grade (E58, ainda não construído)
+
+**Modais**
+- Detalhe do produto: `max-w-5xl` · Enviar Produto: `max-w-6xl` · Selecionar contato: `max-w-4xl`
+- Em mobile (`<md`), os três viram `Drawer` (vaul) full-height em vez de `Dialog` centralizado
+
+**Tipografia do card**
+- Título: 13px semibold, 2 linhas (`line-clamp-2`)
+- Marca/fornecedor: 11px `text-foreground-secondary`
+- Preço: 16px (`.catalog-price`, E11 — já usado por `PriceTag` tamanho `md`)
