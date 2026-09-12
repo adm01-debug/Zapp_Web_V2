@@ -32,3 +32,5 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 ## Fase 1 — Design system (carvão)
 
 - E11 · Classes `.catalog-*` em `components.css`: card, media (fundo branco), 5 badges de status, chip de cor, chip de categoria (+ativo), preço, rail (300/320px), thumb de galeria, moldura de preview WhatsApp. Nenhum token novo — só `hsl(var(--…))` do carvão existente. `COMPONENTES.md` criado. Build OK · 2026-09-12
+
+- E12 · `ProductBadge` + `resolveProductBadge`: 5 estados com prioridade real (esgotado > mais vendido > novidade > destaque > em estoque); renderiza correto mesmo com flags `undefined` (cai em instock/out). 8 testes de prioridade. tsc 0 · 2026-09-12
