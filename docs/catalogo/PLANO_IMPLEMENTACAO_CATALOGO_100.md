@@ -491,24 +491,24 @@
 - [ ] contagens batem com o DB
 - [ ] deploy
 
-### E23 · Ordenação e busca full-text (relevância)
-**Objetivo:** "Ordenar por: Mais relevantes" real.
+### E23 · Ordenação e busca full-text
+**Objetivo:** busca por texto usando o `search_vector` real (em vez de `ilike`).
 **Arquivos:** edge
-1. `order_by` += `relevance, created_at, order_count, stock_quantity, sale_price`.
-2. Com `search`: `.textSearch('search_vector', q, {type:'websearch', config:'portuguese'})` + fallback `ilike` se `search_vector` estiver nulo para o produto (verificar preenchimento: `count(*) where search_vector is null`).
-3. `relevance` só válido com `search`; sem busca → `name`.
-4. Manter `sanitizeSearch`.
-5. Testes Deno: "caneca bambu" retorna bambu antes.
-6. Latência medida (`meta.duration_ms`) < 400 ms para 24 itens.
-7. Deploy + manifest.
-8. `CatalogFilters.order_by` tipado com union.
+1. Executado: `search_vector` 100% preenchido (8.031/8.031, verificado por SQL) e mantido por gatilho `BEFORE INSERT OR UPDATE` — sem lacuna, então **sem fallback `ilike`** (seria código morto).
+2. Achado que mudou o desenho: o gatilho aplica `unaccent()` **antes** do `to_tsvector` — confirmado por SQL que uma busca acentuada gera um léxico diferente do vetor armazenado. `stripDiacritics()` (equivalente em JS) aplicado ao termo antes de `.textSearch('search_vector', termo, {type:'websearch', config:'portuguese'})`.
+3. `order_by` += `order_count` (coluna real). **`relevance` cancelado desta etapa**: ordenar por `ts_rank_cd` exige uma RPC dedicada no banco externo (PostgREST não ordena por rank num select comum) — decisão de arquitetura maior, fora do escopo aqui; sem busca ou com busca, a ordenação continua nas colunas reais (`name` por padrão).
+4. Manter `sanitizeSearch` (ainda usado por `color`/`material` da E22); nova `sanitizeFtsQuery` só limita tamanho (`websearch_to_tsquery` já aceita frases/aspas/operadores).
+5. Sem `deno` neste ambiente (mesma limitação da E22) — sem teste automatizado; validado por `EXPLAIN ANALYZE` direto no banco.
+6. Latência medida via `EXPLAIN ANALYZE` real: 7 ms (índice GIN `idx_products_search_vector` em uso) — bem abaixo do limite de 400 ms.
+7. Deploy junto com a E21/E22 (ver E30) + manifest.
+8. `CatalogFilters.order_by` já é `string` (sem union — a lista de valores aceitos vive só na edge, matching o padrão já usado por `order_by` desde a E21).
 9. CHANGELOG.
-10. Commit `feat(catalog): E23 ordenação + FTS`.
+10. Commit `feat(catalog): E23 busca full-text real`.
 **Checklist**
-- [ ] 6 ordenações
-- [ ] FTS com fallback
-- [ ] latência medida
-- [ ] deploy
+- [ ] busca por `search_vector`, sem `ilike`
+- [ ] `unaccent` do termo casando com o vetor
+- [ ] latência medida (real, via EXPLAIN)
+- [ ] `relevance` documentado como pendente (RPC), não fingido
 
 ### E24 · Ação `catalog_stats` (KPIs, sync, série mensal)
 **Objetivo:** números reais para KPIs e gráfico.

@@ -9,7 +9,19 @@ const jsonRes = (body: unknown, status = 200, req?: Request) =>
   });
 
 // ─── Input Schemas ────────────────────────────────────────────
-const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku"] as const;
+const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
+
+/**
+ * Equivalente em JS do unaccent() do Postgres, para casar com o gatilho
+ * products_search_vector_update (que aplica unaccent() ANTES do
+ * to_tsvector): sem isso, buscar "açucareiro" gera o léxico 'açucareir',
+ * que não bate com o 'acucareir' armazenado no vetor. Confirmado via SQL
+ * direto contra o banco: websearch_to_tsquery('portuguese','açucareiro')
+ * e a versão sem acento produzem lexemas diferentes.
+ */
+function stripDiacritics(input: string): string {
+  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 const ListProductsSchema = z.object({
   search: z.string().max(200).optional(),
@@ -47,6 +59,11 @@ const ActionSchema = z.object({
 
 function sanitizeSearch(input: string): string {
   return input.replace(/[%_.\\()]/g, "").trim().slice(0, 100);
+}
+
+/** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */
+function sanitizeFtsQuery(input: string): string {
+  return input.trim().slice(0, 100);
 }
 
 const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id),
@@ -210,9 +227,18 @@ Deno.serve(async (req) => {
         }
       }
       if (search) {
-        const safe = sanitizeSearch(search);
-        if (safe.length > 0) query = query.or(`name.ilike.%${safe}%,sku.ilike.%${safe}%,brand.ilike.%${safe}%`);
+        // FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT
+        // OR UPDATE garante isso sempre; sem fallback ilike necessário).
+        // unaccent() aplicado ao termo pra casar com o vetor (o gatilho
+        // tambem aplica unaccent() antes do to_tsvector).
+        const safe = sanitizeFtsQuery(search);
+        if (safe.length > 0) {
+          query = query.textSearch("search_vector", stripDiacritics(safe), { type: "websearch", config: "portuguese" });
+        }
       }
+      // NOTA: "relevance" (ordenar por ts_rank_cd) exigiria uma RPC dedicada
+      // no banco externo — o PostgREST não ordena por rank num select comum.
+      // Fora do escopo desta etapa; order_by continua nas colunas reais.
       query = query.order(order_by, { ascending }).range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
