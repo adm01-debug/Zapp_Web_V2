@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('ExternalCatalog');
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -189,31 +189,26 @@ export function useExternalCatalog() {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,
+    // E26 — mantém a página anterior visível durante a paginação/troca de
+    // filtro, em vez de piscar o skeleton a cada refetch.
+    placeholderData: keepPreviousData,
   });
 
-  // Categories
-  const categoriesQuery = useQuery({
-    queryKey: ['external-catalog', 'categories'],
-    queryFn: async () => {
-      const result = await invokeAction<{ data: ExternalCategory[] }>('list_categories');
-      return result.data || [];
-    },
-    enabled: ready,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
-
-  // Suppliers
-  const suppliersQuery = useQuery({
-    queryKey: ['external-catalog', 'suppliers'],
-    queryFn: async () => {
-      const result = await invokeAction<{ data: ExternalSupplier[] }>('list_suppliers');
-      return result.data || [];
-    },
-    enabled: ready,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  // Categories + suppliers (+ stats, usado por useCatalogStats) numa
+  // única chamada de rede (ação bootstrap, E26) - react-query dedupe pela
+  // mesma queryKey de useCatalogBootstrap() abaixo, então mesmo com esta
+  // query e useCatalogStats() montados ao mesmo tempo, só 1 request sai.
+  const bootstrapQuery = useCatalogBootstrapQuery(ready);
+  const categoriesQuery = {
+    data: bootstrapQuery.data?.categories,
+    isLoading: bootstrapQuery.isLoading,
+    error: bootstrapQuery.error,
+  };
+  const suppliersQuery = {
+    data: bootstrapQuery.data?.suppliers,
+    isLoading: bootstrapQuery.isLoading,
+    error: bootstrapQuery.error,
+  };
 
   // Called by component to set filters and trigger fetch
   const fetchProducts = useCallback((newFilters: CatalogFilters = {}) => {
@@ -293,7 +288,7 @@ export function useExternalProduct(productId: string | undefined, options: { ena
   });
 }
 
-/** Formato exato de public.zapp_catalog_stats() (E24), retornado pela ação catalog_stats. */
+/** Formato exato de public.zapp_catalog_stats() (E24), retornado pela ação catalog_stats/bootstrap. */
 export interface CatalogStats {
   total: number;
   in_stock: number;
@@ -309,14 +304,38 @@ export interface CatalogStats {
   by_month: { month: string; count: number }[];
 }
 
-/** KPIs, sincronização e série mensal do rail/topo do Catálogo (E24). */
-export function useCatalogStats() {
+interface CatalogBootstrap {
+  categories: ExternalCategory[];
+  suppliers: ExternalSupplier[];
+  stats: CatalogStats;
+}
+
+/**
+ * Query única e compartilhada (mesma queryKey em todo lugar que a chama)
+ * para a ação bootstrap (E26): categorias + fornecedores + stats numa
+ * chamada de rede só. useExternalCatalog() e useCatalogStats() leem desta
+ * mesma query — o react-query dedupe pela queryKey, então montar os dois
+ * hooks ao mesmo tempo ainda dispara só 1 request.
+ */
+function useCatalogBootstrapQuery(enabled: boolean) {
   return useQuery({
-    queryKey: ['external-catalog', 'stats'],
+    queryKey: ['external-catalog', 'bootstrap'],
     queryFn: async () => {
-      const res = await invokeAction<{ data: CatalogStats }>('catalog_stats');
+      const res = await invokeAction<{ data: CatalogBootstrap }>('bootstrap');
       return res.data;
     },
-    staleTime: 5 * 60 * 1000,
+    enabled,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
+}
+
+/** KPIs, sincronização e série mensal do rail/topo do Catálogo (E24). */
+export function useCatalogStats() {
+  const bootstrap = useCatalogBootstrapQuery(true);
+  return {
+    data: bootstrap.data?.stats,
+    isLoading: bootstrap.isLoading,
+    error: bootstrap.error,
+  };
 }

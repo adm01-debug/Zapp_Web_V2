@@ -53,7 +53,7 @@ const GetProductSchema = z.object({
 });
 
 const ActionSchema = z.object({
-  action: z.enum(["list_products", "get_product", "list_categories", "list_suppliers", "catalog_stats"]),
+  action: z.enum(["list_products", "get_product", "list_categories", "list_suppliers", "catalog_stats", "bootstrap"]),
   params: z.record(z.unknown()).optional().default({}),
 });
 
@@ -272,10 +272,15 @@ Deno.serve(async (req) => {
       return jsonRes({ data: { ...product, variants: variants || [] }, meta: { duration_ms: duration } }, 200, req);
     }
 
+    // E25 selects reusados pelas ações list_categories/list_suppliers e
+    // pelo bootstrap (E26), pra nao duplicar a string de campos.
+    const CATEGORY_FIELDS = "id, name, slug, parent_id, level, path, full_path_readable, icon, color_hex, image_url, products_count, display_order";
+    const SUPPLIER_FIELDS = "id, name, trading_name, logo_url, is_product_supplier, low_stock_threshold";
+
     if (action === "list_categories") {
       const { data, error } = await extClient
         .from("categories")
-        .select("id, name, slug, parent_id, level, path, full_path_readable, icon, color_hex, image_url, products_count, display_order")
+        .select(CATEGORY_FIELDS)
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("display_order", { ascending: true })
@@ -287,11 +292,37 @@ Deno.serve(async (req) => {
     if (action === "list_suppliers") {
       const { data, error } = await extClient
         .from("suppliers")
-        .select("id, name, trading_name, logo_url, is_product_supplier, low_stock_threshold")
+        .select(SUPPLIER_FIELDS)
         .eq("active", true)
         .order("name", { ascending: true });
       if (error) return externalDatabaseErrorResponse(error, req, log);
       return jsonRes({ data }, 200, req);
+    }
+
+    if (action === "bootstrap") {
+      // E26: categorias + fornecedores + stats numa chamada só (reduz de
+      // 4 pra 2 chamadas por abertura da tela, junto com list_products).
+      if (catalogStatsCache && catalogStatsCache.expiresAt > Date.now()) {
+        const [{ data: categories, error: catErr }, { data: suppliers, error: supErr }] = await Promise.all([
+          extClient.from("categories").select(CATEGORY_FIELDS).eq("is_active", true).is("deleted_at", null)
+            .order("display_order", { ascending: true }).order("name", { ascending: true }),
+          extClient.from("suppliers").select(SUPPLIER_FIELDS).eq("active", true).order("name", { ascending: true }),
+        ]);
+        if (catErr) return externalDatabaseErrorResponse(catErr, req, log);
+        if (supErr) return externalDatabaseErrorResponse(supErr, req, log);
+        return jsonRes({ data: { categories, suppliers, stats: catalogStatsCache.data }, meta: { cached: true } }, 200, req);
+      }
+      const [{ data: categories, error: catErr }, { data: suppliers, error: supErr }, { data: stats, error: statsErr }] = await Promise.all([
+        extClient.from("categories").select(CATEGORY_FIELDS).eq("is_active", true).is("deleted_at", null)
+          .order("display_order", { ascending: true }).order("name", { ascending: true }),
+        extClient.from("suppliers").select(SUPPLIER_FIELDS).eq("active", true).order("name", { ascending: true }),
+        extClient.rpc("zapp_catalog_stats"),
+      ]);
+      if (catErr) return externalDatabaseErrorResponse(catErr, req, log);
+      if (supErr) return externalDatabaseErrorResponse(supErr, req, log);
+      if (statsErr) return externalDatabaseErrorResponse(statsErr, req, log);
+      catalogStatsCache = { data: stats, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data: { categories, suppliers, stats }, meta: { cached: false } }, 200, req);
     }
 
     if (action === "catalog_stats") {

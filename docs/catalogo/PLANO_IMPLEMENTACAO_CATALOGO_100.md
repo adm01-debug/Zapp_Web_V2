@@ -554,9 +554,9 @@
 1. Medir chamadas por abertura da tela (hoje 3; após F3 seriam 5).
 2. Ação combinada `bootstrap` → `{categories, suppliers, stats}` em 1 chamada.
 3. Rate limit por usuário sobe para 120/min só para `list_products` (paginação rápida); demais mantêm 60.
-4. `staleTime` por chave: lista 2 min, produto 5 min, bootstrap 10 min.
+4. `staleTime`: lista mantida em 5 min (já estava assim desde a E05/E06 — não reduzida pra 2 min como o plano original sugeria, sem motivo concreto pra mudar algo que já funciona), produto 5 min (inalterado), bootstrap 10 min (novo).
 5. `keepPreviousData` na lista (sem flash na paginação).
-6. Prefetch da página seguinte no hover de "Próxima".
+6. Adiado para a E45 (Fase 4): não existe botão "Próxima" ainda pra atrelar o hover — prefetch de página é uma etapa de UI, não de backend.
 7. Teste de `useExternalCatalog` para `bootstrap`.
 8. Deploy + manifest.
 9. CHANGELOG.

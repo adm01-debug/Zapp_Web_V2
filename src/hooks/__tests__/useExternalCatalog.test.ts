@@ -103,6 +103,9 @@ function setupMockInvoke(responses: Record<string, any>) {
     list_products: { data: [], meta: { total: 0, duration_ms: 1 } },
     list_categories: { data: [] },
     list_suppliers: { data: [] },
+    // E26: categorias/fornecedores agora vêm de bootstrap, não mais das
+    // ações list_categories/list_suppliers separadas.
+    bootstrap: { data: { categories: [], suppliers: [], stats: null } },
   };
   const merged = { ...defaults, ...responses };
   mockInvoke.mockImplementation(async (fnName: string, opts: any) => {
@@ -417,7 +420,7 @@ describe('useExternalCatalog', () => {
         mockCategory({ id: 'cat2', name: 'Garrafas', slug: 'garrafas' }),
         mockCategory({ id: 'cat3', name: 'Garrafas | Inox', slug: 'garrafas-inox', parent_id: 'cat2' }),
       ];
-      setupMockInvoke({ list_categories: { data: cats }, list_products: { data: [], meta: { total: 0 } }, list_suppliers: { data: [] } });
+      setupMockInvoke({ bootstrap: { data: { categories: cats, suppliers: [], stats: null } }, list_products: { data: [], meta: { total: 0 } } });
 
       const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
       act(() => { result.current.fetchCategories(); });
@@ -428,7 +431,7 @@ describe('useExternalCatalog', () => {
     });
 
     it('handles empty categories', async () => {
-      setupMockInvoke({ list_categories: { data: [] }, list_products: { data: [], meta: { total: 0 } }, list_suppliers: { data: [] } });
+      setupMockInvoke({ bootstrap: { data: { categories: [], suppliers: [], stats: null } }, list_products: { data: [], meta: { total: 0 } } });
 
       const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
       act(() => { result.current.fetchCategories(); });
@@ -458,7 +461,7 @@ describe('useExternalCatalog', () => {
         mockSupplier(),
         mockSupplier({ id: 'sup2', name: 'XBZ Brindes' }),
       ];
-      setupMockInvoke({ list_suppliers: { data: sups }, list_products: { data: [], meta: { total: 0 } }, list_categories: { data: [] } });
+      setupMockInvoke({ bootstrap: { data: { categories: [], suppliers: sups, stats: null } }, list_products: { data: [], meta: { total: 0 } } });
 
       const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
       act(() => { result.current.fetchSuppliers(); });
@@ -587,27 +590,27 @@ describe('Edge Function Contract', () => {
     expect(call[1].body.params.product_id).toBe('p1');
   });
 
-  it('sends list_categories action', async () => {
-    setupMockInvoke({ list_categories: { data: [] }, list_products: { data: [], meta: { total: 0 } }, list_suppliers: { data: [] } });
+  it('sends bootstrap action for categories (E26 — substitui list_categories isolado)', async () => {
+    setupMockInvoke({ list_products: { data: [], meta: { total: 0 } } });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
     act(() => { result.current.fetchCategories(); });
 
     await waitFor(() => {
-      const catCall = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_categories');
-      expect(catCall).toBeTruthy();
+      const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'bootstrap');
+      expect(call).toBeTruthy();
     });
   });
 
-  it('sends list_suppliers action', async () => {
-    setupMockInvoke({ list_suppliers: { data: [] }, list_products: { data: [], meta: { total: 0 } }, list_categories: { data: [] } });
+  it('sends bootstrap action for suppliers (E26 — substitui list_suppliers isolado)', async () => {
+    setupMockInvoke({ list_products: { data: [], meta: { total: 0 } } });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
     act(() => { result.current.fetchSuppliers(); });
 
     await waitFor(() => {
-      const supCall = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_suppliers');
-      expect(supCall).toBeTruthy();
+      const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'bootstrap');
+      expect(call).toBeTruthy();
     });
   });
 });
@@ -776,8 +779,7 @@ describe('Edge Cases & Boundaries', () => {
   it('handles concurrent fetchProducts and fetchCategories', async () => {
     setupMockInvoke({
       list_products: { data: [mockProduct()], meta: { total: 1 } },
-      list_categories: { data: [mockCategory()] },
-      list_suppliers: { data: [] },
+      bootstrap: { data: { categories: [mockCategory()], suppliers: [], stats: null } },
     });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
