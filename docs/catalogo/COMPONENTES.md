@@ -28,3 +28,6 @@ Nenhum token novo — todas usam `hsl(var(--…))` das variáveis carvão já ex
 | `handleImageError`, `ProductImage` | E04 | fallback de imagem em cascata (substituído por `ProductThumb` na E15) |
 | `ProductBadge` + `resolveProductBadge` | E12 | 5 estados, prioridade esgotado > mais vendido > novidade > destaque > em estoque |
 | `ColorChips` + `ColorSwatch` | E13 | chips de cor no card (+"+N"); bolinha com hex ou chip de texto (sem hex) |
+| `PriceTag` | E14 | preço + sugerido riscado (só se diferente) |
+| `StockPill` | E14 | "N em estoque" (verde) / "Esgotado" (vermelho, qty<=0 ou flag) |
+| `LowStockPill` | E14 | "N un." em âmbar, só 1..threshold (padrão 10) |

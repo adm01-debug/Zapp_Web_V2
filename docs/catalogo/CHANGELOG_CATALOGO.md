@@ -36,3 +36,5 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 - E12 · `ProductBadge` + `resolveProductBadge`: 5 estados com prioridade real (esgotado > mais vendido > novidade > destaque > em estoque); renderiza correto mesmo com flags `undefined` (cai em instock/out). 8 testes de prioridade. tsc 0 · 2026-09-12
 
 - E13 · `ColorChips`/`ColorSwatch`: chips do card ("+N" quando excede max) e bolinha de cor do detalhe; aceita string ou objeto (`color_swatches` da E21). Sem `TooltipProvider` global no app — usa `title` nativo em vez de Radix Tooltip. 13 testes (5 novos). tsc 0 · 2026-09-12
+
+- E14 · `PriceTag`/`StockPill`/`LowStockPill`: preço com sugerido riscado condicional; estoque verde/vermelho (trata qty<=0 e flag stockout inconsistentes com "ou"); baixo estoque âmbar só entre 1 e threshold (10 por padrão, o mesmo limiar dos 308 produtos reais). 10 testes novos (23 no arquivo). tsc 0 · 2026-09-12

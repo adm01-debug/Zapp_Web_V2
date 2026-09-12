@@ -142,3 +142,47 @@ export function ColorChips({ colors, max = 3 }: ColorChipsProps) {
     </div>
   );
 }
+
+// ─── PriceTag / StockPill / LowStockPill (E14) ─────────────────
+interface PriceTagProps {
+  value: number;
+  suggested?: number | null;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const PRICE_SIZE_CLASS: Record<NonNullable<PriceTagProps['size']>, string> = {
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-2xl',
+};
+
+/** Preço em destaque (.catalog-price da E11); sugerido riscado ao lado só se diferente. */
+export function PriceTag({ value, suggested, size = 'md' }: PriceTagProps) {
+  return (
+    <span className="inline-flex items-baseline gap-2">
+      <span className={`catalog-price tabular-nums ${PRICE_SIZE_CLASS[size]}`}>{formatPrice(value)}</span>
+      {suggested != null && suggested !== value && (
+        <span className="text-xs text-muted-foreground line-through tabular-nums">{formatPrice(suggested)}</span>
+      )}
+    </span>
+  );
+}
+
+interface StockPillProps {
+  qty: number;
+  stockout?: boolean;
+}
+
+/** "1573 em estoque" (verde) ou "Esgotado" (vermelho). */
+export function StockPill({ qty, stockout }: StockPillProps) {
+  if (stockout || qty <= 0) {
+    return <span className="catalog-badge catalog-badge--out">Esgotado</span>;
+  }
+  return <span className="catalog-badge catalog-badge--instock tabular-nums">{qty} em estoque</span>;
+}
+
+/** "2 un." em âmbar — só entre 1 e `threshold` (padrão 10, mesmo limiar dos 308 produtos reais). */
+export function LowStockPill({ qty, threshold = 10 }: { qty: number; threshold?: number }) {
+  if (qty < 1 || qty > threshold) return null;
+  return <span className="catalog-badge catalog-badge--featured tabular-nums">{formatStock(qty)}</span>;
+}

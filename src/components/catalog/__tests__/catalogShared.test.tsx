@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch } from '../catalogShared';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill } from '../catalogShared';
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -68,5 +68,57 @@ describe('ColorSwatch', () => {
     render(<ColorSwatch hex={null} name="Padrão" />);
     expect(screen.getByText('Padrão')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+});
+
+describe('PriceTag', () => {
+  it('mostra só o preço quando não há sugerido', () => {
+    render(<PriceTag value={63.78} />);
+    expect(screen.getByText('R$ 63,78')).toBeInTheDocument();
+  });
+
+  it('mostra o sugerido riscado quando diferente do preço', () => {
+    render(<PriceTag value={63.78} suggested={43.67} />);
+    expect(screen.getByText('R$ 63,78')).toBeInTheDocument();
+    expect(screen.getByText('R$ 43,67')).toBeInTheDocument();
+  });
+
+  it('não duplica quando sugerido é igual ao preço', () => {
+    render(<PriceTag value={63.78} suggested={63.78} />);
+    expect(screen.getAllByText('R$ 63,78')).toHaveLength(1);
+  });
+});
+
+describe('StockPill', () => {
+  it('em estoque: mostra a contagem', () => {
+    render(<StockPill qty={1573} />);
+    expect(screen.getByText('1573 em estoque')).toBeInTheDocument();
+  });
+  it('qty=0: mostra Esgotado mesmo sem a flag stockout', () => {
+    render(<StockPill qty={0} />);
+    expect(screen.getByText('Esgotado')).toBeInTheDocument();
+  });
+  it('stockout=true: mostra Esgotado mesmo com qty>0 (dado inconsistente do PromoGifts)', () => {
+    render(<StockPill qty={5} stockout />);
+    expect(screen.getByText('Esgotado')).toBeInTheDocument();
+  });
+});
+
+describe('LowStockPill', () => {
+  it('qty=5 (entre 1 e 10): renderiza', () => {
+    render(<LowStockPill qty={5} />);
+    expect(screen.getByText('5 un.')).toBeInTheDocument();
+  });
+  it('qty=0: não renderiza', () => {
+    const { container } = render(<LowStockPill qty={0} />);
+    expect(container.firstChild).toBeNull();
+  });
+  it('qty=11 (acima do threshold padrão): não renderiza', () => {
+    const { container } = render(<LowStockPill qty={11} />);
+    expect(container.firstChild).toBeNull();
+  });
+  it('threshold customizado', () => {
+    render(<LowStockPill qty={15} threshold={20} />);
+    expect(screen.getByText('15 un.')).toBeInTheDocument();
   });
 });
