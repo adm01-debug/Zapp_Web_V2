@@ -28,3 +28,25 @@ Formato: `E<nn> · <título> · <commit/PR> · <data>`
 - E07 · Suíte de testes base do módulo antes do redesign: `sendProductUtils.test.ts` (12 — groupVariantsByColor, buildMessage nos 3 templates + esgotado + variante selecionada + campos ausentes, collectAllImages), `ContactSelectionStep.test.tsx` (6 — botão desabilitado sem contato, habilita com nome, estados vazio/sem-resultado, lista de resultados, "Enviando..."), `ExternalProductManagement.test.tsx` (6 — título+contagem, cards, debounce da busca, toggle grade/lista, vazio, erro). Total do módulo: 121/121. Gates: tsc 0 · typecheck-ratchet 0 · lint-ratchet 1118/1114 (0 novas) · 2026-09-11
 
 - E08 · Diagnóstico do envio ponta a ponta — ver `docs/catalogo/ENVIO_E2E.md`. Confirmado por leitura de código: mediaUrl externo (`imagedelivery.net`) passa sem re-upload por `resolvePrivateBucketUrl`; `external_id` é gravado pelo backend, independente do frontend (o "fix #209" do plano original não correspondia a nada real — corrigido). Nunca exercitado em produção (2.218 imagens enviadas, 100% via Storage do próprio ZAPP, 0% externas). Envio real ao vivo não foi possível nesta sessão: `message-delivery` exige sessão de usuário autenticado (sem fixture de login neste repo) e o MCP `EVO API - MCP` retornou 401 (apikey inválida para `wpp2`) — infra fora do escopo do Catálogo, sinalizado. · 2026-09-12
+
+## Fase 1 — Design system (carvão)
+
+- E11 · Classes `.catalog-*` em `components.css`: card, media (fundo branco), 5 badges de status, chip de cor, chip de categoria (+ativo), preço, rail (300/320px), thumb de galeria, moldura de preview WhatsApp. Nenhum token novo — só `hsl(var(--…))` do carvão existente. `COMPONENTES.md` criado. Build OK · 2026-09-12
+
+- E12 · `ProductBadge` + `resolveProductBadge`: 5 estados com prioridade real (esgotado > mais vendido > novidade > destaque > em estoque); renderiza correto mesmo com flags `undefined` (cai em instock/out). 8 testes de prioridade. tsc 0 · 2026-09-12
+
+- E13 · `ColorChips`/`ColorSwatch`: chips do card ("+N" quando excede max) e bolinha de cor do detalhe; aceita string ou objeto (`color_swatches` da E21). Sem `TooltipProvider` global no app — usa `title` nativo em vez de Radix Tooltip. 13 testes (5 novos). tsc 0 · 2026-09-12
+
+- E14 · `PriceTag`/`StockPill`/`LowStockPill`: preço com sugerido riscado condicional; estoque verde/vermelho (trata qty<=0 e flag stockout inconsistentes com "ou"); baixo estoque âmbar só entre 1 e threshold (10 por padrão, o mesmo limiar dos 308 produtos reais). 10 testes novos (23 no arquivo). tsc 0 · 2026-09-12
+
+- E15 · `ProductThumb`: skeleton até `onLoad`, `srcSet` real do Cloudflare Images (variantes confirmadas via CF Images API: thumbnail 150, small 300, card 400, medium/public 600, large 1200 — todas JPEG), fallback em cascata `src`→`fallbackSrc`→ícone. Substitui `ProductImage` (removido, sem consumidor) nos 3 usos reais (2 em `ExternalProductCard.tsx`, 1 em `ProductDetailDialog.tsx`). 5 testes novos.
+- E16 · `FavoriteButton`: coração com `aria-pressed`, animação de escala respeitando `useReducedMotion`, `stopPropagation` (não abre o card ao favoritar), estado `busy`. Ainda sem persistência (E27) — não montado em nenhum card. 4 testes novos.
+Total do módulo: 150/150. tsc 0 · lint-ratchet 0 novas · 2026-09-12
+
+- E17 · `CatalogKpiStrip` (reuso de `KpiCard`): `KpiCard`/`KpiCardSkeleton` ganham prop `compact` opcional (72px, sem mini-barras, ícone à esquerda) sem quebrar os 9 usos existentes no Talk X (confirmado: 37 testes de TalkX.test.tsx/talkxExport continuam verdes). Strip renderiza só os 6 campos numéricos presentes em `CatalogStats` (nada de "—" decorativo) — hoje sempre oculto, já que `catalog_stats` só existe na E24. 5 testes novos. Total do módulo: 155/155. tsc 0 · lint-ratchet 0 novas · 2026-09-12
+
+- E18 · `CategoryChips` + `CatalogFilterBar`: chips de categoria ordenados por `products_count`, excedente em `DropdownMenu` ("Mais"). `CatalogFilterBar` compõe `FilterBarV2` do Talk X 100% via `rightSlot` (switch "Em estoque" + botão "Filtros avançados" com contador) — **zero mudança em `FilterBarV2`**, mais simples do que as props extras que o plano original previa (`switches[]`/`extraRight`), corrigido no plano. 14 testes novos. Total do módulo: 164/164. tsc 0 · lint-ratchet 0 novas · 2026-09-12
+
+- E19 · `MetaTile`/`SectionCard` (2 primitivos novos). Achado que evitou duplicação: `RailAction` e `RailCard` (com prop `glow`) **já existem** em `talkxShared.tsx`, cobrindo exatamente "ações rápidas do rail" e "banner com glow" — cancelados `RailBanner`/`RailActionRow` do escopo original, plano corrigido. `TalkXPrimaryButton`/`GhostButton` confirmados reutilizáveis direto (sem wrapper) para Enviar/Ver detalhes. 2 testes novos. Total do módulo: 166/166. tsc 0 · lint-ratchet 0 novas · 2026-09-12
+
+- E20 · Regras de motion/densidade/responsivo documentadas em `COMPONENTES.md` (stagger igual ao `DashboardCard.tsx` confirmado, breakpoints, modais, tipografia) — telas reais só existem a partir da F3, então esta etapa é o contrato para quando forem construídas. Fase 1 completa (E11-E20). 2026-09-12

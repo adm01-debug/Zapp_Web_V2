@@ -461,10 +461,29 @@ interface KpiCardProps {
   bars?: number[]; // 7 valores reais (% de altura relativa 0-100)
   hint?: string;
   index?: number; // para delay de animação
+  /** E17 (Catálogo): 72px, sem mini-barras, ícone à esquerda, texto menor. */
+  compact?: boolean;
 }
 
-export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint, index = 0 }: KpiCardProps) {
+export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint, index = 0, compact = false }: KpiCardProps) {
   const maxBar = bars ? Math.max(...bars, 1) : 1;
+  if (compact) {
+    return (
+      <div
+        className={cn('relative bg-card border border-border/70 rounded-xl px-3 flex items-center gap-2.5 h-[72px] overflow-hidden',
+          'hover:border-primary/30 hover:shadow-[var(--glow-primary-sm)] transition-all duration-150'
+        )}
+        style={{ animationDelay: `${index * 40}ms` }}
+        title={hint}
+      >
+        <IconTile icon={icon} color={color} size={32} glow />
+        <div className="flex-1 min-w-0">
+          <p className="text-[10.5px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
+          <span className="text-[17px] font-semibold tracking-tight text-foreground leading-none tabular-nums">{value}</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={cn('relative bg-card border border-border/70 rounded-xl p-4 flex items-start gap-3 h-24 overflow-hidden',
@@ -497,8 +516,8 @@ export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint,
   );
 }
 
-export function KpiCardSkeleton() {
-  return <div className="bg-card border border-border/70 rounded-xl h-24 animate-pulse" />;
+export function KpiCardSkeleton({ compact = false }: { compact?: boolean } = {}) {
+  return <div className={cn('bg-card border border-border/70 rounded-xl animate-pulse', compact ? 'h-[72px]' : 'h-24')} />;
 }
 
 // ═══════════════════════════════════════════════════════════════

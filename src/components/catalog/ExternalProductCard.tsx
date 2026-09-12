@@ -6,7 +6,7 @@ import { Send, Eye, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { ProductDetailDialog } from './ProductDetailDialog';
-import { formatPrice, ProductImage } from './catalogShared';
+import { formatPrice, ProductThumb } from './catalogShared';
 
 interface ExternalProductCardProps {
   product: ExternalProduct;
@@ -20,7 +20,7 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({ produc
   if (compact) {
     return (
       <motion.div whileHover={{ scale: 1.01 }} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border/30 hover:border-primary/30 transition-colors">
-        <div className="w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0"><ProductImage src={product.primary_image_url} alt={product.name} /></div>
+        <div className="w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0"><ProductThumb src={product.primary_image_url} fallbackSrc={product.primary_image_fallback_url} alt={product.name} sizes="56px" /></div>
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-sm truncate">{product.name}</h4>
           <div className="flex items-center gap-2 mt-0.5">
@@ -50,7 +50,7 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({ produc
       <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
         <Card className="overflow-hidden border-border/30 hover:border-primary/30 transition-colors h-full flex flex-col">
           <div className="aspect-square relative bg-muted">
-            <ProductImage src={product.primary_image_url} alt={product.name} iconSize="w-12 h-12" />
+            <ProductThumb src={product.primary_image_url} fallbackSrc={product.primary_image_fallback_url} alt={product.name} iconSize="w-12 h-12" />
             {product.is_stockout && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center"><Badge variant="destructive">Esgotado</Badge></div>
             )}
