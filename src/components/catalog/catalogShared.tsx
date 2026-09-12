@@ -87,3 +87,58 @@ export function ProductBadge({ kind, size = 'md' }: ProductBadgeProps) {
     </span>
   );
 }
+
+// ─── ColorChips / ColorSwatch (E13) ────────────────────────────
+export interface CatalogColorLike {
+  color_name?: string | null;
+  name?: string | null;
+  color_hex?: string | null;
+}
+
+interface ColorSwatchProps {
+  hex?: string | null;
+  name: string;
+  size?: number;
+}
+
+/** Bolinha de cor com borda; sem hex, mostra só um chip de texto (E64 reusa). */
+export function ColorSwatch({ hex, name, size = 16 }: ColorSwatchProps) {
+  if (!hex) {
+    return <span className="catalog-chip" title={name}>{name}</span>;
+  }
+  return (
+    <span
+      className="inline-block rounded-full border"
+      style={{ width: size, height: size, backgroundColor: hex, borderColor: 'hsl(var(--border) / 0.6)' }}
+      title={name}
+      role="img"
+      aria-label={`Cor ${name}`}
+    />
+  );
+}
+
+interface ColorChipsProps {
+  colors: (string | CatalogColorLike)[];
+  max?: number;
+}
+
+function colorLabel(c: string | CatalogColorLike): string {
+  return typeof c === 'string' ? c : c.color_name || c.name || 'Padrão';
+}
+
+/** Chips "BRANCO NATURAL PRETO" do card, com "+N" quando excede `max`. */
+export function ColorChips({ colors, max = 3 }: ColorChipsProps) {
+  if (!colors || colors.length === 0) return null;
+  const visible = colors.slice(0, max);
+  const extra = colors.length - visible.length;
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {visible.map((c, i) => (
+        <span key={i} className="catalog-chip" title={colorLabel(c)}>
+          {colorLabel(c)}
+        </span>
+      ))}
+      {extra > 0 && <span className="catalog-chip">+{extra}</span>}
+    </div>
+  );
+}
