@@ -13,7 +13,6 @@ export const LazyTagsView = lazy(() => import('@/components/tags/TagsView').then
 export const LazySettingsView = lazy(() => import('@/components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 export const LazyClientWalletView = lazy(() => import('@/components/wallet/ClientWalletView').then(m => ({ default: m.ClientWalletView })));
 export const LazyAdminView = lazy(() => import('@/components/admin/AdminView').then(m => ({ default: m.AdminView })));
-export const LazyProductManagement = lazy(() => import('@/components/catalog/ExternalProductManagement').then(m => ({ default: m.ExternalProductManagement })));
 export const LazyGroupsView = lazy(() => import('@/components/groups/GroupsView').then(m => ({ default: m.GroupsView })));
 export const LazyTranscriptionsHistoryView = lazy(() => import('@/components/transcriptions/TranscriptionsHistoryView').then(m => ({ default: m.TranscriptionsHistoryView })));
 export const LazyAdvancedReportsView = lazy(() => import('@/components/reports/AdvancedReportsView').then(m => ({ default: m.AdvancedReportsView })));

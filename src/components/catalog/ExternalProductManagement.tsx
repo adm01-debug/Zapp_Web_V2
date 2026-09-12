@@ -68,25 +68,31 @@ export const ExternalProductManagement: React.FC = () => {
     return params;
   }, [page, search, categoryId, supplierId, onlyInStock]);
 
-  // Initial load
+  // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
+  // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
+  // inclui-los faria este efeito rodar a cada digitacao/paginacao. Tela
+  // inteira sera reescrita com useReducer na F3 (E31+ do plano do catalogo).
   useEffect(() => {
     fetchCategories();
     fetchSuppliers();
     fetchProducts(buildFilters());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filter changes - debounced
+  // Filter changes - debounced (mesmo motivo acima para as deps omitidas)
   useEffect(() => {
     const t = setTimeout(() => {
       setPage(0);
       fetchProducts(buildFilters(0));
     }, 300);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, supplierId, onlyInStock]);
 
-  // Page changes
+  // Page changes (mesmo motivo)
   useEffect(() => {
     if (page > 0) fetchProducts(buildFilters());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);

@@ -36,7 +36,7 @@
 4. **Diff mínimo.** Estender `talkxShared`/`DashboardCard` com props opcionais; primitivos novos do catálogo vivem em um único `catalogShared.tsx`. Não renomear/mover o que já existe; `ExternalProductCatalog` (dialog do chat) continua funcionando durante toda a migração.
 5. **1 etapa = 1 commit** `feat(catalog): E<nn> <título>`; branches `feat/catalog-f<N>-<nome>`, PR pequeno para `main`, squash.
 6. **Gate de toda etapa:** `npx tsc --noEmit -p tsconfig.app.json` = 0 · `node scripts/ci/lint-ratchet.mjs` = 0 novas · `npx vitest run src/components/catalog src/hooks/__tests__/useExternalCatalog.test.ts` verde · checklist 100%.
-7. **Escrita:** `GITHUB - MCP - FOREVER` (`github_push_files`) ou `git` no VPS. **DDL no ZAPP:** `db_query` no MCP `SUPABASE - ZAPP WEB V2` + arquivo em `supabase/migrations/` + `INSERT` manual em `supabase_migrations.schema_migrations` + `schema-catalog.json`/`schema-manifest.json`. **DDL no externo (PromoGifts):** só objetos aditivos read-only (`view`/`function` `security definer` com `search_path` fixo) via `apply_migration` do MCP GESTÃO DE PRODUTOS; nunca alterar `products`.
+7. **Escrita:** `GITHUB - MCP - FOREVER` (`github_push_files`) ou `git` no VPS. **DDL no ZAPP:** `db_apply_migration` do MCP `SUPABASE - ZAPP WEB V2` (aplica e registra em `supabase_migrations.schema_migrations` **atomicamente** — sem workaround manual, essa pane é só do self-hosted AtomicaBR) + arquivo espelho em `supabase/migrations/`. **Cadastro no guard:** `scripts/db-audit/catalog.sql` e `manifest.sql` são consultas geradoras (não listas para editar à mão) — rodar o conteúdo de cada uma via `db_batch_query` (mesmo MCP) e commitar o resultado em `supabase/schema-catalog.json`/`schema-manifest.json`. **DDL no externo (PromoGifts):** só objetos aditivos read-only (`view`/`function` `security definer` com `search_path` fixo) via `apply_migration` do MCP GESTÃO DE PRODUTOS; nunca alterar `products`.
 8. Shell `dash`; sem Python no `claude-code`; tarefa pesada via `claude -p '…' --model sonnet`. Antes de rodar gates, checar `df -h /workspace` — se ≥ 80%, rodar `docker image prune -a -f --filter until=48h` no host, senão o actioner pausa o container no meio do build.
 9. Nomes: componentes `src/components/catalog/Catalog<Nome>.tsx`, primitivos em `catalogShared.tsx`, hooks `src/hooks/integrations/useCatalog<Nome>.ts`, CSS `.catalog-*`, RPC externa `public.zapp_catalog_<verbo>`, tabelas ZAPP `catalog_<objeto>`.
 10. Antes de grep estrutural: `graphify explain "ExternalProductManagement.tsx"` (após rebuild da E10).
@@ -203,8 +203,11 @@
 3. Verificar em `messages` a linha `image` com `media_url` e a `text`; verificar `status` após 30 s.
 4. Verificar no WhatsApp real que imagem e texto chegaram.
 5. Se falhar: registrar causa raiz em `docs/catalogo/ENVIO_E2E.md` e corrigir dentro da E08 (diff mínimo no service).
-6. Confirmar `useSendProduct` grava `external_id` (fix do #209).
-7. Decidir: caption da 1ª imagem = mensagem (1 envio em vez de N+1)? Documentar; **não** mudar ainda (E85).
+6. Confirmado por leitura de código (sem enviar nada): `external_id` é gravado pelo backend
+   (`message-delivery`, via RPC de conclusão), independente do que o frontend faz com o
+   retorno de `sendOutboundMessage` — não há fix pendente aqui.
+7. Decidir: caption da 1ª imagem = mensagem (1 envio em vez de N+1)? Documentado em
+   `docs/catalogo/ENVIO_E2E.md`; **não** mudar ainda (E85).
 8. Apagar as mensagens de teste ou marcar `is_deleted`.
 9. CHANGELOG.
 10. Commit `docs(catalog): E08 envio e2e verificado`.
@@ -570,8 +573,8 @@
 1. DDL: `catalog_favorites(user_id uuid references auth.users, product_id uuid, product_name text, product_sku text, primary_image_url text, created_at timestamptz default now(), primary key(user_id, product_id))`.
 2. RLS: `select/insert/delete` onde `user_id = auth.uid()`.
 3. Índice `(user_id, created_at desc)`.
-4. Aplicar via `db_query`; `INSERT` em `schema_migrations`; arquivo de migration idêntico.
-5. Atualizar `schema-catalog.json`/`schema-manifest.json` e `catalog.sql`/`manifest.sql`.
+4. Aplicar via `db_apply_migration` (atômico); espelhar o SQL em `supabase/migrations/`.
+5. Rodar `catalog.sql`/`manifest.sql` via `db_batch_query` e commitar o `schema-catalog.json`/`schema-manifest.json` regenerados.
 6. `db-guard.yml` verde localmente (`node scripts/db-audit/check-migration-drift.mjs`).
 7. Hook `useCatalogFavorites()` (`list`, `toggle` optimistic).
 8. Teste do hook com mock.
@@ -589,7 +592,7 @@
 1. DDL: `catalog_send_events(id uuid pk default gen_random_uuid(), product_id uuid, product_name text, product_sku text, variant_label text, contact_id uuid references contacts, agent_id uuid, template text check in ('formal','informal','promo','custom'), images_count int, message_length int, status text check in ('sent','partial','failed'), message_ids jsonb, created_at timestamptz default now())`.
 2. RLS: insert `agent_id = auth.uid()`; select para `authenticated`.
 3. Índices `(created_at desc)`, `(product_id)`, `(contact_id)`.
-4. Aplicar + registrar + catalogar (mesmo rito da E27).
+4. Aplicar via `db_apply_migration`; regenerar `schema-catalog.json`/`schema-manifest.json` (mesmo rito da E27).
 5. `useSendToContact` grava 1 evento ao final com `status` real e `message_ids`.
 6. Teste do hook: evento gravado com `partial` quando 1 imagem falha.
 7. `db-guard` verde.

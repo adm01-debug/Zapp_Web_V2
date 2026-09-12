@@ -65,7 +65,6 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(0);
-  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Build category tree for display
   const parentCategories = categories.filter((c) => !c.parent_id);
@@ -95,16 +94,24 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     }
   }, [isOpen]);
 
-  // Re-fetch on filter changes (debounced for search)
+  // Re-fetch on filter changes (debounced for search). O cleanup do proprio
+  // effect ja cancela o timer anterior quando as deps mudam de novo -
+  // guardar o id em state (como antes) era redundante e disparava
+  // set-state-in-effect.
+  //
+  // doFetch nao entra nas deps de proposito: ele muda a cada mudanca de
+  // 'page' (esta na propria lista de deps do seu useCallback), e inclui-lo
+  // aqui faria este efeito de busca reagir a paginacao e resetar page para
+  // 0 a cada troca de pagina. Reescrito com useReducer na E35
+  // (CatalogFilterBar), quando essa UI for substituida.
   useEffect(() => {
     if (!isOpen) return;
-    if (searchTimeout) clearTimeout(searchTimeout);
     const t = setTimeout(() => {
       setPage(0);
       doFetch({ offset: 0 });
     }, 300);
-    setSearchTimeout(t);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, supplierId, onlyInStock]);
 
   // Re-fetch on page change
