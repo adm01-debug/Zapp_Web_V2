@@ -52,6 +52,9 @@ export interface TalkXCampaign {
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  // Introduzido por 20260912130000. Opcional até o types-sync canônico após
+  // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
+  revision?: number;
 }
 
 export interface TalkXRecipient {
@@ -97,6 +100,28 @@ function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionRe
 }
 
 type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updated_at'>;
+
+export type TalkXDraftSaveResult = {
+  campaignId: string;
+  revision: number;
+  creationReplayed: boolean;
+};
+
+function parseDraftSaveResult(data: unknown): TalkXDraftSaveResult {
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== 'object') throw new Error('O banco não confirmou o salvamento do rascunho.');
+  const result = row as Record<string, unknown>;
+  const campaignId = result.campaign_id;
+  const revision = result.revision;
+  if (typeof campaignId !== 'string' || !Number.isInteger(revision) || (revision as number) < 1) {
+    throw new Error('Resposta inválida ao salvar o rascunho Talk X.');
+  }
+  return {
+    campaignId,
+    revision: revision as number,
+    creationReplayed: result.creation_replayed === true,
+  };
+}
 
 export function useTalkX() {
   const queryClient = useQueryClient();
@@ -201,6 +226,37 @@ export function useTalkX() {
         .single();
       if (error) throw error;
       return data as unknown as TalkXCampaign;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
+  /**
+   * Authoritative editor save path. The database derives authorship from the
+   * session, recovers an idempotent create, and rejects a stale revision.
+   */
+  const saveDraftCampaign = useMutation({
+    mutationFn: async ({
+      campaignId,
+      expectedRevision,
+      creationKey,
+      payload,
+    }: {
+      campaignId: string | null;
+      expectedRevision: number | null;
+      creationKey: string | null;
+      payload: CampaignPayload;
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('save_talkx_campaign_draft', {
+        p_campaign_id: campaignId,
+        p_expected_revision: expectedRevision,
+        p_creation_key: creationKey,
+        p_payload: payload,
+      });
+      if (error) throw error;
+      return parseDraftSaveResult(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
@@ -314,6 +370,7 @@ export function useTalkX() {
     setSelectedCampaignId,
     createCampaign,
     updateCampaign,
+    saveDraftCampaign,
     deleteCampaign,
     addRecipients,
     replaceDraftRecipients,

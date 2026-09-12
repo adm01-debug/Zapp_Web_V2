@@ -36,6 +36,7 @@ export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
 export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+const DRAFT_CREATION_KEY_STORAGE = 'talkx:draft-creation-key:v1';
 
 type LocalDateTimeParts = {
   year: number;
@@ -90,6 +91,32 @@ function initialWizardStep(): WizardStep {
   return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
 }
 
+function newDraftCreationKey(): string {
+  if (typeof globalThis.crypto?.randomUUID !== 'function') {
+    throw new Error('O navegador não oferece uma fonte segura para identificar o rascunho.');
+  }
+  return globalThis.crypto.randomUUID();
+}
+
+/**
+ * A create response can be lost after PostgreSQL committed it. Keep the key in
+ * the browser tab so refresh/retry can ask the server for that exact draft,
+ * rather than creating a second one. It is not an authorization credential.
+ */
+function restoreOrCreateDraftCreationKey(): string {
+  try {
+    const stored = window.sessionStorage.getItem(DRAFT_CREATION_KEY_STORAGE);
+    if (stored && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(stored)) return stored;
+    const key = newDraftCreationKey();
+    window.sessionStorage.setItem(DRAFT_CREATION_KEY_STORAGE, key);
+    return key;
+  } catch {
+    // Storage may be unavailable in hardened browser contexts. The server still
+    // protects a retry within this mounted editor via the in-memory key.
+    return newDraftCreationKey();
+  }
+}
+
 export function utcToLocalInTimezone(utc: string, tz: string): string {
   if (!utc) return '';
   const instantMs = new Date(utc).getTime();
@@ -131,7 +158,7 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
   return new Date(candidates[0]).toISOString();
 }
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
-  const { createCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
+  const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates, registerUse } = useTalkXTemplates();
   const logEvent = useTalkXEventLogger();
@@ -169,6 +196,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // seguinte pode ter capturado o render anterior, ainda sem o ID recém-criado.
   const draftCampaignIdRef = useRef<string | null>(campaign?.id || null);
   const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaign?.id || null);
+  const draftRevisionRef = useRef<number>(campaign?.revision ?? 1);
+  const [draftRevision, setDraftRevision] = useState<number>(campaign?.revision ?? 1);
+  const [draftCreationKey] = useState<string | null>(() => campaign?.id ? null : restoreOrCreateDraftCreationKey());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
   const [contactSearch, setContactSearch] = useState('');
@@ -477,16 +507,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const payload = buildPayload();
       if (mode === 'draft' && campaign?.status === 'scheduled' && !payload.scheduled_at) payload.status = 'draft';
 
-      let id: string;
       const persistedCampaignId = campaign?.id || draftCampaignIdRef.current;
+      const savedDraft = await saveDraftCampaign.mutateAsync({
+        campaignId: persistedCampaignId,
+        expectedRevision: persistedCampaignId ? draftRevisionRef.current : null,
+        creationKey: persistedCampaignId ? null : draftCreationKey,
+        payload,
+      });
+      const id = savedDraft.campaignId;
+      draftRevisionRef.current = savedDraft.revision;
+      setDraftRevision(savedDraft.revision);
       if (persistedCampaignId) {
-        await updateCampaign.mutateAsync({ id: persistedCampaignId, ...payload });
-        id = persistedCampaignId;
         await logEvent(id, 'updated', 'Campanha atualizada');
       } else {
-        const created = await createCampaign.mutateAsync(payload);
-        if (!created) return null;
-        id = created.id;
         draftCampaignIdRef.current = id;
         setDraftCampaignId(id);
         await logEvent(id, 'created', 'Campanha criada');
@@ -526,7 +559,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, updateCampaign, createCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -542,6 +575,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   // E68: sincronizar ref -- useEffect garante nao acessa ref durante render
   useEffect(() => { handleSaveRef.current = handleSave; }, [handleSave]);
+
+  useEffect(() => {
+    if (!draftCampaignId) return;
+    try { window.sessionStorage.removeItem(DRAFT_CREATION_KEY_STORAGE); } catch { /* storage is optional */ }
+  }, [draftCampaignId]);
 
   // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
   const autosaveFields = JSON.stringify({
@@ -581,7 +619,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, []);
 
   return {
-    step, setStep, canProceed, draftCampaignId,
+    step, setStep, canProceed, draftCampaignId, draftRevision,
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,

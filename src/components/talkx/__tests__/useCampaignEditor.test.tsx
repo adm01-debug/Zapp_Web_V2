@@ -2,7 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const f = vi.hoisted(() => ({
-  create: vi.fn(), update: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
+  create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), start: vi.fn(), log: vi.fn(),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected' }],
   blacklist: { ids: new Set<string>(), phones: new Set<string>() },
@@ -14,6 +14,18 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
     createCampaign: { mutateAsync: f.create },
     updateCampaign: { mutateAsync: f.update },
+    saveDraftCampaign: {
+      mutateAsync: async (input: { campaignId: string | null; expectedRevision: number | null; creationKey: string | null; payload: Record<string, unknown> }) => {
+        const { campaignId, expectedRevision, payload } = input;
+        f.saveDraft(input);
+        if (campaignId) {
+          await f.update({ id: campaignId, ...payload });
+          return { campaignId, revision: (expectedRevision ?? 1) + 1, creationReplayed: false };
+        }
+        const created = await f.create(payload);
+        return { campaignId: created.id, revision: 1, creationReplayed: false };
+      },
+    },
     replaceDraftRecipients: { mutateAsync: f.replace },
     startCampaign: f.start,
   }),
@@ -44,6 +56,7 @@ describe('useCampaignEditor — draft integrity', () => {
     vi.clearAllMocks();
     f.create.mockResolvedValue({ id: 'draft-1' });
     f.update.mockResolvedValue({});
+    f.saveDraft.mockClear();
     f.replace.mockResolvedValue(1);
     f.start.mockResolvedValue(true);
     f.log.mockResolvedValue({});
@@ -51,6 +64,7 @@ describe('useCampaignEditor — draft integrity', () => {
     f.blacklist.phones.clear();
     f.persistedRecipientIds = [];
     f.templates = [];
+    window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
 
@@ -109,6 +123,42 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(f.create).toHaveBeenCalledTimes(1);
     expect(f.update).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'draft-1' }));
+  });
+
+  it('reuses the tab-scoped creation key after a create response is lost', async () => {
+    f.create.mockRejectedValueOnce(new Error('network_response_lost'));
+    const first = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => first.result.current.setName('Campanha recuperável'));
+
+    await expect(first.result.current.handleSave('draft')).rejects.toThrow('network_response_lost');
+    const firstKey = f.saveDraft.mock.calls[0]?.[0]?.creationKey;
+    expect(firstKey).toMatch(/^[0-9a-f-]{36}$/i);
+    first.unmount();
+
+    const recovered = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => recovered.result.current.setName('Campanha recuperável'));
+    await act(async () => { await recovered.result.current.handleSave('draft'); });
+
+    expect(f.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      campaignId: null,
+      creationKey: firstKey,
+    }));
+  });
+
+  it('sends an optimistic revision and advances it only after the database confirms the save', async () => {
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft', revision: 7 };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+
+    await act(async () => { await result.current.handleSave('draft'); });
+    expect(f.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      campaignId: 'draft-1', expectedRevision: 7, creationKey: null,
+    }));
+
+    await act(async () => { await result.current.handleSave('draft'); });
+    expect(f.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      campaignId: 'draft-1', expectedRevision: 8, creationKey: null,
+    }));
+    expect(result.current.draftRevision).toBe(9);
   });
 
   it('restores the persisted recipient snapshot before editing an existing draft', async () => {
