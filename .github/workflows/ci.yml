@@ -64,6 +64,7 @@ jobs:
           supabase/functions/_shared/__tests__/ssrf.test.ts
           supabase/functions/_shared/__tests__/secure-egress.test.ts
           supabase/functions/_shared/__tests__/crm-integration-contract.test.ts
+          supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/message-delivery/index.test.ts
 

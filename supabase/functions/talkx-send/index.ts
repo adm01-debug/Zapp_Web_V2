@@ -7,6 +7,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
+import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 
 const DEFAULT_SCHEDULE_TIMEZONE = "America/Sao_Paulo";
 
@@ -176,8 +177,9 @@ Deno.serve(async (req) => {
       }
       // Buscar conexao WhatsApp padrao (primeira ativa)
       const { data: conn } = await supabase
-        .from("whatsapp_connections").select("instance_id").eq("status", "connected").limit(1).single();
-      if (!conn?.instance_id) {
+        .from("whatsapp_connections").select("status, instance_id").eq("status", "connected").limit(1).single();
+      const testInstanceId = liveTalkXInstanceId(conn);
+      if (!testInstanceId) {
         return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
       }
       // Personalizar com dados ficticios para preview
@@ -191,13 +193,13 @@ Deno.serve(async (req) => {
           sendRes = await evoFetch(
             evolutionUrl,
             evolutionKey,
-            `/message/${isAudio ? "sendWhatsAppAudio" : "sendMedia"}/${conn.instance_id}`,
+            `/message/${isAudio ? "sendWhatsAppAudio" : "sendMedia"}/${testInstanceId}`,
             isAudio
               ? { number: cleanPhone, audio: mediaUrl }
               : { number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText },
           );
         } else {
-          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${conn.instance_id}`, {
+          sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${testInstanceId}`, {
             number: cleanPhone, text: personalizedText,
           });
         }
@@ -251,10 +253,11 @@ Deno.serve(async (req) => {
     let campaign = initialCampaign;
     // Get WhatsApp connection instance
     const { data: connection } = await supabase
-      .from("whatsapp_connections").select("instance_id")
+      .from("whatsapp_connections").select("status, instance_id")
       .eq("id", campaign.whatsapp_connection_id).eq("status", "connected").single();
 
-    if (!connection?.instance_id) {
+    const initialInstanceId = liveTalkXInstanceId(connection);
+    if (!initialInstanceId) {
       return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
     }
 
@@ -460,7 +463,7 @@ Deno.serve(async (req) => {
 
         try {
           await evoFetch(evolutionUrl, evolutionKey,
-            `/chat/updatePresence/${connection.instance_id}`,
+            `/chat/updatePresence/${initialInstanceId}`,
             { number: phone, presence: "composing" });
         } catch { /* Presence update is best-effort */ }
 
@@ -474,13 +477,23 @@ Deno.serve(async (req) => {
           .eq("id", campaignId).single();
         if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
         const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend) : { allowed: false as const, reason: "campaign_not_found" };
-        if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed) {
+        const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
+          .from("whatsapp_connections")
+          .select("status, instance_id")
+          .eq("id", campaign.whatsapp_connection_id)
+          .maybeSingle();
+        if (beforeSendConnectionError) throw new Error(`talkx_connection_state_lookup_failed: ${beforeSendConnectionError.message}`);
+        const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
+        if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
           if (beforeSend?.status === "sending") {
             const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
               p_campaign_id: campaignId,
               p_action: "pause",
             });
             if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
+          }
+          if (!beforeSendInstanceId) {
+            log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
           }
           const { data: released, error: releaseError } = await supabase.rpc("release_talkx_recipient_claim", {
             p_recipient_id: recipient.id,
@@ -524,7 +537,7 @@ Deno.serve(async (req) => {
           await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-            `/message/${mediaEndpoint}/${connection.instance_id}`,
+            `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
             effectiveMediaType === "audio"
               ? { number: phone, audio: mediaSource, delay: 0 }
               : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
@@ -533,7 +546,7 @@ Deno.serve(async (req) => {
           await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-            `/message/sendText/${connection.instance_id}`,
+            `/message/sendText/${beforeSendInstanceId}`,
             { number: phone, text: personalizedMsg, delay: 0 }
           );
         }

@@ -32,6 +32,8 @@ test('talkx-send claims before touching the provider and completes with its leas
   assert.match(edgeFunction, /complete_talkx_campaign_if_drained/);
   assert.match(edgeFunction, /p_status:\s*"outcome_unknown"/);
   assert.match(edgeFunction, /talkx_recipient_quarantine_failed/);
+  assert.match(edgeFunction, /liveTalkXInstanceId/);
+  assert.match(edgeFunction, /talkx_connection_state_lookup_failed/);
   assert.doesNotMatch(edgeFunction, /fetchWithRetry/);
 });
 
@@ -73,8 +75,9 @@ test('Talk X persists provider receipts and delivery acknowledgements atomically
   assert.match(edgeFunction, /record_talkx_recipient_sent/);
   const typingDelay = edgeFunction.indexOf('await sleep(typingDelay)');
   const recheck = edgeFunction.indexOf('await isRecipientSuppressed', typingDelay);
+  const connectionRecheck = edgeFunction.indexOf('beforeSendConnection', typingDelay);
   const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', recheck);
-  assert.ok(typingDelay >= 0 && recheck > typingDelay && dispatchMark > recheck, 'suppression must be rechecked after typing and before the provider dispatch marker');
+  assert.ok(typingDelay >= 0 && connectionRecheck > typingDelay && recheck > connectionRecheck && dispatchMark > recheck, 'connection and suppression must be rechecked after typing and before the provider dispatch marker');
 });
 
 test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {
