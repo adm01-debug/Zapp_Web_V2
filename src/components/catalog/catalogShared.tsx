@@ -292,3 +292,79 @@ export function FavoriteButton({ active, onToggle, busy, size = 32 }: FavoriteBu
     </motion.button>
   );
 }
+
+// ─── CatalogKpiStrip (E17) ──────────────────────────────────────
+import { Box, Folder, Users, Package as PackageIcon, Star as StarIcon, Sparkles as SparklesIcon } from 'lucide-react';
+import { KpiCard, KpiCardSkeleton, type TileColor } from '@/components/talkx/talkxShared';
+
+/** Formato esperado da E24 (catalog_stats); todos os campos numéricos são opcionais. */
+export interface CatalogStats {
+  total?: number | null;
+  categories_root?: number | null;
+  suppliers_active?: number | null;
+  in_stock?: number | null;
+  featured?: number | null;
+  new_30d?: number | null;
+}
+
+interface KpiDef {
+  key: keyof CatalogStats;
+  label: string;
+  icon: typeof Box;
+  color: TileColor;
+}
+
+const CATALOG_KPI_DEFS: KpiDef[] = [
+  { key: 'total', label: 'Produtos no total', icon: Box, color: 'blue' },
+  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'amber' },
+  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'blue' },
+  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green' },
+  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'blue' },
+  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'amber' },
+];
+
+interface CatalogKpiStripProps {
+  stats: CatalogStats | null | undefined;
+  loading?: boolean;
+  /** Clique aplica o filtro correspondente (ligado nas etapas E33/E36). */
+  onSelect?: (key: keyof CatalogStats) => void;
+}
+
+/**
+ * 6 KPIs do topo do mock A. Cada card só aparece se o campo vier como
+ * número (a RPC catalog_stats da E24 ainda não existe — hoje `stats` é
+ * `undefined` e o strip inteiro fica oculto, sem "—" decorativo).
+ */
+export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripProps) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} compact />)}
+      </div>
+    );
+  }
+  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
+  if (visible.length === 0) return null;
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      {visible.map((d, i) => (
+        <button
+          key={d.key}
+          type="button"
+          onClick={() => onSelect?.(d.key)}
+          disabled={!onSelect}
+          className="text-left disabled:cursor-default"
+        >
+          <KpiCard
+            icon={d.icon}
+            color={d.color}
+            label={d.label}
+            value={(stats![d.key] as number).toLocaleString('pt-BR')}
+            compact
+            index={i}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
