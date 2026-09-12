@@ -1,0 +1,229 @@
+{
+  "auditedAt": "2026-09-11T21:43:48.284Z",
+  "head": "5363f4a95fb0a2f1ccff942126ce5fe844e271d4",
+  "main": "33d02292c59b4f1b47c54b03c24bea99caf8af6e",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "6013abe9ce5503be0c8f574045cc49e8e2d2d8754b0ea767d46a609dce72f513"
+    },
+    {
+      "path": ".github/workflows/db-guard.yml",
+      "sha256": "70fb2e1a2296d27f72dc833225560d67ddc2e9899d82f4126a65dea1f778415d"
+    },
+    {
+      "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+      "sha256": "ec28c77979df056a097250dfd2dabe70d0de849930e78bb8d3d24dc613029a04"
+    },
+    {
+      "path": "src/components/talkx/TalkXAnalytics.tsx",
+      "sha256": "567179567988203ba548e2a2f2bdd7cca2b874b16f6d145e64fa01dbc15c1e7c"
+    },
+    {
+      "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+      "sha256": "b0cca4d71fba82ebe05f828143dcfab6de4ac2662618ff53f8ca969df02a4cd2"
+    },
+    {
+      "path": "src/components/talkx/TalkXCampaignScheduled.tsx",
+      "sha256": "a0be44a78918593a8093cd2f8a91786b8d2431c3e7cd04eb8392e4596c6282ac"
+    },
+    {
+      "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+      "sha256": "48735dcc01521a6472f6b74b40f8fc79c7e1fedd8380d029ebb87bfb2c0c9a32"
+    },
+    {
+      "path": "src/components/talkx/TalkXContactSelector.tsx",
+      "sha256": "19779e1fe3f094a023a225572942820a6d60d5cf93db19c2d6edb32d3f3f692a"
+    },
+    {
+      "path": "src/components/talkx/TalkXLiveMonitor.tsx",
+      "sha256": "2f3faf19da71b02e195c6178244ff4e61892bcf2ee5c2dad5ce3d14662b298df"
+    },
+    {
+      "path": "src/components/talkx/TalkXOverview.tsx",
+      "sha256": "814962c35b9620f5d999fe77bd8a4ef67df52e02acd16dff39b04caae6516ac4"
+    },
+    {
+      "path": "src/components/talkx/TalkXSegments.tsx",
+      "sha256": "2009999f68c2690b713073d5956d066376946745937f6f2841b6b8f56dfa5b97"
+    },
+    {
+      "path": "src/components/talkx/TalkXSuppression.tsx",
+      "sha256": "3f01bb67725244ec57d4249bbeea85dbccb4a9fb5261c08eb667bd3584e1a35d"
+    },
+    {
+      "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+      "sha256": "26c9c4dcba523ccc97c580bb24b2764d3b424391d77fafcbc9bb5a379be13458"
+    },
+    {
+      "path": "src/components/talkx/TalkXTemplates.tsx",
+      "sha256": "e41ff7c203dd701ca1643b0f141862753a50405a3f7905340a10dcb479402848"
+    },
+    {
+      "path": "src/components/talkx/TalkXView.tsx",
+      "sha256": "420f972830234c8b7d429ca830edbda0ab106e82fc9239414768ba07e59a3015"
+    },
+    {
+      "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+      "sha256": "ef93eb7f0c5a02d19ba7fcebad9c29f0116c374b66352e0e6e2afff3e60483df"
+    },
+    {
+      "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+      "sha256": "897a9e6b5a506a5f6f0654a57370010d064e5977ac510a2aea8a5d24b90dffa9"
+    },
+    {
+      "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+      "sha256": "ae5d227b29076eefc921b8a244107f1cf316e57ed4279bb11ee289b32583caea"
+    },
+    {
+      "path": "src/components/talkx/talkxShared.tsx",
+      "sha256": "aa92d31d0a4578b6862ced2c64352b89e53807d58fc8e986834815c61d03ddff"
+    },
+    {
+      "path": "src/components/talkx/useCampaignEditor.ts",
+      "sha256": "0e65ae4a10b2ef1f7d0dbdb3998c778383122376133554bcd781ae7d49a3027a"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkX.ts",
+      "sha256": "b8922b603db76994472b7ef877344d053714107bfc877a35db979a4cb2079f2a"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXEvents.ts",
+      "sha256": "213c4ac5ef16aa4d74add0815677042cf8a3ea172e3a587e3df7c4e8dc90bc45"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXMonitor.ts",
+      "sha256": "2a73672b079a7328811b58123bf0a76a864015cdb2ede40adf63631a07b29dd8"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXSegments.ts",
+      "sha256": "2800ebea351192bd841877c243bf3dc0dc154947191d313d6dc72ba4054b3ad4"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXSuppression.ts",
+      "sha256": "ea97f31a43a110f4ce8ccdd9c89ad6ec08abd83d50ef2f370f36a96d5c596e0a"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXTemplates.ts",
+      "sha256": "d7b7d25242fe0a21a202efb00fd66c5266636948aca487cf93af423341f35e0d"
+    },
+    {
+      "path": "supabase/deployment-manifest.json",
+      "sha256": "a7a2f9b1a0bb7505117112a09c83abfca05dd0c24a4f7d22f1d423eba4518282"
+    },
+    {
+      "path": "supabase/functions/talkx-report/index.ts",
+      "sha256": "48fa87e8100c4145ee0a67c594e3a00ad72ce18c114deeec04dcba8f5ece4721"
+    },
+    {
+      "path": "supabase/functions/talkx-scheduler/index.ts",
+      "sha256": "402e60d4090bd0dcf845f5f20c8361e3f9b7bc8727e4dff30db7136c4c078fbf"
+    },
+    {
+      "path": "supabase/functions/talkx-send/index.ts",
+      "sha256": "29bcd6651de39db065f1d5ba3f3cff869e7b8f0d8ce99b7f545d0d86701eaf80"
+    },
+    {
+      "path": "supabase/migrations/20260911120000_replace_talkx_draft_recipients.sql",
+      "sha256": "66cd8876cb3c64324c214ac5d7e57e4e67e6cc1cd46b4df46066f78b04d22232"
+    },
+    {
+      "path": "supabase/migrations/20260911130000_add_talkx_recipient_delivery_leases.sql",
+      "sha256": "922fdb045781d40469141a9029d2ddb03f2086da082afee720580ddd4293bb72"
+    },
+    {
+      "path": "supabase/migrations/20260911140000_harden_talkx_campaign_state_transitions.sql",
+      "sha256": "672754bad5e5af9713fed33615b09e9184c59389b45ea956b22d151e8f623ebf"
+    },
+    {
+      "path": "supabase/migrations/20260911150000_add_talkx_campaign_transition_rpc.sql",
+      "sha256": "22e1ae6f0142ae51273ee91d48baa27c91b57f88d84e286637577e3e739a947d"
+    },
+    {
+      "path": "supabase/migrations/20260911160000_harden_talkx_campaign_insert_and_draft_delete.sql",
+      "sha256": "78a4e86214506dc58e7e305eafe3ff79d2cbf7d75183d0e58f4fe4615d4ac04f"
+    },
+    {
+      "path": "supabase/migrations/20260911170000_add_talkx_campaign_completion_rpc.sql",
+      "sha256": "3ec1c118b0f00b1c36bc52eeb43b25d18044b29e2d46700276e0d0da2bb59798"
+    },
+    {
+      "path": "supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql",
+      "sha256": "3eaa083d5010413faf5a28ee4097b63e91d534c9abca99da933a62425e163c8e"
+    },
+    {
+      "path": "supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql",
+      "sha256": "fc1d70fc837f3162268e52db56bbc7b5d6310b63452539c0f37bd36143b9689c"
+    },
+    {
+      "path": "supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql",
+      "sha256": "9f476473e42b8ac8ac96c4da56d1e302cbeda7a181cd68acb0b66c4c6bced2c5"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/build.log",
+      "sha256": "50ed0ff74037c8968ad16ec949606d7a870238356cc134b817097c747f97e615"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/contracts-vitest.log",
+      "sha256": "de1ba79378b0231ebe4d69903a1d814694de5aa393a6402ccb928fce0df4b489"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/contracts.log",
+      "sha256": "6fcd5d5e451fedec648f0056b35f308d2020477dc93735e741116a0834539b81"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/crud-probe.log",
+      "sha256": "8f56df01a5e52103fba849c7d8dcee16684953a6573b102af0a87540fb8d5f18"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/deno.log",
+      "sha256": "e1811380a683689a592b7ff905028a8605cc964651118010ce940c3edabf76e7"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/drafts.log",
+      "sha256": "769cfb288c7bf689553dff38042707a0ea939acdcb3182d5d446ae3a67a490ab"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/leases.log",
+      "sha256": "c4575229bb911f5fad57afe685c0f91493007e1d304bc1c3ac0c768a6a01b998"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/lint.log",
+      "sha256": "10315260b1023d74729f19ee3eeaa0689a504994e2b32f532259c7c9fa39827f"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/main-webhook-probes.log",
+      "sha256": "54b8adff95f496d8a573a8a0dbcc911f66ceb70d3d2202959be3b21291dc731c"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/manifest.log",
+      "sha256": "71f3d94ae2161516c79f01d1f7e95e9ecc817d579cec8fd0576f49801be773ce"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/merge-simulation.log",
+      "sha256": "1d47c6440cfdf58cd5f71a8418144b6f60eff05622be843f57b21c1477fc73ff"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/runtime-probes.log",
+      "sha256": "b92b8125b0df5cbe211de6d7bb6de3e8077898d2da4da6fc6b6a317bb32d6b7c"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/state.log",
+      "sha256": "b3a4fb3abf09ab8b5c6be58fc3755429760725a19c60fe286dba91a382ea0bcd"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/transitions.log",
+      "sha256": "dd18d8e5c70405c4a088a46613246914685c8dd06349f82a33752495ae482032"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/typecheck.log",
+      "sha256": "4fec200faf0180516bb7b68652c0c2c29e56573b8c74611b73fa9d49cf7f5e6c"
+    },
+    {
+      "path": "/tmp/talkx-revalidation-7ZtZI5/units.log",
+      "sha256": "855571506674034bc65d1690ff4805c64d471dbeee31d5bc6106b886bf6a85c8"
+    }
+  ]
+}
