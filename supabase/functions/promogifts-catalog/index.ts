@@ -21,6 +21,7 @@ const ListProductsSchema = z.object({
   ascending: z.boolean().default(true),
   only_active: z.boolean().default(true),
   only_in_stock: z.boolean().default(false),
+  compact: z.boolean().default(false),
 }).default({});
 
 const GetProductSchema = z.object({
@@ -36,13 +37,30 @@ function sanitizeSearch(input: string): string {
   return input.replace(/[%_.\\()]/g, "").trim().slice(0, 100);
 }
 
+const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id),
+  suppliers:supplier_id(id, name)`;
+
+// Payload do card (grade/lista): só o que a UI mostra por item.
+const PRODUCT_FIELDS_COMPACT = `id, name, short_description, sku, sale_price, suggested_price,
+  stock_quantity, primary_image_url, primary_image_fallback_url, colors, brand, min_quantity,
+  is_kit, is_active, is_stockout, allows_personalization, lead_time_days,
+  is_featured, is_new, is_bestseller, is_on_sale, is_closeout,
+  is_featured_expires_at, is_new_expires_at, is_bestseller_expires_at,
+  category_id, supplier_id, slug, created_at, last_sync_at,
+  ${PRODUCT_RELATIONS}`;
+
+// Payload completo (detalhe, envio e list_products sem compact).
 const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_price, suggested_price,
-  stock_quantity, primary_image_url, colors, brand, origin_country, min_quantity,
+  stock_quantity, primary_image_url, primary_image_fallback_url, images, colors, color_swatches,
+  materials, tags, brand, origin_country, min_quantity,
   dimensions_display, weight_g, combined_sizes, product_type, is_kit, is_active,
   is_stockout, allows_personalization, lead_time_days, supply_mode,
+  is_featured, is_new, is_bestseller, is_on_sale, is_closeout, has_gift_box,
+  is_featured_expires_at, is_new_expires_at, is_bestseller_expires_at,
+  engraving_type, engraving_description, main_category_id,
+  order_count, view_count, created_at, updated_at, last_sync_at,
   category_id, supplier_id, slug, capacity_ml, ncm_code,
-  categories:category_id(id, name, slug, parent_id),
-  suppliers:supplier_id(id, name)`;
+  ${PRODUCT_RELATIONS}`;
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 60;
@@ -133,9 +151,9 @@ Deno.serve(async (req) => {
       if (!paramsParse.success) {
         return jsonRes({ error: "Invalid parameters", details: paramsParse.error.flatten().fieldErrors }, 400, req);
       }
-      const { search, category_id, supplier_id, limit, offset, order_by, ascending, only_active, only_in_stock } = paramsParse.data;
+      const { search, category_id, supplier_id, limit, offset, order_by, ascending, only_active, only_in_stock, compact } = paramsParse.data;
 
-      let query = extClient.from("products").select(PRODUCT_FIELDS, { count: "exact" });
+      let query = extClient.from("products").select(compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS, { count: "exact" });
       if (only_active) query = query.eq("is_active", true);
       if (only_in_stock) query = query.eq("is_stockout", false);
       if (category_id) query = query.eq("category_id", category_id);
