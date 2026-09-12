@@ -6161,6 +6161,7 @@ export type Database = {
           created_by: string | null
           delivered_count: number
           description: string | null
+          draft_creation_key: string | null
           failed_count: number
           id: string
           media_type: string | null
@@ -6168,7 +6169,10 @@ export type Database = {
           message_template: string
           name: string
           objective: string
+          outcome_unknown_count: number
           paused_at: string | null
+          revision: number
+          schedule_timezone: string
           scheduled_at: string | null
           segment_id: string | null
           send_interval_max: number
@@ -6196,6 +6200,7 @@ export type Database = {
           created_by?: string | null
           delivered_count?: number
           description?: string | null
+          draft_creation_key?: string | null
           failed_count?: number
           id?: string
           media_type?: string | null
@@ -6203,7 +6208,10 @@ export type Database = {
           message_template: string
           name: string
           objective?: string
+          outcome_unknown_count?: number
           paused_at?: string | null
+          revision?: number
+          schedule_timezone?: string
           scheduled_at?: string | null
           segment_id?: string | null
           send_interval_max?: number
@@ -6231,6 +6239,7 @@ export type Database = {
           created_by?: string | null
           delivered_count?: number
           description?: string | null
+          draft_creation_key?: string | null
           failed_count?: number
           id?: string
           media_type?: string | null
@@ -6238,7 +6247,10 @@ export type Database = {
           message_template?: string
           name?: string
           objective?: string
+          outcome_unknown_count?: number
           paused_at?: string | null
+          revision?: number
+          schedule_timezone?: string
           scheduled_at?: string | null
           segment_id?: string | null
           send_interval_max?: number
@@ -6322,39 +6334,75 @@ export type Database = {
           contact_id: string
           created_at: string
           delivered_at: string | null
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
           error_message: string | null
+          external_id: string | null
           id: string
+          media_type_snapshot: string | null
+          media_url_snapshot: string | null
+          message_snapshot_at: string | null
           personalized_message: string | null
+          provider_dispatch_started_at: string | null
           sent_at: string | null
           status: string
           updated_at: string
           variant_id: string | null
+          variant_id_snapshot: string | null
         }
         Insert: {
           campaign_id: string
           contact_id: string
           created_at?: string
           delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          delivery_last_claim_token?: string | null
           error_message?: string | null
+          external_id?: string | null
           id?: string
+          media_type_snapshot?: string | null
+          media_url_snapshot?: string | null
+          message_snapshot_at?: string | null
           personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
           variant_id?: string | null
+          variant_id_snapshot?: string | null
         }
         Update: {
           campaign_id?: string
           contact_id?: string
           created_at?: string
           delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          delivery_last_claim_token?: string | null
           error_message?: string | null
+          external_id?: string | null
           id?: string
+          media_type_snapshot?: string | null
+          media_url_snapshot?: string | null
+          message_snapshot_at?: string | null
           personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
           variant_id?: string | null
+          variant_id_snapshot?: string | null
         }
         Relationships: [
           {
@@ -8210,6 +8258,21 @@ export type Database = {
           whatsapp_instance_name: string
         }[]
       }
+      claim_talkx_recipient: {
+        Args: {
+          p_campaign_id: string
+          p_lease_seconds?: number
+          p_recipient_id: string
+          p_worker: string
+        }
+        Returns: {
+          claim_expires_at: string
+          claim_token: string
+          contact_id: string
+          delivery_attempt_count: number
+          recipient_id: string
+        }[]
+      }
       cleanup_crm_sync_outbox: {
         Args: {
           p_dead_letter_days?: number
@@ -8308,6 +8371,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      complete_talkx_campaign_if_drained: {
+        Args: { p_campaign_id: string }
+        Returns: boolean
+      }
+      complete_talkx_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_status: string
+        }
+        Returns: undefined
       }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
@@ -8714,6 +8790,10 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_valid_talkx_schedule_timezone: {
+        Args: { p_timezone: string }
+        Returns: boolean
+      }
       is_within_business_hours: {
         Args: { connection_id: string }
         Returns: boolean
@@ -8732,6 +8812,10 @@ export type Database = {
         Args: { p_contact_id: string }
         Returns: undefined
       }
+      mark_talkx_recipient_dispatch_started: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: undefined
+      }
       mcp_exec: { Args: { max_rows?: number; sql: string }; Returns: Json }
       mcp_exec_many: {
         Args: { max_rows?: number; statements: string[] }
@@ -8744,6 +8828,22 @@ export type Database = {
           p_secondary_ids: string[]
         }
         Returns: Json
+      }
+      persist_talkx_recipient_message_snapshot: {
+        Args: {
+          p_claim_token: string
+          p_media_type?: string
+          p_media_url?: string
+          p_personalized_message: string
+          p_recipient_id: string
+          p_variant_id?: string
+        }
+        Returns: {
+          media_type_snapshot: string
+          media_url_snapshot: string
+          personalized_message: string
+          variant_id_snapshot: string
+        }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
       reassign_absent_agents: {
@@ -8759,6 +8859,18 @@ export type Database = {
           locked_until: string
         }[]
       }
+      record_talkx_recipient_delivered: {
+        Args: { p_connection_id: string; p_external_id: string }
+        Returns: boolean
+      }
+      record_talkx_recipient_sent: {
+        Args: {
+          p_claim_token: string
+          p_external_id: string
+          p_recipient_id: string
+        }
+        Returns: undefined
+      }
       register_first_response_internal: {
         Args: {
           p_before_created_at?: string
@@ -8766,6 +8878,27 @@ export type Database = {
           p_responded_at: string
         }
         Returns: undefined
+      }
+      release_talkx_recipient_claim: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: boolean
+      }
+      replace_talkx_draft_recipients: {
+        Args: { p_campaign_id: string; p_contact_ids: string[] }
+        Returns: number
+      }
+      save_talkx_campaign_draft: {
+        Args: {
+          p_campaign_id: string
+          p_creation_key: string
+          p_expected_revision: number
+          p_payload: Json
+        }
+        Returns: {
+          campaign_id: string
+          creation_replayed: boolean
+          revision: number
+        }[]
       }
       search_contacts: {
         Args: {
@@ -8821,6 +8954,22 @@ export type Database = {
           p_refresh_token?: string
         }
         Returns: undefined
+      }
+      talkx_increment_delivered: {
+        Args: { p_campaign_id: string }
+        Returns: undefined
+      }
+      talkx_recipient_is_suppressed: {
+        Args: { p_contact_id: string; p_phone: string }
+        Returns: boolean
+      }
+      transition_talkx_campaign: {
+        Args: { p_action: string; p_campaign_id: string }
+        Returns: {
+          campaign_id: string
+          current_status: string
+          previous_status: string
+        }[]
       }
       update_own_profile: {
         Args: {
