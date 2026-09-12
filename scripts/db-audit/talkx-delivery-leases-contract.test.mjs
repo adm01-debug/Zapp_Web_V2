@@ -7,6 +7,7 @@ const completionMigration = await readFile(new URL('../../supabase/migrations/20
 const quarantineMigration = await readFile(new URL('../../supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
 const outcomeCounterMigration = await readFile(new URL('../../supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
 const receiptMigration = await readFile(new URL('../../supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql', import.meta.url), 'utf8');
+const messageSnapshotMigration = await readFile(new URL('../../supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql', import.meta.url), 'utf8');
 const edgeFunction = await readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8');
 
 test('Talk X leases are service-role-only and fence claim completion', () => {
@@ -83,4 +84,21 @@ test('Talk X campaign transition RPC serializes delivery lifecycle changes', asy
   assert.match(transitionMigration, /talkx_campaign_recipients_required/i);
   assert.match(transitionMigration, /REVOKE ALL ON FUNCTION public\.transition_talkx_campaign[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(transitionMigration, /GRANT EXECUTE ON FUNCTION public\.transition_talkx_campaign[\s\S]*TO service_role/i);
+});
+
+test('Talk X snapshots the exact A/B message before a provider dispatch', () => {
+  assert.match(messageSnapshotMigration, /variant_id_snapshot uuid/i);
+  assert.match(messageSnapshotMigration, /message_snapshot_at timestamptz/i);
+  assert.match(messageSnapshotMigration, /persist_talkx_recipient_message_snapshot/i);
+  assert.match(messageSnapshotMigration, /message_snapshot_at IS NULL/i);
+  assert.match(messageSnapshotMigration, /variant_id_snapshot = COALESCE\(recipient\.variant_id_snapshot, recipient\.variant_id, p_variant_id\)/i);
+  assert.match(messageSnapshotMigration, /REVOKE ALL ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(messageSnapshotMigration, /GRANT EXECUTE ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*TO service_role/i);
+
+  const snapshot = edgeFunction.indexOf('persist_talkx_recipient_message_snapshot');
+  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', snapshot);
+  const provider = edgeFunction.indexOf('/message/sendText/', snapshot);
+  assert.ok(snapshot >= 0 && dispatchMark > snapshot && provider > dispatchMark, 'the immutable recipient snapshot must precede the dispatch marker and provider POST');
+  assert.match(edgeFunction, /talkx_variant_snapshot_source_unavailable/);
+  assert.match(edgeFunction, /talkx_invalid_persisted_media_snapshot/);
 });

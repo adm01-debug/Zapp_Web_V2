@@ -375,31 +375,83 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // E49: sortear variante A/B
-      const existingVid = (recipient as Record<string, unknown>).variant_id as string | null;
-      let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
-      if (existingVid) {
-        const { data: vData, error: vErr } = await supabase
-          .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
-          .eq('id', existingVid).single();
-        if (!vErr && vData) variant = vData;
-        // em erro: variant fica null mas existingVid é preservado no update abaixo
-      } else if (campaign.template_id) {
-        variant = await pickVariant(supabase, campaign.template_id);
+      // Persist the actual message selected for this recipient before a
+      // provider call. A mutable template variant must never change what a
+      // retry, audit export, or delayed worker would send later.
+      const recipientRecord = recipient as Record<string, unknown>;
+      const hasSnapshot = typeof recipientRecord.message_snapshot_at === "string"
+        && typeof recipientRecord.personalized_message === "string"
+        && recipientRecord.personalized_message.trim().length > 0;
+      let personalizedMsg: string;
+      let effectiveMediaUrl: string | null;
+      let effectiveMediaType: string | null;
+
+      if (hasSnapshot) {
+        personalizedMsg = recipientRecord.personalized_message as string;
+        effectiveMediaUrl = typeof recipientRecord.media_url_snapshot === "string"
+          ? recipientRecord.media_url_snapshot
+          : null;
+        effectiveMediaType = typeof recipientRecord.media_type_snapshot === "string"
+          ? recipientRecord.media_type_snapshot
+          : null;
+      } else {
+        const existingVid = typeof recipientRecord.variant_id === "string" ? recipientRecord.variant_id : null;
+        const legacyPersonalizedMessage = typeof recipientRecord.personalized_message === "string"
+          && recipientRecord.personalized_message.trim().length > 0
+          ? recipientRecord.personalized_message
+          : null;
+        let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
+        if (existingVid) {
+          const { data: vData, error: vErr } = await supabase
+            .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
+            .eq('id', existingVid).single();
+          if (vErr || !vData) {
+            // A legacy worker may already have persisted the exact text. In
+            // that case retain it; otherwise fail closed rather than silently
+            // fall back to a changed campaign template.
+            if (!legacyPersonalizedMessage) {
+              throw new Error(`talkx_variant_snapshot_source_unavailable: ${vErr?.message ?? "variant_not_found"}`);
+            }
+          } else {
+            variant = vData;
+          }
+        } else if (campaign.template_id) {
+          variant = await pickVariant(supabase, campaign.template_id);
+        }
+
+        const contentToSend = legacyPersonalizedMessage ?? variant?.content ?? campaign.message_template;
+        const candidateMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
+        const candidateMediaType = variant?.media_type ?? campaign.media_type ?? null;
+        if ((candidateMediaUrl === null) !== (candidateMediaType === null)) {
+          throw new Error("talkx_invalid_media_snapshot_source");
+        }
+        const calculatedMessage = legacyPersonalizedMessage ?? personalize(
+          contentToSend,
+          contact as { name: string; nickname?: string; company?: string },
+          [],
+          typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+        );
+        const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
+          p_recipient_id: recipient.id,
+          p_claim_token: claim.claim_token,
+          p_personalized_message: calculatedMessage,
+          p_media_url: candidateMediaUrl,
+          p_media_type: candidateMediaType,
+          p_variant_id: variant?.id ?? existingVid,
+        });
+        if (snapshotError) throw new Error(`talkx_message_snapshot_failed: ${snapshotError.message}`);
+        const snapshot = Array.isArray(snapshotRows) ? snapshotRows[0] as Record<string, unknown> | undefined : undefined;
+        if (!snapshot || typeof snapshot.personalized_message !== "string") {
+          throw new Error("talkx_message_snapshot_invalid_response");
+        }
+        personalizedMsg = snapshot.personalized_message;
+        effectiveMediaUrl = typeof snapshot.media_url_snapshot === "string" ? snapshot.media_url_snapshot : null;
+        effectiveMediaType = typeof snapshot.media_type_snapshot === "string" ? snapshot.media_type_snapshot : null;
       }
-      const contentToSend = variant?.content ?? campaign.message_template;
-      const effectiveMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
-      const effectiveMediaType = variant?.media_type ?? campaign.media_type ?? null;
-      const recipientHasMedia = !!effectiveMediaUrl && !!effectiveMediaType;
-      const personalizedMsg = personalize(
-        contentToSend,
-        contact as { name: string; nickname?: string; company?: string },
-        [],
-        typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-      );
-      await supabase.from("talkx_recipients")
-        .update({ personalized_message: personalizedMsg, variant_id: variant?.id ?? existingVid ?? null })
-        .eq("id", recipient.id).eq("delivery_claim_token", claim.claim_token);
+      if ((effectiveMediaUrl === null) !== (effectiveMediaType === null)) {
+        throw new Error("talkx_invalid_persisted_media_snapshot");
+      }
+      const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
 
       let providerPostAttempted = false;
       try {
