@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton } from '../catalogShared';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip } from '../catalogShared';
 
 describe('catalogShared', () => {
   it('formatPrice formata em BRL pt-BR', () => {
@@ -195,5 +195,39 @@ describe('FavoriteButton', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onParentClick).not.toHaveBeenCalled();
+  });
+});
+
+describe('CatalogKpiStrip', () => {
+  it('sem stats (undefined), não renderiza nada', () => {
+    const { container } = render(<CatalogKpiStrip stats={undefined} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('com stats parcial, renderiza só os campos numéricos presentes', () => {
+    render(<CatalogKpiStrip stats={{ total: 7576, in_stock: 6040 }} />);
+    expect(screen.getByText('Produtos no total')).toBeInTheDocument();
+    expect(screen.getByText('7.576')).toBeInTheDocument();
+    expect(screen.getByText('Em estoque')).toBeInTheDocument();
+    expect(screen.queryByText('Categorias')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fornecedores')).not.toBeInTheDocument();
+  });
+
+  it('loading=true, mostra 6 skeletons em vez dos KPIs', () => {
+    const { container } = render(<CatalogKpiStrip stats={{ total: 7576 }} loading />);
+    expect(screen.queryByText('Produtos no total')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(6);
+  });
+
+  it('clique num KPI chama onSelect com a chave certa', () => {
+    const onSelect = vi.fn();
+    render(<CatalogKpiStrip stats={{ featured: 2147 }} onSelect={onSelect} />);
+    fireEvent.click(screen.getByText('Em destaque').closest('button')!);
+    expect(onSelect).toHaveBeenCalledWith('featured');
+  });
+
+  it('sem onSelect, os cards não são clicáveis (botão desabilitado)', () => {
+    render(<CatalogKpiStrip stats={{ total: 100 }} />);
+    expect(screen.getByText('Produtos no total').closest('button')).toBeDisabled();
   });
 });
