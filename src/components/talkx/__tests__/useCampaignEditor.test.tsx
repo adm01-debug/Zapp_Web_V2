@@ -204,6 +204,23 @@ describe('useCampaignEditor — draft integrity', () => {
     }));
   });
 
+  it('reports a failed autosave and only marks the latest snapshot saved after a confirmed retry', async () => {
+    f.create.mockRejectedValueOnce(new Error('rede indisponível')).mockResolvedValueOnce({ id: 'draft-recovered' });
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => result.current.setName('Campanha com recuperação'));
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(result.current.autosaveStatus).toBe('error');
+    expect(result.current.autosaveError).toBe('rede indisponível');
+    expect(result.current.lastAutosave).toBeNull();
+
+    await act(async () => { await result.current.retryAutosave(); });
+    expect(result.current.autosaveStatus).toBe('idle');
+    expect(result.current.autosaveError).toBeNull();
+    expect(result.current.lastAutosave).toBeInstanceOf(Date);
+    expect(result.current.autosaveIsDirty).toBe(false);
+  });
+
   it('does not overwrite an existing audience before its snapshot hydrates', async () => {
     f.persistedRecipientIds = undefined;
     const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };

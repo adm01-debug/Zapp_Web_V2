@@ -169,6 +169,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
   const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'error' | 'offline'>('idle');
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const [persistedAutosaveSnapshot, setPersistedAutosaveSnapshot] = useState<string | null>(null);
   const initialScheduleTimezone = campaign?.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
   const [scheduleTimezone, setScheduleTimezone] = useState(initialScheduleTimezone); // E69
   const [scheduleConfigError, setScheduleConfigError] = useState<string | null>(null);
@@ -589,6 +592,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
   });
+  const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
+
   useEffect(() => {
     // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
     if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; return; }
@@ -597,18 +602,46 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(async () => {
       // handleSaveRef.current e sempre o callback mais recente (nao sofre de closure stale)
-      const id = await handleSaveRef.current?.('draft').catch(() => null);
-      if (id) {
+      setAutosaveStatus('saving');
+      setAutosaveError(null);
+      try {
+        const id = await handleSaveRef.current?.('draft');
+        if (!id) return;
         // O baseline deve acompanhar o último snapshot confirmado. Caso o
         // usuário reverta um filtro ao valor de abertura, essa reversão também
         // precisa ser persistida — não pode ser tratada como "sem alteração".
         autosaveInitialRef.current = autosaveFields;
+        setPersistedAutosaveSnapshot(autosaveFields);
         setLastAutosave(new Date());
+        setAutosaveStatus('idle');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Não foi possível salvar automaticamente.';
+        setAutosaveError(message);
+        setAutosaveStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error');
       }
     }, 3000);
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
+
+  const retryAutosave = useCallback(async () => {
+    setAutosaveStatus('saving');
+    setAutosaveError(null);
+    try {
+      const id = await handleSave('draft');
+      if (!id) return null;
+      autosaveInitialRef.current = autosaveFields;
+      setPersistedAutosaveSnapshot(autosaveFields);
+      setLastAutosave(new Date());
+      setAutosaveStatus('idle');
+      return id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar automaticamente.';
+      setAutosaveError(message);
+      setAutosaveStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error');
+      return null;
+    }
+  }, [autosaveFields, handleSave]);
 
   const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
@@ -629,7 +662,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
     inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
-    lastAutosave, // E68
+    lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
     scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,

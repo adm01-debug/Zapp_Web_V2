@@ -20,6 +20,7 @@ import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
 
@@ -86,7 +87,14 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
   };
   const prev = () => requestStep(Math.max(1, step - 1) as WizardStep);
 
-  const saveDraft = async () => { const id = await ed.handleSave('draft'); if (id) onClose(); };
+  const saveDraft = async () => {
+    try {
+      const id = await ed.handleSave('draft');
+      if (id) onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+    }
+  };
 
   return (
     <div className="w-full min-w-0 space-y-4">
@@ -144,7 +152,19 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
-              {ed.lastAutosave && (
+              {ed.autosaveStatus === 'saving' && <span className="text-[10.5px] text-muted-foreground" role="status">Salvando alterações…</span>}
+              {ed.autosaveStatus === 'offline' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-[10.5px] text-dash-amber hover:underline">
+                  Sem conexão — tentar novamente
+                </button>
+              )}
+              {ed.autosaveStatus === 'error' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-[10.5px] text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                  Não salvo — tentar novamente
+                </button>
+              )}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-[10.5px] text-dash-amber">Alterações não salvas</span>}
+              {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
                 <span className="text-[10.5px] text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
                 </span>
