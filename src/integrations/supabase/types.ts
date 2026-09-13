@@ -1121,6 +1121,36 @@ export type Database = {
           },
         ]
       }
+      catalog_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          primary_image_url: string | null
+          product_id: string
+          product_name: string
+          product_sku: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          primary_image_url?: string | null
+          product_id: string
+          product_name: string
+          product_sku?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          primary_image_url?: string | null
+          product_id?: string
+          product_name?: string
+          product_sku?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       channel_connections: {
         Row: {
           channel_type: Database["public"]["Enums"]["channel_type"]

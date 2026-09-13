@@ -339,3 +339,95 @@ export function useCatalogStats() {
     error: bootstrap.error,
   };
 }
+
+// ─── useCatalogFavorites (E27) ──────────────────────────────────
+export interface CatalogFavorite {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string | null;
+  primary_image_url: string | null;
+  created_at: string;
+}
+
+/**
+ * Favoritos do catálogo (tabela catalog_favorites no ZAPP, RLS por
+ * usuário). Mesma convenção de auth de favorite_contacts
+ * (useConversationActions.ts): supabase.auth.getUser() direto, sem
+ * depender do AuthProvider — mantém o hook testável isolado.
+ */
+export function useCatalogFavorites() {
+  const queryClient = useQueryClient();
+
+  const favoritesQuery = useQuery({
+    queryKey: ['catalog-favorites'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('catalog_favorites')
+        .select('id, product_id, product_name, product_sku, primary_image_url, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as CatalogFavorite[];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const favoriteIds = new Set((favoritesQuery.data || []).map((f) => f.product_id));
+
+  const toggle = useCallback(
+    async (product: { id: string; name: string; sku?: string | null; primary_image_url?: string | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const key = ['catalog-favorites'];
+      const previous = queryClient.getQueryData<CatalogFavorite[]>(key) || [];
+      const isFavorite = previous.some((f) => f.product_id === product.id);
+
+      // Optimistic update; rollback se a escrita falhar.
+      if (isFavorite) {
+        queryClient.setQueryData<CatalogFavorite[]>(key, previous.filter((f) => f.product_id !== product.id));
+        const { error } = await supabase
+          .from('catalog_favorites')
+          .delete()
+          .eq('product_id', product.id)
+          .eq('user_id', user.id);
+        if (error) {
+          queryClient.setQueryData(key, previous);
+          log.error('Falha ao remover favorito:', error.message);
+        }
+      } else {
+        const optimisticEntry: CatalogFavorite = {
+          id: `optimistic-${product.id}`,
+          product_id: product.id,
+          product_name: product.name,
+          product_sku: product.sku ?? null,
+          primary_image_url: product.primary_image_url ?? null,
+          created_at: new Date().toISOString(),
+        };
+        queryClient.setQueryData<CatalogFavorite[]>(key, [optimisticEntry, ...previous]);
+        const { error } = await supabase.from('catalog_favorites').insert({
+          user_id: user.id,
+          product_id: product.id,
+          product_name: product.name,
+          product_sku: product.sku ?? null,
+          primary_image_url: product.primary_image_url ?? null,
+        });
+        if (error) {
+          queryClient.setQueryData(key, previous);
+          log.error('Falha ao favoritar:', error.message);
+        }
+      }
+      await queryClient.invalidateQueries({ queryKey: key });
+    },
+    [queryClient]
+  );
+
+  return {
+    favorites: favoritesQuery.data || [],
+    favoriteIds,
+    isFavorite: (productId: string) => favoriteIds.has(productId),
+    isLoading: favoritesQuery.isLoading,
+    toggle,
+  };
+}

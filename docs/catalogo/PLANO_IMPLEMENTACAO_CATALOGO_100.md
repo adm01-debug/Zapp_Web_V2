@@ -570,12 +570,12 @@
 ### E27 · Tabela `catalog_favorites` no ZAPP
 **Objetivo:** coração persistente por usuário.
 **Arquivos:** `supabase/migrations/2026091?_catalog_favorites.sql`, `schema-catalog.json`, `schema-manifest.json`, `scripts/db-audit/catalog.sql`
-1. DDL: `catalog_favorites(user_id uuid references auth.users, product_id uuid, product_name text, product_sku text, primary_image_url text, created_at timestamptz default now(), primary key(user_id, product_id))`.
-2. RLS: `select/insert/delete` onde `user_id = auth.uid()`.
+1. Executado: schema real é `id uuid` PK próprio + `UNIQUE(user_id, product_id)` — checado antes de escrever contra a tabela `favorite_contacts` já existente (mesmo padrão), não a PK composta que esta linha previa originalmente.
+2. RLS: 1 única policy `FOR ALL` com `USING (user_id = auth.uid())` — mesmo padrão de `favorite_contacts`, mais simples que 3 policies separadas.
 3. Índice `(user_id, created_at desc)`.
-4. Aplicar via `db_apply_migration` (atômico); espelhar o SQL em `supabase/migrations/`.
-5. Rodar `catalog.sql`/`manifest.sql` via `db_batch_query` e commitar o `schema-catalog.json`/`schema-manifest.json` regenerados.
-6. `db-guard.yml` verde localmente (`node scripts/db-audit/check-migration-drift.mjs`).
+4. Aplicado via `db_apply_migration` (atômico, versão `20260913013153`); SQL espelhado em `supabase/migrations/`.
+5. `schema-catalog.json` regenerado de verdade via `catalog.sql`/`db_batch_query` e commitado. `schema-manifest.json` **não** regenerado manualmente nesta etapa: achado real — existe um workflow `types-sync.yml` que dispara sozinho em todo push no `main` que toque `supabase/migrations/**` (ou semanalmente), conecta no banco oficial, regenera os 3 artefatos (`types.ts`/`schema-catalog.json`/`schema-manifest.json`) e abre PR automático se houver drift, com seus próprios gates (tsc, usage-guard, limite de remoções). É a origem dos commits `chore(db): sincronizar...` já vistos nesta sessão. Reconstruir os ~400KB do manifest à mão neste chat seria redundante e arriscado (risco de erro de transcrição) — deixado para o bot, que já faz isso de forma confiável.
+6. `db-guard.yml` (offline, roda em todo PR) confirmado que **não** chama `check-manifest-fresh.mjs` — só valida `schema-catalog.json` via `supabase-usage-guard.mjs`, testes dos comparadores e SQL sintático num Postgres descartável. A comparação ao vivo do manifest é do `types-sync.yml`/`db-live-guard.yml`, fora do caminho crítico deste PR.
 7. Hook `useCatalogFavorites()` (`list`, `toggle` optimistic).
 8. Teste do hook com mock.
 9. CHANGELOG.
