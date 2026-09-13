@@ -80,6 +80,7 @@ playwright/.cache/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*:Zone.Identifier
 *.swp
 *.swo
 *~
