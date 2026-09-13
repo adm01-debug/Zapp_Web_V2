@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -113,7 +112,8 @@ export const ExternalProductManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
+    <div className="space-y-6 min-w-0">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export const ExternalProductManagement: React.FC = () => {
       )}
 
       {/* Products */}
-      <ScrollArea className="h-[calc(100vh-320px)]">
+      <div>
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
             {[...Array(10)].map((_, i) => (
@@ -263,7 +263,7 @@ export const ExternalProductManagement: React.FC = () => {
             </motion.div>
           </AnimatePresence>
         )}
-      </ScrollArea>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -288,6 +288,10 @@ export const ExternalProductManagement: React.FC = () => {
           onOpenChange={(open) => { if (!open) setSendProduct(null); }}
         />
       )}
+    </div>
+
+    {/* Rail (E31: só a estrutura — conteúdo real na F5) */}
+    <aside className="catalog-rail sticky top-4 hidden xl:block" />
     </div>
   );
 };
