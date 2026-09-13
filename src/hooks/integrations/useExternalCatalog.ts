@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('ExternalCatalog');
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -11,11 +11,27 @@ export interface ExternalCategory {
   name: string;
   slug: string;
   parent_id: string | null;
+  // E25 — enriquecidos; opcionais pq CategoryChips (E18) já usava o tipo
+  // básico e algumas categorias legadas (ex.: "Outros") não têm icon/color_hex.
+  level?: number;
+  path?: string;
+  full_path_readable?: string | null;
+  icon?: string | null;
+  color_hex?: string | null;
+  image_url?: string | null;
+  products_count?: number;
+  display_order?: number;
 }
 
 export interface ExternalSupplier {
   id: string;
   name: string;
+  // E25 — enriquecidos. logo_url hoje é sempre null (nenhum fornecedor
+  // tem logo cadastrado no PromoGifts) — UI precisa de fallback sem logo.
+  trading_name?: string | null;
+  logo_url?: string | null;
+  is_product_supplier?: boolean;
+  low_stock_threshold?: number | null;
 }
 
 export interface ExternalProductVariant {
@@ -119,6 +135,19 @@ export interface CatalogFilters {
   ascending?: boolean;
   /** Payload enxuto do card; default false (comportamento anterior). */
   compact?: boolean;
+  // E22 — filtros avançados (edge promogifts-catalog)
+  is_featured?: boolean;
+  is_new?: boolean;
+  is_bestseller?: boolean;
+  is_kit?: boolean;
+  allows_personalization?: boolean;
+  /** 1 <= estoque <= 10 */
+  low_stock?: boolean;
+  price_min?: number;
+  price_max?: number;
+  color?: string;
+  material?: string;
+  has_engraving?: boolean;
 }
 
 // ─── API invoke ───────────────────────────────────────────────
@@ -160,31 +189,26 @@ export function useExternalCatalog() {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,
+    // E26 — mantém a página anterior visível durante a paginação/troca de
+    // filtro, em vez de piscar o skeleton a cada refetch.
+    placeholderData: keepPreviousData,
   });
 
-  // Categories
-  const categoriesQuery = useQuery({
-    queryKey: ['external-catalog', 'categories'],
-    queryFn: async () => {
-      const result = await invokeAction<{ data: ExternalCategory[] }>('list_categories');
-      return result.data || [];
-    },
-    enabled: ready,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
-
-  // Suppliers
-  const suppliersQuery = useQuery({
-    queryKey: ['external-catalog', 'suppliers'],
-    queryFn: async () => {
-      const result = await invokeAction<{ data: ExternalSupplier[] }>('list_suppliers');
-      return result.data || [];
-    },
-    enabled: ready,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  // Categories + suppliers (+ stats, usado por useCatalogStats) numa
+  // única chamada de rede (ação bootstrap, E26) - react-query dedupe pela
+  // mesma queryKey de useCatalogBootstrap() abaixo, então mesmo com esta
+  // query e useCatalogStats() montados ao mesmo tempo, só 1 request sai.
+  const bootstrapQuery = useCatalogBootstrapQuery(ready);
+  const categoriesQuery = {
+    data: bootstrapQuery.data?.categories,
+    isLoading: bootstrapQuery.isLoading,
+    error: bootstrapQuery.error,
+  };
+  const suppliersQuery = {
+    data: bootstrapQuery.data?.suppliers,
+    isLoading: bootstrapQuery.isLoading,
+    error: bootstrapQuery.error,
+  };
 
   // Called by component to set filters and trigger fetch
   const fetchProducts = useCallback((newFilters: CatalogFilters = {}) => {
@@ -262,4 +286,148 @@ export function useExternalProduct(productId: string | undefined, options: { ena
     enabled: options.enabled && !!productId,
     staleTime: 5 * 60 * 1000,
   });
+}
+
+/** Formato exato de public.zapp_catalog_stats() (E24), retornado pela ação catalog_stats/bootstrap. */
+export interface CatalogStats {
+  total: number;
+  in_stock: number;
+  featured: number;
+  new_30d: number;
+  bestseller: number;
+  kits: number;
+  low_stock: number;
+  categories_root: number;
+  suppliers_active: number;
+  last_sync_at: string | null;
+  last_update_at: string | null;
+  by_month: { month: string; count: number }[];
+}
+
+interface CatalogBootstrap {
+  categories: ExternalCategory[];
+  suppliers: ExternalSupplier[];
+  stats: CatalogStats;
+}
+
+/**
+ * Query única e compartilhada (mesma queryKey em todo lugar que a chama)
+ * para a ação bootstrap (E26): categorias + fornecedores + stats numa
+ * chamada de rede só. useExternalCatalog() e useCatalogStats() leem desta
+ * mesma query — o react-query dedupe pela queryKey, então montar os dois
+ * hooks ao mesmo tempo ainda dispara só 1 request.
+ */
+function useCatalogBootstrapQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: ['external-catalog', 'bootstrap'],
+    queryFn: async () => {
+      const res = await invokeAction<{ data: CatalogBootstrap }>('bootstrap');
+      return res.data;
+    },
+    enabled,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+/** KPIs, sincronização e série mensal do rail/topo do Catálogo (E24). */
+export function useCatalogStats() {
+  const bootstrap = useCatalogBootstrapQuery(true);
+  return {
+    data: bootstrap.data?.stats,
+    isLoading: bootstrap.isLoading,
+    error: bootstrap.error,
+  };
+}
+
+// ─── useCatalogFavorites (E27) ──────────────────────────────────
+export interface CatalogFavorite {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string | null;
+  primary_image_url: string | null;
+  created_at: string;
+}
+
+/**
+ * Favoritos do catálogo (tabela catalog_favorites no ZAPP, RLS por
+ * usuário). Mesma convenção de auth de favorite_contacts
+ * (useConversationActions.ts): supabase.auth.getUser() direto, sem
+ * depender do AuthProvider — mantém o hook testável isolado.
+ */
+export function useCatalogFavorites() {
+  const queryClient = useQueryClient();
+
+  const favoritesQuery = useQuery({
+    queryKey: ['catalog-favorites'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('catalog_favorites')
+        .select('id, product_id, product_name, product_sku, primary_image_url, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as CatalogFavorite[];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const favoriteIds = new Set((favoritesQuery.data || []).map((f) => f.product_id));
+
+  const toggle = useCallback(
+    async (product: { id: string; name: string; sku?: string | null; primary_image_url?: string | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const key = ['catalog-favorites'];
+      const previous = queryClient.getQueryData<CatalogFavorite[]>(key) || [];
+      const isFavorite = previous.some((f) => f.product_id === product.id);
+
+      // Optimistic update; rollback se a escrita falhar.
+      if (isFavorite) {
+        queryClient.setQueryData<CatalogFavorite[]>(key, previous.filter((f) => f.product_id !== product.id));
+        const { error } = await supabase
+          .from('catalog_favorites')
+          .delete()
+          .eq('product_id', product.id)
+          .eq('user_id', user.id);
+        if (error) {
+          queryClient.setQueryData(key, previous);
+          log.error('Falha ao remover favorito:', error.message);
+        }
+      } else {
+        const optimisticEntry: CatalogFavorite = {
+          id: `optimistic-${product.id}`,
+          product_id: product.id,
+          product_name: product.name,
+          product_sku: product.sku ?? null,
+          primary_image_url: product.primary_image_url ?? null,
+          created_at: new Date().toISOString(),
+        };
+        queryClient.setQueryData<CatalogFavorite[]>(key, [optimisticEntry, ...previous]);
+        const { error } = await supabase.from('catalog_favorites').insert({
+          user_id: user.id,
+          product_id: product.id,
+          product_name: product.name,
+          product_sku: product.sku ?? null,
+          primary_image_url: product.primary_image_url ?? null,
+        });
+        if (error) {
+          queryClient.setQueryData(key, previous);
+          log.error('Falha ao favoritar:', error.message);
+        }
+      }
+      await queryClient.invalidateQueries({ queryKey: key });
+    },
+    [queryClient]
+  );
+
+  return {
+    favorites: favoritesQuery.data || [],
+    favoriteIds,
+    isFavorite: (productId: string) => favoriteIds.has(productId),
+    isLoading: favoritesQuery.isLoading,
+    toggle,
+  };
 }

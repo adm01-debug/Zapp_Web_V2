@@ -24,6 +24,7 @@ import {
   type MessageTemplate, type SendMode, buildMessage, collectAllImages,
 } from './sendProductUtils';
 import { useContactSearch, useSendToContact } from './useSendProduct';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
 
 interface SendProductDialogProps {
@@ -61,6 +62,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     resetContactSelection,
   } = useContactSearch(step);
 
+  const { profile } = useAuth();
   const { isSending, sendProductToContact } = useSendToContact(() => {
     onOpenChange(false);
     setStep('configure');
@@ -132,7 +134,19 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const handleSendToContact = async () => {
     if (!selectedContact) { toast({ title: 'Selecione um contato', variant: 'destructive' }); return; }
-    await sendProductToContact(selectedContact, message, Array.from(selectedImages));
+    await sendProductToContact(
+      selectedContact,
+      message,
+      Array.from(selectedImages),
+      {
+        id: fullProduct.id,
+        name: fullProduct.name,
+        sku: fullProduct.sku,
+        variantLabel: sendMode === 'variant' && activeGroup ? activeGroup.colorName : undefined,
+        template,
+      },
+      profile?.id,
+    );
   };
 
   return (

@@ -6,6 +6,9 @@
  */
 import React, { useState } from 'react';
 import { Package, type LucideIcon } from 'lucide-react';
+// CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
+// public.zapp_catalog_stats()); reimportado aqui para não duplicar.
+import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -302,16 +305,6 @@ export function FavoriteButton({ active, onToggle, busy, size = 32 }: FavoriteBu
 // ─── CatalogKpiStrip (E17) ──────────────────────────────────────
 import { Box, Folder, Users, Package as PackageIcon, Star as StarIcon, Sparkles as SparklesIcon } from 'lucide-react';
 import { KpiCard, KpiCardSkeleton, type TileColor } from '@/components/talkx/talkxShared';
-
-/** Formato esperado da E24 (catalog_stats); todos os campos numéricos são opcionais. */
-export interface CatalogStats {
-  total?: number | null;
-  categories_root?: number | null;
-  suppliers_active?: number | null;
-  in_stock?: number | null;
-  featured?: number | null;
-  new_30d?: number | null;
-}
 
 interface KpiDef {
   key: keyof CatalogStats;

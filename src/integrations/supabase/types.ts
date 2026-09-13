@@ -1121,6 +1121,106 @@ export type Database = {
           },
         ]
       }
+      catalog_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          primary_image_url: string | null
+          product_id: string
+          product_name: string
+          product_sku: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          primary_image_url?: string | null
+          product_id: string
+          product_name: string
+          product_sku?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          primary_image_url?: string | null
+          product_id?: string
+          product_name?: string
+          product_sku?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      catalog_send_events: {
+        Row: {
+          agent_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          images_count: number | null
+          message_ids: Json | null
+          message_length: number | null
+          product_id: string
+          product_name: string
+          product_sku: string | null
+          status: string | null
+          template: string | null
+          variant_label: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          images_count?: number | null
+          message_ids?: Json | null
+          message_length?: number | null
+          product_id: string
+          product_name: string
+          product_sku?: string | null
+          status?: string | null
+          template?: string | null
+          variant_label?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          images_count?: number | null
+          message_ids?: Json | null
+          message_length?: number | null
+          product_id?: string
+          product_name?: string
+          product_sku?: string | null
+          status?: string | null
+          template?: string | null
+          variant_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_send_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_send_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_send_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_connections: {
         Row: {
           channel_type: Database["public"]["Enums"]["channel_type"]
