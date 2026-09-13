@@ -25,11 +25,17 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 const mockUseExternalCatalog = vi.fn();
+// E32: ModuleHeader usa useCatalogStats (total real + status de sync).
+const mockUseCatalogStats = vi.fn();
 vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
     '@/hooks/integrations/useExternalCatalog'
   );
-  return { ...actual, useExternalCatalog: () => mockUseExternalCatalog() };
+  return {
+    ...actual,
+    useExternalCatalog: () => mockUseExternalCatalog(),
+    useCatalogStats: () => mockUseCatalogStats(),
+  };
 });
 
 function baseHookReturn(overrides: Record<string, unknown> = {}) {
@@ -66,12 +72,39 @@ describe('ExternalProductManagement', () => {
     mockUseExternalCatalog.mockReturnValue(baseHookReturn());
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
+    mockUseCatalogStats.mockReset();
+    mockUseCatalogStats.mockReturnValue({
+      data: { total: 2, last_sync_at: new Date().toISOString() },
+      isLoading: false,
+      error: null,
+    });
   });
 
   it('mostra o título e a contagem total de produtos', () => {
     renderManagement();
     expect(screen.getByText('Catálogo de Produtos')).toBeInTheDocument();
-    expect(screen.getByText('2 produtos')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent === '2 produtos sincronizados em tempo real com o PromoGifts. Gerencie, edite e compartilhe produtos.')).toBeInTheDocument();
+  });
+
+  it('E32: chip de sync recente mostra "Sincronizado" (tom success)', () => {
+    mockUseCatalogStats.mockReturnValue({
+      data: { total: 2, last_sync_at: new Date().toISOString() },
+      isLoading: false,
+      error: null,
+    });
+    renderManagement();
+    expect(screen.getByText(/^Sincronizado /)).toBeInTheDocument();
+  });
+
+  it('E32: chip de sync com mais de 24h mostra data/hora (tom neutro)', () => {
+    const stale = new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString();
+    mockUseCatalogStats.mockReturnValue({
+      data: { total: 2, last_sync_at: stale },
+      isLoading: false,
+      error: null,
+    });
+    renderManagement();
+    expect(screen.getByText(/^Última sincronização em /)).toBeInTheDocument();
   });
 
   it('renderiza um card por produto retornado', () => {
