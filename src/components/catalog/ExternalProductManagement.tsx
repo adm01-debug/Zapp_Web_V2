@@ -23,11 +23,12 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useExternalCatalog, useCatalogStats, ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
-import { ModuleHeader, fmtAgo } from '@/components/talkx/talkxShared';
+import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
+import { CatalogKpiStrip } from './catalogShared';
 import { cn } from '@/lib/utils';
 
 /** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
@@ -61,7 +62,7 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
 const PAGE_SIZE = 24;
 
 export const ExternalProductManagement: React.FC = () => {
-  const { data: stats, isLoading: statsLoading } = useCatalogStats();
+  const { data: stats, isLoading: statsLoading, error: statsError } = useCatalogStats();
   const {
     products,
     totalProducts,
@@ -78,6 +79,8 @@ export const ExternalProductManagement: React.FC = () => {
   const [categoryId, setCategoryId] = useState<string>('all');
   const [supplierId, setSupplierId] = useState<string>('all');
   const [onlyInStock, setOnlyInStock] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isNew, setIsNew] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(0);
 
@@ -94,8 +97,10 @@ export const ExternalProductManagement: React.FC = () => {
     if (search) params.search = search;
     if (categoryId !== 'all') params.category_id = categoryId;
     if (supplierId !== 'all') params.supplier_id = supplierId;
+    if (isFeatured) params.is_featured = true;
+    if (isNew) params.is_new = true;
     return params;
-  }, [page, search, categoryId, supplierId, onlyInStock]);
+  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
 
   // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
   // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
@@ -116,7 +121,7 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock]);
+  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
 
   // Page changes (mesmo motivo)
   useEffect(() => {
@@ -125,14 +130,25 @@ export const ExternalProductManagement: React.FC = () => {
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
-  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock;
+  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew;
 
   const clearFilters = () => {
     setSearch('');
     setCategoryId('all');
     setSupplierId('all');
     setOnlyInStock(false);
+    setIsFeatured(false);
+    setIsNew(false);
     setPage(0);
+  };
+
+  /** E33: clique no KPI aplica o filtro correspondente. Categorias/
+   * Fornecedores/Total nao tem filtro booleano equivalente - so
+   * mostram numero mesmo, sem acao no clique. */
+  const handleKpiSelect = (key: keyof CatalogStats) => {
+    if (key === 'in_stock') setOnlyInStock(true);
+    else if (key === 'featured') setIsFeatured(true);
+    else if (key === 'new_30d') setIsNew(true);
   };
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
@@ -177,6 +193,13 @@ export const ExternalProductManagement: React.FC = () => {
           />
         )}
       </motion.div>
+
+      {/* KPIs (E33) */}
+      {statsError ? (
+        <AlertCard tone="warning">Não foi possível carregar os indicadores do catálogo agora.</AlertCard>
+      ) : (
+        <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
