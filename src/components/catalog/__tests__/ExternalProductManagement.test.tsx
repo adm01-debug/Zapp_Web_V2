@@ -74,7 +74,15 @@ describe('ExternalProductManagement', () => {
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
     mockUseCatalogStats.mockReset();
     mockUseCatalogStats.mockReturnValue({
-      data: { total: 2, last_sync_at: new Date().toISOString() },
+      data: {
+        total: 2,
+        in_stock: 2,
+        featured: 1,
+        new_30d: 1,
+        categories_root: 1,
+        suppliers_active: 1,
+        last_sync_at: new Date().toISOString(),
+      },
       isLoading: false,
       error: null,
     });
@@ -111,6 +119,31 @@ describe('ExternalProductManagement', () => {
     renderManagement();
     expect(screen.getByText('Caneta Plástica Azul')).toBeInTheDocument();
     expect(screen.getByText('Caneta Vermelha')).toBeInTheDocument();
+  });
+
+  it('E33: clicar no KPI "Em destaque" aplica is_featured=true na proxima busca', async () => {
+    const hookReturn = baseHookReturn();
+    mockUseExternalCatalog.mockReturnValue(hookReturn);
+    renderManagement();
+    fireEvent.click(screen.getByText('Em destaque'));
+    await new Promise((r) => setTimeout(r, 350));
+    const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
+    expect(lastCall.is_featured).toBe(true);
+  });
+
+  it('E33: clicar no KPI "Total" nao aplica filtro nenhum (nao-acionavel)', async () => {
+    const hookReturn = baseHookReturn();
+    mockUseExternalCatalog.mockReturnValue(hookReturn);
+    renderManagement();
+    // O effeito de debounce roda no mount tambem (array de deps nao vazio
+    // ainda dispara na 1a renderizacao) - espera esse assentar antes de
+    // limpar, senao ele conta como uma chamada "nova" mais tarde.
+    await new Promise((r) => setTimeout(r, 350));
+    hookReturn.fetchProducts.mockClear();
+    fireEvent.click(screen.getByText('Produtos no total'));
+    await new Promise((r) => setTimeout(r, 350));
+    expect(hookReturn.fetchProducts).not.toHaveBeenCalled();
   });
 
   it('digitar na busca chama fetchProducts com o texto (debounce)', async () => {
