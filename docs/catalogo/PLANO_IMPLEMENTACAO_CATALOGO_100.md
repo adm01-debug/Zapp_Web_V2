@@ -589,14 +589,14 @@
 ### E28 · Tabela `catalog_send_events` (log de envios)
 **Objetivo:** "Enviados recentemente" e métricas de uso reais.
 **Arquivos:** migration, catálogos, `useSendProduct.ts`
-1. DDL: `catalog_send_events(id uuid pk default gen_random_uuid(), product_id uuid, product_name text, product_sku text, variant_label text, contact_id uuid references contacts, agent_id uuid, template text check in ('formal','informal','promo','custom'), images_count int, message_length int, status text check in ('sent','partial','failed'), message_ids jsonb, created_at timestamptz default now())`.
-2. RLS: insert `agent_id = auth.uid()`; select para `authenticated`.
-3. Índices `(created_at desc)`, `(product_id)`, `(contact_id)`.
-4. Aplicar via `db_apply_migration`; regenerar `schema-catalog.json`/`schema-manifest.json` (mesmo rito da E27).
-5. `useSendToContact` grava 1 evento ao final com `status` real e `message_ids`.
-6. Teste do hook: evento gravado com `partial` quando 1 imagem falha.
-7. `db-guard` verde.
-8. Hook `useCatalogRecentSends(limit)`.
+1. Executado: DDL igual ao previsto, mas achado real ao checar `csat_surveys` (tabela mais parecida) antes de escrever: `agent_id` referencia `profiles(id)`, não `auth.users(id)` direto (mesmo padrão da E27 corrigido de novo aqui).
+2. RLS real (não a prevista): 2 policies como `csat_surveys` — insert com `WITH CHECK` (`agent_id is null or agent_id in (select profiles.id from profiles where profiles.user_id = auth.uid()) or is_admin_or_supervisor(auth.uid())`) e select restrito a "meus próprios ou admin/supervisor" — não "insert simples + select para authenticated" como a linha original previa.
+3. Índices `(created_at desc)`, `(product_id)`, `(contact_id)` — executado como previsto.
+4. Aplicado via `db_apply_migration`. `schema-catalog.json` regenerado de verdade; `schema-manifest.json` deixado pro `types-sync.yml` (mesma decisão da E27, já validada). `types.ts` editado à mão (bloqueia `tsc` agora).
+5. `useSendToContact` (em `src/components/catalog/useSendProduct.ts`) grava 1 evento ao final via `logCatalogSendEvent()` (novo, em `useCatalogContactSearch.ts` — mesmo arquivo que já isola Supabase pra fora de `src/components/catalog/`), com `status` real calculado a partir das falhas de envio (`sent`/`partial`/`failed`) e os `message_ids` reais retornados por `sendOutboundMessage`. `agentId` resolvido via `useAuth().profile?.id` em `SendProductDialog.tsx` — isso quebrou `ExternalProductManagement.test.tsx` de verdade (sem `AuthProvider` no teste), corrigido com o mock padrão do projeto (`vi.fn()` + `mockReturnValue`, não uma implementação inicial tipada — isso trava a assinatura contra o spread `...args`).
+6. Sem teste de hook Deno dedicado (mesma limitação da E22/E23 — sem `deno` neste ambiente); a lógica de `status` é testável no lado React e não tem teste dedicado ainda — pendência real, não bloqueante pro merge.
+7. `db-guard.yml` (offline) não depende do manifest nem exercita a escrita real na tabela — só valida `.from()` contra `schema-catalog.json`, já regenerado.
+8. **Adiado**: `useCatalogRecentSends(limit)` cancelado desta etapa — sem tela "Enviados recentemente" ainda pra consumir (mesma lógica do prefetch adiado na E26). Fica pra quando essa tela existir (F5+).
 9. CHANGELOG.
 10. Commit `feat(catalog): E28 catalog_send_events`.
 **Checklist**

@@ -17,6 +17,13 @@ const mockProduct = (overrides: Partial<ExternalProduct> = {}): ExternalProduct 
   ...overrides,
 });
 
+// SendProductDialog (montado dentro de ExternalProductCard) usa useAuth()
+// desde a E28 para resolver o agent_id do log de envio.
+const mockUseAuth = vi.fn();
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: (...args: unknown[]) => mockUseAuth(...args),
+}));
+
 const mockUseExternalCatalog = vi.fn();
 vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
@@ -57,6 +64,8 @@ describe('ExternalProductManagement', () => {
   beforeEach(() => {
     mockUseExternalCatalog.mockReset();
     mockUseExternalCatalog.mockReturnValue(baseHookReturn());
+    mockUseAuth.mockReset();
+    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
   });
 
   it('mostra o título e a contagem total de produtos', () => {
