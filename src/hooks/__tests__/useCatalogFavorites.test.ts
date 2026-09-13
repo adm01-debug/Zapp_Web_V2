@@ -109,7 +109,10 @@ describe('useCatalogFavorites', () => {
       await result.current.toggle({ id: 'p2', name: 'Caneta Azul', sku: 'CAN-1', primary_image_url: null });
     });
 
-    expect(result.current.isFavorite('p2')).toBe(true);
+    // waitFor (não expect direto): mesma corrida da E27 (invalidateQueries
+    // dispara um refetch em segundo plano) — a asserção precisa esperar o
+    // hook assentar, não só o retorno de toggle().
+    await waitFor(() => expect(result.current.isFavorite('p2')).toBe(true));
     expect(fakeTable.some((r) => r.product_id === 'p2')).toBe(true);
   });
 
