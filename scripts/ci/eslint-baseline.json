@@ -129,14 +129,6 @@
       "sha256": "1e35fd33049bc79408aab1efce2da262c47fe8e0908aa4c5975f87edf07900a6"
     },
     {
-      "path": "src/components/catalog/ExternalProductManagement.tsx",
-      "sha256": "38e0f160103e8cf95d2decf87a26649ff251b4d89261ae9d5b11f9055dcaff3d"
-    },
-    {
-      "path": "src/components/catalog/useSendProduct.ts",
-      "sha256": "006cb0f78b56ed70994b0f2952ad961da449963f736d2197cccec4c7ebac8af5"
-    },
-    {
       "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
       "sha256": "36fe540c64540bb9ffc8879d93e8906cd85cb2d24dadc304b425c9313f3e3aef"
     },
@@ -231,6 +223,10 @@
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
       "sha256": "a1a83d5d6fff1d35aceea7bb426f9e2c0af353df21a2eff27247be9b47607ae5"
+    },
+    {
+      "path": "src/components/contacts/ContactsTable.tsx",
+      "sha256": "e6768b559950442a7b75bd75ba20f05d6cdf5c81c8e711498220b335cd44ca5f"
     },
     {
       "path": "src/components/contacts/InlineEditCell.tsx",
@@ -934,7 +930,7 @@
     },
     {
       "path": "src/components/talkx/useCampaignEditor.ts",
-      "sha256": "ce07574fd0d6e91799ac78c30dc0932ed8f4407082227b08d6961d2ff77b8a42"
+      "sha256": "eac0707c1ed1111bfa01984ca2d69a8b60a3a144ed9ca2318e5b55d6cf327070"
     },
     {
       "path": "src/components/team-chat/AddMembersDialog.tsx",
@@ -1093,6 +1089,14 @@
       "sha256": "9f525d1dccc635e8595fdae3823b8f959b146be8272049f0385c8fda6cd4b0d5"
     },
     {
+      "path": "src/contexts/LayoutContext.tsx",
+      "sha256": "551712fa8f10a652af30ef6b3e8b06a144aced3ad8b90db0967cb4b1d8998a7a"
+    },
+    {
+      "path": "src/contexts/LayoutScrollContext.tsx",
+      "sha256": "c5bd24720c1b7ee3acbdf0c507ca5fcf2e75a685d0c937aedc9d35ba2a2636c8"
+    },
+    {
       "path": "src/hooks/__tests__/useAgentGamification.test.tsx",
       "sha256": "9cc6cd8dcfd017b18ed64eecaf8707db24865485280073b4171dbc4f3d9ac5de"
     },
@@ -1162,7 +1166,7 @@
     },
     {
       "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "sha256": "f5d96536224009206c2f0ce85e2a8a8dba3470db97a1a7f489f67ddd1db5f289"
+      "sha256": "149e70e17948220e016818ca705a31460f627c7944fda00ff28eb4a45f8fe5eb"
     },
     {
       "path": "src/hooks/__tests__/useGlobalSettings.test.tsx",
@@ -1718,7 +1722,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "sha256": "7aefc081c8b0421843ab3acdb42b6b9f6d7609f9700a2237f3b3e3234e13d218"
+      "sha256": "af9ca1392f0c55dc38ec9f024a361dad6763c7070eeb1961419e4c9fd98f5c63"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -2713,62 +2717,6 @@
       "contextHash": "56ccdcb18b4be26d041fd0a6d382cfb69320152a0bdf1174f23998d4fb5c38ec"
     },
     {
-      "file": "src/components/catalog/ExternalProductManagement.tsx",
-      "line": 76,
-      "column": 6,
-      "endLine": 76,
-      "endColumn": 8,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'buildFilters', 'fetchCategories', 'fetchProducts', and 'fetchSuppliers'. Either include them or remove the dependency array.",
-      "spanHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "lineHash": "27c7e19d1e112eeabf093062e0e24babd319cebac309a618f8cf7a9aa324b972",
-      "contextHash": "ee6c396a101d720a9a4d6eec201096a8b0b486ffcfe4111c112b9a417d84a9c2"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductManagement.tsx",
-      "line": 85,
-      "column": 6,
-      "endLine": 85,
-      "endColumn": 51,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'buildFilters' and 'fetchProducts'. Either include them or remove the dependency array.",
-      "spanHash": "84d0b41babf712c249475ea64161cfe86519829288e0bbeb114a6e8b4661f4e1",
-      "lineHash": "6268f6ef5c17c1276febc70643cce809642ccdb5ff6f5b624230b7c43a972751",
-      "contextHash": "7212de002d1c658239d3d4c286edd434a76e4ae715144e8d3397f307eb37e425"
-    },
-    {
-      "file": "src/components/catalog/ExternalProductManagement.tsx",
-      "line": 90,
-      "column": 6,
-      "endLine": 90,
-      "endColumn": 12,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'buildFilters' and 'fetchProducts'. Either include them or remove the dependency array.",
-      "spanHash": "9ac80c1431a21f37a17d43de8b21dc179888a81a8935137e7f74c213fbc7e22f",
-      "lineHash": "38b5e0274e1540e512e5b416471ec7285d54803c4ac85a743d10d083e1312107",
-      "contextHash": "9c0fc228aa7241de61f2bc89b4579774ec332ab4069be785214d29b43b2e2025"
-    },
-    {
-      "file": "src/components/catalog/useSendProduct.ts",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "091fd7d4fae8c0f6971eea4fa609856cf5567df6ae353221cb5eea5e6a6a4880"
-    },
-    {
       "file": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
       "line": 2,
       "column": 1,
@@ -3215,6 +3163,20 @@
       "spanHash": "1b6378821b7e0195e7c2c3ec296c25bf6595e72eb120c2539edd8182df6852db",
       "lineHash": "dc61204069fd311c0ddc6f2c825f0ee3096fdbb11eda6dcea5f880d964d72cab",
       "contextHash": "9ad1eda20b2f8ee45b6f8c9fe3ea2e19739cad53eab9425a14928f7e0c07b560"
+    },
+    {
+      "file": "src/components/contacts/ContactsTable.tsx",
+      "line": 37,
+      "column": 10,
+      "endLine": 37,
+      "endColumn": 28,
+      "severity": 1,
+      "ruleId": "react-refresh/only-export-components",
+      "messageId": "namedExport",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
+      "spanHash": "c6b8054210863bf36b2aa59db070f13b56eb6bf5fea2a220a7ed0e9195953d6f",
+      "lineHash": "37cff450d0489a6aa8a1c79780e7dcc30e55e666e0e8024022563cef3dabaec1",
+      "contextHash": "fe2199ad4749aa638b9176baeba3ad3882352df660b263523304222c180ad32a"
     },
     {
       "file": "src/components/contacts/InlineEditCell.tsx",
@@ -10763,6 +10725,34 @@
       "contextHash": "08e975b28d1e9e372bb18bf21c2ad898d3cf8b3f2088457ad4acffe0e047dc25"
     },
     {
+      "file": "src/contexts/LayoutContext.tsx",
+      "line": 11,
+      "column": 17,
+      "endLine": 11,
+      "endColumn": 33,
+      "severity": 1,
+      "ruleId": "react-refresh/only-export-components",
+      "messageId": "namedExport",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
+      "spanHash": "fb8138537d7805b24dd9efa0449e1e2f7d53bf7bb95acb6019276045e744ffe5",
+      "lineHash": "d6f0825ff7c5aa5c35f8a1bf1ef80c2e1e68e22434a9c95452f788e04ca47a78",
+      "contextHash": "f006aaba9f39cb57473cb0c1bfe36ca589ea129eafa80afebed5731c2fbaaa49"
+    },
+    {
+      "file": "src/contexts/LayoutScrollContext.tsx",
+      "line": 7,
+      "column": 17,
+      "endLine": 7,
+      "endColumn": 32,
+      "severity": 1,
+      "ruleId": "react-refresh/only-export-components",
+      "messageId": "namedExport",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
+      "spanHash": "2d660602771068d04323c18d227c236b31d5e08cb081ad1100602d64f9eb75a5",
+      "lineHash": "740a61b924d3874b251048d858b50b999eb5e145e0e83c39bb366b458a9e26e3",
+      "contextHash": "7349e37f1e009a57721653286d77e40bbdf16547c8821cf717fdb1b7515030b3"
+    },
+    {
       "file": "src/hooks/__tests__/useAgentGamification.test.tsx",
       "line": 1,
       "column": 1,
@@ -11408,9 +11398,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 108,
+      "line": 111,
       "column": 62,
-      "endLine": 108,
+      "endLine": 111,
       "endColumn": 65,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11436,9 +11426,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 171,
+      "line": 174,
       "column": 31,
-      "endLine": 171,
+      "endLine": 174,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11450,9 +11440,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 573,
+      "line": 576,
       "column": 56,
-      "endLine": 573,
+      "endLine": 576,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11464,9 +11454,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 584,
+      "line": 587,
       "column": 49,
-      "endLine": 584,
+      "endLine": 587,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11478,37 +11468,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 597,
-      "column": 54,
-      "endLine": 597,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "2017bc45f01836ffd5153854461edc823218a6c00c673a0d4d5b3b8c48807b58",
-      "contextHash": "5752b58a0a550cff8a28f719777a966080d4119d4bbcd9cbbfa2dfce9973ba60"
-    },
-    {
-      "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 609,
-      "column": 54,
-      "endLine": 609,
-      "endColumn": 57,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "501489ae8a1d247adba11b1c103efb87852901b3e4a3aa708b0dc808205963ec",
-      "contextHash": "f61c272a1a883809382df2c28db9541324ffeb677b85cfa969a46903b214f231"
-    },
-    {
-      "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 704,
+      "line": 707,
       "column": 18,
-      "endLine": 704,
+      "endLine": 707,
       "endColumn": 21,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -11520,9 +11482,9 @@
     },
     {
       "file": "src/hooks/__tests__/useExternalCatalog.test.ts",
-      "line": 808,
+      "line": 810,
       "column": 51,
-      "endLine": 808,
+      "endLine": 810,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16686,9 +16648,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 169,
+      "line": 166,
       "column": 54,
-      "endLine": 169,
+      "endLine": 166,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16700,9 +16662,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 212,
+      "line": 209,
       "column": 5,
-      "endLine": 212,
+      "endLine": 209,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16714,9 +16676,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 217,
+      "line": 214,
       "column": 51,
-      "endLine": 217,
+      "endLine": 214,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16728,9 +16690,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 268,
+      "line": 265,
       "column": 3,
-      "endLine": 268,
+      "endLine": 265,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16742,9 +16704,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 272,
+      "line": 269,
       "column": 54,
-      "endLine": 272,
+      "endLine": 269,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16756,9 +16718,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "line": 290,
+      "line": 287,
       "column": 7,
-      "endLine": 290,
+      "endLine": 287,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
