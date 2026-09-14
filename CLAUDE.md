@@ -90,6 +90,8 @@ grep "Built from commit" graphify-out/GRAPH_REPORT.md
 Se divergirem, auto-sync N8N corrige em ate 15min.
 
 ## Talk X / Campanhas
-M�dulo em desenvolvimento ativo. Branch de feature: `feat/talkx-f0-remaining` (fase 0), próximas fases em `feat/talkx-f{N}`.
+Módulo em desenvolvimento ativo. Fase 0 (saneamento, E01–E10) e Fase 1 (design system, E11–E20)
+já mergeadas em `main` (Fase 1 via PR #370, branch `feat/catalog-f1-design`). `feat/talkx-f0-remaining`
+não existe mais — próximas fases usam branch novo por fase, padrão `feat/talkx-f{N}-*`.
 - Plano completo: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md`
 - **NUNCA** imprimir tokens ou secrets no output.
