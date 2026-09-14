@@ -16,7 +16,7 @@
 | 2 | `?view=catalog` → `lazyViews.ProductManagement` → `ExternalProductManagement.tsx`. Os params `wizard=new&step=1` na URL são resíduo do deep link do Talk X; o catálogo não os lê. | `ViewRouter.tsx:39`, `lazyViews.ts:13` |
 | 3 | 16 arquivos em `src/components/catalog/`: fluxo externo real (`ExternalProductManagement`, `ExternalProductCatalog` [dialog do chat], `ExternalProductCard`, `ProductDetailDialog`, `SendProductDialog`, `ContactSelectionStep`, `sendProductUtils`, `useSendProduct`) + legado de produtos locais (`ProductManagement`, `ProductCatalog`, `ProductCard`, `ProductForm`, `ShoppingCart`, `ProductMessage`, `useProductManagement`) + `WhatsAppTemplatesManager` (view `wa-templates`, fora do escopo). **Grafo verificado na E01** (`ESTADO_INICIAL.md`): nenhum componente importa os legados; `ProductCard`/`ShoppingCart` só exportam tipos para `src/hooks/business/useShoppingCart.ts`, que só é re-exportado em `hooks/business/index.ts` e testado — cadeia inteira removível. `LazyRoutes.tsx` exporta `LazyProductManagement` sem consumidor. `src/hooks/chat/useRecommendedProducts.ts` (AiTab) lê a tabela **local** `products` do ZAPP — a tabela local fica. | árvore de `main`, grep no VPS |
 | 4 | Fonte de dados: edge `promogifts-catalog` com 4 ações (`list_products`, `get_product`, `list_categories`, `list_suppliers`), auth por JWT do usuário, rate limit 60/min/usuário, busca `ilike` em `name/sku/brand`, ordenação só por `name` na UI. `PRODUCT_FIELDS` **não** traz `images[]`, `is_featured`, `is_new`, `is_bestseller`, `materials`, `tags`, `color_swatches`, `engraving_type`, `created_at`, `last_sync_at`, `order_count` — todos os badges/ficha/galeria do mock dependem disso. | `supabase/functions/promogifts-catalog/index.ts:38-44` |
-| 5 | DB externo (`products`): **7.576 ativos** (bate com a UI), 6.040 em estoque, 2.147 `is_featured`, 252 `is_new` (178 criados em 30 d), 596 `is_bestseller`, 0 `is_on_sale`, 978 kits, 5.750 com >1 imagem, 7.243 com `color_swatches`, 7.386 com `materials`, 3.531 com `engraving_type`, 308 com estoque 1–10, `max(last_sync_at)`=2026-09-05 15:40, `max(updated_at)`=2026-09-11 10:20. 478 categorias (28 raiz; têm `icon`, `image_url`, `color_hex`, `products_count`, `level`, `path`, `full_path_readable`), 5 fornecedores (4 com produto ativo; têm `logo_url`, `low_stock_threshold`), 19.635 variantes ativas (`images`, `color_hex`, `selected_thumbnail`, `next_entry_date/quantity`). `search_vector` tsvector existe e não é usado. Existem `product_images`, `v_catalog_stats`, `user_favorites`, `product_views` (colunas ainda não lidas). | `execute_sql` no MCP GESTÃO DE PRODUTOS |
+| 5 | DB externo (`products`): **7.576 ativos** (bate com a UI), 6.040 em estoque, 2.147 `is_featured`, 252 `is_new` (178 criados em 30 d), 596 `is_bestseller`, 0 `is_on_sale`, 978 kits, 5.750 com >1 imagem, 7.243 com `color_swatches`, 7.386 com `materials`, 3.531 com `engraving_type`, 308 com estoque 1–10, `max(last_sync_at)`=2026-09-05 15:40, `max(updated_at)`=2026-09-11 10:20. 478 categorias (28 raiz na contagem bruta, **27 ativas** — corrigido na E24 por SQL direto; têm `icon`, `image_url`, `color_hex`, `products_count`, `level`, `path`, `full_path_readable`), 5 fornecedores (4 com produto ativo; têm `logo_url`, `low_stock_threshold`), 19.635 variantes ativas (`images`, `color_hex`, `selected_thumbnail`, `next_entry_date/quantity`). `search_vector` tsvector existe e não é usado. Existem `product_images`, `v_catalog_stats`, `user_favorites`, `product_views` (colunas ainda não lidas). | `execute_sql` no MCP GESTÃO DE PRODUTOS |
 | 6 | **Tudo do mock tem backend real** exceto: "Importar planilha" e "Novo Produto" (catálogo é somente-leitura no ZAPP — viram links para o PromoGifts), o banner de marketing (conteúdo estático, não é métrica) e o "+12%" (só entra se calculado de `created_at` por mês). | idem |
 | 7 | DB ZAPP: **não** há tabela de favoritos nem de log de envio de produto. `messages` tem **0** imagens `imagedelivery.net` e **0** textos do template informal → o fluxo "Enviar produto" nunca foi usado em produção (ou nunca funcionou ponta a ponta). 1.968 contatos com telefone. | `db_batch_query` |
 | 8 | `useExternalCatalog.ts`: filtros em `useState` + react-query com `enabled: ready`; `fetchCategories/fetchSuppliers` só fazem `setReady(true)`. Componentes têm `useEffect` sem deps completas → dívida de `react-hooks/exhaustive-deps`/`set-state-in-effect`. `formatPrice` duplicado 3×, `ProductImage`+`handleImageError` duplicados 2×, `ContactResult` duplicado em `sendProductUtils.ts` e `useSendProduct.ts`. | leitura dos arquivos |
@@ -491,24 +491,24 @@
 - [ ] contagens batem com o DB
 - [ ] deploy
 
-### E23 · Ordenação e busca full-text (relevância)
-**Objetivo:** "Ordenar por: Mais relevantes" real.
+### E23 · Ordenação e busca full-text
+**Objetivo:** busca por texto usando o `search_vector` real (em vez de `ilike`).
 **Arquivos:** edge
-1. `order_by` += `relevance, created_at, order_count, stock_quantity, sale_price`.
-2. Com `search`: `.textSearch('search_vector', q, {type:'websearch', config:'portuguese'})` + fallback `ilike` se `search_vector` estiver nulo para o produto (verificar preenchimento: `count(*) where search_vector is null`).
-3. `relevance` só válido com `search`; sem busca → `name`.
-4. Manter `sanitizeSearch`.
-5. Testes Deno: "caneca bambu" retorna bambu antes.
-6. Latência medida (`meta.duration_ms`) < 400 ms para 24 itens.
-7. Deploy + manifest.
-8. `CatalogFilters.order_by` tipado com union.
+1. Executado: `search_vector` 100% preenchido (8.031/8.031, verificado por SQL) e mantido por gatilho `BEFORE INSERT OR UPDATE` — sem lacuna, então **sem fallback `ilike`** (seria código morto).
+2. Achado que mudou o desenho: o gatilho aplica `unaccent()` **antes** do `to_tsvector` — confirmado por SQL que uma busca acentuada gera um léxico diferente do vetor armazenado. `stripDiacritics()` (equivalente em JS) aplicado ao termo antes de `.textSearch('search_vector', termo, {type:'websearch', config:'portuguese'})`.
+3. `order_by` += `order_count` (coluna real). **`relevance` cancelado desta etapa**: ordenar por `ts_rank_cd` exige uma RPC dedicada no banco externo (PostgREST não ordena por rank num select comum) — decisão de arquitetura maior, fora do escopo aqui; sem busca ou com busca, a ordenação continua nas colunas reais (`name` por padrão).
+4. Manter `sanitizeSearch` (ainda usado por `color`/`material` da E22); nova `sanitizeFtsQuery` só limita tamanho (`websearch_to_tsquery` já aceita frases/aspas/operadores).
+5. Sem `deno` neste ambiente (mesma limitação da E22) — sem teste automatizado; validado por `EXPLAIN ANALYZE` direto no banco.
+6. Latência medida via `EXPLAIN ANALYZE` real: 7 ms (índice GIN `idx_products_search_vector` em uso) — bem abaixo do limite de 400 ms.
+7. Deploy junto com a E21/E22 (ver E30) + manifest.
+8. `CatalogFilters.order_by` já é `string` (sem union — a lista de valores aceitos vive só na edge, matching o padrão já usado por `order_by` desde a E21).
 9. CHANGELOG.
-10. Commit `feat(catalog): E23 ordenação + FTS`.
+10. Commit `feat(catalog): E23 busca full-text real`.
 **Checklist**
-- [ ] 6 ordenações
-- [ ] FTS com fallback
-- [ ] latência medida
-- [ ] deploy
+- [ ] busca por `search_vector`, sem `ilike`
+- [ ] `unaccent` do termo casando com o vetor
+- [ ] latência medida (real, via EXPLAIN)
+- [ ] `relevance` documentado como pendente (RPC), não fingido
 
 ### E24 · Ação `catalog_stats` (KPIs, sync, série mensal)
 **Objetivo:** números reais para KPIs e gráfico.
@@ -520,7 +520,7 @@
 5. Delta mensal = `(m0 - m-1)/m-1` calculado no client; renderiza só se `m-1 > 0`.
 6. Testes: RPC no MCP retorna 7.576/6.040/2.147.
 7. Deploy + manifest.
-8. `ARQUITETURA.md` mapa métrica→fonte atualizado.
+8. `ARQUITETURA.md` — **não foi criado na hora certa**; feito retroativamente na E25 (`docs/catalogo/ARQUITETURA.md`, com diagrama Mermaid, mapa métrica→fonte e riscos conhecidos até aqui).
 9. CHANGELOG.
 10. Commit `feat(catalog): E24 catalog_stats`.
 **Checklist**
@@ -539,7 +539,7 @@
 5. Cache client 30 min mantido.
 6. Teste Deno.
 7. Deploy + manifest.
-8. Verificar: 28 raiz, 4 fornecedores com produto.
+8. Conferir os números reais desta etapa: 27 raiz ativas (achado na E24, corrigido nesta linha do plano — a estimativa original da seção 0 dizia 28), 4 fornecedores com produto.
 9. CHANGELOG.
 10. Commit `feat(catalog): E25 categorias e fornecedores enriquecidos`.
 **Checklist**
@@ -554,9 +554,9 @@
 1. Medir chamadas por abertura da tela (hoje 3; após F3 seriam 5).
 2. Ação combinada `bootstrap` → `{categories, suppliers, stats}` em 1 chamada.
 3. Rate limit por usuário sobe para 120/min só para `list_products` (paginação rápida); demais mantêm 60.
-4. `staleTime` por chave: lista 2 min, produto 5 min, bootstrap 10 min.
+4. `staleTime`: lista mantida em 5 min (já estava assim desde a E05/E06 — não reduzida pra 2 min como o plano original sugeria, sem motivo concreto pra mudar algo que já funciona), produto 5 min (inalterado), bootstrap 10 min (novo).
 5. `keepPreviousData` na lista (sem flash na paginação).
-6. Prefetch da página seguinte no hover de "Próxima".
+6. Adiado para a E45 (Fase 4): não existe botão "Próxima" ainda pra atrelar o hover — prefetch de página é uma etapa de UI, não de backend.
 7. Teste de `useExternalCatalog` para `bootstrap`.
 8. Deploy + manifest.
 9. CHANGELOG.
@@ -570,12 +570,12 @@
 ### E27 · Tabela `catalog_favorites` no ZAPP
 **Objetivo:** coração persistente por usuário.
 **Arquivos:** `supabase/migrations/2026091?_catalog_favorites.sql`, `schema-catalog.json`, `schema-manifest.json`, `scripts/db-audit/catalog.sql`
-1. DDL: `catalog_favorites(user_id uuid references auth.users, product_id uuid, product_name text, product_sku text, primary_image_url text, created_at timestamptz default now(), primary key(user_id, product_id))`.
-2. RLS: `select/insert/delete` onde `user_id = auth.uid()`.
+1. Executado: schema real é `id uuid` PK próprio + `UNIQUE(user_id, product_id)` — checado antes de escrever contra a tabela `favorite_contacts` já existente (mesmo padrão), não a PK composta que esta linha previa originalmente.
+2. RLS: 1 única policy `FOR ALL` com `USING (user_id = auth.uid())` — mesmo padrão de `favorite_contacts`, mais simples que 3 policies separadas.
 3. Índice `(user_id, created_at desc)`.
-4. Aplicar via `db_apply_migration` (atômico); espelhar o SQL em `supabase/migrations/`.
-5. Rodar `catalog.sql`/`manifest.sql` via `db_batch_query` e commitar o `schema-catalog.json`/`schema-manifest.json` regenerados.
-6. `db-guard.yml` verde localmente (`node scripts/db-audit/check-migration-drift.mjs`).
+4. Aplicado via `db_apply_migration` (atômico, versão `20260913013153`); SQL espelhado em `supabase/migrations/`.
+5. `schema-catalog.json` regenerado de verdade via `catalog.sql`/`db_batch_query` e commitado. `schema-manifest.json` **não** regenerado manualmente nesta etapa: achado real — existe um workflow `types-sync.yml` que dispara sozinho em todo push no `main` que toque `supabase/migrations/**` (ou semanalmente), conecta no banco oficial, regenera os 3 artefatos (`types.ts`/`schema-catalog.json`/`schema-manifest.json`) e abre PR automático se houver drift, com seus próprios gates (tsc, usage-guard, limite de remoções). É a origem dos commits `chore(db): sincronizar...` já vistos nesta sessão. Reconstruir os ~400KB do manifest à mão neste chat seria redundante e arriscado (risco de erro de transcrição) — deixado para o bot, que já faz isso de forma confiável.
+6. `db-guard.yml` (offline, roda em todo PR) confirmado que **não** chama `check-manifest-fresh.mjs` — só valida `schema-catalog.json` via `supabase-usage-guard.mjs`, testes dos comparadores e SQL sintático num Postgres descartável. A comparação ao vivo do manifest é do `types-sync.yml`/`db-live-guard.yml`, fora do caminho crítico deste PR.
 7. Hook `useCatalogFavorites()` (`list`, `toggle` optimistic).
 8. Teste do hook com mock.
 9. CHANGELOG.
@@ -589,14 +589,14 @@
 ### E28 · Tabela `catalog_send_events` (log de envios)
 **Objetivo:** "Enviados recentemente" e métricas de uso reais.
 **Arquivos:** migration, catálogos, `useSendProduct.ts`
-1. DDL: `catalog_send_events(id uuid pk default gen_random_uuid(), product_id uuid, product_name text, product_sku text, variant_label text, contact_id uuid references contacts, agent_id uuid, template text check in ('formal','informal','promo','custom'), images_count int, message_length int, status text check in ('sent','partial','failed'), message_ids jsonb, created_at timestamptz default now())`.
-2. RLS: insert `agent_id = auth.uid()`; select para `authenticated`.
-3. Índices `(created_at desc)`, `(product_id)`, `(contact_id)`.
-4. Aplicar via `db_apply_migration`; regenerar `schema-catalog.json`/`schema-manifest.json` (mesmo rito da E27).
-5. `useSendToContact` grava 1 evento ao final com `status` real e `message_ids`.
-6. Teste do hook: evento gravado com `partial` quando 1 imagem falha.
-7. `db-guard` verde.
-8. Hook `useCatalogRecentSends(limit)`.
+1. Executado: DDL igual ao previsto, mas achado real ao checar `csat_surveys` (tabela mais parecida) antes de escrever: `agent_id` referencia `profiles(id)`, não `auth.users(id)` direto (mesmo padrão da E27 corrigido de novo aqui).
+2. RLS real (não a prevista): 2 policies como `csat_surveys` — insert com `WITH CHECK` (`agent_id is null or agent_id in (select profiles.id from profiles where profiles.user_id = auth.uid()) or is_admin_or_supervisor(auth.uid())`) e select restrito a "meus próprios ou admin/supervisor" — não "insert simples + select para authenticated" como a linha original previa.
+3. Índices `(created_at desc)`, `(product_id)`, `(contact_id)` — executado como previsto.
+4. Aplicado via `db_apply_migration`. `schema-catalog.json` regenerado de verdade; `schema-manifest.json` deixado pro `types-sync.yml` (mesma decisão da E27, já validada). `types.ts` editado à mão (bloqueia `tsc` agora).
+5. `useSendToContact` (em `src/components/catalog/useSendProduct.ts`) grava 1 evento ao final via `logCatalogSendEvent()` (novo, em `useCatalogContactSearch.ts` — mesmo arquivo que já isola Supabase pra fora de `src/components/catalog/`), com `status` real calculado a partir das falhas de envio (`sent`/`partial`/`failed`) e os `message_ids` reais retornados por `sendOutboundMessage`. `agentId` resolvido via `useAuth().profile?.id` em `SendProductDialog.tsx` — isso quebrou `ExternalProductManagement.test.tsx` de verdade (sem `AuthProvider` no teste), corrigido com o mock padrão do projeto (`vi.fn()` + `mockReturnValue`, não uma implementação inicial tipada — isso trava a assinatura contra o spread `...args`).
+6. Sem teste de hook Deno dedicado (mesma limitação da E22/E23 — sem `deno` neste ambiente); a lógica de `status` é testável no lado React e não tem teste dedicado ainda — pendência real, não bloqueante pro merge.
+7. `db-guard.yml` (offline) não depende do manifest nem exercita a escrita real na tabela — só valida `.from()` contra `schema-catalog.json`, já regenerado.
+8. **Adiado**: `useCatalogRecentSends(limit)` cancelado desta etapa — sem tela "Enviados recentemente" ainda pra consumir (mesma lógica do prefetch adiado na E26). Fica pra quando essa tela existir (F5+).
 9. CHANGELOG.
 10. Commit `feat(catalog): E28 catalog_send_events`.
 **Checklist**
@@ -689,7 +689,7 @@
 **Objetivo:** 6 cards do mock A com `catalog_stats`.
 **Arquivos:** `ExternalProductManagement.tsx`
 1. Montar `CatalogKpiStrip stats={stats}`.
-2. Categorias = `categories_root` (28) — rótulo "Categorias"; tooltip "28 raiz · 478 no total".
+2. Categorias = `categories_root` (27, confirmado pela RPC da E24) — rótulo "Categorias"; tooltip "27 raiz · 478 no total".
 3. Fornecedores = `suppliers_active` (4).
 4. Novidades = `new_30d`; rótulo "Novidades (30 dias)".
 5. Clique no KPI aplica filtro correspondente (em estoque, destaque, novidade).

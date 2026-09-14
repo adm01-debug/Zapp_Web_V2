@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/hooks/ui/use-toast';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
-import { fetchCatalogContactResults } from '@/hooks/integrations/useCatalogContactSearch';
+import { fetchCatalogContactResults, logCatalogSendEvent, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
 
 const log = getLogger('useSendProduct');
 
@@ -58,6 +58,15 @@ export function useContactSearch(step: 'configure' | 'selectContact') {
   };
 }
 
+/** Produto sendo enviado — só o necessário pro log de catalog_send_events (E28). */
+export interface SendEventProductInfo {
+  id: string;
+  name: string;
+  sku?: string | null;
+  variantLabel?: string | null;
+  template?: CatalogSendTemplate | null;
+}
+
 export function useSendToContact(onSuccess: () => void) {
   const [isSending, setIsSending] = useState(false);
 
@@ -65,16 +74,20 @@ export function useSendToContact(onSuccess: () => void) {
     contact: ContactResult,
     message: string,
     imageUrls: string[],
+    product?: SendEventProductInfo,
+    agentId?: string | null,
   ) => {
     setIsSending(true);
     try {
       // Send images
       let imageFailed = 0;
+      const messageIds: string[] = [];
       for (const imgUrl of imageUrls) {
         try {
           // Keep the old empty provider caption. The image URL is stored in
           // media_url; it must never become customer-facing message text.
-          await sendOutboundMessage({ contactId: contact.id, content: '', messageType: 'image', mediaUrl: imgUrl });
+          const result = await sendOutboundMessage({ contactId: contact.id, content: '', messageType: 'image', mediaUrl: imgUrl });
+          messageIds.push(result.id);
         } catch {
           imageFailed++;
         }
@@ -82,10 +95,33 @@ export function useSendToContact(onSuccess: () => void) {
 
       // Send text
       let textFailed = false;
-      try { await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' }); }
-      catch { textFailed = true; }
+      try {
+        const result = await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' });
+        messageIds.push(result.id);
+      } catch { textFailed = true; }
 
       const totalFailed = imageFailed + (textFailed ? 1 : 0);
+      const totalAttempted = imageUrls.length + 1;
+      const status = totalFailed === 0 ? 'sent' : totalFailed === totalAttempted ? 'failed' : 'partial';
+
+      if (product) {
+        // Falha silenciosa (dentro do próprio helper) — nunca bloqueia o
+        // fluxo de envio, que já terminou de verdade nesse ponto.
+        void logCatalogSendEvent({
+          productId: product.id,
+          productName: product.name,
+          productSku: product.sku,
+          variantLabel: product.variantLabel,
+          contactId: contact.id,
+          agentId,
+          template: product.template,
+          imagesCount: imageUrls.length,
+          messageLength: message.length,
+          status,
+          messageIds,
+        });
+      }
+
       if (totalFailed > 0) {
         toast({ title: 'Envio parcial', description: `${totalFailed} mensagem(ns) falharam para ${contact.name}`, variant: 'destructive' });
       } else {
