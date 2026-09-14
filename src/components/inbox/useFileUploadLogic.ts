@@ -20,6 +20,7 @@ interface FilePreview {
 
 interface UploadedPrivateObject {
   locatorUrl: string;
+  storagePath: string;
 }
 
 interface QueuedFile extends FilePreview {
@@ -31,6 +32,40 @@ interface QueuedFile extends FilePreview {
 
 const categoryOrder: Record<string, number> = { image: 0, video: 1, audio: 2, document: 3, sticker: 4 };
 const MAX_FILES = 10;
+
+// Storage isolation hardening: nomes de arquivo enviados pelo usuário viram
+// parte do caminho no bucket público whatsapp-media. Sem isso, caracteres
+// fora de [a-zA-Z0-9._-] (acentos, espaços, símbolos) chegam intactos ao
+// Storage API.
+function sanitizeStorageFileName(fileName: string): string {
+  const normalized = fileName
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/\.{2,}/g, '.')
+    .replace(/-+\./g, '.')
+    .replace(/\.-+/g, '.')
+    .replace(/^[._-]+|[._-]+$/g, '')
+    .slice(0, 120);
+
+  return normalized || 'arquivo';
+}
+
+function createStorageObjectId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  if (typeof globalThis.crypto?.getRandomValues !== 'function') {
+    throw new Error('Não foi possível gerar um identificador seguro para o arquivo');
+  }
+
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'));
+  return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
+}
 
 export type { FileMessageData, FilePreview, QueuedFile };
 
@@ -57,6 +92,17 @@ export function useFileUploadLogic(opts: {
 
   const apiLoading = false;
 
+  // Best-effort: um objeto que ficou órfão no bucket (upload ok, envio
+  // seguinte falhou) não trava o fluxo do usuário nem vira erro fatal.
+  const removeStoredObjectBestEffort = useCallback(async (storagePath: string) => {
+    try {
+      const { error } = await supabase.storage.from('whatsapp-media').remove([storagePath]);
+      if (error) log.warn('Não foi possível remover o upload órfão do storage:', error);
+    } catch (err) {
+      log.warn('Não foi possível remover o upload órfão do storage:', err);
+    }
+  }, []);
+
   const processFilesToQueue = useCallback((files: File[]): QueuedFile[] => {
     const processed = files.slice(0, MAX_FILES).map((file, index) => {
       const validation = validateFile(file);
@@ -70,6 +116,8 @@ export function useFileUploadLogic(opts: {
   }, []);
 
   const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
+    if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+
     let fileToUpload = file;
     if (file.type.startsWith('image/') && file.type !== 'image/gif') {
       try {
@@ -80,17 +128,22 @@ export function useFileUploadLogic(opts: {
         }
       } catch (err) { log.warn('Image compression failed:', err); }
     }
-    const fileExt = fileToUpload.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `uploads/${fileName}`;
+    const safeFileName = sanitizeStorageFileName(fileToUpload.name);
+    // Escopado por contato: isola os arquivos de cada conversa no bucket
+    // (antes era uma única pasta uploads/ compartilhada por todo mundo) e
+    // torna qualquer limpeza/auditoria rastreável até o contato de origem.
+    const filePath = `${contactId}/${createStorageObjectId()}-${safeFileName}`;
 
     const { error } = await supabase.storage.from('whatsapp-media').upload(filePath, fileToUpload, { cacheControl: '31536000', upsert: false });
     if (error) throw new Error(`Erro ao fazer upload: ${error.message}`);
 
     const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(filePath);
-    if (!locatorData?.publicUrl) throw new Error('Erro ao gerar referência durável do arquivo');
-    return { locatorUrl: locatorData.publicUrl };
-  }, []);
+    if (!locatorData?.publicUrl) {
+      await removeStoredObjectBestEffort(filePath);
+      throw new Error('Erro ao gerar referência durável do arquivo');
+    }
+    return { locatorUrl: locatorData.publicUrl, storagePath: filePath };
+  }, [contactId, removeStoredObjectBestEffort]);
 
   const handleClose = useCallback(() => {
     if (filePreview?.preview) URL.revokeObjectURL(filePreview.preview);
@@ -105,17 +158,22 @@ export function useFileUploadLogic(opts: {
 
   const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
-    const { locatorUrl } = await uploadFileToStorage(file);
+    const { locatorUrl, storagePath } = await uploadFileToStorage(file);
     const messageContent = category === 'document' ? file.name : `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : category === 'sticker' ? 'Sticker' : 'Arquivo'}]`;
     const messageType: OutboundMessageType = category === 'image' || category === 'video' || category === 'audio' || category === 'sticker'
       ? category
       : 'document';
-    const result = await sendOutboundMessage({
-      contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
-      caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
-    });
-    return { result, mediaUrl: locatorUrl, category: messageType };
-  }, [contactId, connectionId, uploadFileToStorage]);
+    try {
+      const result = await sendOutboundMessage({
+        contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
+        caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
+      });
+      return { result, mediaUrl: locatorUrl, category: messageType };
+    } catch (error) {
+      await removeStoredObjectBestEffort(storagePath);
+      throw error;
+    }
+  }, [contactId, connectionId, uploadFileToStorage, removeStoredObjectBestEffort]);
 
   const handleSendFile = useCallback(async () => {
     if (!filePreview || !filePreview.validation.valid) return;
