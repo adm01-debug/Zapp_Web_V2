@@ -41,37 +41,8 @@ export default defineConfig(({ mode }) => {
       include: ["react", "react-dom", "framer-motion", "lucide-react"],
       force: true,
     },
-    esbuild: {
-      // In production: remove `debugger` statements entirely.
-      // Do NOT drop 'console' globally — console.error and console.warn
-      // must survive for ErrorBoundary, Sentry, and runtime error tracking.
-      drop: isProd ? ["debugger"] : [],
-
-      // Mark informational console methods as pure (no side effects).
-      // esbuild will tree-shake these calls away during minification
-      // since their return value (undefined) is never used.
-      // console.error and console.warn are intentionally EXCLUDED so they
-      // survive in production for error monitoring.
-      pure: isProd
-        ? [
-            "console.log",
-            "console.debug",
-            "console.info",
-            "console.trace",
-            "console.group",
-            "console.groupCollapsed",
-            "console.groupEnd",
-            "console.time",
-            "console.timeEnd",
-            "console.dir",
-            "console.dirxml",
-            "console.table",
-          ]
-        : [],
-    },
     build: {
       target: "esnext",
-      minify: "esbuild",
       cssMinify: true,
       chunkSizeWarningLimit: 1200,
       // sourcemap: 'hidden' → source maps are generated but NOT linked in the
@@ -82,6 +53,18 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: false,
       rolldownOptions: {
         output: {
+          // Vite 8 uses Rolldown/Oxc. The former `esbuild` block was only a
+          // compatibility shim and was ignored when Oxc options were present.
+          // Keep `console.warn` and `console.error` for runtime diagnostics;
+          // Oxc's `dropConsole` is intentionally not used because it removes
+          // all console calls. `dropDebugger` has the desired narrow scope.
+          minify: isProd
+            ? {
+                compress: {
+                  dropDebugger: true,
+                },
+              }
+            : undefined,
           // Vite 8 = rolldown. A compat de `manualChunks` aplica os grupos com
           // `includeDependenciesRecursively: true`: o grupo vendor-charts
           // arrastava o React (dependencia do recharts) e vendor-maps arrastava

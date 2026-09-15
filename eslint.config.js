@@ -21,6 +21,9 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Debuggers must never reach first-party production code. Third-party
+      // bundles are intentionally outside ESLint's source scope.
+      "no-debugger": "error",
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },

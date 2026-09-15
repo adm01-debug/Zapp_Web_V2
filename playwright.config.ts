@@ -18,7 +18,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'bun run dev',
+    // The application development server intentionally defaults to port 8080.
+    // E2E owns an isolated port so Playwright's readiness probe and its browser
+    // always exercise the same process, including while a developer is running
+    // the app locally on the default port.
+    command: 'bun run dev -- --host 127.0.0.1 --port 5173 --strictPort',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
