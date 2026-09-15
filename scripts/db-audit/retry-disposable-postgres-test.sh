@@ -9,10 +9,13 @@ set -euo pipefail
 # Second known bootstrap signature: the official postgres image restarts the
 # server once (temporary instance for initdb scripts, then the real one) —
 # a readiness probe can land in that gap, pass, and the very next psql call
-# then hits a socket that momentarily doesn't exist. That error comes
-# straight from psql (unguarded, non-"FAIL: ..." text), so it must be matched
-# explicitly too.
-BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed: No such file or directory'
+# then hits a socket that momentarily doesn't exist or is mid-shutdown. That
+# error comes straight from psql (unguarded, non-"FAIL: ..." text) and its
+# suffix varies by exact timing ("No such file or directory", "FATAL:  the
+# database system is shutting down", ...), so match the whole class by its
+# common "connection to server on socket ... failed:" prefix instead of one
+# exact suffix — confirmed both suffixes on the same branch within minutes.
+BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:'
 if [[ "$#" -eq 0 ]]; then
   printf 'usage: %s <test command> [args...]\n' "${0##*/}" >&2
   exit 64
