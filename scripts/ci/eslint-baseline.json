@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "command": "eslint . --format json",
   "eslintVersion": "9.32.0",
-  "eslintConfigSha256": "65c5b222366d148fe97262547645146cbb040e19588f888b236f8569242dcc8d",
+  "eslintConfigSha256": "bbf27a15fb5d5d33687a98f9362bbf808e49fb90c848376c49bbeae13ac622cd",
   "files": [
     {
       "path": "src/components/a11y/a11yHooks.tsx",
@@ -590,7 +590,7 @@
     },
     {
       "path": "src/components/inbox/useFileUploadLogic.ts",
-      "sha256": "aa053b887671cf468b35e4e87486a27aadae6ed7a36d90a0debdd32aeb2b7c32"
+      "sha256": "1f14d83370923769bfbaa25ecafdbaef0f14c62e25a6cf4d523a2d644eedd12e"
     },
     {
       "path": "src/components/inbox/useGlobalSearchData.ts",

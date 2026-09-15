@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test';
 test.describe('Auth flows', () => {
   test('login page renders', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /entrar|login/i })).toBeVisible();
+    await expect(page.getByRole('main', { name: /acesso à plataforma/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /bem-vindo de volta/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /^entrar$/i })).toHaveAttribute('data-state', 'active');
+    await expect(page.getByRole('button', { name: /^entrar$/i })).toBeVisible();
   });
 
   test('login form validates email format', async ({ page }) => {
