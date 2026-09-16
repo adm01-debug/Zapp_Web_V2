@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import { Package, type LucideIcon } from 'lucide-react';
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
@@ -373,6 +374,50 @@ export interface CatalogCategoryLike {
   id: string;
   name: string;
   products_count?: number | null;
+  icon?: string | null;
+}
+
+// Resolve um icone lucide-react a partir do nome vindo do banco
+// (categories.icon, E25). dynamicIconImports usa chaves kebab-case
+// (ex: "shopping-bag") - normaliza o nome recebido antes de olhar no
+// mapa. Nome desconhecido/ausente -> nenhum icone (fallback previsto
+// no plano), nunca um erro; carregado sob demanda (React.lazy), nao
+// empacota o pacote de icones inteiro.
+function toKebabCase(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/[\s_]+/g, '-').toLowerCase();
+}
+
+// Cache do modulo (nao e um Hook, sobrevive entre montagens/desmontagens -
+// o mesmo nome de icone nunca refaz o import() depois da 1a resolucao).
+const categoryIconCache = new Map<string, LucideIcon>();
+
+/** react-hooks/static-components rejeita React.lazy() (mesmo memoizado)
+ * dentro do corpo do render, mesmo com cache proprio por baixo - a
+ * criacao do lazy component em si e o que a regra proibe, nao importa
+ * se o resultado seria estavel. Resolvido sem React.lazy/Suspense: o
+ * import() dinamico roda dentro de um effect (padrao assincrono comum,
+ * nao sinalizado), o componente ja resolvido so entra no estado quando
+ * pronto - nada e "criado" durante o render, so referenciado. */
+function CategoryChipIcon({ name }: { name: string }) {
+  const key = toKebabCase(name);
+  const [Icon, setIcon] = useState<LucideIcon | null>(() => categoryIconCache.get(key) ?? null);
+  useEffect(() => {
+    // Cache-hit ja foi coberto pelo inicializador preguicoso do useState
+    // acima (roda 1x no mount) - reafirmar aqui com setState seria a
+    // mesma regra da E32 (set-state-in-effect). So busca se preciso.
+    if (categoryIconCache.has(key)) return;
+    const loader = dynamicIconImports[key as keyof typeof dynamicIconImports];
+    if (!loader) { setIcon(null); return; }
+    let active = true;
+    loader().then((mod) => {
+      categoryIconCache.set(key, mod.default);
+      if (active) setIcon(mod.default);
+    }).catch(() => { if (active) setIcon(null); });
+    return () => { active = false; };
+  }, [key]);
+  if (!Icon) return null;
+  const Comp = Icon;
+  return <Comp className="w-3.5 h-3.5" />;
 }
 
 interface CategoryChipsProps {
@@ -404,6 +449,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           title={c.products_count != null ? `${c.products_count} produtos` : undefined}
           className={`catalog-category-chip ${activeId === c.id ? 'catalog-category-chip--active' : ''}`}
         >
+          {c.icon && <CategoryChipIcon name={c.icon} />}
           {c.name}
         </button>
       ))}
@@ -417,6 +463,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
             {rest.map((c) => (
               <DropdownMenuItem key={c.id} onSelect={() => onChange(c.id)}>
+                {c.icon && <CategoryChipIcon name={c.icon} />}
                 {c.name}
                 {c.products_count != null && (
                   <span className="ml-auto text-xs text-muted-foreground tabular-nums">{c.products_count}</span>
