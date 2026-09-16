@@ -26,12 +26,12 @@ function personalize(
   trackingUrl?: string,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
-  let result = template
-    .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, contact.name || '')
-    .replace(/\{\{apelido\}\}/gi, contact.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, contact.company || '')
-    .replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
+  // Substituições de valor confiável (saudação computada, vars de campanha,
+  // link gerado pelo servidor) primeiro; dado de contato (nome/apelido/
+  // empresa, editável via CRM) por último e em passe único — caso contrário
+  // um campo como `company` contendo literalmente "{{saudacao}}" ou
+  // "{{link}}" seria reinterpretado como placeholder pela chamada seguinte.
+  let result = template.replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
   for (const v of customVars) {
     result = result.split('{{' + v + '}}').join('[' + v + ']');
   }
@@ -39,6 +39,13 @@ function personalize(
   if (trackingUrl) {
     result = result.split('{{link}}').join(trackingUrl);
   }
+  const contactValues: Record<string, string> = {
+    nome: firstName,
+    nome_completo: contact.name || '',
+    apelido: contact.nickname || firstName,
+    empresa: contact.company || '',
+  };
+  result = result.replace(/\{\{(nome_completo|nome|apelido|empresa)\}\}/gi, (_match, key: string) => contactValues[key.toLowerCase()]);
   return result;
 }
 
@@ -247,6 +254,21 @@ Deno.serve(async (req) => {
       .order("created_at");
     if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
 
+    // E90: link rastreável referenciado por {{link}} no template. Uma campanha
+    // pode ter mais de um link cadastrado; o placeholder é único, então usamos
+    // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
+    const { data: trackingLink } = await supabase
+      .from("talkx_links")
+      .select("slug")
+      .eq("campaign_id", campaignId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const trackingUrlFor = (recipientId: string) =>
+      trackingLink?.slug
+        ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
+        : undefined;
+
     // Check against the source of truth for every recipient. This makes a
     // phone-only, formatted legacy opt-out equivalent to the contact phone
     // and lets us repeat the check immediately before a provider POST.
@@ -392,6 +414,7 @@ Deno.serve(async (req) => {
           contact as { name: string; nickname?: string; company?: string },
           [],
           typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+          trackingUrlFor(recipient.id as string),
         );
         const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
           p_recipient_id: recipient.id,
@@ -416,6 +439,12 @@ Deno.serve(async (req) => {
       const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
 
       let providerPostAttempted = false;
+      // Precisa viver fora do try: o catch chama clearTimeout(sendTimeout) para
+      // qualquer erro dentro do try, inclusive os lançados antes da linha que
+      // cria o timeout — declarado como `const` dentro do try, essa variável
+      // não existia no escopo do catch (ReferenceError em runtime a cada erro
+      // pré-dispatch, mascarando o erro original em vez de acionar o backoff).
+      let sendTimeout: ReturnType<typeof setTimeout> | undefined;
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
         const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
@@ -490,7 +519,7 @@ Deno.serve(async (req) => {
 
         // E91: timeout de segurança por envio
         const abortCtrl = new AbortController();
-        const sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
+        sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
 
         if (recipientHasMedia) {
           const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
@@ -504,13 +533,15 @@ Deno.serve(async (req) => {
             effectiveMediaType === "audio"
               ? { number: phone, audio: mediaSource, delay: 0 }
               : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
           );
         } else {
           await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/sendText/${beforeSendInstanceId}`,
-            { number: phone, text: personalizedMsg, delay: 0 }
+            { number: phone, text: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
           );
         }
         clearTimeout(sendTimeout);

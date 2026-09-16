@@ -11,6 +11,7 @@ export async function evoFetch(
   body: unknown,
   fetcher: Fetcher = (u, o) => fetch(u, o),
   v2Method = "POST",
+  signal?: AbortSignal,
 ): Promise<Response> {
   let path = v2Path;
   let method = v2Method;
@@ -41,6 +42,7 @@ export async function evoFetch(
     method,
     headers: { "Content-Type": contentType, apikey },
     ...(method !== "GET" && finalBody ? { body: JSON.stringify(finalBody) } : {}),
+    ...(signal ? { signal } : {}),
   });
 }
 
