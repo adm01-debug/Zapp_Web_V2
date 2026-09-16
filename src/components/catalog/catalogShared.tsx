@@ -4,8 +4,9 @@
  * Ponto único para evitar duplicação entre ExternalProductCard,
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, type LucideIcon } from 'lucide-react';
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
@@ -373,6 +374,47 @@ export interface CatalogCategoryLike {
   id: string;
   name: string;
   products_count?: number | null;
+  icon?: string | null;
+}
+
+// Resolve um icone lucide-react a partir do nome vindo do banco
+// (categories.icon, E25). dynamicIconImports usa chaves kebab-case
+// (ex: "shopping-bag") - normaliza o nome recebido antes de olhar no
+// mapa. Nome desconhecido/ausente -> nenhum icone (fallback previsto
+// no plano), nunca um erro; carregado sob demanda (import() dinamico),
+// nao empacota o pacote de icones inteiro.
+function toKebabCase(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/[\s_]+/g, '-').toLowerCase();
+}
+
+// Cache do modulo (nao e um Hook, sobrevive entre montagens/desmontagens -
+// o mesmo nome de icone nunca refaz o import() depois da 1a resolucao).
+const categoryIconCache = new Map<string, LucideIcon>();
+
+/** react-hooks/static-components rejeita React.lazy() (mesmo memoizado)
+ * dentro do corpo do render, mesmo com cache proprio por baixo - a
+ * criacao do lazy component em si e o que a regra proibe. Resolvido
+ * sem React.lazy/Suspense: dynamicIconImports e um objeto estatico ja
+ * importado, entao saber se a CHAVE existe e sincrono; so o VALOR (o
+ * import() do icone em si) precisa ser assincrono, e roda dentro de um
+ * effect cujo unico setState fica num callback assincrono (.then), nunca
+ * sincrono no corpo do effect (react-hooks/set-state-in-effect). */
+function CategoryChipIcon({ name }: { name: string }) {
+  const key = toKebabCase(name);
+  const loader = dynamicIconImports[key as keyof typeof dynamicIconImports];
+  const [Icon, setIcon] = useState<LucideIcon | null>(() => categoryIconCache.get(key) ?? null);
+  useEffect(() => {
+    if (!loader || categoryIconCache.has(key)) return;
+    let active = true;
+    loader().then((mod) => {
+      categoryIconCache.set(key, mod.default);
+      if (active) setIcon(mod.default);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [key, loader]);
+  if (!loader || !Icon) return null;
+  const Comp = Icon;
+  return <Comp className="w-3.5 h-3.5" />;
 }
 
 interface CategoryChipsProps {
@@ -404,6 +446,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           title={c.products_count != null ? `${c.products_count} produtos` : undefined}
           className={`catalog-category-chip ${activeId === c.id ? 'catalog-category-chip--active' : ''}`}
         >
+          {c.icon && <CategoryChipIcon name={c.icon} />}
           {c.name}
         </button>
       ))}
@@ -417,6 +460,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
             {rest.map((c) => (
               <DropdownMenuItem key={c.id} onSelect={() => onChange(c.id)}>
+                {c.icon && <CategoryChipIcon name={c.icon} />}
                 {c.name}
                 {c.products_count != null && (
                   <span className="ml-auto text-xs text-muted-foreground tabular-nums">{c.products_count}</span>

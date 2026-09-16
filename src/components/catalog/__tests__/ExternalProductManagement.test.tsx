@@ -146,6 +146,47 @@ describe('ExternalProductManagement', () => {
     expect(hookReturn.fetchProducts).not.toHaveBeenCalled();
   });
 
+  it('E34: clicar no chip de categoria aplica o filtro e reflete na URL', async () => {
+    const hookReturn = baseHookReturn();
+    mockUseExternalCatalog.mockReturnValue(hookReturn);
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+    hookReturn.fetchProducts.mockClear();
+
+    // "Canetas" tambem aparece como badge (div, nao clicavel) nos cards
+    // de produto mockados - getByRole('button', ...) pega so o chip real,
+    // ignora os badges (achado real: getAllByText pegava 3 elementos, o
+    // ultimo era um badge de card sem onClick, testando nada).
+    fireEvent.click(screen.getByRole('button', { name: 'Canetas' }));
+
+    await new Promise((r) => setTimeout(r, 350));
+    const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
+    expect(lastCall.category_id).toBe('cat1');
+    expect(window.location.search).toContain('view=catalog');
+    expect(window.location.search).toContain('cat=cat1');
+  });
+
+  it('E34: URL com ?view=catalog&cat=<id> ja aplica o filtro no mount', () => {
+    // parseCatalogCategoryRoute exige formato UUID de verdade - 'cat1' (o
+    // id simplificado usado nos outros mocks deste arquivo) e rejeitado
+    // como malformado por design, entao aqui precisa de um id real.
+    const realCategoryId = 'a1b2c3d4-e5f6-4789-a123-456789abcdef';
+    const previousSearch = window.location.search;
+    window.history.replaceState(null, '', `/?view=catalog&cat=${realCategoryId}`);
+    try {
+      const hookReturn = baseHookReturn({
+        categories: [{ id: realCategoryId, name: 'Canetas', slug: 'canetas', parent_id: null }],
+      });
+      mockUseExternalCatalog.mockReturnValue(hookReturn);
+      renderManagement();
+      const chip = screen.getByRole('button', { name: 'Canetas' });
+      expect(chip.className).toContain('catalog-category-chip--active');
+    } finally {
+      window.history.replaceState(null, '', previousSearch || '/');
+    }
+  });
+
   it('digitar na busca chama fetchProducts com o texto (debounce)', async () => {
     const hookReturn = baseHookReturn();
     mockUseExternalCatalog.mockReturnValue(hookReturn);
@@ -166,10 +207,13 @@ describe('ExternalProductManagement', () => {
     expect(screen.getByText('Caneta Plástica Azul')).toBeInTheDocument();
   });
 
-  it('estado vazio: mostra "Nenhum produto encontrado" quando products=[]', () => {
+  it('estado vazio: mostra "Catálogo vazio" quando products=[] sem filtros ativos', () => {
+    // Texto atualizado pela E39 (implementada em sessao concorrente, ver
+    // CHANGELOG) - a mensagem generica antiga nao existe mais, virou 2
+    // mensagens distintas (com/sem filtro ativo). Sem filtro -> este branch.
     mockUseExternalCatalog.mockReturnValue(baseHookReturn({ products: [], totalProducts: 0 }));
     renderManagement();
-    expect(screen.getByText('Nenhum produto encontrado')).toBeInTheDocument();
+    expect(screen.getByText('Catálogo vazio')).toBeInTheDocument();
   });
 
   it('estado de erro: mostra a mensagem de erro do hook', () => {
