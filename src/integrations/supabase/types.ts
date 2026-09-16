@@ -6169,6 +6169,13 @@ export type Database = {
             foreignKeyName: "talkx_blacklist_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
             referencedRelation: "talkx_campaigns"
             referencedColumns: ["id"]
           },
@@ -6241,6 +6248,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
           },
           {
             foreignKeyName: "talkx_campaign_events_campaign_id_fkey"
@@ -6514,6 +6528,13 @@ export type Database = {
           variant_id_snapshot?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "talkx_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
           {
             foreignKeyName: "talkx_recipients_campaign_id_fkey"
             columns: ["campaign_id"]
@@ -8155,6 +8176,75 @@ export type Database = {
         }
         Relationships: []
       }
+      talkx_campaign_metrics: {
+        Row: {
+          campaign_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          delivered_count: number | null
+          delivery_rate_pct: number | null
+          duration_secs: number | null
+          outcome_unknown_count: number | null
+          replied_count: number | null
+          reply_rate_pct: number | null
+          segment_id: string | null
+          sent_count: number | null
+          started_at: string | null
+          status: string | null
+          template_id: string | null
+          total_recipients: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          delivered_count?: number | null
+          delivery_rate_pct?: never
+          duration_secs?: never
+          outcome_unknown_count?: number | null
+          replied_count?: never
+          reply_rate_pct?: never
+          segment_id?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          total_recipients?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          delivered_count?: number | null
+          delivery_rate_pct?: never
+          duration_secs?: never
+          outcome_unknown_count?: number | null
+          replied_count?: never
+          reply_rate_pct?: never
+          segment_id?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          total_recipients?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_campaigns_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null
@@ -9071,6 +9161,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      talkx_benchmarks: { Args: never; Returns: Json }
       talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
