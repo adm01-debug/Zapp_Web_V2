@@ -21,7 +21,16 @@ import {
   ChevronRight,
   ExternalLink,
   RefreshCw,
+  ChevronDown,
+  SlidersHorizontal,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
@@ -59,6 +68,79 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
   );
 }
 
+
+// ── E34: Chips de categoria ─────────────────────────────────────────────────
+const MAX_VISIBLE_CHIPS = 7;
+
+function CategoryChips({
+  categories,
+  activeId,
+  onSelect,
+}: {
+  categories: import('@/hooks/integrations/useExternalCatalog').ExternalCategory[];
+  activeId: string;
+  onSelect: (id: string) => void;
+}) {
+  const rootCats = [...categories]
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => ((b.products_count ?? 0) - (a.products_count ?? 0)));
+  const visible = rootCats.slice(0, MAX_VISIBLE_CHIPS);
+  const rest = rootCats.slice(MAX_VISIBLE_CHIPS);
+
+  const chipClass = (active: boolean) =>
+    cn(
+      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0',
+      active
+        ? 'bg-primary text-primary-foreground border-primary'
+        : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+    );
+
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
+      <button type="button" onClick={() => onSelect('all')} className={chipClass(activeId === 'all')}>
+        Todos
+      </button>
+      {visible.map((cat) => (
+        <button
+          key={cat.id}
+          type="button"
+          onClick={() => onSelect(cat.id)}
+          className={chipClass(activeId === cat.id)}
+          title={cat.products_count ? cat.products_count.toLocaleString('pt-BR') + ' produtos' : undefined}
+        >
+          {cat.name}
+          {cat.products_count ? (
+            <span className="opacity-60 text-[10px]">({cat.products_count.toLocaleString('pt-BR')})</span>
+          ) : null}
+        </button>
+      ))}
+      {rest.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className={chipClass(rest.some((c) => c.id === activeId))}>
+              <SlidersHorizontal className="w-3 h-3" />
+              Mais ({rest.length})
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+            <DropdownMenuRadioGroup value={activeId} onValueChange={onSelect}>
+              {rest.map((cat) => (
+                <DropdownMenuRadioItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                  {cat.products_count ? (
+                    <span className="ml-auto text-muted-foreground text-xs">{cat.products_count.toLocaleString('pt-BR')}</span>
+                  ) : null}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
 const PAGE_SIZE = 24;
 
 export const ExternalProductManagement: React.FC = () => {
@@ -81,8 +163,13 @@ export const ExternalProductManagement: React.FC = () => {
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+    () => (localStorage.getItem('catalog.view') as 'grid' | 'list') ?? 'grid'
+  );
   const [page, setPage] = useState(0);
+  // E37: sort
+  const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
+  const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
@@ -99,8 +186,12 @@ export const ExternalProductManagement: React.FC = () => {
     if (supplierId !== 'all') params.supplier_id = supplierId;
     if (isFeatured) params.is_featured = true;
     if (isNew) params.is_new = true;
+    // E37 sort
+    const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
+    params.order_by = effectiveOrder;
+    params.ascending = ascending;
     return params;
-  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
+  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending]);
 
   // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
   // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
@@ -121,7 +212,7 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
+  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending]);
 
   // Page changes (mesmo motivo)
   useEffect(() => {
@@ -139,7 +230,41 @@ export const ExternalProductManagement: React.FC = () => {
     setOnlyInStock(false);
     setIsFeatured(false);
     setIsNew(false);
+    setOrderBy('name');
+    setAscending(true);
     setPage(0);
+    sessionStorage.removeItem('catalog.order_by');
+    sessionStorage.removeItem('catalog.ascending');
+  };
+
+  // E37: helpers de sort
+  type SortOption = { label: string; order_by: string; ascending: boolean };
+  const SORT_OPTIONS: SortOption[] = [
+    { label: 'Nome A–Z', order_by: 'name', ascending: true },
+    { label: 'Nome Z–A', order_by: 'name', ascending: false },
+    { label: 'Menor preço', order_by: 'sale_price', ascending: true },
+    { label: 'Maior preço', order_by: 'sale_price', ascending: false },
+    { label: 'Maior estoque', order_by: 'stock_quantity', ascending: false },
+    { label: 'Mais recentes', order_by: 'created_at', ascending: false },
+    { label: 'Mais pedidos', order_by: 'order_count', ascending: false },
+  ];
+  const sortKey = orderBy + ':' + String(ascending);
+  const currentSort = SORT_OPTIONS.find((o) => o.order_by === orderBy && o.ascending === ascending) ?? SORT_OPTIONS[0];
+
+  const applySort = (key: string) => {
+    const opt = SORT_OPTIONS.find((o) => o.order_by + ':' + String(o.ascending) === key);
+    if (!opt) return;
+    setOrderBy(opt.order_by);
+    setAscending(opt.ascending);
+    sessionStorage.setItem('catalog.order_by', opt.order_by);
+    sessionStorage.setItem('catalog.ascending', String(opt.ascending));
+    setPage(0);
+  };
+
+  // E35: persistir viewMode em localStorage
+  const handleViewMode = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('catalog.view', mode);
   };
 
   /** E33: clique no KPI aplica o filtro correspondente. Categorias/
@@ -201,6 +326,15 @@ export const ExternalProductManagement: React.FC = () => {
         <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
       )}
 
+      {/* E34: chips de categoria */}
+      {categories.length > 0 && (
+        <CategoryChips
+          categories={categories}
+          activeId={categoryId}
+          onSelect={(id) => { setCategoryId(id); setPage(0); }}
+        />
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-[250px] relative">
@@ -258,29 +392,61 @@ export const ExternalProductManagement: React.FC = () => {
         </div>
 
         <div className="flex border rounded-md">
-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => setViewMode('grid')}>
+          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => handleViewMode('grid')} title="Grade">
             <Grid3X3 className="w-4 h-4" />
           </Button>
-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => setViewMode('list')}>
+          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => handleViewMode('list')} title="Lista">
             <List className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Status */}
+      {/* E37: resultados + ordenar por */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Mostrando {totalProducts > 0 ? Math.min(page * PAGE_SIZE + 1, totalProducts) : 0}-{Math.min((page + 1) * PAGE_SIZE, totalProducts)} de {totalProducts.toLocaleString('pt-BR')}
+        <span className="tabular-nums">
+          {loading
+            ? 'Carregando...'
+            : totalProducts === 0
+              ? 'Nenhum produto'
+              : <>Mostrando <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE + 1, totalProducts).toLocaleString('pt-BR')}–{Math.min((page + 1) * PAGE_SIZE, totalProducts).toLocaleString('pt-BR')}</span> de <span className="font-medium text-foreground">{totalProducts.toLocaleString('pt-BR')}</span></>
+          }
         </span>
-        {hasFilters && (
-          <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0">
-            Limpar filtros
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {hasFilters && (
+            <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0">
+              Limpar filtros
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-muted-foreground hover:text-foreground">
+                Ordenar: {currentSort.label}
+                <ChevronDown className="w-3.5 h-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup value={sortKey} onValueChange={applySort}>
+                {SORT_OPTIONS.map((opt) => (
+                  <DropdownMenuRadioItem
+                    key={opt.order_by + ':' + String(opt.ascending)}
+                    value={opt.order_by + ':' + String(opt.ascending)}
+                  >
+                    {opt.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">{error}</div>
+        <AlertCard tone="danger">
+          {error}
+          <Button variant="link" size="sm" className="h-auto p-0 ml-2" onClick={() => fetchProducts(buildFilters())}>
+            Tentar de novo
+          </Button>
+        </AlertCard>
       )}
 
       {/* Products */}
@@ -292,10 +458,25 @@ export const ExternalProductManagement: React.FC = () => {
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <Package className="w-16 h-16 mb-4 opacity-50" />
-            <p className="font-medium text-lg">Nenhum produto encontrado</p>
-            <p className="text-sm">Tente ajustar os filtros de busca.</p>
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
+            <Package className="w-16 h-16 opacity-40" />
+            {hasFilters ? (
+              <>
+                <p className="font-medium text-lg text-foreground">Nenhum produto com esses filtros</p>
+                <p className="text-sm">Tente remover ou ajustar os filtros de busca.</p>
+                <Button variant="outline" size="sm" onClick={clearFilters}>Limpar filtros</Button>
+              </>
+            ) : (
+              <>
+                <p className="font-medium text-lg text-foreground">Catálogo vazio</p>
+                <p className="text-sm">Nenhum produto sincronizado ainda.</p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="https://promogifts.com.br" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-1" />Gerenciar no PromoGifts
+                  </a>
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
