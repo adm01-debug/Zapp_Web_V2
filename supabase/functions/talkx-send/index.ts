@@ -432,6 +432,12 @@ Deno.serve(async (req) => {
       const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
 
       let providerPostAttempted = false;
+      // Precisa viver fora do try: o catch chama clearTimeout(sendTimeout) para
+      // qualquer erro dentro do try, inclusive os lançados antes da linha que
+      // cria o timeout — declarado como `const` dentro do try, essa variável
+      // não existia no escopo do catch (ReferenceError em runtime a cada erro
+      // pré-dispatch, mascarando o erro original em vez de acionar o backoff).
+      let sendTimeout: ReturnType<typeof setTimeout> | undefined;
       try {
         const phone = (contact.phone as string).replace(/\D/g, "");
         const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
@@ -506,7 +512,7 @@ Deno.serve(async (req) => {
 
         // E91: timeout de segurança por envio
         const abortCtrl = new AbortController();
-        const sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
+        sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
 
         if (recipientHasMedia) {
           const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
@@ -520,13 +526,15 @@ Deno.serve(async (req) => {
             effectiveMediaType === "audio"
               ? { number: phone, audio: mediaSource, delay: 0 }
               : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
           );
         } else {
           await markProviderDispatch();
           providerPostAttempted = true;
           sendResponse = await evoFetch(evolutionUrl, evolutionKey,
             `/message/sendText/${beforeSendInstanceId}`,
-            { number: phone, text: personalizedMsg, delay: 0 }
+            { number: phone, text: personalizedMsg, delay: 0 },
+            undefined, undefined, abortCtrl.signal,
           );
         }
         clearTimeout(sendTimeout);
