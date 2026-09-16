@@ -151,7 +151,7 @@
     "views": {
         "v:profiles_public": "2e4de3cbfcd045f7ed6db0ce70ec953d",
         "v:gmail_accounts_safe": "75f748277009cabe6e5de5b284dfaec9",
-        "v:talkx_campaign_metrics": "fe1cf1a518ba6754a12af0156ce1cd4a",
+        "v:talkx_campaign_metrics": "06fbac18d267f2ff4e87ac7699dd7f01",
         "v:channel_connections_safe": "4ede96d190b525cf3dd7709075407b83",
         "v:whatsapp_connections_safe": "19152b9b2014fec4e032bc031abe072b",
         "v:whatsapp_connections_agent": "cd6c4947bc480eafff83a25cf290f29d",
@@ -3467,7 +3467,7 @@
     "functions": {
         "f:handle_new_user()": "0cc13112844cee8252b4a808014a39a3",
         "f:init_agent_stats()": "23000426dbd4bed9f1037a4a2a26661d",
-        "f:talkx_benchmarks()": "151b350cbd0144f1bf329872f33f27ef",
+        "f:talkx_benchmarks()": "1b5cba3fb2571229b1edabf5d0495251",
         "f:get_team_profiles()": "0a194313ebf6fa3466689cc1c817b65e",
         "f:audit_role_changes()": "85bc20846db1f310d3176e34e2fad3f1",
         "f:update_agent_level()": "44bdca043ab8c28b3891a114245eb499",
@@ -4081,7 +4081,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-16T12:36:29Z",
+    "generated_at": "2026-09-16T13:22:15Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
