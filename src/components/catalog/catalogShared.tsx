@@ -4,9 +4,8 @@
  * Ponto único para evitar duplicação entre ExternalProductCard,
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
-import React, { useState, useEffect } from 'react';
-import { Package, type LucideIcon } from 'lucide-react';
-import dynamicIconImports from 'lucide-react/dynamicIconImports';
+import React, { useState } from 'react';
+import { Package, type LucideIcon, ShoppingBag, Shirt, Crown, Coffee, GlassWater, PenLine, KeyRound, Backpack, Umbrella, Cpu, Gift, Puzzle, BookOpen, NotebookPen, Watch, Dumbbell } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
@@ -378,43 +377,61 @@ export interface CatalogCategoryLike {
 }
 
 // Resolve um icone lucide-react a partir do nome vindo do banco
-// (categories.icon, E25). dynamicIconImports usa chaves kebab-case
-// (ex: "shopping-bag") - normaliza o nome recebido antes de olhar no
-// mapa. Nome desconhecido/ausente -> nenhum icone (fallback previsto
-// no plano), nunca um erro; carregado sob demanda (import() dinamico),
-// nao empacota o pacote de icones inteiro.
+// (categories.icon, E25). ACHADO REAL (nao presumido): a 1a versao
+// usava lucide-react/dynamicIconImports (import dinamico por nome,
+// ~1000+ icones), mas o vite.config.ts deste projeto tem uma regra de
+// manualChunks que agrupa TUDO de node_modules/lucide-react num unico
+// chunk "vendor-icons" ja carregado no first paint (nao e lazy) - o
+// mapa inteiro entrava no bundle inicial e estourava o budget em
+// +131KB gzip (CI real: initial-js 452KB > 350KB). Mudar essa regra
+// e config de build compartilhada, fora do escopo de uma etapa do
+// catalogo. Resolvido com import estatico de um conjunto curado -
+// nome desconhecido/ausente continua sem quebrar, so sem icone.
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'shopping-bag': ShoppingBag,
+  bag: ShoppingBag,
+  shirt: Shirt,
+  'polo-shirt': Shirt,
+  apparel: Shirt,
+  cap: Crown,
+  hat: Crown,
+  mug: Coffee,
+  cup: Coffee,
+  bottle: GlassWater,
+  squeeze: GlassWater,
+  pen: PenLine,
+  caneta: PenLine,
+  keychain: KeyRound,
+  chaveiro: KeyRound,
+  backpack: Backpack,
+  mochila: Backpack,
+  bag2: ShoppingBag,
+  ecobag: ShoppingBag,
+  umbrella: Umbrella,
+  guarda_chuva: Umbrella,
+  tech: Cpu,
+  electronics: Cpu,
+  gift: Gift,
+  presente: Gift,
+  toy: Puzzle,
+  brinquedo: Puzzle,
+  book: BookOpen,
+  notebook: NotebookPen,
+  agenda: NotebookPen,
+  watch: Watch,
+  relogio: Watch,
+  sport: Dumbbell,
+  esporte: Dumbbell,
+};
+
 function toKebabCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/[\s_]+/g, '-').toLowerCase();
 }
 
-// Cache do modulo (nao e um Hook, sobrevive entre montagens/desmontagens -
-// o mesmo nome de icone nunca refaz o import() depois da 1a resolucao).
-const categoryIconCache = new Map<string, LucideIcon>();
-
-/** react-hooks/static-components rejeita React.lazy() (mesmo memoizado)
- * dentro do corpo do render, mesmo com cache proprio por baixo - a
- * criacao do lazy component em si e o que a regra proibe. Resolvido
- * sem React.lazy/Suspense: dynamicIconImports e um objeto estatico ja
- * importado, entao saber se a CHAVE existe e sincrono; so o VALOR (o
- * import() do icone em si) precisa ser assincrono, e roda dentro de um
- * effect cujo unico setState fica num callback assincrono (.then), nunca
- * sincrono no corpo do effect (react-hooks/set-state-in-effect). */
 function CategoryChipIcon({ name }: { name: string }) {
-  const key = toKebabCase(name);
-  const loader = dynamicIconImports[key as keyof typeof dynamicIconImports];
-  const [Icon, setIcon] = useState<LucideIcon | null>(() => categoryIconCache.get(key) ?? null);
-  useEffect(() => {
-    if (!loader || categoryIconCache.has(key)) return;
-    let active = true;
-    loader().then((mod) => {
-      categoryIconCache.set(key, mod.default);
-      if (active) setIcon(mod.default);
-    }).catch(() => {});
-    return () => { active = false; };
-  }, [key, loader]);
-  if (!loader || !Icon) return null;
-  const Comp = Icon;
-  return <Comp className="w-3.5 h-3.5" />;
+  const Icon = CATEGORY_ICONS[toKebabCase(name)];
+  if (!Icon) return null;
+  return <Icon className="w-3.5 h-3.5" />;
 }
 
 interface CategoryChipsProps {

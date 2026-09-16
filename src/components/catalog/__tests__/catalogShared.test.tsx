@@ -287,18 +287,21 @@ describe('CategoryChips', () => {
     expect(screen.queryByText('Mais')).not.toBeInTheDocument();
   });
 
-  it('E34: categoria com icon (nome real do lucide) renderiza o svg do icone', async () => {
+  it('E34: categoria com icon (nome do conjunto curado) renderiza o svg do icone', () => {
+    // Achado real: dynamicIconImports (import dinamico por nome, ~1000+
+    // icones) estourava o budget de bundle inicial em +131KB gzip - o
+    // vite.config.ts deste projeto agrupa TUDO de lucide-react num chunk
+    // ja carregado no first paint (manualChunks nao e lazy aqui). Resolvido
+    // com conjunto curado estatico - sincrono agora, sem waitFor.
     const withIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'shopping-bag' }];
     render(<CategoryChips categories={withIcon} activeId={null} onChange={vi.fn()} />);
     const chip = screen.getByText('Agro').closest('button');
-    await waitFor(() => expect(chip?.querySelector('svg')).toBeInTheDocument());
+    expect(chip?.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('E34: categoria com icon desconhecido nao quebra, so nao mostra svg', async () => {
+  it('E34: categoria com icon fora do conjunto curado nao quebra, so nao mostra svg', () => {
     const badIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'nome-que-nao-existe-no-lucide' }];
     render(<CategoryChips categories={badIcon} activeId={null} onChange={vi.fn()} />);
-    expect(screen.getByText('Agro')).toBeInTheDocument();
-    await new Promise((r) => setTimeout(r, 50));
     const chip = screen.getByText('Agro').closest('button');
     expect(chip?.querySelector('svg')).not.toBeInTheDocument();
   });
