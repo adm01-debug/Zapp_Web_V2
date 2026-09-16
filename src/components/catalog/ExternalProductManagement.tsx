@@ -37,7 +37,8 @@ import { ExternalProductCard } from './ExternalProductCard';
 import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
-import { CatalogKpiStrip } from './catalogShared';
+import { CatalogKpiStrip, CategoryChips } from './catalogShared';
+import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { cn } from '@/lib/utils';
 
 /** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
@@ -69,78 +70,6 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
 }
 
 
-// ── E34: Chips de categoria ─────────────────────────────────────────────────
-const MAX_VISIBLE_CHIPS = 7;
-
-function CategoryChips({
-  categories,
-  activeId,
-  onSelect,
-}: {
-  categories: import('@/hooks/integrations/useExternalCatalog').ExternalCategory[];
-  activeId: string;
-  onSelect: (id: string) => void;
-}) {
-  const rootCats = [...categories]
-    .filter((c) => !c.parent_id)
-    .sort((a, b) => ((b.products_count ?? 0) - (a.products_count ?? 0)));
-  const visible = rootCats.slice(0, MAX_VISIBLE_CHIPS);
-  const rest = rootCats.slice(MAX_VISIBLE_CHIPS);
-
-  const chipClass = (active: boolean) =>
-    cn(
-      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0',
-      active
-        ? 'bg-primary text-primary-foreground border-primary'
-        : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-    );
-
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
-      <button type="button" onClick={() => onSelect('all')} className={chipClass(activeId === 'all')}>
-        Todos
-      </button>
-      {visible.map((cat) => (
-        <button
-          key={cat.id}
-          type="button"
-          onClick={() => onSelect(cat.id)}
-          className={chipClass(activeId === cat.id)}
-          title={cat.products_count ? cat.products_count.toLocaleString('pt-BR') + ' produtos' : undefined}
-        >
-          {cat.name}
-          {cat.products_count ? (
-            <span className="opacity-60 text-[10px]">({cat.products_count.toLocaleString('pt-BR')})</span>
-          ) : null}
-        </button>
-      ))}
-      {rest.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className={chipClass(rest.some((c) => c.id === activeId))}>
-              <SlidersHorizontal className="w-3 h-3" />
-              Mais ({rest.length})
-              <ChevronDown className="w-3 h-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
-            <DropdownMenuRadioGroup value={activeId} onValueChange={onSelect}>
-              {rest.map((cat) => (
-                <DropdownMenuRadioItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                  {cat.products_count ? (
-                    <span className="ml-auto text-muted-foreground text-xs">{cat.products_count.toLocaleString('pt-BR')}</span>
-                  ) : null}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
-  );
-}
-
 const PAGE_SIZE = 24;
 
 export const ExternalProductManagement: React.FC = () => {
@@ -158,7 +87,19 @@ export const ExternalProductManagement: React.FC = () => {
   } = useExternalCatalog();
 
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string>('all');
+  // E34: deep link ?view=catalog&cat=<id> - inicializador preguicoso le
+  // a URL 1x no mount (nao um effect - evita corrida com o 1o render).
+  const [categoryId, setCategoryId] = useState<string>(
+    () => parseCatalogCategoryRoute(window.location.search).categoryId ?? 'all'
+  );
+
+  /** Categoria muda por qualquer via (chip ou select) - mantem os dois
+   * sincronizados no mesmo estado e reflete na URL (replaceState, sem
+   * poluir o historico do navegador por clique de filtro). */
+  const handleCategoryChange = useCallback((id: string) => {
+    setCategoryId(id);
+    replaceCatalogCategoryRoute(id === 'all' ? null : id);
+  }, []);
   const [supplierId, setSupplierId] = useState<string>('all');
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -202,6 +143,15 @@ export const ExternalProductManagement: React.FC = () => {
     fetchSuppliers();
     fetchProducts(buildFilters());
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // E34: URL malformada/duplicada (?cat repetido, view!=catalog) precisa
+  // ser limpa uma vez no mount - o inicializador do useState ja rejeitou
+  // o valor (categoryId ficou 'all'), so falta refletir isso na barra de
+  // enderecos tambem.
+  useEffect(() => {
+    const parsed = parseCatalogCategoryRoute(window.location.search);
+    if (parsed.needsNormalization) replaceCatalogCategoryRoute(null);
   }, []);
 
   // Filter changes - debounced (mesmo motivo acima para as deps omitidas)
@@ -326,12 +276,19 @@ export const ExternalProductManagement: React.FC = () => {
         <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
       )}
 
-      {/* E34: chips de categoria */}
-      {categories.length > 0 && (
+{/* Chips de categoria (E34) - mesmo categoryId do select abaixo.
+          Resolucao de conflito real (nao so metadado): o main ja tinha
+          uma implementacao propria de E34, com CategoryChips LOCAL
+          duplicado (nao reusava catalogShared.tsx, sem icone, sem deep
+          link). Removida - o componente compartilhado (E18/F1, com
+          51 testes proprios) + deep link (E34a) + icone (E34b) sao
+          estritamente mais completos. setPage(0) ja e coberto pelo
+          effect de debounce existente (categoryId esta nas deps). */}
+      {parentCategories.length > 0 && (
         <CategoryChips
-          categories={categories}
-          activeId={categoryId}
-          onSelect={(id) => { setCategoryId(id); setPage(0); }}
+          categories={parentCategories}
+          activeId={categoryId === 'all' ? null : categoryId}
+          onChange={(id) => handleCategoryChange(id ?? 'all')}
         />
       )}
 
@@ -352,7 +309,7 @@ export const ExternalProductManagement: React.FC = () => {
           )}
         </div>
 
-        <Select value={categoryId} onValueChange={setCategoryId}>
+        <Select value={categoryId} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
