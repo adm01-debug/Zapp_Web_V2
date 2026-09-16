@@ -13,6 +13,23 @@
 const REPLY_WINDOW_HOURS = 72;
 
 /**
+ * Fonte unica das keywords de opt-out. Era duplicada verbatim entre o
+ * handler de opt-out real (E57, que insere em talkx_blacklist) e o filtro
+ * de atribuicao de resposta (E88) em evolution-webhook-messages.ts --
+ * ambos precisam do MESMO criterio, senao uma mensagem podia contar como
+ * "engajamento" (replied_count) sem entrar na blacklist, ou vice-versa.
+ *
+ * Limitacao conhecida (nao alterada aqui de proposito): so casa a mensagem
+ * INTEIRA, nao uma frase que contenha a keyword -- "quero sair da lista,
+ * por favor" nao e reconhecida. Ampliar o casamento e uma decisao de
+ * produto/compliance (equilibrio entre falso negativo -- pessoa continua
+ * recebendo -- e falso positivo -- "nao quero mais bolo" vira opt-out),
+ * nao uma correcao tecnica de resposta unica.
+ */
+export const TALKX_OPT_OUT_RE =
+  /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[ãa]o quero|optout|opt-out)\s*$/i;
+
+/**
  * Atribui a mensagem messageId como resposta de contactId à
  * campanha mais recente que o atingiu nos últimos 72 h.
  * Fire-and-forget: erros são logados mas não propagados.

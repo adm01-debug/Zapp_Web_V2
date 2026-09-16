@@ -1,6 +1,6 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
-import { attributeTalkXReply } from "./talkx-reply.ts";
+import { attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -279,8 +279,7 @@ export async function handleIncomingMessage(
   }
   // E57: opt-out automatico por palavra-chave (gateado por campanha recente 30 dias)
   if ((tx.outcome === 'inserted' || tx.outcome === 'updated') && messageType === 'text' && content && !key.fromMe) {
-    const OPT_OUT_KEYWORDS = /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[\u00e3a]o quero|optout|opt-out)\s*$/i;
-    if (OPT_OUT_KEYWORDS.test(content.trim()) && tx.contact_id) {
+    if (TALKX_OPT_OUT_RE.test(content.trim()) && tx.contact_id) {
       // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
       const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
       if (resolvedPhone && resolvedPhone.length >= 8) {
@@ -325,8 +324,7 @@ export async function handleIncomingMessage(
 
   // E88: atribuir resposta TalkX (janela 72 h), exceto opt-out
   if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
-    const OPT_OUT_RE = /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[\u00e3a]o quero|optout|opt-out)\s*$/i;
-    if (!OPT_OUT_RE.test((content ?? '').trim())) {
+    if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
       void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
     }
   }

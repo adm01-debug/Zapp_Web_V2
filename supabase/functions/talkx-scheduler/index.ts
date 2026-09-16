@@ -10,7 +10,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
-import { isWithinSendWindow } from "../_shared/talkx-window.ts";
+import { deliveryWindowStatus } from "../_shared/talkx-window.ts";
 
 
 // ─── Handler principal ──────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // ── 2. Campanhas pausadas por janela de envio (status='paused' + janela configurada) ───
     const { data: pausedCampaigns, error: pauseErr } = await supabase
       .from("talkx_campaigns")
-      .select("id, name, send_window_start, send_window_end, business_hours_only")
+      .select("id, name, schedule_timezone, send_window_start, send_window_end, business_hours_only")
       .eq("status", "paused")
       .not("paused_at", "is", null) // pausadas com timestamp (não rascunhos)
       .or("send_window_start.not.is.null,business_hours_only.eq.true"); // tem janela configurada
@@ -53,8 +53,9 @@ Deno.serve(async (req) => {
       // não abortar -- continua com os agendados
     }
 
-    // Filtrar apenas as que estão dentro da janela agora
-    const resumeCandidates = (pausedCampaigns ?? []).filter(isWithinSendWindow);
+    // Filtrar apenas as que estão dentro da janela agora (mesmo fuso e mesma
+    // logica fail-closed que a pausa usa em talkx-send, via deliveryWindowStatus)
+    const resumeCandidates = (pausedCampaigns ?? []).filter((c) => deliveryWindowStatus(c).allowed);
 
     if (!dueCampaigns?.length && !resumeCandidates.length) {
       return new Response(
