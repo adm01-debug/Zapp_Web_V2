@@ -38,6 +38,8 @@ import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
 import { CatalogKpiStrip } from './catalogShared';
+import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
+import { AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { cn } from '@/lib/utils';
 
 /** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
@@ -171,6 +173,11 @@ export const ExternalProductManagement: React.FC = () => {
   const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
   const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
+  // E36: filtros avançados (declarados antes de buildFilters para evitar TDZ)
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ isBestseller: false, priceMin: '', priceMax: '' });
+  const advCount = countAdvancedFilters(advFilters);
+
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
@@ -190,8 +197,12 @@ export const ExternalProductManagement: React.FC = () => {
     const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
     params.order_by = effectiveOrder;
     params.ascending = ascending;
+    // E36: filtros avançados
+    if (advFilters.isBestseller) params.is_bestseller = true;
+    if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
+    if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
     return params;
-  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending]);
+  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
   // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
   // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
@@ -212,7 +223,7 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending]);
+  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
   // Page changes (mesmo motivo)
   useEffect(() => {
@@ -221,7 +232,7 @@ export const ExternalProductManagement: React.FC = () => {
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
-  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew;
+  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew || advCount > 0;
 
   const clearFilters = () => {
     setSearch('');
@@ -235,6 +246,7 @@ export const ExternalProductManagement: React.FC = () => {
     setPage(0);
     sessionStorage.removeItem('catalog.order_by');
     sessionStorage.removeItem('catalog.ascending');
+    setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' });
   };
 
   // E37: helpers de sort
@@ -326,6 +338,12 @@ export const ExternalProductManagement: React.FC = () => {
         <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
       )}
 
+      {/* E36: chips de filtros avançados */}
+      <AdvancedFilterChips
+        filters={advFilters}
+        onChange={(next) => { setAdvFilters(next); setPage(0); }}
+      />
+
       {/* E34: chips de categoria */}
       {categories.length > 0 && (
         <CategoryChips
@@ -399,6 +417,16 @@ export const ExternalProductManagement: React.FC = () => {
             <List className="w-4 h-4" />
           </Button>
         </div>
+
+        <Button variant="outline" size="sm" onClick={() => setAdvancedOpen(true)} className="relative">
+          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+          Filtros avançados
+          {advCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+              {advCount}
+            </span>
+          )}
+        </Button>
       </div>
 
       {/* E37: resultados + ordenar por */}
@@ -522,6 +550,16 @@ export const ExternalProductManagement: React.FC = () => {
           </Button>
         </div>
       )}
+
+      {/* E36: sheet de filtros avançados */}
+      <CatalogAdvancedFilters
+        key={String(advancedOpen)}
+        open={advancedOpen}
+        onOpenChange={setAdvancedOpen}
+        filters={advFilters}
+        onApply={(next) => { setAdvFilters(next); setPage(0); }}
+        onClear={() => { setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' }); setPage(0); }}
+      />
 
       {/* Send Product Dialog */}
       {sendProduct && (

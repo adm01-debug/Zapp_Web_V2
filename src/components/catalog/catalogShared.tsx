@@ -5,7 +5,8 @@
  * ProductDetailDialog e demais componentes de src/components/catalog/.
  */
 import React, { useState } from 'react';
-import { Package, type LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Package, type LucideIcon , X } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
@@ -534,6 +535,54 @@ export function SectionCard({ title, children }: { title: string; children: Reac
     <div className="rounded-xl border border-border/60 bg-card p-4">
       <h4 className="text-[13px] font-semibold text-foreground mb-2">{title}</h4>
       {children}
+    </div>
+  );
+}
+
+// ── E36: tipos e helpers de filtros avançados ─────────────────────────────
+export interface AdvancedFilters {
+  isBestseller: boolean;
+  priceMin: string;
+  priceMax: string;
+}
+
+export function countAdvancedFilters(f: AdvancedFilters): number {
+  return (
+    (f.isBestseller ? 1 : 0) +
+    (f.priceMin ? 1 : 0) +
+    (f.priceMax ? 1 : 0)
+  );
+}
+
+/** Chips de filtros avançados ativos, remíveis individualmente */
+export function AdvancedFilterChips({
+  filters,
+  onChange,
+}: {
+  filters: AdvancedFilters;
+  onChange: (next: AdvancedFilters) => void;
+}) {
+  const chips: Array<{ label: string; key: keyof AdvancedFilters; value: unknown }> = [];
+  if (filters.isBestseller) chips.push({ label: 'Mais pedidos', key: 'isBestseller', value: false });
+  if (filters.priceMin) chips.push({ label: 'Preço min R$ ' + filters.priceMin, key: 'priceMin', value: '' });
+  if (filters.priceMax) chips.push({ label: 'Preço máx R$ ' + filters.priceMax, key: 'priceMax', value: '' });
+  if (chips.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          onClick={() => onChange({ ...filters, [chip.key]: chip.value })}
+          className={cn(
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
+            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors'
+          )}
+        >
+          {chip.label}
+          <X className="w-3 h-3" />
+        </button>
+      ))}
     </div>
   );
 }
