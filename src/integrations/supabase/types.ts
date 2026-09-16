@@ -6271,6 +6271,7 @@ export type Database = {
           objective: string
           outcome_unknown_count: number
           paused_at: string | null
+          replied_count: number
           revision: number
           schedule_timezone: string
           scheduled_at: string | null
@@ -6310,6 +6311,7 @@ export type Database = {
           objective?: string
           outcome_unknown_count?: number
           paused_at?: string | null
+          replied_count?: number
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -6349,6 +6351,7 @@ export type Database = {
           objective?: string
           outcome_unknown_count?: number
           paused_at?: string | null
+          replied_count?: number
           revision?: number
           schedule_timezone?: string
           scheduled_at?: string | null
@@ -6448,6 +6451,8 @@ export type Database = {
           message_snapshot_at: string | null
           personalized_message: string | null
           provider_dispatch_started_at: string | null
+          replied_at: string | null
+          reply_message_id: string | null
           sent_at: string | null
           status: string
           updated_at: string
@@ -6473,6 +6478,8 @@ export type Database = {
           message_snapshot_at?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
+          replied_at?: string | null
+          reply_message_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -6498,6 +6505,8 @@ export type Database = {
           message_snapshot_at?: string | null
           personalized_message?: string | null
           provider_dispatch_started_at?: string | null
+          replied_at?: string | null
+          reply_message_id?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -6517,6 +6526,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_recipients_reply_message_id_fkey"
+            columns: ["reply_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
@@ -9055,14 +9071,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
         Returns: undefined
+      }
+      talkx_overview_stats: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
       }
       talkx_recipient_is_suppressed: {
         Args: { p_contact_id: string; p_phone: string }
         Returns: boolean
       }
+      talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
       transition_talkx_campaign: {
         Args: { p_action: string; p_campaign_id: string }
         Returns: {

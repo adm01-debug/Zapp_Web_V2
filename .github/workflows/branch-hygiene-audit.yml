@@ -1,0 +1,76 @@
+# ==================================================================
+# Auditoria semanal de higiene de branches (somente leitura)
+# ==================================================================
+# Nao deleta nada. Publica um relatorio no Job Summary com:
+#   - branches remotos patch-equivalentes a main (candidatos a poda)
+#   - branches sem commit ha mais de 30 dias
+#   - PRs abertos ha mais de 14 dias
+# Origem: docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md, etapa E45.
+# ==================================================================
+
+name: Branch Hygiene Audit
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # segunda-feira, 08:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: branch-hygiene-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Relatorio de branches
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gerar relatorio
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+
+          {
+            echo "## Auditoria de branches — $(date -u +%Y-%m-%d)"
+            echo
+            echo "### Patch-equivalentes a \`main\` (candidatos a poda, 0 commits unicos)"
+            echo '```'
+            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$'); do
+              b="${ref#origin/}"
+              n=$(git cherry origin/main "$ref" 2>/dev/null | grep -c '^+' || true)
+              if [ "$n" = "0" ]; then
+                echo "$b"
+              fi
+            done
+            echo '```'
+            echo
+            echo "### Sem commit ha mais de 30 dias"
+            echo '```'
+            CUTOFF=$(date -u -d '30 days ago' +%s 2>/dev/null || date -u -v-30d +%s)
+            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$'); do
+              ts=$(git log -1 --format=%ct "$ref" 2>/dev/null || echo 0)
+              if [ "$ts" -lt "$CUTOFF" ] && [ "$ts" -gt 0 ]; then
+                echo "${ref#origin/} ($(date -u -d "@$ts" +%Y-%m-%d 2>/dev/null || date -u -r "$ts" +%Y-%m-%d))"
+              fi
+            done
+            echo '```'
+            echo
+            echo "### PRs abertos ha mais de 14 dias"
+            echo '```'
+            gh pr list --repo "$REPO" --state open --json number,title,createdAt,url \
+              --jq '.[] | select((now - (.createdAt | fromdateiso8601)) > (14*86400)) | "#\(.number) \(.title) — \(.url)"'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
