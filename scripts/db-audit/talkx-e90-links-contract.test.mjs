@@ -7,7 +7,7 @@ const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInse
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916200000_talkx_e90_links.sql', import.meta.url), 'utf8'),
-  readFile(new URL('../../supabase/migrations/20260916230000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../../supabase/migrations/20260916270000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916260000_talkx_links_slug_case_insensitive.sql', import.meta.url), 'utf8'),
 ]);
 
