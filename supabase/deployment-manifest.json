@@ -7,13 +7,13 @@
   ],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "3c8f9c68452a8223778f300936f8f8deac8720918002e078084c1f1b6fff7d14"
+    "sha256": "f62d75e9c4817bc26d5ffae7e53f1b8f187f6dc95a857b597a01be7ea0acf791"
   },
   "summary": {
     "function_count": 67,
     "source_file_count": 91,
-    "verify_jwt_true": 58,
-    "verify_jwt_false": 9
+    "verify_jwt_true": 57,
+    "verify_jwt_false": 10
   },
   "source_files": [
     {
@@ -1184,8 +1184,8 @@
     {
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
-      "verify_jwt": true,
-      "source_sha256": "a8d2a8e583af752e7b92c23679721c02eca0b5bb2d2f16fe5102442b5a98bb56",
+      "verify_jwt": false,
+      "source_sha256": "e1f6481da501382d973c9bfb82bc5d676d6bb9240322fb08830c7418f174e06b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1301,5 +1301,5 @@
       ]
     }
   ],
-  "manifest_sha256": "42ee699de6e0e729254e4993e518094f2dae962b27d4daf2b0e0075693bc14c3"
+  "manifest_sha256": "d70b32e4a1aaac206e1779073f8f49341c6a1f6f70efd73f844c94489c1f19e9"
 }

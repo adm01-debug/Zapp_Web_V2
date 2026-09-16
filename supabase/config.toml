@@ -48,3 +48,10 @@ verify_jwt = false
 
 [functions.csp-report]
 verify_jwt = false
+
+# Redirect publico de links rastreaveis (E90), clicado direto do WhatsApp do
+# destinatario -- sem sessao Supabase, sem como enviar JWT. Confirmado ao vivo
+# em producao (auditoria 2026-09-16): sem esta excecao, o gateway rejeitava
+# com 401 antes do codigo da funcao rodar, quebrando 100% dos cliques reais.
+[functions.talkx-link]
+verify_jwt = false
