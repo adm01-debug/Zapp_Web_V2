@@ -28,7 +28,8 @@ import { ExternalProductCard } from './ExternalProductCard';
 import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
-import { CatalogKpiStrip } from './catalogShared';
+import { CatalogKpiStrip, CategoryChips } from './catalogShared';
+import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { cn } from '@/lib/utils';
 
 /** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
@@ -76,7 +77,19 @@ export const ExternalProductManagement: React.FC = () => {
   } = useExternalCatalog();
 
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string>('all');
+  // E34: deep link ?view=catalog&cat=<id> - inicializador preguicoso le
+  // a URL 1x no mount (nao um effect - evita corrida com o 1o render).
+  const [categoryId, setCategoryId] = useState<string>(
+    () => parseCatalogCategoryRoute(window.location.search).categoryId ?? 'all'
+  );
+
+  /** Categoria muda por qualquer via (chip ou select) - mantem os dois
+   * sincronizados no mesmo estado e reflete na URL (replaceState, sem
+   * poluir o historico do navegador por clique de filtro). */
+  const handleCategoryChange = useCallback((id: string) => {
+    setCategoryId(id);
+    replaceCatalogCategoryRoute(id === 'all' ? null : id);
+  }, []);
   const [supplierId, setSupplierId] = useState<string>('all');
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -111,6 +124,15 @@ export const ExternalProductManagement: React.FC = () => {
     fetchSuppliers();
     fetchProducts(buildFilters());
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // E34: URL malformada/duplicada (?cat repetido, view!=catalog) precisa
+  // ser limpa uma vez no mount - o inicializador do useState ja rejeitou
+  // o valor (categoryId ficou 'all'), so falta refletir isso na barra de
+  // enderecos tambem.
+  useEffect(() => {
+    const parsed = parseCatalogCategoryRoute(window.location.search);
+    if (parsed.needsNormalization) replaceCatalogCategoryRoute(null);
   }, []);
 
   // Filter changes - debounced (mesmo motivo acima para as deps omitidas)
@@ -201,6 +223,15 @@ export const ExternalProductManagement: React.FC = () => {
         <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
       )}
 
+      {/* Chips de categoria (E34) - mesmo categoryId do select abaixo */}
+      {parentCategories.length > 0 && (
+        <CategoryChips
+          categories={parentCategories}
+          activeId={categoryId === 'all' ? null : categoryId}
+          onChange={(id) => handleCategoryChange(id ?? 'all')}
+        />
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-[250px] relative">
@@ -218,7 +249,7 @@ export const ExternalProductManagement: React.FC = () => {
           )}
         </div>
 
-        <Select value={categoryId} onValueChange={setCategoryId}>
+        <Select value={categoryId} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
