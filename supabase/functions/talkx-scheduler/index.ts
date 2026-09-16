@@ -10,28 +10,8 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { isWithinSendWindow } from "../_shared/talkx-window.ts";
 
-// ─── Helper reutilizado do talkx-send (sem import compartilhado) ──────────────────────
-function isWithinSendWindow(campaign: {
-  send_window_start?: string | null;
-  send_window_end?: string | null;
-  business_hours_only?: boolean;
-}): boolean {
-  const nowBR = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const hBR = nowBR.getHours();
-  const mBR = nowBR.getMinutes();
-  const dowBR = nowBR.getDay();
-  const hmBR = hBR * 60 + mBR;
-  if (campaign.send_window_start && campaign.send_window_end) {
-    const [wsh, wsm] = campaign.send_window_start.split(":").map(Number);
-    const [weh, wem] = campaign.send_window_end.split(":").map(Number);
-    if (hmBR < wsh * 60 + wsm || hmBR >= weh * 60 + wem) return false;
-  }
-  if (campaign.business_hours_only) {
-    if (dowBR === 0 || dowBR === 6 || hBR < 8 || hBR >= 18) return false;
-  }
-  return true;
-}
 
 // ─── Handler principal ──────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
@@ -110,8 +90,10 @@ Deno.serve(async (req) => {
         results.push({ campaignId: campaign.id, name: campaign.name, success: accepted, action: isResume ? 'resume' : 'start', result });
         if (accepted) {
           log.info(`Campaign ${isResume ? 'resumed' : 'started'}: ${campaign.name} (${campaign.id})`);
+        } else if (isResume) {
+          log.warn(`Paused campaign was not resumed: ${campaign.name} (${campaign.id})`, { httpStatus: response.status });
         } else {
-          log.warn(`Campaign not accepted: ${campaign.name} (${campaign.id})`, { httpStatus: response.status });
+          log.warn(`Scheduled campaign was not accepted: ${campaign.name} (${campaign.id})`, { httpStatus: response.status });
         }
       } catch (err) {
         log.error(`Failed for campaign ${campaign.id}`, { error: err instanceof Error ? err.message : String(err) });
