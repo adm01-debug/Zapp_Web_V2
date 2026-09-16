@@ -166,10 +166,19 @@ describe('ExternalProductManagement', () => {
     expect(screen.getByText('Caneta Plástica Azul')).toBeInTheDocument();
   });
 
-  it('estado vazio: mostra "Nenhum produto encontrado" quando products=[]', () => {
+  it('estado vazio sem filtros: mostra "Catálogo vazio" quando products=[]', () => {
     mockUseExternalCatalog.mockReturnValue(baseHookReturn({ products: [], totalProducts: 0 }));
     renderManagement();
-    expect(screen.getByText('Nenhum produto encontrado')).toBeInTheDocument();
+    expect(screen.getByText('Catálogo vazio')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum produto sincronizado ainda.')).toBeInTheDocument();
+  });
+
+  it('estado vazio com filtros ativos: mostra "Nenhum produto com esses filtros"', async () => {
+    mockUseExternalCatalog.mockReturnValue(baseHookReturn({ products: [], totalProducts: 0 }));
+    renderManagement();
+    const input = screen.getByPlaceholderText('Buscar por nome, SKU ou marca...');
+    fireEvent.change(input, { target: { value: 'caneta' } });
+    expect(screen.getByText('Nenhum produto com esses filtros')).toBeInTheDocument();
   });
 
   it('estado de erro: mostra a mensagem de erro do hook', () => {
