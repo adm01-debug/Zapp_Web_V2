@@ -26,12 +26,12 @@ function personalize(
   trackingUrl?: string,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
-  let result = template
-    .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, contact.name || '')
-    .replace(/\{\{apelido\}\}/gi, contact.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, contact.company || '')
-    .replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
+  // Substituições de valor confiável (saudação computada, vars de campanha,
+  // link gerado pelo servidor) primeiro; dado de contato (nome/apelido/
+  // empresa, editável via CRM) por último e em passe único — caso contrário
+  // um campo como `company` contendo literalmente "{{saudacao}}" ou
+  // "{{link}}" seria reinterpretado como placeholder pela chamada seguinte.
+  let result = template.replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
   for (const v of customVars) {
     result = result.split('{{' + v + '}}').join('[' + v + ']');
   }
@@ -39,6 +39,13 @@ function personalize(
   if (trackingUrl) {
     result = result.split('{{link}}').join(trackingUrl);
   }
+  const contactValues: Record<string, string> = {
+    nome: firstName,
+    nome_completo: contact.name || '',
+    apelido: contact.nickname || firstName,
+    empresa: contact.company || '',
+  };
+  result = result.replace(/\{\{(nome_completo|nome|apelido|empresa)\}\}/gi, (_match, key: string) => contactValues[key.toLowerCase()]);
   return result;
 }
 
