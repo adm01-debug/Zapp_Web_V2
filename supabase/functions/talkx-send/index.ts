@@ -6,11 +6,9 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { isWithinSendWindow } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
-
-const DEFAULT_SCHEDULE_TIMEZONE = "America/Sao_Paulo";
 
 function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
@@ -39,61 +37,6 @@ function personalize(
   return result;
 }
 
-type ScheduleGuardCampaign = {
-  schedule_timezone?: unknown;
-  send_window_start?: string | null;
-  send_window_end?: string | null;
-  business_hours_only?: boolean | null;
-};
-
-type LocalClock = { hour: number; minute: number; weekday: number };
-
-function localClockInTimezone(timeZone: string, now = new Date()): LocalClock | null {
-  try {
-    const values = Object.fromEntries(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        weekday: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).formatToParts(now).map((part) => [part.type, part.value]),
-    );
-    const weekdayText = values.weekday;
-    if (typeof weekdayText !== "string") return null;
-    const weekday = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[weekdayText];
-    const hour = Number(values.hour);
-    const minute = Number(values.minute);
-    return typeof weekday === "number" && Number.isInteger(hour) && Number.isInteger(minute)
-      ? { weekday, hour, minute }
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function deliveryWindowStatus(campaign: ScheduleGuardCampaign, now = new Date()): { allowed: true } | { allowed: false; reason: string; next_window?: string } {
-  const timeZone = typeof campaign.schedule_timezone === "string"
-    ? campaign.schedule_timezone
-    : DEFAULT_SCHEDULE_TIMEZONE;
-  const clock = localClockInTimezone(timeZone, now);
-  if (!clock) return { allowed: false, reason: "invalid_schedule_timezone" };
-
-  const currentMinutes = clock.hour * 60 + clock.minute;
-  if (campaign.send_window_start && campaign.send_window_end) {
-    const [startHour, startMinute] = campaign.send_window_start.split(":").map(Number);
-    const [endHour, endMinute] = campaign.send_window_end.split(":").map(Number);
-    const start = startHour * 60 + startMinute;
-    const end = endHour * 60 + endMinute;
-    if (!Number.isInteger(start) || !Number.isInteger(end) || currentMinutes < start || currentMinutes >= end) {
-      return { allowed: false, reason: "outside_send_window", next_window: campaign.send_window_start };
-    }
-  }
-  if (campaign.business_hours_only && (clock.weekday === 0 || clock.weekday === 6 || clock.hour < 8 || clock.hour >= 18)) {
-    return { allowed: false, reason: "outside_business_hours" };
-  }
-  return { allowed: true };
-}
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
 async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
   const { data: variants, error: varErr } = await supabase

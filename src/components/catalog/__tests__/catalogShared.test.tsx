@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard } from '../catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Layers } from 'lucide-react';
@@ -285,6 +285,28 @@ describe('CategoryChips', () => {
   it('sem categoria nenhuma exceder max, não mostra o chip "Mais"', () => {
     render(<CategoryChips categories={cats.slice(0, 3)} activeId={null} onChange={vi.fn()} max={7} />);
     expect(screen.queryByText('Mais')).not.toBeInTheDocument();
+  });
+
+  it('E34: categoria com icon (nome real do lucide) renderiza o svg do icone', async () => {
+    const withIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'shopping-bag' }];
+    render(<CategoryChips categories={withIcon} activeId={null} onChange={vi.fn()} />);
+    const chip = screen.getByText('Agro').closest('button');
+    await waitFor(() => expect(chip?.querySelector('svg')).toBeInTheDocument());
+  });
+
+  it('E34: categoria com icon desconhecido nao quebra, so nao mostra svg', async () => {
+    const badIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'nome-que-nao-existe-no-lucide' }];
+    render(<CategoryChips categories={badIcon} activeId={null} onChange={vi.fn()} />);
+    expect(screen.getByText('Agro')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    const chip = screen.getByText('Agro').closest('button');
+    expect(chip?.querySelector('svg')).not.toBeInTheDocument();
+  });
+
+  it('E34: categoria sem icon nao renderiza svg nenhum', () => {
+    render(<CategoryChips categories={[{ id: 'c1', name: 'Agro', products_count: 50 }]} activeId={null} onChange={vi.fn()} />);
+    const chip = screen.getByText('Agro').closest('button');
+    expect(chip?.querySelector('svg')).not.toBeInTheDocument();
   });
 });
 
