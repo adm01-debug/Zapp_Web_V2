@@ -27,6 +27,31 @@ Legenda de risco: 🟢 reversível/local · 🟡 toca GitHub · 🔴 toca produ�
 
 ---
 
+## Revisão exaustiva de execução (2026-09-16, mesmo dia — pós E90/E91)
+
+Verificação ground-truth (queries live no banco canônico + `git`/`gh`), não memória de sessão. Muito trabalho de segurança real aconteceu via migrations pontuais fora da ordem deste plano (PRs #407/#411/#418/#419/#420/#425/#428/#429/#431); os **deliverables formais** do plano (docs versionados, scripts de guard) majoritariamente não foram criados.
+
+| Fase | Etapas | Estado |
+|---|---|---|
+| 0 — Rede de segurança | E01–E05 | Baseline (`b9a45952`) há muito superado; não reverificado — sem valor prático hoje |
+| 1 — Higiene git | E03,E06,E07 ✅ · E08 🟡 (5 PRs identificados como MERGED, branches locais não deletados) · E09–E11 ❌ (~40 branches locais sem decisão escrita) · E12 ❌ (21 worktrees `prunable` sob `/tmp`, violando a própria política que E13 propõe) · E13 🟡 (`fetch.prune=true` já setado; regra CLAUDE.md não escrita) |
+| 2 — Ledger/migrations | E14–E20 não reverificadas nesta passada (sem sinal de regressão no `supabase-usage-guard`, que segue exit 0) |
+| 3 — Schema | E21 ✅ (único `NOT VALID` é de `realtime.messages`, gerenciado pelo Supabase, fora do escopo do projeto) · **E22 🟡 NOVO GAP**: 3 FKs sem índice no lado filho, todas das tabelas E90 (`talkx_link_clicks.recipient_id`, `talkx_conversions.recipient_id`, `talkx_conversions.link_id`) — 0 bytes hoje, documentado, não urgente · **E23 ❌ 2 achados novos, nunca antes catalogados**: índice duplicado `idx_talkx_links_slug` (redundante com `talkx_links_slug_key` da UNIQUE) e **`talkx_template_versions` com 3 índices cobrindo a mesma coluna** (`..._template_id_version_number_key`, `idx_talkx_template_versions_template_version`, `talkx_template_versions_template_id_idx`) · E24 ❌ (matriz RLS nunca gerada como doc) · E25 ✅ confirmado ao vivo (0 SECURITY DEFINER sem `search_path`) · **E26 🔴 CRÍTICO, achado NOVO nesta revisão**: `anon` tem `EXECUTE` em 13 funções `public`; 4 são trigger functions (inofensivo) e 3 (`reschedule_talkx_recipient`, `transition_talkx_campaign` ×2) têm guard interno `service_role_required` (grant supérfluo mas não explorável) — **porém `get_last_message_dates(uuid[])` e `set_conversation_status(uuid,text,text)` são SECURITY DEFINER, bypassam RLS, `anon` pode chamar, e NÃO têm nenhum check de autorização no corpo**. `set_conversation_status` deixa qualquer chamador não-autenticado mudar o status de conversa de qualquer contato (e inserir em `conversation_closures`) só sabendo/adivinhando um `contact_id`; `get_last_message_dates` vaza timestamp de última mensagem por `contact_id` arbitrário. Nenhum PR aberto para isso — não fazia parte de nenhuma auditoria anterior desta sessão. `talkx_campaign_report`/`talkx_overview_stats`/`talkx_segment_tags` também têm EXECUTE de `anon` mas são `SECURITY INVOKER` (RLS do próprio `anon` bloqueia, risco baixo) · E27–E28 não reverificadas |
+| 4 — Performance | E29,E31–E35 não reverificadas · **E30 🟡 ainda aberto**: `messages` sem `last_autovacuum` (nunca rodou), `pct_dead` caiu de >75% (nota antiga do CLAUDE.md) para 16.1% só por volume de inserts, não por VACUUM — mesmo achado do CLAUDE.md, sem migration de `autovacuum_vacuum_scale_factor` |
+| 5 — Edge functions | E38 confirmado: `main` ainda com exatamente 9 `verify_jwt=false` (baseline) — a 10ª exceção (`talkx-link`) está no PR #428, não mergeado · E36/E37/E39–E41 não reverificadas |
+| 6 — CI/governança | E42–E46 não reverificadas — nenhum dos scripts/arquivos esperados (`grants-baseline.json`, `check-triple-parity.mjs`, `register-migration.mjs`, `rls-matrix-*.md`) existe no repo |
+| 7 — Fechamento | E47–E50 não iniciadas; nenhum `FECHAMENTO_PLANO_50_ETAPAS_*.md` existe |
+
+**Achados fora do plano de 50 etapas (trilha E90/E91), reverificados nesta passada:**
+- `{{link}}` não substituído, sem rate limit, IDOR, salt de IP fixo → **corrigidos, PR #429 (não mergeado)**
+- `anon EXECUTE` em `talkx_benchmarks`/`record_talkx_link_click` → **corrigido, PR #428 (não mergeado)** — confirmado ao vivo que o grant ainda está ativo em produção
+- `ReferenceError` de escopo (`sendTimeout`) + timeout de abort inerte no `talkx-send` (herdados do PR #427/E91 já mergeado) → **corrigido, PR #431 (não mergeado)**
+- Slug case-sensitive em `talkx_links`, índice `idx_talkx_links_slug` redundante, retenção LGPD de `talkx_link_clicks`, zero cobertura de teste E90 → **ainda não endereçados, sem PR**
+- Bug de ordem em `.replace()`/`.split().join()` dentro de `personalize()` (`talkx-send/index.ts`): `{{empresa}}` é substituído (linha 32) **antes** de `{{saudacao}}` (linha 33) e de `{{link}}` (linha 40) — se o campo `company` de um contato contiver literalmente `{{saudacao}}` ou `{{link}}`, a substituição seguinte reinterpreta esse texto como placeholder. Confirmado ainda presente no código atual (5 parâmetros, incluindo `trackingUrl`). Sem PR.
+- Nenhum `TODO`/`FIXME`/`XXX` encontrado em `supabase/functions/talkx-*`, `_shared/talkx-*` ou migrations `*talkx*` — sem dívida técnica auto-documentada pendente nesse recorte.
+
+---
+
 ## FASE 0 — Rede de segurança (E01–E05) — bloqueante de tudo
 
 ### E01 🟢 Snapshot completo do estado local
@@ -48,7 +73,7 @@ git checkout main && git merge --ff-only origin/main
 - [ ] `git log --oneline main..origin/main` vazio
 
 ### E03 🟢 Remover o branch de trabalho já mergeado
-- [ ] Em `main`; `git branch -d chore/vite8-oxc-hardening` (delete seguro `-d`)
+- [x] Em `main`; `git branch -d chore/vite8-oxc-hardening` (delete seguro `-d`) — confirmado: branch não existe mais localmente (2026-09-16)
 
 ### E04 🟢 Atualizar `fix/talkx-template-history-contract` (2 commits atrás do upstream)
 - [ ] `git log fix/talkx-template-history-contract..origin/fix/talkx-template-history-contract` revisado
@@ -72,8 +97,8 @@ git checkout main && git merge --ff-only origin/main
 ```sh
 for b in <lista>; do echo "$b: $(git cherry origin/main $b | grep -c '^+')"; done   # todos devem ser 0
 ```
-- [ ] Reconfirmado 0 para cada um
-- [ ] Deletados com `git branch -D` (patch-equivalente ≠ ancestral, `-d` recusa) — **somente após E01**
+- [x] Reconfirmado 0 para cada um (implícito — nenhum dos 14 existe mais)
+- [x] Deletados com `git branch -D` — confirmado: nenhuma das 14 branches listadas existe localmente (2026-09-16)
 
 ### E08 🟡 Resolver os 5 branches ambíguos (PR existiu, commits sem equivalente)
 `feat/atomic-outbound-callers` (2), `feat/message-delivery-phase1` (3), `fix/auth-login-fail-closed` (4), `fix/revoke-service-enqueue` (2), `fix/talkx-ledger-recovery` (2).
@@ -81,8 +106,8 @@ for b in <lista>; do echo "$b: $(git cherry origin/main $b | grep -c '^+')"; don
 gh pr list --repo adm01-debug/zapp-web-v2 --state all --search "head:<branch>" --json number,state,mergedAt,mergeCommit
 git diff origin/main...<branch> --stat
 ```
-- [ ] Para cada: PR localizado, estado (`MERGED`/`CLOSED`) anotado
-- [ ] Squash-merged → deletar local · Fechado sem merge → vai para E09
+- [x] Para cada: PR localizado, estado anotado (2026-09-16) — `feat/atomic-outbound-callers`→#330 MERGED, `feat/message-delivery-phase1`→#324 MERGED, `fix/auth-login-fail-closed`→#332 MERGED, `fix/revoke-service-enqueue`→#328 MERGED, `fix/talkx-ledger-recovery`→#319 MERGED
+- [ ] Squash-merged → deletar local — **NÃO feito**: as 5 branches (+ worktree `prunable` de cada uma sob `/tmp`) ainda existem localmente
 
 ### E09 🟡 Decidir destino do trabalho que só existe nesta máquina
 `redesign/inbox-center-tabs-codex` (10), `redesign/inbox-files-history-codex` (10), `redesign/inbox-tasks-notes-codex` (10), `redesign/inbox-right-panel-codex` (2) + sobreviventes de E08. Também sem upstream: `feat/crm-integration-gateway` (8), `fix/inbox-file-upload-integrity` (15), `test/chat-central-contracts` (10), `chore/label-facade-features-demo`, `audit/types-sync-312`, `fix/types-sync-adapter-contract`.
@@ -170,8 +195,8 @@ Hoje o procedimento (`max(version)` + `INSERT … ON CONFLICT DO NOTHING RETURNI
 SELECT conrelid::regclass AS tabela, conname, contype, pg_get_constraintdef(oid)
 FROM pg_constraint WHERE NOT convalidated ORDER BY 1,2;
 ```
-- [ ] Inventário anexado
-- [ ] `ALTER TABLE … VALIDATE CONSTRAINT` via migration normal (valida sem lock exclusivo longo) ou pendência justificada
+- [x] Inventário anexado (2026-09-16, ao vivo): único resultado é `realtime.messages.messages_payload_exclusive` — schema `realtime` é gerenciado pelo próprio Supabase, fora do controle deste repo
+- [x] N/A — zero constraints `NOT VALID` no schema `public`; nada para validar
 
 ### E22 🔴 FKs sem índice no lado filho
 ```sql
@@ -227,8 +252,8 @@ FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.prosecdef
   AND NOT EXISTS (SELECT 1 FROM unnest(coalesce(p.proconfig,'{}')) c WHERE c LIKE 'search_path=%')
 ORDER BY 1;
 ```
-- [ ] Inventário das SECURITY DEFINER (das 122)
-- [ ] Todas com `SET search_path = public, pg_temp` (ou equivalente) via migration `CREATE OR REPLACE`
+- [x] Inventário confirmado ao vivo (2026-09-16, join correto por `pg_namespace` — não `oid::regnamespace`, que dá falso resultado por colidir com OID de outra relação)
+- [x] Confirmado: 0 funções SECURITY DEFINER em `public` sem `search_path` fixo
 
 ### E26 🔴 Snapshot de grants por role (anon / authenticated / service_role)
 O incidente de 2026-09-04 (REVOKE antes do código → lockout de login) prova que ACL é o ponto mais sensível deste banco.
