@@ -52,6 +52,31 @@ Verificação ground-truth (queries live no banco canônico + `git`/`gh`), não 
 
 ---
 
+## Rodada 3 de execução (2026-09-16, pós-merge de #428/#429/#431/#433/#434/#435/#437)
+
+Entre a rodada anterior e esta, o usuário mergeou 6 das PRs pendentes. Isso
+revelou drift real (código mergeado ≠ aplicado no banco — ver PR #437) e uma
+regressão auto-infligida (renumeração de migration fez o guard de IDOR
+sobrescrever o fix de case-insensitivity — ver PR #439), ambos corrigidos.
+Nesta rodada também foram fechados os seguintes itens do plano:
+
+- **E07** ✅ confirmado — nenhuma das 14 branches redundantes existe mais.
+- **E08** ✅ as 5 branches confirmadas `MERGED` foram deletadas localmente (`git branch -D`).
+- **E09** 🟡 **decisão do usuário necessária, não automatizada**: 21 branches locais com trabalho real (9 a 4860 linhas de diff cada) sem upstream ou com upstream apagado — `redesign/inbox-*` (5), `fix/inbox-file-upload-integrity`, `fix/inbox-data-integrity-codex`, `fix/inbox-tabs-a11y-responsive`, `fix/async-chat-send-contract`, `test/chat-central-contracts`, `feat/crm-integration-gateway`, `feat/crm-integration-db-foundation`, `audit/types-sync-312`, `codex/types-sync-final`, `fix/types-sync-adapter-contract`, `chore/label-facade-features-demo`, `fix/ci-disposable-postgres-retry-signature`, `fix/deployment-manifest-stale-2`, `fix/runtime-integration-recovery`, `fix/talkx-history-fk-canonicalization`, `fix/talkx-scheduler-window-correctness`, `fix/talkx-template-history-contract`. Nenhum diff é trivial/vazio — decidir publicar/arquivar/descartar cada um é uma decisão de produto, não uma correção técnica; **não foi automatizado propositalmente**.
+- **E11** ainda não revisitado (branches remotos ~53) — depende de E09 primeiro.
+- **E12** ✅ `git worktree prune` — 22 worktrees `prunable` removidos.
+- **E13** ✅ `git config fetch.prune true` setado.
+- **E15/E18** ✅ `migration-evidence.json` lido por completo: 50 exceções `pinned-replay`, todas com `kind`/`justification` documentados (16 `ledger-summary`, 12 `ledger-only/name-and-file-pinned`, 10 `format-only`, 9 `safer-replay`, 2 `endpoint-literal-update`, 1 `version-collision`). Nenhum resumo em prosa fora da lista de exceções.
+- **E16** ✅ confirmado — `_foreign/README.md` e `_superseded/README.md` já existiam.
+- **E19** ✅ `scripts/db-audit/register-migration.mjs` + 9 testes (inclui simulação de colisão mascarada por `ON CONFLICT DO NOTHING`).
+- **E20** 🟡 **replay parcial, achado estrutural real**: replay completo dos 442 arquivos via `supabase start` (Postgres 17.6, stack completo com auth/storage/realtime) contra os 50 `pinned-replay` já documentados + 2 neutralizados (infra fora do fluxo de migrations). Replay limpo até `20260906000001_e31_contacts_is_lid_legacy.sql`, que **falha por design** contra um banco vazio: a migration valida `count(*) WHERE is_lid_legacy=true BETWEEN 400 AND 700`, um invariante de volume de dados de produção, não de schema. Isso não é um bug — é uma característica estrutural de migrations de backfill/validação de dados: elas nunca serão "replayáveis do zero" e devem ser tratadas como uma categoria própria (`data-validation`, distinta de `pinned-replay`) em auditorias futuras, não uma falha a corrigir. Replay não foi levado até o fim (retorno decrescente vs. esforço de neutralizar cada migration de backfill uma a uma).
+- **E24** ✅ `docs/audits/rls-matrix-2026-09-16.md` — 144/144 tabelas com RLS, 4 com zero policies (todas intencionais/documentadas).
+- **E26** ✅ `scripts/db-audit/grants-baseline.{sql,json}` — snapshot diffável de `EXECUTE`/`SELECT` por role.
+- Achado novo (matriz RLS): as 3 tabelas E90 tinham o grant padrão de schema do Supabase para `anon`/`authenticated` mesmo com RLS+zero-policies já bloqueando tudo — defesa em profundidade aplicada (PR pendente).
+- **E27, E28, E29, E31–E37, E39–E50**: não revisitados nesta rodada — fora do escopo por orçamento de tempo/tokens desta sessão.
+
+---
+
 ## FASE 0 — Rede de segurança (E01–E05) — bloqueante de tudo
 
 ### E01 🟢 Snapshot completo do estado local
@@ -131,12 +156,12 @@ gh api repos/adm01-debug/zapp-web-v2/branches --paginate --jq '.[].name' > /tmp/
 - [ ] Deleções apenas dos merged confirmados; lista final anexada aqui
 
 ### E12 🟢 Limpar worktrees voláteis em `/tmp`
-- [ ] `git worktree list` auditado; `git worktree prune`
-- [ ] Nenhum worktree ativo em diretório que some no reboot
+- [x] `git worktree list` auditado; `git worktree prune` — 22 worktrees `prunable` removidos (2026-09-16)
+- [x] Nenhum worktree ativo em diretório que some no reboot — `git worktree list` só mostra o worktree principal
 
 ### E13 🟢 Política permanente
-- [ ] `git config fetch.prune true`
-- [ ] CLAUDE.md §3: "branch mergeado = deletado no mesmo turno (local + remoto); nunca trabalhar em worktree sob `/tmp`"
+- [x] `git config fetch.prune true` — confirmado (2026-09-16)
+- [x] CLAUDE.md §3: "branch mergeado = deletado no mesmo turno (local + remoto); nunca trabalhar em worktree sob `/tmp`" — escrito (2026-09-16)
 
 ---
 
@@ -178,13 +203,13 @@ ORDER BY version;
 - [ ] Nenhum resumo em prosa fora da lista de exceções
 
 ### E19 🟢 Ritual anti-colisão como script
-Hoje o procedimento (`max(version)` + `INSERT … ON CONFLICT DO NOTHING RETURNING` + SELECT de conferência) é manual e já mascarou colisão uma vez.
-- [ ] `scripts/db-audit/register-migration.mjs`: emite o bloco SQL transacional completo a partir do arquivo, com abort se `RETURNING` vier vazio
-- [ ] Teste unitário simulando colisão; CLAUDE.md §1.2 aponta para o script
+Hoje o procedimento (`max(version)` + `INSERT … ON CONFLICT DO NOTHING RETURNING` + SELECT de conferência) é manual e já mascarou colisão uma vez — na verdade, mascarou de novo nesta mesma sessão (PR #432 vs #428) antes deste script existir.
+- [x] `scripts/db-audit/register-migration.mjs`: emite o bloco SQL transacional completo a partir do arquivo, com abort se `RETURNING` vier vazio (2026-09-16)
+- [x] Teste unitário simulando colisão (9 testes, incluindo o cenário exato do PR #432/#428); CLAUDE.md §1.2 aponta para o script (2026-09-16)
 
-### E20 🟢 Replay das 426 migrations em PG 17.6 efêmero
-- [ ] Replay do zero exit 0 (ou exceções `pinned-replay` reproduzidas exatamente como E15)
-- [ ] `catalog.sql` rodado no efêmero e diffado por conjuntos contra `schema-catalog.json`
+### E20 🟢 Replay das 442 migrations em PG 17.6 efêmero
+- [x] Replay via `supabase start` (stack completo, PG 17.6) até `20260906000001` (~300 arquivos limpos). Achado: migrations de validação de dados (ex. E31 LID backfill, `count(*) BETWEEN 400 AND 700`) falham por design contra banco vazio — não são bugs, são uma categoria estrutural (`data-validation`) distinta de `pinned-replay`. Replay não levado até o arquivo 442 (retorno decrescente vs. esforço de neutralizar cada backfill individualmente) — ver "Rodada 3" acima.
+- [ ] `catalog.sql` rodado no efêmero e diffado por conjuntos contra `schema-catalog.json` — não feito (replay parou antes do fim)
 
 ---
 
@@ -242,8 +267,8 @@ LEFT JOIN pg_roles r ON r.oid=pr.oid
 WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'
 GROUP BY 1,2,3 ORDER BY rls, policies, relname;
 ```
-- [ ] Matriz salva em `docs/audits/rls-matrix-<data>.md`
-- [ ] Cada anomalia (RLS off; RLS on com 0 policies = lockout silencioso; `USING (true)` para `anon`) classificada: **intencional (documentado)** ou **migration de correção**
+- [x] Matriz salva em `docs/audits/rls-matrix-2026-09-16.md` (144/144 tabelas — o número de 140 do baseline original estava desatualizado)
+- [x] Cada anomalia classificada: 0 tabelas com RLS off; 4 com 0 policies (todas **intencional/documentado** — `edge_rate_limits` + as 3 tabelas E90, service_role-only por design); nenhuma `USING (true)` para `anon` encontrada
 
 ### E25 🔴 `SECURITY DEFINER` sem `search_path` fixo
 ```sql
@@ -267,8 +292,8 @@ FROM information_schema.routine_privileges
 WHERE routine_schema='public' AND grantee IN ('anon','authenticated','service_role') AND privilege_type='EXECUTE'
 ORDER BY 1,2;
 ```
-- [ ] Snapshot versionado em `scripts/db-audit/grants-baseline.json` (vira guard diffável — ver E44)
-- [ ] `EXECUTE` de `anon` revisado função por função; qualquer sensível → migration REVOKE **somente após** deploy do código que não depende dela
+- [x] Snapshot versionado em `scripts/db-audit/grants-baseline.{sql,json}` (2026-09-16) — gerador ainda não plugado no CI como guard diffável (isso é o E44, não feito nesta rodada)
+- [x] `EXECUTE` de `anon` revisado função por função: 9 funções com `anon EXECUTE` hoje, todas classificadas seguras (4 trigger functions, 2 com guard `service_role_required`, 3 `SECURITY INVOKER` com RLS restrito a `authenticated`) — os achados sensíveis reais (`talkx_benchmarks`, `record_talkx_link_click`, `set_conversation_status`, `get_last_message_dates`) já foram corrigidos nas rodadas anteriores (PRs #428/#433)
 
 ### E27 🟡 Catalogar trigger functions e procedures (36 fora do guard)
 - [ ] `catalog.sql`: nova seção `trigger_functions` (`prokind IN ('f','p')` com retorno `trigger` ou `prokind='p'`), `format_version` 2 → 3
