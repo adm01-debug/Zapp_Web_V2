@@ -6445,9 +6445,154 @@ export type Database = {
           },
         ]
       }
+      talkx_conversions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          link_id: string | null
+          recipient_id: string | null
+          source: string | null
+          value: number | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          link_id?: string | null
+          recipient_id?: string | null
+          source?: string | null
+          value?: number | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          link_id?: string | null
+          recipient_id?: string | null
+          source?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_conversions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_conversions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_conversions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_conversions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_link_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          ip_hash: string | null
+          link_id: string
+          recipient_id: string | null
+          ua: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id: string
+          recipient_id?: string | null
+          ua?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id?: string
+          recipient_id?: string | null
+          ua?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_link_clicks_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talkx_links: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          target_url: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          target_url: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          target_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talkx_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talkx_recipients: {
         Row: {
           campaign_id: string
+          click_count: number
+          clicked_at: string | null
           contact_id: string
           created_at: string
           delivered_at: string | null
@@ -6475,6 +6620,8 @@ export type Database = {
         }
         Insert: {
           campaign_id: string
+          click_count?: number
+          clicked_at?: string | null
           contact_id: string
           created_at?: string
           delivered_at?: string | null
@@ -6502,6 +6649,8 @@ export type Database = {
         }
         Update: {
           campaign_id?: string
+          click_count?: number
+          clicked_at?: string | null
           contact_id?: string
           created_at?: string
           delivered_at?: string | null
@@ -9064,6 +9213,15 @@ export type Database = {
           is_locked: boolean
           locked_until: string
         }[]
+      }
+      record_talkx_link_click: {
+        Args: {
+          p_ip_hash?: string
+          p_recipient?: string
+          p_slug: string
+          p_ua?: string
+        }
+        Returns: Json
       }
       record_talkx_recipient_delivered: {
         Args: { p_connection_id: string; p_external_id: string }
