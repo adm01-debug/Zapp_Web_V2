@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -25,14 +23,46 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useExternalCatalog, ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
+import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
+import { CatalogKpiStrip } from './catalogShared';
+import { cn } from '@/lib/utils';
+
+/** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
+ * TalkXSegments/TalkXCampaignRunning (nenhum componente StatusChip
+ * generico existe no projeto pra reusar). >24h vira tom neutro com
+ * data/hora em vez do relativo. Date.now() so roda no inicializador
+ * preguicoso do useState (unica excecao sancionada pela regra
+ * react-hooks/purity para leitura de valor impuro) - o caller usa
+ * key={lastSyncAt} pra forcar recalculo quando o valor muda, sem
+ * precisar de effect + setState (react-hooks/set-state-in-effect). */
+function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
+  const [isFresh] = useState(() => {
+    if (!lastSyncAt) return true;
+    return Date.now() - new Date(lastSyncAt).getTime() < 24 * 60 * 60 * 1000;
+  });
+  if (!lastSyncAt) return null;
+  const label = isFresh
+    ? 'Sincronizado ' + fmtAgo(lastSyncAt)
+    : 'Última sincronização em ' + new Date(lastSyncAt).toLocaleDateString('pt-BR') + ' ' + new Date(lastSyncAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return (
+    <span className={cn(
+      'flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full border',
+      isFresh ? 'text-success border-success/30 bg-success/10' : 'text-muted-foreground border-border bg-muted/30'
+    )}>
+      <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success animate-pulse' : 'bg-muted-foreground')} />
+      {label}
+    </span>
+  );
+}
 
 const PAGE_SIZE = 24;
 
 export const ExternalProductManagement: React.FC = () => {
+  const { data: stats, isLoading: statsLoading, error: statsError } = useCatalogStats();
   const {
     products,
     totalProducts,
@@ -49,6 +79,8 @@ export const ExternalProductManagement: React.FC = () => {
   const [categoryId, setCategoryId] = useState<string>('all');
   const [supplierId, setSupplierId] = useState<string>('all');
   const [onlyInStock, setOnlyInStock] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isNew, setIsNew] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(0);
 
@@ -65,8 +97,10 @@ export const ExternalProductManagement: React.FC = () => {
     if (search) params.search = search;
     if (categoryId !== 'all') params.category_id = categoryId;
     if (supplierId !== 'all') params.supplier_id = supplierId;
+    if (isFeatured) params.is_featured = true;
+    if (isNew) params.is_new = true;
     return params;
-  }, [page, search, categoryId, supplierId, onlyInStock]);
+  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
 
   // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
   // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
@@ -87,7 +121,7 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock]);
+  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew]);
 
   // Page changes (mesmo motivo)
   useEffect(() => {
@@ -96,14 +130,25 @@ export const ExternalProductManagement: React.FC = () => {
   }, [page]);
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
-  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock;
+  const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew;
 
   const clearFilters = () => {
     setSearch('');
     setCategoryId('all');
     setSupplierId('all');
     setOnlyInStock(false);
+    setIsFeatured(false);
+    setIsNew(false);
     setPage(0);
+  };
+
+  /** E33: clique no KPI aplica o filtro correspondente. Categorias/
+   * Fornecedores/Total nao tem filtro booleano equivalente - so
+   * mostram numero mesmo, sem acao no clique. */
+  const handleKpiSelect = (key: keyof CatalogStats) => {
+    if (key === 'in_stock') setOnlyInStock(true);
+    else if (key === 'featured') setIsFeatured(true);
+    else if (key === 'new_30d') setIsNew(true);
   };
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
@@ -113,31 +158,48 @@ export const ExternalProductManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
+    <div className="space-y-6 min-w-0">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Package className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">Catálogo de Produtos</h1>
-            <Badge variant="secondary">{totalProducts.toLocaleString('pt-BR')} produtos</Badge>
+        {statsLoading ? (
+          <div className="flex items-center gap-3.5">
+            <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-7 w-64" />
+              <Skeleton className="h-4 w-96" />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())}>
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Atualizar
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a href="https://promogifts.com.br" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-4 h-4 mr-1" />
-                Gerenciar no PromoGifts
-              </a>
-            </Button>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Catálogo sincronizado em tempo real com o PromoGifts. Para editar produtos, acesse o sistema de gestão.
-        </p>
+        ) : (
+          <ModuleHeader
+            icon={Package}
+            color="blue"
+            title="Catálogo de Produtos"
+            subtitle={(stats?.total ?? totalProducts).toLocaleString('pt-BR') + ' produtos sincronizados em tempo real com o PromoGifts. Gerencie, edite e compartilhe produtos.'}
+            right={(
+              <>
+                <SyncStatusChip key={stats?.last_sync_at} lastSyncAt={stats?.last_sync_at} />
+                <Button variant="outline" size="sm" onClick={() => fetchProducts(buildFilters())}>
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Atualizar
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="https://promogifts.com.br" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Gerenciar no PromoGifts
+                  </a>
+                </Button>
+              </>
+            )}
+          />
+        )}
       </motion.div>
+
+      {/* KPIs (E33) */}
+      {statsError ? (
+        <AlertCard tone="warning">Não foi possível carregar os indicadores do catálogo agora.</AlertCard>
+      ) : (
+        <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
@@ -222,7 +284,7 @@ export const ExternalProductManagement: React.FC = () => {
       )}
 
       {/* Products */}
-      <ScrollArea className="h-[calc(100vh-320px)]">
+      <div>
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
             {[...Array(10)].map((_, i) => (
@@ -263,7 +325,7 @@ export const ExternalProductManagement: React.FC = () => {
             </motion.div>
           </AnimatePresence>
         )}
-      </ScrollArea>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -288,6 +350,10 @@ export const ExternalProductManagement: React.FC = () => {
           onOpenChange={(open) => { if (!open) setSendProduct(null); }}
         />
       )}
+    </div>
+
+    {/* Rail (E31: só a estrutura — conteúdo real na F5) */}
+    <aside className="catalog-rail sticky top-4 hidden xl:block" />
     </div>
   );
 };
