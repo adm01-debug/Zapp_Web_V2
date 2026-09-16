@@ -10,9 +10,9 @@
     "sha256": "3c8f9c68452a8223778f300936f8f8deac8720918002e078084c1f1b6fff7d14"
   },
   "summary": {
-    "function_count": 66,
-    "source_file_count": 90,
-    "verify_jwt_true": 57,
+    "function_count": 67,
+    "source_file_count": 91,
+    "verify_jwt_true": 58,
     "verify_jwt_false": 9
   },
   "source_files": [
@@ -422,6 +422,11 @@
       "sha256": "840fed7638a0a27d9d3afdd8c6442ae6b3a41457b48608dbe270fc1317ac585e"
     },
     {
+      "path": "supabase/functions/talkx-link/index.ts",
+      "bytes": 4514,
+      "sha256": "9451deba8c7b12e29fec58bdc1d574bbf12ed600847058d0642e04bcec40c076"
+    },
+    {
       "path": "supabase/functions/talkx-report/index.ts",
       "bytes": 13565,
       "sha256": "48fa87e8100c4145ee0a67c594e3a00ad72ce18c114deeec04dcba8f5ece4721"
@@ -433,8 +438,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 30382,
-      "sha256": "88680ce857ae1d08c104f632cbdc6fd321d8e682f3cc293f2e199c2e6b4ed894"
+      "bytes": 30548,
+      "sha256": "1ba28acea2bd37426e2825e39f833749e219e350ed2d06e80fb576f96064f7b0"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1177,6 +1182,17 @@
       ]
     },
     {
+      "name": "talkx-link",
+      "entrypoint": "supabase/functions/talkx-link/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "a8d2a8e583af752e7b92c23679721c02eca0b5bb2d2f16fe5102442b5a98bb56",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/talkx-link/index.ts"
+      ]
+    },
+    {
       "name": "talkx-report",
       "entrypoint": "supabase/functions/talkx-report/index.ts",
       "verify_jwt": true,
@@ -1203,7 +1219,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8521d5fa4fe35ad6ca174c7a529543e9feb97ee13f4fb3dbda11fb22b98e8809",
+      "source_sha256": "6cc80dad917fa40afb0f0367eadba44fa38a441f6017ae5a79f24bdd9c72180f",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1285,5 +1301,5 @@
       ]
     }
   ],
-  "manifest_sha256": "aa3437dcc5130c01f442b70006081bf245213d1b027b103ee9b4517c39940a60"
+  "manifest_sha256": "9cd59c69c46cf25a4ab4f2aefa51798274f33bd105cdef14dd17dcb5a24d7189"
 }
