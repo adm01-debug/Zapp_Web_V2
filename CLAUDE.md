@@ -18,12 +18,13 @@
 ### ⚠️ Bancos que NÃO são deste projeto (não escrever neles)
 
 - **`uqysyzndkfiwfztbqvsl`** — MCP "ZAPP WEB - LOVABLE" antigo. **NÃO é o banco atual.**
+- **`vpkmqeumtxhrwgawxdrl`** — MCP "MCP - SUPABASE LOVABLE CLOUD - ZAPP WEB V2" (origem Lovable, `src_query` read-only). Nome quase idêntico ao MCP oficial da seção 1 — conferir sempre qual dos dois foi carregado antes de rodar SQL.
 - **Supabase self-hosted da VPS AtomicaBR** — outros sistemas; o ZAPP não roda nele.
 - `pgxfvjmuubtbowutlide` (Gestão de Clientes/CRM) e `doufsxqlfjyuvxuezpln` (Catálogo de Produtos) — bancos **externos, somente leitura** consumidos pelo front/edges. Nunca aplicar migration neles a partir deste repo.
 
 ### Regras de migration (self-explicativas, já validadas)
 
-1. `supabase_apply_migration` **está bugado** (coluna `executed_at` inexistente). Procedimento: DDL via `db_query` + `INSERT INTO supabase_migrations.schema_migrations(version,name,statements)` manual.
+1. `supabase_apply_migration` **está bugado** (coluna `executed_at` inexistente). Procedimento: DDL via `db_query` + `INSERT INTO supabase_migrations.schema_migrations(version,name,statements)` manual. Para apply em produção com dry-run + confirmação de hash SHA-256 (preferível a fazer manual pelo MCP), existe `.github/workflows/db-migrate.yml` (`workflow_dispatch` na `main`, `apply=false` primeiro para o dry-run, depois `apply=true` com `confirm_runtime_sha256` do dry-run anterior).
 2. Antes de registrar: `SELECT max(version)` e usar versão estritamente maior; `INSERT ... ON CONFLICT DO NOTHING` com `RETURNING`/SELECT de conferência (DO NOTHING já mascarou colisão).
 3. Toda mudança de DDL = arquivo em `supabase/migrations/` + registro no banco + `supabase/schema-catalog.json` atualizado + `scripts/db-audit/known-violations.json` se o guard mudar.
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
@@ -46,6 +47,13 @@
 7. Ao registrar no ledger, `statements` é o SQL **real e completo**, um statement por elemento,
    sem `;` final e sem comentários — nunca resumo em prosa ("... (add guard)"). Resumo obriga
    exceção `pinned-replay` em `migration-evidence.json` para sempre.
+8. `supabase/migrations/_foreign/` e `_superseded/` são arquivo morto (cada um com seu README) —
+   **nunca** contar com `ls supabase/migrations/` sem filtrar `*.sql`, senão a paridade
+   arquivos↔ledger dá falso positivo (aconteceu na auditoria de 2026-09-16).
+9. Antes de propor um novo guard/script de CI, conferir se `.github/workflows/db-guard.yml`
+   (por-PR) ou `db-live-guard.yml` (push em `main` **e agendado**) já cobre: este último já
+   compara migrations com o ledger, regenera catálogo e manifesto contra o commitado, e
+   verifica frescor de `types.ts` — reconstruir isso do zero é retrabalho.
 
 ---
 
@@ -75,7 +83,16 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-08-28. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-16. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+
+## Auditoria e plano de correções (2026-09-16)
+
+Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
+Achados abertos que sobrevivem a este commit:
+- Tabela `messages` com >75% de tuplas mortas, nunca autovacuada — `VACUUM (ANALYZE) public.messages;`
+  não roda pelo MCP (`VACUUM cannot run inside a transaction block`); precisa de `psql` direto ou
+  do SQL Editor do dashboard.
+- Branch protection do `main` não exige o check `Contrato DB vivo` (só `Contrato DB offline`).
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
