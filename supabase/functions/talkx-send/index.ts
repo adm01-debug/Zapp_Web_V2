@@ -207,7 +207,15 @@ Deno.serve(async (req) => {
 
     const initialInstanceId = liveTalkXInstanceId(connection);
     if (!initialInstanceId) {
-      return new Response(JSON.stringify({ error: "WhatsApp connection not found" }), { status: 400, headers });
+      // E91: conexão perdida — pausa automática da campanha
+      try {
+        await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+          p_pause_reason: "connection_lost",
+        });
+      } catch { /* já pausada ou outro estado — ignora */ }
+      return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
     }
 
     // Enforce delivery limits in the selected IANA timezone before the locked
@@ -234,6 +242,8 @@ Deno.serve(async (req) => {
       .select("*, contacts:contact_id(name, nickname, phone, company)")
       .eq("campaign_id", campaignId)
       .in("status", ["pending", "sending"])
+      // E91: exclui recipients cujo retry_after ainda não venceu
+      .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
       .order("created_at");
     if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
 
@@ -478,6 +488,10 @@ Deno.serve(async (req) => {
           if (error) throw new Error(`talkx_provider_dispatch_mark_failed: ${error.message}`);
         };
 
+        // E91: timeout de segurança por envio
+        const abortCtrl = new AbortController();
+        const sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
+
         if (recipientHasMedia) {
           const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
           const mediaSource = (effectiveMediaUrl !== campaign.media_url)
@@ -499,6 +513,7 @@ Deno.serve(async (req) => {
             { number: phone, text: personalizedMsg, delay: 0 }
           );
         }
+        clearTimeout(sendTimeout);
 
         // POST retries are unsafe without a provider idempotency contract. A
         // 5xx/connection/parser ambiguity keeps the lease for reconciliation
@@ -535,6 +550,28 @@ Deno.serve(async (req) => {
           if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
         }
       } catch (err) {
+        clearTimeout(sendTimeout);
+        // E91: erro antes do POST ao provedor — pode reagendar com backoff
+        if (!providerPostAttempted) {
+          const backoffMs = [30_000, 120_000, 600_000];
+          const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
+            ? (recipient as Record<string, unknown>).attempt_count as number
+            : 0;
+          const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+          const retryAfter = new Date(Date.now() + delayMs).toISOString();
+          const reason = err instanceof Error ? err.message : "pre_dispatch_error";
+          const { data: schedResult } = await supabase.rpc("reschedule_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_retry_after: retryAfter,
+            p_error_message: reason.slice(0, 500),
+          });
+          if (schedResult?.action === 'dead_lettered') failedCount++;
+          processedCount++;
+          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+          await sleep(interval);
+          continue;
+        }
         // A chamada ao provedor pode ter sido aceita quando a confirmação no
         // banco falhou. Ela nunca pode voltar automaticamente para `pending`:
         // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
