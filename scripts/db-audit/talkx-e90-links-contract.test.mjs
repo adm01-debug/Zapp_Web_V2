@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916200000_talkx_e90_links.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916230000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../../supabase/migrations/20260916260000_talkx_links_slug_case_insensitive.sql', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -67,6 +68,14 @@ test('Talk X link click/convert reject cross-campaign recipient and link_id (IDO
   assert.match(linkFn, /link_id does not belong to recipient's campaign/);
   assert.match(idorMigration, /v_recipient_campaign IS NULL OR v_recipient_campaign <> v_link\.campaign_id/);
   assert.match(idorMigration, /p_recipient := NULL/);
+});
+
+test('Talk X link slug matching is case-insensitive end to end', () => {
+  // Slug curto compartilhado em WhatsApp/impresso e tipado por humanos --
+  // "Abc123" e "abc123" precisam resolver para o mesmo link.
+  assert.match(caseInsensitiveMigration, /DROP CONSTRAINT talkx_links_slug_key/);
+  assert.match(caseInsensitiveMigration, /CREATE UNIQUE INDEX talkx_links_slug_lower_key ON public\.talkx_links \(lower\(slug\)\)/);
+  assert.match(caseInsensitiveMigration, /WHERE lower\(slug\) = lower\(p_slug\)/);
 });
 
 test('Talk X E90 tables ship with RLS on and zero public grants by default', () => {
