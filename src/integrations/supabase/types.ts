@@ -6284,6 +6284,7 @@ export type Database = {
           name: string
           objective: string
           outcome_unknown_count: number
+          pause_reason: string | null
           paused_at: string | null
           replied_count: number
           revision: number
@@ -6324,6 +6325,7 @@ export type Database = {
           name: string
           objective?: string
           outcome_unknown_count?: number
+          pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
           revision?: number
@@ -6364,6 +6366,7 @@ export type Database = {
           name?: string
           objective?: string
           outcome_unknown_count?: number
+          pause_reason?: string | null
           paused_at?: string | null
           replied_count?: number
           revision?: number
@@ -6590,6 +6593,7 @@ export type Database = {
       }
       talkx_recipients: {
         Row: {
+          attempt_count: number
           campaign_id: string
           click_count: number
           clicked_at: string | null
@@ -6612,6 +6616,7 @@ export type Database = {
           provider_dispatch_started_at: string | null
           replied_at: string | null
           reply_message_id: string | null
+          retry_after: string | null
           sent_at: string | null
           status: string
           updated_at: string
@@ -6619,6 +6624,7 @@ export type Database = {
           variant_id_snapshot: string | null
         }
         Insert: {
+          attempt_count?: number
           campaign_id: string
           click_count?: number
           clicked_at?: string | null
@@ -6641,6 +6647,7 @@ export type Database = {
           provider_dispatch_started_at?: string | null
           replied_at?: string | null
           reply_message_id?: string | null
+          retry_after?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -6648,6 +6655,7 @@ export type Database = {
           variant_id_snapshot?: string | null
         }
         Update: {
+          attempt_count?: number
           campaign_id?: string
           click_count?: number
           clicked_at?: string | null
@@ -6670,6 +6678,7 @@ export type Database = {
           provider_dispatch_started_at?: string | null
           replied_at?: string | null
           reply_message_id?: string | null
+          retry_after?: string | null
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -9251,6 +9260,15 @@ export type Database = {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
       }
+      reschedule_talkx_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_retry_after: string
+        }
+        Returns: Json
+      }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
@@ -9334,14 +9352,27 @@ export type Database = {
         Returns: boolean
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
-      transition_talkx_campaign: {
-        Args: { p_action: string; p_campaign_id: string }
-        Returns: {
-          campaign_id: string
-          current_status: string
-          previous_status: string
-        }[]
-      }
+      transition_talkx_campaign:
+        | {
+            Args: { p_action: string; p_campaign_id: string }
+            Returns: {
+              campaign_id: string
+              current_status: string
+              previous_status: string
+            }[]
+          }
+        | {
+            Args: {
+              p_action: string
+              p_campaign_id: string
+              p_pause_reason?: string
+            }
+            Returns: {
+              campaign_id: string
+              current_status: string
+              previous_status: string
+            }[]
+          }
       update_own_profile: {
         Args: {
           p_avatar_url?: string
