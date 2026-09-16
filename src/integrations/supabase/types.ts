@@ -9055,14 +9055,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      talkx_campaign_report: { Args: { p_campaign: string }; Returns: Json }
       talkx_increment_delivered: {
         Args: { p_campaign_id: string }
         Returns: undefined
+      }
+      talkx_overview_stats: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
       }
       talkx_recipient_is_suppressed: {
         Args: { p_contact_id: string; p_phone: string }
         Returns: boolean
       }
+      talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
       transition_talkx_campaign: {
         Args: { p_action: string; p_campaign_id: string }
         Returns: {
