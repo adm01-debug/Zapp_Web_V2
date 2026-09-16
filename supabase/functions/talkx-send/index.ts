@@ -23,6 +23,7 @@ function personalize(
   contact: { name?: string | null; nickname?: string | null; company?: string | null },
   customVars: string[] = [],
   timeZone = DEFAULT_SCHEDULE_TIMEZONE,
+  trackingUrl?: string,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
   let result = template
@@ -33,6 +34,10 @@ function personalize(
     .replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
   for (const v of customVars) {
     result = result.split('{{' + v + '}}').join('[' + v + ']');
+  }
+  // E90: {{link}} -> URL de rastreamento por destinatário
+  if (trackingUrl) {
+    result = result.split('{{link}}').join(trackingUrl);
   }
   return result;
 }
