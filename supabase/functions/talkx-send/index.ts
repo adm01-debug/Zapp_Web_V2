@@ -247,6 +247,21 @@ Deno.serve(async (req) => {
       .order("created_at");
     if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
 
+    // E90: link rastreável referenciado por {{link}} no template. Uma campanha
+    // pode ter mais de um link cadastrado; o placeholder é único, então usamos
+    // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
+    const { data: trackingLink } = await supabase
+      .from("talkx_links")
+      .select("slug")
+      .eq("campaign_id", campaignId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const trackingUrlFor = (recipientId: string) =>
+      trackingLink?.slug
+        ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
+        : undefined;
+
     // Check against the source of truth for every recipient. This makes a
     // phone-only, formatted legacy opt-out equivalent to the contact phone
     // and lets us repeat the check immediately before a provider POST.
@@ -392,6 +407,7 @@ Deno.serve(async (req) => {
           contact as { name: string; nickname?: string; company?: string },
           [],
           typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+          trackingUrlFor(recipient.id as string),
         );
         const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
           p_recipient_id: recipient.id,

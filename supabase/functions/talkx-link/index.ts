@@ -7,7 +7,7 @@
  * O worker é stateless; toda a lógica de persistência fica em RPCs seguras (SECURITY DEFINER).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -16,9 +16,15 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase    = createClient(supabaseUrl, serviceKey);
+  // Endpoint público e sem sessão: nada além do IP identifica o chamador, e
+  // TALKX_LINK_IP_SALT pode não estar provisionado ainda. A service role key
+  // já é um secret por-projeto presente neste isolate e nunca aparece no
+  // código público, então serve como fallback seguro ao literal fixo anterior.
+  const ipSalt = Deno.env.get("TALKX_LINK_IP_SALT") ?? serviceKey;
 
   const url = new URL(req.url);
   const method = req.method.toUpperCase();
+  const clientIp = getClientIP(req);
 
   // ── GET: clique + redirect ──────────────────────────────────────────────────
   if (method === "GET") {
@@ -29,13 +35,18 @@ Deno.serve(async (req) => {
       return new Response("Bad request: missing slug", { status: 400 });
     }
 
-    // Extrair UA e IP (melhor esforço)
+    // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
+    // destinatário (sem sessão), então o limite é por-IP, não por-usuário.
+    // Falha aberta com o fallback em memória se o limiter persistente cair —
+    // nunca derruba o redirect real por causa disso.
+    const rate = await enforceRateLimit(`talkx-link:click:${clientIp}`, 60, 60_000);
+    if (!rate.allowed) {
+      return new Response("Too many requests", { status: 429 });
+    }
+
     const ua     = req.headers.get("user-agent") ?? undefined;
-    const rawIp  = req.headers.get("cf-connecting-ip")
-                ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim()
-                ?? "unknown";
     // Hash trivial (não persiste IP raw)
-    const ipHash = rawIp === "unknown" ? undefined : await hashIp(rawIp);
+    const ipHash = clientIp === "unknown" ? undefined : await hashIp(clientIp, ipSalt);
 
     const { data, error } = await supabase.rpc("record_talkx_link_click", {
       p_slug:      slug,
@@ -58,6 +69,13 @@ Deno.serve(async (req) => {
 
   // ── POST: registrar conversão ───────────────────────────────────────────────
   if (method === "POST") {
+    // Mesmo limite do GET: webhook/pixel de conversão também é chamado sem
+    // sessão, direto do site de destino do link.
+    const rate = await enforceRateLimit(`talkx-link:convert:${clientIp}`, 60, 60_000);
+    if (!rate.allowed) {
+      return new Response("Too many requests", { status: 429 });
+    }
+
     let body: Record<string, unknown>;
     try { body = await req.json(); }
     catch { return new Response("Invalid JSON", { status: 400 }); }
@@ -89,6 +107,20 @@ Deno.serve(async (req) => {
       return new Response("Recipient not found", { status: 404 });
     }
 
+    // IDOR: um link_id arbitrário não pode ser atribuído a um recipient de
+    // outra campanha — inflaria conversão/receita de uma campanha com
+    // cliques de outra.
+    if (link_id) {
+      const { data: linkRow } = await supabase
+        .from("talkx_links")
+        .select("campaign_id")
+        .eq("id", link_id)
+        .maybeSingle();
+      if (!linkRow || linkRow.campaign_id !== rec.campaign_id) {
+        return new Response("link_id does not belong to recipient's campaign", { status: 400 });
+      }
+    }
+
     const { error: convErr } = await supabase
       .from("talkx_conversions")
       .insert({
@@ -113,9 +145,9 @@ Deno.serve(async (req) => {
   return new Response("Method not allowed", { status: 405 });
 });
 
-async function hashIp(ip: string): Promise<string> {
+async function hashIp(ip: string, salt: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(ip + "talkx-salt");
+  const data = encoder.encode(ip + salt);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
