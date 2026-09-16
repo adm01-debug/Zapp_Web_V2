@@ -1,5 +1,6 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
+import { attributeTalkXReply } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -319,6 +320,14 @@ export async function handleIncomingMessage(
           console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
         }
       }
+    }
+  }
+
+  // E88: atribuir resposta TalkX (janela 72 h), exceto opt-out
+  if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
+    const OPT_OUT_RE = /^\s*(sair|stop|cancelar|descadastrar|remove|unsubscribe|parar|nao quero|n[\u00e3a]o quero|optout|opt-out)\s*$/i;
+    if (!OPT_OUT_RE.test((content ?? '').trim())) {
+      void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
     }
   }
 }

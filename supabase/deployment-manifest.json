@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 66,
-    "source_file_count": 89,
+    "source_file_count": 90,
     "verify_jwt_true": 57,
     "verify_jwt_false": 9
   },
@@ -83,8 +83,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 21732,
-      "sha256": "6d2288dd6374a08bea55442de277600c0c04114c40f6f9db870728f7c4798437"
+      "bytes": 22208,
+      "sha256": "1109e5a4648a42620f5cd5800ddb16587f4ae2556bd77068a9171b00fd6e373d"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -120,6 +120,11 @@
       "path": "supabase/functions/_shared/talkx-delivery-connection.ts",
       "bytes": 593,
       "sha256": "3d569e1819ecba45d315777be69e4b6b8bb7408076773747b706e3260cd5d7dd"
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-reply.ts",
+      "bytes": 1951,
+      "sha256": "5ebcc5942a1800c6911c198b41b458be1c4d83f1d331a097ebcb485213c9ed34"
     },
     {
       "path": "supabase/functions/_shared/talkx-window.ts",
@@ -903,7 +908,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "9a070ff601c6373c62a26b44b014d2f12e9acf5bd4848221b443509f74e4bf8e",
+      "source_sha256": "c801b5048b8e50dab52899c9be8a59c2c64f290f6d2c35597db544169dcec190",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -916,6 +921,7 @@
         "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
+        "supabase/functions/_shared/talkx-reply.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/evolution-webhook/index.ts"
       ]
@@ -1279,5 +1285,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a173448ee8f8ad035f9eb65320e85c055897828d12a12f2a133b406eadd8fc42"
+  "manifest_sha256": "3703a0136e91edde672a5486554ca6c01ffaaa9dd90c42bd2f733c05a739ab58"
 }
