@@ -84,16 +84,23 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-09-16. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-17. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
-Achados abertos que sobrevivem a este commit:
-- Tabela `messages` com >75% de tuplas mortas, nunca autovacuada — `VACUUM (ANALYZE) public.messages;`
-  não roda pelo MCP (`VACUUM cannot run inside a transaction block`); precisa de `psql` direto ou
-  do SQL Editor do dashboard.
-- Branch protection do `main` não exige o check `Contrato DB vivo` (só `Contrato DB offline`).
+Estado dos achados após re-auditoria de 2026-09-17:
+- `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
+  2026-09-17 a tabela estava com 4,2% de dead tuples (1.557/35.900). Lembrete permanece válido:
+  `VACUUM` manual não roda pelo MCP (`VACUUM cannot run inside a transaction block`); se voltar a
+  acumular, usar `psql` direto ou o SQL Editor do dashboard.
+- Branch protection sem `Contrato DB vivo` — **NÃO É BUG, é design**: `db-live-guard.yml`
+  deliberadamente não tem trigger de `pull_request` (não expor `DESTINO_URL` a código de PR — ver
+  cabeçalho do workflow), logo o check nunca reportaria no SHA de PR e torná-lo required
+  congelaria todos os merges. O contrato vivo roda pós-merge (push na `main`), agendado (segunda
+  06:00 UTC) e via `workflow_dispatch`; os required checks de PR seguem sendo os offline.
+  Complemento E43 verificado em 2026-09-17: force-push e deleção da `main` bloqueados, strict
+  mode ligado, review obrigatório.
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
@@ -105,7 +112,10 @@ This project has a knowledge graph at graphify-out/ with god nodes, community st
 git rev-parse --short HEAD
 grep "Built from commit" graphify-out/GRAPH_REPORT.md
 ```
-Se divergirem, auto-sync N8N corrige em ate 15min.
+Se divergirem, rode `graphify update .` localmente (fonte de verdade). O "Graph Sync — Dispatcher"
+do N8N (id `67dWSoWEPUGTX5mA`) existe e está ativo, mas a cadência de 15min não se confirma na
+prática (execução de 2026-09-15 12:00 falhou; nenhuma outra até 2026-09-17) — não depender dele
+como única via de atualização.
 
 ## Talk X / Campanhas
 Módulo em desenvolvimento ativo. Fase 0 (saneamento, E01–E10) e Fase 1 (design system, E11–E20)
