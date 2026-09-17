@@ -25,7 +25,7 @@
 ### Regras de migration (self-explicativas, já validadas)
 
 1. `supabase_apply_migration` **está bugado** (coluna `executed_at` inexistente). Procedimento: DDL via `db_query` + `INSERT INTO supabase_migrations.schema_migrations(version,name,statements)` manual. Para apply em produção com dry-run + confirmação de hash SHA-256 (preferível a fazer manual pelo MCP), existe `.github/workflows/db-migrate.yml` (`workflow_dispatch` na `main`, `apply=false` primeiro para o dry-run, depois `apply=true` com `confirm_runtime_sha256` do dry-run anterior).
-2. Antes de registrar: `SELECT max(version)` e usar versão estritamente maior; `INSERT ... ON CONFLICT DO NOTHING` com `RETURNING`/SELECT de conferência (DO NOTHING já mascarou colisão).
+2. Antes de registrar: `SELECT max(version)` e usar versão estritamente maior; `INSERT ... ON CONFLICT DO NOTHING` com `RETURNING`/SELECT de conferência (DO NOTHING já mascarou colisão duas vezes em 2026-09-16). `scripts/db-audit/register-migration.mjs <arquivo.sql> [--apply]` automatiza esse ritual — gera o bloco SQL pronto (dry-run) ou aplica e aborta sozinho se `RETURNING` vier vazio.
 3. Toda mudança de DDL = arquivo em `supabase/migrations/` + registro no banco + `supabase/schema-catalog.json` atualizado + `scripts/db-audit/known-violations.json` se o guard mudar.
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
 5. `CREATE INDEX CONCURRENTLY` falha (gateway envolve em transação) — usar `CREATE INDEX` simples (tabelas são pequenas).
@@ -80,6 +80,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 - **Escrita no GitHub: somente MCP `GITHUB - MCP - FOREVER`** (`github_push_files`). O MCP padrão do GitHub retorna 403 em write.
 - Diff mínimo, causa raiz. `github_push_files` sobrescreve o arquivo — mandar conteúdo integral com apenas a mudança semântica.
 - Pode haver sessão paralela commitando no mesmo branch/banco: re-sync antes de editar, conferir `max(version)` antes de registrar migration, `uniq -d` nos prefixos após push.
+- Branch mergeado = deletado no mesmo turno em que o merge é confirmado (local com `git branch -d`, remoto se ainda existir). Nunca trabalhar em worktree sob `/tmp` — `git worktree prune` não é automático e acumula silenciosamente (22 worktrees `prunable` encontrados na auditoria de 2026-09-16, todos de branches já mergeadas ou abandonadas).
 
 ---
 
