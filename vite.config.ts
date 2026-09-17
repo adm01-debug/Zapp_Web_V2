@@ -82,8 +82,13 @@ export default defineConfig(({ mode }) => {
               // (jspdf, mapbox) o arrasta e o entry passa a pre-carregar esse grupo.
               { name: "vendor-core", priority: 100,
                 test: /(node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run)[\\/]|vite[\\/]preload-helper)/ },
-              // Lucide icons - split into a separate chunk to avoid bloating other chunks
-              { name: "vendor-icons", priority: 90, test: /node_modules[\\/]lucide-react[\\/]/ },
+              // lucide-react NAO tem grupo proprio de proposito: um grupo unico
+              // funde icones alcancados estaticamente (entry) com os alcancados
+              // so por import() dinamico no MESMO chunk - qualquer icone estatico
+              // torna o chunk inteiro inicial e import() de mapas de icones
+              // (catalogCategoryIcons.ts) arrastaria tudo para o first paint
+              // (152 KB gzip; estourou o budget de 350 KB no PR #415). Sem grupo,
+              // cada icone segue a alcancabilidade do seu importador.
               // Data layer
               { name: "vendor-data", priority: 90,
                 test: /node_modules[\\/](@tanstack[\\/]react-query|@supabase[\\/]supabase-js)[\\/]/ },
