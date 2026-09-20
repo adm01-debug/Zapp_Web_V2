@@ -27,6 +27,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import {
   carregarIdentidadeEsperada,
+  endurecerDestinoTls,
   validarDestino,
 } from './database-identity.mjs';
 
@@ -43,6 +44,7 @@ export function splitStatements(sql) {
   let current = '';
   let i = 0;
   let dollarTag = null;
+  let inQuote = false;
   while (i < sql.length) {
     if (dollarTag) {
       if (sql.startsWith(dollarTag, i)) {
@@ -55,12 +57,35 @@ export function splitStatements(sql) {
       i += 1;
       continue;
     }
+    // Strings simples: ';' e '--' dentro de '...' fazem parte do SQL — sem
+    // este estado, o ledger registraria statements adulterados em silencio
+    // (regra 7 do CLAUDE.md exige o SQL real e completo). Escape SQL '' e
+    // respeitado.
+    if (inQuote) {
+      current += sql[i];
+      if (sql[i] === "'") {
+        if (sql[i + 1] === "'") {
+          current += "'";
+          i += 2;
+          continue;
+        }
+        inQuote = false;
+      }
+      i += 1;
+      continue;
+    }
+    if (sql[i] === "'") {
+      inQuote = true;
+      current += sql[i];
+      i += 1;
+      continue;
+    }
     if (sql[i] === '-' && sql[i + 1] === '-') {
       const nl = sql.indexOf('\n', i);
       i = nl === -1 ? sql.length : nl + 1;
       continue;
     }
-    const dollarMatch = /^\$[a-zA-Z_]*\$/.exec(sql.slice(i));
+    const dollarMatch = /^\$(?:[a-zA-Z_][a-zA-Z0-9_]*)?\$/.exec(sql.slice(i));
     if (dollarMatch) {
       dollarTag = dollarMatch[0];
       current += dollarTag;
@@ -109,7 +134,14 @@ RETURNING version, name, array_length(statements,1) AS n_statements;`;
 }
 
 function runPsql(url, sql) {
-  return execFileSync(PSQL_BIN, [url, '-X', '-t', '-A', '-c', sql], { encoding: 'utf8' });
+  try {
+    return execFileSync(PSQL_BIN, [url, '-X', '-t', '-A', '-c', sql], { encoding: 'utf8' });
+  } catch (err) {
+    // err.message do execFileSync embute a linha de comando inteira — com a
+    // DESTINO_URL (credencial). Relanca so o stderr do psql, truncado.
+    const detalhe = (err.stderr || '').toString().slice(0, 300).trim();
+    throw new Error(`psql falhou (exit ${err.status ?? '?'})${detalhe ? `: ${detalhe}` : ''}`);
+  }
 }
 
 export function parseMigrationFile(filePath) {
@@ -175,9 +207,39 @@ function main() {
     return;
   }
 
+  // Vetor libpq "last-wins": query params ?host=/?user=/?dbname= sobrescrevem
+  // a authority da URI e passariam pelo parse acima (provado com psql real na
+  // validacao adversarial de 2026-09-20). Allowlist estrita + TLS endurecido
+  // (mesma rotina do db-live-guard) antes de qualquer psql.
+  let urlSegura;
+  {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      console.error('ABORT identidade: DESTINO_URL invalida; credencial nao exibida');
+      process.exitCode = 1;
+      return;
+    }
+    for (const chave of parsedUrl.searchParams.keys()) {
+      if (chave !== 'sslmode' && chave !== 'sslrootcert') {
+        console.error(`ABORT identidade: query param nao permitido na DESTINO_URL: ${chave}`);
+        process.exitCode = 1;
+        return;
+      }
+    }
+    const tls = endurecerDestinoTls(url);
+    if (tls.erros.length) {
+      for (const erro of tls.erros) console.error(`ABORT identidade: ${erro}`);
+      process.exitCode = 1;
+      return;
+    }
+    urlSegura = tls.connectionString;
+  }
+
   let maxRaw;
   try {
-    maxRaw = runPsql(url, 'SELECT max(version) FROM supabase_migrations.schema_migrations').trim();
+    maxRaw = runPsql(urlSegura, 'SELECT max(version) FROM supabase_migrations.schema_migrations').trim();
   } catch (err) {
     console.error(`ABORT: falha ao consultar max(version): ${err.message}`);
     process.exitCode = 1;
@@ -191,7 +253,7 @@ function main() {
 
   let returned;
   try {
-    returned = runPsql(url, insertSql).trim();
+    returned = runPsql(urlSegura, insertSql).trim();
   } catch (err) {
     console.error(`ABORT: falha ao registrar: ${err.message}`);
     process.exitCode = 1;

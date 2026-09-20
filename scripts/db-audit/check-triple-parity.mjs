@@ -42,16 +42,34 @@ function md5(value) {
   return crypto.createHash('md5').update(value).digest('hex');
 }
 
+function execPsqlSanitizado(args) {
+  try {
+    return execFileSync(PSQL_BIN, args, { encoding: 'utf8' });
+  } catch (err) {
+    // err.message do execFileSync embute a linha de comando (com DESTINO_URL);
+    // relanca apenas o stderr do psql, truncado, sem credencial.
+    const detalhe = (err.stderr || '').toString().slice(0, 300).trim();
+    throw new Error(`psql falhou (exit ${err.status ?? '?'})${detalhe ? `: ${detalhe}` : ''}`);
+  }
+}
+
 function psql(sql) {
-  return execFileSync(PSQL_BIN, [url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql], {
-    encoding: 'utf8',
-  });
+  return execPsqlSanitizado([url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql]);
 }
 
 function psqlFile(file) {
-  return execFileSync(PSQL_BIN, [url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file], {
-    encoding: 'utf8',
-  });
+  return execPsqlSanitizado([url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file]);
+}
+
+// Ordena chaves recursivamente: a igualdade nao pode depender da ordem de
+// serializacao (hoje ambos os lados saem de jsonb, que canonicaliza — este
+// canon() imuniza contra edicao manual do baseline e mudanca futura de json).
+function canon(valor) {
+  if (Array.isArray(valor)) return valor.map(canon);
+  if (valor && typeof valor === 'object') {
+    return Object.fromEntries(Object.keys(valor).sort().map((k) => [k, canon(valor[k])]));
+  }
+  return valor;
 }
 
 // ── A) migrations ↔ ledger ─────────────────────────────────────────────
@@ -110,17 +128,23 @@ function checkGrants() {
   // todo dia — o baseline compara apenas o conteudo de ACL.
   delete fresco.generated_at;
   delete commitado.generated_at;
-  const a = JSON.stringify(fresco);
-  const b = JSON.stringify(commitado);
+  const a = JSON.stringify(canon(fresco));
+  const b = JSON.stringify(canon(commitado));
   console.log(`[grants] fresco=${md5(a)} commitado=${md5(b)}`);
   if (a !== b) {
     fail(`grants-baseline desatualizado. Regenere: ${PSQL_BIN} "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -f ${GRANTS_SQL_PATH} > ${GRANTS_BASELINE_PATH}`);
   }
 }
 
-checkMigrations();
-checkEdges();
-checkGrants();
+// Erros inesperados (psql, JSON invalido) viram falha CONTROLADA da perna —
+// o gate continua fail-closed, sem stack trace nem credencial no output.
+for (const [nome, fn] of [['migrations', checkMigrations], ['edges', checkEdges], ['grants', checkGrants]]) {
+  try {
+    fn();
+  } catch (err) {
+    fail(`[${nome}] erro inesperado: ${err.message}`);
+  }
+}
 
 if (failures > 0) {
   console.error(`Paridade tripla: ${failures} falha(s).`);

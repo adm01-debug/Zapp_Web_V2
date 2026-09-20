@@ -151,3 +151,33 @@ test('sem DESTINO_URL roda so a perna local de edges', () => {
   assert.match(res.stdout, /\[migrations\] pulado/);
   assert.match(res.stdout, /\[grants\] pulado/);
 });
+
+test('grants com chaves em ordem diferente mas conteudo igual PASSAM (comparacao canonica)', () => {
+  const fx = makeFixture({
+    versoes: ['20260901000000'],
+    dirs: ['fn-a'],
+    manifestNames: ['fn-a'],
+    ledger: ['20260901000000'],
+    grantsFresco: { b: 2, a: 1 },
+    grantsCommitado: { a: 1, b: 2 },
+  });
+  const res = run(fx);
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+});
+
+test('psql com exit!=0 vira falha controlada sem vazar a DESTINO_URL', () => {
+  const fx = makeFixture({
+    versoes: ['20260901000000'],
+    dirs: ['fn-a'],
+    manifestNames: ['fn-a'],
+    ledger: ['20260901000000'],
+    grantsFresco: { r: 1 },
+    grantsCommitado: { r: 1 },
+  });
+  fs.writeFileSync(fx.psqlPath, '#!/usr/bin/env node\nprocess.stderr.write("connection refused");\nprocess.exit(2);\n', { mode: 0o755 });
+  const res = run(fx);
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /erro inesperado: psql falhou \(exit 2\): connection refused/);
+  assert.doesNotMatch(res.stderr, /postgres:\/\//);
+  assert.doesNotMatch(res.stdout + res.stderr, /at .*check-triple-parity\.mjs/, 'sem stack trace');
+});

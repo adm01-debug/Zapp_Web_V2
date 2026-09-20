@@ -175,3 +175,57 @@ test('register --apply aborta ANTES de qualquer escrita quando a DESTINO_URL apo
     assert.match(result.stderr, /ABORT identidade: DESTINO_URL aponta para outro projeto/);
   });
 });
+
+// ─── Fixes da validação adversarial de 2026-09-20 ───────────────────────
+
+test('splitStatements preserva ; e -- dentro de strings simples (escape SQL respeitado)', () => {
+  const stmts = splitStatements("INSERT INTO t (a) VALUES ('a;b');\nSELECT 'x--y';\nSELECT 'it''s; fine';");
+  assert.equal(stmts.length, 3);
+  assert.equal(stmts[0], "INSERT INTO t (a) VALUES ('a;b')");
+  assert.equal(stmts[1], "SELECT 'x--y'");
+  assert.equal(stmts[2], "SELECT 'it''s; fine'");
+});
+
+test('splitStatements reconhece dollar-tags com digitos ($q1$)', () => {
+  const stmts = splitStatements('CREATE FUNCTION f() RETURNS void LANGUAGE sql AS $q1$ SELECT 1; SELECT 2; $q1$;');
+  assert.equal(stmts.length, 1);
+  assert.match(stmts[0], /SELECT 1; SELECT 2;/);
+});
+
+test('register --apply aborta com query param proibido na DESTINO_URL sem invocar o psql (vetor libpq last-wins)', () => {
+  withTmpFile('20260916999300_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
+    const marker = path.join(tmp, 'psql-foi-chamado');
+    const psql = path.join(tmp, 'psql-spy.mjs');
+    fs.writeFileSync(psql, `#!/usr/bin/env node
+require('node:fs').writeFileSync(${JSON.stringify(marker)}, '1');
+process.stdout.write('20260101000000');
+`, { mode: 0o755 });
+    const result = runScript(filePath, {
+      DESTINO_URL: `${FIXTURE_URL}?host=127.0.0.1`,
+      DATABASE_IDENTITY_PATH: fixtureIdentity(tmp),
+      PSQL_BIN: psql,
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /query param nao permitido na DESTINO_URL: host/);
+    assert.equal(fs.existsSync(marker), false, 'psql nao pode ser invocado');
+  });
+});
+
+test('falha do psql nao vaza a DESTINO_URL no stderr (mensagem sanitizada)', () => {
+  withTmpFile('20260916999400_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
+    const psql = path.join(tmp, 'psql-falha.mjs');
+    fs.writeFileSync(psql, `#!/usr/bin/env node
+process.stderr.write('psql: error: connection refused');
+process.exit(2);
+`, { mode: 0o755 });
+    const result = runScript(filePath, {
+      DESTINO_URL: FIXTURE_URL,
+      DATABASE_IDENTITY_PATH: fixtureIdentity(tmp),
+      PSQL_BIN: psql,
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /psql falhou \(exit 2\): psql: error: connection refused/);
+    assert.doesNotMatch(result.stderr, /postgres:\/\//, 'URL com credencial nao pode aparecer');
+    assert.doesNotMatch(result.stderr, /supabase\.co/, 'host da credencial nao pode aparecer');
+  });
+});
