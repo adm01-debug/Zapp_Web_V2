@@ -21,6 +21,28 @@
 | Higiene git | 22 branches locais · 2 remotos `claude/*` mergeados aguardando deleção (classificador negou à IA em 17/09) |
 | Automação | Graph Sync Dispatcher N8N (`67dWSoWEPUGTX5mA`) sem cadência (erro 15/09); MCPs quebrados toda sessão: CLOUDFLARE-WORKERS (410), LALAMOVE ×2 (404), VS-CODE-VPS (404), PLAYWRIGHT (timeout); MCP N8N com tools stub (`search_workflows`, `execution_logs`) |
 
+## Status da execução — rodada 2026-09-20 (mesma data do plano)
+
+Evidências completas em `DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md`. Legenda:
+✅ fechada com evidência · 🔧 implementada em PR aguardando merge · 📋 análise pronta,
+ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de observação.
+
+| Fase | Status por etapa |
+|---|---|
+| F0 | E01 👤 · E02 🔧 · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
+| F1 | E07–E09 👤(3 cliques) · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
+| F2 | E14 🔧 · E15 📋🔧⏳(meta recalibrada) · E16 ✅(0) · E17 📋 · E18 🔧⏳ · E19 ✅ · E20 ✅ · E21 👤 |
+| F3 | E22 📋 · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
+| F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
+| F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
+| F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
+| F7 | E44 👤 · E45 👤 · E46 🔧 · E47 🔧 |
+| F8 | E48 ✅rodada · E49 🔧 · E50 📋(critérios no dossiê) |
+
+Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 (maioria dos
+"244 sem uso" é FK-support/feature vazia — dropar seria erro), E39 (dívida 99%
+não-autofixável — redução por módulo, não em massa), E40/E42/E43 (já estavam zerados).
+
 ## Regras de execução (herdadas e obrigatórias)
 
 1. **1 etapa = 1 PR** quando tocar o repo; branch `chore|fix|feat/e{NN}-slug`; merge ⇒ deletar branch no mesmo turno.

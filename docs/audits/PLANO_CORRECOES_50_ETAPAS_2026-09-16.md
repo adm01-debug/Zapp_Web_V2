@@ -6,6 +6,15 @@
 
 ## Baseline da auditoria (ponto de comparação para E47)
 
+> **⚠️ PLANO ENCERRADO em 2026-09-20.** Os checkboxes ainda abertos aqui foram herdados
+> e re-mapeados pelo plano vigente `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (tabela de
+> herança "herda E{n}/16-09" lá; evidências em `DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md`).
+> Fechamentos comprovados após a escrita deste arquivo: E42 (cron do CRM worker
+> desativado, 20/09), E43 (force-push/deleção bloqueados e "Contrato DB vivo" reclassificado
+> como design em 17/09 — ver CLAUDE.md), E44 (gate `check-triple-parity.mjs`, 20/09),
+> E45 (`branch-hygiene-audit.yml` semanal já existia), E46 (CLAUDE.md atualizado via
+> PR #442). Não marcar mais checkboxes AQUI — o tracking vive no plano de 20/09.
+
 | Eixo | Estado em 2026-09-16 |
 |---|---|
 | `origin/main` | `b9a45952` (PR #402), CI 100% verde incl. `Contrato DB vivo` e `Contrato DB offline` |
