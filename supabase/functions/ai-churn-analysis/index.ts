@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AiChurnAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
