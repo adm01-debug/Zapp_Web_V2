@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import crypto from 'node:crypto';
 import { splitStatements, buildInsertSql, parseMigrationFile } from './register-migration.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./register-migration.mjs', import.meta.url));
@@ -19,6 +20,25 @@ function withTmpFile(name, content, fn) {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+// Identidade de fixture (E46): ref valido de 20 chars + database 'test',
+// para que os testes de --apply passem pela blindagem de banco sem tocar
+// na identidade oficial versionada.
+const FIXTURE_REF = 'aaaaaaaaaaaaaaaaaaaa';
+const FIXTURE_URL = `postgres://postgres:pw@db.${FIXTURE_REF}.supabase.co/test`;
+function fixtureIdentity(tmp) {
+  const file = path.join(tmp, 'identity.json');
+  const sha = crypto.createHash('sha256').update(FIXTURE_REF).digest('hex');
+  fs.writeFileSync(file, JSON.stringify({
+    format_version: 1,
+    connection_provider: 'supabase-cloud',
+    project_ref_sha256: sha,
+    database: 'test',
+    schema: 'public',
+    server_major: 17,
+  }));
+  return file;
 }
 
 function fakePsql(tmp, { maxVersionOutput = '', insertOutput = '', failOnInsert = false } = {}) {
@@ -98,7 +118,7 @@ test('parseMigrationFile rejects a file with no real statements', () => {
 test('register --apply aborts when the file version is not strictly greater than the live max(version)', () => {
   withTmpFile('20260101000000_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
     const psql = fakePsql(tmp, { maxVersionOutput: '20260101000000' }); // same version already registered
-    const result = runScript(filePath, { DESTINO_URL: 'postgres://fixture.invalid/test', PSQL_BIN: psql });
+    const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /nao e estritamente maior que max\(version\)/);
   });
@@ -111,7 +131,7 @@ test('register --apply aborts when INSERT ... ON CONFLICT DO NOTHING RETURNING c
   // INSERT colide silenciosamente porque a outra ja ocupou a linha.
   withTmpFile('20260916999000_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
     const psql = fakePsql(tmp, { maxVersionOutput: '20260916210000', insertOutput: '' });
-    const result = runScript(filePath, { DESTINO_URL: 'postgres://fixture.invalid/test', PSQL_BIN: psql });
+    const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /RETURNING vazio -- versao 20260916999000 ja existe no ledger/);
   });
@@ -123,7 +143,7 @@ test('register --apply succeeds and reports the registered version when RETURNIN
       maxVersionOutput: '20260916210000',
       insertOutput: '20260916999100|demo|1',
     });
-    const result = runScript(filePath, { DESTINO_URL: 'postgres://fixture.invalid/test', PSQL_BIN: psql });
+    const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /OK: migration 20260916999100 \(demo\) registrada/);
   });
@@ -140,5 +160,18 @@ test('register without --apply/DESTINO_URL only prints the SQL block (dry-run, n
     assert.equal(result.status, 0);
     assert.match(result.stdout, /INSERT INTO supabase_migrations\.schema_migrations/);
     assert.match(result.stdout, /ON CONFLICT \(version\) DO NOTHING/);
+  });
+});
+
+test('register --apply aborta ANTES de qualquer escrita quando a DESTINO_URL aponta para outro projeto (E46)', () => {
+  withTmpFile('20260916999200_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
+    const psql = fakePsql(tmp, { maxVersionOutput: '20260916210000', insertOutput: 'x' });
+    const result = runScript(filePath, {
+      DESTINO_URL: 'postgres://postgres:pw@db.bbbbbbbbbbbbbbbbbbbb.supabase.co/test',
+      DATABASE_IDENTITY_PATH: fixtureIdentity(tmp),
+      PSQL_BIN: psql,
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /ABORT identidade: DESTINO_URL aponta para outro projeto/);
   });
 });

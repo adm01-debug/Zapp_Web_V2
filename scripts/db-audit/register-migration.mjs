@@ -25,6 +25,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import {
+  carregarIdentidadeEsperada,
+  validarDestino,
+} from './database-identity.mjs';
 
 const FILE_NAME_RE = /^(\d{14})_([a-z0-9][a-z0-9_-]*)\.sql$/;
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
@@ -149,6 +153,25 @@ function main() {
   if (!apply || !url) {
     console.log('-- modo dry-run (sem --apply ou sem DESTINO_URL): cole este bloco no db_query.');
     console.log(insertSql);
+    return;
+  }
+
+  // E46 (plano 2026-09-20): unico script db-audit que ESCREVE no banco —
+  // blindagem contra banco errado ANTES de qualquer escrita (mesmo assert
+  // do db-live-guard; errar o banco ja causou retrabalho real, CLAUDE.md §1).
+  try {
+    const esperada = carregarIdentidadeEsperada(
+      process.env.DATABASE_IDENTITY_PATH || 'scripts/db-audit/database-identity.json',
+    );
+    const errosIdentidade = validarDestino(url, esperada);
+    if (errosIdentidade.length) {
+      for (const erro of errosIdentidade) console.error(`ABORT identidade: ${erro}`);
+      process.exitCode = 1;
+      return;
+    }
+  } catch (err) {
+    console.error(`ABORT identidade: ${err.message}`);
+    process.exitCode = 1;
     return;
   }
 
