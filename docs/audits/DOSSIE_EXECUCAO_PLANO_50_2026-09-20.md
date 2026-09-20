@@ -196,33 +196,15 @@ Perna local FECHADA e agora **gateada** (E10): manifesto 67 = diretórios 67 ✓
 `SUPABASE_ACCESS_TOKEN` válido (403 em 16/09) — 👤 gerar token e rodar
 `supabase functions list --project-ref tnnnlkbymytvtqngbbqh`.
 
-### E28 ✅ Auditoria dos 10 `verify_jwt=false` (análise linha a linha)
-| Function | Veredito | Proteção real |
-|---|---|---|
-| auth-login | **JUSTIFICADA** | lockout RPC + rate-limit IP 10/min e e-mail 20/min persistentes |
-| crm-integration | **JUSTIFICADA** | timingSafeEqual de service-role/x-cron-secret + limites 120/60 por min |
-| csp-report | **JUSTIFICADA** | POST-only, body ≤8KB, redação de URLs, 30/min/IP |
-| gmail-cron-sync | **JUSTIFICADA** | x-cron-secret constant-time, 403 sem secret |
-| public-api | **JUSTIFICADA** | desativada (410 sempre) |
-| talkx-link | **FRÁGIL** | GET ok (RPC + IP hash + 60/min); POST `convert` sem credencial — qualquer origem infla `talkx_conversions` (anti-IDOR + IP-rate contornável) |
-| evolution-webhook | **FRÁGIL** | token de instância comparado constant-time MAS `EVOLUTION_WEBHOOK_ENFORCE` default `shadow` só loga; rate-limit em memória por isolate |
-| whatsapp-webhook | **FRÁGIL** | só o handshake GET protegido; POST (status de messages) aberto, assinatura em shadow |
-| gmail-webhook | **SEM PROTEÇÃO** | OIDC do Pub/Sub apenas logado (shadow), nunca 401; POST forjado dispara refresh OAuth + sync; sem rate limit |
-| elevenlabs-webhook | **SEM PROTEÇÃO** | HMAC apenas shadow; corpo não-confiável gravado em audit_logs com service role; sem rate limit |
-
-**Plano de enforcement (em ordem de risco/beneficio, NÃO executado nesta rodada por ser
-mudança de comportamento em produção):**
-1. `evolution-webhook`: setar secret `EVOLUTION_WEBHOOK_ENFORCE=token` (flip sem deploy,
-   rollback idem). **Pré-condição**: 24h de logs `[WEBHOOK_AUTH_SHADOW]` sem mismatch de
-   token — senão o fluxo de mensagens WhatsApp cai. Verificar logs → flip → observar.
-2. `gmail-webhook`: implementar verificação OIDC contra JWKS do Google (o comentário em
-   `_shared/hmac-validation.ts:379` reconhece a lacuna) + `enforceRateLimit`.
-3. `elevenlabs-webhook`: exigir `ELEVENLABS_WEBHOOK_SECRET` (HMAC hard-fail) + rate limit.
-4. `whatsapp-webhook`: `x-hub-signature-256` hard-fail (secret já existe:
-   `WHATSAPP_APP_SECRET`) + constant-time no verify_token do GET.
-5. `talkx-link` POST: token por recipient no payload do link ou assinatura do link_id.
-Transversal: `enforceRateLimit` é fail-open para memória se o RPC falhar
-(`_shared/validation.ts:262`) — endurecer para fail-closed nos webhooks acima.
+### E28 ✅ Auditoria dos 10 `verify_jwt=false` (linha a linha) — detalhes fora do repo
+Auditoria concluída sobre as 10 functions: **5 JUSTIFICADAS** (proteção compensatória
+verificada no código: credencial constant-time, rate-limit persistente ou desativação),
+**3 FRÁGEIS** e **2 CRÍTICAS** (controle de autenticação presente porém não-bloqueante).
+O repo é público: a tabela nominal função→lacuna→plano de enforcement NÃO é publicada
+aqui — foi entregue ao owner em canal privado (sessão de 2026-09-20), com ordem de
+correção por risco, pré-condições de rollout (janela de observação de logs antes de
+qualquer enforce) e rollback. Critério de fechamento: 10/10 JUSTIFICADAS em
+re-auditoria, com testes de contrato nascendo junto com cada enforcement (E41).
 
 ### E29 ✅/👤 Secrets das edges
 Matriz completa: 41 env vars, 33 credenciais; **`SUPABASE_SERVICE_ROLE_KEY` alcançável em
@@ -231,10 +213,12 @@ Matriz completa: 41 env vars, 33 credenciais; **`SUPABASE_SERVICE_ROLE_KEY` alca
 usado×definido: 👤 (dashboard → Edge Functions → Secrets; priorizar EVOLUTION_*,
 GOOGLE_CLIENT_SECRET, RESEND, ELEVENLABS se >90d).
 
-### E30 ✅ Rate limiting nas expostas — coberto exceto os 2 SEM PROTEÇÃO
-csp-report ✓ 30/min/IP · talkx-link ✓ 60/min/IP (GET e POST) · auth-login ✓ ·
-evolution-webhook ⚠️ em memória/isolate (trocar por `enforceRateLimit` no item 1 acima) ·
-gmail-webhook ✗ · elevenlabs-webhook ✗ (itens 2–3 acima).
+### E30 ✅ Rate limiting nas edges expostas — mapeado
+Cobertura verificada function a function (persistente × em-memória × ausente); os gaps
+coincidem com os itens críticos da E28 e estão no mesmo plano privado. Achado
+transversal tratável em código: o helper compartilhado de rate-limit degrada para
+contador em memória se o RPC falhar (fail-open) — endurecer para fail-closed nos
+webhooks é parte do enforcement.
 
 ### E31 🔧 Pinning Deno (PR `chore/e50-f4-edges-pinning`)
 19 imports `supabase-js@2` flutuantes pinados em 2.87.1; npm:→esm.sh unificado.
@@ -348,6 +332,5 @@ E32 E38* E40 E42 E43 (*parcial estrutural)
 **Janela de observação (⏳):** aceites de E15/E18.
 
 Descobertas de maior valor da rodada: o drift silencioso do grants-baseline (17/09),
-o `ORDER BY` não-determinístico no gerador do baseline, os 2 webhooks com autenticação
-em shadow-mode permanente, e a correção de 3 premissas do próprio plano (E15, E39, E40)
+o `ORDER BY` não-determinístico no gerador do baseline, os 2 controles de webhook não-bloqueantes (detalhes em canal privado), e a correção de 3 premissas do próprio plano (E15, E39, E40)
 — o plano agora reflete o sistema real.
