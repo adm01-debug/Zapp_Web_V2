@@ -402,7 +402,7 @@
     },
     {
       "path": "src/components/inbox/chat/MarkdownPreview.tsx",
-      "sha256": "2e351fc6409df60ba4992cb741734b99f21382f9d17c50c3bae9b7232d3614df"
+      "sha256": "18adeb9e8e37d3c7c96698df17025ff20422f1d1db8cf646994a5fbae29e0184"
     },
     {
       "path": "src/components/inbox/chat/MentionAutocomplete.tsx",
@@ -530,7 +530,7 @@
     },
     {
       "path": "src/components/inbox/MessagePreview.tsx",
-      "sha256": "2c65b53a850a82390c1bbd344ecd6efd9c62f3bf06f59439994556f3a245b2da"
+      "sha256": "c859c781a2a1f897dbbd42837907cece642073171f2310423130647dfd50c012"
     },
     {
       "path": "src/components/inbox/ObjectionDetector.tsx",
@@ -622,7 +622,7 @@
     },
     {
       "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
-      "sha256": "6ba484e781568a9839c199270cb1f1a7e5716aa4a9971d172f9e7725a647f7a2"
+      "sha256": "f6fcd5eb640b7aebd5c5c5ef59cf4abd4329b3d464f765e6512f8829ee99b82e"
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
@@ -834,7 +834,7 @@
     },
     {
       "path": "src/components/security/SecurityOverview.tsx",
-      "sha256": "027def6680055d58d8a20c40beb916584c3dcb893efac7c2458574de1c6f2943"
+      "sha256": "0774ceebc8e48bb2278ecf6d52db19ce300ff7315e2804553dc7aaffbbcb34cc"
     },
     {
       "path": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
@@ -1457,10 +1457,6 @@
       "sha256": "4359313bee96b8cd42bdf7786f497e7503c9a36306f2bf46a0345db44bd8ba5d"
     },
     {
-      "path": "src/hooks/integrations/useExternalEvolution.ts",
-      "sha256": "86be81dff7e991ddf55911adbae84ba36bb9375534d2a6b4e651c98c4ee53123"
-    },
-    {
       "path": "src/hooks/integrations/usePersonalStickers.ts",
       "sha256": "2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5"
     },
@@ -1470,7 +1466,7 @@
     },
     {
       "path": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "sha256": "1f2ae73a9055308ea05eb46fed9909736f80b67ed732f11bd5e01ac83469423b"
+      "sha256": "268537beb3c46bd877ec91516319cd8204f537e40ee4152c569e594adcf3ad0a"
     },
     {
       "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
@@ -1706,7 +1702,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-send.ts",
-      "sha256": "b8340795dfb31dee3cdffca8c8c1a171f8e2c9d133af1e6d0c2ac6ae37b0c2db"
+      "sha256": "ce57c9b4e63ef5e50220ab421398007ab0d6dbf3ce5489edd5a68b6579c67856"
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
@@ -1718,7 +1714,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "sha256": "6d2288dd6374a08bea55442de277600c0c04114c40f6f9db870728f7c4798437"
+      "sha256": "b65f6de748ef4638c2359f9cec0466f53d446d9139c5af62095e8d3a73103e1b"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -4411,20 +4407,6 @@
       "contextHash": "0dc8c8571d4d642760afa44904ff364151889761fb68ef6312222c346e57e3f6"
     },
     {
-      "file": "src/components/inbox/chat/MarkdownPreview.tsx",
-      "line": 9,
-      "column": 7,
-      "endLine": 9,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'formatted' is never reassigned. Use 'const' instead.",
-      "spanHash": "def3a35ce8c8037ae46ce39fd2707fe3dc258b7abf16a83c88ca679934155c4b",
-      "lineHash": "7acdf105c8c626341d18abb587e0dd5364b144479b7076200532cfa1a8cc4d5d",
-      "contextHash": "35c37cd53ef463e789140ff72b9530c9fc28bcb7ec06a757275964a0ed901611"
-    },
-    {
       "file": "src/components/inbox/chat/MentionAutocomplete.tsx",
       "line": 118,
       "column": 17,
@@ -6301,20 +6283,6 @@
       "contextHash": "b94ea7c6d543123c876158174d54158524a2603c0a6fe2b23dc83d76854d36fc"
     },
     {
-      "file": "src/components/inbox/MessagePreview.tsx",
-      "line": 64,
-      "column": 9,
-      "endLine": 64,
-      "endColumn": 18,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'remaining' is never reassigned. Use 'const' instead.",
-      "spanHash": "43e3ece73ff8f4eb23096122eaa99c8a8e84945a0b214662f2123bd6b6f0e692",
-      "lineHash": "65bc0fbe368ce0b37c5ebdef6a42d375bd2a822dd5a55af437aac1049c1947f7",
-      "contextHash": "ea68210b879b323877a6814b199f1bc9703a8ad9d4aa3178b9d1270c290076fc"
-    },
-    {
       "file": "src/components/inbox/ObjectionDetector.tsx",
       "line": 126,
       "column": 6,
@@ -6722,9 +6690,9 @@
     },
     {
       "file": "src/components/keyboard/GlobalKeyboardProvider.tsx",
-      "line": 15,
+      "line": 16,
       "column": 14,
-      "endLine": 15,
+      "endLine": 16,
       "endColumn": 31,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -8371,62 +8339,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "969a76751dee3b435b51b2bc6b7dd4b825a7ccd1119d04c63fe4cb33a8a807b5"
-    },
-    {
-      "file": "src/components/security/SecurityOverview.tsx",
-      "line": 70,
-      "column": 9,
-      "endLine": 70,
-      "endColumn": 17,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'mfaScore' is never reassigned. Use 'const' instead.",
-      "spanHash": "0e15933bcec09304fc2f6fa272bf4c70f60a31c20d8ae5f91d545b5b78ce2152",
-      "lineHash": "a5870f8ff3263297a278251a35ed0d495fae68f37b2893937a57132edcb92681",
-      "contextHash": "85a716dd4272bf6f0e5a284177a93aff19bd901a3e9833d000ca53f4c39e8990"
-    },
-    {
-      "file": "src/components/security/SecurityOverview.tsx",
-      "line": 71,
-      "column": 9,
-      "endLine": 71,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'deviceScore' is never reassigned. Use 'const' instead.",
-      "spanHash": "ddd204c32ad178bd53eec537b4ca6703b9d17136c844726b6a2be4e65ad79482",
-      "lineHash": "faf076d68da6d13f82c5f1288b9257e3857ead79dcddbc47bcc7a546fcac169f",
-      "contextHash": "fe652a4d8d7281d6c8086b436734b370feff6e3334ed903637b568f6d92438e6"
-    },
-    {
-      "file": "src/components/security/SecurityOverview.tsx",
-      "line": 72,
-      "column": 9,
-      "endLine": 72,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'sessionScore' is never reassigned. Use 'const' instead.",
-      "spanHash": "bc29829afa66604f5d05137364b2de0fa0398c66f0703c885a64dc134a1c8419",
-      "lineHash": "abfd0af8b35f69349b8fd26c8abf4817a8c695def0271e476e83b24cfdee63a6",
-      "contextHash": "ea74c2c2e3c7b73da4662fb8ae0fd2f43d7a95235e2b656463690e7aa3122506"
-    },
-    {
-      "file": "src/components/security/SecurityOverview.tsx",
-      "line": 73,
-      "column": 9,
-      "endLine": 73,
-      "endColumn": 22,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'passwordScore' is never reassigned. Use 'const' instead.",
-      "spanHash": "902917f433e506fa3a82598fb3693bf572d8472670ee9fcf5829239a7664261d",
-      "lineHash": "197aec49bf5c545bad7ae960b0e88bf6ebdce3160bda836985c47413799d91d6",
-      "contextHash": "73f75f1d56a7a55aec4ad5b76fd4967ce69f11597492613d3f235ea60d9749c2"
     },
     {
       "file": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
@@ -14295,20 +14207,6 @@
       "contextHash": "4384417f98921eb86f5e34794823f32327ec231689673bd203ce090fd2aaea91"
     },
     {
-      "file": "src/hooks/integrations/useExternalEvolution.ts",
-      "line": 57,
-      "column": 22,
-      "endLine": 57,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "no-extra-boolean-cast",
-      "messageId": "unexpectedNegation",
-      "message": "Redundant double negation.",
-      "spanHash": "797dd2a06a3cbc230144d0875b688010416cca66ea1db91a8ebc95ae00aa80a1",
-      "lineHash": "ca14bbc334618a5eff390905cb30817dd945958bbd6022e0226d2e5cdb0eb995",
-      "contextHash": "9a2c64487e441927a2a8711e5d9a2b500ae1370ddb6b9c971f567d7731e3abcb"
-    },
-    {
       "file": "src/hooks/integrations/usePersonalStickers.ts",
       "line": 33,
       "column": 36,
@@ -14335,20 +14233,6 @@
       "spanHash": "28f35ea6d34b2ad0d4ccb1e50f28ccbe430b8626472042b693441ad981b5a98f",
       "lineHash": "d0b7bfbb06c4ecf8323efd8b52b2e85b632f8f14845eaa5ff451a111fd118f1a",
       "contextHash": "aefd95d2116b7b642436453cec34c07008b2838bb98b1e44a29caf05eeebab00"
-    },
-    {
-      "file": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "line": 141,
-      "column": 9,
-      "endLine": 141,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "prefer-const",
-      "messageId": "useConst",
-      "message": "'contactQuery' is never reassigned. Use 'const' instead.",
-      "spanHash": "eb749488d1cd48d16dd567a26398ecf10d31bfb686a6af07fce9040917d708e6",
-      "lineHash": "9fba0705e0b38674f394050202c9388e78486d8f6f3c5f6e453c1c1af0a21aa7",
-      "contextHash": "757e631b6c3d76af493e5734ca26eeb401b4d023629bb66c9b921c2f3e33ff1f"
     },
     {
       "file": "src/hooks/integrations/useWhatsAppStatus.ts",
@@ -16130,9 +16014,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 49,
+      "line": 51,
       "column": 40,
-      "endLine": 49,
+      "endLine": 51,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16144,9 +16028,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 59,
+      "line": 61,
       "column": 42,
-      "endLine": 59,
+      "endLine": 61,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16158,9 +16042,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 75,
+      "line": 77,
       "column": 40,
-      "endLine": 75,
+      "endLine": 77,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16172,9 +16056,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 87,
+      "line": 89,
       "column": 46,
-      "endLine": 87,
+      "endLine": 89,
       "endColumn": 49,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16522,9 +16406,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 121,
+      "line": 122,
       "column": 5,
-      "endLine": 121,
+      "endLine": 122,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16536,9 +16420,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 172,
+      "line": 173,
       "column": 13,
-      "endLine": 172,
+      "endLine": 173,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16550,9 +16434,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 201,
+      "line": 202,
       "column": 5,
-      "endLine": 201,
+      "endLine": 202,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16564,9 +16448,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 214,
+      "line": 215,
       "column": 5,
-      "endLine": 214,
+      "endLine": 215,
       "endColumn": 16,
       "severity": 1,
       "ruleId": "no-console",
@@ -16578,9 +16462,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 27,
+      "line": 28,
       "column": 13,
-      "endLine": 27,
+      "endLine": 28,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16592,9 +16476,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 328,
+      "line": 335,
       "column": 13,
-      "endLine": 328,
+      "endLine": 335,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16606,9 +16490,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 412,
+      "line": 419,
       "column": 58,
-      "endLine": 412,
+      "endLine": 419,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16620,9 +16504,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 49,
+      "line": 50,
       "column": 13,
-      "endLine": 49,
+      "endLine": 50,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16634,9 +16518,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "line": 77,
+      "line": 78,
       "column": 13,
-      "endLine": 77,
+      "endLine": 78,
       "endColumn": 16,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
