@@ -12,8 +12,8 @@
 > Fechamentos comprovados após a escrita deste arquivo: E42 (cron do CRM worker
 > desativado, 20/09), E43 (force-push/deleção bloqueados e "Contrato DB vivo" reclassificado
 > como design em 17/09 — ver CLAUDE.md), E44 (gate `check-triple-parity.mjs`, 20/09),
-> E45 (`branch-hygiene-audit.yml` semanal já existia), E46 (CLAUDE.md atualizado via
-> PR #442). Não marcar mais checkboxes AQUI — o tracking vive no plano de 20/09.
+> E45 (`branch-hygiene-audit.yml` semanal já existia); E42 (cron do CRM worker) e E44 (gate
+> `check-triple-parity.mjs`) estão implementados no PR #445, pendente de merge; E46 via PR #442. Não marcar mais checkboxes AQUI — o tracking vive no plano de 20/09.
 
 | Eixo | Estado em 2026-09-16 |
 |---|---|

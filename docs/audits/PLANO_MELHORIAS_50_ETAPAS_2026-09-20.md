@@ -16,7 +16,7 @@
 | Banco | `messages` 0,1% dead (autovacuum 19/09) · **3 FKs sem índice** · **244/503 índices com idx_scan=0** · 400 policies · 0 tabelas sem RLS · 38 trigger functions fora do catálogo |
 | Edges | 67 diretórios em `supabase/functions/` · **10 com `verify_jwt=false`** (16/09 eram 9) · listagem live nunca reconciliada (CLI 403 em 16/09) |
 | CI desperdício | `CRM Sync Worker` agendado dispara a cada ~8min e **sempre skipped** (`vars.CRM_SYNC_WORKER_ENABLED` ausente/false) |
-| Qualidade | lint ratchet baseline **1115** · implicit-any 2 · TODO/FIXME 4 · console.log 1 |
+| Qualidade | lint ratchet baseline **1115** · implicit-any **0** (baseline zerado desde o PR #243) · TODO/FIXME: 4 hits de grep, **0 reais** · console.log: 1 hit, exemplo em JSDoc |
 | Governança | approvals=1 + owner único ⇒ **todo merge é bypass de admin** (`enforce_admins=false`); branches não são auto-deletados no merge |
 | Higiene git | 22 branches locais · 2 remotos `claude/*` mergeados aguardando deleção (classificador negou à IA em 17/09) |
 | Automação | Graph Sync Dispatcher N8N (`67dWSoWEPUGTX5mA`) sem cadência (erro 15/09); MCPs quebrados toda sessão: CLOUDFLARE-WORKERS (410), LALAMOVE ×2 (404), VS-CODE-VPS (404), PLAYWRIGHT (timeout); MCP N8N com tools stub (`search_workflows`, `execution_logs`) |

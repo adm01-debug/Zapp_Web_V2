@@ -215,10 +215,9 @@ GOOGLE_CLIENT_SECRET, RESEND, ELEVENLABS se >90d).
 
 ### E30 ✅ Rate limiting nas edges expostas — mapeado
 Cobertura verificada function a function (persistente × em-memória × ausente); os gaps
-coincidem com os itens críticos da E28 e estão no mesmo plano privado. Achado
-transversal tratável em código: o helper compartilhado de rate-limit degrada para
-contador em memória se o RPC falhar (fail-open) — endurecer para fail-closed nos
-webhooks é parte do enforcement.
+coincidem com os itens críticos da E28 e estão no mesmo plano privado. Um endurecimento
+transversal de resiliência do helper compartilhado de rate-limit faz parte do plano
+privado da E28.
 
 ### E31 🔧 Pinning Deno (PR `chore/e50-f4-edges-pinning`)
 19 imports `supabase-js@2` flutuantes pinados em 2.87.1; npm:→esm.sh unificado.
@@ -227,10 +226,10 @@ dedicado) e migrar `std@0.168.0/http/server.ts` legado → `Deno.serve` (10 arqu
 Sem `deno.json`/import_map central — candidato a rodada futura.
 
 ### E32 ✅ Contrato do evolution-webhook documentado
-Evolution GO **não assina** webhooks (limitação upstream comprovada no código); a
-credencial é o `instanceToken` no corpo, comparado constant-time e removido antes dos
-handlers. Boot falha se `enforce=token` sem token configurado. O gap é só o default
-`shadow` — ver E28 item 1.
+Mecanismo de credenciamento verificado linha a linha (limitação upstream da Evolution GO
+comprovada no código; credencial comparada em tempo constante e removida do payload antes
+dos handlers; boot valida a configuração). Parâmetros operacionais do enforcement e a
+janela de rollout estão no plano privado da E28.
 
 ## F5
 
@@ -274,9 +273,9 @@ executado: `errors: 0 (baseline: 0)`.
 
 ### E41 ✅/📋 Testes
 Baseline registrado: **3.143 passed | 35 todo (3.178)**, suíte local 90s. Módulos
-críticos sem cobertura direta identificados: os handlers de enforcement dos webhooks
-(gmail/elevenlabs) — os testes de contrato devem nascer JUNTO com o enforcement da E28
-(testar shadow-mode atual seria consolidar o comportamento errado).
+críticos sem cobertura direta identificados: os handlers de credenciamento de webhooks
+do plano privado da E28 — os testes de contrato devem nascer JUNTO com cada enforcement
+(testar o comportamento atual consolidaria o que será mudado).
 
 ### E42 ✅ TODO/FIXME: 0 reais
 Os 4 hits são a palavra "TODOS" (pt-BR) em comentário/teste e guards `not.toContain('TODO...')`.
