@@ -25,6 +25,16 @@ test('deployment brackets mutation with snapshots and stable post-collection', (
 test('runtime SQL is exercised on disposable PostgreSQL in PRs', () => {
   const workflow = read('../../.github/workflows/db-guard.yml');
   assert.match(workflow, /retry-disposable-postgres-test\.sh bash scripts\/db-audit\/runtime-config\.test\.sh/);
+  assert.match(workflow,
+    /retry-disposable-postgres-test\.sh bash scripts\/db-audit\/notification-delivery-atomicity\.test\.sh/);
+});
+test('production migration has fail-closed preflight and postflight for notification atomicity', () => {
+  const workflow = read('../../.github/workflows/db-migrate.yml');
+  assert.match(workflow, /20260922220000\)/);
+  assert.equal((workflow.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length, 2);
+  assert.match(workflow, /inputs\.migration_version == '20260922220000'/);
+  assert.match(workflow, /proof\.service_execute_count === 2/);
+  assert.match(workflow, /proof\.authenticated_execute_count === 0/);
 });
 test('DB guard installs the pinned AST dependency before checking Realtime subscriptions', () => {
   const workflow = read('../../.github/workflows/db-guard.yml');

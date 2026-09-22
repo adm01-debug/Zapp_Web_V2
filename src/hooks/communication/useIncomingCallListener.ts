@@ -33,16 +33,24 @@ interface IncomingCallNotification {
 
 export function useIncomingCallListener() {
   const { user } = useAuth();
-  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  const [incomingState, setIncomingState] = useState<{ userId: string; call: IncomingCall } | null>(null);
   const seenNotificationsRef = useRef(new Set<string>());
-  const recentCallsRef = useRef(new Map<string, number>());
+  const recentProviderEventsRef = useRef(new Map<string, number>());
+  const deliveryGenerationRef = useRef(0);
 
   const dismissCall = useCallback(() => {
-    setIncomingCall(null);
+    deliveryGenerationRef.current += 1;
+    setIncomingState(null);
   }, []);
 
   useEffect(() => {
+    deliveryGenerationRef.current += 1;
+    seenNotificationsRef.current.clear();
+    recentProviderEventsRef.current.clear();
     if (!user?.id) return;
+
+    let active = true;
+    const subscribedUserId = user.id;
 
     const channel = supabase
       .channel(uniqueRealtimeTopic('incoming-calls'))
@@ -71,16 +79,20 @@ export function useIncomingCallListener() {
             if (oldest) seenNotificationsRef.current.delete(oldest);
           }
 
-          const callKey = metadata.event_id || [metadata.contact_id, metadata.whatsapp_connection_id].filter(Boolean).join(':');
+          // Only a provider event ID proves replay identity. Contact +
+          // connection would also collapse a legitimate second call.
+          const callKey = metadata.event_id;
           const now = Date.now();
           if (callKey) {
-            const lastSeen = recentCallsRef.current.get(callKey);
+            const lastSeen = recentProviderEventsRef.current.get(callKey);
             if (lastSeen && now - lastSeen < 35_000) return;
-            recentCallsRef.current.set(callKey, now);
-            for (const [key, timestamp] of recentCallsRef.current) {
-              if (now - timestamp >= 35_000) recentCallsRef.current.delete(key);
+            recentProviderEventsRef.current.set(callKey, now);
+            for (const [key, timestamp] of recentProviderEventsRef.current) {
+              if (now - timestamp >= 35_000) recentProviderEventsRef.current.delete(key);
             }
           }
+
+          const deliveryGeneration = ++deliveryGenerationRef.current;
 
           let contactName = metadata.contact_name || 'Desconhecido';
           let contactPhone = metadata.phone || '';
@@ -99,14 +111,19 @@ export function useIncomingCallListener() {
             }
           }
 
-          setIncomingCall({
-            id: notification.id,
-            contact_id: metadata.contact_id || null,
-            contact_name: contactName,
-            contact_phone: contactPhone,
-            is_video: metadata.is_video === true,
-            whatsapp_connection_id: metadata.whatsapp_connection_id || null,
-            started_at: notification.created_at,
+          if (!active || deliveryGeneration !== deliveryGenerationRef.current) return;
+
+          setIncomingState({
+            userId: subscribedUserId,
+            call: {
+              id: notification.id,
+              contact_id: metadata.contact_id || null,
+              contact_name: contactName,
+              contact_phone: contactPhone,
+              is_video: metadata.is_video === true,
+              whatsapp_connection_id: metadata.whatsapp_connection_id || null,
+              started_at: notification.created_at,
+            },
           });
 
           log.info('Incoming call notification received', { notificationId: notification.id });
@@ -115,9 +132,12 @@ export function useIncomingCallListener() {
       .subscribe();
 
     return () => {
+      active = false;
+      deliveryGenerationRef.current += 1;
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
 
+  const incomingCall = incomingState && incomingState.userId === user?.id ? incomingState.call : null;
   return { incomingCall, dismissCall };
 }
