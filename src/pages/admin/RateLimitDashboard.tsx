@@ -27,7 +27,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function RateLimitDashboard() {
   const { isAdmin, isSupervisor } = useUserRole();
-  const { logs, stats, loading, refetch } = useRateLimitLogs();
+  const { logs, stats, loading, refetch } = useRateLimitLogs(isAdmin || isSupervisor);
   const [activeTab, setActiveTab] = useState('overview');
 
   if (!isAdmin && !isSupervisor) {

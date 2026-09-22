@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 const mockChannel = vi.fn().mockReturnValue({
@@ -25,13 +25,19 @@ const mockLogs = [
   { id: '3', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 30, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-02' },
 ];
 
+function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
+  const result = Promise.resolve({ data, error });
+  return Object.assign(result, { abortSignal: vi.fn(() => result) });
+}
+
 describe('useRateLimitLogs', () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: mockLogs, error: null }),
+          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
         }),
       }),
     });
@@ -79,7 +85,7 @@ describe('useRateLimitLogs', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          limit: vi.fn().mockReturnValue(queryResult([])),
         }),
       }),
     });
@@ -95,7 +101,7 @@ describe('useRateLimitLogs', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: null, error: new Error('fail') }),
+          limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
         }),
       }),
     });
@@ -104,15 +110,43 @@ describe('useRateLimitLogs', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
-  it('subscribes to realtime changes', () => {
-    renderHook(() => useRateLimitLogs());
-    expect(mockChannel).toHaveBeenCalledWith('rate-limit-logs');
+  it('refreshes logs without an unpublished realtime subscription', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useRateLimitLogs());
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(result.current.loading).toBe(false);
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(2);
+    expect(mockChannel).not.toHaveBeenCalled();
   });
 
-  it('cleans up subscription on unmount', () => {
+  it('stops refreshing after unmount', async () => {
+    vi.useFakeTimers();
     const { unmount } = renderHook(() => useRateLimitLogs());
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     unmount();
-    expect(mockRemoveChannel).toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates statistics together with refreshed rows', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useRateLimitLogs());
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
+    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)) })) })) });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(result.current.logs).toEqual(updated);
+    expect(result.current.stats?.totalRequests).toBe(900);
+    expect(result.current.stats?.blockedRequests).toBe(1);
+  });
+
+  it('does not query without the dashboard permission', async () => {
+    vi.useFakeTimers();
+    renderHook(() => useRateLimitLogs(false));
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it('exposes refetch function', async () => {

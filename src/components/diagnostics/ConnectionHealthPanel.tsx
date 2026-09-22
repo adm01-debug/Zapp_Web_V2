@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('ConnectionHealthPanel');
@@ -43,36 +44,33 @@ export function ConnectionHealthPanel() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    const [{ data: conns }, { data: logs }] = await Promise.all([
-      supabase
-        .from('whatsapp_connections')
-        .select('id, instance_id, status, phone_number, last_health_check, health_status, health_response_ms')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('connection_health_logs')
-        .select('id, instance_id, status, response_time_ms, error_message, checked_at')
-        .order('checked_at', { ascending: false })
-        .limit(50),
-    ]);
+  const fetchData = useCallback(async (signal: AbortSignal) => {
+    const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
+    try {
+      const [{ data: conns, error: connectionsError }, { data: logs, error: logsError }] = await Promise.all([
+        supabase
+          .from('whatsapp_connections')
+          .select('id, instance_id, status, phone_number, last_health_check, health_status, health_response_ms')
+          .order('created_at', { ascending: false })
+          .abortSignal(requestSignal),
+        supabase
+          .from('connection_health_logs')
+          .select('id, instance_id, status, response_time_ms, error_message, checked_at')
+          .order('checked_at', { ascending: false })
+          .limit(50)
+          .abortSignal(requestSignal),
+      ]);
 
-    if (conns) setConnections(conns as ConnectionHealth[]);
-    if (logs) setRecentLogs(logs as HealthLog[]);
-    setLoading(false);
+      if (requestSignal.aborted) return;
+      if (!connectionsError && conns) setConnections(conns as ConnectionHealth[]);
+      if (!logsError && logs) setRecentLogs(logs as HealthLog[]);
+    } finally {
+      if (!signal.aborted) setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Realtime updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('health-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'connection_health_logs' }, () => {
-        fetchData();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchData]);
+  // Refresh stored diagnostics only. Never invoke health-check automatically.
+  const refresh = useVisiblePolling(fetchData);
 
   const runHealthCheck = async () => {
     setChecking(true);
@@ -80,7 +78,7 @@ export function ConnectionHealthPanel() {
       const { data, error } = await supabase.functions.invoke('connection-health-check');
       if (error) throw error;
       toast.success(`Health check concluído: ${data?.connections?.length || 0} conexões verificadas`);
-      await fetchData();
+      await refresh();
     } catch (err) {
       toast.error('Erro ao executar health check');
       log.error('Health check error:', err);

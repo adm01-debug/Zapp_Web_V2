@@ -1,20 +1,15 @@
 // @ts-nocheck
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const mockInvoke = vi.hoisted(() => vi.fn());
 const mockChannel = vi.hoisted(() => vi.fn());
 const mockRemoveChannel = vi.hoisted(() => vi.fn());
+const mockFrom = vi.hoisted(() => vi.fn());
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-    })),
+    from: mockFrom,
     functions: { invoke: mockInvoke },
     channel: mockChannel.mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() }),
     removeChannel: mockRemoveChannel,
@@ -34,7 +29,15 @@ import { ConnectionHealthPanel } from '@/components/diagnostics/ConnectionHealth
 import { toast } from 'sonner';
 
 describe('ConnectionHealthPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.useRealTimers());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockImplementation(() => {
+      const response = Promise.resolve({ data: [], error: null });
+      const query = Object.assign(response, { limit: vi.fn(() => query), abortSignal: vi.fn(() => query) });
+      return { select: vi.fn(() => ({ order: vi.fn(() => query) })) };
+    });
+  });
 
   it('renders summary cards', async () => {
     render(<ConnectionHealthPanel />);
@@ -70,6 +73,22 @@ describe('ConnectionHealthPanel', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao executar health check'));
   });
 
-  it('subscribes to realtime channel', () => { render(<ConnectionHealthPanel />); expect(mockChannel).toHaveBeenCalledWith('health-updates'); });
-  it('unsubscribes on unmount', () => { const { unmount } = render(<ConnectionHealthPanel />); unmount(); expect(mockRemoveChannel).toHaveBeenCalled(); });
+  it('refreshes both queries without relying on unpublished health logs', async () => {
+    vi.useFakeTimers();
+    render(<ConnectionHealthPanel />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(mockFrom).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(4);
+    expect(mockChannel).not.toHaveBeenCalled();
+    expect(mockInvoke).not.toHaveBeenCalled();
+  });
+  it('stops queries on unmount', async () => {
+    vi.useFakeTimers();
+    const { unmount } = render(<ConnectionHealthPanel />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    unmount();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
+  });
 });

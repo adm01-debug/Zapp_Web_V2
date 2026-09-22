@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 
 interface RateLimitLog {
   id: string;
@@ -22,28 +23,12 @@ interface RateLimitStats {
   topIPs: { ip: string; count: number; blocked: boolean }[];
 }
 
-export function useRateLimitLogs() {
+export function useRateLimitLogs(enabled = true) {
   const [logs, setLogs] = useState<RateLimitLog[]>([]);
   const [stats, setStats] = useState<RateLimitStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchLogs = useCallback(async (limit = 100) => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('rate_limit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (!error && data) {
-      setLogs(data);
-      calculateStats(data);
-    }
-    setLoading(false);
-    return data || [];
-  }, []);
-
-  const calculateStats = (data: RateLimitLog[]) => {
+  const calculateStats = useCallback((data: RateLimitLog[]) => {
     const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0);
     const blockedRequests = data.filter(log => log.blocked).length;
     const uniqueIPs = new Set(data.map(log => log.ip_address)).size;
@@ -79,36 +64,34 @@ export function useRateLimitLogs() {
       topEndpoints,
       topIPs
     });
-  };
-
-  const subscribeToLogs = useCallback(() => {
-    const channel = supabase
-      .channel('rate-limit-logs')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'rate_limit_logs' },
-        (payload) => {
-          const newLog = payload.new as RateLimitLog;
-          setLogs(prev => [newLog, ...prev].slice(0, 100));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
-  useEffect(() => {
-    fetchLogs();
-    const unsubscribe = subscribeToLogs();
-    return unsubscribe;
-  }, [fetchLogs, subscribeToLogs]);
+  const fetchLogs = useCallback(async (signal: AbortSignal) => {
+    const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
+    try {
+      const { data, error } = await supabase
+        .from('rate_limit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+        .abortSignal(requestSignal);
+      if (!requestSignal.aborted && !error && data) {
+        setLogs(data);
+        calculateStats(data);
+      }
+    } finally {
+      if (!signal.aborted) setLoading(false);
+    }
+  }, [calculateStats]);
+
+  // Security logs intentionally are not in the Realtime publication.
+  // Use the existing authenticated/RLS-protected read, not a new publication.
+  const refetch = useVisiblePolling(fetchLogs, 30_000, enabled);
 
   return {
     logs,
     stats,
     loading,
-    refetch: fetchLogs
+    refetch
   };
 }
