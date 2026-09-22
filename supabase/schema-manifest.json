@@ -2036,6 +2036,7 @@
         "security_alerts.idx_security_alerts_resolved_by": "8b7ee3afccc69216e684e86ed114fd5e",
         "talkx_blacklist.idx_talkx_blacklist_campaign_id": "e56f4124fb571534df7255fb29ffee9b",
         "talkx_campaigns.idx_talkx_campaigns_template_id": "b8af653ee6a5a090d9f5e2ee5daa93da",
+        "talkx_conversions.idx_talkx_conversions_link_id": "7c90bb189d87b99f4f23f4210361995f",
         "talkx_recipients.idx_talkx_recipients_claimable": "df938b5952354cd13d516c5a1c8f091d",
         "team_messages.idx_team_messages_conversation_id": "36ec9e12ca9709b60cd76a8542aaa55e",
         "whisper_messages.idx_whisper_messages_sender_id": "0178e9e9b7f6cb33940ac1d2e47a3f9d",
@@ -2051,7 +2052,6 @@
         "conversation_sla.idx_conversation_sla_contact_id": "0398660fa6111dc34451075894bb570c",
         "csat_auto_config.idx_csat_auto_config_updated_by": "a5d15c3e5261354ad1eadf0d2febe670",
         "deal_activities.idx_deal_activities_performed_by": "5be3b395d670d3404cdc756f459d646a",
-        "email_threads.idx_email_threads_gmail_account_id": "6e90218b643d8079051c8b96c6b8e5f5",
         "geo_blocking_settings.geo_blocking_settings_pkey": "f17e675f07735903f2a25220d14d64a2",
         "meta_capi_events.idx_meta_capi_events_contact_id": "c4e305539b1d419b0276bbac509f45f3",
         "performance_snapshots.performance_snapshots_pkey": "0e6c208209cdf339a4ff6ed4b45a989e",
@@ -2118,6 +2118,8 @@
         "password_reset_requests.password_reset_requests_pkey": "2ecabaa90f6cc10190e86a1047b805ae",
         "scheduled_messages.idx_scheduled_messages_contact_id": "62df70b41562de33e27228adac1d3c90",
         "scheduled_messages.idx_scheduled_messages_created_by": "00e3ec86f27c7225e3d123e9544e566e",
+        "talkx_conversions.idx_talkx_conversions_recipient_id": "d5117003f9abf9354c552f23dfc8dd7c",
+        "talkx_link_clicks.idx_talkx_link_clicks_recipient_id": "62d10f442c68220b0c281e937e0ba9ba",
         "talkx_template_variants.talkx_template_variants_pkey": "de05a4622c7c3cdec7bd6835fd2fe975",
         "talkx_template_versions.talkx_template_versions_pkey": "5113500b18257ccab2d32156e495378d",
         "team_conversations.idx_team_conversations_created_by": "69a425f4260b1dc8e4c353e1e01c8a43",
@@ -4145,7 +4147,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-17T09:57:58Z",
+    "generated_at": "2026-09-22T10:50:29Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
