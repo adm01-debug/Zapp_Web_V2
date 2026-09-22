@@ -193,13 +193,15 @@ export function CatalogProductCard({
                 </Button>
               )
             )}
-            <Button
-              size="icon" variant="ghost"
-              className={cn('h-8 w-8', isFavorite && 'text-rose-500')}
-              onClick={() => onToggleFavorite?.(product.id)}
-            >
-              <Heart className={cn('w-4 h-4', isFavorite && 'fill-current')} />
-            </Button>
+            {onToggleFavorite && (
+              <Button
+                size="icon" variant="ghost"
+                className={cn('h-8 w-8', isFavorite && 'text-rose-500')}
+                onClick={() => onToggleFavorite(product.id)}
+              >
+                <Heart className={cn('w-4 h-4', isFavorite && 'fill-current')} />
+              </Button>
+            )}
           </div>
         </div>
         <ProductDetailDialog product={product} open={showDetails} onOpenChange={setShowDetails} onSend={onSend} />
@@ -239,7 +241,9 @@ export function CatalogProductCard({
             </span>
           )}
           {/* favorito */}
-          <FavoriteButton active={isFavorite} onToggle={onToggleFavorite} productId={product.id} />
+          {onToggleFavorite && (
+            <FavoriteButton active={isFavorite} onToggle={onToggleFavorite} productId={product.id} />
+          )}
         </div>
 
         {/* corpo */}
