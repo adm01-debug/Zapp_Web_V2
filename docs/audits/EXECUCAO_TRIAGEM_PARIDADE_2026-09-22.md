@@ -14,6 +14,14 @@ Nenhuma migration, grant, segredo ou linha de negocio foi alterada. Nao houve
 novo deployment de producao pelo executor. Merges efetuados por outro ator
 nao sao apresentados como acao desta sessao.
 
+**Atualizacao externa, 15:32 UTC:** o [DB Live Guard 35748033864](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35748033864)
+falhou com 447 registros remotos versus 446 arquivos na main c54550ce.
+O registro adicional e `20260922130000_fix_talkx_campaign_metrics_view_and_link_clicks_rls`,
+cujo arquivo esta na [PR #495](https://github.com/adm01-debug/Zapp_Web_V2/pull/495), de outra frente.
+Portanto, a paridade viva anteriormente observada deixou de valer para esse novo
+snapshot. Esta rodada nao aplicou nem reaplicara esse SQL e nao assume a integracao
+da PR concorrente. Depois dela, conferir tambem catalogo, manifesto, tipos e grants.
+
 ## 2. Matriz de execucao
 
 | Frente | Implementado nesta rodada | Aceite / limite |
@@ -81,9 +89,17 @@ TABLE e executado em producao pelo coletor.
 Testes mockados de API provam o comportamento do coletor, nao equivalem a nova
 coleta remota autenticada. Testes de contador e metadados nao homologam negocios.
 
+Tambem houve replay offline dos dois atestados reais 35737945858/35742846771:
+o coletor rejeita as amostras antigas e aceita apenas a serie estabilizada. A
+comparacao detecta 7 digests alterados, 67 versoes diferentes e timestamps antes
+nulos. Como o primeiro artefato nao e o pre-deploy real do segundo, esse replay
+nao serve para atribuir autoria/escopo das alteracoes: exercita a compatibilidade
+do parser e evidencia por que snapshots novos antes/depois sao necessarios.
+
 ## 5. Pendencias externas explicitas
 
 1. Integrar as PRs funcionais somente com checks/revisao aprovados; nao forcar main.
+   Coordenar a PR #495 e seu drift vivo antes de afirmar paridade total.
 2. Executar o DB Live Guard na main para obter runtime-config.json do banco oficial.
 3. No proximo deployment autorizado, conferir o novo atestado estabilizado. Nao
    disparar 67 funcoes apenas para produzir um artefato novo.
