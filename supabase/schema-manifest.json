@@ -155,7 +155,7 @@
     "views": {
         "v:profiles_public": "2e4de3cbfcd045f7ed6db0ce70ec953d",
         "v:gmail_accounts_safe": "75f748277009cabe6e5de5b284dfaec9",
-        "v:talkx_campaign_metrics": "06fbac18d267f2ff4e87ac7699dd7f01",
+        "v:talkx_campaign_metrics": "f2e4a6c8c5f11a9344ff1cdcb9383eae",
         "v:channel_connections_safe": "4ede96d190b525cf3dd7709075407b83",
         "v:whatsapp_connections_safe": "19152b9b2014fec4e032bc031abe072b",
         "v:whatsapp_connections_agent": "cd6c4947bc480eafff83a25cf290f29d",
@@ -1198,6 +1198,8 @@
         "sla_configurations.updated_at": "2ee64b1d53e1f8dc8df73647e8fba382",
         "talkx_campaign_events.message": "2a2cfca688ff6a504270d0e8ae144de8",
         "talkx_campaign_metrics.status": "2a2cfca688ff6a504270d0e8ae144de8",
+        "talkx_campaign_metrics.campaign_name": "2a2cfca688ff6a504270d0e8ae144de8",
+        "talkx_campaign_metrics.id": "56a86446063b2ee9feb224bd26659238",
         "talkx_campaigns.replied_count": "00a1b509635e663a18c76adaae253e11",
         "talkx_campaigns.speed_profile": "39c66b4057962691166304f428d0a1a2",
         "talkx_conversions.campaign_id": "9eb0988535c3822cb67934be7c6886ed",
@@ -3025,6 +3027,7 @@
         "user_settings.transcription_notification_enabled": "b326b5062b2f0e69046810717534cb09"
     },
     "policies": {
+        "talkx_link_clicks.\"Users can view clicks of own campaigns\"": "7bc71f1dc1d39143d75af82f1a902fd3",
         "tags.\"Users can insert tags\"": "7a19d6fd7afdfdb6f648176ac2d25e01",
         "tags.\"Admins can manage tags\"": "04f5b11e1ea6bda9d5b313ad3b3582db",
         "calls.\"Users can insert calls\"": "f10634fa183ccf41ab4a6e5d1d8ba86d",
@@ -6491,6 +6494,7 @@
         "r:public.talkx_link_clicks|postgres|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.talkx_link_clicks|postgres|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.talkx_link_clicks|postgres|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.talkx_link_clicks|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.talkx_link_clicks|postgres|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.talkx_links|service_role|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.talkx_links|service_role|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
