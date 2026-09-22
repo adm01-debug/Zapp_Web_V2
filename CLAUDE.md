@@ -88,6 +88,8 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ## Auditoria e plano de correções (2026-09-16)
 
+**Plano vigente:** `docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (sucessor; herda
+os 80 checkboxes abertos de 16/09 e adiciona o aprendido em 17/09).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
