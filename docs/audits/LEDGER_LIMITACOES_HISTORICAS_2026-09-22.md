@@ -1,5 +1,13 @@
 # Ledger: quinze limitacoes historicas, nao quinze migrations pendentes
 
+> Atualizacao: o [DB Live Guard 35767806526](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35767806526),
+> main `102a5001`, conciliou 447 versoes: 432 satisfazem os criterios de
+> evidencia do guard, 11 continuam fixadas sem prova de conteudo historico e
+> os quatro avisos abaixo permanecem. A coleta viva confirmou os quatro
+> nomes normalizados: uma entrada sem statements e tres com cardinalidade 1.
+> Cardinalidade nao prova integridade/conteudo do SQL historico. Nenhuma
+> excecao/allowlist foi ampliada. [Validacao atual](./VALIDACAO_POS_MERGE_LIBPQ_2026-09-22.md).
+
 Fonte: [DB Live Guard 35742672654](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35742672654),
 22/09/2026 14:46 UTC, main `a11efb7d`.
 
