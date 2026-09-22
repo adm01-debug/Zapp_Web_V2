@@ -117,7 +117,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 <tbody>
                   {paged.map((s) => (
                     <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
-                      <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
+                      <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-[13.5px] font-semibold text-foreground">{s.name}</p>
                         <p className="text-[11.5px] text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
@@ -196,7 +196,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
   const { data: est } = useAudienceEstimate(s.rules, true);
   return (
     <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || 'Altíssimo valor e recorrência'}
-      right={<button type="button" onClick={onClose} className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
+      right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2">
         <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
@@ -272,7 +272,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
-          <button type="button" onClick={onCancel} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={onCancel} aria-label="Cancelar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-[18px] font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
@@ -308,7 +308,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
                     <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-[12px]"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
                   </Select>
-                  {rules.groups.length > 1 && <button type="button" onClick={() => removeGroup(g.id)} className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
+                  {rules.groups.length > 1 && <button type="button" onClick={() => removeGroup(g.id)} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
                 </div>
                 <div className="p-4 space-y-2.5">
                   {g.rules.map((r) => <RuleRow key={r.id} rule={r} onChange={(p) => updateRule(g.id, r.id, p)} onRemove={() => removeRule(g.id, r.id)} />)}
@@ -404,7 +404,7 @@ function RuleRow({ rule, onChange, onRemove }: { rule: SegmentRule; onChange: (p
           <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-[12.5px] w-[130px]" />
         )
       )}
-      <button type="button" onClick={onRemove} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
+      <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
     </div>
   );
 }

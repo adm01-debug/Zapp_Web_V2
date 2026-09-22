@@ -598,7 +598,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <button type="button" onClick={onBack} className="p-1.5 rounded-lg hover:bg-muted/50 shrink-0">
+          <button type="button" onClick={onBack} aria-label="Voltar" className="p-1.5 rounded-lg hover:bg-muted/50 shrink-0">
             <ChevronLeft className="w-5 h-5 text-foreground-secondary" />
           </button>
           <IconTile icon={Activity} color="green" size={40} glow />
@@ -612,6 +612,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
           <select
             value={selectedId ?? ''}
             onChange={(e) => { setSelectedId(e.target.value || null); setActiveTab('overview'); }}
+            aria-label="Selecionar campanha"
             className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-medium max-w-[220px] truncate focus:outline-none focus:ring-1 focus:ring-primary"
           >
             {sending.length === 0 && <option value="">Nenhuma campanha ativa</option>}

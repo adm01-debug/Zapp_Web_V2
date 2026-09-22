@@ -366,7 +366,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
             </div>
             <div className="relative w-full max-w-sm">
               <Input value={ed.mediaUrl} onChange={(e) => ed.setMediaUrl(e.target.value)} placeholder="https://exemplo.com/arquivo.jpg" className="h-9 pr-8 bg-input/40 border-border/70 text-[12.5px]" />
-              {ed.mediaUrl && <button type="button" onClick={() => ed.setMediaUrl('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>}
+              {ed.mediaUrl && <button type="button" onClick={() => ed.setMediaUrl('')} aria-label="Limpar URL da mídia" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>}
             </div>
           </div>
         )}

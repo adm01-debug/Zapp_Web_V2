@@ -86,12 +86,14 @@ export function TalkXSettings() {
                     <>
                       <Button
                         size="icon" variant="ghost" className="h-7 w-7"
+                        aria-label="Descartar alteração"
                         onClick={() => setEdits((prev) => { const n = { ...prev }; delete n[row.key]; return n; })}
                       >
                         <RotateCcw className="w-3 h-3" />
                       </Button>
                       <Button
                         size="icon" variant="default" className="h-7 w-7"
+                        aria-label="Salvar"
                         disabled={update.isPending}
                         onClick={() => handleSave(row.key)}
                       >

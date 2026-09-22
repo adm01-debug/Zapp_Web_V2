@@ -359,14 +359,14 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
       <p className="text-[12px] text-foreground-secondary">Mostrando {from} a {to} de {fmtInt(total)} {noun}</p>
       <div className="flex items-center gap-1.5">
-        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronLeft className="w-4 h-4" /></button>
+        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Página anterior" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronLeft className="w-4 h-4" /></button>
         {visible.map((p, i) => (
           <span key={p} className="flex items-center gap-1.5">
             {i > 0 && visible[i - 1] !== p - 1 && <span className="text-muted-foreground text-xs px-1">…</span>}
             <button type="button" onClick={() => onPage(p)} className={cn('h-8 min-w-8 px-2 rounded-lg text-[12.5px] font-semibold border transition-colors', p === page ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{p}</button>
           </span>
         ))}
-        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronRight className="w-4 h-4" /></button>
+        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Próxima página" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronRight className="w-4 h-4" /></button>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
           <SelectTrigger className="h-8 rounded-lg bg-input/40 border-border/70 text-[12px] w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
           <SelectContent>{[8, 10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>)}</SelectContent>
