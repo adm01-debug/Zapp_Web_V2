@@ -234,7 +234,13 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
 function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   return (
-    <div onClick={onClick} className={cn('rounded-2xl border cursor-pointer transition-all hover:shadow-md', selected ? 'border-primary bg-primary/5' : 'border-border/70 bg-card hover:border-primary/40')}>
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
+      className={cn('rounded-2xl border cursor-pointer transition-all hover:shadow-md', selected ? 'border-primary bg-primary/5' : 'border-border/70 bg-card hover:border-primary/40')}
+    >
       {/* Bubble preview */}
       <div className="bg-muted/30 rounded-t-2xl p-3 border-b border-border/50">
         <div className="flex justify-end">
