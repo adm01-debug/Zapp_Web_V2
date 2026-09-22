@@ -52,8 +52,8 @@ if (args.includes('-c')) {
   return { tmp, migDir, fnDir, manifestPath, grantsSqlPath, grantsBaselinePath, psqlPath };
 }
 
-function run(fx) {
-  return spawnSync(process.execPath, [SCRIPT], {
+function run(fx, { env = {}, args = [] } = {}) {
+  return spawnSync(process.execPath, [SCRIPT, ...args], {
     encoding: 'utf8',
     env: {
       ...process.env,
@@ -64,6 +64,7 @@ function run(fx) {
       GRANTS_SQL_PATH: fx.grantsSqlPath,
       GRANTS_BASELINE_PATH: fx.grantsBaselinePath,
       PSQL_BIN: fx.psqlPath,
+      ...env,
     },
   });
 }
@@ -150,6 +151,8 @@ test('sem DESTINO_URL roda so a perna local de edges', () => {
   assert.equal(res.status, 0, res.stderr + res.stdout);
   assert.match(res.stdout, /\[migrations\] pulado/);
   assert.match(res.stdout, /\[grants\] pulado/);
+  assert.match(res.stdout, /PARCIAL:.*1\/3/);
+  assert.doesNotMatch(res.stdout, /OK: paridade tripla verificada/);
 });
 
 test('grants com chaves em ordem diferente mas conteudo igual PASSAM (comparacao canonica)', () => {
@@ -177,9 +180,67 @@ test('psql com exit!=0 vira falha controlada sem vazar a DESTINO_URL', () => {
   fs.writeFileSync(fx.psqlPath, '#!/usr/bin/env node\nprocess.stderr.write("connection refused");\nprocess.exit(2);\n', { mode: 0o755 });
   const res = run(fx);
   assert.equal(res.status, 1);
-  assert.match(res.stderr, /erro inesperado: psql falhou \(exit 2\): connection refused/);
+  assert.match(res.stderr, /psql falhou \(exit 2\)/);
   assert.doesNotMatch(res.stderr, /postgres:\/\//);
   assert.doesNotMatch(res.stdout + res.stderr, /at .*check-triple-parity\.mjs/, 'sem stack trace');
+});
+
+function minimalFixture() {
+  return makeFixture({ versoes: ['20260901000000'], dirs: ['fn-a'], manifestNames: ['fn-a'],
+    ledger: ['20260901000000'], grantsFresco: { r: 1 }, grantsCommitado: { r: 1 } });
+}
+
+test('--require-live falha fechado sem banco, sem sucesso global', () => {
+  const result = run(minimalFixture(), { env: { DESTINO_URL: '' }, args: ['--require-live'] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /require-live/);
+  assert.doesNotMatch(result.stdout, /OK: paridade tripla verificada/);
+});
+
+test('argumento desconhecido falha para evitar typo desativar requisito live', () => {
+  assert.equal(run(minimalFixture(), { args: ['--require-lvie'] }).status, 1);
+});
+
+test('erro do psql nao propaga stdout/stderr com URL, senha ou payload', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(fx.psqlPath, '#!/usr/bin/env node\nprocess.stderr.write("postgres://u:fixture-secret@db/test Authorization: Bearer fixture-secret"); process.exit(2);', { mode: 0o755 });
+  const result = run(fx);
+  assert.equal(result.status, 1);
+  assert.doesNotMatch(result.stdout + result.stderr, /fixture-secret|postgres:\/\//);
+});
+
+test('manifesto com nome duplicado nao pode ser mascarado por Set', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(fx.manifestPath, JSON.stringify({ functions: [{ name: 'fn-a' }, { name: 'fn-a' }] }));
+  assert.equal(run(fx).status, 1);
+});
+
+test('stdout inesperado do psql nao pode vazar payload em count/hash', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(fx.psqlPath, '#!/usr/bin/env node\nprocess.stdout.write("fixture-private-response");', { mode: 0o755 });
+  const result = run(fx);
+  assert.equal(result.status, 1);
+  assert.doesNotMatch(result.stdout + result.stderr, /fixture-private-response/);
+});
+
+test('a URL fica fora do argv do psql', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(fx.psqlPath, '#!/usr/bin/env node\nif(process.argv.some(a=>a.startsWith("postgres:")))process.exit(91); process.exit(12);', { mode: 0o755 });
+  const result = run(fx);
+  assert.match(result.stderr, /exit 12/);
+  assert.doesNotMatch(result.stderr, /exit 91/);
+});
+
+test('SQL local com versao duplicada falha mesmo sem acesso ao banco', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(path.join(fx.migDir, '20260901000000_duplicate.sql'), 'SELECT 1;');
+  assert.equal(run(fx, { env: { DESTINO_URL: '' } }).status, 1);
+});
+
+test('SQL local com nome invalido nao desaparece da contagem', () => {
+  const fx = minimalFixture();
+  fs.writeFileSync(path.join(fx.migDir, 'bad.sql'), 'SELECT 1;');
+  assert.equal(run(fx, { env: { DESTINO_URL: '' } }).status, 1);
 });
 
 test('grants: note/how_to_regenerate divergentes PASSAM; mudanca de ACL continua FALHANDO', () => {

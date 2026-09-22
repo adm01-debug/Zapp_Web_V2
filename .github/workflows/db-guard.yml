@@ -146,3 +146,6 @@ jobs:
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
+
+      - name: Simular auditoria somente-leitura de configuracao runtime
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh

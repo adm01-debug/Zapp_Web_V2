@@ -129,7 +129,10 @@ jobs:
       # de edges × diretorios e frescor do grants-baseline num unico gate.
       # Complementa (nao substitui) os passos acima — ver §1.9 do CLAUDE.md.
       - name: Paridade tripla (migrations · edges · grants)
-        run: node scripts/db-audit/check-triple-parity.mjs
+        run: node scripts/db-audit/check-triple-parity.mjs --require-live
+
+      - name: Auditar configuracao runtime sem dados de clientes
+        run: node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json
 
       - name: Publicar evidencias estruturais
         if: always()
@@ -139,5 +142,6 @@ jobs:
           path: |
             /tmp/fresh-catalog.json
             /tmp/fresh-manifest.json
+            /tmp/runtime-config.json
           if-no-files-found: ignore
           retention-days: 3
