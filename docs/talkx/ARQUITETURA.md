@@ -51,14 +51,14 @@ graph TD
 | Contatos alcançados | `count(distinct contact_id) where sent_at is not null` | **existe** |
 | Ritmo de entrega (gráfico) | `rateByMinute` via `useTalkXMonitor` → `talkx_recipients.sent_at` | **E02 ✅** |
 | Elapsed (timer ao vivo) | `useEffect + setInterval` → sem `Date.now()` no render | **E02 ✅** |
-| Entregues / Lidas | `talkx_recipients.delivered_at / read_at` via `external_id` + webhook | E87 |
-| Respondidas / Taxa / Tempo médio | `talkx_recipients.replied_at` | E88 |
-| Cliques / Conversões / ROI | `talkx_links`, `talkx_link_clicks`, `talkx_conversions` | E90 |
+| Entregues / Lidas | `talkx_recipients.delivered_at / read_at` via `external_id` + webhook | **E87 ✅** |
+| Respondidas / Taxa / Tempo médio | `talkx_recipients.replied_at` | **E88 ✅** |
+| Cliques / Conversões / ROI | `talkx_links`, `talkx_link_clicks`, `talkx_conversions` | **E90 ✅** |
 | Opt-outs / Suprimidos / LGPD | `talkx_blacklist_active.reason_code` | E51, E57 |
 | Campanhas protegidas | `talkx_campaigns.respect_suppression` | E63 |
-| vs. média / benchmarks | `talkx_campaign_metrics` + `talkx_benchmarks()` | E89 |
+| vs. média / benchmarks | `talkx_campaign_metrics` + `talkx_benchmarks()` | **E89 ✅** |
 | Fila por segmento | `talkx_campaign_segments` | E75 |
-| Insights / IA | heurísticas reais (rótulo "Insights"); IA só com flag | E92 |
+| Insights / IA | heurísticas reais (rótulo "Insights"); IA só com flag | **E92 ✅** |
 | **NÃO implementar** | Homens/Mulheres, RFM, "+32% engajamento", "Média de 8.1k" | — |
 
 ---
@@ -81,9 +81,9 @@ graph TD
 | 12 Em andamento | `TalkXCampaignRunning.tsx` (novo) | E77, E78 |
 | 13 Pausada/retomada | `TalkXCampaignPaused.tsx` (novo) | E79–E81 |
 | 14 Relatório concluída | `TalkXCampaignReport.tsx` (novo) | E82–E85, E90 |
-| 15 Importação/CRM 360 | `TalkXImport.tsx` (novo) | E94, E95 |
-| 16 Ajuda | `TalkXHelp.tsx` (novo) | E96 |
-| 17 Estados e modais | todos os `TalkX*.tsx` | E19, E97 |
+| 15 Importação/CRM 360 | sem tela dedicada — `ContactImportDialog` (Contatos) para CSV; `TalkXCRMBadge` no `TalkXContactSelector` para o badge | **E94 ✅** (CSV), E95 parcial (só badge) |
+| 16 Ajuda | não implementado — botão "Ajuda" sem destino foi removido (#302) | E96 pendente |
+| 17 Estados e modais | todos os `TalkX*.tsx` | E19, **E97 ✅** |
 
 ---
 
