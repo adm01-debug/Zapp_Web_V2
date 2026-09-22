@@ -7,7 +7,7 @@ import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
-  Sparkles, RefreshCw, Upload,
+  Sparkles, RefreshCw, Upload, Download,
 } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
@@ -33,7 +33,7 @@ export function ContactsView() {
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
     isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
-    handleContactClick,
+    handleContactClick, handleExportCSV,
   } = useContactsViewState();
 
   const {
@@ -101,6 +101,14 @@ export function ContactsView() {
                 className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
               >
                 <Upload className="w-[18px] h-[18px]" />Importar CSV
+              </Button>
+            </motion.div>
+            <motion.div whileTap={tapAnimation}>
+              <Button
+                onClick={handleExportCSV}
+                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+              >
+                <Download className="w-[18px] h-[18px]" />Exportar CSV
               </Button>
             </motion.div>
             <motion.div whileTap={tapAnimation}>
