@@ -413,8 +413,8 @@
     },
     {
       "path": "supabase/functions/sentiment-alert/index.ts",
-      "bytes": 9400,
-      "sha256": "0386c4cd93b3921eaa324a635ac3daf65a567cbadd59ee46c715cb54aafda0d4"
+      "bytes": 9578,
+      "sha256": "d3aae3ba3839e1cf9b11c7b5f58efc695427f31f61d8814ff3858ea161af060f"
     },
     {
       "path": "supabase/functions/sicoob-bridge-reply/index.ts",
@@ -1156,7 +1156,7 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1fb5922a981d381ebd626cdcbbc3c608ded08bfac55971be93635d735144f525",
+      "source_sha256": "975dae03a01e88f05a28a754161354792805a3f1df35f3cb06fda939e78fe32b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/notification-events.ts",
@@ -1309,5 +1309,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2cd5a47ed22b8595e5511835313e9bd7fe8e45b97e13aabf4115deb45667522d"
+  "manifest_sha256": "a8948ca5b407b5189623766ba9e4fe8cfd2c6ad2b904c953f29a0292ce7cf374"
 }

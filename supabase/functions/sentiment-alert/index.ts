@@ -59,6 +59,7 @@ export async function handleSentimentAlertRequest(req: Request): Promise<Respons
     }
 
     const settingsOwnerId = sentimentSettingsOwnerId(auth.userId, agentProfile?.user_id);
+    const notifyCaller = !agentProfile?.user_id || agentProfile.user_id === auth.userId;
     const { data: userSettings, error: userSettingsError } = await supabase
       .from('user_settings')
       .select('sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count')
@@ -153,7 +154,14 @@ export async function handleSentimentAlertRequest(req: Request): Promise<Respons
     const persistence = persistedAlert as { notification_created?: unknown; duplicate?: unknown };
     const notificationCreated = persistence.notification_created === true;
     if (persistence.duplicate === true) {
-      return jsonResponse({ alerted: true, consecutiveLow, duplicate: true, emailSent: false, notificationCreated }, 200, req);
+      return jsonResponse({
+        alerted: true,
+        consecutiveLow,
+        duplicate: true,
+        emailSent: false,
+        notificationCreated,
+        notifyCaller,
+      }, 200, req);
     }
 
     let emailSent = false;
@@ -196,6 +204,7 @@ export async function handleSentimentAlertRequest(req: Request): Promise<Respons
       consecutiveLow,
       emailSent,
       notificationCreated,
+      notifyCaller,
     }, 200, req);
   } catch (error: unknown) {
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });

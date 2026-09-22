@@ -72,11 +72,11 @@ aplicada pelo workflow se o estado divergir do pré ou pós-estado permitido.
 
 | Camada | Resultado |
 | --- | --- |
-| Vitest com coverage | 241 arquivos; 3.181 passed; 35 todo; 0 failed |
+| Vitest com coverage | 241 arquivos; 3.183 passed; 35 todo; 0 failed |
 | Cobertura | 43,13% statements; 40,26% branches; 50,71% functions; 44,51% lines |
 | Contratos | 7 arquivos; 197 passed; 0 failed |
 | Edge Deno congelado | 27 passed; 0 failed |
-| CI/Edge/DB Node | 354 passed; 0 failed |
+| CI/Edge/DB Node | 355 passed; 0 failed |
 | PostgreSQL 17 | 26 fases do `db-guard`, todas aprovadas |
 | Harness de atomicidade | pré/pós-estado, ACL, retry, rollback e reparo aprovados |
 | Realtime | 10 testes adversariais; 19 tabelas atuais válidas |
@@ -87,7 +87,7 @@ aplicada pelo workflow se o estado divergir do pré ou pós-estado permitido.
 | Migrations | 448 arquivos válidos; comparação remota reservada ao Live Guard |
 | Build | aprovado em 4,71 s |
 | Bundle | inicial 325,5/340 KB; maior 486/550 KB; total 3.964/4.000 KB |
-| Manifesto Edge | 67 funções, 92 fontes, digest `2cd5a47ed22b8595e5511835313e9bd7fe8e45b97e13aabf4115deb45667522d` |
+| Manifesto Edge | 67 funções, 92 fontes, digest `a8948ca5b407b5189623766ba9e4fe8cfd2c6ad2b904c953f29a0292ce7cf374` |
 | Segurança do diff | Gitleaks: 0 findings |
 | Workflows | 11 arquivos com Actions fixadas por SHA; fronteira de secrets aprovada |
 | Whitespace | `git diff --check`: aprovado |
@@ -114,6 +114,10 @@ Nenhuma dependência Go foi alterada por esta correção.
 13. segunda chamada sem ID cria registros distintos;
 14. floods do dedupe não expulsam uma identidade ainda viva nem crescem sem
     limite.
+15. preferências do supervisor não impedem a avaliação canônica do
+    destinatário e a resposta HTTP não exibe o alerta no navegador errado;
+16. `offer/ringing` atrasado não regride chamada `answered` ou terminal e não
+    recria uma notificação após o encerramento.
 
 ## 7. Rollout obrigatório
 

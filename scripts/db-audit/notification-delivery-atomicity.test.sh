@@ -164,6 +164,60 @@ SET ROLE service_role;
 SELECT * FROM public.record_incoming_call_event(
   '40000000-0000-0000-0000-000000000001',
   '30000000-0000-0000-0000-000000000001',
+  'answered', true, 'provider-event-answered-first', false
+);
+SELECT * FROM public.record_incoming_call_event(
+  '40000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  'ringing', true, 'provider-event-answered-first', true
+);
+RESET ROLE;
+
+DO $$
+BEGIN
+  IF (SELECT status FROM public.calls
+      WHERE provider_event_id = 'provider-event-answered-first') <> 'answered' THEN
+    RAISE EXCEPTION 'delayed ringing event regressed an answered call';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.notifications
+    WHERE metadata->>'event_id' = 'provider-event-answered-first'
+  ) THEN
+    RAISE EXCEPTION 'delayed ringing event notified after answered state';
+  END IF;
+END $$;
+
+SET ROLE service_role;
+SELECT * FROM public.record_incoming_call_event(
+  '40000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  'missed', false, 'provider-event-out-of-order', false
+);
+SELECT * FROM public.record_incoming_call_event(
+  '40000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  'ringing', false, 'provider-event-out-of-order', true
+);
+RESET ROLE;
+
+DO $$
+BEGIN
+  IF (SELECT status FROM public.calls
+      WHERE provider_event_id = 'provider-event-out-of-order') <> 'missed' THEN
+    RAISE EXCEPTION 'delayed ringing event regressed a terminal call';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.notifications
+    WHERE metadata->>'event_id' = 'provider-event-out-of-order'
+  ) THEN
+    RAISE EXCEPTION 'delayed ringing event notified after terminal state';
+  END IF;
+END $$;
+
+SET ROLE service_role;
+SELECT * FROM public.record_incoming_call_event(
+  '40000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
   'ringing', false, 'provider-event-1', true
 );
 SELECT * FROM public.record_incoming_call_event(

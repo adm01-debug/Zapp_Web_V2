@@ -43,6 +43,7 @@ DECLARE
   v_contact_connection_id uuid;
   v_event_id text := nullif(btrim(p_provider_event_id), '');
   v_call_id uuid;
+  v_persisted_status text;
   v_notification_id uuid;
   v_notification_candidate uuid;
   v_notification_created boolean := false;
@@ -100,11 +101,17 @@ BEGIN
     DO UPDATE SET
       contact_id = EXCLUDED.contact_id,
       agent_id = EXCLUDED.agent_id,
-      status = EXCLUDED.status,
+      status = CASE
+        WHEN public.calls.status IN ('ended', 'missed', 'busy', 'failed')
+          THEN public.calls.status
+        WHEN public.calls.status = 'answered' AND EXCLUDED.status = 'ringing'
+          THEN public.calls.status
+        ELSE EXCLUDED.status
+      END,
       answered_at = COALESCE(public.calls.answered_at, EXCLUDED.answered_at),
       ended_at = COALESCE(public.calls.ended_at, EXCLUDED.ended_at),
       notes = EXCLUDED.notes
-    RETURNING id INTO v_call_id;
+    RETURNING id, status INTO v_call_id, v_persisted_status;
   ELSE
     INSERT INTO public.calls (
       contact_id, whatsapp_connection_id, agent_id, direction, status,
@@ -115,10 +122,10 @@ BEGIN
       CASE WHEN p_status = 'answered' THEN now() ELSE NULL END,
       CASE WHEN p_status IN ('ended', 'missed', 'busy', 'failed') THEN now() ELSE NULL END,
       CASE WHEN p_is_video THEN 'Chamada de vídeo' ELSE 'Chamada de voz' END
-    ) RETURNING id INTO v_call_id;
+    ) RETURNING id, status INTO v_call_id, v_persisted_status;
   END IF;
 
-  IF p_should_notify AND v_agent_user_id IS NOT NULL THEN
+  IF p_should_notify AND v_persisted_status = 'ringing' AND v_agent_user_id IS NOT NULL THEN
     v_notification_candidate := CASE
       WHEN v_event_id IS NULL THEN gen_random_uuid()
       ELSE md5(
@@ -138,7 +145,7 @@ BEGIN
         'contact_name', COALESCE(NULLIF(v_contact_name, ''), v_contact_phone, 'Contato'),
         'phone', v_contact_phone,
         'is_video', p_is_video,
-        'call_status', p_status,
+        'call_status', v_persisted_status,
         'whatsapp_connection_id', p_whatsapp_connection_id,
         'call_id', v_call_id,
         'event_id', v_event_id
