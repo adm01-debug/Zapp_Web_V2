@@ -63,7 +63,7 @@ export const Sidebar = React.memo(function Sidebar({
         <button onClick={() => onViewChange('inbox')} className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
           <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
         </button>
-        {!collapsed && <span className="text-lg font-bold text-foreground tracking-[-0.02em] ml-2 mr-auto">ZAPP</span>}
+        {!collapsed && <span className="font-display text-xl font-bold leading-none tracking-[-0.01em] text-foreground ml-2 mr-auto">ZAPP</span>}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
