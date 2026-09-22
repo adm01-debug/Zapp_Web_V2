@@ -125,6 +125,12 @@ jobs:
           fi
           echo "OK: types.ts em sincronia com o banco."
 
+      # E10 (plano 2026-09-20): consolida count+md5 arquivos↔ledger, manifesto
+      # de edges × diretorios e frescor do grants-baseline num unico gate.
+      # Complementa (nao substitui) os passos acima — ver §1.9 do CLAUDE.md.
+      - name: Paridade tripla (migrations · edges · grants)
+        run: node scripts/db-audit/check-triple-parity.mjs
+
       - name: Publicar evidencias estruturais
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
