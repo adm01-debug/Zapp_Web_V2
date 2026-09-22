@@ -265,7 +265,7 @@ function main() {
     process.exitCode = 1;
     return;
   }
-  if (!new RegExp(`^${version}\\|`, 'm').test(returned)) {
+  if (!returned.split('\n').some((linha) => linha.startsWith(`${version}|`))) {
     console.error(`ABORT: RETURNING vazio -- versao ${version} ja existe no ledger (colisao mascarada por ON CONFLICT DO NOTHING).`);
     process.exitCode = 1;
     return;
