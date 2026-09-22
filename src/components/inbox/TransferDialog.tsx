@@ -27,7 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface TransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onTransfer: (type: 'agent' | 'queue' | 'connection', targetId: string, message?: string) => void;
+  onTransfer: (type: 'agent' | 'queue' | 'connection', targetId: string, message?: string) => void | Promise<void>;
 }
 
 export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialogProps) {
@@ -60,29 +60,31 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
     if (!selectedTarget || isTransferring) return;
     setIsTransferring(true);
     try {
-      onTransfer(transferType, selectedTarget, message || undefined);
+      await onTransfer(transferType, selectedTarget, message || undefined);
       onOpenChange(false);
       setSelectedTarget('');
       setMessage('');
+    } catch {
+      // O callback canônico já exibe o erro e o diálogo permanece aberto.
     } finally {
       setIsTransferring(false);
     }
   };
 
-  // Reset state when dialog closes
-  useEffect(() => {
-    if (!open) {
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
       setSelectedTarget('');
       setMessage('');
       setIsTransferring(false);
     }
-  }, [open]);
+    onOpenChange(nextOpen);
+  };
 
   // Filter online/away agents (active ones)
   const availableAgents = agents.filter((a) => a.status === 'online' || a.status === 'away');
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

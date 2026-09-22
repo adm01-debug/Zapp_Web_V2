@@ -2,6 +2,7 @@
  import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
  import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
  import { ChatService, Message } from '@/services/chat.service';
+ import type { MessageRow } from '@/types/chat';
  import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
  import { log } from '@/lib/logger';
 
@@ -10,14 +11,19 @@ interface UseMessagesOptions {
   enabled?: boolean;
 }
 
+const MESSAGES_PAGE_SIZE = 1000;
+
 export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasOlder, setHasOlder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const previousContactIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
   const activeContactIdRef = useRef<string | null>(contactId);
   const requestGenerationRef = useRef(0);
+  const loadingOlderRef = useRef(false);
   const realtimeOverlayRef = useRef<Map<string, Message | null>>(new Map());
 
   // Track mount state to prevent setState after unmount
@@ -41,12 +47,15 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     try {
       if (mountedRef.current) {
         setLoading(true);
+        loadingOlderRef.current = false;
+        setLoadingOlder(false);
+        setHasOlder(false);
         setError(null);
       }
-      
-      const { data, error: fetchError } = await ChatService.fetchMessages(requestedContactId);
+
+      const { data, error: fetchError } = await ChatService.fetchMessages(requestedContactId, 0, MESSAGES_PAGE_SIZE);
       if (fetchError) throw fetchError;
-      
+
       if (mountedRef.current && generation === requestGenerationRef.current &&
         activeContactIdRef.current === requestedContactId && data) {
         const snapshot = data.map((row) => mapMessageRowToMessage(row));
@@ -58,6 +67,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         setMessages([...merged.values()].sort((a, b) =>
           new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
         ));
+        setHasOlder(data.length === MESSAGES_PAGE_SIZE);
       }
     } catch (err) {
       log.error('Error fetching messages:', err);
@@ -71,11 +81,57 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     }
   }, [contactId]);
 
+  const loadOlderMessages = useCallback(async () => {
+    const requestedContactId = contactId;
+    const generation = requestGenerationRef.current;
+    if (!requestedContactId || loadingOlderRef.current || !hasOlder || messages.length === 0) return;
+
+    const oldest = messages[0];
+    const createdAt = oldest.created_at || oldest.timestamp?.toISOString();
+    if (!createdAt) {
+      setHasOlder(false);
+      return;
+    }
+
+    loadingOlderRef.current = true;
+    setLoadingOlder(true);
+    try {
+      const { data, error: fetchError } = await ChatService.fetchMessagesBefore(
+        requestedContactId,
+        { createdAt, id: oldest.id },
+        MESSAGES_PAGE_SIZE,
+      );
+      if (fetchError) throw fetchError;
+      if (!mountedRef.current || generation !== requestGenerationRef.current ||
+        activeContactIdRef.current !== requestedContactId || !data) return;
+
+      const older = data.map((row) => mapMessageRowToMessage(row));
+      setMessages((current) => {
+        const merged = new Map(older.map((message) => [message.id, message]));
+        for (const message of current) merged.set(message.id, message);
+        return [...merged.values()].sort((a, b) =>
+          new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+        );
+      });
+      setHasOlder(data.length === MESSAGES_PAGE_SIZE);
+    } catch (err) {
+      log.error('Error fetching older messages:', err);
+      if (mountedRef.current && generation === requestGenerationRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch older messages');
+      }
+    } finally {
+      if (mountedRef.current && generation === requestGenerationRef.current) {
+        loadingOlderRef.current = false;
+        setLoadingOlder(false);
+      }
+    }
+  }, [contactId, hasOlder, messages]);
+
   // Handle new message from realtime
   const handleNewMessage = useCallback(
-    (payload: RealtimePostgresChangesPayload<Message>) => {
-      const newMessage = mapMessageRowToMessage(payload.new as any);
-      
+    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
+      const newMessage = mapMessageRowToMessage(payload.new as MessageRow);
+
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(newMessage.id, newMessage);
@@ -84,7 +140,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
             return prev;
           }
           // Sort after adding just in case of race conditions
-          return [...prev, newMessage].sort((a, b) => 
+          return [...prev, newMessage].sort((a, b) =>
             new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
           );
         });
@@ -95,8 +151,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Handle message update from realtime
   const handleMessageUpdate = useCallback(
-    (payload: RealtimePostgresChangesPayload<Message>) => {
-      const updatedMessage = mapMessageRowToMessage(payload.new as any);
+    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
+      const updatedMessage = mapMessageRowToMessage(payload.new as MessageRow);
 
       if (updatedMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(updatedMessage.id, updatedMessage);
@@ -110,8 +166,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Handle message delete from realtime
   const handleMessageDelete = useCallback(
-    (payload: RealtimePostgresChangesPayload<Message>) => {
-      const deletedMessage = payload.old as Message;
+    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
+      const deletedMessage = payload.old as MessageRow;
 
       if (deletedMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(deletedMessage.id, null);
@@ -126,6 +182,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     activeContactIdRef.current = enabled ? contactId : null;
     if (!enabled || !contactId) {
       requestGenerationRef.current += 1;
+      loadingOlderRef.current = false;
       previousContactIdRef.current = null;
       realtimeOverlayRef.current.clear();
       const invalidatedGeneration = requestGenerationRef.current;
@@ -133,6 +190,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         if (!mountedRef.current || requestGenerationRef.current !== invalidatedGeneration) return;
         setMessages([]);
         setLoading(false);
+        setLoadingOlder(false);
+        setHasOlder(false);
         setError(null);
       });
       return;
@@ -148,7 +207,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   }, [contactId, enabled, fetchMessages]);
 
    // Subscribe to realtime updates using the standardized hook
-   useSupabaseRealtime<Message>({
+   useSupabaseRealtime<MessageRow>({
      channelName: `messages:${contactId}`,
      table: 'messages',
      filter: contactId ? `contact_id=eq.${contactId}` : undefined,
@@ -188,8 +247,11 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   return {
     messages,
     loading,
+    loadingOlder,
+    hasOlder,
     error,
     refetch: fetchMessages,
+    loadOlderMessages,
     addMessage,
     updateMessage,
     removeMessage,

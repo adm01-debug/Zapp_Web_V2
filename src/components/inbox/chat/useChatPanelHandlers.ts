@@ -168,8 +168,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       (product.short_description || product.description) ? `\n${(product.short_description || product.description || '').slice(0, 300)}` : '',
       product.primary_image_url ? `\n🔗 ${product.primary_image_url}` : '',
     ].filter(Boolean).join('\n');
-    await onSendMessage(lines);
-    toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
+    try {
+      await onSendMessage(lines);
+      toast({ title: 'Produto enviado!', description: `${product.name} - ${price}` });
+    } catch (err) {
+      log.error('Failed to send product:', err);
+      toast({ title: 'Erro ao enviar', description: 'Não foi possível enviar o produto.', variant: 'destructive' });
+    }
   }, [onSendMessage]);
 
   const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
