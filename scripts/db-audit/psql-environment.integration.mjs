@@ -6,7 +6,7 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { withPsqlEnvironment } from './psql-environment.mjs';
-import { evaluateRuntimeConfig } from './check-runtime-config.mjs';
+import { evaluateRuntimeConfig, loadRealtimeBaseline } from './check-runtime-config.mjs';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'zapp-libpq-integration-'));
 const container = `zapp-libpq-test-${process.pid}`;
@@ -55,13 +55,21 @@ try {
   assert.deepEqual(fs.readdirSync(directory), [], 'temporary passfiles must be removed after success/failure');
 
   stage = 'create-isolated-fixtures';
+  const realtimeTables = loadRealtimeBaseline();
+  const coreTables = new Set(['public.messages', 'public.contacts', 'public.email_messages', 'public.email_threads']);
+  const additionalRealtimeTables = realtimeTables
+    .filter(table => !coreTables.has(table))
+    .map(table => `CREATE TABLE ${table}(id int);`)
+    .join('\n');
   withConnection(`CREATE SCHEMA supabase_migrations;
 CREATE TABLE supabase_migrations.schema_migrations(version text, name text, statements text[]);
 INSERT INTO supabase_migrations.schema_migrations VALUES ('20260901000000', 'fixture_demo', NULL);
 CREATE TABLE public.messages(id int) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.contacts(id int) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.email_messages(id int) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
-CREATE TABLE public.email_threads(id int) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);`);
+CREATE TABLE public.email_threads(id int) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
+${additionalRealtimeTables}
+CREATE PUBLICATION supabase_realtime FOR TABLE ${realtimeTables.join(', ')};`);
 
   // Real psql + actual runtime SQL, not a mocked stdout transport.
   stage = 'runtime-SQL';

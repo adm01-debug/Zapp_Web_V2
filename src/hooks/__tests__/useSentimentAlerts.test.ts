@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 
 const mockFunctionsInvoke = vi.fn();
 const mockFrom = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -26,7 +27,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 
 vi.mock('sonner', () => ({
-  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
+  toast: { error: (...args: unknown[]) => mockToastError(...args), success: vi.fn(), info: vi.fn() },
 }));
 
 vi.mock('@/utils/notificationSound', () => ({
@@ -40,6 +41,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';
+import { claimNotificationEvent } from '@/lib/notificationDedupe';
 
 describe('useSentimentAlerts', () => {
   beforeEach(() => {
@@ -99,7 +101,7 @@ describe('useSentimentAlerts', () => {
       contactId: 'c1',
       contactName: 'João',
       sentimentScore: 10,
-      analysisId: 'a1',
+      analysisId: 'a-local-alert',
     });
     expect(mockFunctionsInvoke).toHaveBeenCalledWith('sentiment-alert', expect.any(Object));
   });
@@ -128,6 +130,24 @@ describe('useSentimentAlerts', () => {
     });
     expect(outcome.triggered).toBe(true);
     expect(outcome.consecutiveLow).toBe(3);
+    expect(mockToastError).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not duplicate the toast when Realtime already delivered the targeted notification', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: true, consecutiveLow: 3, emailSent: true, notificationCreated: true },
+      error: null,
+    });
+    claimNotificationEvent('sentiment:a-delivered');
+    const { result } = renderHook(() => useSentimentAlerts());
+    const outcome = await result.current.checkAndTriggerAlert({
+      contactId: 'c1',
+      contactName: 'João',
+      sentimentScore: 10,
+      analysisId: 'a-delivered',
+    });
+    expect(outcome.triggered).toBe(true);
+    expect(mockToastError).not.toHaveBeenCalled();
   });
 
   it('getRecentAlerts returns empty array on error', async () => {

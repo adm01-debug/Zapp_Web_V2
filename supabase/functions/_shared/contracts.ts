@@ -27,9 +27,17 @@ export function parseVersioned<T1, T2>(
   | { ok: true; version: ContractVersion; data: T1 | T2 }
   | { ok: false; version: ContractVersion; response: Response } {
   const version = getContractVersion(req);
-  const parsed = parseBody(version === 2 ? schemas.v2 : schemas.v1, body);
+  if (version === 2) {
+    const parsed = parseBody(schemas.v2, body);
+    if (!parsed.success) {
+      return { ok: false, version, response: validationErrorResponse(parsed, req, version) };
+    }
+    return { ok: true, version, data: parsed.data };
+  }
+
+  const parsed = parseBody(schemas.v1, body);
   if (!parsed.success) {
     return { ok: false, version, response: validationErrorResponse(parsed, req, version) };
   }
-  return { ok: true, version, data: parsed.data as T1 | T2 };
+  return { ok: true, version, data: parsed.data };
 }

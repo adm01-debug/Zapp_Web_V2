@@ -4,23 +4,24 @@ import { toast } from 'sonner';
 import { playNotificationSound } from '@/utils/notificationSound';
 import { showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSound';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { claimNotificationEvent } from '@/lib/notificationDedupe';
 
 const log = getLogger('SentimentAlerts');
 
-interface SentimentAlertPayload {
+interface SentimentAlertNotification {
   id: string;
-  action: string;
-  entity_id: string | null;
-  entity_type: string | null;
-  user_id: string | null;
-  details: {
-    type?: string;
+  user_id: string;
+  type: string;
+  metadata: {
     contact_id?: string;
     contact_name?: string;
     contact_phone?: string;
     sentiment_score?: number;
     consecutive_low?: number;
+    analysis_id?: string;
     agent_name?: string;
     message?: string;
   } | null;
@@ -28,15 +29,20 @@ interface SentimentAlertPayload {
 }
 
 export function useRealtimeSentimentAlerts() {
+  const { user } = useAuth();
   const { settings, isQuietHours } = useNotificationSettings();
 
-  const handleNewAlert = useCallback(async (payload: SentimentAlertPayload) => {
-    log.debug('New sentiment alert received', { payload });
+  const handleNewAlert = useCallback(async (payload: SentimentAlertNotification) => {
+    if (payload.type !== 'sentiment_alert' || settings.sentimentAlertEnabled === false) return;
 
-    const details = payload.details || {};
+    const details = payload.metadata || {};
+    const dedupeKey = details.analysis_id ? `sentiment:${details.analysis_id}` : `notification:${payload.id}`;
+    if (!claimNotificationEvent(dedupeKey)) return;
+
+    log.debug('Sentiment notification received', { notificationId: payload.id });
     const contactName = details.contact_name || 'Cliente';
-    const sentimentScore = details.sentiment_score || 0;
-    const consecutiveLow = details.consecutive_low || 0;
+    const sentimentScore = typeof details.sentiment_score === 'number' ? details.sentiment_score : 0;
+    const consecutiveLow = typeof details.consecutive_low === 'number' ? details.consecutive_low : 0;
 
     // Show toast notification
     toast.error(
@@ -78,32 +84,28 @@ export function useRealtimeSentimentAlerts() {
   }, [settings, isQuietHours]);
 
   useEffect(() => {
-    log.debug('Setting up realtime subscription');
+    if (!user?.id) return;
 
     const channel = supabase
-      .channel('sentiment-alerts-realtime')
+      .channel(uniqueRealtimeTopic('sentiment-alerts'))
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'audit_logs',
-          filter: 'action=eq.sentiment_alert',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          log.debug('Realtime payload', { payload });
-          handleNewAlert(payload.new as SentimentAlertPayload);
+          void handleNewAlert(payload.new as SentimentAlertNotification);
         }
       )
-      .subscribe((status) => {
-        log.debug('Subscription status', { status });
-      });
+      .subscribe();
 
     return () => {
-      log.debug('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, [handleNewAlert]);
+  }, [handleNewAlert, user?.id]);
 
   return null;
 }

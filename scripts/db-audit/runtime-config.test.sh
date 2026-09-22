@@ -28,7 +28,30 @@ CREATE TABLE public.messages(id int) WITH (autovacuum_vacuum_scale_factor=0.05, 
 CREATE TABLE public.contacts(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.email_messages(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.email_threads(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
-CREATE PUBLICATION supabase_realtime FOR TABLE public.messages;
+CREATE TABLE public.agent_stats(id int);
+CREATE TABLE public.conversation_sla(id int);
+CREATE TABLE public.message_reactions(id int);
+CREATE TABLE public.notifications(id int);
+CREATE TABLE public.payment_links(id int);
+CREATE TABLE public.queue_goals(id int);
+CREATE TABLE public.queue_members(id int);
+CREATE TABLE public.queues(id int);
+CREATE TABLE public.sales_deals(id int);
+CREATE TABLE public.talkx_campaigns(id int);
+CREATE TABLE public.talkx_recipients(id int);
+CREATE TABLE public.team_message_reactions(id int);
+CREATE TABLE public.team_messages(id int);
+CREATE TABLE public.warroom_alerts(id int);
+CREATE TABLE public.whatsapp_connections(id int);
+CREATE TABLE public.whisper_messages(id int);
+CREATE PUBLICATION supabase_realtime FOR TABLE
+  public.agent_stats, public.contacts, public.conversation_sla,
+  public.email_messages, public.email_threads, public.message_reactions,
+  public.messages, public.notifications, public.payment_links,
+  public.queue_goals, public.queue_members, public.queues, public.sales_deals,
+  public.talkx_campaigns, public.talkx_recipients,
+  public.team_message_reactions, public.team_messages, public.warroom_alerts,
+  public.whatsapp_connections, public.whisper_messages;
 SQL
 db < "$repo_root/scripts/db-audit/runtime-config.sql" > "$test_dir/absent.jsonl"
 db <<'SQL'
@@ -52,6 +75,7 @@ import { evaluateRuntimeConfig } from './scripts/db-audit/check-runtime-config.m
 const load = name => fs.readFileSync(`${process.env.TEST_EVIDENCE_DIR}/${name}.jsonl`, 'utf8');
 const absent = evaluateRuntimeConfig(load('absent'));
 assert.equal(absent.status, 'PARTIAL');
+assert.equal(absent.coverage.realtime, 'VERIFIED');
 assert.equal(absent.coverage.cron, 'UNAVAILABLE');
 const present = evaluateRuntimeConfig(load('present'));
 assert.equal(present.status, 'PARTIAL');

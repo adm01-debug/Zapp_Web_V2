@@ -4,12 +4,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { evaluateRuntimeConfig } from './check-runtime-config.mjs';
+import { evaluateRuntimeConfig, loadRealtimeBaseline } from './check-runtime-config.mjs';
+
+const realtimeBaseline = loadRealtimeBaseline();
 
 function fixture() {
   return [{ section: 'identity', database: 'postgres', server_major: 17 },
     { section: 'autovacuum', enabled: true, tables: ['messages', 'contacts', 'email_threads', 'email_messages'].map(table => ({ table, vacuum_scale_factor: '0.05', analyze_scale_factor: '0.05', enabled: true })) },
-    { section: 'realtime', publication_present: true, tables: ['public.messages'] },
+    { section: 'realtime', publication_present: true, tables: [...realtimeBaseline] },
     { section: 'cron', available: true, jobs: 4, active_jobs: 3 },
     { section: 'storage', available: true, buckets: 3, public_buckets: 1 },
     { section: 'ledger_limitations', available: true, records: [] }];
@@ -19,8 +21,21 @@ test('verified table options never claim full runtime/backup parity', () => {
   const result = evaluate(fixture());
   assert.equal(result.status, 'PARTIAL');
   assert.equal(result.coverage.autovacuum, 'VERIFIED');
+  assert.equal(result.coverage.realtime, 'VERIFIED');
   assert.equal(result.coverage.backups, 'NOT_VERIFIED_RESTORE_REQUIRED');
 });
+for (const mode of ['missing', 'extra', 'duplicate', 'absent']) {
+  test(`realtime publication ${mode} fails closed`, () => {
+    const rows = fixture();
+    if (mode === 'missing') rows[2].tables.pop();
+    if (mode === 'extra') rows[2].tables.push('public.unreviewed_table');
+    if (mode === 'duplicate') rows[2].tables.push(rows[2].tables[0]);
+    if (mode === 'absent') rows[2].publication_present = false;
+    const result = evaluate(rows);
+    assert.equal(result.status, 'FAIL');
+    assert.equal(result.coverage.realtime, 'FAIL');
+  });
+}
 for (const mode of ['missing', 'duplicate', 'defaults', 'disabled', 'global']) {
   test(`autovacuum ${mode} fails`, () => {
     const rows = fixture();
