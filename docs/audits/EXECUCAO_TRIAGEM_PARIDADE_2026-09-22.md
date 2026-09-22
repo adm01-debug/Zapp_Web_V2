@@ -78,13 +78,22 @@ TABLE e executado em producao pelo coletor.
 ## 4. Validacoes locais
 
 - 317 testes Node de CI, Edge e DB: PASS, zero skips.
+- Suite da aplicacao: 238 arquivos, **3.148 testes PASS e 35 TODO preexistentes**;
+  TODO nao e teste implementado nem validacao concluida.
+- Suite de contratos: 167 testes PASS em quatro arquivos.
 - 22 contratos Deno: PASS na geracao e na repeticao com --frozen.
+- Lock Deno adulterado em fixture isolada: rejeitado por falha de integridade.
 - 88 testes Node da branch Deno: PASS.
 - Integracao real PostgreSQL 17: PASS, com estados ausente/presente/drift.
 - Manifesto Edge: 67 funcoes / 91 arquivos, fingerprint de fontes inalterado.
 - 446 migrations locais validas; nenhum SQL novo para aplicar.
 - Pins de Actions e fronteira de secrets em PR: PASS.
 - Supabase usage guard: zero novas violacoes.
+- Typecheck: exit 0; lint-ratchet: zero novas dividas (1104 ocorrencias historicas).
+- Build: exit 0; budget aprovado, JS inicial 325.5 KB gzip de 340 KB.
+- CI funcional da PR #497 no commit cdfd7b30: lint/typecheck, unitarios, build,
+  seguranca, CodeQL e DB offline aprovados. Commits posteriores desta rodada
+  alteram apenas documentacao/evidencias, nao o codigo validado.
 
 Testes mockados de API provam o comportamento do coletor, nao equivalem a nova
 coleta remota autenticada. Testes de contador e metadados nao homologam negocios.
