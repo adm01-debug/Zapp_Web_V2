@@ -34,6 +34,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
+import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
@@ -438,7 +439,9 @@ export const ExternalProductManagement: React.FC = () => {
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
             {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className={viewMode === 'grid' ? 'h-72' : 'h-20'} />
+              viewMode === 'grid'
+                ? <CatalogProductCardSkeleton key={i} mode="grade" />
+                : <CatalogProductCardSkeleton key={i} mode="list" />
             ))}
           </div>
         ) : products.length === 0 ? (
