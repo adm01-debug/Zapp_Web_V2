@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, Users,
+  LayoutDashboard, Users, HelpCircle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -11,6 +11,7 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { ModuleHeader, IconTile } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
+import { TalkXHelp } from './TalkXHelp';
 import { TalkXOverview } from './TalkXOverview';
 import { TalkXCampaignWizard } from './TalkXCampaignWizard';
 import { TalkXLiveMonitor } from './TalkXLiveMonitor';
@@ -39,6 +40,7 @@ export default function TalkXView() {
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXWizardRoute(window.location.search).route);
+  const [helpOpen, setHelpOpen] = useState(false);
   // A campaign just created locally may not have reached the campaigns query
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
@@ -246,10 +248,17 @@ export default function TalkXView() {
                 Ao vivo
               </span>
             )}
+            <button
+              type="button" aria-label="Ajuda" onClick={() => setHelpOpen(true)}
+              className="talkx-glow-ring inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
             <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
           </div>
         }
       />
+      <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
         <div className="overflow-x-auto">
