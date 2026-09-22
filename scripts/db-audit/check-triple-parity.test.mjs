@@ -181,3 +181,20 @@ test('psql com exit!=0 vira falha controlada sem vazar a DESTINO_URL', () => {
   assert.doesNotMatch(res.stderr, /postgres:\/\//);
   assert.doesNotMatch(res.stdout + res.stderr, /at .*check-triple-parity\.mjs/, 'sem stack trace');
 });
+
+test('grants: note/how_to_regenerate divergentes PASSAM; mudanca de ACL continua FALHANDO', () => {
+  const base = { versoes: ['20260901000000'], dirs: ['fn-a'], manifestNames: ['fn-a'], ledger: ['20260901000000'] };
+  const soTexto = run(makeFixture({
+    ...base,
+    grantsFresco: { note: 'texto do SQL', how_to_regenerate: 'x.sql', anon_execute: ['f()'] },
+    grantsCommitado: { note: 'texto editado a mao', how_to_regenerate: 'y.sql', anon_execute: ['f()'] },
+  }));
+  assert.equal(soTexto.status, 0, soTexto.stderr + soTexto.stdout);
+  const acl = run(makeFixture({
+    ...base,
+    grantsFresco: { note: 'n', anon_execute: ['f()', 'g()'] },
+    grantsCommitado: { note: 'n', anon_execute: ['f()'] },
+  }));
+  assert.equal(acl.status, 1);
+  assert.match(acl.stderr, /grants-baseline desatualizado/);
+});
