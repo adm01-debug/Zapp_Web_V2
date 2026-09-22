@@ -1,8 +1,13 @@
 name: CRM Sync Worker
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  # E02 (plano 2026-09-20): o cron '*/5 * * * *' ficou meses disparando runs
+  # 100% "skipped" (vars.CRM_SYNC_WORKER_ENABLED nunca foi ligada) — ~288
+  # runs/dia poluindo o historico de Actions sem processar nada. Reativar o
+  # agendamento SOMENTE junto com vars.CRM_SYNC_WORKER_ENABLED=true, quando o
+  # CRM sync entrar em operacao real:
+  # schedule:
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       batch_size:
