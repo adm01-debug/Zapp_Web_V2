@@ -1,5 +1,5 @@
 {
-    "note": "Snapshot de EXECUTE por role para toda funcao em public. Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar -- e o guard de anon-grant que faltava desde o inicio da sessao (E26/E44).",
+    "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
@@ -11,7 +11,7 @@
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-20",
+    "generated_at": "2026-09-22",
     "anon_table_select": [
         "agent_achievements",
         "agent_skills",
