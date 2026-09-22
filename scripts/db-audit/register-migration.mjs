@@ -135,7 +135,13 @@ RETURNING version, name, array_length(statements,1) AS n_statements;`;
 
 function runPsql(url, sql) {
   try {
-    return execFileSync(PSQL_BIN, [url, '-X', '-t', '-A', '-c', sql], { encoding: 'utf8' });
+    // -q: sem ele o psql imprime a tag "INSERT 0 0" quando o ON CONFLICT DO NOTHING
+    // descarta a linha, e o RETURNING "vazio" deixava de ser vazio (colisao dada
+    // como OK). stdio explicito: o stderr do psql nao vaza direto no console.
+    return execFileSync(PSQL_BIN, [url, '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-c', sql], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
   } catch (err) {
     // err.message do execFileSync embute a linha de comando inteira — com a
     // DESTINO_URL (credencial). Relanca so o stderr do psql, truncado.
@@ -259,7 +265,7 @@ function main() {
     process.exitCode = 1;
     return;
   }
-  if (!returned) {
+  if (!new RegExp(`^${version}\\|`, 'm').test(returned)) {
     console.error(`ABORT: RETURNING vazio -- versao ${version} ja existe no ledger (colisao mascarada por ON CONFLICT DO NOTHING).`);
     process.exitCode = 1;
     return;
