@@ -47,3 +47,9 @@ updates:
       - "ci"
     commit-message:
       prefix: "⬆️ ci:"
+    # init e analyze do codeql-action precisam da mesma versao: isolados, cada PR
+    # falha no CodeQL ("Loaded a configuration file for version X, but running Y").
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
