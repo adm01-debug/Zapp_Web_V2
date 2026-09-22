@@ -22,6 +22,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR || 'supabase/migrations';
 const FUNCTIONS_DIR = process.env.FUNCTIONS_DIR || 'supabase/functions';
@@ -48,8 +49,9 @@ function md5(value) {
 
 function execPsqlSanitizado(args) {
   try {
-    return execFileSync(PSQL_BIN, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
-      env: { ...process.env, PGDATABASE: url } });
+    return withPsqlEnvironment(url, env => execFileSync(PSQL_BIN, args, {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env,
+    }));
   } catch (err) {
     // Nem stderr e seguro: libpq, proxies ou wrappers podem repetir credenciais.
     const safe = new Error(`psql falhou (exit ${Number.isInteger(err.status) ? err.status : '?'})`);

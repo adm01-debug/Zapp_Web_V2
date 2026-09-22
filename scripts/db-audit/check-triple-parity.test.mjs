@@ -57,7 +57,7 @@ function run(fx, { env = {}, args = [] } = {}) {
     encoding: 'utf8',
     env: {
       ...process.env,
-      DESTINO_URL: 'postgres://fixture',
+      DESTINO_URL: 'postgres://fixture:synthetic-only@fixture.invalid:5432/postgres',
       MIGRATIONS_DIR: fx.migDir,
       FUNCTIONS_DIR: fx.fnDir,
       MANIFEST_PATH: fx.manifestPath,
@@ -229,6 +229,18 @@ test('a URL fica fora do argv do psql', () => {
   const result = run(fx);
   assert.match(result.stderr, /exit 12/);
   assert.doesNotMatch(result.stderr, /exit 91/);
+});
+
+test('psql recebe parametros libpq separados, nao URI em PGDATABASE', () => {
+  const fx = minimalFixture();
+  const script = fs.readFileSync(fx.psqlPath, 'utf8');
+  fs.writeFileSync(fx.psqlPath, script.replace('const args =', `
+if (process.env.PGDATABASE !== 'postgres' || process.env.PGHOST !== 'fixture.invalid'
+  || process.env.PGUSER !== 'fixture' || process.env.PGPORT !== '5432') process.exit(93);
+if (process.env.PGPASSWORD || process.env.DESTINO_URL || !process.env.PGPASSFILE) process.exit(94);
+const args =`));
+  const result = run(fx);
+  assert.equal(result.status, 0, result.stderr);
 });
 
 test('SQL local com versao duplicada falha mesmo sem acesso ao banco', () => {

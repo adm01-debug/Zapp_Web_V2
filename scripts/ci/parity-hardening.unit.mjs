@@ -26,3 +26,7 @@ test('runtime SQL is exercised on disposable PostgreSQL in PRs', () => {
   const workflow = read('../../.github/workflows/db-guard.yml');
   assert.match(workflow, /retry-disposable-postgres-test\.sh bash scripts\/db-audit\/runtime-config\.test\.sh/);
 });
+test('PR guard exercises libpq transport with real client authentication, not only SQL fixtures', () => {
+  assert.match(read('../../.github/workflows/db-guard.yml'),
+    /retry-disposable-postgres-test\.sh node scripts\/db-audit\/psql-environment\.integration\.mjs/);
+});
