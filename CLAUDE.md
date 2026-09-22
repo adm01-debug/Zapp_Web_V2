@@ -76,7 +76,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ## 3. Repo e escrita
 
-- Repo: `adm01-debug/zapp-web-v2`, branch `main`, público. Deploy do front: Vercel; edges: Supabase Cloud.
+- Repo: `adm01-debug/Zapp_Web_V2` (nome real no GitHub; a API aceita `zapp-web-v2` por case-insensitive, mas referências novas usam a grafia canônica), branch `main`, público. Deploy do front: Vercel; edges: Supabase Cloud.
 - **Escrita no GitHub: somente MCP `GITHUB - MCP - FOREVER`** (`github_push_files`). O MCP padrão do GitHub retorna 403 em write.
 - Diff mínimo, causa raiz. `github_push_files` sobrescreve o arquivo — mandar conteúdo integral com apenas a mudança semântica.
 - Pode haver sessão paralela commitando no mesmo branch/banco: re-sync antes de editar, conferir `max(version)` antes de registrar migration, `uniq -d` nos prefixos após push.

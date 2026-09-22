@@ -16,10 +16,32 @@
 | Banco | `messages` 0,1% dead (autovacuum 19/09) · **3 FKs sem índice** · **244/503 índices com idx_scan=0** · 400 policies · 0 tabelas sem RLS · 38 trigger functions fora do catálogo |
 | Edges | 67 diretórios em `supabase/functions/` · **10 com `verify_jwt=false`** (16/09 eram 9) · listagem live nunca reconciliada (CLI 403 em 16/09) |
 | CI desperdício | `CRM Sync Worker` agendado dispara a cada ~8min e **sempre skipped** (`vars.CRM_SYNC_WORKER_ENABLED` ausente/false) |
-| Qualidade | lint ratchet baseline **1115** · implicit-any 2 · TODO/FIXME 4 · console.log 1 |
+| Qualidade | lint ratchet baseline **1115** · implicit-any **0** (baseline zerado desde o PR #243) · TODO/FIXME: 4 hits de grep, **0 reais** · console.log: 1 hit, exemplo em JSDoc |
 | Governança | approvals=1 + owner único ⇒ **todo merge é bypass de admin** (`enforce_admins=false`); branches não são auto-deletados no merge |
 | Higiene git | 22 branches locais · 2 remotos `claude/*` mergeados aguardando deleção (classificador negou à IA em 17/09) |
 | Automação | Graph Sync Dispatcher N8N (`67dWSoWEPUGTX5mA`) sem cadência (erro 15/09); MCPs quebrados toda sessão: CLOUDFLARE-WORKERS (410), LALAMOVE ×2 (404), VS-CODE-VPS (404), PLAYWRIGHT (timeout); MCP N8N com tools stub (`search_workflows`, `execution_logs`) |
+
+## Status da execução — rodada 2026-09-20 (mesma data do plano)
+
+Evidências completas em `DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md`. Legenda:
+✅ fechada com evidência · 🔧 implementada em PR aguardando merge · 📋 análise pronta,
+ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de observação.
+
+| Fase | Status por etapa |
+|---|---|
+| F0 | E01 👤 · E02 🔧 · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
+| F1 | E07–E09 👤(3 cliques) · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
+| F2 | E14 🔧 · E15 📋🔧⏳(meta recalibrada) · E16 ✅(0) · E17 📋 · E18 🔧⏳ · E19 ✅ · E20 ✅ · E21 👤 |
+| F3 | E22 📋 · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
+| F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
+| F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
+| F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
+| F7 | E44 👤 · E45 👤 · E46 🔧 · E47 🔧 |
+| F8 | E48 ✅rodada · E49 🔧 · E50 📋(critérios no dossiê) |
+
+Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 (maioria dos
+"244 sem uso" é FK-support/feature vazia — dropar seria erro), E39 (dívida 99%
+não-autofixável — redução por módulo, não em massa), E40/E42/E43 (já estavam zerados).
 
 ## Regras de execução (herdadas e obrigatórias)
 
