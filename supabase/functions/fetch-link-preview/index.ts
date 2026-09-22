@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { fetchPreviewViaSecureEgress } from "../_shared/secure-egress.ts";
 
