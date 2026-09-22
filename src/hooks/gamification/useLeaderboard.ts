@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 export interface LeaderboardAgent {
   id: string;
@@ -80,7 +81,7 @@ export function useLeaderboard() {
   useEffect(() => {
     fetchLeaderboard();
     const channel = supabase
-      .channel('leaderboard-updates')
+      .channel(uniqueRealtimeTopic('leaderboard-updates'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_stats' }, () => {
         log.debug('Agent stats updated, refreshing leaderboard...');
         fetchLeaderboard();

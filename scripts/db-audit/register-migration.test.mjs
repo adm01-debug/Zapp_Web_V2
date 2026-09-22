@@ -229,3 +229,36 @@ process.exit(2);
     assert.doesNotMatch(result.stderr, /supabase\.co/, 'host da credencial nao pode aparecer');
   });
 });
+
+// ─── Validação de 2026-09-22: psql real (sem -q) imprime a tag do comando ─────
+
+test('register --apply aborta quando a colisao volta como tag "INSERT 0 0" (saida real do psql sem -q)', () => {
+  withTmpFile('20260916999500_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
+    const psql = fakePsql(tmp, { maxVersionOutput: '20260916210000', insertOutput: 'INSERT 0 0\n' });
+    const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /RETURNING vazio -- versao 20260916999500 ja existe no ledger/);
+    assert.doesNotMatch(result.stdout, /OK: migration/);
+  });
+});
+
+test('register --apply chama o psql com -q e ON_ERROR_STOP=1', () => {
+  withTmpFile('20260916999600_demo.sql', 'CREATE TABLE public.demo (id integer);', (filePath, tmp) => {
+    const argvLog = path.join(tmp, 'argv.log');
+    const psql = path.join(tmp, 'psql-argv.mjs');
+    fs.writeFileSync(psql, `#!/usr/bin/env node
+import fs from 'node:fs';
+fs.appendFileSync(${JSON.stringify(argvLog)}, JSON.stringify(process.argv.slice(2, -1)) + '\\n');
+const sql = process.argv[process.argv.length - 1];
+process.stdout.write(sql.startsWith('SELECT max(version)') ? '20260916210000' : '20260916999600|demo|1');
+`, { mode: 0o755 });
+    const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const chamadas = fs.readFileSync(argvLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+    assert.equal(chamadas.length, 2);
+    for (const argv of chamadas) {
+      assert.ok(argv.includes('-q'), `sem -q: ${argv}`);
+      assert.ok(argv.includes('ON_ERROR_STOP=1'), `sem ON_ERROR_STOP: ${argv}`);
+    }
+  });
+});

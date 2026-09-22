@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
+import { useExternalCatalog, useCatalogStats, useCatalogFavorites, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
@@ -38,7 +38,6 @@ import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/t
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
-import { useCatalogFavorites } from '@/hooks/integrations/useCatalogFavorites';
 import { cn } from '@/lib/utils';
 
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
@@ -102,9 +101,7 @@ export const ExternalProductManagement: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('catalog.view') as 'grid' | 'list') ?? 'grid'
   );
-  // E45: página inicializa do ?page= na URL
   const [page, setPageState] = useState(() => readPageParam());
-  // E45: tamanho de página persistido em sessionStorage
   const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
     const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
     return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
@@ -112,18 +109,21 @@ export const ExternalProductManagement: React.FC = () => {
   const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
   const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
-  // E36: filtros avançados
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ isBestseller: false, priceMin: '', priceMax: '' });
   const advCount = countAdvancedFilters(advFilters);
 
-  // E43: favoritos
-  const { isFav, toggleFavorite } = useCatalogFavorites();
+  // E43: favoritos via Supabase (catalog_favorites, RLS por usuário)
+  const { isFavorite: isFav, toggle } = useCatalogFavorites();
+  // Wrapper: ExternalProductCard/CatalogProductCard chamam onToggleFavorite(id: string)
+  // toggle() do Supabase precisa do objeto {id, name, sku, primary_image_url}
+  const handleToggleFavorite = useCallback((id: string) => {
+    const p = products.find((x) => x.id === id);
+    if (p) toggle({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+  }, [products, toggle]);
 
-  // E45: ref para scroll-to-top no topo do grid ao trocar de página
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // helpers para setar página + URL (E45)
   const setPage = useCallback((p: number | ((prev: number) => number)) => {
     setPageState((prev) => {
       const next = typeof p === 'function' ? p(prev) : p;
@@ -188,7 +188,6 @@ export const ExternalProductManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize]);
 
-  // E45: scroll-to-top ao trocar de página
   useEffect(() => {
     if (page > 0) {
       fetchProducts(buildFilters());
@@ -430,7 +429,6 @@ export const ExternalProductManagement: React.FC = () => {
         </AlertCard>
       )}
 
-      {/* grid com ref para scroll-to-top E45 */}
       <div ref={gridRef}>
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
@@ -484,7 +482,7 @@ export const ExternalProductManagement: React.FC = () => {
                     onSend={handleSendProduct}
                     compact={viewMode === 'list'}
                     isFavorite={isFav(product.id)}
-                    onToggleFavorite={toggleFavorite}
+                    onToggleFavorite={handleToggleFavorite}
                   />
                 </motion.div>
               ))}
@@ -493,7 +491,6 @@ export const ExternalProductManagement: React.FC = () => {
         )}
       </div>
 
-      {/* E45: TalkXPagination com pageSizes [24,48,96] */}
       {totalPages > 1 && (
         <TalkXPagination
           page={page + 1}

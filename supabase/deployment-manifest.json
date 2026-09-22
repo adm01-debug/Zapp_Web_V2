@@ -93,8 +93,8 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "bytes": 10782,
-      "sha256": "1af0866989e3eb648092acfd1370fb5dca167031e83886162055f9a244435ca7"
+      "bytes": 10816,
+      "sha256": "2620049044a6db0c44cbc933cacdc99837c427677c41322fcce6f2b3224ebd11"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
@@ -992,7 +992,7 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "af6d395ff1138ef8f4f144beed9bd2d0af12b98ac1015ba721dd33d93af82507",
+      "source_sha256": "43f9bf2d8e0d5c7151c2ce98b6b756cb8c3f6d9cea789147c937b09103d1653e",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1028,7 +1028,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "527ab190994dc9af23fe11dbe8b8cee3d6c710e42ff2f9155ad87cbb0a82c6c1",
+      "source_sha256": "83e79493f0f0dad7e76aa3ff34a6d2a2b76fc7294da205c86a39cf3bc487f231",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1301,5 +1301,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2b6713dff63a61dad733cb1aff6b13738b6a558c80b3524f2e04e53e886b283f"
+  "manifest_sha256": "cc85593e8d23a5260e50ff0840e26d1b37ec2dd48ce282dfbd038f0030bbcca2"
 }
