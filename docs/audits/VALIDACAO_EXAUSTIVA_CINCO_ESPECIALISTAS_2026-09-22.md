@@ -1,5 +1,11 @@
 # Validação exaustiva das correções recentes — 2026-09-22
 
+> **Atualização corretiva:** os oito achados P2/P3 deste relatório foram
+> tratados na branch `audit/codex-five-specialists-20260922`. A implementação,
+> os ensaios adversariais e os limites de rollout estão documentados em
+> [IMPLEMENTACAO_ACHADOS_CINCO_ESPECIALISTAS_2026-09-22.md](./IMPLEMENTACAO_ACHADOS_CINCO_ESPECIALISTAS_2026-09-22.md).
+> Este documento permanece como registro do estado anterior às correções.
+
 ## 1. Veredito executivo
 
 Base auditada: `origin/main` no commit `7761a5704b6745f1d0f91ab22de5f7b006f25432`, correspondente ao merge da PR #520.
