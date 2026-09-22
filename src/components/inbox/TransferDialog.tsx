@@ -72,6 +72,7 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isTransferring) return;
     if (!nextOpen) {
       setSelectedTarget('');
       setMessage('');
@@ -298,7 +299,7 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isTransferring}>
               Cancelar
             </Button>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
