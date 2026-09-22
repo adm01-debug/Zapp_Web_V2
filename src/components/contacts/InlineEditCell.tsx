@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface InlineEditCellProps {
   contactId: string;
-  field: string;
+  field: keyof TablesUpdate<'contacts'>;
   value: string;
   onUpdate: () => void;
 }
@@ -30,7 +31,7 @@ export function InlineEditCell({ contactId, field, value, onUpdate }: InlineEdit
     setSaving(true);
     const { error } = await supabase
       .from('contacts')
-      .update({ [field]: editValue || null })
+      .update({ [field]: editValue || null } as TablesUpdate<'contacts'>)
       .eq('id', contactId);
 
     if (error) {
