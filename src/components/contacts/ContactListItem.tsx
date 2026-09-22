@@ -66,7 +66,7 @@ export function ContactListItem({
           />
           <Badge
             variant="outline"
-            className={cn("h-6 px-2.5 rounded-full text-[12.5px] font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
+            className={cn("h-6 px-2.5 rounded-full text-xs font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
           >
             {typeConfig.iconNode}
             {typeConfig.label}

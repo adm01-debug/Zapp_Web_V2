@@ -36,7 +36,7 @@ export function AIToolsCard({ onSeeAll }: AIToolsCardProps) {
                 <Icon className="w-4 h-4 text-white/90" />
               </span>
               <span>
-                <p className="text-[12px] font-semibold text-foreground truncate">{feature.title}</p>
+                <p className="text-xs font-semibold text-foreground truncate">{feature.title}</p>
                 <p className="text-[11px] text-foreground-secondary line-clamp-2 leading-snug">{feature.description}</p>
               </span>
             </button>

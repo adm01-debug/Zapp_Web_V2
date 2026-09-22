@@ -140,7 +140,7 @@ export function TeamChatInputArea({
               onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
               placeholder="Digite uma mensagem... (/ para comandos, @ para mencionar)" rows={1}
               className={cn("w-full bg-transparent border border-border/50 rounded-xl outline-none text-sm text-foreground placeholder:text-muted-foreground resize-none transition-all focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
-                isMobile ? "px-3 py-2.5 text-[16px] min-h-[42px] max-h-[200px]" : "px-3 py-2 min-h-[40px] max-h-[200px]",
+                isMobile ? "px-3 py-2.5 text-base min-h-[42px] max-h-[200px]" : "px-3 py-2 min-h-[40px] max-h-[200px]",
                 draft.isOverLimit && "border-destructive/50 focus:border-destructive focus:ring-destructive/20")}
               aria-label="Digite sua mensagem" aria-describedby={draft.charCount > 0 ? "team-char-counter" : undefined}
             />

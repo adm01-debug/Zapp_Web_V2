@@ -85,20 +85,20 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
         </div>
       ) : visibleRows.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-1 py-10 text-center">
-          <p className="text-[12px] text-muted-foreground">Nenhuma meta nesta categoria</p>
+          <p className="text-xs text-muted-foreground">Nenhuma meta nesta categoria</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="table-auto w-full text-[13px]">
             <thead>
               <tr className="text-left">
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Meta</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Tipo</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Progresso</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Atual / Meta</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Restante</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Status</th>
-                <th className="pb-3 text-[12px] font-semibold text-muted-foreground text-right pr-1">Ações</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Meta</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Tipo</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Progresso</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Atual / Meta</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Restante</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground">Status</th>
+                <th className="pb-3 text-xs font-semibold text-muted-foreground text-right pr-1">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -113,8 +113,8 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                           <Icon className="w-[18px] h-[18px] text-primary-glow" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground truncate">{goal.label}</p>
-                          <p className="text-[12px] text-muted-foreground truncate">{goal.description}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{goal.label}</p>
+                          <p className="text-xs text-muted-foreground truncate">{goal.description}</p>
                         </div>
                       </div>
                     </td>
@@ -126,7 +126,7 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                         <div className="w-[120px] h-1.5 rounded-full bg-muted/50 overflow-hidden shrink-0">
                           <div className={`h-full rounded-full ${status.tone === 'success' ? 'bg-success' : status.tone === 'primary' ? 'bg-primary' : status.tone === 'warning' ? 'bg-warning' : 'bg-destructive'}`} style={{ width: `${percentage}%` }} />
                         </div>
-                        <span className="text-[12px] font-medium text-foreground tabular-nums">{percentage}%</span>
+                        <span className="text-xs font-medium text-foreground tabular-nums">{percentage}%</span>
                       </div>
                     </td>
                     <td className="pr-2 text-foreground-secondary tabular-nums">

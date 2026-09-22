@@ -205,7 +205,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
     <div className="space-y-4 min-w-0">
       <div className="flex items-center gap-2 flex-wrap">
         {(['7d', '30d', '90d'] as Period[]).map((p) => (
-          <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-[12.5px] font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
+          <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-xs font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
         ))}
       </div>
 
@@ -230,8 +230,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
           <div className="flex items-center gap-3">
             <IconTile icon={Users} color="violet" size={36} />
             <div>
-              <p className="text-[14px] font-bold text-foreground">{replyData.replied} contatos responderam</p>
-              <p className="text-[12px] text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
+              <p className="text-sm font-bold text-foreground">{replyData.replied} contatos responderam</p>
+              <p className="text-xs text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
             </div>
           </div>
           <button
@@ -261,7 +261,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
               }));
               exportRecipientsCsv(rows, `respondentes-${period}`);
             }}
-            className="h-9 px-4 rounded-lg border border-dash-violet/40 bg-dash-violet/10 text-dash-violet text-[12.5px] font-semibold flex items-center gap-2 hover:bg-dash-violet/20 shrink-0"
+            className="h-9 px-4 rounded-lg border border-dash-violet/40 bg-dash-violet/10 text-dash-violet text-xs font-semibold flex items-center gap-2 hover:bg-dash-violet/20 shrink-0"
           >
             <Download className="w-4 h-4" />Exportar CSV
           </button>
@@ -273,7 +273,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
           <section className="rounded-2xl bg-card border border-border/70 p-4">
             <div className="flex items-center gap-2 mb-4">
               <IconTile icon={BarChart3} size={36} />
-              <div><p className="text-[15px] font-bold text-foreground">Performance por Campanha</p><p className="text-[12px] text-foreground-secondary">Top {barData.length} campanhas por envio</p></div>
+              <div><p className="text-[15px] font-bold text-foreground">Performance por Campanha</p><p className="text-xs text-foreground-secondary">Top {barData.length} campanhas por envio</p></div>
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
@@ -291,20 +291,20 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <section className="rounded-2xl bg-card border border-border/70 p-4">
           <div className="flex items-center gap-2 mb-4">
             <IconTile icon={Target} color="violet" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Funil da Campanha</p><p className="text-[12px] text-foreground-secondary">Somente métricas confirmadas pela plataforma</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Funil da Campanha</p><p className="text-xs text-foreground-secondary">Somente métricas confirmadas pela plataforma</p></div>
           </div>
           <div className="space-y-2.5">
             {funnelData.map((f, i) => {
               const widths = [100, 80, 55, 35];
               return (
                 <div key={f.name} className="flex items-center gap-3">
-                  <span className="text-[12px] text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
+                  <span className="text-xs text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
                   <div style={{ width: `${widths[i]}%` }} className="relative h-9 flex items-center justify-center rounded-lg" >
                     <div className="w-full h-9 rounded-lg flex items-center justify-center" style={{ background: f.fill + '33', border: `1.5px solid ${f.fill}55` }}>
                       <span className="text-[13px] font-bold text-foreground">{f.reported ? fmtInt(f.value ?? 0) : 'Não rastreado'}</span>
                     </div>
                   </div>
-                  <span className="text-[12px] text-foreground-secondary w-12 shrink-0">{f.reported ? fmtPct(f.value ?? 0, funnelData[0].value ?? 0) : '—'}</span>
+                  <span className="text-xs text-foreground-secondary w-12 shrink-0">{f.reported ? fmtPct(f.value ?? 0, funnelData[0].value ?? 0) : '—'}</span>
                 </div>
               );
             })}
@@ -317,7 +317,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <section className="rounded-2xl bg-card border border-border/70 p-4">
           <div className="flex items-center gap-2 mb-4">
             <IconTile icon={BarChart3} color="amber" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Volume por dia da semana</p><p className="text-[12px] text-foreground-secondary">Total de envios por dia</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Volume por dia da semana</p><p className="text-xs text-foreground-secondary">Total de envios por dia</p></div>
           </div>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={dayTotals} margin={{ top: 4, right: 4, left: -25, bottom: 2 }}>
@@ -341,13 +341,13 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <section className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-3">
             <IconTile icon={Sparkles} color="violet" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Melhor horário</p><p className="text-[12px] text-foreground-secondary">Pico de entrega no período</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Melhor horário</p><p className="text-xs text-foreground-secondary">Pico de entrega no período</p></div>
           </div>
           {bestHour ? (
             <div className="text-center py-4">
-              <p className="text-[42px] font-bold text-foreground tabular-nums leading-none">{String(bestHour.hour).padStart(2, '0')}h</p>
-              {bestHour.day && <p className="text-[14px] text-foreground-secondary mt-1">{bestHour.day} &mdash; {bestHour.count} envios</p>}
-              <p className="text-[11.5px] text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
+              <p className="text-5xl font-bold text-foreground tabular-nums leading-none">{String(bestHour.hour).padStart(2, '0')}h</p>
+              {bestHour.day && <p className="text-sm text-foreground-secondary mt-1">{bestHour.day} &mdash; {bestHour.count} envios</p>}
+              <p className="text-[11px] text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
             </div>
           ) : (
             <p className="text-[13px] text-muted-foreground text-center py-6">Sem dados de envio no período selecionado.</p>
@@ -359,7 +359,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <IconTile icon={Calendar} color="green" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Melhores horários de envio</p><p className="text-[12px] text-foreground-secondary">Volume por dia da semana e horário</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Melhores horários de envio</p><p className="text-xs text-foreground-secondary">Volume por dia da semana e horário</p></div>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className="w-8 h-2.5 rounded-sm bg-muted/50 inline-block" />Menor
@@ -368,7 +368,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-[600px]">
-            <div className="flex ml-9 mb-1">{Array.from({ length: 8 }, (_, i) => i * 3).map((h) => <div key={h} className="flex-1 text-[9.5px] text-muted-foreground text-center">{String(h).padStart(2, '0')}h</div>)}</div>
+            <div className="flex ml-9 mb-1">{Array.from({ length: 8 }, (_, i) => i * 3).map((h) => <div key={h} className="flex-1 text-[9px] text-muted-foreground text-center">{String(h).padStart(2, '0')}h</div>)}</div>
             {DAY_LABELS.map((day, dw) => (
               <div key={day} className="flex items-center mb-0.5 gap-1">
                 <span className="text-[10px] text-foreground-secondary w-8 text-right shrink-0">{day}</span>
@@ -391,14 +391,14 @@ export function TalkXAnalytics({ campaigns }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <thead><tr>
-                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-[11.5px] font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
+                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-[11px] font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
               </tr></thead>
               <tbody>
                 {topCampaigns.map((c, i) => (
                   <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
-                    <td className="px-3 py-2.5 text-[12px] text-muted-foreground">{i + 1}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
                     <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
-                    <td className="px-3 py-2.5"><span className="text-[12px] text-whatsapp">WhatsApp</span></td>
+                    <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
                     <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
                     <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count + c.failed_count > 0 ? fmtPct(c.sent_count, c.sent_count + c.failed_count) : '—'}</td>
                     <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
@@ -416,7 +416,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <IconTile icon={TrendingUp} color="green" size={36} />
             <div>
               <p className="text-[15px] font-bold text-foreground">Comparativo de Campanhas</p>
-              <p className="text-[12px] text-foreground-secondary">{`Últimas ${compareData.length} concluídas — envio vs falha`}</p>
+              <p className="text-xs text-foreground-secondary">{`Últimas ${compareData.length} concluídas — envio vs falha`}</p>
             </div>
           </div>
           <div className="h-[240px] w-full">
@@ -448,16 +448,16 @@ export function TalkXAnalytics({ campaigns }: Props) {
               <IconTile icon={BarChart3} color="blue" size={36} />
               <div className="min-w-0">
                 <p className="text-[15px] font-bold text-foreground truncate max-w-[360px]">{panelCampaign?.name ?? 'Campanha'}</p>
-                <p className="text-[12px] text-foreground-secondary">{panelLoading ? 'Carregando…' : `${panelRecipients?.length ?? 0} destinatários (amostra)`}</p>
+                <p className="text-xs text-foreground-secondary">{panelLoading ? 'Carregando…' : `${panelRecipients?.length ?? 0} destinatários (amostra)`}</p>
               </div>
             </div>
-            <button type="button" onClick={() => setSelectedCampaignId(null)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium hover:bg-muted/50">Fechar</button>
+            <button type="button" onClick={() => setSelectedCampaignId(null)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium hover:bg-muted/50">Fechar</button>
           </div>
           {panelCampaign && (
             <div className="grid grid-cols-3 gap-3 mb-4">
               {([['Enviadas', fmtInt(panelCampaign.sent_count), 'text-primary'], ['Entregues', fmtInt(panelCampaign.delivered_count), 'text-dash-green'], ['Falhas', fmtInt(panelCampaign.failed_count), 'text-dash-red']] as [string, string, string][]).map(([label, value, color]) => (
                 <div key={label} className="rounded-xl border border-border/60 bg-input/20 p-3 text-center">
-                  <p className={`text-[22px] font-bold ${color}`}>{value}</p>
+                  <p className={`text-2xl font-bold ${color}`}>{value}</p>
                   <p className="text-[11px] text-foreground-secondary mt-0.5">{label}</p>
                 </div>
               ))}
@@ -478,11 +478,11 @@ export function TalkXAnalytics({ campaigns }: Props) {
                     const tone = r.status === 'sent' ? 'text-dash-green' : r.status === 'failed' ? 'text-dash-red' : 'text-foreground-secondary';
                     return (
                       <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                        <td className="px-2 py-2 text-[12.5px] font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                        <td className="px-2 py-2 text-[12px] text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                        <td className={`px-2 py-2 text-[12px] font-semibold ${tone}`}>{r.status || '—'}</td>
-                        <td className="px-2 py-2 text-[11.5px] text-muted-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</td>
-                        <td className="px-2 py-2 text-[11.5px] text-muted-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</td>
+                        <td className="px-2 py-2 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
+                        <td className="px-2 py-2 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
+                        <td className={`px-2 py-2 text-xs font-semibold ${tone}`}>{r.status || '—'}</td>
+                        <td className="px-2 py-2 text-[11px] text-muted-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</td>
+                        <td className="px-2 py-2 text-[11px] text-muted-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</td>
                       </tr>
                     );
                   })}

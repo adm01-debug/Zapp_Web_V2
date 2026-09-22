@@ -42,13 +42,13 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
         )}
       />
       {total === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground min-h-[100px]">
+        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[100px]">
           Sem avaliações no período
         </div>
       ) : (
         <div className="grid grid-cols-[96px_1fr] gap-3">
           <div className="flex flex-col items-start">
-            <p className="text-[30px] font-bold tabular-nums text-foreground leading-none">{average.toFixed(1)}</p>
+            <p className="text-3xl font-bold tabular-nums text-foreground leading-none">{average.toFixed(1)}</p>
             <div className="flex gap-0.5 mt-1.5">
               {[1, 2, 3, 4, 5].map((n) => (
                 <Star key={n} className={cn('w-3 h-3', n <= Math.round(average) ? 'fill-dash-amber text-dash-amber' : 'fill-muted-foreground/40 text-muted-foreground/40')} />

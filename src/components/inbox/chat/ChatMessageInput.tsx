@@ -143,7 +143,7 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
             <Textarea ref={textareaRef} value={inputValue} onChange={handleInputChange} onKeyDown={handleKeyDown} onBlur={onTypingStop}
               aria-label="Escrever mensagem"
               placeholder={replyToMessage ? "Digite sua resposta..." : isMobile ? "Mensagem..." : "Digite / para comandos... (Shift+Enter para nova linha)"}
-              className={cn("min-h-[40px] max-h-[120px] resize-none pr-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all", isMobile ? "py-2.5 text-[16px] rounded-2xl leading-snug" : "py-2.5")}
+              className={cn("min-h-[40px] max-h-[120px] resize-none pr-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all", isMobile ? "py-2.5 text-base rounded-2xl leading-snug" : "py-2.5")}
               rows={1}
             />
             <div className="absolute right-1 top-1.5 flex items-center gap-0.5">

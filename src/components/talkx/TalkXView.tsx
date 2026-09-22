@@ -225,7 +225,7 @@ export default function TalkXView() {
     return (
       <div className="min-h-full bg-background p-3 md:p-4 lg:p-6">
         <div className="flex items-center gap-3 mb-4">
-          <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-[12.5px] font-medium text-foreground-secondary hover:bv-muted/50">
+          <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bv-muted/50">
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
@@ -243,7 +243,7 @@ export default function TalkXView() {
         right={
           <div className="flex items-center gap-3">
             {isLive && (
-              <span className="flex items-center gap-1.5 text-[11.5px] text-success font-medium">
+              <span className="flex items-center gap-1.5 text-[11px] text-success font-medium">
                 <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
                 Ao vivo
               </span>
@@ -271,7 +271,7 @@ export default function TalkXView() {
               ['analytics',   'Analytics',   BarChart3],
             ] as const).map(([v, label, Icon]) => (
               <TabsTrigger key={v} value={v}
-                className="talkx-glow-ring h-10 px-4 rounded-lg border text-[12.5px] font-medium transition-all flex items-center gap-1.5
+                className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
                   data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
                   data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
                   hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"

@@ -99,7 +99,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* E61: Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground px-0.5">
+      <nav className="flex items-center gap-1.5 text-[11px] text-muted-foreground px-0.5">
         <span>Talk X</span>
         <span className="text-border">›</span>
         <span>Campanhas</span>
@@ -115,8 +115,8 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           <button type="button" onClick={onClose} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
           <IconTile icon={step === 4 ? Check : Zap} color={step === 4 ? 'green' : 'blue'} size={48} />
           <div className="min-w-0">
-            <h1 className="text-[22px] font-bold font-display text-foreground tracking-[-0.02em] leading-tight truncate">{step === 4 ? 'Revisão Final' : campaign ? 'Editar campanha' : 'Nova campanha'}</h1>
-            <p className="text-[12.5px] text-foreground-secondary">{step === 4 ? 'Confira todos os detalhes da sua campanha antes de lançar.' : 'Configure público, mensagem e entrega com segurança.'}</p>
+            <h1 className="text-2xl font-bold font-display text-foreground tracking-[-0.02em] leading-tight truncate">{step === 4 ? 'Revisão Final' : campaign ? 'Editar campanha' : 'Nova campanha'}</h1>
+            <p className="text-xs text-foreground-secondary">{step === 4 ? 'Confira todos os detalhes da sua campanha antes de lançar.' : 'Configure público, mensagem e entrega com segurança.'}</p>
           </div>
         </div>
         <ol className="flex items-center gap-2 xl:gap-0 flex-wrap">
@@ -152,20 +152,20 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
-              {ed.autosaveStatus === 'saving' && <span className="text-[10.5px] text-muted-foreground" role="status">Salvando alterações…</span>}
+              {ed.autosaveStatus === 'saving' && <span className="text-[10px] text-muted-foreground" role="status">Salvando alterações…</span>}
               {ed.autosaveStatus === 'offline' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-[10.5px] text-dash-amber hover:underline">
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-[10px] text-dash-amber hover:underline">
                   Sem conexão — tentar novamente
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-[10.5px] text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-[10px] text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
                   Não salvo — tentar novamente
                 </button>
               )}
-              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-[10.5px] text-dash-amber">Alterações não salvas</span>}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-[10px] text-dash-amber">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
-                <span className="text-[10.5px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
                 </span>
               )}
@@ -196,7 +196,7 @@ function SectionCard({ icon, title, subtitle, right, children }: { icon: React.E
         <IconTile icon={Icon as never} size={40} />
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-bold text-foreground">{title}</p>
-          {subtitle && <p className="text-[12px] text-foreground-secondary">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-foreground-secondary">{subtitle}</p>}
         </div>
         {right}
       </div>
@@ -211,8 +211,8 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
     <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
       <IconTile icon={Icon as never} size={40} color={active ? 'blue' : 'blue'} />
       <div className="min-w-0 flex-1">
-        <p className="text-[13.5px] font-semibold text-foreground">{title}</p>
-        <p className="text-[11.5px] text-foreground-secondary leading-snug mt-0.5">{desc}</p>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-[11px] text-foreground-secondary leading-snug mt-0.5">{desc}</p>
         {badge && <span className="inline-block mt-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground">{badge}</span>}
       </div>
       <span className={cn('w-4 h-4 rounded-full border-2 shrink-0 mt-0.5', active ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_hsl(var(--card))]' : 'border-border')} />
@@ -225,16 +225,16 @@ function StepAudience({ ed }: { ed: WizardState }) {
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
-          <div><Label className="text-[12px] text-foreground-secondary">Nome da campanha</Label><Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div><Label className="text-xs text-foreground-secondary">Nome da campanha</Label><Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div>
-            <Label className="text-[12px] text-foreground-secondary">Objetivo</Label>
+            <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
               <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
               <SelectContent>{OBJECTIVES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-[12px] text-foreground-secondary">Conexão WhatsApp</Label>
+            <Label className="text-xs text-foreground-secondary">Conexão WhatsApp</Label>
             <Select value={ed.connectionId} onValueChange={ed.setConnectionId}>
               <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
@@ -243,8 +243,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
             </Select>
           </div>
         </div>
-        <div className="mt-3"><Label className="text-[12px] text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-        {(ed.connections ?? []).length === 0 && <p className="text-[12px] text-dash-amber mt-3 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Nenhuma conexão WhatsApp conectada — conecte em Conexões antes de enviar.</p>}
+        <div className="mt-3"><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+        {(ed.connections ?? []).length === 0 && <p className="text-xs text-dash-amber mt-3 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Nenhuma conexão WhatsApp conectada — conecte em Conexões antes de enviar.</p>}
       </SectionCard>
 
       <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
@@ -263,8 +263,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
                     <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
                     <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                   </div>
-                  <p className="text-[11.5px] text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
-                  <p className="text-[12px] font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
+                  <p className="text-[11px] text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
+                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
                 </button>
               );
             })}
@@ -273,7 +273,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       {ed.audienceSource === 'contacts' && (
-        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com filtros e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-[12px] font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com filtros e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
           <TalkXContactSelector
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
@@ -307,7 +307,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
         right={(
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-[12px] font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
               {approved.length > 0 && <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
@@ -329,7 +329,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
           {[{ v: '', l: 'Texto', I: MessageSquare }, ...MEDIA_TYPES.map((m) => ({ v: m.value, l: m.label, I: MEDIA_ICONS[m.value as keyof typeof MEDIA_ICONS] }))].map(({ v, l, I }) => {
             const active = v === '' ? !ed.hasMedia : ed.hasMedia && ed.mediaType === v;
             return (
-              <button key={l} type="button" onClick={() => { if (v === '') ed.toggleMedia(false); else { ed.toggleMedia(true); ed.setMediaType(v); } }} className={cn('h-8 px-3 rounded-lg text-[12px] font-medium border flex items-center gap-1.5 transition-colors', active ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>
+              <button key={l} type="button" onClick={() => { if (v === '') ed.toggleMedia(false); else { ed.toggleMedia(true); ed.setMediaType(v); } }} className={cn('h-8 px-3 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors', active ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>
                 <I className="w-3.5 h-3.5" />{l}
               </button>
             );
@@ -337,14 +337,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
           <div className="rounded-xl border border-border/70 bg-input/30 overflow-hidden">
-            <Textarea value={ed.messageTemplate} onChange={(e) => ed.setMessageTemplate(e.target.value)} placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" rows={7} className="resize-none border-0 bg-transparent text-[13.5px] leading-relaxed focus-visible:ring-0" />
+            <Textarea value={ed.messageTemplate} onChange={(e) => ed.setMessageTemplate(e.target.value)} placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" rows={7} className="resize-none border-0 bg-transparent text-sm leading-relaxed focus-visible:ring-0" />
             <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
               <span>{ed.messageTemplate.length}/4096</span>
             </div>
           </div>
           <div className="rounded-xl border border-border/70 bg-input/30 p-3">
-            <p className="text-[12px] font-semibold text-foreground mb-2">Variáveis</p>
+            <p className="text-xs font-semibold text-foreground mb-2">Variáveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
@@ -361,11 +361,11 @@ function StepMessage({ ed }: { ed: WizardState }) {
           <div className="mt-3 rounded-xl border border-border/70 bg-input/30 p-3 flex items-center gap-3">
             <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[12.5px] font-medium text-foreground">Adicionar mídia ({ed.mediaType || 'imagem'})</p>
+              <p className="text-xs font-medium text-foreground">Adicionar mídia ({ed.mediaType || 'imagem'})</p>
               <p className="text-[11px] text-muted-foreground">Imagens, vídeos, documentos ou áudios via URL pública. Máx. 16 MB.</p>
             </div>
             <div className="relative w-full max-w-sm">
-              <Input value={ed.mediaUrl} onChange={(e) => ed.setMediaUrl(e.target.value)} placeholder="https://exemplo.com/arquivo.jpg" className="h-9 pr-8 bg-input/40 border-border/70 text-[12.5px]" />
+              <Input value={ed.mediaUrl} onChange={(e) => ed.setMediaUrl(e.target.value)} placeholder="https://exemplo.com/arquivo.jpg" className="h-9 pr-8 bg-input/40 border-border/70 text-xs" />
               {ed.mediaUrl && <button type="button" onClick={() => ed.setMediaUrl('')} aria-label="Limpar URL da mídia" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>}
             </div>
           </div>
@@ -376,7 +376,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       {(ed.messageTemplate.split('http').length - 1) > 2 && (
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
           <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
-          <p className="text-[12px] text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
+          <p className="text-xs text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
         </div>
       )}
 
@@ -386,8 +386,8 @@ function StepMessage({ ed }: { ed: WizardState }) {
             {approved.slice(0, 3).map((t) => (
               <button key={t.id} type="button" onClick={() => ed.applyTemplate(t.id)} className={cn('text-left rounded-xl border p-3 transition-all', ed.templateId === t.id ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
                 <p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p>
-                <p className="text-[11.5px] text-foreground-secondary line-clamp-2 mt-0.5">{t.content}</p>
-                <div className="flex items-center gap-2 mt-2"><Badge variant="outline" className="text-[10px] h-4">{t.category}</Badge><span className="text-[10.5px] text-muted-foreground">{fmtInt(t.use_count)} usos</span></div>
+                <p className="text-[11px] text-foreground-secondary line-clamp-2 mt-0.5">{t.content}</p>
+                <div className="flex items-center gap-2 mt-2"><Badge variant="outline" className="text-[10px] h-4">{t.category}</Badge><span className="text-[10px] text-muted-foreground">{fmtInt(t.use_count)} usos</span></div>
               </button>
             ))}
           </div>
@@ -407,7 +407,7 @@ function StatTile({ icon, color, label, value, sub, subTone }: { icon: React.Ele
       <IconTile icon={icon as never} color={color} size={36} />
       <div className="min-w-0">
         <p className="text-[11px] text-foreground-secondary leading-tight">{label}</p>
-        <p className="text-[18px] font-bold text-foreground leading-tight tabular-nums mt-0.5 truncate">{value}</p>
+        <p className="text-lg font-bold text-foreground leading-tight tabular-nums mt-0.5 truncate">{value}</p>
         {sub && <p className={cn('text-[11px] mt-0.5', subTone ?? 'text-muted-foreground')}>{sub}</p>}
       </div>
     </div>
@@ -422,7 +422,7 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
       right={isFetching ? <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" /> : undefined}
     >
       <p className="text-[11px] text-foreground-secondary">Público estimado</p>
-      <p className={cn('text-[24px] font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-[12px] font-normal text-muted-foreground ml-1">contatos</span></p>
+      <p className={cn('text-2xl font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-xs font-normal text-muted-foreground ml-1">contatos</span></p>
       {est?.sample && est.sample.length > 0 && (
         <div className="mt-2 space-y-1.5">
           <p className="text-[11px] text-foreground-secondary">Amostra (5)</p>
@@ -430,8 +430,8 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
             <div key={c.id} className="flex items-center gap-2">
               <InitialsAvatar name={c.name || '?'} size={24} />
               <div className="min-w-0">
-                <p className="text-[11.5px] font-medium text-foreground truncate">{c.name}</p>
-                <p className="text-[10.5px] text-foreground-secondary truncate">{c.company || c.phone}</p>
+                <p className="text-[11px] font-medium text-foreground truncate">{c.name}</p>
+                <p className="text-[10px] text-foreground-secondary truncate">{c.company || c.phone}</p>
               </div>
             </div>
           ))}

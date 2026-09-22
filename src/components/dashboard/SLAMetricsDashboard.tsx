@@ -28,7 +28,7 @@ function HelpIcon({ text }: { text: string }) {
       <TooltipTrigger asChild>
         <span className="inline-flex text-muted-foreground/70 hover:text-foreground cursor-help"><Info className="w-3.5 h-3.5" /></span>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="max-w-[240px] text-[12px]">{text}</TooltipContent>
+      <TooltipContent side="bottom" className="max-w-[240px] text-xs">{text}</TooltipContent>
     </Tooltip>
   );
 }

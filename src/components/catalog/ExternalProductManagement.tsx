@@ -57,7 +57,7 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
     : 'Última sincronização em ' + new Date(lastSyncAt).toLocaleDateString('pt-BR') + ' ' + new Date(lastSyncAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   return (
     <span className={cn(
-      'flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full border',
+      'flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border',
       isFresh ? 'text-success border-success/30 bg-success/10' : 'text-muted-foreground border-border bg-muted/30'
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success animate-pulse' : 'bg-muted-foreground')} />

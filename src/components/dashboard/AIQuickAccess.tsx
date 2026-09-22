@@ -35,7 +35,7 @@ const INSIGHT_PERIODS = [
 ];
 
 function TrendText({ trend, label }: { trend?: { direction: 'up' | 'down' | 'stable'; percentage: number }; label: string }) {
-  if (!trend || trend.direction === 'stable') return <p className="text-[12px] text-muted-foreground">{label}</p>;
+  if (!trend || trend.direction === 'stable') return <p className="text-xs text-muted-foreground">{label}</p>;
   const up = trend.direction === 'up';
   const Arrow = up ? TrendingUp : TrendingDown;
   return (
@@ -43,7 +43,7 @@ function TrendText({ trend, label }: { trend?: { direction: 'up' | 'down' | 'sta
       <p className={cn('flex items-center justify-end gap-1 text-[13px] font-semibold', up ? 'text-dash-green' : 'text-dash-red')}>
         <Arrow className="w-3.5 h-3.5" />{up ? '+' : '-'}{Math.round(trend.percentage)}%
       </p>
-      <p className="text-[12px] text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -72,13 +72,13 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
             <p className="text-[13px] text-muted-foreground">Modelo de IA Ativo</p>
             {provider ? (
               <>
-                <p className="text-[18px] font-bold text-foreground truncate leading-tight mt-0.5">{provider.model ?? provider.name}</p>
-                <p className="text-[12.5px] text-muted-foreground truncate">{provider.description ?? provider.name}</p>
+                <p className="text-lg font-bold text-foreground truncate leading-tight mt-0.5">{provider.model ?? provider.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{provider.description ?? provider.name}</p>
               </>
             ) : (
               <>
-                <p className="text-[18px] font-bold text-foreground truncate leading-tight mt-0.5">Nenhum modelo</p>
-                <p className="text-[12.5px] text-muted-foreground truncate">Configure um provedor de IA em Configurações</p>
+                <p className="text-lg font-bold text-foreground truncate leading-tight mt-0.5">Nenhum modelo</p>
+                <p className="text-xs text-muted-foreground truncate">Configure um provedor de IA em Configurações</p>
               </>
             )}
           </div>
@@ -94,8 +94,8 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] text-muted-foreground">Análises Disponíveis</p>
-            <p className="text-[28px] font-bold text-foreground tabular-nums leading-none mt-1">{totalAnalyses.toLocaleString('pt-BR')}</p>
-            <p className="text-[12.5px] text-muted-foreground mt-1">Processamentos este mês</p>
+            <p className="text-3xl font-bold text-foreground tabular-nums leading-none mt-1">{totalAnalyses.toLocaleString('pt-BR')}</p>
+            <p className="text-xs text-muted-foreground mt-1">Processamentos este mês</p>
           </div>
           <div className="flex items-center gap-3 shrink-0 border-l border-border/60 pl-4">
             <TrendText trend={analysesTrend} label="vs. mês anterior" />
@@ -110,8 +110,8 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] text-muted-foreground">Alertas de Sentimento</p>
-            <p className="text-[28px] font-bold text-foreground tabular-nums leading-none mt-1">{activeAlerts}</p>
-            <p className="text-[12.5px] text-muted-foreground mt-1">Conversas com sentimento negativo</p>
+            <p className="text-3xl font-bold text-foreground tabular-nums leading-none mt-1">{activeAlerts}</p>
+            <p className="text-xs text-muted-foreground mt-1">Conversas com sentimento negativo</p>
           </div>
           <div className="flex items-center gap-3 shrink-0 border-l border-border/60 pl-4">
             <TrendText trend={alertsTrend} label="vs. ontem" />
@@ -131,12 +131,12 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-[17px] text-foreground leading-tight">{feature.title}</h3>
+                  <h3 className="font-bold text-lg text-foreground leading-tight">{feature.title}</h3>
                   {feature.badge && <Pill label={feature.badge} tone={feature.badge === 'Popular' ? 'info' : 'success'} />}
                 </div>
-                <p className="text-[13.5px] text-muted-foreground line-clamp-2 mt-1.5 leading-snug">{feature.description}</p>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1.5 leading-snug">{feature.description}</p>
                 <div className="flex items-center justify-between mt-4">
-                  <span className="text-[14px] font-semibold text-primary-glow">{FEATURE_CTA[feature.id] ?? 'Acessar'} →</span>
+                  <span className="text-sm font-semibold text-primary-glow">{FEATURE_CTA[feature.id] ?? 'Acessar'} →</span>
                   <div className="w-10 h-10 rounded-full bg-muted/50 border border-border/60 hover:bg-primary/20 hover:border-primary/40 flex items-center justify-center transition-colors">
                     <ArrowRight className="w-[18px] h-[18px] text-foreground" />
                   </div>
@@ -153,13 +153,13 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
           <SectionHeader icon={Clock} title="Análises Recentes" subtitle="Últimas análises e processamentos de IA" tileSize={44} size="lg"
             right={<VerTodasButton onClick={() => navigate('/sentiment-alerts')} />}
           />
-          <div className="rounded-lg bg-muted/20 border border-border/40 px-4 h-10 grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center text-[12px] font-semibold text-muted-foreground">
+          <div className="rounded-lg bg-muted/20 border border-border/40 px-4 h-10 grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center text-xs font-semibold text-muted-foreground">
             <span>Conversa</span><span>Tipo de análise</span><span>Resultado</span><span>Data</span><span className="w-6" />
           </div>
           <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
             <Clock className="w-10 h-10 opacity-30" />
-            <p className="text-[14px] font-medium text-foreground">Nenhuma análise recente</p>
-            <p className="text-[12.5px]">As análises aparecerão aqui assim que forem processadas</p>
+            <p className="text-sm font-medium text-foreground">Nenhuma análise recente</p>
+            <p className="text-xs">As análises aparecerão aqui assim que forem processadas</p>
           </div>
         </DashboardCard>
         <DashboardCard testid="ai-insights-card" variant="comfortable">
@@ -168,8 +168,8 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
           />
           <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
             <Lightbulb className="w-9 h-9 opacity-30" />
-            <p className="text-[14px] font-medium text-foreground">Sem insights ainda</p>
-            <p className="text-[12.5px] text-center">Os insights aparecem quando há análises suficientes no período</p>
+            <p className="text-sm font-medium text-foreground">Sem insights ainda</p>
+            <p className="text-xs text-center">Os insights aparecem quando há análises suficientes no período</p>
           </div>
         </DashboardCard>
       </div>

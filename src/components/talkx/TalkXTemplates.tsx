@@ -182,11 +182,11 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
 
       <div className="space-y-4 min-w-0">
         <RailCard icon={Star} color="amber" title="Biblioteca inteligente" subtitle="Templates que convertem, recomendações sob medida.">
-          <p className="text-[12.5px] font-semibold text-foreground mb-2">Mais convertidos</p>
+          <p className="text-xs font-semibold text-foreground mb-2">Mais convertidos</p>
           {most.map((t, i) => (
             <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-[12px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-              <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-[11.5px] text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
+              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-[11px] text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </button>
           ))}
@@ -244,30 +244,30 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
       {/* Bubble preview */}
       <div className="bg-muted/30 rounded-t-2xl p-3 border-b border-border/50">
         <div className="flex justify-end">
-          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-[12px] text-foreground whitespace-pre-wrap leading-relaxed">
-            {t.media_url && <div className="rounded-lg mb-1.5 px-2 py-1 bg-black/20 text-[10.5px] text-muted-foreground">📎 {t.media_type}</div>}
+          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+            {t.media_url && <div className="rounded-lg mb-1.5 px-2 py-1 bg-black/20 text-[10px] text-muted-foreground">📎 {t.media_type}</div>}
             {t.content.slice(0, 140)}{t.content.length > 140 ? '…' : ''}
-            <span className="block text-right text-[9.5px] text-muted-foreground mt-0.5">Agora ✓✓</span>
+            <span className="block text-right text-[9px] text-muted-foreground mt-0.5">Agora ✓✓</span>
           </div>
         </div>
       </div>
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[13.5px] font-semibold text-foreground truncate">{t.name}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <Pill label={sm.label} tone={sm.tone} dot />
-              <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
               {t.tags.slice(0, 2).map((tag) => <span key={tag} className="text-[10px] text-primary-glow">#{tag}</span>)}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-          <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-[12px] font-semibold">Usar template</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold">Usar template</button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3.5 h-3.5" /></button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
-          <span className="text-[10.5px] text-muted-foreground">{fmtInt(t.use_count)} usos</span>
+          <span className="text-[10px] text-muted-foreground">{fmtInt(t.use_count)} usos</span>
         </div>
       </div>
     </div>

@@ -88,7 +88,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
         <div className="flex-1 flex flex-col items-center justify-center gap-1 py-10 text-center">
           <Users className="w-8 h-8 text-muted-foreground/40" />
           <p className="text-[13px] font-medium text-foreground">Sem agentes</p>
-          <p className="text-[12px] text-muted-foreground">Nenhum agente encontrado no período selecionado</p>
+          <p className="text-xs text-muted-foreground">Nenhum agente encontrado no período selecionado</p>
         </div>
       ) : (
         <>
@@ -96,12 +96,12 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
             <table className="table-auto w-full text-[13px]">
               <thead>
                 <tr className="text-left">
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground flex items-center gap-1 pt-0">Agente <ChevronsUpDown className="w-3 h-3" /></th>
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground">SLA</th>
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground">No Prazo</th>
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Violações</th>
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Progresso</th>
-                  <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Status</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground flex items-center gap-1 pt-0">Agente <ChevronsUpDown className="w-3 h-3" /></th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">SLA</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">No Prazo</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">Violações</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">Progresso</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,10 +112,10 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                       <td className="pr-2">
                         <div className="flex items-center gap-3">
                           <InitialsAvatar name={agent.agentName} src={agent.avatarUrl} size={32} />
-                          <span className="text-[14px] font-medium text-foreground truncate">{agent.agentName}</span>
+                          <span className="text-sm font-medium text-foreground truncate">{agent.agentName}</span>
                         </div>
                       </td>
-                      <td className={`pr-2 text-[14px] font-bold tabular-nums ${SLA_RATE_TEXT_CLASS[tone]}`}>{Math.round(agent.overallRate)}%</td>
+                      <td className={`pr-2 text-sm font-bold tabular-nums ${SLA_RATE_TEXT_CLASS[tone]}`}>{Math.round(agent.overallRate)}%</td>
                       <td className="pr-2 text-foreground-secondary tabular-nums">{agent.firstResponse.onTime}</td>
                       <td className="pr-2 text-foreground-secondary tabular-nums">{agent.firstResponse.breached}</td>
                       <td className="pr-2">
@@ -133,7 +133,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
             </table>
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Mostrando {filtered.length === 0 ? 0 : currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, filtered.length)} de {filtered.length} agentes
             </p>
             <div className="flex items-center gap-1">
@@ -150,7 +150,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                   key={i}
                   type="button"
                   onClick={() => setPage(i)}
-                  className={`w-8 h-8 rounded-lg text-[12px] font-medium flex items-center justify-center ${i === currentPage ? 'bg-primary text-primary-foreground' : 'hover:bg-muted/50 text-foreground-secondary'}`}
+                  className={`w-8 h-8 rounded-lg text-xs font-medium flex items-center justify-center ${i === currentPage ? 'bg-primary text-primary-foreground' : 'hover:bg-muted/50 text-foreground-secondary'}`}
                 >
                   {i + 1}
                 </button>

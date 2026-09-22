@@ -23,7 +23,7 @@ function LevelCard({ onNavigateTab }: { onNavigateTab?: (tab: string) => void })
   return (
     <DashboardCard testid="goals-level-card" variant="comfortable">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[18px] font-bold text-foreground tracking-[-0.01em]">Seu nível e progresso</p>
+        <p className="text-lg font-bold text-foreground tracking-[-0.01em]">Seu nível e progresso</p>
         {onNavigateTab && (
           <button type="button" onClick={() => onNavigateTab('team')} className="text-[13px] font-semibold text-primary-glow hover:underline shrink-0 flex items-center gap-1">
             Ver ranking →
@@ -38,10 +38,10 @@ function LevelCard({ onNavigateTab }: { onNavigateTab?: (tab: string) => void })
           <ShieldCheck className="w-6 h-6 text-white" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[18px] font-bold text-foreground leading-tight">Nível {stats.level}</p>
+          <p className="text-lg font-bold text-foreground leading-tight">Nível {stats.level}</p>
           <p className="text-[13px] text-muted-foreground mt-0.5">{stats.xp.toLocaleString('pt-BR')} / {nextLevelXp.toLocaleString('pt-BR')} XP</p>
         </div>
-        <span className="h-9 px-3.5 rounded-full text-[16px] font-bold bg-primary/15 text-primary-glow flex items-center shrink-0">
+        <span className="h-9 px-3.5 rounded-full text-base font-bold bg-primary/15 text-primary-glow flex items-center shrink-0">
           {Math.round(progress)}%
         </span>
       </div>
@@ -59,7 +59,7 @@ function LevelCard({ onNavigateTab }: { onNavigateTab?: (tab: string) => void })
         </div>
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-primary-glow">Faltam {missingXp.toLocaleString('pt-BR')} XP para o próximo nível!</p>
-          <p className="text-[12px] text-muted-foreground mt-0.5">Continue batendo suas metas e evolua mais rápido.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Continue batendo suas metas e evolua mais rápido.</p>
         </div>
       </div>
     </DashboardCard>
@@ -76,7 +76,7 @@ function QuickActions({ onNavigateTab, onConfigure }: GoalsRailProps) {
 
   return (
     <DashboardCard testid="goals-quick-actions" variant="comfortable">
-      <p className="text-[18px] font-bold text-foreground tracking-[-0.01em] mb-4">Ações rápidas</p>
+      <p className="text-lg font-bold text-foreground tracking-[-0.01em] mb-4">Ações rápidas</p>
       <div className="space-y-2">
         {items.map((item) => (
           <button
@@ -87,7 +87,7 @@ function QuickActions({ onNavigateTab, onConfigure }: GoalsRailProps) {
             className="w-full h-11 rounded-lg border border-border/60 bg-input/30 hover:bg-muted/50 hover:border-primary/40 flex items-center gap-3 px-3 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <item.icon className="w-[18px] h-[18px] text-primary-glow shrink-0" />
-            <span className="text-[14px] font-medium text-foreground flex-1 min-w-0 truncate">{item.label}</span>
+            <span className="text-sm font-medium text-foreground flex-1 min-w-0 truncate">{item.label}</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </button>
         ))}
@@ -103,7 +103,7 @@ function MotivationCard() {
       <div className="flex items-center gap-4">
         <Trophy className="w-12 h-12 text-dash-amber shrink-0" strokeWidth={1.6} />
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-bold text-foreground leading-tight">
+          <p className="text-base font-bold text-foreground leading-tight">
             Disciplina hoje, <span className="text-primary-glow">resultados amanhã!</span>
           </p>
           <p className="text-[13px] text-muted-foreground mt-1 italic">“{phrase}”</p>

@@ -119,22 +119,22 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                     <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
-                        <p className="text-[13.5px] font-semibold text-foreground">{s.name}</p>
-                        <p className="text-[11.5px] text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
+                        <p className="text-sm font-semibold text-foreground">{s.name}</p>
+                        <p className="text-[11px] text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
                       </Td>
                       <Td><Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} /></Td>
                       <Td>
                         <div className="flex flex-wrap gap-1 max-w-[280px]">
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
                             const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-[10.5px] px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
+                            return <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
                           })}
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-[10.5px] text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
+                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-[10px] text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-[11px] text-muted-foreground italic">Toda a base</span>}
                         </div>
                       </Td>
-                      <Td><span className="text-[14px] font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-[11px] text-foreground-secondary ml-1">contatos</span></Td>
-                      <Td><span className="text-[12px] text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
+                      <Td><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-[11px] text-foreground-secondary ml-1">contatos</span></Td>
+                      <Td><span className="text-xs text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
                       <Td><ProgressBar value={Math.min(100, (s.estimated_count / Math.max(...segments.map((x) => x.estimated_count), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
                       <Td className="text-right">
                         <div onClick={(e) => e.stopPropagation()}>
@@ -169,12 +169,12 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign(selected.id)} onClose={() => setSelected(null)} />
         ) : (
           <RailCard icon={Bookmark} title="Selecione um segmento" subtitle="Clique em um segmento para ver os detalhes e ações disponíveis.">
-            <p className="text-[12.5px] text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
+            <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
           </RailCard>
         )}
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex items-start gap-3">
           <IconTile icon={Info} size={36} color="blue" />
-          <div><p className="text-[13px] font-bold text-foreground">Sugestão de IA</p><p className="text-[12px] text-foreground-secondary leading-snug">Segmentos com mais de 1.000 contatos têm 2,3× mais conversões que envios genéricos. Segmente mais sua base.</p></div>
+          <div><p className="text-[13px] font-bold text-foreground">Sugestão de IA</p><p className="text-xs text-foreground-secondary leading-snug">Segmentos com mais de 1.000 contatos têm 2,3× mais conversões que envios genéricos. Segmente mais sua base.</p></div>
         </div>
       </div>
 
@@ -202,7 +202,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
         <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
-      <MetaRow label="Público estimado" value={<span className="font-bold text-[14px]">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
       <MetaRow label="Origem" value={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} />
       <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
@@ -212,7 +212,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
           {est.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2 py-1.5">
               <InitialsAvatar name={c.name || '?'} size={28} />
-              <div className="min-w-0"><p className="text-[12.5px] font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.company || c.phone}</p></div>
+              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.company || c.phone}</p></div>
             </div>
           ))}
         </div>
@@ -275,7 +275,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           <button type="button" onClick={onCancel} aria-label="Cancelar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-[18px] font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
             <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Adicione uma descrição para este segmento…" className="text-[13px] border-0 bg-transparent p-0 h-auto mt-0.5 focus-visible:ring-0 text-foreground-secondary placeholder:text-muted-foreground/40" />
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -287,9 +287,9 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
         {/* Construtor de regras */}
         <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
-            <div><p className="text-[15px] font-bold text-foreground">Regras do segmento</p><p className="text-[12.5px] text-foreground-secondary">Defina os filtros e condições para o seu segmento</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Regras do segmento</p><p className="text-xs text-foreground-secondary">Defina os filtros e condições para o seu segmento</p></div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setRules(emptyRules())} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Limpar tudo</button>
+              <button type="button" onClick={() => setRules(emptyRules())} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Limpar tudo</button>
             </div>
           </div>
           <div className="space-y-4">
@@ -302,25 +302,25 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
                 onDrop={(e) => { e.preventDefault(); const fieldVal = e.dataTransfer.getData('text/plain'); const f = RULE_FIELDS.find((x) => x.value === fieldVal); if (f) { setActiveGroupId(g.id); const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp; addRule(g.id, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' }); } setDragOverGroupId(null); setDraggingField(null); }}
               >
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
-                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-[12px] font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
+                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
                   <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-[11px] font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                   <Select value={g.match} onValueChange={(v) => setRules({ groups: rules.groups.map((x) => x.id !== g.id ? x : { ...x, match: v as 'and' | 'or' }) })}>
-                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-[12px]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
                   </Select>
                   {rules.groups.length > 1 && <button type="button" onClick={() => removeGroup(g.id)} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
                 </div>
                 <div className="p-4 space-y-2.5">
                   {g.rules.map((r) => <RuleRow key={r.id} rule={r} onChange={(p) => updateRule(g.id, r.id, p)} onRemove={() => removeRule(g.id, r.id)} />)}
-                  {g.rules.length === 0 && <p className="text-[12.5px] text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
-                  <button type="button" onClick={() => addRule(g.id)} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-[12.5px] font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
+                  {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
+                  <button type="button" onClick={() => addRule(g.id)} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
                 </div>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2 mt-4">
-            <button type="button" onClick={() => addGroup('and')} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-[12.5px] font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
-            <button type="button" onClick={() => addGroup('or')} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-[12.5px] font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
+            <button type="button" onClick={() => addGroup('and')} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
+            <button type="button" onClick={() => addGroup('or')} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-xs font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
           </div>
         </section>
 
@@ -329,7 +329,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
       {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
       <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
         <p className="text-[13px] font-bold text-foreground">Filtros</p>
-        <p className="text-[11.5px] text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+        <p className="text-[11px] text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
         {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
           <div key={cat}>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
@@ -342,7 +342,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
                   onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
                   onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
                   onClick={() => addFieldToGroup(f)}
-                  className={cn('h-8 px-2.5 rounded-lg text-[12px] font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
                 >
                   <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
                 </button>
@@ -354,14 +354,14 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-[11.5px] font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-[11px] font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
           <p className="text-[11px] text-foreground-secondary">Audiência estimada</p>
-          <p className={cn('text-[32px] font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
-          <p className="text-[12px] text-foreground-secondary">contatos</p>
+          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
+          <p className="text-xs text-foreground-secondary">contatos</p>
           <div className="mt-3 rounded-xl border border-border/50 bg-input/20 p-3">
-            <p className="text-[12.5px] font-semibold text-foreground mb-1">Risco de entrega</p>
+            <p className="text-xs font-semibold text-foreground mb-1">Risco de entrega</p>
             <Pill label={riskLevel === 'low' ? 'Baixo' : riskLevel === 'moderate' ? 'Moderado' : 'Alto'} tone={riskLevel === 'low' ? 'success' : riskLevel === 'moderate' ? 'warning' : 'danger'} dot />
-            <p className="text-[11.5px] text-foreground-secondary mt-1.5">{riskLevel === 'low' ? 'Excelente potencial de entrega para campanhas no WhatsApp.' : riskLevel === 'moderate' ? 'Valide os contatos antes de lançar.' : 'Público muito pequeno — revise as regras.'}</p>
+            <p className="text-[11px] text-foreground-secondary mt-1.5">{riskLevel === 'low' ? 'Excelente potencial de entrega para campanhas no WhatsApp.' : riskLevel === 'moderate' ? 'Valide os contatos antes de lançar.' : 'Público muito pequeno — revise as regras.'}</p>
           </div>
           {est?.sample && est.sample.length > 0 && (
             <div className="mt-3">
@@ -369,7 +369,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
               {est.sample.map((c) => (
                 <div key={c.id} className="flex items-center gap-2 py-1">
                   <InitialsAvatar name={c.name || '?'} size={28} />
-                  <div className="min-w-0"><p className="text-[12px] font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.phone}</p></div>
+                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.phone}</p></div>
                 </div>
               ))}
             </div>
@@ -387,21 +387,21 @@ function RuleRow({ rule, onChange, onRemove }: { rule: SegmentRule; onChange: (p
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Select value={rule.field} onValueChange={(v) => onChange({ field: v as never, op: (RULE_OPS[RULE_FIELDS.find((f) => f.value === v)?.kind ?? 'text']?.[0]?.value ?? 'eq') as never, value: '' })}>
-        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-[12.5px] min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
         <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
       </Select>
       <Select value={rule.op} onValueChange={(v) => onChange({ op: v as never })}>
-        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-[12.5px] w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
         <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
       </Select>
       {needsValue && (
         fieldDef?.options ? (
           <Select value={rule.value} onValueChange={(v) => onChange({ value: v })}>
-            <SelectTrigger className="h-9 bg-input/40 border-border/70 text-[12.5px] w-auto min-w-[130px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[130px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
             <SelectContent>{fieldDef.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
           </Select>
         ) : (
-          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-[12.5px] w-[130px]" />
+          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-xs w-[130px]" />
         )
       )}
       <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>

@@ -31,14 +31,14 @@ export function ContactResultsSummary({
   const showPagination = totalCount > pageSize;
 
   return (
-    <div className="h-9 flex items-center justify-between text-[14px] text-muted-foreground">
+    <div className="h-9 flex items-center justify-between text-sm text-muted-foreground">
       <div className="flex items-center gap-3 flex-wrap">
         {/* Fix: <button> aninhado em <button> é HTML inválido.
             Usamos div com role=button + onKeyDown para acessibilidade. */}
         <div
           role="button"
           tabIndex={0}
-          className="h-9 flex items-center gap-2 text-[14px] font-medium cursor-pointer select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className="h-9 flex items-center gap-2 text-sm font-medium cursor-pointer select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           onClick={onSelectAll}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelectAll()}
           aria-label={selectedCount > 0 ? `${selectedCount} contatos selecionados — clique para desselecionar` : 'Selecionar todos os contatos'}
@@ -74,7 +74,7 @@ export function ContactResultsSummary({
 
       {showPagination && (
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[14px] font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             Página <span className="font-semibold text-foreground">{currentPage}</span> de{' '}
             <span className="font-semibold text-foreground">{totalPages}</span>
           </span>

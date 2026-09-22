@@ -48,11 +48,11 @@ export function QueueHealthTable({ rows, isConnected, onSeeAll }: QueueHealthTab
         )}
       />
       {visibleRows.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground min-h-[120px]">
+        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[120px]">
           Sem filas ativas
         </div>
       ) : (
-        <table className="w-full text-[12px]">
+        <table className="w-full text-xs">
           <thead>
             <tr className="h-[22px] text-[11px] font-medium text-muted-foreground text-left">
               <th className="font-medium">Fila</th>

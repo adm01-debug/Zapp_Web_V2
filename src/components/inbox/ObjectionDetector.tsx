@@ -60,7 +60,7 @@ const ActionBar = memo(function ActionBar({ text, idx, copiedIdx, isRewriting, r
           </Button>
         </TooltipTrigger><TooltipContent side="bottom" className="text-[10px]">Reescrever</TooltipContent></Tooltip>
       </div>
-      <Button size="sm" className="h-9 px-5 text-[12px] font-bold gap-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={() => onSelect(text)} disabled={rewritingAny}>
+      <Button size="sm" className="h-9 px-5 text-xs font-bold gap-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={() => onSelect(text)} disabled={rewritingAny}>
         <Send className="w-3.5 h-3.5" />Usar resposta
       </Button>
     </div>
@@ -94,7 +94,7 @@ const ObjectionCard = memo(forwardRef<HTMLDivElement, {
                     {isRewriting ? (
                       <div className="flex items-center gap-2 py-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /><span className="text-xs text-muted-foreground">Reescrevendo...</span></div>
                     ) : (
-                      <p className="text-[12.5px] text-foreground/90 leading-relaxed">{obj.counterArgument}</p>
+                      <p className="text-xs text-foreground/90 leading-relaxed">{obj.counterArgument}</p>
                     )}
                   </div>
                 </div>

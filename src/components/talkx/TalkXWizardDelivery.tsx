@@ -27,7 +27,7 @@ function Section({ icon, color = 'blue', title, subtitle, right, children }: { i
     <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
       <div className="flex items-center gap-3 mb-4">
         <IconTile icon={icon as never} color={color} size={40} />
-        <div className="min-w-0 flex-1"><p className="text-[15px] font-bold text-foreground">{title}</p>{subtitle && <p className="text-[12px] text-foreground-secondary">{subtitle}</p>}</div>
+        <div className="min-w-0 flex-1"><p className="text-[15px] font-bold text-foreground">{title}</p>{subtitle && <p className="text-xs text-foreground-secondary">{subtitle}</p>}</div>
         {right}
       </div>
       {children}
@@ -37,7 +37,7 @@ function Section({ icon, color = 'blue', title, subtitle, right, children }: { i
 
 function OptionPill({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className={cn('h-10 px-3.5 rounded-xl border text-[12.5px] font-medium flex items-center gap-2 transition-colors', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/30 text-foreground-secondary hover:border-primary/40')}>
+    <button type="button" onClick={onClick} className={cn('h-10 px-3.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-colors', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/30 text-foreground-secondary hover:border-primary/40')}>
       <span className={cn('w-3.5 h-3.5 rounded-full border-2', active ? 'border-primary bg-primary shadow-[inset_0_0_0_2.5px_hsl(var(--card))]' : 'border-border')} />{label}
     </button>
   );
@@ -63,12 +63,12 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
         {ed.isScheduled && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
-              <Label className="text-[12px] text-foreground-secondary">Data e horário de início</Label>
+              <Label className="text-xs text-foreground-secondary">Data e horário de início</Label>
               <Input type="datetime-local" value={ed.scheduledAt} min={ed.minimumScheduledAt} onChange={(e) => ed.setScheduledAt(e.target.value)} aria-invalid={!!ed.scheduleConfigError} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-[11.5px] text-dash-red">{ed.scheduleConfigError}</p>}
+              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-[11px] text-dash-red">{ed.scheduleConfigError}</p>}
             </div>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Fuso horário</Label>
+              <Label className="text-xs text-foreground-secondary">Fuso horário</Label>
               <Select value={ed.scheduleTimezone} onValueChange={ed.setScheduleTimezone}><SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger><SelectContent><SelectItem key="America/Sao_Paulo" value="America/Sao_Paulo">America/Sao Paulo</SelectItem><SelectItem key="America/Manaus" value="America/Manaus">America/Manaus</SelectItem><SelectItem key="America/Belem" value="America/Belem">America/Belem</SelectItem><SelectItem key="America/Fortaleza" value="America/Fortaleza">America/Fortaleza</SelectItem><SelectItem key="America/Recife" value="America/Recife">America/Recife</SelectItem><SelectItem key="America/Cuiaba" value="America/Cuiaba">America/Cuiaba</SelectItem><SelectItem key="America/Porto_Velho" value="America/Porto_Velho">America/Porto Velho</SelectItem><SelectItem key="America/Rio_Branco" value="America/Rio_Branco">America/Rio Branco</SelectItem><SelectItem key="America/New_York" value="America/New_York">America/New York</SelectItem><SelectItem key="America/Chicago" value="America/Chicago">America/Chicago</SelectItem><SelectItem key="America/Los_Angeles" value="America/Los_Angeles">America/Los Angeles</SelectItem><SelectItem key="America/Buenos_Aires" value="America/Buenos_Aires">America/Buenos Aires</SelectItem><SelectItem key="America/Santiago" value="America/Santiago">America/Santiago</SelectItem><SelectItem key="America/Bogota" value="America/Bogota">America/Bogota</SelectItem><SelectItem key="America/Lima" value="America/Lima">America/Lima</SelectItem><SelectItem key="Europe/London" value="Europe/London">Europe/London</SelectItem><SelectItem key="Europe/Lisbon" value="Europe/Lisbon">Europe/Lisbon</SelectItem><SelectItem key="UTC" value="UTC">UTC</SelectItem></SelectContent></Select>
             </div>
           </div>
@@ -79,19 +79,19 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
         right={<Switch checked={ed.sendWindowEnabled} onCheckedChange={ed.setSendWindowEnabled} />}
       >
         <div className={cn('grid grid-cols-1 md:grid-cols-[1fr_1fr_1.4fr] gap-3', !ed.sendWindowEnabled && 'opacity-50 pointer-events-none')}>
-          <div><Label className="text-[12px] text-foreground-secondary">Início da janela</Label><Input type="time" value={ed.sendWindowStart} onChange={(e) => ed.setSendWindowStart(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-          <div><Label className="text-[12px] text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div><Label className="text-xs text-foreground-secondary">Início da janela</Label><Input type="time" value={ed.sendWindowStart} onChange={(e) => ed.setSendWindowStart(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div><Label className="text-xs text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
             <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-            <div><p className="text-[12.5px] font-semibold text-foreground">Envios apenas neste período</p><p className="text-[11.5px] text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
+            <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-[11px] text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
           <div className="flex items-center gap-3">
             <IconTile icon={CalendarDays as never} size={36} />
-            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-[11.5px] text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
+            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-[11px] text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
           </div>
-          <div className="flex items-center gap-2"><span className={cn('text-[12px] font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
+          <div className="flex items-center gap-2"><span className={cn('text-xs font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
         </div>
       </Section>
 
@@ -99,7 +99,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-4">
           <div className="space-y-4">
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Velocidade de envio</Label>
+              <Label className="text-xs text-foreground-secondary">Velocidade de envio</Label>
               <div className="flex flex-col gap-2 mt-1.5">
                 {SPEED_PROFILES.map((p) => <OptionPill key={p.value} active={ed.speedProfile === p.value} label={`${p.label} · ${p.interval[0]}–${p.interval[1]}s entre mensagens`} onClick={() => ed.setSpeedProfile(p.value)} />)}
               </div>
@@ -107,16 +107,16 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           </div>
           <div className="space-y-5 rounded-xl border border-border/60 bg-input/20 p-4">
             <div>
-              <div className="flex justify-between mb-2"><Label className="text-[12px] text-foreground-secondary">Tempo "digitando…"</Label><span className="text-[11px] font-mono text-foreground">{ed.typingDelay[0]}s – {ed.typingDelay[1]}s</span></div>
+              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Tempo "digitando…"</Label><span className="text-[11px] font-mono text-foreground">{ed.typingDelay[0]}s – {ed.typingDelay[1]}s</span></div>
               <Slider value={ed.typingDelay} onValueChange={ed.setTypingDelay} min={0.5} max={10} step={0.5} />
             </div>
             <div>
-              <div className="flex justify-between mb-2"><Label className="text-[12px] text-foreground-secondary">Intervalo entre envios</Label><span className="text-[11px] font-mono text-foreground">{ed.sendInterval[0]}s – {ed.sendInterval[1]}s</span></div>
+              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Intervalo entre envios</Label><span className="text-[11px] font-mono text-foreground">{ed.sendInterval[0]}s – {ed.sendInterval[1]}s</span></div>
               <Slider value={ed.sendInterval} onValueChange={ed.setSendInterval} min={3} max={60} step={1} />
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
               <Sliders className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-              <div><p className="text-[12.5px] font-semibold text-foreground">Simulação humana ativa</p><p className="text-[11.5px] text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
+              <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-[11px] text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
             </div>
           </div>
         </div>
@@ -126,11 +126,11 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           <label className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3 cursor-pointer">
             <Checkbox checked={ed.respectSuppression} onCheckedChange={(v) => ed.setRespectSuppression(!!v)} className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Não enviar para contatos em lista de supressão</p><p className="text-[11.5px] text-foreground-secondary">Opt-outs, bloqueios manuais e LGPD são removidos do público{ed.suppressedCount > 0 ? ` (${ed.suppressedCount} no público atual)` : ''}.</p></div>
+            <div><p className="text-[13px] font-medium text-foreground">Não enviar para contatos em lista de supressão</p><p className="text-[11px] text-foreground-secondary">Opt-outs, bloqueios manuais e LGPD são removidos do público{ed.suppressedCount > 0 ? ` (${ed.suppressedCount} no público atual)` : ''}.</p></div>
           </label>
           <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
             <Checkbox checked disabled className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Respeitar opt-outs e bloqueados no envio</p><p className="text-[11.5px] text-foreground-secondary">O motor de envio sempre pula contatos suprimidos, mesmo os adicionados após o agendamento.</p></div>
+            <div><p className="text-[13px] font-medium text-foreground">Respeitar opt-outs e bloqueados no envio</p><p className="text-[11px] text-foreground-secondary">O motor de envio sempre pula contatos suprimidos, mesmo os adicionados após o agendamento.</p></div>
           </div>
         </div>
       </Section>
@@ -146,11 +146,11 @@ const Row = ({ icon, label, value, sub, ok, step, ed }: { icon: React.ElementTyp
     <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
       <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] text-foreground-secondary">{label}</p>
+        <p className="text-[11px] text-foreground-secondary">{label}</p>
         <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
-        {sub && <p className={cn('text-[11.5px]', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
+        {sub && <p className={cn('text-[11px]', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
       </div>
-      <button type="button" onClick={() => ed.setStep(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
+      <button type="button" onClick={() => ed.setStep(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
     </div>
   );
 
@@ -217,7 +217,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
           ].map((c) => (
             <label key={c.k} className="flex items-start gap-2.5 cursor-pointer">
               <Checkbox checked={c.v} onCheckedChange={(x) => c.set(!!x)} className="mt-0.5" />
-              <span className="text-[12.5px] text-foreground leading-snug">{c.l}</span>
+              <span className="text-xs text-foreground leading-snug">{c.l}</span>
             </label>
           ))}
         </RailCard>
@@ -225,32 +225,32 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
         <div className={cn('rounded-2xl border p-4 flex items-start gap-3', allGood ? 'border-dash-green/40 bg-dash-green/10' : 'border-dash-amber/40 bg-dash-amber/10')}>
           <div className={cn('w-9 h-9 rounded-full flex items-center justify-center shrink-0', allGood ? 'bg-dash-green text-white' : 'bg-dash-amber text-black')}>{allGood ? <Check className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}</div>
           <div>
-            <p className="text-[13.5px] font-bold text-foreground">{allGood ? 'Tudo pronto para lançar!' : 'Pendências antes de lançar'}</p>
-            <p className="text-[12px] text-foreground-secondary">{allGood ? 'Sua campanha está configurada e em conformidade com as políticas do WhatsApp.' : !waOk ? 'Selecione uma conexão WhatsApp ativa.' : !audienceOk ? 'Nenhum contato elegível no público.' : 'Escreva a mensagem da campanha.'}</p>
+            <p className="text-sm font-bold text-foreground">{allGood ? 'Tudo pronto para lançar!' : 'Pendências antes de lançar'}</p>
+            <p className="text-xs text-foreground-secondary">{allGood ? 'Sua campanha está configurada e em conformidade com as políticas do WhatsApp.' : !waOk ? 'Selecione uma conexão WhatsApp ativa.' : !audienceOk ? 'Nenhum contato elegível no público.' : 'Escreva a mensagem da campanha.'}</p>
           </div>
         </div>
 
         <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-[12px] text-dash-red">{error}</p>}
+        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md rounded-2xl border-border/70">
           <DialogHeader>
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center mb-2"><Send className="w-7 h-7 text-primary-glow" /></div>
-            <DialogTitle className="text-center text-[20px] font-bold">Confirmar disparo?</DialogTitle>
-            <DialogDescription className="text-center text-[12.5px]">
+            <DialogTitle className="text-center text-xl font-bold">Confirmar disparo?</DialogTitle>
+            <DialogDescription className="text-center text-xs">
               {ed.isScheduled && ed.scheduledAt ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)}` : 'Após o lançamento, a campanha será enviada'} para <b className="text-foreground">{fmtInt(ed.eligibleCount)} contatos</b>. Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-1.5 text-[12.5px]">
+          <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-1.5 text-xs">
             {[['Campanha', ed.name], ['Público', ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : 'Contatos ZAPP'], ['Destinatários', `${fmtInt(ed.eligibleCount)} contatos`], ['Duração estimada', ed.estimatedTime ?? '—'], ['Envio', ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato']].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3"><span className="text-foreground-secondary">{k}</span><span className="font-medium text-foreground text-right truncate">{v}</span></div>
             ))}
           </div>
-          <div className="space-y-1.5 text-[12px]">
+          <div className="space-y-1.5 text-xs">
             {[ed.confirmConsent, ed.confirmContent, ed.confirmSuppression].every(Boolean) && ['Consentimento dos contatos confirmado', 'Conteúdo da mensagem revisado', 'Lista de supressão aplicada'].map((t) => (
               <p key={t} className="flex items-center gap-2 text-dash-green"><Check className="w-3.5 h-3.5" /> <span className="text-foreground">{t}</span></p>
             ))}

@@ -130,8 +130,8 @@ export function ScheduledReportsManager() {
                 <FileText className="w-16 h-16 text-primary-glow" strokeWidth={1.4} />
                 <Sparkles className="w-5 h-5 text-primary-glow absolute -top-1 -right-2" />
               </div>
-              <p className="text-[22px] font-bold text-foreground mt-2">{configs.length === 0 ? 'Nenhum relatório agendado ainda' : 'Nenhum relatório encontrado'}</p>
-              <p className="text-[14px] text-center max-w-[460px] leading-relaxed">
+              <p className="text-2xl font-bold text-foreground mt-2">{configs.length === 0 ? 'Nenhum relatório agendado ainda' : 'Nenhum relatório encontrado'}</p>
+              <p className="text-sm text-center max-w-[460px] leading-relaxed">
                 {configs.length === 0
                   ? 'Crie relatórios automáticos para receber insights do seu atendimento diretamente no seu email. Acompanhe métricas, produtividade da equipe, SLA e muito mais, de forma automática.'
                   : 'Ajuste a busca ou os filtros para encontrar o relatório desejado.'}
@@ -149,10 +149,10 @@ export function ScheduledReportsManager() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[14px] font-semibold text-foreground truncate">{cfg.name}</span>
+                        <span className="text-sm font-semibold text-foreground truncate">{cfg.name}</span>
                         <Pill label={cfg.is_active ? 'Ativo' : 'Pausado'} tone={cfg.is_active ? 'success' : 'muted'} dot />
                       </div>
-                      <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground mt-0.5">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                         <span>{REPORT_TYPE_LABELS[cfg.report_type] ?? cfg.report_type}</span>
                         <span>·</span><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{FREQUENCY_LABELS[cfg.frequency] ?? cfg.frequency}</span>
                         <span>·</span><span>{cfg.recipients?.length ?? 0} destinatário(s)</span>
@@ -174,7 +174,7 @@ export function ScheduledReportsManager() {
           <DashboardCard testid="reports-templates-card" variant="comfortable">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="text-[18px] font-bold text-foreground tracking-[-0.01em]">Modelos de Relatórios</p>
+                <p className="text-lg font-bold text-foreground tracking-[-0.01em]">Modelos de Relatórios</p>
                 <p className="text-[13px] text-muted-foreground mt-0.5">Utilize nossos modelos prontos para começar mais rápido.</p>
               </div>
               <VerTodasButton onClick={() => openCreate()} />
@@ -188,8 +188,8 @@ export function ScheduledReportsManager() {
                       <Ico className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-bold text-foreground truncate">{t.label}</div>
-                      <div className="text-[12px] text-muted-foreground line-clamp-2 leading-snug">{t.desc}</div>
+                      <div className="text-sm font-bold text-foreground truncate">{t.label}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-2 leading-snug">{t.desc}</div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                   </button>
@@ -199,7 +199,7 @@ export function ScheduledReportsManager() {
           </DashboardCard>
 
           <DashboardCard testid="reports-freq-card" variant="comfortable">
-            <p className="text-[18px] font-bold text-foreground tracking-[-0.01em]">Frequências Comuns</p>
+            <p className="text-lg font-bold text-foreground tracking-[-0.01em]">Frequências Comuns</p>
             <p className="text-[13px] text-muted-foreground mt-0.5 mb-3">Escolha a periodicidade ideal para seu relatório.</p>
             <div className="grid grid-cols-4 gap-2.5">
               {FREQ_TILES.map(f => {
@@ -222,7 +222,7 @@ export function ScheduledReportsManager() {
               <div className="flex items-start gap-3">
                 <Lightbulb className="w-6 h-6 text-dash-amber shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-foreground">Dica</p>
+                  <p className="text-sm font-bold text-foreground">Dica</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">Comece com o relatório semanal de Resumo Executivo para receber os principais indicadores da sua operação.</p>
                 </div>
                 <button onClick={() => setTipDismissed(true)} className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-muted/60">

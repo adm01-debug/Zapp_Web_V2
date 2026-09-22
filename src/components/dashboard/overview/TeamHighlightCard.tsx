@@ -18,7 +18,7 @@ function RankIndicator({ index }: { index: number }) {
   if (index < 3) {
     return <Medal className={cn('w-5 h-5 shrink-0', MEDAL_CLASS[index])} />;
   }
-  return <span className="w-5 h-5 flex items-center justify-center text-[12px] font-semibold text-muted-foreground shrink-0">{index + 1}</span>;
+  return <span className="w-5 h-5 flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">{index + 1}</span>;
 }
 
 export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRateByAgent }: TeamHighlightCardProps) {
@@ -41,7 +41,7 @@ export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRat
         )}
       />
       {visibleAgents.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground min-h-[120px]">
+        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[120px]">
           Sem dados de equipe
         </div>
       ) : (
@@ -60,7 +60,7 @@ export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRat
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-semibold text-foreground truncate">{agent.name}</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{agent.name}</p>
                   <p className="text-[11px] text-foreground-secondary truncate">{agent.conversationsResolved} resolvidas</p>
                 </div>
                 <div className="h-1.5 w-[120px] rounded-full bg-muted/60 overflow-hidden shrink-0">

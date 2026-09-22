@@ -31,14 +31,14 @@ export function GreetingBanner() {
         ) : (
           <span
             data-testid="banner-avatar"
-            className={cn('w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-semibold shrink-0', bg, text)}
+            className={cn('w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0', bg, text)}
           >
             {getInitials(name)}
           </span>
         )}
         <div className="min-w-0">
           <p className="text-xl font-bold text-foreground leading-tight truncate">{greeting}</p>
-          <p className="text-[12px] text-foreground-secondary">Aqui está o resumo da sua operação hoje.</p>
+          <p className="text-xs text-foreground-secondary">Aqui está o resumo da sua operação hoje.</p>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export function GreetingBanner() {
           <div className="hidden md:block w-px h-9 bg-border shrink-0" />
           <div className="flex items-center gap-2.5 shrink-0">
             <div data-testid="level-tile" className="w-[34px] h-[34px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-              <span className="text-[14px] font-bold text-white">{stats.level}</span>
+              <span className="text-sm font-bold text-white">{stats.level}</span>
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-semibold text-foreground">Nível {stats.level}</p>
@@ -68,15 +68,15 @@ export function GreetingBanner() {
 
           <div className="hidden lg:block w-px h-9 bg-border shrink-0" />
           <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 bg-primary/15 text-primary-glow">
+            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-primary/15 text-primary-glow">
               <Zap className="w-3.5 h-3.5" />
               {stats.xp.toLocaleString('pt-BR')} XP
             </span>
-            <span data-testid="gami-chip" title="Conquistas" className="h-[30px] px-3 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 bg-dash-tile-amber text-dash-amber">
+            <span data-testid="gami-chip" title="Conquistas" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-dash-tile-amber text-dash-amber">
               <Star className="w-3.5 h-3.5" />
               {stats.achievements_count}
             </span>
-            <span data-testid="gami-chip" title="Dias seguidos" className="h-[30px] px-3 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 bg-[hsl(354_48%_23%)] text-dash-red">
+            <span data-testid="gami-chip" title="Dias seguidos" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[hsl(354_48%_23%)] text-dash-red">
               <Flame className="w-3.5 h-3.5" />
               {stats.current_streak}
             </span>
@@ -85,7 +85,7 @@ export function GreetingBanner() {
       )}
 
       <div className="hidden xl:block w-px h-9 bg-border shrink-0" />
-      <p className="hidden xl:block text-[12px] text-foreground-secondary max-w-[220px] leading-snug">{phrase}</p>
+      <p className="hidden xl:block text-xs text-foreground-secondary max-w-[220px] leading-snug">{phrase}</p>
     </div>
   );
 }
