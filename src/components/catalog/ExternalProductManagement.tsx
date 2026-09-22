@@ -41,6 +41,7 @@ import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared'
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
+import { useCatalogFavorites } from '@/hooks/integrations/useCatalogFavorites';
 import { cn } from '@/lib/utils';
 
 /** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
@@ -89,15 +90,10 @@ export const ExternalProductManagement: React.FC = () => {
   } = useExternalCatalog();
 
   const [search, setSearch] = useState('');
-  // E34: deep link ?view=catalog&cat=<id> - inicializador preguicoso le
-  // a URL 1x no mount (nao um effect - evita corrida com o 1o render).
   const [categoryId, setCategoryId] = useState<string>(
     () => parseCatalogCategoryRoute(window.location.search).categoryId ?? 'all'
   );
 
-  /** Categoria muda por qualquer via (chip ou select) - mantem os dois
-   * sincronizados no mesmo estado e reflete na URL (replaceState, sem
-   * poluir o historico do navegador por clique de filtro). */
   const handleCategoryChange = useCallback((id: string) => {
     setCategoryId(id);
     replaceCatalogCategoryRoute(id === 'all' ? null : id);
@@ -110,14 +106,16 @@ export const ExternalProductManagement: React.FC = () => {
     () => (localStorage.getItem('catalog.view') as 'grid' | 'list') ?? 'grid'
   );
   const [page, setPage] = useState(0);
-  // E37: sort
   const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
   const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
-  // E36: filtros avançados (declarados antes de buildFilters para evitar TDZ)
+  // E36: filtros avançados
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ isBestseller: false, priceMin: '', priceMax: '' });
   const advCount = countAdvancedFilters(advFilters);
+
+  // E43: favoritos
+  const { isFav, toggleFavorite } = useCatalogFavorites();
 
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
@@ -134,21 +132,15 @@ export const ExternalProductManagement: React.FC = () => {
     if (supplierId !== 'all') params.supplier_id = supplierId;
     if (isFeatured) params.is_featured = true;
     if (isNew) params.is_new = true;
-    // E37 sort
     const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
     params.order_by = effectiveOrder;
     params.ascending = ascending;
-    // E36: filtros avançados
     if (advFilters.isBestseller) params.is_bestseller = true;
     if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
     if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
     return params;
   }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
-  // Initial load. fetchCategories/fetchSuppliers/fetchProducts e buildFilters
-  // sao recriados a cada render (nao vem de useCallback com deps estaveis) -
-  // inclui-los faria este efeito rodar a cada digitacao/paginacao. Tela
-  // inteira sera reescrita com useReducer na F3 (E31+ do plano do catalogo).
   useEffect(() => {
     fetchCategories();
     fetchSuppliers();
@@ -156,16 +148,11 @@ export const ExternalProductManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // E34: URL malformada/duplicada (?cat repetido, view!=catalog) precisa
-  // ser limpa uma vez no mount - o inicializador do useState ja rejeitou
-  // o valor (categoryId ficou 'all'), so falta refletir isso na barra de
-  // enderecos tambem.
   useEffect(() => {
     const parsed = parseCatalogCategoryRoute(window.location.search);
     if (parsed.needsNormalization) replaceCatalogCategoryRoute(null);
   }, []);
 
-  // Filter changes - debounced (mesmo motivo acima para as deps omitidas)
   useEffect(() => {
     const t = setTimeout(() => {
       setPage(0);
@@ -175,7 +162,6 @@ export const ExternalProductManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
-  // Page changes (mesmo motivo)
   useEffect(() => {
     if (page > 0) fetchProducts(buildFilters());
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,7 +185,6 @@ export const ExternalProductManagement: React.FC = () => {
     setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' });
   };
 
-  // E37: helpers de sort
   type SortOption = { label: string; order_by: string; ascending: boolean };
   const SORT_OPTIONS: SortOption[] = [
     { label: 'Nome A–Z', order_by: 'name', ascending: true },
@@ -223,15 +208,11 @@ export const ExternalProductManagement: React.FC = () => {
     setPage(0);
   };
 
-  // E35: persistir viewMode em localStorage
   const handleViewMode = (mode: 'grid' | 'list') => {
     setViewMode(mode);
     localStorage.setItem('catalog.view', mode);
   };
 
-  /** E33: clique no KPI aplica o filtro correspondente. Categorias/
-   * Fornecedores/Total nao tem filtro booleano equivalente - so
-   * mostram numero mesmo, sem acao no clique. */
   const handleKpiSelect = (key: keyof CatalogStats) => {
     if (key === 'in_stock') setOnlyInStock(true);
     else if (key === 'featured') setIsFeatured(true);
@@ -243,6 +224,9 @@ export const ExternalProductManagement: React.FC = () => {
   const handleSendProduct = (product: ExternalProduct) => {
     setSendProduct(product);
   };
+
+  // Suprimir aviso de toast não utilizado (importado pelo hook)
+  void toast;
 
   return (
     <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
@@ -281,27 +265,17 @@ export const ExternalProductManagement: React.FC = () => {
         )}
       </motion.div>
 
-      {/* KPIs (E33) */}
       {statsError ? (
         <AlertCard tone="warning">Não foi possível carregar os indicadores do catálogo agora.</AlertCard>
       ) : (
         <CatalogKpiStrip stats={stats} loading={statsLoading} onSelect={handleKpiSelect} />
       )}
 
-      {/* E36: chips de filtros avançados */}
       <AdvancedFilterChips
         filters={advFilters}
         onChange={(next) => { setAdvFilters(next); setPage(0); }}
       />
 
-      {/* Chips de categoria (E34) - mesmo categoryId do select abaixo.
-          Resolucao de conflito real (nao so metadado): o main ja tinha
-          uma implementacao propria de E34, com CategoryChips LOCAL
-          duplicado (nao reusava catalogShared.tsx, sem icone, sem deep
-          link). Removida - o componente compartilhado (E18/F1, com
-          51 testes proprios) + deep link (E34a) + icone (E34b) sao
-          estritamente mais completos. setPage(0) ja e coberto pelo
-          effect de debounce existente (categoryId esta nas deps). */}
       {parentCategories.length > 0 && (
         <CategoryChips
           categories={parentCategories}
@@ -310,7 +284,6 @@ export const ExternalProductManagement: React.FC = () => {
         />
       )}
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-[250px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -386,7 +359,6 @@ export const ExternalProductManagement: React.FC = () => {
         </Button>
       </div>
 
-      {/* E37: resultados + ordenar por */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span className="tabular-nums">
           {loading
@@ -434,7 +406,6 @@ export const ExternalProductManagement: React.FC = () => {
         </AlertCard>
       )}
 
-      {/* Products */}
       <div>
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
@@ -487,6 +458,8 @@ export const ExternalProductManagement: React.FC = () => {
                     product={product}
                     onSend={handleSendProduct}
                     compact={viewMode === 'list'}
+                    isFavorite={isFav(product.id)}
+                    onToggleFavorite={toggleFavorite}
                   />
                 </motion.div>
               ))}
@@ -495,7 +468,6 @@ export const ExternalProductManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 pt-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
@@ -510,7 +482,6 @@ export const ExternalProductManagement: React.FC = () => {
         </div>
       )}
 
-      {/* E36: sheet de filtros avançados */}
       <CatalogAdvancedFilters
         key={String(advancedOpen)}
         open={advancedOpen}
@@ -520,7 +491,6 @@ export const ExternalProductManagement: React.FC = () => {
         onClear={() => { setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' }); setPage(0); }}
       />
 
-      {/* Send Product Dialog */}
       {sendProduct && (
         <SendProductDialog
           product={sendProduct}
@@ -530,7 +500,6 @@ export const ExternalProductManagement: React.FC = () => {
       )}
     </div>
 
-    {/* Rail (E31: só a estrutura — conteúdo real na F5) */}
     <aside className="catalog-rail sticky top-4 hidden xl:block" />
     </div>
   );
