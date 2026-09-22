@@ -152,10 +152,19 @@ export function useRealtimeInbox() {
     const currentId = selectedContactId;
     try {
       await sendMessage(currentId, content);
-      await refreshActiveConversation();
     } catch (err) {
       log.error('Error sending message:', err);
-      toast.error('Erro ao enviar mensagem');
+      // O ChatPanel é responsável pelo feedback visual. A rejeição precisa
+      // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
+      throw err;
+    }
+
+    try {
+      await refreshActiveConversation();
+    } catch (err) {
+      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
+      // ao agente que reenvie a mesma mensagem e gere duplicidade.
+      log.warn('Message sent, but conversation refresh failed:', err);
     }
   }, [selectedContactId, sendMessage, refreshActiveConversation]);
 
@@ -204,6 +213,9 @@ export function useRealtimeInbox() {
      conversations, cachedConversations, usingCache,
      loading, error,
      selectedMessagesLoading,
+     hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
+     loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
+     loadOlderMessages: !USE_EXTERNAL_DB ? localMsgs.loadOlderMessages : async () => {},
      newMessageNotification, dismissNotification,
      legacyConversation, legacyMessages,
      handleSelectConversation,
