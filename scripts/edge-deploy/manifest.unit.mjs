@@ -141,6 +141,19 @@ test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functio
   assert.equal(attestation.functions[0].remote_bundle_sha256, 'a'.repeat(64));
   assert.equal('source_sha256' in attestation.functions[0], false);
   assert.equal(attestation.source_manifest_sha256, manifest.manifest_sha256);
+  assert.equal(attestation.functions[0].remote_updated_at, null);
+
+  const withTimes = buildDeploymentAttestation({
+    ...base,
+    remoteResponse: [
+      { ...remote[0], created_at: 1757000000000, updated_at: 1758549600000 },
+      { ...remote[1], created_at: '2026-09-01T00:00:00.000Z', updated_at: 8.7e15 },
+    ],
+  });
+  assert.equal(withTimes.functions[0].remote_created_at, '2025-09-04T15:33:20.000Z');
+  assert.equal(withTimes.functions[0].remote_updated_at, '2025-09-22T14:00:00.000Z');
+  assert.equal(withTimes.functions[1].remote_created_at, '2026-09-01T00:00:00.000Z');
+  assert.equal(withTimes.functions[1].remote_updated_at, null);
 
   assert.throws(
     () => buildDeploymentAttestation({ ...base, remoteResponse: remote.slice(0, 1) }),

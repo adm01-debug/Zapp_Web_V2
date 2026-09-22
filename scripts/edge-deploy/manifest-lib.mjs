@@ -240,6 +240,15 @@ export function parseRemoteFunctions(value) {
   return rows;
 }
 
+// A Management API devolve created_at/updated_at como epoch em ms (int64 no OpenAPI);
+// antes só string era aceita e o atestado gravava null para todas as funções.
+function remoteTimestamp(value) {
+  if (typeof value === 'string') return value;
+  if (typeof value !== 'number') return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
 export function buildDeploymentAttestation({
   manifest,
   remoteResponse,
@@ -287,8 +296,8 @@ export function buildDeploymentAttestation({
       remote_id: typeof remote.id === 'string' ? remote.id : null,
       remote_version: Number.isInteger(remote.version) ? remote.version : null,
       remote_status: typeof remote.status === 'string' ? remote.status : null,
-      remote_created_at: typeof remote.created_at === 'string' ? remote.created_at : null,
-      remote_updated_at: typeof remote.updated_at === 'string' ? remote.updated_at : null,
+      remote_created_at: remoteTimestamp(remote.created_at),
+      remote_updated_at: remoteTimestamp(remote.updated_at),
     };
   });
 
