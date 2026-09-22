@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "publication": "supabase_realtime",
+  "tables": [
+    "public.agent_stats",
+    "public.contacts",
+    "public.conversation_sla",
+    "public.email_messages",
+    "public.email_threads",
+    "public.message_reactions",
+    "public.messages",
+    "public.notifications",
+    "public.payment_links",
+    "public.queue_goals",
+    "public.queue_members",
+    "public.queues",
+    "public.sales_deals",
+    "public.talkx_campaigns",
+    "public.talkx_recipients",
+    "public.team_message_reactions",
+    "public.team_messages",
+    "public.warroom_alerts",
+    "public.whatsapp_connections",
+    "public.whisper_messages"
+  ]
+}

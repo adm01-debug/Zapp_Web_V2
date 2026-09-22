@@ -6,6 +6,12 @@ import {
   getConnectionByInstance, getContactByPhone, persistProfilePicture,
   invalidateConnectionCache,
 } from "./evolution-helpers.ts";
+import {
+  buildIncomingCallNotification,
+  normalizeEvolutionCallVideo,
+  normalizeEvolutionCallStatus,
+  shouldNotifyIncomingCall,
+} from "./notification-events.ts";
 
 // Re-export message handlers for backward compatibility
 export {
@@ -230,8 +236,8 @@ export async function handleLabelsAssociation(supabase: any, instance: string, d
 export async function handleCallEvent(supabase: any, instance: string, data: unknown) {
   const callData = isRecord(data) ? data : {};
   const from = callData.from as string;
-  const isVideo = callData.isVideo as boolean;
-  const callStatus = callData.status as string;
+  const isVideo = normalizeEvolutionCallVideo(callData.isVideo);
+  const callStatus = typeof callData.status === 'string' ? callData.status : '';
   if (!from) return;
 
   const phone = from.replace('@s.whatsapp.net', '');
@@ -257,31 +263,35 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
   }
   if (!contact) return;
 
-  // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed);
-  // o v2 emite nomes fora da lista (offer/reject/timeout…) — mapeia antes.
-  const CALL_STATUS_MAP: Record<string, string> = {
-    offer: 'ringing', ringing: 'ringing', answered: 'answered', accept: 'answered',
-    ended: 'ended', terminate: 'ended', reject: 'missed', timeout: 'missed',
-    missed: 'missed', busy: 'busy', failed: 'failed',
-  };
+  // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed).
+  // O Evolution emite nomes fora da lista; normalize antes de persistir.
+  const normalizedStatus = normalizeEvolutionCallStatus(callStatus);
   const agentId = contact.assigned_to || null;
-  await supabase.from('calls').insert({
+  const { data: persistedCall } = await supabase.from('calls').insert({
     contact_id: contact.id, whatsapp_connection_id: connection.id, agent_id: agentId,
-    direction: 'inbound', status: CALL_STATUS_MAP[(callStatus || '').toLowerCase()] ?? 'ringing',
+    direction: 'inbound', status: normalizedStatus,
     started_at: new Date().toISOString(),
     notes: isVideo ? 'Chamada de vídeo' : 'Chamada de voz',
-  });
+  }).select('id, started_at').maybeSingle();
 
-  if (agentId) {
+  // Eventos answered/missed/busy/failed continuam no historico, mas nao tocam.
+  if (agentId && shouldNotifyIncomingCall(callStatus)) {
     const { data: agentProfile } = await supabase.from('profiles')
       .select('user_id, name').eq('id', agentId).single();
     if (agentProfile?.user_id) {
-      await supabase.from('notifications').insert({
-        user_id: agentProfile.user_id, type: 'incoming_call',
-        title: isVideo ? '📹 Chamada de vídeo recebida' : '📞 Chamada de voz recebida',
-        message: `${contact.name || phone} está ligando para você`,
-        metadata: { contact_id: contact.id, phone, is_video: isVideo, call_status: callStatus, whatsapp_connection_id: connection.id, agent_profile_id: agentId },
-      });
+      const rawEventId = callData.id ?? callData.callId ?? callData.call_id;
+      const eventId = typeof rawEventId === 'string' && rawEventId.length <= 200 ? rawEventId : undefined;
+      await supabase.from('notifications').insert(buildIncomingCallNotification({
+        userId: agentProfile.user_id,
+        contactId: contact.id,
+        contactName: contact.name || phone,
+        phone,
+        isVideo,
+        callStatus: normalizedStatus,
+        whatsappConnectionId: connection.id,
+        callId: persistedCall?.id,
+        eventId,
+      }));
     }
   }
 }

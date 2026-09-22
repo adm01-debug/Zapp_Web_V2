@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 export interface IncomingCall {
   id: string;
@@ -13,63 +14,102 @@ export interface IncomingCall {
   started_at: string;
 }
 
+interface IncomingCallNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  message: string;
+  created_at: string;
+  metadata: {
+    contact_id?: string;
+    contact_name?: string;
+    phone?: string;
+    is_video?: boolean;
+    call_status?: string;
+    whatsapp_connection_id?: string;
+    event_id?: string;
+  } | null;
+}
+
 export function useIncomingCallListener() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  const seenNotificationsRef = useRef(new Set<string>());
+  const recentCallsRef = useRef(new Map<string, number>());
 
   const dismissCall = useCallback(() => {
     setIncomingCall(null);
   }, []);
 
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!user?.id) return;
 
     const channel = supabase
-      .channel('incoming-calls')
+      .channel(uniqueRealtimeTopic('incoming-calls'))
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'calls',
-          filter: `agent_id=eq.${profile.id}`,
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
         },
         async (payload) => {
-          const call = payload.new as Record<string, unknown>;
-          
-          if (call.direction !== 'inbound' || call.status === 'ended') return;
+          const notification = payload.new as IncomingCallNotification;
+          if (notification.type !== 'incoming_call') return;
 
-          // Fetch contact info
-          let contactName = 'Desconhecido';
-          let contactPhone = '';
+          const metadata = notification.metadata || {};
+          const status = typeof metadata.call_status === 'string'
+            ? metadata.call_status.toLowerCase()
+            : '';
+          if (status !== 'ringing' && status !== 'offer') return;
 
-          if (call.contact_id) {
+          if (seenNotificationsRef.current.has(notification.id)) return;
+          seenNotificationsRef.current.add(notification.id);
+          if (seenNotificationsRef.current.size > 100) {
+            const oldest = seenNotificationsRef.current.values().next().value;
+            if (oldest) seenNotificationsRef.current.delete(oldest);
+          }
+
+          const callKey = metadata.event_id || [metadata.contact_id, metadata.whatsapp_connection_id].filter(Boolean).join(':');
+          const now = Date.now();
+          if (callKey) {
+            const lastSeen = recentCallsRef.current.get(callKey);
+            if (lastSeen && now - lastSeen < 35_000) return;
+            recentCallsRef.current.set(callKey, now);
+            for (const [key, timestamp] of recentCallsRef.current) {
+              if (now - timestamp >= 35_000) recentCallsRef.current.delete(key);
+            }
+          }
+
+          let contactName = metadata.contact_name || 'Desconhecido';
+          let contactPhone = metadata.phone || '';
+
+          // Compatibilidade com notificacoes emitidas antes de contact_name.
+          if (!metadata.contact_name && metadata.contact_id) {
             const { data: contact } = await supabase
               .from('contacts')
               .select('name, phone')
-              .eq('id', call.contact_id as string)
+              .eq('id', metadata.contact_id)
               .single();
-            
+
             if (contact) {
               contactName = contact.name || contact.phone;
               contactPhone = contact.phone;
             }
           }
 
-          const notes = (call.notes as string) || '';
-          const isVideo = notes.toLowerCase().includes('vídeo');
-
           setIncomingCall({
-            id: call.id as string,
-            contact_id: call.contact_id as string | null,
+            id: notification.id,
+            contact_id: metadata.contact_id || null,
             contact_name: contactName,
             contact_phone: contactPhone,
-            is_video: isVideo,
-            whatsapp_connection_id: call.whatsapp_connection_id as string | null,
-            started_at: call.started_at as string,
+            is_video: metadata.is_video === true,
+            whatsapp_connection_id: metadata.whatsapp_connection_id || null,
+            started_at: notification.created_at,
           });
 
-          log.info(`Incoming ${isVideo ? 'video' : 'audio'} call from ${contactName}`);
+          log.info('Incoming call notification received', { notificationId: notification.id });
         }
       )
       .subscribe();
@@ -77,7 +117,7 @@ export function useIncomingCallListener() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.id]);
+  }, [user?.id]);
 
   return { incomingCall, dismissCall };
 }

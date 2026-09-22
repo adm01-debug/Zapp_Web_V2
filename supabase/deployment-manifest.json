@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 67,
-    "source_file_count": 91,
+    "source_file_count": 92,
     "verify_jwt_true": 57,
     "verify_jwt_false": 10
   },
@@ -33,8 +33,8 @@
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
-      "bytes": 1391,
-      "sha256": "d626eeb39308fd9028a7e79fc42b4d6f4b306fb62fa66320fd1de82225f843d6"
+      "bytes": 1607,
+      "sha256": "6b3f5665803c7a63412df191b83c4e9d7ae52e8b6e329dd225bfd723b31cd7d7"
     },
     {
       "path": "supabase/functions/_shared/crm-integration-contract.ts",
@@ -78,8 +78,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "bytes": 16649,
-      "sha256": "9cc0032ffefc1382232687ba30433704d7b0a621bf2ead3adb8024169fe588d8"
+      "bytes": 16911,
+      "sha256": "6ccdba000c676371147a84240c1568d1a0ca101d6d254e0aa136a0d4ade3ac57"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -100,6 +100,11 @@
       "path": "supabase/functions/_shared/hmac-validation.ts",
       "bytes": 15388,
       "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da"
+    },
+    {
+      "path": "supabase/functions/_shared/notification-events.ts",
+      "bytes": 2898,
+      "sha256": "84751b4ffb6c308af8b5529dd5ea4a328cc29a845c66d71996d51467eb929380"
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
@@ -408,8 +413,8 @@
     },
     {
       "path": "supabase/functions/sentiment-alert/index.ts",
-      "bytes": 5698,
-      "sha256": "2e59af4dac336912bcc274d23ca1f4013500f7ab7d3c905095ae0f6ea02e4536"
+      "bytes": 9833,
+      "sha256": "f2e8c55f17aa34c58de5a22edbb7cd0ddab2683a9c36ff46522fbc0f10c74d60"
     },
     {
       "path": "supabase/functions/sicoob-bridge-reply/index.ts",
@@ -874,7 +879,7 @@
       "name": "elevenlabs-webhook",
       "entrypoint": "supabase/functions/elevenlabs-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "eedaf89605fc25e22c70b6f88245298be9cfc2855cf46689bf5089c9349528d6",
+      "source_sha256": "8c2947b405c6f5f41ae1b9b88646135be18051490620b581cc5b1b92c73e7aa8",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -914,7 +919,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "20066a2f20d2ef396c1b3440d4ebf407e885bff6088993155a58a6e5dc8ef5f3",
+      "source_sha256": "dced1f803c96894b648e9977ebeacbfa5488c4779fc0f7ef33f7b23168f65d4f",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -926,6 +931,7 @@
         "supabase/functions/_shared/evolution-webhook-messages.ts",
         "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/notification-events.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/talkx-reply.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1150,9 +1156,10 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1837c7400c6f20cec7a568854b5ed5e717820e5480718fd283ceadeb8d5ae677",
+      "source_sha256": "68b7af70b9a970427a938dcdfcb0973dbb1c3c19136636e78082724d0e05b19a",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/notification-events.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/sentiment-alert/index.ts"
@@ -1302,5 +1309,5 @@
       ]
     }
   ],
-  "manifest_sha256": "12eca5b7a2210b0ac0da702e9bab713e7b75160166b408c5dc15bd7c45c6e39d"
+  "manifest_sha256": "2b0b8a386982e9ec5ade7b4e05e616cfde68c75412c25ccf79f1ea2f3159a69b"
 }

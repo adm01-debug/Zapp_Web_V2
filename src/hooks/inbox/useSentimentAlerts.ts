@@ -5,6 +5,7 @@ import { playNotificationSound } from '@/utils/notificationSound';
 import { showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSound';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { log } from '@/lib/logger';
+import { claimNotificationEvent } from '@/lib/notificationDedupe';
 
 interface SentimentAlertData {
   contactId: string;
@@ -58,34 +59,35 @@ export function useSentimentAlerts() {
 
       // If alert was triggered, show local notification
       if (alertResult?.alerted) {
-        // Show toast notification
-        toast.error(
-          `⚠️ Alerta de Sentimento: ${contactName}`,
-          {
-            description: `Sentimento negativo (${sentimentScore}%) detectado em ${alertResult.consecutiveLow} análises consecutivas`,
-            duration: 10000,
-            action: {
-              label: 'Ver conversa',
-              onClick: () => {
-                log.debug('Navigate to conversation:', contactId);
+        // The request response and Realtime row can race. Exactly one consumer
+        // in this browser runtime renders the alert; other sessions still receive it.
+        if (claimNotificationEvent(`sentiment:${analysisId}`)) {
+          toast.error(
+            `⚠️ Alerta de Sentimento: ${contactName}`,
+            {
+              description: `Sentimento negativo (${sentimentScore}%) detectado em ${alertResult.consecutiveLow} análises consecutivas`,
+              duration: 10000,
+              action: {
+                label: 'Ver conversa',
+                onClick: () => {
+                  log.debug('Navigate to conversation:', contactId);
+                },
               },
-            },
-          }
-        );
-
-        // Play alert sound if not in quiet hours
-        if (!isQuietHours() && settings.soundEnabled && settings.slaBreachSound) {
-          playNotificationSound('alert');
-        }
-
-        // Show browser notification
-        if (settings.browserNotifications) {
-          await requestNotificationPermission();
-          showBrowserNotification(
-            '⚠️ Alerta de Sentimento Negativo',
-            `${contactName}: Sentimento em ${sentimentScore}% (${alertResult.consecutiveLow} análises consecutivas)`,
-            '/favicon.ico'
+            }
           );
+
+          if (!isQuietHours() && settings.soundEnabled && settings.slaBreachSound) {
+            playNotificationSound('alert');
+          }
+
+          if (settings.browserNotifications) {
+            await requestNotificationPermission();
+            showBrowserNotification(
+              '⚠️ Alerta de Sentimento Negativo',
+              `${contactName}: Sentimento em ${sentimentScore}% (${alertResult.consecutiveLow} análises consecutivas)`,
+              '/favicon.ico'
+            );
+          }
         }
 
         return { 

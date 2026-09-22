@@ -43,6 +43,9 @@ jobs:
       - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
+      - name: Validar subscriptions contra a publicacao Realtime
+        run: node scripts/db-audit/check-realtime-subscriptions.mjs
+
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: node --test scripts/db-audit/*.test.mjs
 
