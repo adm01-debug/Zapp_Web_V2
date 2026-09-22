@@ -43,11 +43,6 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 
-  // TalkXHelp / aria-label="Ajuda" is not implemented anywhere in this
-  // codebase yet (verified via grep across src/components/talkx and
-  // src/hooks/integrations — no TalkXHelp component, no "Ajuda" button in
-  // TalkXView). Written ahead of time so it can be enabled once both the
-  // help modal and an auth fixture exist; do not remove the skip until then.
   test.skip('help modal opens and closes', async ({ page }) => {
     await page.goto('/');
     await page
