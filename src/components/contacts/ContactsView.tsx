@@ -7,7 +7,7 @@ import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
-  Sparkles, RefreshCw,
+  Sparkles, RefreshCw, Upload,
 } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
@@ -22,6 +22,7 @@ import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
+import { ContactImportDialog } from './ContactImportDialog';
 import { useContactsViewState } from './useContactsViewState';
 
 export function ContactsView() {
@@ -96,6 +97,14 @@ export function ContactsView() {
             )}
             <motion.div whileTap={tapAnimation}>
               <Button
+                onClick={() => setIsImportOpen(true)}
+                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+              >
+                <Upload className="w-[18px] h-[18px]" />Importar CSV
+              </Button>
+            </motion.div>
+            <motion.div whileTap={tapAnimation}>
+              <Button
                 onClick={handleSync}
                 disabled={loading}
                 className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
@@ -133,6 +142,10 @@ export function ContactsView() {
         open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
         contactIds={selectedIds} allTags={uniqueTags}
         onComplete={() => { setSelectedIds([]); refetch(); }}
+      />
+      <ContactImportDialog
+        open={isImportOpen} onOpenChange={setIsImportOpen}
+        onImportComplete={handleSync}
       />
 
       <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />

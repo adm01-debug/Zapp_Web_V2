@@ -6176,6 +6176,13 @@ export type Database = {
             foreignKeyName: "talkx_blacklist_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_blacklist_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
             referencedRelation: "talkx_campaigns"
             referencedColumns: ["id"]
           },
@@ -6255,6 +6262,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "talkx_campaign_metrics"
             referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "talkx_campaign_events_campaign_id_fkey"
@@ -6488,6 +6502,13 @@ export type Database = {
             foreignKeyName: "talkx_conversions_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_conversions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
             referencedRelation: "talkx_campaigns"
             referencedColumns: ["id"]
           },
@@ -6581,6 +6602,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "talkx_campaign_metrics"
             referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "talkx_links_campaign_id_fkey"
@@ -6692,6 +6720,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "talkx_campaign_metrics"
             referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "talkx_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_campaign_metrics"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "talkx_recipients_campaign_id_fkey"
@@ -8358,11 +8393,13 @@ export type Database = {
       talkx_campaign_metrics: {
         Row: {
           campaign_id: string | null
+          campaign_name: string | null
           completed_at: string | null
           created_at: string | null
           delivered_count: number | null
           delivery_rate_pct: number | null
           duration_secs: number | null
+          id: string | null
           outcome_unknown_count: number | null
           replied_count: number | null
           reply_rate_pct: number | null
@@ -8375,11 +8412,13 @@ export type Database = {
         }
         Insert: {
           campaign_id?: string | null
+          campaign_name?: string | null
           completed_at?: string | null
           created_at?: string | null
           delivered_count?: number | null
           delivery_rate_pct?: never
           duration_secs?: never
+          id?: string | null
           outcome_unknown_count?: number | null
           replied_count?: never
           reply_rate_pct?: never
@@ -8392,11 +8431,13 @@ export type Database = {
         }
         Update: {
           campaign_id?: string | null
+          campaign_name?: string | null
           completed_at?: string | null
           created_at?: string | null
           delivered_count?: number | null
           delivery_rate_pct?: never
           duration_secs?: never
+          id?: string | null
           outcome_unknown_count?: number | null
           replied_count?: never
           reply_rate_pct?: never

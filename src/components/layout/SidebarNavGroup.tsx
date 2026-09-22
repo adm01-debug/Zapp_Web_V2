@@ -76,7 +76,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
         'shrink-0 transition-colors duration-200'
       )} />
       {!collapsed && (
-        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground truncate select-none">
+        <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground truncate select-none">
           {label}
         </span>
       )}
