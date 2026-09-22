@@ -285,8 +285,11 @@ export function buildDeploymentAttestation({
         `${expected.name}: verify_jwt mismatch; expected=${expected.verify_jwt}, remote=${remote.verify_jwt}`,
       );
     }
-    if (typeof remote.ezbr_sha256 !== 'string' || remote.ezbr_sha256.length < 16) {
+    if (!/^[a-f0-9]{64}$/.test(remote.ezbr_sha256 ?? '')) {
       throw new Error(`${expected.name}: remote bundle digest is missing`);
+    }
+    if (remote.status !== 'ACTIVE' || !Number.isInteger(remote.version) || remote.version < 1) {
+      throw new Error(`${expected.name}: remote function must be ACTIVE with a positive version`);
     }
     return {
       name: expected.name,

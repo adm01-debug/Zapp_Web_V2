@@ -78,6 +78,11 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Fixar coletor confiavel mesmo durante rollback
+        run: |
+          mkdir -p "$RUNNER_TEMP/edge-tooling"
+          git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
+
       - name: Validar gerador e manifesto de deployment
         run: |
           node --test scripts/edge-deploy/*.unit.mjs
@@ -211,6 +216,17 @@ jobs:
               --project-ref "$PROJECT_REF"
           fi
 
+      - name: Capturar inventario estrutural antes do deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          umask 077
+          mkdir -p "$RUNNER_TEMP/edge-deployment-evidence"
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
+            --manifest supabase/deployment-manifest.json \
+            --output "$RUNNER_TEMP/edge-deployment-evidence/edge-before.json"
+
       - name: Deploy
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -235,19 +251,14 @@ jobs:
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           cp supabase/deployment-manifest.json "$EVIDENCE_DIR/deployment-manifest.json"
-          curl --fail --silent --show-error \
-            "https://api.supabase.com/v1/projects/$PROJECT_REF/functions" \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            > "$RUNNER_TEMP/edge-functions-remote.json"
           SCOPE=${FN:-all}
-          node scripts/edge-deploy/verify-remote.mjs \
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" \
             --manifest supabase/deployment-manifest.json \
-            --remote "$RUNNER_TEMP/edge-functions-remote.json" \
+            --before "$EVIDENCE_DIR/edge-before.json" \
             --output "$EVIDENCE_DIR/edge-deployment-attestation.json" \
             --git-sha "$DEPLOYED_GIT_SHA" \
             --run-id "$GITHUB_RUN_ID" \
             --scope "$SCOPE"
-          rm "$RUNNER_TEMP/edge-functions-remote.json"
 
       - name: Executar smoke positivo e negativo por funcao
         env:
@@ -274,6 +285,9 @@ jobs:
             lines.push(`- Source manifest: \`${attestation.source_manifest_sha256}\``);
             lines.push(`- Remote functions reconciled: ${attestation.function_count}`);
             lines.push('- Remote bundle digests: captured from Supabase Management API');
+            lines.push(`- Stable samples: ${attestation.verification.consecutive_samples}; observation: ${attestation.verification.observation_ms} ms`);
+            lines.push(`- Changes outside scope: ${attestation.verification.changed_outside_scope.length}`);
+            lines.push('- Source/bundle binary equivalence: NOT proven (metadata-only attestation)');
             lines.push(`- Deployment scope: \`${attestation.deployment_scope}\``);
           }
           if (existsSync(smokePath)) {

@@ -11,7 +11,8 @@
  *     com o grants-baseline.json commitado (requer DESTINO_URL).
  *
  * Sem DESTINO_URL as pernas A e C sao puladas com aviso (mesma semantica do
- * check-migration-drift.mjs). Qualquer divergencia => exit 1.
+ * check-migration-drift.mjs), com resultado PARCIAL, nunca sucesso global.
+ * --require-live exige as tres pernas (CI viva). Qualquer divergencia => exit 1.
  *
  * Variaveis para testes offline:
  *   MIGRATIONS_DIR, FUNCTIONS_DIR, MANIFEST_PATH, GRANTS_SQL_PATH,
@@ -28,10 +29,13 @@ const MANIFEST_PATH = process.env.MANIFEST_PATH || 'supabase/deployment-manifest
 const GRANTS_SQL_PATH = process.env.GRANTS_SQL_PATH || 'scripts/db-audit/grants-baseline.sql';
 const GRANTS_BASELINE_PATH = process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json';
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
-const url = process.env.DESTINO_URL;
+const url = process.env.DESTINO_URL?.trim();
+const args = process.argv.slice(2);
+const requireLive = args.includes('--require-live');
 
 const FILE_NAME_RE = /^(\d{14})_[a-z0-9][a-z0-9_-]*\.sql$/;
 let failures = 0;
+let skipped = 0;
 
 function fail(msg) {
   failures += 1;
@@ -44,21 +48,22 @@ function md5(value) {
 
 function execPsqlSanitizado(args) {
   try {
-    return execFileSync(PSQL_BIN, args, { encoding: 'utf8' });
+    return execFileSync(PSQL_BIN, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
+      env: { ...process.env, PGDATABASE: url } });
   } catch (err) {
-    // err.message do execFileSync embute a linha de comando (com DESTINO_URL);
-    // relanca apenas o stderr do psql, truncado, sem credencial.
-    const detalhe = (err.stderr || '').toString().slice(0, 300).trim();
-    throw new Error(`psql falhou (exit ${err.status ?? '?'})${detalhe ? `: ${detalhe}` : ''}`);
+    // Nem stderr e seguro: libpq, proxies ou wrappers podem repetir credenciais.
+    const safe = new Error(`psql falhou (exit ${Number.isInteger(err.status) ? err.status : '?'})`);
+    safe.safeDiagnostic = true;
+    throw safe;
   }
 }
 
 function psql(sql) {
-  return execPsqlSanitizado([url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql]);
+  return execPsqlSanitizado(['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql]);
 }
 
 function psqlFile(file) {
-  return execPsqlSanitizado([url, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file]);
+  return execPsqlSanitizado(['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file]);
 }
 
 // Ordena chaves recursivamente: a igualdade nao pode depender da ordem de
@@ -74,22 +79,27 @@ function canon(valor) {
 
 // ── A) migrations ↔ ledger ─────────────────────────────────────────────
 function localVersions() {
-  return fs.readdirSync(MIGRATIONS_DIR)
-    .filter((f) => FILE_NAME_RE.test(f))
-    .map((f) => f.slice(0, 14))
-    .sort();
+  const files = fs.readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.sql')).map((entry) => entry.name);
+  for (const file of files) if (!FILE_NAME_RE.test(file)) fail('migration com nome invalido');
+  const versions = files.filter((file) => FILE_NAME_RE.test(file)).map((file) => file.slice(0, 14)).sort();
+  if (!versions.length) fail('nenhuma migration local');
+  if (new Set(versions).size !== versions.length) fail('versao de migration duplicada');
+  return versions;
 }
 
 function checkMigrations() {
+  const locais = localVersions();
   if (!url) {
+    skipped += 1;
     console.log('[migrations] pulado: DESTINO_URL ausente');
     return;
   }
-  const locais = localVersions();
   const md5Local = md5(`${locais.join('\n')}\n`);
   const out = psql(
     "SELECT count(*) || '|' || md5(string_agg(version, E'\\n' ORDER BY version) || E'\\n') FROM supabase_migrations.schema_migrations",
   ).trim();
+  if (!/^\d+\|[a-f0-9]{32}$/.test(out)) throw new Error('invalid ledger aggregate');
   const [countLedger, md5Ledger] = out.split('|');
   console.log(`[migrations] arquivos=${locais.length} ledger=${countLedger} md5_local=${md5Local} md5_ledger=${md5Ledger}`);
   if (String(locais.length) !== countLedger) {
@@ -103,7 +113,13 @@ function checkMigrations() {
 // ── B) edges: manifesto ↔ diretorios ───────────────────────────────────
 function checkEdges() {
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  if (!Array.isArray(manifest.functions) || !manifest.functions.length
+    || manifest.functions.some((fn) => !/^[a-z0-9][a-z0-9-]*$/.test(fn?.name ?? ''))) {
+    fail('manifesto de edges invalido ou vazio');
+    return;
+  }
   const nomesManifesto = new Set((manifest.functions || []).map((f) => f.name));
+  if (nomesManifesto.size !== manifest.functions.length) fail('nomes de edges duplicados no manifesto');
   const dirs = new Set(
     fs.readdirSync(FUNCTIONS_DIR, { withFileTypes: true })
       .filter((e) => e.isDirectory() && !e.name.startsWith('_'))
@@ -119,6 +135,7 @@ function checkEdges() {
 // ── C) grants baseline ─────────────────────────────────────────────────
 function checkGrants() {
   if (!url) {
+    skipped += 1;
     console.log('[grants] pulado: DESTINO_URL ausente');
     return;
   }
@@ -140,11 +157,13 @@ function checkGrants() {
 
 // Erros inesperados (psql, JSON invalido) viram falha CONTROLADA da perna —
 // o gate continua fail-closed, sem stack trace nem credencial no output.
+if (args.some((arg) => arg !== '--require-live')) fail('argumento desconhecido');
+if (requireLive && !url) fail('--require-live exige DESTINO_URL; verificacao viva indisponivel');
 for (const [nome, fn] of [['migrations', checkMigrations], ['edges', checkEdges], ['grants', checkGrants]]) {
   try {
     fn();
   } catch (err) {
-    fail(`[${nome}] erro inesperado: ${err.message}`);
+    fail(`[${nome}] erro inesperado: ${err.safeDiagnostic ? err.message : 'falha de leitura ou resposta invalida (detalhes omitidos)'}`);
   }
 }
 
@@ -152,4 +171,5 @@ if (failures > 0) {
   console.error(`Paridade tripla: ${failures} falha(s).`);
   process.exit(1);
 }
-console.log('OK: paridade tripla verificada.');
+if (skipped > 0) console.log(`PARCIAL: ${3 - skipped}/3 verificacoes executadas; banco NAO verificado. Use --require-live para exigir evidencia completa.`);
+else console.log('OK: paridade tripla verificada.');

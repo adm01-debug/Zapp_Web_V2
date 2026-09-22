@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-22T14:46:58Z",
+  "source_run": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35742672654",
+  "scope": "informational-inventory-not-a-ledger-exception-or-proof-of-application",
+  "historical_content_proven": false,
+  "entries": [
+    {
+      "version": "20260827120000",
+      "filename": "20260827120000_fk_indexes_backfill.sql",
+      "local_file_sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260827130000",
+      "filename": "20260827130000_fix_gmail_crypto_search_path_and_missing_key.sql",
+      "local_file_sha256": "ec32ba1d60244e69fe10e3604214d37d08d57f9c807f5c2aed64ea01012907f1",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260827140000",
+      "filename": "20260827140000_fix_sicoob_bridge_url_official_db.sql",
+      "local_file_sha256": "9305d082d21ebd62e4f1543ca271e129fff04750fd010bd953434426cb575159",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260827150000",
+      "filename": "20260827150000_sicoob_bridge_use_pg_net.sql",
+      "local_file_sha256": "3784a7816b8ba3f162f7bea835a5b458b3a026257174d0a21ff4aa5573377b92",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260827160000",
+      "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
+      "local_file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260828000000",
+      "filename": "20260828000000_guard_secdef_batch.sql",
+      "local_file_sha256": "a347b928203d40639ff2340487cb068cfaa34bee56e5adfaa8b8f5364f20ecff",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260901000002",
+      "filename": "20260901000002_messages_unique_dedup_index.sql",
+      "local_file_sha256": "2243dfa76a5400c2b73a05b055dc56ddd751f1adee01a76c41e6089f386695c3",
+      "evidence_class": "live-guard-warning-no-historical-content"
+    },
+    {
+      "version": "20260901200001",
+      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
+      "local_file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260902000200",
+      "filename": "20260902000200_fix_cron_avatars_refresh_key.sql",
+      "local_file_sha256": "b24a05f478f55fd29dfa5b8f6ed2c7e733e3a04a9a89b58e22db382b65877034",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260902000700",
+      "filename": "20260902000700_fix_search_contacts_order_tiebreaker.sql",
+      "local_file_sha256": "2f8e35056034bf4914da6d05e4e4de9f6dfa2d4c719b0118d544c9a6ca2019c7",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260902023200",
+      "filename": "20260902023200_consolidate_rls_select_messages_contacts.sql",
+      "local_file_sha256": "feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c",
+      "evidence_class": "live-guard-warning-no-historical-content"
+    },
+    {
+      "version": "20260902023300",
+      "filename": "20260902023300_add_check_constraints_high_write_tables.sql",
+      "local_file_sha256": "08a3160aa491ebd24e494f68b3db0c151dea5ae62222cd51b4b6b84384c7ed55",
+      "evidence_class": "live-guard-warning-no-historical-content"
+    },
+    {
+      "version": "20260902120000",
+      "filename": "20260902120000_team_chat_v3_parity_reactions_status_departments.sql",
+      "local_file_sha256": "0c19508fa9cf8522cea46d22c55b0fce91aa2070db0d2abf081811d8620ec790",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260906000001",
+      "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
+      "local_file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
+      "evidence_class": "name-and-file-pinned"
+    },
+    {
+      "version": "20260907200000",
+      "filename": "20260907200000_add_get_conversation_tab_counts_rpc.sql",
+      "local_file_sha256": "d16c976d9ea47943e46fbd9305364af1e2367945c97a8ae5043fa37890d76336",
+      "evidence_class": "live-guard-warning-no-historical-content"
+    }
+  ]
+}
