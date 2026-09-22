@@ -22,6 +22,7 @@ import {
   ChevronDown,
   SlidersHorizontal,
   CheckSquare,
+  Heart,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -40,6 +41,9 @@ import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilte
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
+import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
+import { CatalogFavoritesTab } from './CatalogFavoritesTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
@@ -130,7 +134,6 @@ export const ExternalProductManagement: React.FC = () => {
       return next;
     });
   }, []);
-  // clearSelection usa setSelectedIds (estável, vem do useState) — sem dep extra necessário.
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
   const toggleSelectAll = useCallback(() => {
     const pageIds = products.map((p) => p.id);
@@ -151,16 +154,11 @@ export const ExternalProductManagement: React.FC = () => {
   }, [products, selectedIds]);
   const allPageSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
 
-  const [bulkSendProduct, setBulkSendProduct] = useState<ExternalProduct | null>(null);
-  const handleBulkSend = useCallback(() => {
-    const firstId = [...selectedIds][0];
-    const p = products.find((x) => x.id === firstId);
-    if (p) setBulkSendProduct(p);
-  }, [selectedIds, products]);
+  const [bulkSendOpen, setBulkSendOpen] = useState(false);
+  const handleBulkSend = useCallback(() => { setBulkSendOpen(true); }, []);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // setPage: usa setSelectedIds directamente (sem ref) — setSelectedIds é estável
   const setPage = useCallback((p: number | ((prev: number) => number)) => {
     setPageState((prev) => {
       const next = typeof p === 'function' ? p(prev) : p;
@@ -171,7 +169,6 @@ export const ExternalProductManagement: React.FC = () => {
       } catch { /* ignore */ }
       return next;
     });
-    // limpa seleção ao trocar de página; setSelectedIds é estável e não exige dep
     setSelectedIds(new Set());
   }, []);
 
@@ -291,6 +288,19 @@ export const ExternalProductManagement: React.FC = () => {
   const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
 
   return (
+    <Tabs defaultValue="produtos" className="w-full min-w-0">
+      <TabsList className="mb-4 h-9">
+        <TabsTrigger value="produtos" className="gap-1.5 text-xs">
+          <Package className="w-3.5 h-3.5" />
+          Produtos
+        </TabsTrigger>
+        <TabsTrigger value="favoritos" className="gap-1.5 text-xs">
+          <Heart className="w-3.5 h-3.5" />
+          Favoritos
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="produtos">
     <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
     <div className="space-y-6 min-w-0">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
@@ -581,16 +591,21 @@ export const ExternalProductManagement: React.FC = () => {
         />
       )}
 
-      {bulkSendProduct && (
-        <SendProductDialog
-          product={bulkSendProduct}
-          open={!!bulkSendProduct}
-          onOpenChange={(open) => { if (!open) { setBulkSendProduct(null); clearSelection(); } }}
-        />
-      )}
+      <CatalogBulkSendDialog
+        products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
+        open={bulkSendOpen}
+        onOpenChange={setBulkSendOpen}
+        onSent={clearSelection}
+      />
     </div>
 
     <aside className="catalog-rail sticky top-4 hidden xl:block" />
     </div>
+      </TabsContent>
+
+      <TabsContent value="favoritos">
+        <CatalogFavoritesTab />
+      </TabsContent>
+    </Tabs>
   );
 };
