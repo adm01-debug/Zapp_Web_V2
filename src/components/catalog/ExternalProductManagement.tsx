@@ -130,6 +130,7 @@ export const ExternalProductManagement: React.FC = () => {
       return next;
     });
   }, []);
+  // clearSelection usa setSelectedIds (estável, vem do useState) — sem dep extra necessário.
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
   const toggleSelectAll = useCallback(() => {
     const pageIds = products.map((p) => p.id);
@@ -152,19 +153,14 @@ export const ExternalProductManagement: React.FC = () => {
 
   const [bulkSendProduct, setBulkSendProduct] = useState<ExternalProduct | null>(null);
   const handleBulkSend = useCallback(() => {
-    // MVP: abre SendProductDialog para o primeiro produto selecionado.
-    // E48 deve estender para multi-send (envio sequencial ou dialog de batch).
     const firstId = [...selectedIds][0];
     const p = products.find((x) => x.id === firstId);
     if (p) setBulkSendProduct(p);
   }, [selectedIds, products]);
 
-  // limpa seleção ao mudar de página ou filtro
-  const clearSelectionRef = useRef(clearSelection);
-  clearSelectionRef.current = clearSelection;
-
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // setPage: usa setSelectedIds directamente (sem ref) — setSelectedIds é estável
   const setPage = useCallback((p: number | ((prev: number) => number)) => {
     setPageState((prev) => {
       const next = typeof p === 'function' ? p(prev) : p;
@@ -175,7 +171,8 @@ export const ExternalProductManagement: React.FC = () => {
       } catch { /* ignore */ }
       return next;
     });
-    clearSelectionRef.current();
+    // limpa seleção ao trocar de página; setSelectedIds é estável e não exige dep
+    setSelectedIds(new Set());
   }, []);
 
   const setPageSize = useCallback((ps: PageSizeOption) => {
@@ -413,7 +410,6 @@ export const ExternalProductManagement: React.FC = () => {
           </Button>
         </div>
 
-        {/* E47: botão selecionar (ativa modo seleção) */}
         <Button
           variant={selectedIds.size > 0 ? 'secondary' : 'outline'}
           size="sm"
@@ -566,7 +562,6 @@ export const ExternalProductManagement: React.FC = () => {
         onClear={() => { setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' }); setPage(0); }}
       />
 
-      {/* E47: barra de ações em massa */}
       {selectedIds.size > 0 && (
         <CatalogBulkBar
           count={selectedIds.size}
@@ -586,7 +581,6 @@ export const ExternalProductManagement: React.FC = () => {
         />
       )}
 
-      {/* E47: bulk send — usa SendProductDialog com primeiro produto selecionado (MVP) */}
       {bulkSendProduct && (
         <SendProductDialog
           product={bulkSendProduct}
