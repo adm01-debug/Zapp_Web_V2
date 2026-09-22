@@ -1,5 +1,12 @@
 # Execucao das recomendacoes da triagem de paridade
 
+> Atualizacao em 22/09, apos 18:33 UTC: as PRs #495, #496, #497, #500 e #509
+> ja estao integradas. O guard vivo passou em `0933e01b` e `102a5001`, com
+> 447 migrations conciliadas, estrutura/grants/tipos sincronizados e coleta
+> runtime executada. As pendencias 1 e 2 da secao 5 foram atendidas para
+> esses snapshots. [Evidencias e limites atuais](./VALIDACAO_POS_MERGE_LIBPQ_2026-09-22.md).
+> As contagens e estados abaixo permanecem como historico da rodada original.
+
 Data: 22/09/2026. Base inicial `c25e290e`, atualizada sem sobrescrita para
 `c54550ce`. Destino canonico: `tnnnlkbymytvtqngbbqh`.
 
