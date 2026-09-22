@@ -54,7 +54,7 @@ export function useExternalMessages(remoteJid: string | null) {
       return evoMessages.map(evolutionToRealtimeMessage);
     },
     enabled: !!remoteJid,
-    refetchInterval: !!remoteJid ? POLL_INTERVAL : false,
+    refetchInterval: remoteJid ? POLL_INTERVAL : false,
     staleTime: POLL_INTERVAL - 1000,
   });
 

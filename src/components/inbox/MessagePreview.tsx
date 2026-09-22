@@ -61,7 +61,7 @@ export function MessagePreview({ content, className }: MessagePreviewProps) {
     if (!formattedContent) return [];
 
     const segments: { type: 'text' | 'bold' | 'italic' | 'code' | 'link'; content: string; url?: string }[] = [];
-    let remaining = formattedContent;
+    const remaining = formattedContent;
 
     // Process formatting patterns
     const patterns = [
