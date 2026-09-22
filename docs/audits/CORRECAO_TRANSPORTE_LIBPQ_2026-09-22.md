@@ -1,5 +1,11 @@
 # Correcao do transporte libpq — 22/09/2026
 
+> Atualizacao pos-merge: a PR #509 foi integrada em `0933e01b` pelo owner.
+> O DB Live Guard passou nesse SHA e novamente em `102a5001`; os artefatos
+> foram examinados, incluindo runtime `PARTIAL` com autovacuum `VERIFIED`.
+> Ver [validacao pos-merge](./VALIDACAO_POS_MERGE_LIBPQ_2026-09-22.md).
+> O texto abaixo preserva o diagnostico e os limites da rodada original.
+
 ## Incidente confirmado, sem inferencia de drift do banco
 
 As PRs [#496](https://github.com/adm01-debug/Zapp_Web_V2/pull/496) e
@@ -77,7 +83,9 @@ encobrir a falha. Nenhuma funcao produtiva foi redeployada nesta rodada.
 4. Confirmar quatro tabelas/autovacuum; nao promover inventarios de Cron,
    Storage e Realtime a baselines aprovados por simples observacao.
 
-Enquanto o novo run nao terminar, a recuperacao produtiva permanece pendente.
+Na publicacao original, a recuperacao produtiva permanecia pendente do novo run.
+Esse aceite do transporte foi posteriormente cumprido nos runs citados na
+validacao pos-merge; nao equivale a fechar as limitacoes seguintes.
 Backup restaurado, E2E autenticado e equivalencia binaria fonte/bundle continuam
 fora da evidencia coletada. Os 35 TODO se distribuem em 32 asserts historicos
 de Team Chat e 3 verificacoes RLS/CI; nao representam automaticamente 35 bugs
