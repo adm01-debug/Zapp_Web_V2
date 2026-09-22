@@ -1350,7 +1350,7 @@
     },
     {
       "path": "src/hooks/business/useQueueGoals.ts",
-      "sha256": "cf903ab3f617561ddc3bf5b5d47d04eb05d3d9b8c57e7ecea0fa8c77a80d0ada"
+      "sha256": "55740e400663d790b0b403b277546471dfa1764d3e1d8360e2aaf6a0812ddc52"
     },
     {
       "path": "src/hooks/business/useQueues.ts",
@@ -1438,7 +1438,7 @@
     },
     {
       "path": "src/hooks/gamification/useLeaderboard.ts",
-      "sha256": "6a062501385f8e8ac0bbc5b9c1693c4887225ec561507cadaeef267925a9779c"
+      "sha256": "eb40060e24386d0b7ad04c470968cc8fdd5f22807305f8f50470970ae52974e3"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -13494,14 +13494,14 @@
     },
     {
       "file": "src/hooks/business/useQueueGoals.ts",
-      "line": 33,
+      "line": 34,
       "column": 5,
-      "endLine": 33,
+      "endLine": 34,
       "endColumn": 15,
       "severity": 2,
       "ruleId": "react-hooks/immutability",
       "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `fetchGoals` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/business/useQueueGoals.ts:33:5 31 | 32 | useEffect(() => { > 33 | fetchGoals(); | ^^^^^^^^^^ `fetchGoals` accessed before it is declared 34 | 35 | const channel = supabase 36 | .channel('queue-goals-changes') <ROOT>/src/hooks/business/useQueueGoals.ts:45:3 43 | }, []); 44 | > 45 | const fetchGoals = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 46 | try { | ^^^^^^^^^ > 47 | const { data, error } = await supabase … | ^^^^^^^^^ > 63 | } | ^^^^^^^^^ > 64 | }; | ^^^^^ `fetchGoals` is declared here 65 | 66 | const saveGoal = async (queueId: string, goalData: Partial<QueueGoal>) => { 67 | try {",
+      "message": "Error: Cannot access variable before it is declared `fetchGoals` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/business/useQueueGoals.ts:34:5 32 | 33 | useEffect(() => { > 34 | fetchGoals(); | ^^^^^^^^^^ `fetchGoals` accessed before it is declared 35 | 36 | const channel = supabase 37 | .channel(uniqueRealtimeTopic('queue-goals-changes')) <ROOT>/src/hooks/business/useQueueGoals.ts:46:3 44 | }, []); 45 | > 46 | const fetchGoals = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 47 | try { | ^^^^^^^^^ > 48 | const { data, error } = await supabase … | ^^^^^^^^^ > 64 | } | ^^^^^^^^^ > 65 | }; | ^^^^^ `fetchGoals` is declared here 66 | 67 | const saveGoal = async (queueId: string, goalData: Partial<QueueGoal>) => { 68 | try {",
       "spanHash": "5d2a806346ba978a5f891c2dbea67974aea9d4d01bcefc3d882ab23e9c10327b",
       "lineHash": "935d1a6afcb11b920dac061984e65d8f0eaab9b0a9aad21bcf9d8d95c1076764",
       "contextHash": "ecd23e7ff40580f1182bc8d368cc7b572994d8200a88fa3e06423e26671a9b43"
@@ -14124,14 +14124,14 @@
     },
     {
       "file": "src/hooks/gamification/useLeaderboard.ts",
-      "line": 81,
+      "line": 82,
       "column": 5,
-      "endLine": 81,
+      "endLine": 82,
       "endColumn": 21,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/gamification/useLeaderboard.ts:81:5 79 | 80 | useEffect(() => { > 81 | fetchLeaderboard(); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 82 | const channel = supabase 83 | .channel('leaderboard-updates') 84 | .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_stats' }, () => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/gamification/useLeaderboard.ts:82:5 80 | 81 | useEffect(() => { > 82 | fetchLeaderboard(); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 83 | const channel = supabase 84 | .channel(uniqueRealtimeTopic('leaderboard-updates')) 85 | .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_stats' }, () => {",
       "spanHash": "fefa0748f42be541ebed7dc7410e38b0e4b32943c863936f39ca0db7b92ff0f4",
       "lineHash": "9e3e68175d22879ad05d75202c84a938605c5e9b23a663846e2b595b5e754948",
       "contextHash": "eeaa150af60fc7b3a4386a6185ed3b43b3bffe19281fb22c591c436e8aead950"
