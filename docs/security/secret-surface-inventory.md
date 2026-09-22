@@ -39,7 +39,7 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
 | `VITE_CRM_INTEGRATION_ENABLED` | n/a | `.env.production`/bundle | flag pública | n/a |
 | `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`) | URL pública / chave secreta server-side | Dashboard do projeto CRM |
 | `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`) | obrigatório; gateway recusa anon key | Dashboard do projeto CRM |
-| `EXTERNAL_SUPABASE_ANON_KEY` | banco externo legado | Edge env (`external-db-proxy`) | legado isolado; não usado por `crm-integration` | Dashboard do banco externo |
+| `EVOLUTION_VPS_SUPABASE_URL` / `EVOLUTION_VPS_SUPABASE_ANON_KEY` | Supabase self-hosted (`supabase.atomicabr.com.br`) | Edge env (`external-db-proxy`) | legado isolado; renomeado de `EXTERNAL_SUPABASE_*` em 2026-09-22 pois esse prefixo é sobrescrito a cada deploy de `crm-integration` (colisão causava 502 por mismatch projeto/chave) | Dashboard do Supabase self-hosted / Portainer |
 | `PROMOGIFTS_SUPABASE_URL` / `PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY` | a confirmar | Edge env + GitHub Actions | servidor privilegiado; nunca frontend | Dashboard do projeto PromoGifts (owner a confirmar) |
 | (histórico) chaves `anon` do projeto `allrjhkpuscmgbsnmjlv` | legado | `.env` removido do HEAD (F-05) | público | n/a |
 

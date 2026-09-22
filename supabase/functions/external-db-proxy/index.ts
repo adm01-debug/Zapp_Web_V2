@@ -58,8 +58,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Unauthorized' }, 401, corsHeaders)
     }
 
-    const url = Deno.env.get('EXTERNAL_SUPABASE_URL')
-    const key = Deno.env.get('EXTERNAL_SUPABASE_ANON_KEY')
+    // Dedicated secret names (not EXTERNAL_SUPABASE_*): that prefix is
+    // owned by crm-integration's deploy-functions.yml preflight, which
+    // overwrites EXTERNAL_SUPABASE_URL on every crm-integration/full deploy.
+    // Sharing it here silently pointed this proxy at the CRM project while
+    // still using the self-hosted (Evolution VPS) anon key, producing 502s.
+    const url = Deno.env.get('EVOLUTION_VPS_SUPABASE_URL')
+    const key = Deno.env.get('EVOLUTION_VPS_SUPABASE_ANON_KEY')
 
     // If external DB is not configured, return empty result gracefully
     // (avoids 503 errors that break the UI when the integration is optional)
