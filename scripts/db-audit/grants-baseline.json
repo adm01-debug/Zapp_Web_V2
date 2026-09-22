@@ -11,7 +11,7 @@
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-16",
+    "generated_at": "2026-09-20",
     "anon_table_select": [
         "agent_achievements",
         "agent_skills",
@@ -125,9 +125,6 @@
         "talkx_campaign_events",
         "talkx_campaign_metrics",
         "talkx_campaigns",
-        "talkx_conversions",
-        "talkx_link_clicks",
-        "talkx_links",
         "talkx_recipients",
         "talkx_segments",
         "talkx_settings",
