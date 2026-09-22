@@ -40,6 +40,7 @@ import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilte
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
+import { CatalogBulkSendDialog } from './CatalogBulkSendDialog';
 import { cn } from '@/lib/utils';
 
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
@@ -151,12 +152,8 @@ export const ExternalProductManagement: React.FC = () => {
   }, [products, selectedIds]);
   const allPageSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
 
-  const [bulkSendProduct, setBulkSendProduct] = useState<ExternalProduct | null>(null);
-  const handleBulkSend = useCallback(() => {
-    const firstId = [...selectedIds][0];
-    const p = products.find((x) => x.id === firstId);
-    if (p) setBulkSendProduct(p);
-  }, [selectedIds, products]);
+  const [bulkSendOpen, setBulkSendOpen] = useState(false);
+  const handleBulkSend = useCallback(() => { setBulkSendOpen(true); }, []);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -581,13 +578,12 @@ export const ExternalProductManagement: React.FC = () => {
         />
       )}
 
-      {bulkSendProduct && (
-        <SendProductDialog
-          product={bulkSendProduct}
-          open={!!bulkSendProduct}
-          onOpenChange={(open) => { if (!open) { setBulkSendProduct(null); clearSelection(); } }}
-        />
-      )}
+      <CatalogBulkSendDialog
+        products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
+        open={bulkSendOpen}
+        onOpenChange={setBulkSendOpen}
+        onSent={clearSelection}
+      />
     </div>
 
     <aside className="catalog-rail sticky top-4 hidden xl:block" />
