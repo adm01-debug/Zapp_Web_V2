@@ -72,7 +72,7 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
       aria-label={`${label} — ${isOpen ? 'recolher' : 'expandir'}`}
     >
       <GroupIcon className={cn(
-        collapsed ? 'w-[11px] h-[11px]' : 'w-[13px] h-[13px]',
+        collapsed ? 'w-[11px] h-[11px]' : cn('w-6 h-6', !hasActiveItem && 'text-sidebar-foreground/30'),
         'shrink-0 transition-colors duration-200'
       )} />
       {!collapsed && (

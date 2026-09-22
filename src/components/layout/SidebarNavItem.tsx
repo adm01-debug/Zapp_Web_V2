@@ -72,8 +72,8 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         </>
       )}
       <Icon className={cn(
-        'w-[18px] h-[18px] relative z-10 shrink-0 transition-transform duration-150',
-        !isActive && 'group-hover/item:scale-110'
+        'w-[18px] h-[18px] relative z-10 shrink-0 text-primary transition-transform duration-150',
+        isActive ? 'scale-110' : 'group-hover/item:scale-110'
       )} />
       {!collapsed && (
         <span className="relative z-10 truncate">{item.label}</span>

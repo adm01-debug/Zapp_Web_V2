@@ -63,7 +63,7 @@ export function ContactViewSwitcher({
                 onClick={() => onViewModeChange(value)}
                 title={label}
                 className={cn(
-                  'relative isolate h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
+                  'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
                   active ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
               >
@@ -79,7 +79,7 @@ export function ContactViewSwitcher({
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  'relative isolate h-9 px-4 rounded-[10px] text-[15px] font-medium flex items-center gap-2 transition-colors',
+                  'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
                   isSecondaryActive ? 'text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
                 title="Mais visualizações"
@@ -116,7 +116,7 @@ export function ContactViewSwitcher({
       {/* Colunas + Agrupamento */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border-border text-[15px] font-medium gap-2">
+          <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border-border text-sm font-medium gap-2">
             <Settings2 className="w-[18px] h-[18px]" />
             <span className="hidden sm:inline">Colunas</span>
           </Button>
