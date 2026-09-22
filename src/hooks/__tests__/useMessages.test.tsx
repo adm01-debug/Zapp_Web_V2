@@ -34,7 +34,9 @@ function makeQueryChain(data: any[] = [], error: any = null) {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          range: rangeMock,
+          order: vi.fn().mockReturnValue({
+            range: rangeMock,
+          }),
         }),
       }),
     }),
@@ -60,9 +62,11 @@ describe('useMessages', () => {
   });
 
   it('fetches messages when contactId is provided', async () => {
+    // ChatService.fetchMessages busca em ordem DESC (mais recente primeiro) e
+    // reverte para cronológica antes de devolver — o mock simula o retorno cru do banco.
     const mockMessages = [
-      { id: 'msg-1', contact_id: 'c1', content: 'Hello', sender: 'contact', created_at: '2024-01-01' },
-      { id: 'msg-2', contact_id: 'c1', content: 'Hi!', sender: 'agent', created_at: '2024-01-01' },
+      { id: 'msg-2', contact_id: 'c1', content: 'Hi!', sender: 'agent', created_at: '2024-01-01T10:01:00Z' },
+      { id: 'msg-1', contact_id: 'c1', content: 'Hello', sender: 'contact', created_at: '2024-01-01T10:00:00Z' },
     ];
     mockFrom.mockReturnValue(makeQueryChain(mockMessages));
 
@@ -127,7 +131,9 @@ describe('useMessages', () => {
       select: vi.fn(() => ({
         eq: vi.fn((_: string, contact: string) => ({
           order: vi.fn(() => ({
-            range: vi.fn(() => contact === 'c1' ? c1Promise : c2Promise),
+            order: vi.fn(() => ({
+              range: vi.fn(() => contact === 'c1' ? c1Promise : c2Promise),
+            })),
           })),
         })),
       })),
@@ -158,11 +164,11 @@ describe('useMessages', () => {
     let calls = 0;
     mockFrom.mockImplementation(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({ order: vi.fn(() => ({
+        eq: vi.fn(() => ({ order: vi.fn(() => ({ order: vi.fn(() => ({
           range: vi.fn(() => ++calls === 1
             ? first
             : Promise.resolve({ data: [{ id: 'fresh', contact_id: 'c1', content: 'Fresh', sender: 'contact', created_at: '2024-01-02' }], error: null })),
-        })) })),
+        })) })) })),
       })),
     }));
 
