@@ -40,6 +40,17 @@ jobs:
         with:
           node-version: '24'
 
+      # O guard de subscriptions usa a API AST do TypeScript para rejeitar
+      # nomes de tabela dinamicos sem recorrer a regex permissiva. O checkout
+      # limpo do runner nao possui essa devDependency ate o install frozen.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: Instalar dependencias do guard AST
+        run: bun install --frozen-lockfile
+
       - name: Validar .from() e .rpc() contra o catalogo
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
