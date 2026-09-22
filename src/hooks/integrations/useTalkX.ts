@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 // A função é introduzida pela migration desta mesma mudança. O types-sync gera
 // a assinatura canônica somente depois que o banco canônico receber a migration.
@@ -146,7 +147,7 @@ export function useTalkX() {
   // E27 — Canal realtime talkx:campaigns (UPDATE pontual + INSERT invalida)
   useEffect(() => {
     const channel = supabase
-      .channel('talkx:campaigns')
+      .channel(uniqueRealtimeTopic('talkx:campaigns'))
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns' },

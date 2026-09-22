@@ -11,8 +11,23 @@ interface ExternalProductCardProps {
   onSend?: (product: ExternalProduct) => void;
   /** compact = modo lista; sem compact = grade */
   compact?: boolean;
+  /** E43: favoritos */
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
-export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({ product, onSend, compact = false }) => (
-  <CatalogProductCard product={product} onSend={onSend} mode={compact ? 'list' : 'grade'} />
+export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
+  product,
+  onSend,
+  compact = false,
+  isFavorite = false,
+  onToggleFavorite,
+}) => (
+  <CatalogProductCard
+    product={product}
+    onSend={onSend}
+    mode={compact ? 'list' : 'grade'}
+    isFavorite={isFavorite}
+    onToggleFavorite={onToggleFavorite}
+  />
 );
