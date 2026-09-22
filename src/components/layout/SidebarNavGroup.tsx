@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarNavItem, type NavItemConfig } from './SidebarNavItem';
@@ -80,10 +80,10 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
           {label}
         </span>
       )}
-      <ChevronRight className={cn(
-        'transition-transform duration-250 ease-out shrink-0',
-        collapsed ? 'w-[8px] h-[8px]' : 'w-[11px] h-[11px] ml-auto opacity-60 group-hover/trigger:opacity-100',
-        effectiveOpen && 'rotate-90'
+      <ChevronDown className={cn(
+        'transition-transform duration-300 shrink-0',
+        collapsed ? 'w-[8px] h-[8px]' : 'w-3.5 h-3.5 ml-auto text-sidebar-foreground/30',
+        effectiveOpen && 'rotate-180'
       )} />
     </button>
   );

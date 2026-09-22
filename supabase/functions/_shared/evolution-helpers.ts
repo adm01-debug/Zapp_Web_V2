@@ -301,6 +301,23 @@ export async function fetchProfilePicFromApi(instance: string, phone: string): P
   } catch { return null; }
 }
 
+/**
+ * Caminho fixo por telefone dentro do bucket avatars.
+ *
+ * Antes o nome levava Date.now e persistProfilePicture apagava os arquivos
+ * antigos do numero ANTES de subir o novo. Dois webhooks simultaneos do mesmo
+ * contato - contacts.upsert e messages.upsert na criacao - apagavam o arquivo
+ * um do outro, e o UPDATE que chegava por ultimo gravava no contato a URL de um
+ * objeto ja removido. 99 contatos ficaram sem foto entre 28/08 e 04/09/2026,
+ * com mediana de 833ms entre os dois arquivos.
+ *
+ * Com caminho fixo o objeto e sobrescrito, nunca removido: nenhuma URL gravada
+ * aponta para arquivo inexistente, qualquer que seja a ordem das chamadas.
+ */
+export function avatarObjectPath(phone: string): string {
+  return `avatars/${phone.replace(/\D/g, '')}.jpg`;
+}
+
 // deno-lint-ignore no-explicit-any
 export async function persistProfilePicture(supabase: any, phone: string, profilePicUrl: string): Promise<string | null> {
   try {
@@ -310,13 +327,7 @@ export async function persistProfilePicture(supabase: any, phone: string, profil
     const bytes = new Uint8Array(blob);
     if (bytes.length < 100) return null;
 
-    const fileName = `${phone}_${Date.now()}.jpg`;
-    const storagePath = `avatars/${fileName}`;
-
-    const { data: oldFiles } = await supabase.storage.from('avatars').list('avatars', { search: phone });
-    if (oldFiles?.length) {
-      await supabase.storage.from('avatars').remove(oldFiles.map((f: { name: string }) => `avatars/${f.name}`));
-    }
+    const storagePath = avatarObjectPath(phone);
 
     const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
       contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
@@ -324,7 +335,8 @@ export async function persistProfilePicture(supabase: any, phone: string, profil
     if (error) { console.error('Avatar upload error:', error); return null; }
 
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
-    return urlData.publicUrl;
+    // ?v= quebra o cache do CDN e do navegador, ja que o caminho nao muda mais
+    return `${urlData.publicUrl}?v=${Date.now()}`;
   } catch (err) { console.error('Avatar persist error:', err); return null; }
 }
 

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
+import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -79,8 +80,7 @@ Deno.serve(async (req) => {
           const bytes = new Uint8Array(blob);
           if (bytes.length < 100) { failed++; await markAttempted(); return; }
 
-          const fileName = `${contact.phone}_${Date.now()}.jpg`;
-          const storagePath = `avatars/${fileName}`;
+          const storagePath = avatarObjectPath(contact.phone);
           const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
             contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
           });
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
 
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
           await supabase.from('contacts').update({
-            avatar_url: urlData.publicUrl,
+            avatar_url: `${urlData.publicUrl}?v=${Date.now()}`,
             avatar_fetch_attempted_at: new Date().toISOString(),
           }).eq('id', contact.id);
           updated++;
