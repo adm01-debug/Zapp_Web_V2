@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,8 +17,6 @@ import {
   Grid3X3,
   List,
   X,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   RefreshCw,
   ChevronDown,
@@ -35,23 +33,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useExternalCatalog, useCatalogStats, ExternalProduct, type CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
-import { toast } from '@/hooks/ui/use-toast';
 import { SendProductDialog } from './SendProductDialog';
-import { ModuleHeader, fmtAgo, AlertCard } from '@/components/talkx/talkxShared';
+import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { useCatalogFavorites } from '@/hooks/integrations/useCatalogFavorites';
 import { cn } from '@/lib/utils';
 
-/** Chip "Sincronizado ha X" - mesmo padrao ponto+texto ja usado em
- * TalkXSegments/TalkXCampaignRunning (nenhum componente StatusChip
- * generico existe no projeto pra reusar). >24h vira tom neutro com
- * data/hora em vez do relativo. Date.now() so roda no inicializador
- * preguicoso do useState (unica excecao sancionada pela regra
- * react-hooks/purity para leitura de valor impuro) - o caller usa
- * key={lastSyncAt} pra forcar recalculo quando o valor muda, sem
- * precisar de effect + setState (react-hooks/set-state-in-effect). */
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
   const [isFresh] = useState(() => {
     if (!lastSyncAt) return true;
@@ -72,8 +61,16 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
   );
 }
 
+// E45: tamanhos de página disponíveis
+const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
+type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
 
-const PAGE_SIZE = 24;
+function readPageParam(): number {
+  try {
+    const p = parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
+    return isNaN(p) || p < 1 ? 0 : p - 1;
+  } catch { return 0; }
+}
 
 export const ExternalProductManagement: React.FC = () => {
   const { data: stats, isLoading: statsLoading, error: statsError } = useCatalogStats();
@@ -105,7 +102,13 @@ export const ExternalProductManagement: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('catalog.view') as 'grid' | 'list') ?? 'grid'
   );
-  const [page, setPage] = useState(0);
+  // E45: página inicializa do ?page= na URL
+  const [page, setPageState] = useState(() => readPageParam());
+  // E45: tamanho de página persistido em sessionStorage
+  const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
+    const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
+    return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
+  });
   const [orderBy, setOrderBy] = useState<string>(() => sessionStorage.getItem('catalog.order_by') ?? 'name');
   const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
@@ -117,14 +120,37 @@ export const ExternalProductManagement: React.FC = () => {
   // E43: favoritos
   const { isFav, toggleFavorite } = useCatalogFavorites();
 
+  // E45: ref para scroll-to-top no topo do grid ao trocar de página
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // helpers para setar página + URL (E45)
+  const setPage = useCallback((p: number | ((prev: number) => number)) => {
+    setPageState((prev) => {
+      const next = typeof p === 'function' ? p(prev) : p;
+      try {
+        const url = new URL(window.location.href);
+        if (next === 0) { url.searchParams.delete('page'); } else { url.searchParams.set('page', String(next + 1)); }
+        history.replaceState(null, '', url.toString());
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const setPageSize = useCallback((ps: PageSizeOption) => {
+    setPageSizeState(ps);
+    sessionStorage.setItem('catalog.page_size', String(ps));
+    setPage(0);
+  }, [setPage]);
+
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
-  const buildFilters = useCallback((pageOverride?: number): Record<string, unknown> => {
+  const buildFilters = useCallback((pageOverride?: number, sizeOverride?: number): Record<string, unknown> => {
     const currentPage = pageOverride ?? page;
+    const currentSize = sizeOverride ?? pageSize;
     const params: Record<string, unknown> = {
-      limit: PAGE_SIZE,
-      offset: currentPage * PAGE_SIZE,
+      limit: currentSize,
+      offset: currentPage * currentSize,
       only_in_stock: onlyInStock,
     };
     if (search) params.search = search;
@@ -139,7 +165,7 @@ export const ExternalProductManagement: React.FC = () => {
     if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
     if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
     return params;
-  }, [page, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
+  }, [page, pageSize, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
   useEffect(() => {
     fetchCategories();
@@ -160,14 +186,18 @@ export const ExternalProductManagement: React.FC = () => {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
+  }, [search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize]);
 
+  // E45: scroll-to-top ao trocar de página
   useEffect(() => {
-    if (page > 0) fetchProducts(buildFilters());
+    if (page > 0) {
+      fetchProducts(buildFilters());
+      gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
+  const totalPages = Math.ceil(totalProducts / pageSize);
   const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || isFeatured || isNew || advCount > 0;
 
   const clearFilters = () => {
@@ -220,13 +250,7 @@ export const ExternalProductManagement: React.FC = () => {
   };
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
-
-  const handleSendProduct = (product: ExternalProduct) => {
-    setSendProduct(product);
-  };
-
-  // Suprimir aviso de toast não utilizado (importado pelo hook)
-  void toast;
+  const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
 
   return (
     <div className="w-full min-w-0 xl:grid xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_320px] xl:gap-6">
@@ -365,7 +389,7 @@ export const ExternalProductManagement: React.FC = () => {
             ? 'Carregando...'
             : totalProducts === 0
               ? 'Nenhum produto'
-              : <>Mostrando <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE + 1, totalProducts).toLocaleString('pt-BR')}–{Math.min((page + 1) * PAGE_SIZE, totalProducts).toLocaleString('pt-BR')}</span> de <span className="font-medium text-foreground">{totalProducts.toLocaleString('pt-BR')}</span></>
+              : <>Mostrando <span className="font-medium text-foreground">{Math.min(page * pageSize + 1, totalProducts).toLocaleString('pt-BR')}–{Math.min((page + 1) * pageSize, totalProducts).toLocaleString('pt-BR')}</span> de <span className="font-medium text-foreground">{totalProducts.toLocaleString('pt-BR')}</span></>
           }
         </span>
         <div className="flex items-center gap-3">
@@ -406,10 +430,11 @@ export const ExternalProductManagement: React.FC = () => {
         </AlertCard>
       )}
 
-      <div>
+      {/* grid com ref para scroll-to-top E45 */}
+      <div ref={gridRef}>
         {loading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
-            {[...Array(10)].map((_, i) => (
+            {[...Array(pageSize)].map((_, i) => (
               viewMode === 'grid'
                 ? <CatalogProductCardSkeleton key={i} mode="grade" />
                 : <CatalogProductCardSkeleton key={i} mode="list" />
@@ -468,18 +493,16 @@ export const ExternalProductManagement: React.FC = () => {
         )}
       </div>
 
+      {/* E45: TalkXPagination com pageSizes [24,48,96] */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-            <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Página {page + 1} de {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-            Próxima <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
+        <TalkXPagination
+          page={page + 1}
+          pageSize={pageSize}
+          total={totalProducts}
+          onPage={(p) => setPage(p - 1)}
+          onPageSize={(ps) => setPageSize(ps as PageSizeOption)}
+          noun="produto"
+        />
       )}
 
       <CatalogAdvancedFilters
