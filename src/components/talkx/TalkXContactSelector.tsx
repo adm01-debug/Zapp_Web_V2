@@ -6,6 +6,35 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Search, X, Building2, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+import { useExternalContact360Batch, type CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
+
+const RFM_SEGMENT_COLORS: Record<string, string> = {
+  Champions: 'bg-success/15 text-success border-success/30',
+  'Loyal Customers': 'bg-info/15 text-info border-info/30',
+  'At Risk': 'bg-destructive/15 text-destructive border-destructive/30',
+  Hibernating: 'bg-muted text-muted-foreground border-border',
+  Lost: 'bg-muted/50 text-muted-foreground border-border/50',
+  "Can't Lose Them": 'bg-destructive/15 text-destructive border-destructive/30',
+  'Need Attention': 'bg-warning/15 text-warning border-warning/30',
+  Promising: 'bg-secondary/15 text-secondary border-secondary/30',
+};
+
+function TalkXCRMBadge({ crmInfo }: { crmInfo: CRMBatchResult | undefined }) {
+  if (!crmInfo?.company_name) return null;
+  return (
+    <div className="flex items-center gap-1 mt-0.5">
+      <Building2 className="w-3 h-3 text-primary/60 shrink-0" />
+      <span className="text-[10px] text-muted-foreground truncate max-w-[110px]">{crmInfo.company_name}</span>
+      {crmInfo.rfm_score != null && (
+        <Badge variant="outline" className={cn('text-[9px] py-0 px-1 shrink-0', RFM_SEGMENT_COLORS[crmInfo.rfm_segment ?? ''] || 'bg-muted/20')}>
+          {crmInfo.rfm_score}
+        </Badge>
+      )}
+    </div>
+  );
+}
 
 interface ContactItem {
   id: string;
@@ -40,6 +69,13 @@ export const TalkXContactSelector: React.FC<Props> = ({
   tagFilter, setTagFilter, companies, tags,
   toggleContact, selectAll, clearFilters,
 }) => {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  const crmContacts = React.useMemo(
+    () => filteredContacts.map((c) => ({ id: c.id, phone: c.phone })),
+    [filteredContacts]
+  );
+  const { lookup: crmLookup } = useExternalContact360Batch(crmContacts);
+
   return (
     <Card className="h-fit max-h-[calc(100vh-200px)] flex flex-col">
       <CardHeader className="pb-3">
@@ -111,6 +147,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
                         {contact.nickname && <span className="text-muted-foreground ml-1 font-normal">({contact.nickname})</span>}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">{contact.phone}{contact.company && ` · ${contact.company}`}</p>
+                      {crmIntegrationEnabled && <TalkXCRMBadge crmInfo={crmLookup(contact.phone)} />}
                     </div>
                   </label>
                 );
