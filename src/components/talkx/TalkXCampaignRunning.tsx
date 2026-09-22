@@ -494,9 +494,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   }, [campaign]);
   React.useEffect(() => {
     if (selectedId && !sending.find((c) => c.id === selectedId) && prevCampaignRef.current !== null) {
-      // Campanha saiu da lista ativa (concluiu ou foi cancelada remotamente)
+      // Campanha saiu da lista ativa (concluiu ou foi cancelada remotamente).
+      // Sem isso, um modal de acao (Pausar/Cancelar/Editar Limites) aberto no
+      // momento da transicao ficava preso: a campanha some, os handlers fazem
+      // no-op silencioso (guard `if (!campaign) return`), e o modal nunca fecha.
       toast.info('Campanha concluída ou cancelada.');
       setSelectedId(null);
+      setPauseOpen(false);
+      setCancelOpen(false);
+      setLimitsOpen(false);
     }
   }, [sending, selectedId]);
 

@@ -149,3 +149,6 @@ jobs:
 
       - name: Simular auditoria somente-leitura de configuracao runtime
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
+
+      - name: Provar transporte libpq com cliente e PostgreSQL reais
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs

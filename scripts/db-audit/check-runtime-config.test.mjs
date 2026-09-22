@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { evaluateRuntimeConfig } from './check-runtime-config.mjs';
 
@@ -47,6 +49,24 @@ test('CLI fails without canonical credentials and never echoes them', () => {
   });
   assert.equal(result.status, 1);
   assert.doesNotMatch(result.stdout + result.stderr, /fixture-private/);
+});
+test('runtime CLI transports canonical identity and pinned TLS via libpq fields', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-transport-'));
+  const bin = path.join(tmp, 'psql-fixture.mjs');
+  const output = path.join(tmp, 'runtime.json');
+  fs.writeFileSync(bin, `#!/usr/bin/env node
+if (process.env.PGDATABASE !== 'postgres' || process.env.PGHOST !== 'db.tnnnlkbymytvtqngbbqh.supabase.co'
+  || process.env.PGUSER !== 'postgres' || process.env.PGSSLMODE !== 'verify-full'
+  || process.env.PGSSLROOTCERT !== 'scripts/db-audit/certs/supabase-prod-ca-2021.crt') process.exit(93);
+if (process.env.PGPASSWORD || process.env.DESTINO_URL || !process.env.PGPASSFILE) process.exit(94);
+process.stdout.write(${JSON.stringify(fixture().map(row => JSON.stringify(row)).join('\n'))});
+`, { mode: 0o700 });
+  const result = spawnSync(process.execPath, ['scripts/db-audit/check-runtime-config.mjs', output], {
+    encoding: 'utf8', env: { ...process.env, PSQL_BIN: bin,
+      DESTINO_URL: 'postgres://postgres:synthetic-only@db.tnnnlkbymytvtqngbbqh.supabase.co/postgres' },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(fs.readFileSync(output, 'utf8')).status, 'PARTIAL');
 });
 test('collection is read-only, bounded and never selects commands/object/customer rows', () => {
   const sql = fs.readFileSync(new URL('./runtime-config.sql', import.meta.url), 'utf8');

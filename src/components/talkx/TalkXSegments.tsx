@@ -60,6 +60,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const openEdit = (s: TalkXSegment) => { setEditingName(s.name); setEditingDesc(s.description ?? ''); setEditingRules(s.rules); setSelected(s); setMode('edit'); };
 
   const save = async () => {
+    if (saving) return;
     if (!editingName.trim()) return;
     setSaving(true);
     try {

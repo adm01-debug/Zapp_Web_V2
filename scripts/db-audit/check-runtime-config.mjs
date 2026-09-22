@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { carregarIdentidadeEsperada, validarDestino, validarSupabaseCa, endurecerDestinoTls } from './database-identity.mjs';
+import { withPsqlEnvironment } from './psql-environment.mjs';
 
 export function evaluateRuntimeConfig(raw) {
   const sections = raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -39,11 +40,11 @@ export function runRuntimeConfigAudit(outputPath) {
   const tls = endurecerDestinoTls(process.env.DESTINO_URL);
   errors.push(...tls.erros);
   if (errors.length) throw new Error('Canonical database identity/TLS required');
-  // Do not put the URL on argv or propagate psql stderr; use child-only PGDATABASE.
-  const raw = execFileSync(process.env.PSQL_BIN || 'psql', ['-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', 'scripts/db-audit/runtime-config.sql'], {
-    env: { ...process.env, PGDATABASE: tls.connectionString, PGSSLMODE: 'verify-full' },
+  // URI/password stay out of argv/environment; libpq fields + temporary 0600 pgpass.
+  const raw = withPsqlEnvironment(tls.connectionString, env => execFileSync(process.env.PSQL_BIN || 'psql', ['-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', 'scripts/db-audit/runtime-config.sql'], {
+    env,
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
-  });
+  }));
   const evidence = evaluateRuntimeConfig(raw);
   fs.writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
   return evidence;

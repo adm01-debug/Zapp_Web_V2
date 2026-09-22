@@ -109,6 +109,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   const calDate = localDate ? new Date(localDate) : undefined;
 
   const handleSave = useCallback(async () => {
+    if (saving) return;
     if (!localDate) { toast.error('Defina a data e hora do agendamento.'); return; }
     if (windowEnabled && windowStart >= windowEnd) {
       toast.error('O fim da janela de envio deve ser posterior ao início.');
@@ -134,7 +135,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     } finally {
       setSaving(false);
     }
-  }, [campaign, localDate, localTz, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign]);
+  }, [campaign, localDate, localTz, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign, saving]);
 
   const handleLaunch = useCallback(() => {
     setLaunchOpen(false);
@@ -186,7 +187,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </div>
         <div className="flex items-center gap-2">
           <GhostButton icon={Pencil} onClick={() => onEdit(campaign)}>Editar no wizard</GhostButton>
-          <PrimaryButton icon={Save} onClick={handleSave}>{saving ? 'Salvando…' : 'Salvar agendamento'}</PrimaryButton>
+          <PrimaryButton icon={Save} onClick={handleSave} disabled={saving}>{saving ? 'Salvando…' : 'Salvar agendamento'}</PrimaryButton>
         </div>
       </div>
 
