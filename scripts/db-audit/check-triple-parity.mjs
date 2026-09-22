@@ -126,10 +126,12 @@ function checkGrants() {
   const commitado = JSON.parse(fs.readFileSync(GRANTS_BASELINE_PATH, 'utf8'));
   // generated_at embute a data da regeneracao (to_char(now(),...)) e mudaria
   // todo dia — o baseline compara apenas o conteudo de ACL.
-  delete fresco.generated_at;
-  delete commitado.generated_at;
-  const a = JSON.stringify(canon(fresco));
-  const b = JSON.stringify(canon(commitado));
+  // note/how_to_regenerate sao texto livre: divergencia neles derrubou a main em
+  // 2026-09-22 sem nenhuma mudanca de ACL. Qualquer outra chave continua comparada.
+  const METADADOS = new Set(['generated_at', 'note', 'how_to_regenerate']);
+  const soAcl = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !METADADOS.has(k)));
+  const a = JSON.stringify(canon(soAcl(fresco)));
+  const b = JSON.stringify(canon(soAcl(commitado)));
   console.log(`[grants] fresco=${md5(a)} commitado=${md5(b)}`);
   if (a !== b) {
     fail(`grants-baseline desatualizado. Regenere: ${PSQL_BIN} "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -f ${GRANTS_SQL_PATH} > ${GRANTS_BASELINE_PATH}`);

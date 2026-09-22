@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 
 interface ContactInfoSectionProps {
@@ -97,8 +98,10 @@ export function ContactInfoSection({ contact, enrichedData }: ContactInfoSection
     toast.success(`${label} copiado!`);
   };
 
-  const updateContact = useCallback(async (field: string, value: string) => {
-    const { error } = await supabase.from('contacts').update({ [field]: value }).eq('id', contact.id);
+  const updateContact = useCallback(async (field: 'email' | 'company' | 'job_title', value: string) => {
+    const patch: TablesUpdate<'contacts'> = {};
+    patch[field] = value;
+    const { error } = await supabase.from('contacts').update(patch).eq('id', contact.id);
     if (error) throw error;
   }, [contact.id]);
 

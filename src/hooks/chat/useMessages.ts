@@ -25,6 +25,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   const requestGenerationRef = useRef(0);
   const loadingOlderRef = useRef(false);
   const realtimeOverlayRef = useRef<Map<string, Message | null>>(new Map());
+  const loadedContactIdRef = useRef<string | null>(null);
 
   // Track mount state to prevent setState after unmount
   useEffect(() => {
@@ -44,12 +45,18 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       return;
     }
 
+    // Refetch de conversa já carregada (ex.: pós-envio) é silencioso: sem loading o
+    // RealtimeInboxView não troca o ChatPanel pelo fallback (remount perdia reply,
+    // diálogos, scroll e o "Desfazer"), e páginas antigas já carregadas são mantidas.
+    const silent = loadedContactIdRef.current === requestedContactId;
     try {
       if (mountedRef.current) {
-        setLoading(true);
+        if (!silent) {
+          setLoading(true);
+          setHasOlder(false);
+        }
         loadingOlderRef.current = false;
         setLoadingOlder(false);
-        setHasOlder(false);
         setError(null);
       }
 
@@ -59,15 +66,23 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       if (mountedRef.current && generation === requestGenerationRef.current &&
         activeContactIdRef.current === requestedContactId && data) {
         const snapshot = data.map((row) => mapMessageRowToMessage(row));
-        const merged = new Map(snapshot.map((message) => [message.id, message]));
-        for (const [id, message] of realtimeOverlayRef.current) {
-          if (message) merged.set(id, message);
-          else merged.delete(id);
-        }
-        setMessages([...merged.values()].sort((a, b) =>
-          new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-        ));
-        setHasOlder(data.length === MESSAGES_PAGE_SIZE);
+        const timeOf = (message: Message) => new Date(message.created_at || 0).getTime();
+        const keepOlder = silent && data.length === MESSAGES_PAGE_SIZE;
+        const oldestInSnapshot = Math.min(...snapshot.map(timeOf));
+        setMessages((current) => {
+          const merged = new Map<string, Message>();
+          if (keepOlder) {
+            for (const message of current) if (timeOf(message) < oldestInSnapshot) merged.set(message.id, message);
+          }
+          for (const message of snapshot) merged.set(message.id, message);
+          for (const [id, message] of realtimeOverlayRef.current) {
+            if (message) merged.set(id, message);
+            else merged.delete(id);
+          }
+          return [...merged.values()].sort((a, b) => timeOf(a) - timeOf(b));
+        });
+        if (!keepOlder) setHasOlder(data.length === MESSAGES_PAGE_SIZE);
+        loadedContactIdRef.current = requestedContactId;
       }
     } catch (err) {
       log.error('Error fetching messages:', err);
@@ -184,6 +199,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       requestGenerationRef.current += 1;
       loadingOlderRef.current = false;
       previousContactIdRef.current = null;
+      loadedContactIdRef.current = null;
       realtimeOverlayRef.current.clear();
       const invalidatedGeneration = requestGenerationRef.current;
       void Promise.resolve().then(() => {
@@ -198,6 +214,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     }
     if (contactId !== previousContactIdRef.current) {
       previousContactIdRef.current = contactId;
+      loadedContactIdRef.current = null;
       realtimeOverlayRef.current.clear();
       // Clear messages and set loading immediately to prevent UI flicker of old messages
       setMessages([]);
