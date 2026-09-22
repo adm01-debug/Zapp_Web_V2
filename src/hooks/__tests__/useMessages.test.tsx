@@ -187,4 +187,78 @@ describe('useMessages', () => {
     await waitFor(() => expect(result.current.messages.map((message) => message.id)).toEqual(['fresh']));
     expect(calls).toBe(2);
   });
+
+  describe('refetch de conversa já carregada (pós-envio)', () => {
+    const T0 = Date.parse('2024-01-01T00:00:00Z');
+    const row = (id: string, minute: number) => ({
+      id, contact_id: 'c1', content: id, sender: 'contact', created_at: new Date(T0 + minute * 60_000).toISOString(),
+    });
+    // O banco devolve DESC (mais recente primeiro); ChatService reverte.
+    const desc = <T,>(rows: T[]) => [...rows].reverse();
+    function queueChain(responses: unknown[]) {
+      const next = () => Promise.resolve(responses.shift());
+      const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+      for (const m of ['select', 'eq', 'or', 'order']) chain[m] = vi.fn(() => chain);
+      chain.range = vi.fn(next);
+      chain.limit = vi.fn(next);
+      return chain;
+    }
+
+    it('não volta a loading=true (o ChatPanel não é trocado pelo fallback)', async () => {
+      let resolveRefetch: (value: unknown) => void = () => undefined;
+      const refetchResponse = new Promise((resolve) => { resolveRefetch = resolve; });
+      mockFrom.mockReturnValue(queueChain([
+        { data: desc([row('m1', 1)]), error: null },
+        refetchResponse,
+      ]));
+      const seen: boolean[] = [];
+      const { result } = renderHook(() => {
+        const r = useMessages({ contactId: 'c1' });
+        seen.push(r.loading);
+        return r;
+      });
+      await waitFor(() => expect(result.current.messages.map((m) => m.id)).toEqual(['m1']));
+      expect(result.current.loading).toBe(false);
+
+      const inicioRefetch = seen.length;
+      let pending: Promise<void> = Promise.resolve();
+      act(() => { pending = result.current.refetch(); });
+      expect(result.current.loading).toBe(false);
+      await act(async () => {
+        resolveRefetch({ data: desc([row('m1', 1), row('m2', 2)]), error: null });
+        await pending;
+      });
+
+      expect(result.current.messages.map((m) => m.id)).toEqual(['m1', 'm2']);
+      expect(seen.slice(inicioRefetch)).not.toContain(true);
+    });
+
+    it('mantém as páginas antigas já carregadas por loadOlderMessages', async () => {
+      const pagina = Array.from({ length: 1000 }, (_, i) => row(`n${i}`, 100 + i));
+      const antigas = Array.from({ length: 5 }, (_, i) => row(`o${i}`, i));
+      const nova = row('nova', 2000);
+      mockFrom.mockReturnValue(queueChain([
+        { data: desc(pagina), error: null },
+        { data: desc(antigas), error: null },
+        { data: desc([...pagina.slice(1), nova]), error: null },
+      ]));
+
+      const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
+      await waitFor(() => expect(result.current.messages).toHaveLength(1000));
+      expect(result.current.hasOlder).toBe(true);
+
+      await act(async () => { await result.current.loadOlderMessages(); });
+      expect(result.current.messages).toHaveLength(1005);
+      expect(result.current.hasOlder).toBe(false);
+
+      await act(async () => { await result.current.refetch(); });
+
+      const ids = result.current.messages.map((m) => m.id);
+      expect(ids).toHaveLength(1006);
+      expect(ids.slice(0, 6)).toEqual(['o0', 'o1', 'o2', 'o3', 'o4', 'n0']);
+      expect(ids[ids.length - 1]).toBe('nova');
+      expect(result.current.hasOlder).toBe(false);
+      expect(result.current.loading).toBe(false);
+    });
+  });
 });
