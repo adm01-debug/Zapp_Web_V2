@@ -13,8 +13,33 @@ export default defineConfig({
   },
   projects: [
     {
+      // auth.spec.ts exercita a tela de login deslogada (tabs, validação de
+      // formulário) e nunca deve depender do projeto "setup" — rodar só este
+      // projeto (ex: npx playwright test --project=chromium) precisa continuar
+      // funcionando mesmo sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas.
       name: 'chromium',
+      testMatch: /auth\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], executablePath: '/opt/pw-browsers/chromium' },
+    },
+    {
+      // Login real (e2e/auth.setup.ts), executado só quando o projeto
+      // "chromium-authenticated" roda (via dependsOn abaixo) — nunca bloqueia
+      // o projeto "chromium" acima.
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'], executablePath: '/opt/pw-browsers/chromium' },
+    },
+    {
+      // Demais specs assumem uma sessão já logada, produzida pelo projeto
+      // "setup" e salva em e2e/.auth/user.json.
+      name: 'chromium-authenticated',
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts/,
+      dependsOn: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        executablePath: '/opt/pw-browsers/chromium',
+        storageState: 'e2e/.auth/user.json',
+      },
     },
   ],
   webServer: {

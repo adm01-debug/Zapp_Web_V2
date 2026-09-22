@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-// Requires authenticated session — stubs skipped until auth fixture is set up.
+// The auth fixture (e2e/auth.setup.ts, via the "setup" -> "chromium-authenticated" dependsOn)
+// now provides a logged-in session, but both tests below still need at least
+// one real conversation already seeded in the inbox — there is no seeded test
+// data in this environment yet, so they stay skipped rather than inventing a
+// fake fixture.
 test.describe('Conversation state transitions', () => {
   test.skip('resolving conversation changes status badge', async ({ page }) => {
     await page.goto('/inbox');
