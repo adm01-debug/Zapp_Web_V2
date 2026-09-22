@@ -119,13 +119,15 @@ permitida, pois seus call sites literais são avaliados pelo mesmo gate.
 | Lint ratchet | baseline 1.107; atual 1.101; removidas 6; novas 0 |
 | Uso Supabase | 144 tabelas, 8 views, 92 funções; zero violação |
 | Build | Vite aprovado |
-| Bundle | inicial JS 325,5/340 KB; CSS 35,7/80 KB; maior 486/550 KB; total 3.962,7/4.000 KB |
+| Bundle | inicial JS 325,5/340 KB; CSS 35,7/80 KB; maior 486/550 KB; total 3.964,2/4.000 KB |
 | Manifesto Edge | geração/check determinísticos e 28 testes aprovados |
+| Segurança no GitHub | CodeQL, dependency audit de produção e secret scanning aprovados na PR #520 |
+| Proxy de saída | contratos Go 1.24 aprovados no runner oficial da CI |
 | Whitespace | `git diff --check` aprovado |
 
 Os avisos do jsdom sobre navegação/canvas são limitações conhecidas do ambiente
 de teste e não produziram falhas. O budget total permanece aprovado, porém com
-margem estreita de aproximadamente 37,3 KB; novas dependências no carregamento
+margem estreita de aproximadamente 35,8 KB; novas dependências no carregamento
 inicial devem ser evitadas.
 
 ## 6. Rollout seguro
@@ -165,3 +167,20 @@ altera objetos SQL.
 Esses limites impedem declarar “perfeição” absoluta. O escopo desta correção,
 entretanto, fica coberto por código, contratos, PostgreSQL descartável,
 inventário canônico somente leitura e gates preventivos de CI.
+
+## 8. Validação em runner limpo da PR
+
+A primeira execução do `DB Guard (offline)` na PR #520 revelou um gap que a
+máquina de desenvolvimento, por já possuir `node_modules`, não reproduzia: o
+gate AST importava a devDependency `typescript` antes de o workflow instalar
+as dependências. O runner falhou fechado com `ERR_MODULE_NOT_FOUND`; nenhuma
+validação foi falsamente reportada como aprovada.
+
+O commit `00f9177c` corrigiu a causa na esteira: Bun 1.4.0 é configurado por
+Action fixada em SHA e `bun install --frozen-lockfile` ocorre antes do gate.
+Um contrato em `scripts/ci/parity-hardening.unit.mjs` fixa tanto o pin quanto a
+ordem dos passos. A repetição oficial concluiu com sucesso todo o DB Guard,
+incluindo o gate Realtime, PostgreSQL 17, ACLs, concorrência, ledger e
+transporte libpq real. Lint/TypeCheck, cobertura unitária, build, budget,
+CodeQL e Security Audit também ficaram verdes. O merge continua condicionado
+à revisão independente exigida pela proteção da `main`.
