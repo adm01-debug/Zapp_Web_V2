@@ -13,8 +13,10 @@ import { exportCampaignsCsv, exportRecipientsCsv, type RecipientRow } from '@/li
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
+  InsightCard,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
+import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 function loadFilters() {
@@ -43,6 +45,7 @@ const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> =
 
 export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
+  const { data: insights } = useTalkXInsights();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
@@ -180,6 +183,29 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
             </section>
           );
         })()}
+
+        {/* E94: Insights heurísticos */}
+        {insights && insights.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-sm font-semibold text-foreground">Insights</span>
+              <span className="text-xs text-muted-foreground">({insights.length})</span>
+            </div>
+            <div className="space-y-2">
+              {insights.map((insight) => (
+                <InsightCard
+                  key={insight.id}
+                  type={insight.type}
+                  title={insight.title}
+                  description={insight.description}
+                  priority={insight.priority}
+                  applyLabel={insight.applyLabel}
+                  onApply={insight.apply}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">

@@ -67,10 +67,10 @@ export function SecurityOverview() {
 
   // Calculate security score
   const calculateScore = (): SecurityScore => {
-    let mfaScore = isMFAEnabled ? 25 : 0;
-    let deviceScore = devices.filter(d => d.is_trusted).length > 0 ? 25 : 15;
-    let sessionScore = sessions.length <= 3 ? 25 : 15;
-    let passwordScore = 25; // Assume good password for now
+    const mfaScore = isMFAEnabled ? 25 : 0;
+    const deviceScore = devices.filter(d => d.is_trusted).length > 0 ? 25 : 15;
+    const sessionScore = sessions.length <= 3 ? 25 : 15;
+    const passwordScore = 25; // Assume good password for now
 
     return {
       total: mfaScore + deviceScore + sessionScore + passwordScore,

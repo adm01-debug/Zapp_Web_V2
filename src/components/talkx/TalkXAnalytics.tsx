@@ -11,7 +11,8 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
-import { IconTile, TalkXEmptyState, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
+import { IconTile, TalkXEmptyState, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
+import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 
 interface Props { campaigns: TalkXCampaign[] }
 type Period = '7d' | '30d' | '90d';
@@ -195,6 +196,10 @@ export function TalkXAnalytics({ campaigns }: Props) {
   }, [hourlyData]);
 
   if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
+
+  // E94: insights heurísticos
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { data: insights } = useTalkXInsights();
 
   return (
     <div className="space-y-4 min-w-0">
@@ -486,6 +491,29 @@ export function TalkXAnalytics({ campaigns }: Props) {
               {(panelRecipients?.length ?? 0) >= 200 && <p className="text-[11px] text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros. Use CSV para o conjunto completo.</p>}
             </div>
           )}
+        </section>
+      )}
+
+      {/* E94: Insights heurísticos */}
+      {insights && insights.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Insights</h3>
+          </div>
+          <div className="space-y-2">
+            {insights.map((insight) => (
+              <InsightCard
+                key={insight.id}
+                type={insight.type}
+                title={insight.title}
+                description={insight.description}
+                priority={insight.priority}
+                applyLabel={insight.applyLabel}
+                onApply={insight.apply}
+              />
+            ))}
+          </div>
         </section>
       )}
     </div>
