@@ -39,40 +39,46 @@
 
   /* Paridade com Promo_Gifts_V4 (src/index.css › Global Typography Consistency):
      só peso e tracking no dark. Cor, line-height, links e escala de títulos não entram. */
-  .dark body {
+  /* Prefixo html. eleva a especificidade (0,2,1) pra nao perder empate de
+     especificidade (0,2,0) contra variants Tailwind tipo data-[state=active]:font-semibold,
+     que no CSS gerado saem depois deste bloco (base.css nao esta em @layer) e venceriam
+     por ordem em caso de empate. .dark sempre fica no <html>, entao o seletor e equivalente. */
+  html.dark body {
     font-weight: 450;
     letter-spacing: 0.01em;
   }
 
-  .dark p,
-  .dark span,
-  .dark label,
-  .dark td,
-  .dark th,
-  .dark li,
-  .dark .text-muted-foreground {
+  html.dark p,
+  html.dark span,
+  html.dark label,
+  html.dark td,
+  html.dark th,
+  html.dark li,
+  html.dark .text-muted-foreground {
     font-weight: 450;
   }
 
-  .dark .font-medium {
+  html.dark .font-medium {
     font-weight: 550;
   }
 
-  .dark .font-semibold {
+  html.dark .font-semibold {
     font-weight: 650;
   }
 
-  .dark .font-bold {
+  /* Sem letter-spacing aqui: colidia com tracking-* explicito (tracking-widest,
+     tracking-wider, tracking-tighter, tracking-[...]) em ~25 componentes que usam
+     font-bold + tracking custom — o peso 800 e o objetivo, o tracking do Promo nao. */
+  html.dark .font-bold {
     font-weight: 800;
-    letter-spacing: -0.01em;
   }
 
   /* Promo rebaixa extrabold/black em span/p para 450 (especificidade); aqui não. */
-  .dark .font-extrabold {
+  html.dark .font-extrabold {
     font-weight: 800;
   }
 
-  .dark .font-black {
+  html.dark .font-black {
     font-weight: 900;
   }
 
