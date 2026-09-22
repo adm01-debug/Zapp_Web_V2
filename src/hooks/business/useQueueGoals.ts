@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 export interface QueueGoal {
   id: string;
@@ -33,7 +34,7 @@ export function useQueueGoals() {
     fetchGoals();
 
     const channel = supabase
-      .channel('queue-goals-changes')
+      .channel(uniqueRealtimeTopic('queue-goals-changes'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_goals' }, fetchGoals)
       .subscribe();
 
