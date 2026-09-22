@@ -1,6 +1,6 @@
 
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 // Mock implementation of logic for testing without actual DB/API calls
 // In a real scenario, we'd use a test DB or mock the fetch
