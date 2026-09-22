@@ -1342,6 +1342,8 @@
         "talkx_campaign_metrics.started_at:timestamp with time zone:nullable",
         "talkx_campaign_metrics.completed_at:timestamp with time zone:nullable",
         "talkx_campaign_metrics.created_at:timestamp with time zone:nullable",
+        "talkx_campaign_metrics.id:uuid:nullable",
+        "talkx_campaign_metrics.campaign_name:text:nullable",
         "talkx_campaigns.id:uuid:not-null",
         "talkx_campaigns.name:text:not-null",
         "talkx_campaigns.message_template:text:not-null",
@@ -1822,7 +1824,7 @@
         "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-16",
+    "generated_at": "2026-09-22",
     "format_version": 2,
     "database_identity": {
         "schema": "public",

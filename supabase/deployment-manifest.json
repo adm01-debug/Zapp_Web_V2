@@ -323,8 +323,8 @@
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
-      "bytes": 7823,
-      "sha256": "4b597d34e5f70c5293795d222decf9e0df825d01d5d3db9d960f1923e8f02031"
+      "bytes": 8208,
+      "sha256": "9dcd13e9b0fcfcc3392307529e0704848aa14373f730c4681054e1ebb123509b"
     },
     {
       "path": "supabase/functions/fetch-link-preview/index.ts",
@@ -947,7 +947,7 @@
       "name": "external-db-proxy",
       "entrypoint": "supabase/functions/external-db-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "613453784930c6a43265bb6119f21a3f80b7f64c74ffa82ab3c27edd922b22a4",
+      "source_sha256": "0c623146e5ff66c082eb03e2e537c8ee9db0fd3f9f47188bdd4c1edfda3ac928",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1301,5 +1301,5 @@
       ]
     }
   ],
-  "manifest_sha256": "cc85593e8d23a5260e50ff0840e26d1b37ec2dd48ce282dfbd038f0030bbcca2"
+  "manifest_sha256": "458c70a90d50af1614062fecef0ad60fdd64442f4b9f4556201336f7ca9b2693"
 }
