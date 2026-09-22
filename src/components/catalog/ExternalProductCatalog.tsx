@@ -22,12 +22,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Search, Package, Grid3X3, List, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from '@/hooks/ui/use-toast';
 import { useExternalCatalog, ExternalProduct, ExternalCategory } from '@/hooks/integrations/useExternalCatalog';
 import { ExternalProductCard } from './ExternalProductCard';
 
 interface ExternalProductCatalogProps {
-  onSendProduct: (product: ExternalProduct) => void;
+  onSendProduct: (product: ExternalProduct) => void | Promise<void>;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -120,9 +119,9 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   }, [page]);
 
   const handleSend = (product: ExternalProduct) => {
-    onSendProduct(product);
+    // Sucesso/erro sao anunciados por quem envia (handleSendProduct), apos o await.
+    void onSendProduct(product);
     setIsOpen(false);
-    toast({ title: 'Produto enviado!', description: `${product.name} foi enviado para o chat.` });
   };
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);

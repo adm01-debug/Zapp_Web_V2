@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "type": "module",
   "overrides": {
-    "postcss": "^8.5.26",
+    "postcss": "^8.5.28",
     "ws": "^8.21.3"
   },
   "scripts": {
