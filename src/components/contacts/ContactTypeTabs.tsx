@@ -67,7 +67,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
           <TabsList className="flex h-10 items-center gap-1 bg-transparent border-none p-0 flex-1 justify-start overflow-x-auto flex-nowrap scrollbar-thin snap-x min-w-0">
             <TabsTrigger
               value="all"
-              className="relative isolate h-10 px-4 rounded-[10px] text-[15px] font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
+              className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
             >
               {activeTab === 'all' && <Pill reduceMotion={reduceMotion} />}
               <Users className="w-[18px] h-[18px]" />
@@ -82,7 +82,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
                 <TabsTrigger
                   key={type.value}
                   value={type.value}
-                  className="relative isolate h-10 px-4 rounded-[10px] text-[15px] font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
+                  className="relative isolate h-10 px-4 rounded-[10px] text-sm font-medium text-muted-foreground gap-2 data-[state=active]:text-foreground data-[state=active]:font-semibold shrink-0 snap-start"
                 >
                   {active && <Pill reduceMotion={reduceMotion} />}
                   {resizeIcon(CONTACT_TYPE_ICONS[type.value])}
@@ -99,7 +99,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
                 <button
                   className={cn(
                     /* focus-visible restored: ring equivalente ao dos TabsTrigger */
-                    'relative isolate h-10 px-3 rounded-[10px] text-[15px] font-medium flex items-center gap-1.5 shrink-0 transition-colors select-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                    'relative isolate h-10 px-3 rounded-[10px] text-sm font-medium flex items-center gap-1.5 shrink-0 transition-colors select-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                     overflowActive
                       ? 'text-foreground font-semibold'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'

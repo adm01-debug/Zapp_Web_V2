@@ -230,7 +230,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-[15px]" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
         {error && <p className="text-[12px] text-dash-red">{error}</p>}
