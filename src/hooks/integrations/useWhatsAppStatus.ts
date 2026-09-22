@@ -138,7 +138,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   const getConnectionInfo = useCallback(async (contactPhone: string): Promise<ContactConnectionInfo> => {
     const cleanPhone = normalizeDigits(contactPhone);
 
-    let contactQuery = supabase
+    const contactQuery = supabase
       .from('contacts')
       .select('name, whatsapp_connection_id')
       .eq('phone', contactPhone)

@@ -15,7 +15,10 @@ SELECT jsonb_pretty(jsonb_build_object(
   'how_to_regenerate', 'scripts/db-audit/grants-baseline.sql (E26)',
   'note', 'Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.',
   'anon_execute', (
-    SELECT coalesce(jsonb_agg(format('%s(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) ORDER BY 1), '[]'::jsonb)
+    -- ORDER BY posicional nao funciona dentro de agregacao (ordenava pela
+    -- constante 1 = ordem indefinida); a expressao explicita torna o array
+    -- deterministico entre regeneracoes (E10/gate de paridade tripla).
+    SELECT coalesce(jsonb_agg(format('%s(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) ORDER BY format('%s(%s)', p.proname, pg_get_function_identity_arguments(p.oid))), '[]'::jsonb)
     FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
       AND has_function_privilege('anon', p.oid, 'EXECUTE')
   ),
