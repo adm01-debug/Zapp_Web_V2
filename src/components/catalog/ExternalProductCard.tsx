@@ -14,6 +14,9 @@ interface ExternalProductCardProps {
   /** E43: favoritos */
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  /** E47: seleção em massa */
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
@@ -22,6 +25,8 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
   compact = false,
   isFavorite = false,
   onToggleFavorite,
+  isSelected = false,
+  onToggleSelect,
 }) => (
   <CatalogProductCard
     product={product}
@@ -29,5 +34,7 @@ export const ExternalProductCard: React.FC<ExternalProductCardProps> = ({
     mode={compact ? 'list' : 'grade'}
     isFavorite={isFavorite}
     onToggleFavorite={onToggleFavorite}
+    isSelected={isSelected}
+    onToggleSelect={onToggleSelect}
   />
 );

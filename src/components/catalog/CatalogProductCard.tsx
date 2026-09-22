@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Eye, Heart, Star, Sparkles, TrendingUp, Tag } from 'lucide-react';
+import { Send, Eye, Heart, Star, Sparkles, TrendingUp, Tag, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -7,15 +7,18 @@ import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { formatPrice, ProductThumb } from './catalogShared';
 import { ProductDetailDialog } from './ProductDetailDialog';
 
-// ── tipos ──────────────────────────────────────────────────────────────────
+// ── tipos ─────────────────────────────────────────────────────
 export interface CatalogProductCardProps {
   product: ExternalProduct;
   onSend?: (p: ExternalProduct) => void;
   /** grade = card quadrado; list = linha densa */
   mode?: 'grade' | 'list';
-  /** E43: controlado externamente; placeholder até useCatalogFavorites existir */
+  /** E43: favoritos via Supabase */
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  /** E47: seleção em massa */
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 // ── badge de destaque (top-left) ───────────────────────────────────────────
@@ -43,7 +46,7 @@ function ProductBadge({ product }: { product: ExternalProduct }) {
   return null;
 }
 
-// ── chips de cor ───────────────────────────────────────────────────────────
+// ── chips de cor ─────────────────────────────────────────────────────
 function ColorChips({ product }: { product: ExternalProduct }) {
   const swatches = product.color_swatches;
   const colors   = product.colors;
@@ -74,7 +77,7 @@ function ColorChips({ product }: { product: ExternalProduct }) {
   return null;
 }
 
-// ── pill de estoque baixo ──────────────────────────────────────────────────
+// ── pill de estoque baixo ────────────────────────────────────────────────
 function LowStockPill({ qty }: { qty: number }) {
   if (qty > 10) return null;
   return (
@@ -84,7 +87,7 @@ function LowStockPill({ qty }: { qty: number }) {
   );
 }
 
-// ── botão favorito ─────────────────────────────────────────────────────────
+// ── botão favorito ──────────────────────────────────────────────────────
 function FavoriteButton({ active, onToggle, productId }: { active: boolean; onToggle?: (id: string) => void; productId: string }) {
   return (
     <button
@@ -102,7 +105,32 @@ function FavoriteButton({ active, onToggle, productId }: { active: boolean; onTo
   );
 }
 
-// ── skeleton ───────────────────────────────────────────────────────────────
+// ── checkbox de seleção (E47) ─────────────────────────────────────────────
+function SelectCheckbox({ selected, onToggle, productId }: {
+  selected: boolean;
+  onToggle: (id: string) => void;
+  productId: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onToggle(productId); }}
+      className={cn(
+        'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0',
+        'transition-all duration-150',
+        selected
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border/60 bg-background/80 backdrop-blur-sm text-transparent hover:border-primary/60'
+      )}
+      aria-label={selected ? 'Desselecionar produto' : 'Selecionar produto'}
+      aria-pressed={selected}
+    >
+      <Check className="w-3 h-3" />
+    </button>
+  );
+}
+
+// ── skeleton ─────────────────────────────────────────────────────────
 export function CatalogProductCardSkeleton({ mode = 'grade' }: { mode?: 'grade' | 'list' }) {
   if (mode === 'list') return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 animate-pulse">
@@ -130,33 +158,48 @@ export function CatalogProductCardSkeleton({ mode = 'grade' }: { mode?: 'grade' 
   );
 }
 
-// ── card principal ─────────────────────────────────────────────────────────
+// ── card principal ───────────────────────────────────────────────────────
 export function CatalogProductCard({
   product,
   onSend,
   mode = 'grade',
   isFavorite = false,
   onToggleFavorite,
+  isSelected = false,
+  onToggleSelect,
 }: CatalogProductCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const stockout = product.is_stockout || product.stock_quantity === 0;
 
-  // ── modo lista ─────────────────────────────────────────────────────────
+  // ── modo lista ────────────────────────────────────────────────────────
   if (mode === 'list') {
     return (
       <>
         <div
-          className="flex items-center gap-3 px-4 py-3 border-b border-border/30 hover:bg-muted/10 transition-colors cursor-pointer"
-          onClick={() => setShowDetails(true)}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 border-b border-border/30 hover:bg-muted/10 transition-colors cursor-pointer',
+            isSelected && 'bg-primary/5 border-primary/20'
+          )}
+          onClick={() => !onToggleSelect && setShowDetails(true)}
         >
+          {/* E47: checkbox no modo lista */}
+          {onToggleSelect && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <SelectCheckbox selected={isSelected} onToggle={onToggleSelect} productId={product.id} />
+            </div>
+          )}
+
           {/* thumb 56px */}
-          <div className="relative w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0">
+          <div
+            className="relative w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0"
+            onClick={() => setShowDetails(true)}
+          >
             <ProductThumb src={product.primary_image_url} fallbackSrc={product.primary_image_fallback_url} alt={product.name} sizes="56px" />
             {stockout && <div className="absolute inset-0 bg-background/70" />}
           </div>
 
           {/* info */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" onClick={() => setShowDetails(true)}>
             <p className="text-[13px] font-semibold text-foreground truncate">{product.name}</p>
             <p className="text-[11px] text-muted-foreground truncate">
               {[product.brand, product.suppliers?.name].filter(Boolean).join(' | ')}
@@ -209,14 +252,19 @@ export function CatalogProductCard({
     );
   }
 
-  // ── modo grade ─────────────────────────────────────────────────────────
+  // ── modo grade ─────────────────────────────────────────────────────
   return (
     <>
-      <div className="catalog-card group rounded-xl border border-border/30 overflow-hidden bg-card hover:border-primary/30 hover:shadow-sm transition-all flex flex-col h-full">
+      <div
+        className={cn(
+          'catalog-card group rounded-xl border border-border/30 overflow-hidden bg-card hover:border-primary/30 hover:shadow-sm transition-all flex flex-col h-full',
+          isSelected && 'border-primary/50 bg-primary/5 shadow-sm shadow-primary/10'
+        )}
+      >
         {/* mídia */}
         <div
           className="catalog-media relative aspect-square bg-muted cursor-pointer"
-          onClick={() => setShowDetails(true)}
+          onClick={() => !onToggleSelect && setShowDetails(true)}
         >
           <ProductThumb
             src={product.primary_image_url}
@@ -230,10 +278,23 @@ export function CatalogProductCard({
               <span className="px-2 py-1 rounded text-xs font-bold bg-destructive text-destructive-foreground">Esgotado</span>
             </div>
           )}
-          {/* badge top-left */}
+
+          {/* top-left: checkbox (E47) quando onToggleSelect ativo; badge caso contrário */}
           <div className="absolute top-2 left-2">
-            <ProductBadge product={product} />
+            {onToggleSelect ? (
+              <div
+                className={cn(
+                  'transition-opacity',
+                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                )}
+              >
+                <SelectCheckbox selected={isSelected} onToggle={onToggleSelect} productId={product.id} />
+              </div>
+            ) : (
+              <ProductBadge product={product} />
+            )}
           </div>
+
           {/* is_kit top-right (quando sem favorito) */}
           {product.is_kit && !onToggleFavorite && (
             <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-violet-500 text-white">

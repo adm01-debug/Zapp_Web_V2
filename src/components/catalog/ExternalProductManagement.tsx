@@ -21,6 +21,7 @@ import {
   RefreshCw,
   ChevronDown,
   SlidersHorizontal,
+  CheckSquare,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/t
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
+import { CatalogBulkBar } from './CatalogBulkBar';
 import { cn } from '@/lib/utils';
 
 function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined }) {
@@ -60,7 +62,6 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
   );
 }
 
-// E45: tamanhos de página disponíveis
 const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
 type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
 
@@ -113,17 +114,53 @@ export const ExternalProductManagement: React.FC = () => {
   const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ isBestseller: false, priceMin: '', priceMax: '' });
   const advCount = countAdvancedFilters(advFilters);
 
-  // E43: favoritos via Supabase (catalog_favorites, RLS por usuário)
+  // E43: favoritos Supabase
   const { isFavorite: isFav, toggle } = useCatalogFavorites();
-  // Wrapper: ExternalProductCard/CatalogProductCard chamam onToggleFavorite(id: string)
-  // toggle() do Supabase precisa do objeto {id, name, sku, primary_image_url}
   const handleToggleFavorite = useCallback((id: string) => {
     const p = products.find((x) => x.id === id);
     if (p) toggle({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
   }, [products, toggle]);
 
+  // E47: seleção em massa
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelectProduct = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
+  // clearSelection usa setSelectedIds (estável, vem do useState) — sem dep extra necessário.
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+  const toggleSelectAll = useCallback(() => {
+    const pageIds = products.map((p) => p.id);
+    const allSelected = pageIds.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        pageIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        pageIds.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  }, [products, selectedIds]);
+  const allPageSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
+
+  const [bulkSendProduct, setBulkSendProduct] = useState<ExternalProduct | null>(null);
+  const handleBulkSend = useCallback(() => {
+    const firstId = [...selectedIds][0];
+    const p = products.find((x) => x.id === firstId);
+    if (p) setBulkSendProduct(p);
+  }, [selectedIds, products]);
+
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // setPage: usa setSelectedIds directamente (sem ref) — setSelectedIds é estável
   const setPage = useCallback((p: number | ((prev: number) => number)) => {
     setPageState((prev) => {
       const next = typeof p === 'function' ? p(prev) : p;
@@ -134,6 +171,8 @@ export const ExternalProductManagement: React.FC = () => {
       } catch { /* ignore */ }
       return next;
     });
+    // limpa seleção ao trocar de página; setSelectedIds é estável e não exige dep
+    setSelectedIds(new Set());
   }, []);
 
   const setPageSize = useCallback((ps: PageSizeOption) => {
@@ -371,6 +410,16 @@ export const ExternalProductManagement: React.FC = () => {
           </Button>
         </div>
 
+        <Button
+          variant={selectedIds.size > 0 ? 'secondary' : 'outline'}
+          size="sm"
+          onClick={selectedIds.size > 0 ? clearSelection : toggleSelectAll}
+          className="gap-1.5"
+        >
+          <CheckSquare className="w-4 h-4" />
+          {selectedIds.size > 0 ? `${selectedIds.size} selecionado${selectedIds.size > 1 ? 's' : ''}` : 'Selecionar'}
+        </Button>
+
         <Button variant="outline" size="sm" onClick={() => setAdvancedOpen(true)} className="relative">
           <SlidersHorizontal className="w-4 h-4 mr-1.5" />
           Filtros avançados
@@ -483,6 +532,8 @@ export const ExternalProductManagement: React.FC = () => {
                     compact={viewMode === 'list'}
                     isFavorite={isFav(product.id)}
                     onToggleFavorite={handleToggleFavorite}
+                    isSelected={selectedIds.has(product.id)}
+                    onToggleSelect={toggleSelectProduct}
                   />
                 </motion.div>
               ))}
@@ -511,11 +562,30 @@ export const ExternalProductManagement: React.FC = () => {
         onClear={() => { setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' }); setPage(0); }}
       />
 
+      {selectedIds.size > 0 && (
+        <CatalogBulkBar
+          count={selectedIds.size}
+          pageTotal={products.length}
+          allPageSelected={allPageSelected}
+          onToggleSelectAll={toggleSelectAll}
+          onClear={clearSelection}
+          onSend={handleBulkSend}
+        />
+      )}
+
       {sendProduct && (
         <SendProductDialog
           product={sendProduct}
           open={!!sendProduct}
           onOpenChange={(open) => { if (!open) setSendProduct(null); }}
+        />
+      )}
+
+      {bulkSendProduct && (
+        <SendProductDialog
+          product={bulkSendProduct}
+          open={!!bulkSendProduct}
+          onOpenChange={(open) => { if (!open) { setBulkSendProduct(null); clearSelection(); } }}
         />
       )}
     </div>
