@@ -69,7 +69,7 @@ export function FilterPresets({ onApplyPreset, currentFilters }: FilterPresetsPr
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border border-border text-[15px] font-medium gap-2">
+        <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border border-border text-sm font-medium gap-2">
           <Bookmark className="w-[18px] h-[18px]" />
           Filtros Salvos
           {presets.length > 0 && (

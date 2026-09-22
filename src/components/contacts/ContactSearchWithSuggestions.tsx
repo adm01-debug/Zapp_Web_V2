@@ -102,7 +102,7 @@ export function ContactSearchWithSuggestions({
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onKeyDown={handleKeyDown}
-        className={cn("h-11 pl-11 rounded-xl bg-input border-border text-[15px] transition-all", focused && "ring-2 ring-primary/20")}
+        className={cn("h-11 pl-11 rounded-xl bg-input border-border text-sm transition-all", focused && "ring-2 ring-primary/20")}
       />
       {value && (
         <button
