@@ -1,13 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-// Requires authenticated session — same gap as e2e/conversation.spec.ts and
-// e2e/messaging.spec.ts: there is no seeded test user or storageState fixture
-// in this repo yet, so every test below is skipped until an auth fixture
-// exists. Selectors follow the real DOM (see src/services/navigation.service.ts
-// and src/components/talkx/*) so the tests are ready to enable as soon as a
-// login helper lands — no auth bypass hacks, no mocks.
+// Runs against the "chromium-authenticated" project (see playwright.config.ts),
+// which depends on "setup" (e2e/auth.setup.ts) for its storageState. These tests
+// only exercise navigation/rendering that depends on being logged in, not on
+// seeded campaign/segment/WhatsApp-connection data.
 test.describe('Talk X module', () => {
-  test.skip('campaigns overview renders after navigating from the sidebar', async ({ page }) => {
+  test('campaigns overview renders after navigating from the sidebar', async ({ page }) => {
     await page.goto('/');
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
@@ -20,7 +18,7 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('button', { name: /nova campanha/i })).toBeVisible();
   });
 
-  test.skip('new campaign wizard opens on the audience step', async ({ page }) => {
+  test('new campaign wizard opens on the audience step', async ({ page }) => {
     await page.goto('/');
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
@@ -43,7 +41,7 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 
-  test.skip('help modal opens and closes', async ({ page }) => {
+  test('help modal opens and closes', async ({ page }) => {
     await page.goto('/');
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
@@ -59,7 +57,7 @@ test.describe('Talk X module', () => {
     await expect(dialog).not.toBeVisible();
   });
 
-  test.skip('segments and templates tabs render', async ({ page }) => {
+  test('segments and templates tabs render', async ({ page }) => {
     await page.goto('/');
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })

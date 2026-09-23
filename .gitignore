@@ -64,6 +64,8 @@ coverage/
 test-results/
 playwright-report/
 playwright/.cache/
+# storageState de sessão real gerado por e2e/auth.setup.ts (project "setup") — nunca commitar
+e2e/.auth/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json.example
