@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-23T10:09:36.159Z",
+  "geradoEm": "2026-09-23T13:27:32.866Z",
   "commit": null,
   "escala": {
     "xs": {
@@ -137,20 +137,32 @@
       "lineHeightOrigem": "herdado (preflight 1.5)",
       "usos": 1,
       "equivalenteNaEscala": null
+    },
+    "12.8": {
+      "fontSizePx": 12.8,
+      "lineHeightPx": 19.2,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
     }
   },
   "totais": {
     "usosNomeados": 3386,
-    "usosArbitrarios": 1233,
+    "usosArbitrarios": 1234,
     "arquivosAnalisados": 1414
   },
   "violacoes": {
-    "meiaMedida": 0,
+    "meiaMedida": 1,
     "acima16px": 1,
     "comEquivalenteExato": 0
   },
   "detalheViolacoes": {
-    "halfStep": [],
+    "halfStep": [
+      {
+        "where": "src/components/ui/calendar.tsx:29",
+        "px": 12.8
+      }
+    ],
     "above16": [
       {
         "where": "src/pages/NotFound.tsx:27",
