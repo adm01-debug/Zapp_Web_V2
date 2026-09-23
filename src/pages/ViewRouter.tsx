@@ -8,6 +8,8 @@ import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
 import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 import { ViewContainer } from '@/components/layout/ViewContainer';
 import { NavigationService } from '@/services/navigation.service';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { ShieldAlert } from 'lucide-react';
 
 import * as Views from './lazyViews';
 
@@ -111,13 +113,25 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   useDocumentTitle(mod.label);
   const { announce } = useAriaAnnouncer();
   const prefersReduced = useReducedMotion();
+  const { roles, loading: rolesLoading } = useUserRole();
 
   // Announce view changes for screen readers
   useEffect(() => {
     announce(`Navegou para ${mod.label}`);
   }, [currentView, mod.label, announce]);
 
+  // Bloqueio real de rota: esconder do menu nao impede ?view= digitado a mao,
+  // deep link ou favorito antigo. Nega por padrao ate os papeis carregarem —
+  // evita flash da tela restrita (mesmo padrao do ProtectedRoute).
+  const authorized = !rolesLoading && NavigationService.canAccess(currentView, roles);
+
   const content = useMemo(() => {
+    if (rolesLoading) {
+      return <ViewLoadingFallback noPadding />;
+    }
+    if (!authorized) {
+      return <RestrictedView onNavigateTo={onNavigateTo} />;
+    }
     // Check special views first (those needing props)
     if (SPECIAL_VIEWS[currentView]) {
       return SPECIAL_VIEWS[currentView]({ currentView, userId, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo });
@@ -132,7 +146,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       );
     }
     return <FallbackView currentView={currentView} />;
-  }, [currentView, userId]);
+  }, [currentView, userId, rolesLoading, authorized, onNavigateTo]);
 
   return (
     <ViewContainer
@@ -209,6 +223,29 @@ function FallbackView({ currentView }: { currentView: string }) {
           <Construction className="w-3.5 h-3.5" />
           <span>Em construção</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Tela de bloqueio quando o papel do usuário não autoriza a view atual (?view= manual, deep link, favorito antigo). */
+function RestrictedView({ onNavigateTo }: { onNavigateTo?: (viewId: string) => void }) {
+  return (
+    <div className="flex items-center justify-center h-full bg-gradient-to-b from-background to-muted/20">
+      <div className="text-center max-w-sm px-6 animate-fade-in">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-destructive/20 bg-destructive/10">
+          <ShieldAlert className="w-9 h-9 text-destructive" />
+        </div>
+        <h2 className="font-display text-2xl font-bold text-foreground mb-2">Acesso restrito</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Seu perfil não tem permissão para acessar esta área.
+        </p>
+        <button
+          onClick={() => onNavigateTo?.('inbox')}
+          className="mt-6 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          Voltar ao Chat
+        </button>
       </div>
     </div>
   );

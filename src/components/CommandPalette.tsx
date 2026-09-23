@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandSeparator,
 } from '@/components/ui/command';
- import { sidebarGroups, primaryNav } from '@/components/layout/sidebarNavConfig';
+ import { sidebarGroups, primaryNav, advancedNav } from '@/components/layout/sidebarNavConfig';
  import { useUserRole } from '@/hooks/system/useUserRole';
  import { NavigationService } from '@/services/navigation.service';
 import type { NavItemConfig } from '@/components/layout/SidebarNavItem';
@@ -39,7 +39,8 @@ function pushRecent(id: string) {
    const filteredGroups = useMemo(() => {
      const groups = [
        { label: 'Principal', items: primaryNav },
-       ...sidebarGroups
+       ...sidebarGroups,
+       { label: 'Avançado', items: advancedNav },
      ];
      return groups.map(g => ({
        ...g,

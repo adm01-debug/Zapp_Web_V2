@@ -50,8 +50,11 @@ export const Sidebar = React.memo(function Sidebar({
    );
 
    const favoriteItems = useMemo(() => 
-     favorites.map(id => allNavItems.find(item => item.id === id)).filter(Boolean) as typeof allNavItems,
-     [favorites, allNavItems]
+     favorites
+       .map(id => allNavItems.find(item => item.id === id))
+       .filter(Boolean)
+       .filter(item => NavigationService.canAccess(item!.id, roles)) as typeof allNavItems,
+     [favorites, allNavItems, roles]
    );
 
   return (
