@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
+import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -92,7 +93,15 @@ serve(async (req) => {
       if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
-        await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
+        // So zera o QR quando conecta de fato. O polling de status roda a cada 3s
+        // enquanto o dialogo de QR esta aberto; zerar aqui apagava o qr_code que o
+        // connect/webhook acabou de gravar e travava o pareamento (spinner infinito).
+        // O neq('status','qr_pending') protege o pareamento em curso.
+        if (status === 'connected') {
+          await supabase.from('whatsapp_connections').update({ status, qr_code: null }).eq('instance_id', instance);
+        } else {
+          await supabase.from('whatsapp_connections').update({ status }).eq('instance_id', instance).neq('status', 'qr_pending');
+        }
       }
       const status = data.state === 'open' ? 'connected' : 'disconnected';
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -209,9 +218,16 @@ serve(async (req) => {
 
     // ─── 5. Chat ───
     if (action === 'find-chats') return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
-    if (action === 'find-messages') return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
+    // /chat/findMessages nao existe na Evolution GO (GO_GAPS D6): sem a guarda a
+    // GO devolve 404 e o chamador engole o erro em Promise.allSettled, virando
+    // "sem dados". Alem disso os 404 alimentavam o contador do circuit breaker.
+    if (action === 'find-messages') {
+      if (isGoFlavor) return goHistoryNotSupported('find-messages', corsHeaders);
+      return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
+    }
 
     if (action === 'find-status-messages') {
+      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
       const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
       const data = await response.json();
       if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
