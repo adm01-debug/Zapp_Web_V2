@@ -1,4 +1,4 @@
- import { useState, useEffect, useCallback } from 'react';
+ import { useState, useEffect, useCallback, useRef } from 'react';
  import { supabase } from '@/integrations/supabase/client';
   import { QueueService } from '@/services/queue.service';
  import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
@@ -32,6 +32,14 @@ export function useQueues() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
    const fetchQueues = useCallback(async () => {
      try {
@@ -40,23 +48,29 @@ export function useQueues() {
          QueueService.fetchQueues(),
          QueueService.fetchMembers()
        ]);
- 
+
        if (queuesError) throw queuesError;
        if (membersError) throw membersError;
- 
+
        const queuesWithMembers: QueueWithMembers[] = (queuesData || []).map(queue => ({
          ...queue,
          members: (membersData || []).filter(m => m.queue_id === queue.id) as QueueMember[],
          waiting_count: 0 // Waiting counts logic could be moved to service if needed
        }));
- 
-       setQueues(queuesWithMembers);
-       setError(null);
+
+       if (isMountedRef.current) {
+         setQueues(queuesWithMembers);
+         setError(null);
+       }
      } catch (err) {
        log.error('Error fetching queues:', err);
-       setError(err as Error);
+       if (isMountedRef.current) {
+         setError(err as Error);
+       }
      } finally {
-       setLoading(false);
+       if (isMountedRef.current) {
+         setLoading(false);
+       }
      }
    }, []);
 

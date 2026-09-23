@@ -48,6 +48,7 @@ export function useConnectionsManager() {
   const [isCreating, setIsCreating] = useState(false);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   // Espelhado em useLayoutEffect, nao no corpo do render: escrever em ref
   // durante o render quebra em StrictMode/concurrent, onde o render pode ser
   // descartado. Mesma convencao de useNavigationHistory.ts.
@@ -62,6 +63,13 @@ export function useConnectionsManager() {
     disconnectInstance,
     deleteInstance,
   } = useEvolutionApi();
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     fetchConnections();
@@ -110,6 +118,7 @@ export function useConnectionsManager() {
       .from('whatsapp_connections')
       .select('*')
       .order('created_at', { ascending: false });
+    if (!isMountedRef.current) return;
     if (!error && data) setConnections(data as WhatsAppConnection[]);
     setLoading(false);
   };

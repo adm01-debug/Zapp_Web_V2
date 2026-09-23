@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -23,10 +23,18 @@ export function useConversationAnalyses(contactId: string | null) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchAnalyses = useCallback(async () => {
     if (!contactId) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -37,13 +45,19 @@ export function useConversationAnalyses(contactId: string | null) {
         .limit(20);
 
       if (error) throw error;
-      
-      setAnalyses((data || []) as ConversationAnalysis[]);
+
+      if (isMountedRef.current) {
+        setAnalyses((data || []) as ConversationAnalysis[]);
+      }
     } catch (err) {
       log.error('Error fetching analyses:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [contactId]);
 
