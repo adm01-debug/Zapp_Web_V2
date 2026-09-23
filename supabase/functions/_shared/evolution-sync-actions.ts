@@ -80,7 +80,7 @@ export async function syncContacts(
 
 // Evolution GO não expõe consulta de histórico (/chat/findMessages não existe;
 // mensagens chegam via webhook Message/HistorySync — GO_GAPS D6).
-function goHistoryNotSupported(actionName: string, corsHeaders: Record<string, string>): Response {
+export function goHistoryNotSupported(actionName: string, corsHeaders: Record<string, string>): Response {
   return jsonRes({
     success: false, notSupported: true,
     message: `${actionName} não é suportado na Evolution GO: o histórico chega via webhook (Message/HistorySync). Use EVOLUTION_API_FLAVOR=v2 apenas com a Evolution API v2.`,
