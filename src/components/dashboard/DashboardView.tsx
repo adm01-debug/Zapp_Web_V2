@@ -39,6 +39,7 @@ import { AIToolsCard } from './overview/AIToolsCard';
 import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -54,7 +55,14 @@ const DASHBOARD_TABS: DashboardTabDef[] = [
   { value: 'reports', label: 'Relatórios', icon: FileText },
 ];
 
+// Agent/special_agent veem so as abas pessoais — RLS ja escopa os dados dele,
+// mas Analytics/Equipe/Sentimento/Relatorios sao paineis de gestao da operacao inteira.
+const AGENT_TAB_VALUES = new Set(['overview', 'goals', 'satisfaction']);
+
 export function DashboardView() {
+  const { isAdmin, isSupervisor } = useUserRole();
+  const isStaff = isAdmin || isSupervisor;
+  const visibleTabs = isStaff ? DASHBOARD_TABS : DASHBOARD_TABS.filter(t => AGENT_TAB_VALUES.has(t.value));
   const [tab, setTab] = useState(OVERVIEW_TAB);
   const [filters, setFilters] = useState<DashboardFiltersState>(getDefaultFilters());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -109,12 +117,12 @@ export function DashboardView() {
       <div className="space-y-2.5">
         <DashboardHeader
           filters={(
-            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
           )}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
-          <DashboardTabs tabs={DASHBOARD_TABS} activeTab={tab} />
+          <DashboardTabs tabs={visibleTabs} activeTab={tab} />
 
         <TabsContent value="overview" className="space-y-2.5 mt-2.5">
           {/* Shell da Visão Geral — placeholders com altura-alvo para o CP1 medir o ritmo vertical.
@@ -144,15 +152,19 @@ export function DashboardView() {
               }}
             />
           </div>
-          <div data-testid="dash-row3" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
-            <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => setTab('sla')} />
+          <div data-testid="dash-row3" className={isStaff ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5' : 'grid grid-cols-1 gap-2.5'}>
+            {isStaff && (
+              <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => setTab('sla')} />
+            )}
             <RecentActivityCard items={recentEvents?.items ?? []} />
-            <TeamHighlightCard
-              agents={leaderboardAgents}
-              timeRange={timeRange}
-              onTimeRangeChange={setTimeRange}
-              slaRateByAgent={slaRateByAgent}
-            />
+            {isStaff && (
+              <TeamHighlightCard
+                agents={leaderboardAgents}
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+                slaRateByAgent={slaRateByAgent}
+              />
+            )}
           </div>
           <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
             <AIToolsCard onSeeAll={() => setTab('ai')} />
