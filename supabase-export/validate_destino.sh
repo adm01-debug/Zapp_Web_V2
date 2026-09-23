@@ -18,6 +18,7 @@ set -u
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 SQL="$DIR/VALIDATE_DESTINO.sql"
+PSQL_SAFE="$DIR/../scripts/db-audit/psql-safe.mjs"
 
 JSON_SQL="$DIR/VALIDATE_DESTINO_JSON.sql"
 CSV_FILE="${EXPORT_LOG_CSV:-$DIR/validation_log.csv}"
@@ -28,6 +29,7 @@ if [[ -z "$URL" ]]; then
   echo "❌ Forneça a URL do destino: \$DESTINO_URL ou \$1"
   exit 2
 fi
+export DESTINO_URL="$URL"
 if [[ ! -f "$SQL" ]]; then
   echo "❌ Arquivo não encontrado: $SQL"
   exit 2
@@ -37,7 +39,7 @@ OUT="$(mktemp)"
 trap 'rm -f "$OUT"' EXIT
 
 echo "▶  Validando destino..."
-if ! psql "$URL" -v ON_ERROR_STOP=1 -f "$SQL" 2>&1 | tee "$OUT"; then
+if ! node "$PSQL_SAFE" -v ON_ERROR_STOP=1 -f "$SQL" 2>&1 | tee "$OUT"; then
   echo "❌ psql falhou."
   exit 2
 fi
@@ -61,7 +63,7 @@ echo "📝 Gerando logs de validação..."
 
 # Gera JSON
 if [[ -f "$JSON_SQL" ]]; then
-  psql "$URL" -v ON_ERROR_STOP=1 -f "$JSON_SQL" -o "$JSON_FILE"
+  node "$PSQL_SAFE" -v ON_ERROR_STOP=1 -f "$JSON_SQL" -o "$JSON_FILE"
   echo "📄 JSON: $JSON_FILE"
 fi
 
