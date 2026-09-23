@@ -37,7 +37,7 @@ env:
 
 jobs:
   sync:
-    name: Propor sync de types + catalogo + manifesto
+    name: Propor sync de types + catalogo + manifesto + grants
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -94,6 +94,8 @@ jobs:
             -f scripts/db-audit/catalog.sql > /tmp/catalog.new.json
           psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/manifest.sql > /tmp/manifest.new.json
+          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/grants-baseline.sql > /tmp/grants.new.json
 
           TYPE_SIZE=$(wc -c < /tmp/types.new.ts)
           echo "types.ts gerado: ${TYPE_SIZE} bytes"
@@ -103,8 +105,10 @@ jobs:
           fi
           test -s /tmp/catalog.new.json
           test -s /tmp/manifest.new.json
+          test -s /tmp/grants.new.json
           node -e "JSON.parse(require('fs').readFileSync('/tmp/catalog.new.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('/tmp/manifest.new.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('/tmp/grants.new.json', 'utf8'))"
 
       # Contrato dos checkers: 0=igual, 1=drift valido, 2=erro/identidade.
       # Apenas exit 1 pode virar proposta de atualizacao.
@@ -127,6 +131,39 @@ jobs:
           CATALOG_STATUS=$?
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/manifest.new.json
           MANIFEST_STATUS=$?
+          GRANTS_CANDIDATE=/tmp/grants.new.json \
+          GRANTS_COMMITTED=scripts/db-audit/grants-baseline.json \
+            node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          try {
+            const fresh = JSON.parse(fs.readFileSync(process.env.GRANTS_CANDIDATE, 'utf8'));
+            const committed = JSON.parse(fs.readFileSync(process.env.GRANTS_COMMITTED, 'utf8'));
+            const isSortedUniqueStrings = (value) => Array.isArray(value)
+              && value.every((item) => typeof item === 'string' && item.length > 0)
+              && value.every((item, index) => index === 0 || value[index - 1] < item);
+            const valid = (value) => value && typeof value === 'object' && !Array.isArray(value)
+              && isSortedUniqueStrings(value.anon_execute)
+              && isSortedUniqueStrings(value.anon_table_select)
+              && Number.isInteger(value.authenticated_execute_count)
+              && value.authenticated_execute_count >= 0
+              && Number.isInteger(value.service_role_execute_count)
+              && value.service_role_execute_count >= 0;
+            if (!valid(fresh) || !valid(committed)) process.exit(2);
+            const metadata = new Set(['generated_at', 'note', 'how_to_regenerate']);
+            const canon = (value) => Array.isArray(value) ? value.map(canon)
+              : value && typeof value === 'object'
+                ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canon(value[key])]))
+                : value;
+            const aclOnly = (value) => Object.fromEntries(
+              Object.entries(value).filter(([key]) => !metadata.has(key)),
+            );
+            process.exit(JSON.stringify(canon(aclOnly(fresh))) === JSON.stringify(canon(aclOnly(committed))) ? 0 : 1);
+          } catch {
+            process.exit(2);
+          }
+          NODE
+          GRANTS_STATUS=$?
           set -e
 
           case "$CATALOG_STATUS" in
@@ -139,8 +176,13 @@ jobs:
             1) MANIFEST_CHANGED=true ;;
             *) echo "::error::Manifesto candidato rejeitado (erro ou identidade nao comprovada)."; exit 1 ;;
           esac
+          case "$GRANTS_STATUS" in
+            0) GRANTS_CHANGED=false ;;
+            1) GRANTS_CHANGED=true ;;
+            *) echo "::error::Baseline de grants candidato rejeitado."; exit 1 ;;
+          esac
 
-          if [ "$TYPES_CHANGED" = true ] || [ "$CATALOG_CHANGED" = true ] || [ "$MANIFEST_CHANGED" = true ]; then
+          if [ "$TYPES_CHANGED" = true ] || [ "$CATALOG_CHANGED" = true ] || [ "$MANIFEST_CHANGED" = true ] || [ "$GRANTS_CHANGED" = true ]; then
             SCHEMA_CHANGED=true
           else
             SCHEMA_CHANGED=false
@@ -149,8 +191,9 @@ jobs:
           echo "types_changed=${TYPES_CHANGED}" >> "$GITHUB_OUTPUT"
           echo "catalog_changed=${CATALOG_CHANGED}" >> "$GITHUB_OUTPUT"
           echo "manifest_changed=${MANIFEST_CHANGED}" >> "$GITHUB_OUTPUT"
+          echo "grants_changed=${GRANTS_CHANGED}" >> "$GITHUB_OUTPUT"
           echo "schema_changed=${SCHEMA_CHANGED}" >> "$GITHUB_OUTPUT"
-          echo "Drift: types=${TYPES_CHANGED}, catalogo=${CATALOG_CHANGED}, manifesto=${MANIFEST_CHANGED}"
+          echo "Drift: types=${TYPES_CHANGED}, catalogo=${CATALOG_CHANGED}, manifesto=${MANIFEST_CHANGED}, grants=${GRANTS_CHANGED}"
 
       - name: Finalizar se nao houver drift
         if: steps.diff.outputs.schema_changed != 'true'
@@ -168,10 +211,13 @@ jobs:
           if [ "${{ steps.diff.outputs.manifest_changed }}" = true ]; then
             cp /tmp/manifest.new.json supabase/schema-manifest.json
           fi
+          if [ "${{ steps.diff.outputs.grants_changed }}" = true ]; then
+            cp /tmp/grants.new.json scripts/db-audit/grants-baseline.json
+          fi
 
       # Se um gate bloquear a proposta (ex.: Gate 3, remocoes > 10 linhas),
       # nenhum PR e aberto e os candidatos ficam presos no runner efemero.
-      # Publica os 3 candidatos como artifact para revisao/aplicacao manual,
+      # Publica os 4 candidatos como artifact para revisao/aplicacao manual,
       # independente do resultado dos gates.
       - name: Publicar candidatos como artifact
         if: steps.diff.outputs.schema_changed == 'true'
@@ -183,6 +229,7 @@ jobs:
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
             supabase/schema-manifest.json
+            scripts/db-audit/grants-baseline.json
           retention-days: 14
 
       - name: Setup Bun
@@ -322,7 +369,7 @@ jobs:
           branch: automation/types-sync
           delete-branch: true
           commit-message: 'chore(db): sincronizar artefatos com o banco [auto]'
-          title: 'chore(db): sincronizar types, catálogo e manifesto'
+          title: 'chore(db): sincronizar artefatos derivados do banco'
           body: |
             Sincronização automatizada a partir do banco oficial.
 
@@ -330,6 +377,7 @@ jobs:
             - types.ts alterado: `${{ steps.diff.outputs.types_changed }}`
             - catálogo alterado: `${{ steps.diff.outputs.catalog_changed }}`
             - manifesto alterado: `${{ steps.diff.outputs.manifest_changed }}`
+            - baseline de grants alterado: `${{ steps.diff.outputs.grants_changed }}`
             - gates TypeScript, usage-guard e remoções: aprovados
 
             Revisão humana e checks da PR continuam obrigatórios.
@@ -338,6 +386,7 @@ jobs:
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
             supabase/schema-manifest.json
+            scripts/db-audit/grants-baseline.json
 
       - name: Exigir PR criado ou atualizado
         if: >-
@@ -363,5 +412,6 @@ jobs:
             echo "| types.ts | ${{ steps.diff.outputs.types_changed || 'n/a' }} |"
             echo "| schema-catalog.json | ${{ steps.diff.outputs.catalog_changed || 'n/a' }} |"
             echo "| schema-manifest.json | ${{ steps.diff.outputs.manifest_changed || 'n/a' }} |"
+            echo "| grants-baseline.json | ${{ steps.diff.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
           } >> "$GITHUB_STEP_SUMMARY"

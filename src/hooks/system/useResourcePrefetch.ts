@@ -111,6 +111,26 @@ export function usePrefetch<T>(
  */
 export function useRoutePrefetch() {
   const prefetchedRoutes = useRef(new Set<string>());
+  const timeoutIds = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const idleCallbackIds = useRef(new Set<number>());
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    const scheduledTimeouts = timeoutIds.current;
+    const scheduledIdleCallbacks = idleCallbackIds.current;
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+      scheduledTimeouts.forEach((id) => clearTimeout(id));
+      scheduledTimeouts.clear();
+
+      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        scheduledIdleCallbacks.forEach((id) => window.cancelIdleCallback(id));
+      }
+      scheduledIdleCallbacks.clear();
+    };
+  }, []);
 
   const prefetchRoute = useCallback((routePath: string) => {
     if (prefetchedRoutes.current.has(routePath)) return;
@@ -120,6 +140,8 @@ export function useRoutePrefetch() {
 
     // Use requestIdleCallback for non-critical prefetching
     const callback = () => {
+      if (!isMounted.current || typeof document === 'undefined') return;
+
       const link = document.createElement('link');
       link.rel = 'prefetch';
       link.as = 'document';
@@ -127,10 +149,19 @@ export function useRoutePrefetch() {
       document.head.appendChild(link);
     };
 
-    if ('requestIdleCallback' in window) {
-      (window as Window).requestIdleCallback(callback);
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      let idleCallbackId = 0;
+      idleCallbackId = window.requestIdleCallback(() => {
+        idleCallbackIds.current.delete(idleCallbackId);
+        callback();
+      });
+      idleCallbackIds.current.add(idleCallbackId);
     } else {
-      setTimeout(callback, 100);
+      const timeoutId = setTimeout(() => {
+        timeoutIds.current.delete(timeoutId);
+        callback();
+      }, 100);
+      timeoutIds.current.add(timeoutId);
     }
   }, []);
 

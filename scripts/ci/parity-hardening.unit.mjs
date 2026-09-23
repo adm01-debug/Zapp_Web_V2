@@ -10,6 +10,15 @@ test('production parity requires live legs, and runtime metadata is archived', (
   assert.doesNotMatch(workflow, /^  pull_request:/m);
   assert.ok(workflow.indexOf('Exigir credencial do banco oficial') < workflow.indexOf('Auditar configuracao runtime'));
 });
+test('types-sync includes the grants baseline in generation, drift and PR paths', () => {
+  const workflow = read('../../.github/workflows/types-sync.yml');
+  assert.match(workflow, /grants-baseline\.sql > \/tmp\/grants\.new\.json/);
+  assert.match(workflow, /GRANTS_STATUS=\$\?/);
+  assert.match(workflow, /grants_changed=\$\{GRANTS_CHANGED\}/);
+  assert.match(workflow, /cp \/tmp\/grants\.new\.json scripts\/db-audit\/grants-baseline\.json/);
+  assert.equal((workflow.match(/scripts\/db-audit\/grants-baseline\.json/g) || []).length, 4);
+  assert.match(workflow, /baseline de grants alterado/);
+});
 test('deployment brackets mutation with snapshots and stable post-collection', () => {
   const workflow = read('../../.github/workflows/deploy-functions.yml');
   const before = workflow.indexOf('collect-remote.mjs" --snapshot');
