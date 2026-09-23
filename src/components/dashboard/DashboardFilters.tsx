@@ -38,6 +38,8 @@ interface DashboardFiltersProps {
   onFiltersChange: (filters: DashboardFiltersState) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  /** false para agent/special_agent: dashboard ja e pessoal, filtro por fila/agente nao se aplica. */
+  showTeamFilters?: boolean;
 }
 
 const PERIOD_OPTIONS = [
@@ -62,7 +64,8 @@ export function DashboardFilters({
   filters, 
   onFiltersChange, 
   onRefresh,
-  isRefreshing 
+  isRefreshing,
+  showTeamFilters = true,
 }: DashboardFiltersProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { queues } = useQueues();
@@ -199,41 +202,47 @@ export function DashboardFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Fila */}
-      <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
-        <SelectTrigger data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
-          <SelectValue placeholder="Todas as filas" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas as filas</SelectItem>
-          {queues?.map(queue => (
-            <SelectItem key={queue.id} value={queue.id}>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: queue.color }}
-                />
-                {queue.name}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {showTeamFilters && (
+        <>
+        {/* Fila */}
+        <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
+          <SelectTrigger data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+            <SelectValue placeholder="Todas as filas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as filas</SelectItem>
+            {queues?.map(queue => (
+              <SelectItem key={queue.id} value={queue.id}>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: queue.color }}
+                  />
+                  {queue.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      {/* Agente */}
-      <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
-        <SelectTrigger data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
-          <SelectValue placeholder="Todos os agentes" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os agentes</SelectItem>
-          {agents?.map(agent => (
-            <SelectItem key={agent.id} value={agent.id}>
-              {agent.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {/* Agente */}
+        <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
+          <SelectTrigger data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+            <SelectValue placeholder="Todos os agentes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os agentes</SelectItem>
+            {agents?.map(agent => (
+              <SelectItem key={agent.id} value={agent.id}>
+                {agent.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+
+        </>
+      )}
 
       {/* Atualizar */}
       {onRefresh && (
