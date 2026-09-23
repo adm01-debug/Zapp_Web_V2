@@ -17,6 +17,8 @@ import {
   inDevelopmentNav,
   advancedNav,
 } from '@/components/layout/sidebarNavConfig';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { NavigationService } from '@/services/navigation.service';
 
 interface MobileDrawerMenuProps {
   isOpen: boolean;
@@ -90,6 +92,7 @@ export function MobileDrawerMenu({
   const [search, setSearch] = useState('');
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const { roles } = useUserRole();
 
   const initials = agentName
     ?.split(' ')
@@ -98,8 +101,12 @@ export function MobileDrawerMenu({
     .slice(0, 2) || 'U';
 
   const filteredSections = useMemo(() => {
-    if (!search.trim()) return sections;
-    return sections
+    const authorizedSections = sections.map((s) => ({
+      ...s,
+      items: NavigationService.filterNavItems(s.items, roles),
+    }));
+    if (!search.trim()) return authorizedSections.filter((s) => s.items.length > 0);
+    return authorizedSections
       .map((s) => ({
         ...s,
         items: s.items.filter((i) =>
@@ -107,12 +114,13 @@ export function MobileDrawerMenu({
         ),
       }))
       .filter((s) => s.items.length > 0);
-  }, [search]);
+  }, [search, roles]);
 
   const recentIds = isOpen ? getRecents() : [];
   const recentItems = recentIds
     .map(id => allItems.find(i => i.id === id))
-    .filter(Boolean) as typeof allItems;
+    .filter(Boolean)
+    .filter((i) => NavigationService.canAccess(i!.id, roles)) as typeof allItems;
 
   const handleNav = (id: string) => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(5);

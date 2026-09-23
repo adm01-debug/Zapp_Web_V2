@@ -19,10 +19,13 @@ interface TaskCardProps {
   assigneeName?: string;
   onToggle: (task: ConversationTask) => void;
   onDelete: (id: string) => void;
+  /** Nome do contato — só a tela "Tarefas" (cross-contato) passa isso; na aba da conversa é redundante. */
+  contactName?: string;
+  onOpenContact?: () => void;
 }
 
 /** Card de tarefa (2.9) — checkbox, prioridade, data e responsável, reaproveitado nas 3 colunas da aba Tarefas. */
-export function TaskCard({ task, assigneeName, onToggle, onDelete }: TaskCardProps) {
+export function TaskCard({ task, assigneeName, onToggle, onDelete, contactName, onOpenContact }: TaskCardProps) {
   const priority = PRIORITY_PILL[task.priority] ?? PRIORITY_PILL.medium;
   const completed = task.status === 'completed';
   const due = task.due_date ? new Date(task.due_date) : null;
@@ -38,6 +41,11 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete }: TaskCardPro
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <p className={cn('text-[13px] font-semibold', completed && 'line-through text-muted-foreground')}>{task.title}</p>
+            {contactName && (
+              <button type="button" onClick={onOpenContact} disabled={!onOpenContact} className="text-[11px] text-primary hover:underline disabled:no-underline disabled:cursor-default disabled:text-muted-foreground mt-0.5 truncate block text-left">
+                {contactName}
+              </button>
+            )}
             {task.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{task.description}</p>}
           </div>
           <DropdownMenu>

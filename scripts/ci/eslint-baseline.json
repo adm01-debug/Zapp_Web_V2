@@ -126,7 +126,7 @@
     },
     {
       "path": "src/components/catalog/ExternalProductCatalog.tsx",
-      "sha256": "1e35fd33049bc79408aab1efce2da262c47fe8e0908aa4c5975f87edf07900a6"
+      "sha256": "e37c9d711f0b18d16775f86a2169cb9e6b4cf89a6cbdcfbb4e33e8695072a7aa"
     },
     {
       "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
@@ -143,10 +143,6 @@
     {
       "path": "src/components/cognitive/ProgressiveDisclosure.tsx",
       "sha256": "29f5982b502cdb922ba7d75511b5e7e9560ed91bbf27ee59314297d106d6121c"
-    },
-    {
-      "path": "src/components/CommandPalette.tsx",
-      "sha256": "23102246000f7497c83d391ce3720917631d18116da08caa8eb946a6785ff44c"
     },
     {
       "path": "src/components/compliance/LGPDComplianceView.tsx",
@@ -222,15 +218,15 @@
     },
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
-      "sha256": "a1a83d5d6fff1d35aceea7bb426f9e2c0af353df21a2eff27247be9b47607ae5"
+      "sha256": "21b132f2f812e1c42c1e81b32aba78e15cce598ac07a5e4c4c67bc2c50b67f05"
     },
     {
       "path": "src/components/contacts/ContactsTable.tsx",
-      "sha256": "e6768b559950442a7b75bd75ba20f05d6cdf5c81c8e711498220b335cd44ca5f"
+      "sha256": "5af3ad375a0939b74e8aaaec8483e417fe361eadb812dc6294e1ffc7a39e4862"
     },
     {
       "path": "src/components/contacts/InlineEditCell.tsx",
-      "sha256": "d1932262e3496569ea8aad1f18c34f118896f7f60ee6ed3e8fd847e5396dbc91"
+      "sha256": "212f195f090a8756818c7dac5f1920d6ff823d26316383ffda0972c5ba131985"
     },
     {
       "path": "src/components/contacts/useContactFormValidation.ts",
@@ -258,7 +254,7 @@
     },
     {
       "path": "src/components/dashboard/DashboardFilters.tsx",
-      "sha256": "3a5cf5c7f0cc2db71c4ace4af0f2638cc80ac959f5511a6c6499b3dea0f1a37f"
+      "sha256": "b9c81ecccb1dbedca611412108055cf31fd38d2d8a5a7e22a21f0377006b6ab4"
     },
     {
       "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
@@ -298,11 +294,11 @@
     },
     {
       "path": "src/components/diagnostics/__tests__/ConnectionHealthPanel.test.tsx",
-      "sha256": "80a38fae13cf59cfa73accc582b024c86d5d8ee40c22d49ba81b66ac5789a8ad"
+      "sha256": "1e2b1feff1a0b9f547d26225e2eda0c3e0001df046f4902c8a4713f60cc93faa"
     },
     {
       "path": "src/components/diagnostics/ConnectionHealthPanel.tsx",
-      "sha256": "31f9f0a69aaa40e354d2217f775f3ec20653a408f3ef20684dca4276344c81c0"
+      "sha256": "357692fa0b27a138b47120af892cd0381c7cf00c049df9ffc4f32f6d732edc35"
     },
     {
       "path": "src/components/effects/Confetti.tsx",
@@ -374,7 +370,7 @@
     },
     {
       "path": "src/components/inbox/AIConversationAssistant.tsx",
-      "sha256": "86e7cd1cdc7b8d2f782bebe0539ce60b41a88b5537a0c49c59d93d1b11c460de"
+      "sha256": "c3b8d66199485a33518dc6c65ab423458e7e91ddf1e924ec5ecb06dbdb9ffcd7"
     },
     {
       "path": "src/components/inbox/AISuggestions.tsx",
@@ -410,7 +406,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "19f4a17943108b36dcada7a0528e14c99b4889b7f4bdcd78a1274e9407db6bb5"
+      "sha256": "d4cd0f4dbb4d7346ea4470558cf42704140ddab2bed08f91a82800665af29428"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -426,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
-      "sha256": "d78ae2d14eda2148a8e1af5e73518d7697fb8429dff3b95ebce8c3775e831542"
+      "sha256": "7a25828ba0ee4c06e68eed654d53c75e275221a4f3b683e59a89c770e7c685b2"
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
@@ -458,7 +454,7 @@
     },
     {
       "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
-      "sha256": "0f14d7e28e411b1014005dc32fde0e5c760e300f186338f08b0b99fbcd8c0b66"
+      "sha256": "c48b597ee0de2c647ce5812052985282c55bbfc7eaa3dce6b1dc14456e8c5936"
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
@@ -534,7 +530,7 @@
     },
     {
       "path": "src/components/inbox/ObjectionDetector.tsx",
-      "sha256": "9322d12bab0a4a255abc8b3582c2a30abca48e8ced88e7b3af856899d60d0957"
+      "sha256": "a282304b974e9c685a8c38cd578fb130c9a294d6a2b4cf3c1d866425e7c4a12a"
     },
     {
       "path": "src/components/inbox/QueuePositionNotifier.tsx",
@@ -582,7 +578,7 @@
     },
     {
       "path": "src/components/inbox/TransferDialog.tsx",
-      "sha256": "f68359b781921916a590ce829557dcb342da7da8a6eab67da6aa48340eb9dcb8"
+      "sha256": "35a9b663ba678299aeeab544e5697e021579a46b40d29d33b0c7eb8061ace3e6"
     },
     {
       "path": "src/components/inbox/useChatMediaSending.ts",
@@ -626,7 +622,7 @@
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "1ea68b078164e536ecc68665aef1096a15b083a2e9d045ffc5ae3eeb11c90604"
+      "sha256": "d07e9a299ca7737c61c7e8cb853a2d36a5f6379d02c2684226dbfad7d82d0933"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -750,7 +746,7 @@
     },
     {
       "path": "src/components/pipeline/SalesPipelineView.tsx",
-      "sha256": "f00479bf62a23e3f5cda895a4b54e60cb8af7a96e6d84d28b8d2a120ba39ebea"
+      "sha256": "f1b129e6fc3c7a248338b4861758e83dd8ceadc47d303943b00a50e7e05c802a"
     },
     {
       "path": "src/components/queues/AddMemberDialog.tsx",
@@ -942,7 +938,7 @@
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
-      "sha256": "20a416bd096775df86f1b6cb573106fd8297f1304b78cd464548c925202f265c"
+      "sha256": "0b184764ea97fbdea1e8b4e6379bbe3a16b68a4b49a26ab1437a41e0b072f885"
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
@@ -1186,7 +1182,7 @@
     },
     {
       "path": "src/hooks/__tests__/useMessages.test.tsx",
-      "sha256": "dc24945bec425ef1059df3a27d48bd9bb8ad17927a951ffcdfc3129fd04778b6"
+      "sha256": "1ab876544b4531fcc1e899fa0f5be14978de4aaf4c26f38e4e43f78f23c0948b"
     },
     {
       "path": "src/hooks/__tests__/useMessageStatus.test.tsx",
@@ -1242,7 +1238,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
-      "sha256": "cbaa49dd2cfd350339b1727371d0a2c672e68db2e758df2773df20af783b07ed"
+      "sha256": "9ca3250c4bab3fc7624a9eef13c63595360bf1d12c828df362e25126abc1d97c"
     },
     {
       "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
@@ -1250,7 +1246,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
-      "sha256": "2eda51db263497e0d24657a4a40ba2e35c8b9c87e0698e847617489f8ce1d7ef"
+      "sha256": "893742f147a8de87277400615038416804226ffe37491f8ec8a7ec5a7d0a2f9d"
     },
     {
       "path": "src/hooks/__tests__/useSavedFilters.test.tsx",
@@ -1266,7 +1262,7 @@
     },
     {
       "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "sha256": "21d9283f40cce1490d944f4a29b40f652c8d44b9ab94f1eea80935bdeed0545a"
+      "sha256": "c5dcfa5b3c68ab5cdd0687431ac8ac2786bf524956cd416e2def228d0272a9c6"
     },
     {
       "path": "src/hooks/__tests__/useSipClient.test.ts",
@@ -1354,11 +1350,11 @@
     },
     {
       "path": "src/hooks/business/useQueues.ts",
-      "sha256": "1fa6368643a92d7b7d35c2c6d174009a3558eaa97edb25901dccbb5a1999c4d5"
+      "sha256": "893f32a0ad97f15525bb928a3b3dbdc2ed4f9a81bb0be89ec14c108e412571d5"
     },
     {
       "path": "src/hooks/business/useQueuesComparison.ts",
-      "sha256": "8a3649188d49419bd86688be61afde9300d313d1181b832a29e706b0c8fbd08d"
+      "sha256": "5d465f237fe2d3905bfff6225935da5ff7d4865403546a698414c8808d5cd56e"
     },
     {
       "path": "src/hooks/chat/useChatKeyboardNavigation.ts",
@@ -1370,7 +1366,7 @@
     },
     {
       "path": "src/hooks/chat/useConversationAnalyses.ts",
-      "sha256": "489c8618f54389a281e4cf57d038959cb6ec91e127532df01f4926fea31a7006"
+      "sha256": "ea6f0869db804891ba4449b468bfe270ae233e438b91a95033ebedeb00b9e8d4"
     },
     {
       "path": "src/hooks/chat/useForwardMessage.ts",
@@ -1379,10 +1375,6 @@
     {
       "path": "src/hooks/chat/useGroupsManager.ts",
       "sha256": "f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055"
-    },
-    {
-      "path": "src/hooks/chat/useMessages.ts",
-      "sha256": "16ca1ecbe57dd1c678bcd98c501be22c71693b62a4b436f9307578347530e90f"
     },
     {
       "path": "src/hooks/chat/useMessageStatus.ts",
@@ -1506,7 +1498,7 @@
     },
     {
       "path": "src/hooks/system/useGeoBlocking.ts",
-      "sha256": "0ec5b13644abcc29405d8fb3e500f38d0be111dde91caeaa7e45e7f4e8085982"
+      "sha256": "6443cba74f5055b5706e0d9b22010b52242da1f44dc7869b967372275e36aaf1"
     },
     {
       "path": "src/hooks/system/useGlobalSettings.ts",
@@ -1522,15 +1514,11 @@
     },
     {
       "path": "src/hooks/system/useNotifications.ts",
-      "sha256": "7c78ded2fedf821d3971f4948bad451cf18b636d9507229f9e67383db2684d3c"
+      "sha256": "b388cf62835242daee891e6b110e61cae0592f01b52c41285be18d2fe50761e7"
     },
     {
       "path": "src/hooks/system/useOfflineCache.ts",
       "sha256": "9ce40c53aa61c13fa649d1a54a861ce63ecb17d6220a2c57a9336ba08e199dd6"
-    },
-    {
-      "path": "src/hooks/system/useRateLimitLogs.ts",
-      "sha256": "c6a28db12735eb53e6b2007f2cc4336698e17b2c4a0773644d8ab24a5492d35e"
     },
     {
       "path": "src/hooks/system/useSearchHistory.ts",
@@ -1610,7 +1598,7 @@
     },
     {
       "path": "src/pages/Auth.tsx",
-      "sha256": "1dd8732a4ea262f07c7e8e4c2de322a6cff6ed73d8b3f4694723802e8a70b511"
+      "sha256": "f2c31936e703b339af11525bd41536a8bb2ba30fc26477ad1076c6661101edb4"
     },
     {
       "path": "src/pages/ChatPopup.tsx",
@@ -1649,10 +1637,6 @@
       "sha256": "b4724ff4116bcabd1034b21ee60807ff2b5f57daa6f8ec57ac399c7c2f83a65f"
     },
     {
-      "path": "src/pages/ViewRouter.tsx",
-      "sha256": "912bd7ca0d2d3417e1cd00b366d05dcf91fb6641c7c2cf54f40e37fcd8d2db82"
-    },
-    {
       "path": "src/services/evolution.service.ts",
       "sha256": "96be56e40846555ff84bed8b63cf146d6dae2855bbc1f3d76322e0cd2d8d4adc"
     },
@@ -1686,7 +1670,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "sha256": "573c751840d10dabb0237ddc6999068e643a5322009ae0e1f12dd61e7efb5efe"
+      "sha256": "ec07344b520ec2481346622443fbfbcce00481ddff42f55beb3492d1bcb84cfb"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1694,7 +1678,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "sha256": "5db118185acd2563c1f09c8562d25959d5a1307094082e8723d4ea8f3e532e62"
+      "sha256": "289c8f2cdd96aa1c4ece8053e65c94decc1be8ec630a62565d682ef3d6697e4a"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -1706,11 +1690,11 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "sha256": "50b7b28dfd497d2d0dd5b1b0072bccbfd54998501774deeb82702002f8f15259"
+      "sha256": "fd8b582b55116307186478c6f7fc03f47656cf20af7dec14bdc7346b2b21b478"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "sha256": "9cc0032ffefc1382232687ba30433704d7b0a621bf2ead3adb8024169fe588d8"
+      "sha256": "240ea935f92a666d165a15e3767cd391d4691ac087f01fab1eb2b9bb619efef2"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -1722,7 +1706,7 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "sha256": "1af0866989e3eb648092acfd1370fb5dca167031e83886162055f9a244435ca7"
+      "sha256": "2620049044a6db0c44cbc933cacdc99837c427677c41322fcce6f2b3224ebd11"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
@@ -1766,11 +1750,11 @@
     },
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
-      "sha256": "61ea691ff01c1cb264fc6cd661f4237994c431c9b335c5d69c5c1c37cce85d70"
+      "sha256": "044e36d98556084095befd51f35fa1ce948f8da7e58216173bafbf1138ae787f"
     },
     {
       "path": "tailwind.config.ts",
-      "sha256": "9c697a358eea3cb2c0497c9c7a9616b9f34f914823206214d0bc486c7b46ceb5"
+      "sha256": "fa79f9daec08618c63d342a04affa4a21fb6cc99fb1c8870734dc101b137c393"
     }
   ],
   "issues": [
@@ -2686,9 +2670,9 @@
     },
     {
       "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 120,
+      "line": 119,
       "column": 6,
-      "endLine": 120,
+      "endLine": 119,
       "endColumn": 12,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -2700,9 +2684,9 @@
     },
     {
       "file": "src/components/catalog/ExternalProductCatalog.tsx",
-      "line": 95,
+      "line": 94,
       "column": 6,
-      "endLine": 95,
+      "endLine": 94,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -2767,48 +2751,6 @@
       "spanHash": "3363ca62e885d6c1bb84dd33228fc4133d0ab1709e8f6309a1de556b95227e64",
       "lineHash": "a108573342594beab572214f67dd1706a988f07e6d3e2a4a1b6d240b537ae6d1",
       "contextHash": "710fc94c43cd47f59b0c444da61ab64a759df672c0af72a601de6f8a9acf5eef"
-    },
-    {
-      "file": "src/components/CommandPalette.tsx",
-      "line": 46,
-      "column": 59,
-      "endLine": 46,
-      "endColumn": 62,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "f5a1ce9686a7a9283337b61296e9d42c535f0b860c2b202d27741068bb510bdd",
-      "contextHash": "26fc334ca74ca41af23b7dda0d2bedef0e82af656b00ad9de5cb55c944f1dc73"
-    },
-    {
-      "file": "src/components/CommandPalette.tsx",
-      "line": 56,
-      "column": 15,
-      "endLine": 56,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/CommandPalette.tsx:56:15 54 | 55 | useEffect(() => { > 56 | if (open) setRecent(getRecent()); | ^^^^^^^^^ Avoid calling setState() directly within an effect 57 | }, [open]); 58 | 59 | useEffect(() => {",
-      "spanHash": "ab19221668254fa5efb54dd572e3de88d4a46c4e1ac6923e895e34dac7c36757",
-      "lineHash": "aa5eaa0831011671336d96e459284d72424881ff24d9014b0d84ae15ea9c8f3a",
-      "contextHash": "b10abf0d8659ac4ec66a20a98f8fa74cd7536de38f450aa1f21227a865fa7e86"
-    },
-    {
-      "file": "src/components/CommandPalette.tsx",
-      "line": 76,
-      "column": 81,
-      "endLine": 76,
-      "endColumn": 84,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "7b832ece2ba1d413f324afc8d4986ba81c5b3c00e9d94d3aeefb21121689d44e",
-      "contextHash": "e2b8e685dee4420e49a29dfcbfd6cc1c5078697b6346e2d3f116328f70ef1c64"
     },
     {
       "file": "src/components/compliance/LGPDComplianceView.tsx",
@@ -3186,7 +3128,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "c1a8fbaedac6d435c35c0a55fd2e14aaba38d789161ef4a55d553be69f871c3d"
+      "contextHash": "b7d22cc74e6d5db7fc782e41cb0df20a8f695963e2441cdb690b133db536320a"
     },
     {
       "file": "src/components/contacts/useContactFormValidation.ts",
@@ -3288,9 +3230,9 @@
     },
     {
       "file": "src/components/dashboard/DashboardFilters.tsx",
-      "line": 51,
+      "line": 53,
       "column": 14,
-      "endLine": 51,
+      "endLine": 53,
       "endColumn": 31,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3508,13 +3450,13 @@
       "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
       "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
       "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
+      "contextHash": "a9b496d596887534c085de855d6013220301a6da1c196db0b3f981bea23e2ea5"
     },
     {
       "file": "src/components/diagnostics/__tests__/ConnectionHealthPanel.test.tsx",
-      "line": 29,
+      "line": 24,
       "column": 43,
-      "endLine": 29,
+      "endLine": 24,
       "endColumn": 46,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -3526,9 +3468,9 @@
     },
     {
       "file": "src/components/diagnostics/__tests__/ConnectionHealthPanel.test.tsx",
-      "line": 30,
+      "line": 25,
       "column": 35,
-      "endLine": 30,
+      "endLine": 25,
       "endColumn": 38,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -3540,9 +3482,9 @@
     },
     {
       "file": "src/components/diagnostics/ConnectionHealthPanel.tsx",
-      "line": 5,
+      "line": 6,
       "column": 1,
-      "endLine": 5,
+      "endLine": 6,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -3551,20 +3493,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "483ee1f29055abded8ca0982fa4d8bd2e9368e8fab3125c7728b1a8ad575f975"
-    },
-    {
-      "file": "src/components/diagnostics/ConnectionHealthPanel.tsx",
-      "line": 64,
-      "column": 21,
-      "endLine": 64,
-      "endColumn": 30,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/diagnostics/ConnectionHealthPanel.tsx:64:21 62 | }, []); 63 | > 64 | useEffect(() => { fetchData(); }, [fetchData]); | ^^^^^^^^^ Avoid calling setState() directly within an effect 65 | 66 | // Realtime updates 67 | useEffect(() => {",
-      "spanHash": "9f1d76c025605bd3eae6e38282899b99ba7785a23050d8b5f9c02906e10b92d6",
-      "lineHash": "855add5d2d50f654756aaf12012be84056314dd32640ca0f7becdcfab1ec8589",
-      "contextHash": "65a23e5b74748036872974bfe840804f745dc2be9d524bd3c23e122fda104e01"
     },
     {
       "file": "src/components/effects/Confetti.tsx",
@@ -4726,7 +4654,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "5f2d236ff1a57c831819de83af0ab42a4aac09016be4f375d3e2d9ac1664ff5b"
+      "contextHash": "7e7ddd89015909bfdfae23ae0b56ad633815f3c48cced9b8f753724082416afe"
     },
     {
       "file": "src/components/inbox/contact-details/EditContactDialog.tsx",
@@ -6533,20 +6461,6 @@
       "spanHash": "9d43df1ab6c31187a0bce305a75cfc45f50245a60ab775978225763487a53117",
       "lineHash": "52e23914bd18a9ad1707e14c11f4453bfdc7146f39524532f4d240b5f99b6423",
       "contextHash": "931d8aedefe2afadd9117b3e37f8ebdcef5e4b13a3b484b158117c07153c9a2b"
-    },
-    {
-      "file": "src/components/inbox/TransferDialog.tsx",
-      "line": 75,
-      "column": 7,
-      "endLine": 75,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/TransferDialog.tsx:75:7 73 | useEffect(() => { 74 | if (!open) { > 75 | setSelectedTarget(''); | ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 76 | setMessage(''); 77 | setIsTransferring(false); 78 | }",
-      "spanHash": "532915e15777162e9a9890f7f1b2447403771b3d3afcb173be1572795488860c",
-      "lineHash": "67f98cde606b3f7f70c2c083d4ac44db3981999258b9fc86bea453b907e5a3b0",
-      "contextHash": "34cd087713d5e6c332271bf1b34a617bf39fc65c2f44447d27a91626492cc522"
     },
     {
       "file": "src/components/inbox/useChatMediaSending.ts",
@@ -12244,7 +12158,7 @@
       "message": "Do not use \"@ts-nocheck\" because it alters compilation errors.",
       "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
       "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
-      "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
+      "contextHash": "a9b496d596887534c085de855d6013220301a6da1c196db0b3f981bea23e2ea5"
     },
     {
       "file": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
@@ -12458,9 +12372,9 @@
     },
     {
       "file": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
-      "line": 8,
+      "line": 11,
       "column": 24,
-      "endLine": 8,
+      "endLine": 11,
       "endColumn": 27,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -12556,23 +12470,9 @@
     },
     {
       "file": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "line": 10,
-      "column": 21,
-      "endLine": 10,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "d1ee0acb77d7b50a85aadba7ca0ac3026ef1f9cad4454df200cd77a5834b1533",
-      "contextHash": "23ac3f89bcab6521db2bf237ae191f5abb59051d7d4ec28013aae89b6cd562bb"
-    },
-    {
-      "file": "src/hooks/__tests__/useSentimentAlerts.test.ts",
-      "line": 9,
+      "line": 18,
       "column": 36,
-      "endLine": 9,
+      "endLine": 18,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -12581,6 +12481,20 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "38de8f28f4091e158ca9131e2be033a9bf760735c953d3ca44969b55e8650ac1",
       "contextHash": "e0ecf3d0a0f16710a65235e70d7833c4050ff648501de71a788891eea500af91"
+    },
+    {
+      "file": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+      "line": 19,
+      "column": 21,
+      "endLine": 19,
+      "endColumn": 24,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "d1ee0acb77d7b50a85aadba7ca0ac3026ef1f9cad4454df200cd77a5834b1533",
+      "contextHash": "23ac3f89bcab6521db2bf237ae191f5abb59051d7d4ec28013aae89b6cd562bb"
     },
     {
       "file": "src/hooks/__tests__/useSipClient.test.ts",
@@ -13508,37 +13422,37 @@
     },
     {
       "file": "src/hooks/business/useQueues.ts",
-      "line": 217,
+      "line": 231,
       "column": 6,
-      "endLine": 217,
+      "endLine": 231,
       "endColumn": 17,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/business/useQueues.ts:217:6 215 | 216 | useEffect(() => { > 217 | fetchQueues(); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 218 | }, [fetchQueues]); 219 | 220 | useSupabaseRealtime({",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/business/useQueues.ts:231:6 229 | 230 | useEffect(() => { > 231 | fetchQueues(); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 232 | }, [fetchQueues]); 233 | 234 | useSupabaseRealtime({",
       "spanHash": "ba370a39ac6cd76ab462e9c0c92eac0b8637c3d6f5d818821b14d8ee1a07b7d9",
       "lineHash": "1a93bb134d402ded48d31b9369763a25efdb620af3f4b3a82248f3eccfbc9da1",
       "contextHash": "de0c08aef6184557d7ad706268e81cc1a3a12be4ad99d7f22d38544d3bec9761"
     },
     {
       "file": "src/hooks/business/useQueuesComparison.ts",
-      "line": 28,
+      "line": 36,
       "column": 5,
-      "endLine": 28,
+      "endLine": 36,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "react-hooks/immutability",
       "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `fetchComparison` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/business/useQueuesComparison.ts:28:5 26 | 27 | useEffect(() => { > 28 | fetchComparison(); | ^^^^^^^^^^^^^^^ `fetchComparison` accessed before it is declared 29 | }, [dateRange.from.toISOString(), dateRange.to.toISOString()]); 30 | 31 | const fetchComparison = async () => { <ROOT>/src/hooks/business/useQueuesComparison.ts:31:3 29 | }, [dateRange.from.toISOString(), dateRange.to.toISOString()]); 30 | > 31 | const fetchComparison = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 32 | try { | ^^^^^^^^^ > 33 | setLoading(true); … | ^^^^^^^^^ > 135 | } | ^^^^^^^^^ > 136 | }; | ^^^^^ `fetchComparison` is declared here 137 | 138 | return { 139 | queuesPerformance,",
+      "message": "Error: Cannot access variable before it is declared `fetchComparison` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/business/useQueuesComparison.ts:36:5 34 | 35 | useEffect(() => { > 36 | fetchComparison(); | ^^^^^^^^^^^^^^^ `fetchComparison` accessed before it is declared 37 | }, [dateRange.from.toISOString(), dateRange.to.toISOString()]); 38 | 39 | const fetchComparison = async () => { <ROOT>/src/hooks/business/useQueuesComparison.ts:39:3 37 | }, [dateRange.from.toISOString(), dateRange.to.toISOString()]); 38 | > 39 | const fetchComparison = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 40 | try { | ^^^^^^^^^ > 41 | setLoading(true); … | ^^^^^^^^^ > 149 | } | ^^^^^^^^^ > 150 | }; | ^^^^^ `fetchComparison` is declared here 151 | 152 | return { 153 | queuesPerformance,",
       "spanHash": "9a41802490ce719d4b4cefe0d266d2ce16a3d43546bc5d11f687a3e0d7726d79",
       "lineHash": "b4ffe3e2f7f477fa63e223c833b0d7dc62aad4b3a82fd9f653a4a8a011bcd2b9",
       "contextHash": "47c335ca5c2c87fd4a6f2f9118c2a50cf539efbaf1a67886fb7d02e9f12b5692"
     },
     {
       "file": "src/hooks/business/useQueuesComparison.ts",
-      "line": 29,
+      "line": 37,
       "column": 37,
-      "endLine": 29,
+      "endLine": 37,
       "endColumn": 63,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13550,9 +13464,9 @@
     },
     {
       "file": "src/hooks/business/useQueuesComparison.ts",
-      "line": 29,
+      "line": 37,
       "column": 6,
-      "endLine": 29,
+      "endLine": 37,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13564,9 +13478,9 @@
     },
     {
       "file": "src/hooks/business/useQueuesComparison.ts",
-      "line": 29,
+      "line": 37,
       "column": 7,
-      "endLine": 29,
+      "endLine": 37,
       "endColumn": 35,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13676,14 +13590,14 @@
     },
     {
       "file": "src/hooks/chat/useConversationAnalyses.ts",
-      "line": 51,
+      "line": 65,
       "column": 5,
-      "endLine": 51,
+      "endLine": 65,
       "endColumn": 18,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/chat/useConversationAnalyses.ts:51:5 49 | 50 | useEffect(() => { > 51 | fetchAnalyses(); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 52 | }, [fetchAnalyses]); 53 | 54 | const saveAnalysis = async (analysis: Omit<ConversationAnalysis, 'id' | 'created_at' | 'analyzed_by'>) => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/chat/useConversationAnalyses.ts:65:5 63 | 64 | useEffect(() => { > 65 | fetchAnalyses(); | ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 66 | }, [fetchAnalyses]); 67 | 68 | const saveAnalysis = async (analysis: Omit<ConversationAnalysis, 'id' | 'created_at' | 'analyzed_by'>) => {",
       "spanHash": "74345791710508151162d57ae946e7b56f57c21db274c86e23a7ba13c9d1883f",
       "lineHash": "0586e80cb9726c2954aac51e801a044759180f34e58c3e4ad48c340774e3ede0",
       "contextHash": "8c2b14949a6f3e8da1d4b51d6521f488c5b27c5f62ac0b65b6d6cb5569cd6298"
@@ -13729,34 +13643,6 @@
       "spanHash": "c420d6e5858b4689806f2b51be66559456a5ae16d9c90cfa92e08bfd3e32fa0d",
       "lineHash": "e728803d515b3e6e1f1302a9ee228c45879e93cf3f0f45d428cc8eaff8f249fe",
       "contextHash": "66da1bb33d1970b33bdc319286ad9d1efb08974dace29405fa1b8688dcb5a70a"
-    },
-    {
-      "file": "src/hooks/chat/useMessages.ts",
-      "line": 77,
-      "column": 64,
-      "endLine": 77,
-      "endColumn": 67,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "af5de7e200b9fd2e4800e5528bedb5f28c327001f5058b830886e29b5aefb7c5",
-      "contextHash": "e3d5946edb18d6a5070934fa11b49758437137bfebd5f06a394d6c8499db0b31"
-    },
-    {
-      "file": "src/hooks/chat/useMessages.ts",
-      "line": 99,
-      "column": 68,
-      "endLine": 99,
-      "endColumn": 71,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "cbc645e40aaa241b95e4498274692921a1bc5eeb60165bac2ef52360ac84728e",
-      "contextHash": "a823575cc667b27c7b2ee96d5d49066b3ea11a1ed21ce883ad907e8aed871c52"
     },
     {
       "file": "src/hooks/chat/useMessageStatus.ts",
@@ -14502,14 +14388,14 @@
     },
     {
       "file": "src/hooks/system/useNotifications.ts",
-      "line": 49,
+      "line": 61,
       "column": 5,
-      "endLine": 49,
+      "endLine": 61,
       "endColumn": 23,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useNotifications.ts:49:5 47 | 48 | useEffect(() => { > 49 | fetchNotifications(); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 50 | }, [fetchNotifications]); 51 | 52 | // Realtime subscription",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useNotifications.ts:61:5 59 | 60 | useEffect(() => { > 61 | fetchNotifications(); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 62 | }, [fetchNotifications]); 63 | 64 | // Realtime subscription",
       "spanHash": "cc6a4002db73d731159bbed913d2645f2c6073b08d104987f41ae626b8c44d3a",
       "lineHash": "decb4c151f8cb8ff3f700dc245d5a05e53a21f8987051c839ea0eb939eb56002",
       "contextHash": "b1cc150f226070fcbede5bb6c97af3495f472a09b54acb0f92e38f0f2af41d17"
@@ -14527,34 +14413,6 @@
       "spanHash": "ea1c373d22402338d3ffeddf24abe108b80a86f19cfaca580a0d1febea757580",
       "lineHash": "4f649a3860149206cca472f85ed703b2e11760ef28581fc34614003c900c8bee",
       "contextHash": "e31a248e289c6cf5444ab302ba9831f15d71c7c6ff05cd0b6fef06349ebc2117"
-    },
-    {
-      "file": "src/hooks/system/useRateLimitLogs.ts",
-      "line": 103,
-      "column": 5,
-      "endLine": 103,
-      "endColumn": 14,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useRateLimitLogs.ts:103:5 101 | 102 | useEffect(() => { > 103 | fetchLogs(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 104 | const unsubscribe = subscribeToLogs(); 105 | return unsubscribe; 106 | }, [fetchLogs, subscribeToLogs]);",
-      "spanHash": "2ca7b313ad1927c6de1d01bc248926036c59c21ac283b831a2ff79bfa7597347",
-      "lineHash": "df7a5f4187b813eae7f4ab6bcfc0d5d3f483328813971b7ef6d4604cd5d880c2",
-      "contextHash": "22439dd8adac5aae4b7e0ed53a18656a87f0e9d85b0d65476fdb03744c7f1343"
-    },
-    {
-      "file": "src/hooks/system/useRateLimitLogs.ts",
-      "line": 40,
-      "column": 7,
-      "endLine": 40,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `calculateStats` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/system/useRateLimitLogs.ts:40:7 38 | if (!error && data) { 39 | setLogs(data); > 40 | calculateStats(data); | ^^^^^^^^^^^^^^ `calculateStats` accessed before it is declared 41 | } 42 | setLoading(false); 43 | return data || []; <ROOT>/src/hooks/system/useRateLimitLogs.ts:46:3 44 | }, []); 45 | > 46 | const calculateStats = (data: RateLimitLog[]) => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 47 | const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 48 | const blockedRequests = data.filter(log => log.blocked).length; … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 81 | }); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 82 | }; | ^^^^^ `calculateStats` is declared here 83 | 84 | const subscribeToLogs = useCallback(() => { 85 | const channel = supabase",
-      "spanHash": "b0df22afd5f37d5e81f13c28dc4a397396ac0dcdee05fd3adf960917a9ffcfbf",
-      "lineHash": "cf241f8f4dcc87aef25cd284a6a7d864aea967ba8a573c51415357a9093812ce",
-      "contextHash": "5af4c54f804e1fc992f5d955e7302d07d0ab191f44ed7b19050460f5769cd68a"
     },
     {
       "file": "src/hooks/system/useSearchHistory.ts",
@@ -15157,20 +15015,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "93fce4b4cbb1c61e3f6d9fa562fda8ddb69115a1ea199cf90edb145232a0ef5a"
-    },
-    {
-      "file": "src/pages/ViewRouter.tsx",
-      "line": 135,
-      "column": 6,
-      "endLine": 135,
-      "endColumn": 27,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useMemo has missing dependencies: 'breadcrumbTrail', 'canGoBack', 'canGoForward', 'onGoBack', 'onGoForward', and 'onNavigateTo'. Either include them or remove the dependency array.",
-      "spanHash": "38fd4f9ec7b488a5625fd8019ee599033d50153d0edb9bd156930faa790cb57f",
-      "lineHash": "2d0d2dd809fe6bc4c3d6d0da935002a87b0fd43a3008c269a0b79b8cf9e836d9",
-      "contextHash": "c06fc0e9803c7bfaf725409103c6bb7aa8f032f25d101ec197802ee5527e8187"
     },
     {
       "file": "src/services/evolution.service.ts",
@@ -15860,9 +15704,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 305,
+      "line": 322,
       "column": 55,
-      "endLine": 305,
+      "endLine": 322,
       "endColumn": 58,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15874,9 +15718,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 332,
+      "line": 344,
       "column": 53,
-      "endLine": 332,
+      "endLine": 344,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -15888,9 +15732,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 340,
+      "line": 352,
       "column": 25,
-      "endLine": 340,
+      "endLine": 352,
       "endColumn": 36,
       "severity": 1,
       "ruleId": "no-console",
@@ -15902,9 +15746,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 343,
+      "line": 355,
       "column": 36,
-      "endLine": 343,
+      "endLine": 355,
       "endColumn": 47,
       "severity": 1,
       "ruleId": "no-console",
@@ -15916,9 +15760,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 350,
+      "line": 362,
       "column": 7,
-      "endLine": 350,
+      "endLine": 362,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -15930,9 +15774,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-helpers.ts",
-      "line": 360,
+      "line": 372,
       "column": 7,
-      "endLine": 360,
+      "endLine": 372,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "no-console",
@@ -16196,9 +16040,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 120,
+      "line": 125,
       "column": 54,
-      "endLine": 120,
+      "endLine": 125,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16210,9 +16054,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 152,
+      "line": 157,
       "column": 51,
-      "endLine": 152,
+      "endLine": 157,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16224,23 +16068,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 17,
-      "column": 56,
-      "endLine": 17,
-      "endColumn": 59,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "4537d6a5010039958a697992bcf07332e5f17eba88dd1c892a4a124d40f46e0d",
-      "contextHash": "5d94d0ed17925e4b71292de53d5732f2d58efe85f5fa61fe721b53b9f07509a7"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 176,
+      "line": 181,
       "column": 50,
-      "endLine": 176,
+      "endLine": 181,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16252,9 +16082,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 202,
+      "line": 207,
       "column": 57,
-      "endLine": 202,
+      "endLine": 207,
       "endColumn": 60,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16266,9 +16096,23 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 230,
+      "line": 22,
+      "column": 56,
+      "endLine": 22,
+      "endColumn": 59,
+      "severity": 2,
+      "ruleId": "@typescript-eslint/no-explicit-any",
+      "messageId": "unexpectedAny",
+      "message": "Unexpected any. Specify a different type.",
+      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
+      "lineHash": "4537d6a5010039958a697992bcf07332e5f17eba88dd1c892a4a124d40f46e0d",
+      "contextHash": "5d94d0ed17925e4b71292de53d5732f2d58efe85f5fa61fe721b53b9f07509a7"
+    },
+    {
+      "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+      "line": 235,
       "column": 49,
-      "endLine": 230,
+      "endLine": 235,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16280,9 +16124,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 290,
+      "line": 288,
       "column": 51,
-      "endLine": 290,
+      "endLine": 288,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16294,9 +16138,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 311,
+      "line": 309,
       "column": 58,
-      "endLine": 311,
+      "endLine": 309,
       "endColumn": 61,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16308,9 +16152,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 312,
+      "line": 310,
       "column": 3,
-      "endLine": 312,
+      "endLine": 310,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16322,9 +16166,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 324,
+      "line": 322,
       "column": 51,
-      "endLine": 324,
+      "endLine": 322,
       "endColumn": 54,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16336,9 +16180,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 347,
+      "line": 345,
       "column": 3,
-      "endLine": 347,
+      "endLine": 345,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16350,9 +16194,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 351,
+      "line": 349,
       "column": 48,
-      "endLine": 351,
+      "endLine": 349,
       "endColumn": 51,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -16364,9 +16208,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 372,
+      "line": 370,
       "column": 3,
-      "endLine": 372,
+      "endLine": 370,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16378,9 +16222,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 47,
+      "line": 52,
       "column": 3,
-      "endLine": 47,
+      "endLine": 52,
       "endColumn": 14,
       "severity": 1,
       "ruleId": "no-console",
@@ -16392,9 +16236,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "line": 70,
+      "line": 75,
       "column": 54,
-      "endLine": 70,
+      "endLine": 75,
       "endColumn": 57,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17260,9 +17104,9 @@
     },
     {
       "file": "tailwind.config.ts",
-      "line": 421,
+      "line": 420,
       "column": 13,
-      "endLine": 421,
+      "endLine": 420,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-require-imports",

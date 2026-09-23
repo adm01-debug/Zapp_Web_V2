@@ -15,10 +15,11 @@ import { cn } from '@/lib/utils';
 import { DealCard } from './DealCard';
 import { PipelineKPICards } from './PipelineKPICards';
 import type { Deal } from './DealCard';
-
+import { useUserRole } from '@/hooks/system/useUserRole'; import { useAuth } from '@/hooks/auth/useAuth';
 interface PipelineStage { id: string; name: string; color: string; position: number; }
 
 export function SalesPipelineView() {
+  const { isAdmin, isSupervisor } = useUserRole(); const { profile } = useAuth(); const isStaff = isAdmin || isSupervisor; const myProfileId = profile?.id ?? '';
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,6 @@ export function SalesPipelineView() {
   const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
   const [draggedDeal, setDraggedDeal] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-
   const [formTitle, setFormTitle] = useState('');
   const [formValue, setFormValue] = useState('');
   const [formStageId, setFormStageId] = useState('');
@@ -59,7 +59,7 @@ export function SalesPipelineView() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
 
-  const openNewDeal = (stageId?: string) => { setEditingDeal(null); setFormTitle(''); setFormValue(''); setFormStageId(stageId || stages[0]?.id || ''); setFormContactId(''); setFormAssignedTo(''); setFormPriority('medium'); setFormCloseDate(''); setFormNotes(''); setShowDealDialog(true); };
+  const openNewDeal = (stageId?: string) => { setEditingDeal(null); setFormTitle(''); setFormValue(''); setFormStageId(stageId || stages[0]?.id || ''); setFormContactId(''); setFormAssignedTo(isStaff ? '' : myProfileId); setFormPriority('medium'); setFormCloseDate(''); setFormNotes(''); setShowDealDialog(true); };
   const openEditDeal = (deal: Deal) => { setEditingDeal(deal); setFormTitle(deal.title); setFormValue(String(deal.value || '')); setFormStageId(deal.stage_id || ''); setFormContactId(deal.contact_id || ''); setFormAssignedTo(deal.assigned_to || ''); setFormPriority(deal.priority); setFormCloseDate(deal.expected_close_date || ''); setFormNotes(deal.notes || ''); setShowDealDialog(true); };
 
   const saveDeal = async () => {
@@ -113,7 +113,7 @@ export function SalesPipelineView() {
                     {stageDeals.map((deal) => (
                       <DealCard key={deal.id} deal={deal} isDragging={draggedDeal === deal.id}
                         onDragStart={() => setDraggedDeal(deal.id)} onDragEnd={() => { setDraggedDeal(null); setDragOverStage(null); }}
-                        onEdit={openEditDeal} onMarkWon={markAsWon} onMarkLost={markAsLost} onDelete={deleteDeal} />
+                        onEdit={openEditDeal} onMarkWon={markAsWon} onMarkLost={markAsLost} onDelete={isStaff ? deleteDeal : undefined} />
                     ))}
                   </AnimatePresence>
                   {stageDeals.length === 0 && <div className="text-center py-8 text-muted-foreground/50 text-xs">Arraste deals aqui</div>}
@@ -132,7 +132,7 @@ export function SalesPipelineView() {
             <div><Label>Valor (R$)</Label><Input type="number" value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="0,00" /></div>
             <div><Label>Etapa</Label><Select value={formStageId} onValueChange={setFormStageId}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{stages.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Contato</Label><Select value={formContactId} onValueChange={setFormContactId}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label>Responsável</Label><Select value={formAssignedTo} onValueChange={setFormAssignedTo}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{agents.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Responsável</Label><Select value={formAssignedTo} onValueChange={setFormAssignedTo} disabled={!isStaff}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{agents.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Prioridade</Label><Select value={formPriority} onValueChange={setFormPriority}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="low">Baixa</SelectItem><SelectItem value="medium">Média</SelectItem><SelectItem value="high">Alta</SelectItem></SelectContent></Select></div>
             <div><Label>Data prevista</Label><Input type="date" value={formCloseDate} onChange={(e) => setFormCloseDate(e.target.value)} /></div>
             <div className="col-span-2"><Label>Observações</Label><Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={3} /></div>

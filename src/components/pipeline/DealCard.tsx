@@ -37,7 +37,8 @@ interface DealCardProps {
   onEdit: (deal: Deal) => void;
   onMarkWon: (deal: Deal) => void;
   onMarkLost: (deal: Deal) => void;
-  onDelete: (id: string) => void;
+  /** Ausente para quem nao pode excluir (RLS ja bloqueia; some do menu tambem). */
+  onDelete?: (id: string) => void;
 }
 
 export function DealCard({ deal, isDragging, onDragStart, onDragEnd, onEdit, onMarkWon, onMarkLost, onDelete }: DealCardProps) {
@@ -55,7 +56,9 @@ export function DealCard({ deal, isDragging, onDragStart, onDragEnd, onEdit, onM
             <DropdownMenuItem onClick={() => onEdit(deal)}><Edit className="w-3.5 h-3.5 mr-2" /> Editar</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onMarkWon(deal)} className="text-success"><Trophy className="w-3.5 h-3.5 mr-2" /> Marcar como ganho</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onMarkLost(deal)} className="text-destructive"><X className="w-3.5 h-3.5 mr-2" /> Marcar como perdido</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(deal.id)} className="text-destructive"><Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir</DropdownMenuItem>
+            {onDelete && (
+              <DropdownMenuItem onClick={() => onDelete(deal.id)} className="text-destructive"><Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir</DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
