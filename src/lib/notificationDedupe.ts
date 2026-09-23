@@ -1,19 +1,20 @@
 const recentEvents = new Map<string, number>();
-const MAX_RECENT_EVENTS = 250;
+const MAX_RECENT_EVENTS = 2_000;
 
-/** Claims an event once per browser runtime, regardless of which hook receives it first. */
+/** Claims an event once until its own TTL expires, regardless of which hook receives it first. */
 export function claimNotificationEvent(key: string, ttlMs = 120_000, now = Date.now()): boolean {
-  const previous = recentEvents.get(key);
-  if (previous !== undefined && now - previous < ttlMs) return false;
+  for (const [eventKey, expiresAt] of recentEvents) {
+    if (expiresAt <= now) recentEvents.delete(eventKey);
+  }
 
-  recentEvents.set(key, now);
-  for (const [eventKey, timestamp] of recentEvents) {
-    if (now - timestamp >= ttlMs) recentEvents.delete(eventKey);
-  }
-  while (recentEvents.size > MAX_RECENT_EVENTS) {
-    const oldest = recentEvents.keys().next().value;
-    if (!oldest) break;
-    recentEvents.delete(oldest);
-  }
+  const previousExpiry = recentEvents.get(key);
+  if (previousExpiry !== undefined && previousExpiry > now) return false;
+
+  // Never evict an unexpired identity merely to make room: that would make a
+  // replay look new. Under abnormal event floods, fail closed until entries
+  // expire instead of growing memory without a bound.
+  if (recentEvents.size >= MAX_RECENT_EVENTS) return false;
+
+  recentEvents.set(key, now + Math.max(0, ttlMs));
   return true;
 }

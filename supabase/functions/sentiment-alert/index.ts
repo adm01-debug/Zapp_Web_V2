@@ -1,9 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, errorResponse, getClientIP, handleCors, jsonResponse, Logger, requireAuth, requireEnv } from "../_shared/validation.ts";
 import { SentimentAlertSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { buildSentimentNotification, escapeHtml, singleLineLabel } from "../_shared/notification-events.ts";
+import { buildSentimentNotification, escapeHtml, sentimentSettingsOwnerId, singleLineLabel } from "../_shared/notification-events.ts";
 
-Deno.serve(async (req) => {
+export async function handleSentimentAlertRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
@@ -36,10 +36,34 @@ Deno.serve(async (req) => {
       return errorResponse('Analysis not found', 404, req);
     }
 
-    const { data: userSettings, error: userSettingsError } = await caller
+    const supabase = createClient(supabaseUrl, requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+      auth: { persistSession: false },
+    });
+
+    const { data: contact, error: contactError } = await supabase
+      .from('contacts')
+      .select('name, phone, assigned_to')
+      .eq('id', contactId)
+      .single();
+    if (contactError || !contact) return errorResponse('Contact not found', 404, req);
+
+    let agentProfile: { id: string; name: string; email: string; user_id: string } | null = null;
+    if (contact.assigned_to) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name, email, user_id')
+        .eq('id', contact.assigned_to)
+        .single();
+      if (profileError || !profile) return errorResponse('Assigned agent is unavailable', 503, req);
+      agentProfile = profile;
+    }
+
+    const settingsOwnerId = sentimentSettingsOwnerId(auth.userId, agentProfile?.user_id);
+    const notifyCaller = !agentProfile?.user_id || agentProfile.user_id === auth.userId;
+    const { data: userSettings, error: userSettingsError } = await supabase
       .from('user_settings')
       .select('sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count')
-      .eq('user_id', auth.userId)
+      .eq('user_id', settingsOwnerId)
       .maybeSingle();
     if (userSettingsError) return errorResponse('Unable to load notification settings', 503, req);
     if (userSettings?.sentiment_alert_enabled === false) {
@@ -59,10 +83,6 @@ Deno.serve(async (req) => {
     if (sentimentScore >= threshold) {
       return jsonResponse({ alerted: false, reason: 'Sentiment above threshold' }, 200, req);
     }
-
-    const supabase = createClient(supabaseUrl, requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
-      auth: { persistSession: false },
-    });
 
     const { data: recentAnalyses, error: fetchError } = await supabase
       .from('conversation_analyses')
@@ -94,24 +114,6 @@ Deno.serve(async (req) => {
       }, 200, req);
     }
 
-    const { data: contact, error: contactError } = await supabase
-      .from('contacts')
-      .select('name, phone, assigned_to')
-      .eq('id', contactId)
-      .single();
-    if (contactError || !contact) return errorResponse('Contact not found', 404, req);
-
-    let agentProfile: { id: string; name: string; email: string; user_id: string } | null = null;
-    if (contact?.assigned_to) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, name, email, user_id')
-        .eq('id', contact.assigned_to)
-        .single();
-      if (profileError || !profile) return errorResponse('Assigned agent is unavailable', 503, req);
-      agentProfile = profile;
-    }
-
     const contactName = contact.name || 'Cliente';
     const previousScore = recentAnalyses?.[1]?.sentiment_score;
     const alertDetails = {
@@ -129,49 +131,38 @@ Deno.serve(async (req) => {
       created_at: new Date().toISOString(),
     };
 
-    const { data: existingAlert, error: existingAlertError } = await supabase.from('audit_logs')
-      .select('id').eq('action', 'sentiment_alert')
-      .eq('details->>analysis_id', analysisId).limit(1).maybeSingle();
-    if (existingAlertError) return errorResponse('Unable to verify alert state', 503, req);
-    if (existingAlert) {
-      return jsonResponse({ alerted: true, consecutiveLow, duplicate: true, emailSent: false, notificationCreated: false }, 200, req);
+    const notification = buildSentimentNotification({
+      notificationId: analysisId,
+      userId: agentProfile?.user_id || auth.userId,
+      contactName,
+      metadata: alertDetails,
+    });
+    const { data: persistedAlert, error: persistError } = await supabase
+      .rpc('persist_sentiment_alert', {
+        p_analysis_id: analysisId,
+        p_contact_id: contactId,
+        p_recipient_user_id: agentProfile?.user_id || null,
+        p_notification_title: notification.title,
+        p_notification_message: notification.message,
+        p_details: alertDetails,
+      })
+      .maybeSingle();
+    if (persistError || !persistedAlert) {
+      log.warn("Failed to persist atomic sentiment alert", { code: persistError?.code || 'unknown' });
+      return errorResponse('Unable to persist sentiment alert', 503, req);
     }
-
-    let notificationCreated = false;
-    if (agentProfile?.user_id) {
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert(buildSentimentNotification({
-          notificationId: analysisId,
-          userId: agentProfile.user_id,
-          contactName,
-          metadata: alertDetails,
-        }));
-      if (notificationError?.code === '23505') {
-        return jsonResponse({ alerted: true, consecutiveLow, duplicate: true, emailSent: false, notificationCreated: false }, 200, req);
-      }
-      if (notificationError) {
-        log.warn("Failed to create targeted sentiment notification", { code: notificationError.code || 'unknown' });
-        return errorResponse('Unable to create notification', 503, req);
-      }
-      notificationCreated = true;
+    const persistence = persistedAlert as { notification_created?: unknown; duplicate?: unknown };
+    const notificationCreated = persistence.notification_created === true;
+    if (persistence.duplicate === true) {
+      return jsonResponse({
+        alerted: true,
+        consecutiveLow,
+        duplicate: true,
+        emailSent: false,
+        notificationCreated,
+        notifyCaller,
+      }, 200, req);
     }
-
-    const { error: logError } = await supabase
-      .from('audit_logs')
-      .insert({
-        id: analysisId,
-        action: 'sentiment_alert',
-        entity_type: 'contact',
-        entity_id: contactId,
-        user_id: agentProfile?.user_id || null,
-        details: alertDetails,
-      });
-
-    if (logError?.code === '23505') {
-      return jsonResponse({ alerted: true, consecutiveLow, duplicate: true, emailSent: false, notificationCreated }, 200, req);
-    }
-    if (logError) log.warn("Failed to log alert", { code: logError.code || 'unknown' });
 
     let emailSent = false;
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -213,9 +204,12 @@ Deno.serve(async (req) => {
       consecutiveLow,
       emailSent,
       notificationCreated,
+      notifyCaller,
     }, 200, req);
   } catch (error: unknown) {
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse('Internal server error', 500, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleSentimentAlertRequest);

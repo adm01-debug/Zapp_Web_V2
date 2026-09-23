@@ -818,6 +818,7 @@ export type Database = {
           ended_at: string | null
           id: string
           notes: string | null
+          provider_event_id: string | null
           recording_url: string | null
           started_at: string
           status: string
@@ -833,6 +834,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           notes?: string | null
+          provider_event_id?: string | null
           recording_url?: string | null
           started_at?: string
           status?: string
@@ -848,6 +850,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           notes?: string | null
+          provider_event_id?: string | null
           recording_url?: string | null
           started_at?: string
           status?: string
@@ -9255,6 +9258,21 @@ export type Database = {
         }
         Returns: Json
       }
+      persist_sentiment_alert: {
+        Args: {
+          p_analysis_id: string
+          p_contact_id: string
+          p_details: Json
+          p_notification_message: string
+          p_notification_title: string
+          p_recipient_user_id: string | null
+        }
+        Returns: {
+          audit_created: boolean
+          duplicate: boolean
+          notification_created: boolean
+        }[]
+      }
       persist_talkx_recipient_message_snapshot: {
         Args: {
           p_claim_token: string
@@ -9277,6 +9295,22 @@ export type Database = {
         Returns: number
       }
       reassign_overloaded_agents: { Args: never; Returns: number }
+      record_incoming_call_event: {
+        Args: {
+          p_contact_id: string
+          p_is_video: boolean
+          p_provider_event_id?: string | null
+          p_should_notify?: boolean
+          p_status: string
+          p_whatsapp_connection_id: string
+        }
+        Returns: {
+          call_id: string
+          duplicate: boolean
+          notification_created: boolean
+          notification_id: string | null
+        }[]
+      }
       record_failed_login: {
         Args: { p_email: string; p_ip_address?: string; p_user_agent?: string }
         Returns: {

@@ -51,7 +51,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
   } = usePeriodFilter(messages, '7d');
 
   const { analyses, refetch, getSentimentTrend, loading: historyLoading } = useConversationAnalyses(contactId);
-  const { checkAndTriggerAlert, threshold: SENTIMENT_THRESHOLD } = useSentimentAlerts();
+  const { checkAndTriggerAlert } = useSentimentAlerts();
   const {
     isTtsPlaying,
     isTtsLoading,
@@ -121,7 +121,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       await refetch();
 
       const sentimentScore = result.sentimentScore || 50;
-      if (sentimentScore < SENTIMENT_THRESHOLD && result.analysisId) {
+      if (result.analysisId) {
         const previousAnalysis = analyses[0];
         await checkAndTriggerAlert({
           contactId,
@@ -139,7 +139,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
     } finally {
       setIsLoading(false);
     }
-  }, [analysisPeriod, analyses, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, refetch, SENTIMENT_THRESHOLD]);
+  }, [analysisPeriod, analyses, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, refetch]);
 
   const sentimentTrend = getSentimentTrend();
   const currentSentiment = analysis?.sentiment || 'neutro';

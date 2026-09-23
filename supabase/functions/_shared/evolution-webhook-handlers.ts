@@ -7,7 +7,6 @@ import {
   invalidateConnectionCache,
 } from "./evolution-helpers.ts";
 import {
-  buildIncomingCallNotification,
   normalizeEvolutionCallVideo,
   normalizeEvolutionCallStatus,
   shouldNotifyIncomingCall,
@@ -251,49 +250,38 @@ export async function handleCallEvent(supabase: any, instance: string, data: unk
       .select('id, avatar_url, assigned_to, name').single();
     if (insertErr && insertErr.code === '23505') {
       const phonesVariants = [phone, `+${phone}`, phone.replace(/^\+/, '')];
-      const { data: existing } = await supabase.from('contacts').select('id, avatar_url, assigned_to, name')
+      const { data: existing, error: existingError } = await supabase.from('contacts').select('id, avatar_url, assigned_to, name')
         .in('phone', [...new Set(phonesVariants)]).limit(1).maybeSingle();
+      if (existingError) throw new Error('Unable to recover concurrent call contact');
       if (existing) {
         contact = existing;
-        await supabase.from('contacts').update({ whatsapp_connection_id: connection.id, updated_at: new Date().toISOString() }).eq('id', existing.id);
+        const { error: updateError } = await supabase.from('contacts')
+          .update({ whatsapp_connection_id: connection.id, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        if (updateError) throw new Error('Unable to associate concurrent call contact');
       }
+    } else if (insertErr) {
+      throw new Error('Unable to persist incoming call contact');
     } else {
       contact = newContact;
     }
   }
-  if (!contact) return;
+  if (!contact) throw new Error('Unable to resolve incoming call contact');
 
   // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed).
   // O Evolution emite nomes fora da lista; normalize antes de persistir.
   const normalizedStatus = normalizeEvolutionCallStatus(callStatus);
-  const agentId = contact.assigned_to || null;
-  const { data: persistedCall } = await supabase.from('calls').insert({
-    contact_id: contact.id, whatsapp_connection_id: connection.id, agent_id: agentId,
-    direction: 'inbound', status: normalizedStatus,
-    started_at: new Date().toISOString(),
-    notes: isVideo ? 'Chamada de vídeo' : 'Chamada de voz',
-  }).select('id, started_at').maybeSingle();
-
-  // Eventos answered/missed/busy/failed continuam no historico, mas nao tocam.
-  if (agentId && shouldNotifyIncomingCall(callStatus)) {
-    const { data: agentProfile } = await supabase.from('profiles')
-      .select('user_id, name').eq('id', agentId).single();
-    if (agentProfile?.user_id) {
-      const rawEventId = callData.id ?? callData.callId ?? callData.call_id;
-      const eventId = typeof rawEventId === 'string' && rawEventId.length <= 200 ? rawEventId : undefined;
-      await supabase.from('notifications').insert(buildIncomingCallNotification({
-        userId: agentProfile.user_id,
-        contactId: contact.id,
-        contactName: contact.name || phone,
-        phone,
-        isVideo,
-        callStatus: normalizedStatus,
-        whatsappConnectionId: connection.id,
-        callId: persistedCall?.id,
-        eventId,
-      }));
-    }
-  }
+  const rawEventId = callData.id ?? callData.callId ?? callData.call_id;
+  const eventId = typeof rawEventId === 'string' && rawEventId.length <= 200 ? rawEventId : null;
+  const { error: persistError } = await supabase.rpc('record_incoming_call_event', {
+    p_contact_id: contact.id,
+    p_whatsapp_connection_id: connection.id,
+    p_status: normalizedStatus,
+    p_is_video: isVideo,
+    p_provider_event_id: eventId,
+    p_should_notify: shouldNotifyIncomingCall(callStatus),
+  });
+  if (persistError) throw new Error('Unable to persist incoming call event');
 }
 
 // deno-lint-ignore no-explicit-any

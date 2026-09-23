@@ -4,6 +4,14 @@ import { renderHook, act } from '@testing-library/react';
 const mockFunctionsInvoke = vi.fn();
 const mockFrom = vi.fn();
 const mockToastError = vi.fn();
+const mockSettings = {
+  soundEnabled: true,
+  slaBreachSound: true,
+  browserNotifications: false,
+  sentimentAlertThreshold: 30,
+  sentimentConsecutiveCount: 2,
+  sentimentAlertEnabled: true,
+};
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -14,14 +22,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
-    settings: {
-      soundEnabled: true,
-      slaBreachSound: true,
-      browserNotifications: false,
-      sentimentAlertThreshold: 30,
-      sentimentConsecutiveCount: 2,
-      sentimentAlertEnabled: true,
-    },
+    settings: mockSettings,
     isQuietHours: () => false,
   }),
 }));
@@ -46,6 +47,11 @@ import { claimNotificationEvent } from '@/lib/notificationDedupe';
 describe('useSentimentAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.assign(mockSettings, {
+      sentimentAlertThreshold: 30,
+      sentimentConsecutiveCount: 2,
+      sentimentAlertEnabled: true,
+    });
     mockFunctionsInvoke.mockResolvedValue({ data: { alerted: false }, error: null });
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
@@ -83,7 +89,11 @@ describe('useSentimentAlerts', () => {
     expect(result.current.alertsEnabled).toBe(true);
   });
 
-  it('checkAndTriggerAlert returns not triggered for score above threshold', async () => {
+  it('delegates an above-caller-threshold score to the recipient policy on the server', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: false, reason: 'Sentiment above threshold' },
+      error: null,
+    });
     const { result } = renderHook(() => useSentimentAlerts());
     const outcome = await result.current.checkAndTriggerAlert({
       contactId: 'c1',
@@ -93,6 +103,19 @@ describe('useSentimentAlerts', () => {
     });
     expect(outcome.triggered).toBe(false);
     expect(outcome.reason).toBe('Sentiment above threshold');
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates even when the caller disabled alerts because the recipient may enable them', async () => {
+    mockSettings.sentimentAlertEnabled = false;
+    const { result } = renderHook(() => useSentimentAlerts());
+    await result.current.checkAndTriggerAlert({
+      contactId: 'c1',
+      contactName: 'João',
+      sentimentScore: 10,
+      analysisId: 'a-recipient-policy',
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
   });
 
   it('checkAndTriggerAlert calls edge function for low sentiment', async () => {
@@ -145,6 +168,22 @@ describe('useSentimentAlerts', () => {
       contactName: 'João',
       sentimentScore: 10,
       analysisId: 'a-delivered',
+    });
+    expect(outcome.triggered).toBe(true);
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('does not render the recipient alert in a supervisor browser', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: true, consecutiveLow: 3, emailSent: false, notifyCaller: false },
+      error: null,
+    });
+    const { result } = renderHook(() => useSentimentAlerts());
+    const outcome = await result.current.checkAndTriggerAlert({
+      contactId: 'c1',
+      contactName: 'João',
+      sentimentScore: 10,
+      analysisId: 'a-other-recipient',
     });
     expect(outcome.triggered).toBe(true);
     expect(mockToastError).not.toHaveBeenCalled();
