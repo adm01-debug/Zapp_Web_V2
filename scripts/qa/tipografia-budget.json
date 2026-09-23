@@ -1,12 +1,12 @@
 {
-  "geradoEm": "2026-09-23T13:27:32.866Z",
+  "geradoEm": "2026-09-23T14:14:01.148Z",
   "commit": null,
   "escala": {
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1719
+      "usos": 1720
     },
     "sm": {
       "fontSizePx": 14,
@@ -137,32 +137,20 @@
       "lineHeightOrigem": "herdado (preflight 1.5)",
       "usos": 1,
       "equivalenteNaEscala": null
-    },
-    "12.8": {
-      "fontSizePx": 12.8,
-      "lineHeightPx": 19.2,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 1,
-      "equivalenteNaEscala": null
     }
   },
   "totais": {
-    "usosNomeados": 3386,
-    "usosArbitrarios": 1234,
+    "usosNomeados": 3387,
+    "usosArbitrarios": 1233,
     "arquivosAnalisados": 1414
   },
   "violacoes": {
-    "meiaMedida": 1,
+    "meiaMedida": 0,
     "acima16px": 1,
     "comEquivalenteExato": 0
   },
   "detalheViolacoes": {
-    "halfStep": [
-      {
-        "where": "src/components/ui/calendar.tsx:29",
-        "px": 12.8
-      }
-    ],
+    "halfStep": [],
     "above16": [
       {
         "where": "src/pages/NotFound.tsx:27",
