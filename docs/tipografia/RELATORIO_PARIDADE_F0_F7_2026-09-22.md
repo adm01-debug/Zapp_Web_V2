@@ -9,7 +9,7 @@ Plano de origem: `PLANO_PARIDADE_TIPOGRAFICA_ZAPP_PROMO.md`.
 
 | Violação | Antes | Depois | Restante é |
 |---|---|---|---|
-| Meia-medida (`text-[N.5px]`) | 194 | **1** | `text-[0.8rem]` do `calendar.tsx` — invisível até o fix de regex do guard-rail (23/09) |
+| Meia-medida (`text-[N.5px]`) | 194 | **0** | `calendar.tsx:29` fechado (23/09) — `text-[0.8rem]` → `text-xs` |
 | Arbitrário acima de 16px | 51 | **1** | `text-[120px]` proposital (`NotFound.tsx`) |
 | Arbitrário com equivalente exato | 836 | **0** | — |
 
@@ -211,3 +211,12 @@ O ajuste de `meiaMedida` 0→1 não é regressão nova — é dívida pré-exist
 invisível por 2 meses de gap na regex do guard-rail; agora medida corretamente. Componente
 `calendar.tsx` é shadcn/ui padrão, fora do escopo desta correção (que é só de medição); a
 decisão sobre tocar nele fica para um ciclo futuro.
+
+## Fechamento: `calendar.tsx:29` (2026-09-23)
+
+`text-[0.8rem]` (12,8px) → `text-xs` (12px, equivalente nomeado mais próximo). Diferença de
+0,8px em rótulo de cabeçalho de calendário (dia da semana, `text-muted-foreground`) —
+imperceptível, e o componente ganha `line-height` declarado (16px) em vej de herdado
+(19,2px via preflight 1.5), que é o comportamento correto de qualquer outra célula nomeada
+do calendário. `meiaMedida` volta a 0; teto do guard-rail atualizado de 1→0 no mesmo commit
+que corrigiu o código (não só a medição, como no fix de 23/09 acima).
