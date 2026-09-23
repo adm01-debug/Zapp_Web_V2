@@ -31,7 +31,7 @@ jobs:
   live-contract:
     name: Contrato DB vivo
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout confiavel da main
@@ -87,18 +87,18 @@ jobs:
 
       - name: Verificar ACL e contrato de mcp_exec
         run: >-
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-mcp-exec-acl.sql
 
       - name: Verificar ACL da dead-letter queue de webhooks
         run: >-
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-webhook-failures-acl.sql
 
       - name: Regenerar catalogo e comparar com o commitado
         run: |
           umask 077
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/catalog.sql > /tmp/fresh-catalog.json
           test -s /tmp/fresh-catalog.json
           node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
@@ -106,7 +106,7 @@ jobs:
       - name: Regenerar manifesto e comparar com o commitado
         run: |
           umask 077
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/manifest.sql > /tmp/fresh-manifest.json
           test -s /tmp/fresh-manifest.json
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json

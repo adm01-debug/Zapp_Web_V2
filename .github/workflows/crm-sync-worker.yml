@@ -26,7 +26,7 @@ jobs:
   drain:
     name: Processar outbox CRM
     if: github.event_name == 'workflow_dispatch' || vars.CRM_SYNC_WORKER_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Validar configuracao e processar lote
