@@ -43,8 +43,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 12233,
-      "sha256": "e1defe047d344464804d94082f339f3ab7cded30f6297d9a3bf1d79fa08c0f39"
+      "bytes": 12404,
+      "sha256": "ec07344b520ec2481346622443fbfbcce00481ddff42f55beb3492d1bcb84cfb"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -892,7 +892,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "fd1606d9a76108f85a511af12c71ac89ffdf97ea7a6a0daba21708c05b5022be",
+      "source_sha256": "e922106e11cfd700eca8325c6a0a7715ef2e8c3d9335c0a5da378a4c6779a9d0",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1060,7 +1060,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c4d58066a5f70844b44109e58227ca30416a52120624762c661319c9bf326422",
+      "source_sha256": "677479241428ee886e9df37ee968b2940c4febfbcbf5266111065689531ee603",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1229,7 +1229,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "50ba13e2a9d894a1fcdee247f65797ecaa1fe821de0d98001f6cede5b58aac64",
+      "source_sha256": "79b2b2ddb982ef9f1d236152fb41b4a97c7cbfc4b95b86f7a4501869e5b4f46d",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1311,5 +1311,5 @@
       ]
     }
   ],
-  "manifest_sha256": "c1e9143c0b96dee34489716622f901657974db8a17ca7e48b85dc848113b8946"
+  "manifest_sha256": "1b0a5e81e8369c4eee61a2626cb11ccdb3a66a4aeade106da85936c11c8b168f"
 }

@@ -20,9 +20,13 @@ test("circuit breaker: 4xx nao conta como falha e 5xx nao zera o contador", () =
     "cbRecord(status >= 500) esta invertido: passa sucesso=true em erro 5xx",
   );
   assert.equal(
-    proxySrc.includes("cbRecord(response.status < 500)"), true,
+    proxySrc.includes("cbRecord(response.status < 500"), true,
     "o ramo de !response.ok precisa registrar 4xx como sucesso do breaker",
   );
+  // 408 e timeout reportado pelo servidor: esta em RETRYABLE_STATUSES e tem que
+  // continuar abrindo o breaker, senao a Evolution pode pendurar sem protecao.
+  assert.match(proxySrc, /cbRecord\(response\.status < 500 && response\.status !== 408\)/);
+  assert.match(proxySrc, /RETRYABLE_STATUSES = new Set\(\[408,/);
   // A assinatura que da sentido ao teste acima.
   assert.match(proxySrc, /function cbRecord\(success: boolean\)/);
   assert.match(proxySrc, /if \(success\) \{ cbFailures = 0; return; \}/);

@@ -215,8 +215,17 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
 
       if (!mountedRef.current) return;
 
-      if (statusResult.status === 'fulfilled') {
-        const allStatuses = extractStatusRecords(statusResult.value.data);
+      // A Evolution GO nao expoe /chat/findMessages: a edge function responde 200
+      // com { notSupported: true }. Sem esta guarda o payload caia em lista vazia
+      // e a aba ficava sem status e sem aviso nenhum.
+      const statusPayload = statusResult.status === 'fulfilled' ? statusResult.value.data : null;
+      const notSupported = (statusPayload ?? {}) as { notSupported?: boolean; message?: string };
+
+      if (notSupported.notSupported) {
+        setStatusMessages([]);
+        setError(notSupported.message ?? 'Status do WhatsApp nao e suportado nesta conexao');
+      } else if (statusResult.status === 'fulfilled') {
+        const allStatuses = extractStatusRecords(statusPayload);
         const phoneNeedles = buildPhoneNeedles(phone);
         const normalizedContactName = contactName?.trim().toLowerCase() ?? null;
 

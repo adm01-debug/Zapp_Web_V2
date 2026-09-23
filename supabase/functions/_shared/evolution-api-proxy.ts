@@ -189,7 +189,9 @@ export async function proxyToEvolution(
         // Falha de infra = 5xx/timeout. Um 4xx significa que a GO respondeu: o
         // servico esta de pe, entao conta como sucesso para o breaker. Antes
         // estava invertido — 404 abria o breaker e 500 zerava o contador.
-        cbRecord(response.status < 500);
+        // 408 e a excecao: e timeout reportado pelo servidor, ja listado em
+        // RETRYABLE_STATUSES, entao continua contando como falha.
+        cbRecord(response.status < 500 && response.status !== 408);
         return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage, details: data }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
