@@ -55,10 +55,21 @@ export function usePrefetch<T>(
       return cached.data as T;
     }
 
-    // Check if already prefetching
+    // Check if already prefetching. O "follower" espera a mesma promise que o
+    // "leader" já disparou, mas não pode devolvê-la crua: ela nunca passou
+    // pelo isMountedRef nem pelo try/catch do leader (aquele catch só protege
+    // quem chamou fetcher() primeiro), então sem isso o follower rejeitaria
+    // a Promise<T | null> do contrato e vazaria dado pra um chamador já
+    // desmontado.
     const pending = pendingPrefetches.get(key);
     if (pending) {
-      return pending as Promise<T>;
+      return (pending as Promise<T>).then(
+        (data) => (isMountedRef.current ? data : null),
+        (error) => {
+          log.warn(`Prefetch failed for ${key}:`, error);
+          return null;
+        }
+      );
     }
 
     // Start prefetch
