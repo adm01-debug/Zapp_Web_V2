@@ -131,10 +131,27 @@ mais de revisão visual pra ser considerado corrigido — é uma garantia estrut
 ## Pendente
 
 - **F3 item 12** — revisão visual das telas densas. 193 trocas de meia-medida mudam quebra
-  de linha em tabela; nenhuma foi inspecionada em tela. Tentativa de automação (Playwright/
-  Bright Data) nesta sessão: credenciais resolvidas (usuário `qa.visual@promobrindes.com.br`
-  com senha redefinida), mas bloqueada por falha de ferramenta — Cloudflare Browser Rendering
-  com token inválido/expirado (precisa permissão "Browser Rendering: Edit" renovada), e a
-  sessão Bright Data rejeitou consistentemente `fill`/`type` no campo de senha do formulário
-  de login (3 tentativas, mesmo erro "waiting for element to be visible, enabled and editable").
-  Requer nova tentativa com ferramenta de browser funcional, ou revisão manual.
+  de linha em tabela; nenhuma foi inspecionada em tela.
+
+  **4 tentativas de automação nesta linha de trabalho, todas bloqueadas por infra de
+  browser, nunca pela paridade em si:**
+  1. Cloudflare Browser Rendering — token inválido/expirado (precisa permissão "Browser
+     Rendering: Edit" renovada).
+  2. Bright Data (scraping_browser) — sessão rejeitou consistentemente `fill`/`type` no
+     campo de senha do formulário de login (3 sub-tentativas, mesmo erro "waiting for
+     element to be visible, enabled and editable").
+  3. Bright Data, nova sessão (23/09, pós-merge #526) — sessão expirou entre chamadas e
+     depois pediu reautenticação OAuth (`/mcp`), impossível numa sessão não-interativa.
+  4. Playwright Workers, mesma tentativa — falhou com o mesmo token Cloudflare inválido do
+     item 1 (`CF_API_TOKEN` sem permissão "Browser Rendering: Edit"), confirmando que é o
+     mesmo bloqueio de infra, não um problema do Bright Data especificamente.
+
+  Testado também: sem computador vinculado a esta sessão (sem device bridge) e o conector
+  `Chrome_Browser` disponível é só leitura/scraping (sem `click`/`fill`), não serve para
+  formulário de login.
+
+  Usuário QA `qa.visual@promobrindes.com.br` com senha redefinida de novo em 23/09 (Supabase
+  Auth Admin API), pronta para a próxima tentativa. **Ação necessária fora desta sessão**:
+  renovar/corrigir o `CF_API_TOKEN` com permissão "Browser Rendering: Edit" (destrava
+  Playwright Workers e Cloudflare Browser MCP de uma vez), e/ou reautenticar o Bright Data
+  MCP via `/mcp` numa sessão interativa. Sem isso, a revisão visual só é viável manualmente.
