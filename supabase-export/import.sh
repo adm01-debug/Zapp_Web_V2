@@ -9,6 +9,7 @@ if [ -z "$DESTINO_URL" ]; then
   echo "Uso: DESTINO_URL=postgresql://user:pass@host:port/dbname bash supabase-export/import.sh"
   exit 1
 fi
+export DESTINO_URL
 
 EXPORT_DIR="supabase-export"
 
@@ -30,7 +31,7 @@ for block in "${BLOCKS[@]}"; do
   file="$EXPORT_DIR/$block"
   if [ -f "$file" ]; then
     echo "📦 Aplicando $block..."
-    psql "$DESTINO_URL" -v ON_ERROR_STOP=1 -f "$file" > /dev/null
+    node scripts/db-audit/psql-safe.mjs -v ON_ERROR_STOP=1 -f "$file" > /dev/null
   else
     echo "⚠️  Aviso: Bloco $block não encontrado, pulando..."
   fi

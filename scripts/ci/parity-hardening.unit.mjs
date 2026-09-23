@@ -37,6 +37,26 @@ test('grants comparison logic lives in a standalone, unit-tested script (not jus
   assert.ok(fs.existsSync(new URL('../db-audit/check-grants-fresh.mjs', import.meta.url)));
   assert.ok(fs.existsSync(new URL('../db-audit/check-grants-fresh.test.mjs', import.meta.url)));
 });
+test('db-live-guard runs psql without the connection string in argv (same regression as types-sync)', () => {
+  const workflow = read('../../.github/workflows/db-live-guard.yml');
+  // DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env,
+  // via psql-safe.mjs/withPsqlEnvironment(). Escopo deixado de fora do PR #534
+  // por ser workflow de guarda viva contra producao; fechado separadamente.
+  assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
+  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 4);
+  assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.mjs', import.meta.url)));
+  assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.test.mjs', import.meta.url)));
+});
+test('db-migrate (production) runs psql without the connection string in argv (same regression as types-sync)', () => {
+  const workflow = read('../../.github/workflows/db-migrate.yml');
+  // DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env,
+  // via psql-safe.mjs/withPsqlEnvironment(). Escopo deixado de fora do PR #534
+  // por ser o workflow de migracao de producao mais sensivel do repositorio;
+  // fechado separadamente, com o mesmo transporte, sem tocar a logica de
+  // captura de saida (RUNTIME/RESULT/LEGACY_COUNT/BUNDLE_COUNT/LEDGER_COUNT).
+  assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
+  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 32);
+});
 test('deployment brackets mutation with snapshots and stable post-collection', () => {
   const workflow = read('../../.github/workflows/deploy-functions.yml');
   const before = workflow.indexOf('collect-remote.mjs" --snapshot');

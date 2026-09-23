@@ -48,7 +48,7 @@ jobs:
   migrate:
     name: Migration oficial com preflight
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout confiavel da main
@@ -119,7 +119,7 @@ jobs:
           umask 077
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
             -printf '%f\n' | cut -c1-14 | sort -u > /tmp/local-versions
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
             > /tmp/remote-versions
           comm -13 /tmp/local-versions /tmp/remote-versions > /tmp/remote-only-versions
@@ -192,7 +192,7 @@ jobs:
         run: |
           case "$TARGET_VERSION" in
             20260830170000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH fn AS (
                   SELECT p.oid, p.prosecdef, p.provolatile, p.proconfig,
                          pg_get_functiondef(p.oid) AS body
@@ -214,7 +214,7 @@ jobs:
                 FROM fn;")
               ;;
             20260831120000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH relation AS (
                   SELECT c.oid, c.relrowsecurity
                   FROM pg_class c
@@ -263,7 +263,7 @@ jobs:
                 FROM payload;")
               ;;
             20260831150000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH source_counts AS (
                   SELECT count(*) FILTER (WHERE media_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') AS legacy_count
                   FROM public.messages
@@ -291,7 +291,7 @@ jobs:
                 FROM payload;")
               ;;
             20260908180000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH relations AS (
                   SELECT c.relname, c.relrowsecurity
                   FROM pg_class c
@@ -336,7 +336,7 @@ jobs:
                 FROM payload;")
               ;;
             20260908220000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH payload AS (
                   SELECT jsonb_build_object(
                     'server_major', current_setting('server_version_num')::int / 10000,
@@ -372,7 +372,7 @@ jobs:
                 ))::text FROM payload;")
               ;;
             20260909120000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH expected_functions AS (
                   SELECT p.oid, p.proname, p.prosecdef,
                          COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path
@@ -425,7 +425,7 @@ jobs:
                 ))::text FROM payload;")
               ;;
             20260909180000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
                 WITH target_relation AS (
                   SELECT c.oid
                   FROM pg_class c
@@ -458,31 +458,31 @@ jobs:
                 ))::text FROM payload;")
               ;;
             20260909200000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
               ;;
             20260909210000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
             20260909220000|20260909240000|20260909250000|20260909260000|20260909270000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/message-delivery-phase1-runtime.sql)
               ;;
             20260909230000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-template-history-runtime.sql)
               ;;
             20260910100000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-blacklist-policy-runtime.sql)
               ;;
             20260912130000|20260912140000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-recovery-runtime.sql)
               ;;
             20260922220000)
-              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
               ;;
             *)
@@ -1111,7 +1111,7 @@ jobs:
           TARGET_VERSION: ${{ inputs.migration_version }}
           TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
         run: |
-          LEDGER_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 \
+          LEDGER_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -v target_version="$TARGET_VERSION" -v target_name="$TARGET_NAME" -At <<'SQL'
               SELECT count(*)
               FROM supabase_migrations.schema_migrations
@@ -1129,7 +1129,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          BUNDLE_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
             FROM supabase_migrations.schema_migrations
             WHERE version IN ('20260909250000', '20260909260000', '20260909270000');
@@ -1145,7 +1145,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          BUNDLE_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
             FROM supabase_migrations.schema_migrations
             WHERE version IN (
@@ -1166,7 +1166,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
@@ -1201,7 +1201,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-recovery-runtime.sql)
           printf '%s\n' "$RUNTIME"
           RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
@@ -1241,7 +1241,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-blacklist-policy-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
@@ -1266,7 +1266,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -c "
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
             SELECT json_build_object(
               'returned_inactive', (
                 SELECT count(*) FROM public.get_team_profiles()
@@ -1291,7 +1291,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-webhook-failures-acl.sql
 
       - name: Validar remocao de URLs assinadas persistidas
@@ -1301,7 +1301,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          LEGACY_COUNT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          LEGACY_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT sum(legacy_count)
             FROM (
               SELECT count(*) FILTER (WHERE media_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') AS legacy_count FROM public.messages
@@ -1324,7 +1324,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
               'outbox_rls', (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.crm_sync_outbox'::regclass),
               'links_rls', (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.crm_contact_links'::regclass),
@@ -1362,7 +1362,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
               'lease_column', EXISTS (
                 SELECT 1 FROM information_schema.columns
@@ -1403,7 +1403,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             WITH expected_functions AS (
               SELECT p.oid, p.proname, p.prosecdef,
                      COALESCE('search_path=public, pg_temp' = ANY(p.proconfig), false) AS safe_path
@@ -1490,7 +1490,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
               'legacy_token_count', (
                 SELECT count(*) FROM public.global_settings WHERE key='api_token'
@@ -1518,7 +1518,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
@@ -1555,7 +1555,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
@@ -1608,7 +1608,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
@@ -1637,7 +1637,7 @@ jobs:
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
-          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+          RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-template-history-runtime.sql)
           printf '%s\n' "$RESULT"
           RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
