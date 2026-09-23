@@ -167,11 +167,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <button
           type="button"
           onClick={onBack}
-          className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-[12.5px] font-medium text-foreground-secondary hover:bg-muted/50"
+          className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50"
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-[11.5px] text-muted-foreground hidden sm:inline">
+        <span className="text-[11px] text-muted-foreground hidden sm:inline">
           Campanhas / <span className="text-foreground">{campaign.name}</span>
         </span>
       </div>
@@ -182,7 +182,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
             <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-[11.5px] text-muted-foreground">{campaign.name}</p>
+            <p className="text-[11px] text-muted-foreground">{campaign.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <RailCard title="Configurações de Agendamento" icon={Clock}>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-[11.5px] text-muted-foreground mb-1.5 block">Data e hora</Label>
+              <Label className="text-[11px] text-muted-foreground mb-1.5 block">Data e hora</Label>
               <Input
                 type="datetime-local"
                 value={localDate}
@@ -218,7 +218,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             </div>
 
             <div>
-              <Label className="text-[11.5px] text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label className="text-[11px] text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
                 <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
@@ -233,7 +233,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[12.5px] font-medium text-foreground">Janela de envio</p>
+                <p className="text-xs font-medium text-foreground">Janela de envio</p>
                 <p className="text-[11px] text-muted-foreground">Envia somente neste intervalo</p>
               </div>
               <Switch checked={windowEnabled} onCheckedChange={setWindowEnabled} />
@@ -254,7 +254,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[12.5px] font-medium text-foreground">Somente horário comercial</p>
+                <p className="text-xs font-medium text-foreground">Somente horário comercial</p>
                 <p className="text-[11px] text-muted-foreground">Seg–Sex, 08:00–18:00</p>
               </div>
               <Switch checked={bizHours} onCheckedChange={setBizHours} />
@@ -279,7 +279,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
             <div className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-2">
-              <p className="text-[11.5px] font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
+              <p className="text-[11px] font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
               <div className="space-y-1.5">
                 <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
                 <MetaRow icon={Clock} label="Hora" value={localDate.split('T')[1] || '—'} />
@@ -326,7 +326,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
               <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
-                <p className="text-[12.5px] font-semibold text-primary">Tudo pronto para o envio!</p>
+                <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
                 <p className="text-[11px] text-muted-foreground">Aguardando {scheduledLabel}.</p>
               </div>
             </div>

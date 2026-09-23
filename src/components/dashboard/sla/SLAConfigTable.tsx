@@ -40,19 +40,19 @@ export function SLAConfigTable() {
       />
 
       {isLoading ? (
-        <p className="text-[12px] text-muted-foreground py-4 text-center">Carregando…</p>
+        <p className="text-xs text-muted-foreground py-4 text-center">Carregando…</p>
       ) : configs.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-1 py-8 text-center">
-          <p className="text-[12px] text-muted-foreground">Nenhuma configuração de SLA</p>
+          <p className="text-xs text-muted-foreground">Nenhuma configuração de SLA</p>
         </div>
       ) : (
         <table className="table-auto w-full text-[13px]">
           <thead>
             <tr className="text-left">
-              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Prioridade</th>
-              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Tempo de 1ª resposta</th>
-              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Status</th>
-              <th className="pb-3 text-[12px] font-semibold text-muted-foreground">Ações</th>
+              <th className="pb-3 text-xs font-semibold text-muted-foreground">Prioridade</th>
+              <th className="pb-3 text-xs font-semibold text-muted-foreground">Tempo de 1ª resposta</th>
+              <th className="pb-3 text-xs font-semibold text-muted-foreground">Status</th>
+              <th className="pb-3 text-xs font-semibold text-muted-foreground">Ações</th>
             </tr>
           </thead>
           <tbody>

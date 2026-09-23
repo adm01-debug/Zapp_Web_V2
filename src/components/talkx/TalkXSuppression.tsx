@@ -210,15 +210,15 @@ export function TalkXSuppression() {
                             <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-[11px] text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
-                        <Td><span className="text-[12.5px] text-foreground-secondary">+{b.contacts?.phone?.replace(/\D/g,'')}</span></Td>
+                        <Td><span className="text-xs text-foreground-secondary">+{b.contacts?.phone?.replace(/\D/g,'')}</span></Td>
                         <Td><Pill label={om.label} tone={om.tone} /></Td>
-                        <Td><span className="text-[12px] text-foreground-secondary max-w-[180px] block truncate">{b.reason || '—'}</span></Td>
-                        <Td><span className="text-[11.5px] text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
-                        <Td><span className="text-[12px] text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
+                        <Td><span className="text-xs text-foreground-secondary max-w-[180px] block truncate">{b.reason || '—'}</span></Td>
+                        <Td><span className="text-[11px] text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
+                        <Td><span className="text-xs text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>
                         <Td className="text-right">
                           <AlertDialog>
-                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-[12px] font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
+                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
                           </AlertDialog>
                         </Td>
                       </tr>
@@ -236,35 +236,35 @@ export function TalkXSuppression() {
       <div className="space-y-4 min-w-0">
         <RailCard icon={ShieldCheck} color="green" title="Centro de proteção" subtitle="Mais segurança para suas campanhas" glow>
           <div className="rounded-xl bg-dash-green/10 border border-dash-green/30 p-3 text-center mb-3">
-            <p className="text-[32px] font-bold text-foreground tabular-nums">{fmtInt(totals.total)}</p>
-            <p className="text-[12px] text-foreground-secondary">campanhas protegidas automaticamente</p>
+            <p className="text-4xl font-bold text-foreground tabular-nums">{fmtInt(totals.total)}</p>
+            <p className="text-xs text-foreground-secondary">campanhas protegidas automaticamente</p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-center">
             {[[fmtInt(totals.total), 'Suprimidos'], [fmtInt(totals.optouts), 'Opt-outs'], [fmtInt(totals.manual), 'Manuais'], ['0', 'LGPD']].map(([v, l]) => (
-              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2"><p className="text-[14px] font-bold text-foreground">{v}</p><p className="text-[10px] text-foreground-secondary">{l}</p></div>
+              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2"><p className="text-sm font-bold text-foreground">{v}</p><p className="text-[10px] text-foreground-secondary">{l}</p></div>
             ))}
           </div>
         </RailCard>
         <RailCard icon={Settings} title="Ações da lista">
           <div className="space-y-2">
-            <label className={cn('w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-[12.5px] font-medium text-foreground cursor-pointer', importing && 'opacity-60 pointer-events-none')}>
+            <label className={cn('w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-xs font-medium text-foreground cursor-pointer', importing && 'opacity-60 pointer-events-none')}>
               {importing ? <Loader2 className="w-4 h-4 text-primary-glow animate-spin" /> : <Upload className="w-4 h-4 text-primary-glow" />}
               {importing ? 'Importando...' : 'Importar lista (CSV / TXT de telefones)'}
               <input type="file" className="sr-only" accept=".csv,.txt,.tsv" onChange={handleImportCSV} />
             </label>
             {importResults && (
-              <div className="text-[11.5px] text-foreground-secondary flex flex-col gap-0.5 px-1">
+              <div className="text-[11px] text-foreground-secondary flex flex-col gap-0.5 px-1">
                 <span className="text-dash-green">✓ {importResults.added} adicionados</span>
                 {importResults.notFound > 0 && <span className="text-muted-foreground">{importResults.notFound} não encontrados na base</span>}
                 {importResults.alreadyBlocked > 0 && <span className="text-muted-foreground">{importResults.alreadyBlocked} já bloqueados</span>}
               </div>
             )}
-            <button type="button" onClick={exportCSV} className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-[12.5px] font-medium text-foreground"><Download className="w-4 h-4 text-primary-glow" />Exportar lista (CSV)</button>
+            <button type="button" onClick={exportCSV} className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-border/60 bg-input/20 hover:border-primary/40 text-left text-xs font-medium text-foreground"><Download className="w-4 h-4 text-primary-glow" />Exportar lista (CSV)</button>
           </div>
         </RailCard>
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 p-3 flex items-start gap-2.5">
           <AlertTriangle className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
-          <p className="text-[12px] text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-primary-glow hover:underline">Saiba mais →</a></p>
+          <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-primary-glow hover:underline">Saiba mais →</a></p>
         </div>
       </div>
 
@@ -274,10 +274,10 @@ export function TalkXSuppression() {
           <DialogHeader><DialogTitle>Adicionar à Lista de Supressão</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Buscar contato</Label>
+              <Label className="text-xs text-foreground-secondary">Buscar contato</Label>
               <Input value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} placeholder="Nome ou telefone…" className="mt-1.5 bg-input/40 border-border/70" />
               <div className="max-h-40 overflow-auto mt-2 rounded-lg border border-border/60 divide-y divide-border/50">
-                {filteredAddContacts.length === 0 ? <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum contato encontrado</p>
+                {filteredAddContacts.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Nenhum contato encontrado</p>
                   : filteredAddContacts.map((c) => (
                     <button key={c.id} onClick={() => setAddContactId(c.id)} className={cn('w-full text-left px-3 py-2 text-sm transition-colors', addContactId === c.id ? 'bg-primary/10' : 'hover:bg-muted/50')}>
                       <span className="font-medium">{c.name}</span><span className="text-muted-foreground ml-2 text-xs">{c.phone}</span>
@@ -286,13 +286,13 @@ export function TalkXSuppression() {
               </div>
             </div>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Origem</Label>
+              <Label className="text-xs text-foreground-secondary">Origem</Label>
               <div className="flex gap-2 mt-1.5">
-                {(['manual', 'lgpd'] as const).map((o) => <button key={o} type="button" onClick={() => setAddOrigin(o)} className={cn('h-8 px-3 rounded-lg border text-[12.5px] font-medium', addOrigin === o ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:bg-muted/50')}>{o === 'manual' ? 'Manual' : 'LGPD'}</button>)}
+                {(['manual', 'lgpd'] as const).map((o) => <button key={o} type="button" onClick={() => setAddOrigin(o)} className={cn('h-8 px-3 rounded-lg border text-xs font-medium', addOrigin === o ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:bg-muted/50')}>{o === 'manual' ? 'Manual' : 'LGPD'}</button>)}
               </div>
             </div>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Motivo</Label>
+              <Label className="text-xs text-foreground-secondary">Motivo</Label>
               <Select value={addReason} onValueChange={setAddReason}>
                 <SelectTrigger className="mt-1.5 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>

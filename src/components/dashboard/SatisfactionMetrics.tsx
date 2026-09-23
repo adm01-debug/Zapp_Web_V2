@@ -17,8 +17,8 @@ function EmptyBlock({ icon: Icon, title, sub, action }: { icon: React.ElementTyp
   return (
     <div className="flex flex-col items-center py-8 text-muted-foreground gap-2">
       <Icon className="w-9 h-9 text-primary-glow/70" strokeWidth={1.6} />
-      <p className="text-[14px] font-semibold text-foreground text-center">{title}</p>
-      <p className="text-[12.5px] text-center max-w-[360px] leading-snug">{sub}</p>
+      <p className="text-sm font-semibold text-foreground text-center">{title}</p>
+      <p className="text-xs text-center max-w-[360px] leading-snug">{sub}</p>
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -81,7 +81,7 @@ export function SatisfactionMetrics() {
       <DashboardCard>
         <div className="flex flex-col items-center py-12 text-muted-foreground gap-3">
           <MessageCircle className="w-10 h-10 opacity-30" />
-          <p className="text-[14px] font-medium">Erro ao carregar dados de satisfação</p>
+          <p className="text-sm font-medium">Erro ao carregar dados de satisfação</p>
           <button onClick={() => refetch()} className="text-[13px] text-primary hover:underline">Tentar novamente</button>
         </div>
       </DashboardCard>
@@ -112,7 +112,7 @@ export function SatisfactionMetrics() {
           aside={<KpiEmptyAside icon={Minus} label="Sem variação" />}
         />
         <DashboardKpiCard index={3} size="hero" label="Top Agente" value={topAgent?.agentName?.split(' ')[0] ?? 'Sem dados'}
-          valueClassName={topAgent ? undefined : 'text-[22px] text-muted-foreground'}
+          valueClassName={topAgent ? undefined : 'text-2xl text-muted-foreground'}
           delta={topAgent ? { text: `${Math.round(topAgent.csatPercent)}% CSAT`, tone: 'success' } : { text: 'no período selecionado', tone: 'muted' }}
           tile="amber" icon={Crown} bars={null} barsColor="amber" chart="none"
           aside={topAgent ? <InitialsAvatar name={topAgent.agentName} size={44} /> : <KpiEmptyAside icon={User} label="Sem avaliações no período" />}
@@ -249,7 +249,7 @@ export function SatisfactionMetrics() {
               <div className="flex items-start gap-3">
                 <div className="w-11 h-11 rounded-xl bg-dash-tile-blue flex items-center justify-center shrink-0"><Lightbulb className="w-5 h-5 text-white" /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-primary-glow">Dica</p>
+                  <p className="text-sm font-bold text-primary-glow">Dica</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">Incentive seus clientes a avaliarem os atendimentos. A satisfação do cliente ajuda a identificar pontos de melhoria e reconhecer sua equipe.</p>
                 </div>
                 <button onClick={() => setTipDismissed(true)} className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-muted/60"><X className="w-4 h-4 text-muted-foreground" /></button>

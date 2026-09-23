@@ -56,7 +56,7 @@ export function GoalsDashboard({ onNavigateTab }: GoalsDashboardProps) {
           footer={(
             <div className="mt-1">
               <ProgressBar value={overallProgress} tone="info" height={6} />
-              <p className="text-[12px] text-muted-foreground mt-2">{activeGoalsCount} de {goals.length} metas em andamento</p>
+              <p className="text-xs text-muted-foreground mt-2">{activeGoalsCount} de {goals.length} metas em andamento</p>
             </div>
           )}
         />

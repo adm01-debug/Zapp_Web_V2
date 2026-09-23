@@ -19,7 +19,7 @@ function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?
   return (
     <div className="bg-popover border border-border rounded-lg px-3 py-2 text-[11px]">
       <p className="text-muted-foreground">Agora</p>
-      <p className="text-[12px] font-semibold text-foreground">{currentHourCount} conversas</p>
+      <p className="text-xs font-semibold text-foreground">{currentHourCount} conversas</p>
       {pct !== null && (
         <p className="text-foreground-secondary">{Math.abs(pct)}% {pct >= 0 ? 'acima' : 'abaixo'} da média</p>
       )}
@@ -70,7 +70,7 @@ export function VolumeChart() {
         )}
       />
       {isEmpty ? (
-        <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground min-h-[160px]">
+        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[160px]">
           Sem conversas no período
         </div>
       ) : (

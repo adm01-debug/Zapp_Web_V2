@@ -109,6 +109,9 @@ jobs:
       - name: 🚫 Run implicit-any ratchet
         run: node scripts/ci/implicit-any-ratchet.mjs
 
+      - name: 🔤 Run typography parity guard
+        run: node scripts/qa/medir-tipografia.cjs --check
+
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs
 

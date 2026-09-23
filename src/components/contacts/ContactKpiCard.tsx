@@ -129,13 +129,13 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium text-muted-foreground truncate leading-tight">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground truncate leading-tight">{label}</p>
         <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
-          <p data-testid="kpi-value" className="text-[34px] font-bold tabular-nums leading-none text-foreground">
+          <p data-testid="kpi-value" className="text-4xl font-bold tabular-nums leading-none text-foreground">
             <CountUp value={value} />
           </p>
           {!noData && !flat && (
-            <span className={cn('flex items-center gap-0.5 text-[14px] font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
+            <span className={cn('flex items-center gap-0.5 text-sm font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
             </span>

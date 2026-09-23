@@ -95,7 +95,7 @@ export default function Auth() {
 
           {/* Title above the card — more editorial hierarchy */}
           <div className="mb-5">
-            <h2 className="font-display text-[28px] font-bold leading-tight tracking-tight text-foreground">
+            <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-foreground">
               {activeTab === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

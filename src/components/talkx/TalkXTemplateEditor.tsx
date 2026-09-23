@@ -185,12 +185,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       {/* === COLUNA ESQUERDA: biblioteca === */}
       <aside className="hidden lg:flex flex-col w-[220px] xl:w-[240px] flex-shrink-0 gap-3">
         <div className="rounded-2xl bg-card border border-border/70 p-3 flex flex-col gap-2 flex-1">
-          <p className="text-[12.5px] font-semibold text-foreground">Biblioteca</p>
+          <p className="text-xs font-semibold text-foreground">Biblioteca</p>
           <Input
             value={libSearch}
             onChange={(e) => setLibSearch(e.target.value)}
             placeholder="Buscar…"
-            className="h-8 text-[12px] bg-input/40 border-border/70"
+            className="h-8 text-xs bg-input/40 border-border/70"
           />
           {/* Chips de categoria */}
           <div className="flex flex-wrap gap-1">
@@ -200,7 +200,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 type="button"
                 onClick={() => setLibCat(c)}
                 className={cn(
-                  'h-6 px-2 rounded-md text-[10.5px] font-medium border transition-colors',
+                  'h-6 px-2 rounded-md text-[10px] font-medium border transition-colors',
                   libCat === c
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border/60 text-muted-foreground hover:border-primary/40',
@@ -215,7 +215,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             {isLoading
               ? <TalkXSkeletonRows rows={5} />
               : libFiltered.length === 0
-                ? <p className="text-[11.5px] text-muted-foreground text-center pt-4">Nenhum template</p>
+                ? <p className="text-[11px] text-muted-foreground text-center pt-4">Nenhum template</p>
                 : libFiltered.map((t) => {
                   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
                   return (
@@ -260,8 +260,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           </button>
           <IconTile icon={FileText} size={40} />
           <div className="min-w-0 flex-1">
-            <p className="text-[19px] font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
-            <p className="text-[12px] text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
+            <p className="text-xl font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
+            <p className="text-xs text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {editing && (
@@ -281,16 +281,16 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
         {/* Campos */}
         <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
-            <div><Label className="text-[12px] text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+            <div><Label className="text-xs text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Categoria</Label>
+              <Label className="text-xs text-foreground-secondary">Categoria</Label>
               <Select value={eCat} onValueChange={setECat}>
                 <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Status</Label>
+              <Label className="text-xs text-foreground-secondary">Status</Label>
               <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
                 <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
@@ -301,7 +301,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           {/* Toolbar WhatsApp */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <Label className="text-[12px] text-foreground-secondary">Mensagem</Label>
+              <Label className="text-xs text-foreground-secondary">Mensagem</Label>
               <span className={cn('text-[11px]', eContent.length > 980 ? 'text-dash-red' : 'text-muted-foreground')}>{eContent.length}/1024</span>
             </div>
             {/* Toolbar */}
@@ -321,7 +321,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               value={eContent}
               onChange={(e) => setEContent(e.target.value.slice(0, 1024))}
               rows={7}
-              className="resize-none bg-input/40 border-border/70 text-[13.5px] leading-relaxed font-mono rounded-t-none border-t-0 rounded-tl-none rounded-tr-none"
+              className="resize-none bg-input/40 border-border/70 text-sm leading-relaxed font-mono rounded-t-none border-t-0 rounded-tl-none rounded-tr-none"
               placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial…"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); }
@@ -332,7 +332,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
           {/* Todas as variáveis disponíveis */}
           <div>
-            <p className="text-[11.5px] text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
+            <p className="text-[11px] text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLE_KEYS.map((v) => (
                 <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-[11px] font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
@@ -343,7 +343,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           {/* Mídia */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Label className="text-[12px] text-foreground-secondary">Mídia (opcional)</Label>
+              <Label className="text-xs text-foreground-secondary">Mídia (opcional)</Label>
               <div className="flex gap-1.5">
                 {[{ v: '', l: 'Sem mídia', icon: X }, { v: 'image', l: 'Imagem', icon: Image }, { v: 'video', l: 'Vídeo', icon: Video }, { v: 'document', l: 'Doc', icon: FileText }, { v: 'audio', l: 'Áudio', icon: Music }].map(({ v, l, icon: Icon }) => {
                   const active = v === '' ? !eHasMedia : eHasMedia && eMediaType === v;
@@ -358,17 +358,17 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 })}
               </div>
             </div>
-            {eHasMedia && <Input value={eMediaUrl} onChange={(e) => setEMediaUrl(e.target.value)} placeholder="URL da mídia (ex: https://…/imagem.jpg)" className="h-9 bg-input/40 border-border/70 text-[12.5px]" />}
+            {eHasMedia && <Input value={eMediaUrl} onChange={(e) => setEMediaUrl(e.target.value)} placeholder="URL da mídia (ex: https://…/imagem.jpg)" className="h-9 bg-input/40 border-border/70 text-xs" />}
           </div>
 
 
           {/* E45: Variaveis customizadas */}
           <div>
-            <p className="text-[12px] text-foreground-secondary mb-1.5">Variaveis personalizadas</p>
+            <p className="text-xs text-foreground-secondary mb-1.5">Variaveis personalizadas</p>
             <p className="text-[11px] text-muted-foreground mb-2">Defina variaveis proprias para este template. Serao inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
-                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-[12px] font-mono text-violet-300">
+                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
                   {'{{'}{v}{'}}'}
                   <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>
@@ -387,7 +387,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                   }
                 }}
                 placeholder="nome_variavel (Enter)"
-                className="h-7 w-44 bg-input/40 border-border/70 text-[12px] font-mono"
+                className="h-7 w-44 bg-input/40 border-border/70 text-xs font-mono"
               />
               <button
                 type="button"
@@ -399,7 +399,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     setECustomVarInput('');
                   }
                 }}
-                className="h-7 px-2 rounded-md text-[11.5px] font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
+                className="h-7 px-2 rounded-md text-[11px] font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
               >
                 + Inserir
               </button>
@@ -408,10 +408,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
           {/* Tags */}
           <div>
-            <Label className="text-[12px] text-foreground-secondary">Tags</Label>
+            <Label className="text-xs text-foreground-secondary">Tags</Label>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {eTags.map((t) => (
-                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-[12px] font-medium text-primary-glow">
+                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary-glow">
                   #{t}
                   <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>
@@ -427,7 +427,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                   }
                 }}
                 placeholder="+ tag (Enter)"
-                className="h-7 w-32 bg-input/40 border-border/70 text-[12px]"
+                className="h-7 w-32 bg-input/40 border-border/70 text-xs"
               />
             </div>
           </div>
@@ -438,7 +438,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       {activeTemplateId && (
         <div className="xl:hidden mt-4 rounded-2xl bg-card border border-border/70 p-3">
           <div className="flex items-center gap-2 mb-2">
-            <p className="text-[12.5px] font-semibold text-foreground">Variações A/B</p>
+            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             <button type="button"
               onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }}
               className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
@@ -496,7 +496,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <History className="w-3.5 h-3.5 text-foreground-secondary" />
-              <p className="text-[12.5px] font-semibold text-foreground">Variações A/B</p>
+              <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             </div>
             <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
           </div>
@@ -520,7 +520,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
           )}
           <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
-            <p className="text-[12.5px] font-semibold text-foreground">Historico</p>
+            <p className="text-xs font-semibold text-foreground">Historico</p>
             <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>
           </div>
           {showVersions && (
@@ -542,13 +542,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <div className="grid grid-cols-2 gap-2 text-center">
               {([['—', 'Taxa resposta'], ['—', 'Conversão'], ['—', 'Rejeição'], [fmtInt(editing.use_count), 'Envios']]).map(([v, l]) => (
                 <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1">
-                  <p className="text-[14px] font-bold text-foreground tabular-nums">{v}</p>
+                  <p className="text-sm font-bold text-foreground tabular-nums">{v}</p>
                   <p className="text-[10px] text-foreground-secondary">{l}</p>
                 </div>
               ))}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-[10.5px]">#{t}</Badge>)}
+              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-[10px]">#{t}</Badge>)}
             </div>
           </RailCard>
         )}
@@ -557,11 +557,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       {/* E47: Test Dialog */}
       <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um numero via WhatsApp.</DialogDescription></DialogHeader>
             <div>
-              <Label className="text-[12px] text-foreground-secondary">Numero de destino</Label>
+              <Label className="text-xs text-foreground-secondary">Numero de destino</Label>
               <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
             </div>
             {testResult && (
-              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-[12.5px]' : 'flex items-center gap-2 text-dash-red text-[12.5px]'}>
+              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
                 {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
                 {testResult.msg}
               </div>

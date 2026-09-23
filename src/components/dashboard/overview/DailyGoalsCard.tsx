@@ -61,7 +61,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
       <SectionHeader icon={Target} title={title} tileSize={44} right={<VerTodasButton onClick={onSeeAll} />} />
       {showEmptyState ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-2 min-h-[160px]">
-          <p className="text-[12px] text-muted-foreground">Nenhuma meta configurada ainda</p>
+          <p className="text-xs text-muted-foreground">Nenhuma meta configurada ainda</p>
           <button
             type="button"
             onClick={() => setConfigDialogOpen(true)}
@@ -85,11 +85,11 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-[16px] font-bold text-foreground leading-none">{done}/{total}</p>
-                <p className="text-[12px] text-muted-foreground mt-0.5">{pct}%</p>
+                <p className="text-base font-bold text-foreground leading-none">{done}/{total}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{pct}%</p>
               </div>
             </div>
-            <p className="text-[12px] font-semibold text-foreground text-center">{message}</p>
+            <p className="text-xs font-semibold text-foreground text-center">{message}</p>
             <p className="text-[11px] text-foreground-secondary text-center leading-snug">{submessage}</p>
           </div>
           <div className="space-y-1.5">

@@ -47,8 +47,8 @@ export function NowPanel({ realtime, pendingConversations, slaBreachedToday, bus
               <row.icon className="w-4 h-4 text-white/90" />
             </div>
             <div className="min-w-0">
-              <p className={`text-[18px] font-bold leading-none ${row.tone ?? 'text-foreground'}`}>{row.value}</p>
-              <p className="text-[12px] text-foreground-secondary truncate">{row.label}</p>
+              <p className={`text-lg font-bold leading-none ${row.tone ?? 'text-foreground'}`}>{row.value}</p>
+              <p className="text-xs text-foreground-secondary truncate">{row.label}</p>
             </div>
           </div>
         ))}

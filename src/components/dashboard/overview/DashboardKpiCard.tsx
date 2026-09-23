@@ -200,7 +200,7 @@ function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSiz
   const tone = good ? 'text-dash-green' : 'text-dash-red';
   if (hero && delta.pill) {
     return (
-      <span className={cn('inline-flex items-center gap-1 h-6 px-2 rounded-full text-[12px] font-semibold', good ? 'bg-dash-green/15 text-dash-green' : 'bg-dash-red/15 text-dash-red')}>
+      <span className={cn('inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs font-semibold', good ? 'bg-dash-green/15 text-dash-green' : 'bg-dash-red/15 text-dash-red')}>
         <Arrow className="w-3.5 h-3.5" />
         {positive ? '+' : ''}{delta.pct}%
       </span>
@@ -239,8 +239,8 @@ export function DashboardKpiCard({
             <Icon className="w-[18px] h-[18px] text-white/90" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-medium text-foreground-secondary truncate">{label}</p>
-            <p data-testid="kpi-value" className={cn('text-[22px] font-bold tabular-nums text-foreground leading-tight', valueClassName)}>
+            <p className="text-xs font-medium text-foreground-secondary truncate">{label}</p>
+            <p data-testid="kpi-value" className={cn('text-2xl font-bold tabular-nums text-foreground leading-tight', valueClassName)}>
               <CountUp value={value} />
             </p>
             <DeltaLine delta={delta} />
@@ -268,12 +268,12 @@ export function DashboardKpiCard({
           <Icon className="w-[26px] h-[26px] text-white" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[14px] font-medium text-foreground-secondary">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground-secondary">
             <span className="truncate">{label}</span>
             {labelAdornment}
             {isPill && <span className="ml-auto">{<DeltaLine delta={delta} size="hero" />}</span>}
           </div>
-          <p data-testid="kpi-value" className={cn('text-[32px] font-bold tabular-nums text-foreground leading-none mt-1 tracking-[-0.02em]', valueClassName)}>
+          <p data-testid="kpi-value" className={cn('text-4xl font-bold tabular-nums text-foreground leading-none mt-1 tracking-[-0.02em]', valueClassName)}>
             <CountUp value={value} />
           </p>
           {!isPill && <div className="mt-1.5"><DeltaLine delta={delta} size="hero" /></div>}

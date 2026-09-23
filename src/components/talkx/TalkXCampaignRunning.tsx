@@ -72,7 +72,7 @@ function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: 
       </svg>
       <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
         {segments.map(({ val, color, label }) => (
-          <div key={label} className="flex items-center gap-2 text-[12px]">
+          <div key={label} className="flex items-center gap-2 text-xs">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
             <span className="text-foreground-secondary">{label}</span>
             <span className="font-semibold text-foreground ml-auto">{fmtInt(val)}</span>
@@ -109,7 +109,7 @@ function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: st
       {/* Barra de progresso */}
       {c.total_recipients > 0 && (
         <div className="rounded-2xl bg-card border border-border/70 p-4 space-y-2">
-          <div className="flex justify-between text-[12px] text-foreground-secondary">
+          <div className="flex justify-between text-xs text-foreground-secondary">
             <span>Progresso geral</span>
             <span>{fmtInt(processed)} / {fmtInt(c.total_recipients)} contatos</span>
           </div>
@@ -185,7 +185,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
       <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-        <p className="text-[12px] text-foreground-secondary">{isLoading ? 'Carregando…' : `Mostrando ${recips?.length ?? 0} recentes`}</p>
+        <p className="text-xs text-foreground-secondary">{isLoading ? 'Carregando…' : `Mostrando ${recips?.length ?? 0} recentes`}</p>
       </div>
       {isLoading ? (
         <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-9 bg-muted/40 rounded-lg animate-pulse" />)}</div>
@@ -200,11 +200,11 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
             <tbody>
               {(recips ?? []).map((r, i) => (
                 <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                  <td className="px-4 py-2.5 text-[12.5px] font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-[12px] text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                  <td className={`px-4 py-2.5 text-[12px] font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-[11.5px] text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-[11.5px] text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
+                  <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
+                  <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -263,7 +263,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
       <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
-          <p className="text-[11.5px] text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+          <p className="text-[11px] text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground-secondary">
           <Send className="h-3.5 w-3.5 text-primary" />
@@ -275,13 +275,13 @@ function TabMessages({ campaignId }: { campaignId: string }) {
         <div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>
       ) : isError ? (
         <div className="p-8 text-center">
-          <p className="text-[12.5px] font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
-          <p className="text-[11.5px] text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
+          <p className="text-xs font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
+          <p className="text-[11px] text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
         </div>
       ) : (messages?.length ?? 0) === 0 ? (
         <div className="p-8 text-center">
           <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-          <p className="text-[12.5px] font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
+          <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
         </div>
       ) : (
         <div className="divide-y divide-border/40">
@@ -296,14 +296,14 @@ function TabMessages({ campaignId }: { campaignId: string }) {
             return (
               <article key={message.id} className="px-4 py-3 hover:bg-muted/10">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <p className="text-[12.5px] font-semibold text-foreground">{message.contacts?.name ?? 'Contato indisponível'}</p>
+                  <p className="text-xs font-semibold text-foreground">{message.contacts?.name ?? 'Contato indisponível'}</p>
                   <span className="text-[11px] font-mono text-foreground-secondary">{message.contacts?.phone ?? '—'}</span>
                   <span className={`ml-auto text-[11px] font-semibold ${STATUS_TONE[message.status] ?? 'text-foreground-secondary'}`}>
                     {STATUS_LABEL[message.status] ?? message.status}
                   </span>
                 </div>
-                <p className="mt-2 whitespace-pre-wrap break-words text-[12px] leading-5 text-foreground-secondary">{shownContent}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-muted-foreground">
+                <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground-secondary">{shownContent}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
                   {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
                   {canExpand && (
                     <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
@@ -391,7 +391,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
         </span>
       </div>
       {events.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>
+        <p className="text-xs text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>
       ) : (
         <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
           {events.map((ev) => (
@@ -399,11 +399,11 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
               <span className={`text-[15px] leading-none mt-0.5 ${LOG_TONE[ev.status] ?? 'text-muted-foreground'}`}>{LOG_ICON[ev.status] ?? '●'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-[12.5px] font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
+                  <p className="text-xs font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
                   <span className={`text-[11px] font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
                 </div>
                 {ev.error && <p className="text-[11px] text-dash-red mt-0.5 truncate">{ev.error}</p>}
-                <p className="text-[10.5px] text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
               </div>
             </div>
           ))}
@@ -442,17 +442,17 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {METRICS.map(({ label, value, sub }) => (
           <div key={label} className="rounded-xl border border-border/60 bg-card p-3">
-            <p className="text-[22px] font-bold text-foreground">{value}</p>
+            <p className="text-2xl font-bold text-foreground">{value}</p>
             <p className="text-[11px] font-semibold text-foreground-secondary mt-0.5">{label}</p>
-            {sub && <p className="text-[10.5px] text-muted-foreground mt-0.5">{sub}</p>}
+            {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
           </div>
         ))}
       </div>
       {c.started_at && c.status === 'sending' && pending > 0 && avgRate && avgRate > 0 && (
         <div className="rounded-2xl bg-card border border-border/70 p-4">
           <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
-          <p className="text-[22px] font-bold text-primary">{Math.ceil(pending / avgRate)} min</p>
-          <p className="text-[11.5px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
+          <p className="text-2xl font-bold text-primary">{Math.ceil(pending / avgRate)} min</p>
+          <p className="text-[11px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
         </div>
       )}
     </div>
@@ -603,8 +603,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
           </button>
           <IconTile icon={Activity} color="green" size={40} glow />
           <div className="min-w-0">
-            <h1 className="text-[18px] font-bold text-foreground leading-tight truncate">Campanha em Andamento</h1>
-            <p className="text-[12px] text-foreground-secondary">Acompanhe e gerencie envios ativos</p>
+            <h1 className="text-lg font-bold text-foreground leading-tight truncate">Campanha em Andamento</h1>
+            <p className="text-xs text-foreground-secondary">Acompanhe e gerencie envios ativos</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -613,7 +613,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             value={selectedId ?? ''}
             onChange={(e) => { setSelectedId(e.target.value || null); setActiveTab('overview'); }}
             aria-label="Selecionar campanha"
-            className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-medium max-w-[220px] truncate focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium max-w-[220px] truncate focus:outline-none focus:ring-1 focus:ring-primary"
           >
             {sending.length === 0 && <option value="">Nenhuma campanha ativa</option>}
             {sending.map((c) => (
@@ -628,7 +628,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
       {!campaign && (
         <div className="rounded-2xl border border-border/50 bg-muted/20 p-10 text-center">
-          <p className="text-[14px] text-foreground-secondary">Nenhuma campanha em andamento no momento.</p>
+          <p className="text-sm text-foreground-secondary">Nenhuma campanha em andamento no momento.</p>
         </div>
       )}
 
@@ -640,7 +640,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               <button
                 key={t.id} type="button"
                 onClick={() => setActiveTab(t.id)}
-                className={`px-3.5 py-2 text-[12.5px] font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
+                className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
                   ${activeTab === t.id
                     ? 'border-primary text-primary'
                     : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
@@ -668,7 +668,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             <div className="flex flex-wrap gap-2">
               {campaign.status === 'sending' && (
                 <button type="button" onClick={() => setPauseOpen(true)}
-                  className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-amber-500/20">
+                  className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
                   <Pause className="w-4 h-4" />Pausar
                 </button>
               )}
@@ -682,16 +682,16 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                     toast.error('Erro ao retomar campanha.');
                   } finally { setResuming(false); }
                 }}
-                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
+                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
                   <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
                 </button>
               )}
               <button type="button" onClick={handleOpenLimits}
-                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-muted/50">
+                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
                 <Settings2 className="w-4 h-4" />Editar Limites
               </button>
               <button type="button" onClick={() => onViewMonitor(campaign.id)}
-                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-muted/50">
+                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
                 <Eye className="w-4 h-4" />Ver Monitor
               </button>
               {(campaign.status === 'completed' || campaign.status === 'paused') && (
@@ -703,12 +703,12 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                     toast.error('Erro ao enviar relatório.');
                   }
                 }}
-                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-[12.5px] font-semibold flex items-center gap-2 hover:bg-primary/20">
+                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20">
                   <Mail className="w-4 h-4" />Enviar Relatório
                 </button>
               )}
               <button type="button" onClick={() => setCancelOpen(true)}
-                className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-[12.5px] font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
+                className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
                 <Square className="w-4 h-4" />Cancelar campanha
               </button>
             </div>
@@ -725,9 +725,9 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
           </AlertDialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <label className="text-[12px] font-semibold text-foreground">Velocidade</label>
+              <label className="text-xs font-semibold text-foreground">Velocidade</label>
               <select value={lSpeed} onChange={(e) => setLSpeed(e.target.value)}
-                className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-primary">
+                className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary">
                 <option value="slow">Lento (seguro)</option>
                 <option value="moderate">Moderado</option>
                 <option value="fast">Rápido</option>
@@ -735,31 +735,31 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[12px] font-semibold text-foreground">Intervalo mínimo (s)</label>
+                <label className="text-xs font-semibold text-foreground">Intervalo mínimo (s)</label>
                 <input type="number" min={1} value={lIntMin} onChange={(e) => setLIntMin(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div className="space-y-1">
-                <label className="text-[12px] font-semibold text-foreground">Intervalo máximo (s)</label>
+                <label className="text-xs font-semibold text-foreground">Intervalo máximo (s)</label>
                 <input type="number" min={lIntMin} value={lIntMax} onChange={(e) => setLIntMax(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[12px] font-semibold text-foreground">Janela início</label>
+                <label className="text-xs font-semibold text-foreground">Janela início</label>
                 <input type="time" value={lWinStart} onChange={(e) => setLWinStart(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div className="space-y-1">
-                <label className="text-[12px] font-semibold text-foreground">Janela fim</label>
+                <label className="text-xs font-semibold text-foreground">Janela fim</label>
                 <input type="time" value={lWinEnd} onChange={(e) => setLWinEnd(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={lBizHours} onChange={(e) => setLBizHours(e.target.checked)} className="rounded" />
-              <span className="text-[12.5px] text-foreground">Apenas horário comercial (seg–sex 8h–18h)</span>
+              <span className="text-xs text-foreground">Apenas horário comercial (seg–sex 8h–18h)</span>
             </label>
           </div>
           <AlertDialogFooter>

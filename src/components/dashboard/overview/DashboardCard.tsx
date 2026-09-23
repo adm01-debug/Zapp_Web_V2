@@ -86,8 +86,8 @@ export function SectionHeader({ icon: Icon, title, subtitle, tileSize, right, si
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className={cn('font-bold text-foreground truncate', lg ? 'text-[18px] tracking-[-0.01em]' : 'text-[15px]')}>{title}</p>
-        {subtitle && <p className={cn('text-foreground-secondary truncate', lg ? 'text-[13px] mt-0.5' : 'text-[12px]')}>{subtitle}</p>}
+        <p className={cn('font-bold text-foreground truncate', lg ? 'text-lg tracking-[-0.01em]' : 'text-[15px]')}>{title}</p>
+        {subtitle && <p className={cn('text-foreground-secondary truncate', lg ? 'text-[13px] mt-0.5' : 'text-xs')}>{subtitle}</p>}
       </div>
       {right}
     </div>
@@ -196,7 +196,7 @@ interface PillProps {
 /** Pill de status/tipo dos mockups: h-6 rounded-full text-12 font-semibold, fundo 15% + texto na cor. */
 export function Pill({ label, tone, dot, className }: PillProps) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[12px] font-semibold whitespace-nowrap', pillTone[tone], className)}>
+    <span className={cn('inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap', pillTone[tone], className)}>
       {dot && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
       {label}
     </span>
@@ -218,7 +218,7 @@ export function InitialsAvatar({ name, size = 32, src, className }: InitialsAvat
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const bg = avatarHue[h % avatarHue.length];
-  const font = size >= 44 ? 'text-[18px]' : size >= 32 ? 'text-[12px]' : 'text-[10px]';
+  const font = size >= 44 ? 'text-lg' : size >= 32 ? 'text-xs' : 'text-[10px]';
   if (src) {
     return <img src={src} alt={name} style={{ width: size, height: size }} className={cn('rounded-full object-cover shrink-0', className)} />;
   }
@@ -246,7 +246,7 @@ interface PrimaryButtonProps {
 
 /** Botão azul sólido dos mockups ("+ Novo Relatório", "+ Novo SLA", "Selecionar outro período"). */
 export function PrimaryButton({ children, onClick, icon: Icon, className, testid, size = 'md', disabled = false }: PrimaryButtonProps) {
-  const h = size === 'lg' ? 'h-11 px-5 text-[14px]' : size === 'sm' ? 'h-8 px-3 text-[12px]' : 'h-9 px-4 text-[13px]';
+  const h = size === 'lg' ? 'h-11 px-5 text-sm' : size === 'sm' ? 'h-8 px-3 text-xs' : 'h-9 px-4 text-[13px]';
   return (
     <button
       type="button"
@@ -272,7 +272,7 @@ interface GhostButtonProps {
 
 /** Botão bordado dos mockups ("Exportar", ícone download, chevron circular). */
 export function GhostButton({ children, onClick, icon: Icon, className, title, size = 'md' }: GhostButtonProps) {
-  const h = size === 'sm' ? 'h-8 text-[12px]' : 'h-9 text-[13px]';
+  const h = size === 'sm' ? 'h-8 text-xs' : 'h-9 text-[13px]';
   return (
     <button
       type="button"
