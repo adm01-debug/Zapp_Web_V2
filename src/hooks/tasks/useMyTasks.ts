@@ -56,13 +56,12 @@ export function useMyTasks() {
     onError: () => toast.error('Erro ao remover tarefa'),
   });
 
-  // contact_id obrigatório: a policy de INSERT de conversation_tasks exige
-  // is_contact_visible_to_user(contact_id, ...). Tarefa sem contato (to-do
-  // pessoal solto) precisa de uma policy nova — fora de escopo desta tela.
+  // contact_id opcional: a policy de INSERT aceita is_contact_visible_to_user(contact_id, ...)
+  // OU (contact_id IS NULL AND created_by = próprio usuário) — tarefa pessoal solta.
   const createMutation = useMutation({
-    mutationFn: async (input: { title: string; contactId: string; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => {
+    mutationFn: async (input: { title: string; contactId?: string | null; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => {
       const { error } = await supabase.from('conversation_tasks').insert({
-        contact_id: input.contactId,
+        contact_id: input.contactId ?? null,
         title: input.title,
         priority: input.priority ?? 'medium',
         due_date: input.dueDate ?? null,
