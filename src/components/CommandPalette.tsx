@@ -44,7 +44,7 @@ function pushRecent(id: string) {
      ];
      return groups.map(g => ({
        ...g,
-       items: NavigationService.filterNavItems(g.items as any, roles)
+       items: NavigationService.filterNavItems(g.items, roles)
      })).filter(g => g.items.length > 0);
    }, [roles]);
  
@@ -53,28 +53,36 @@ function pushRecent(id: string) {
   const [open, setOpen] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (open) setRecent(getRecent());
-  }, [open]);
+  // Recarrega os recentes sempre que o palette abre — no handler de abertura,
+  // nunca num useEffect watch de `open` (setState síncrono em efeito dispara
+  // render em cascata).
+  const openPalette = () => { setRecent(getRecent()); setOpen(true); };
+  const handleOpenChange = (next: boolean) => {
+    if (next) setRecent(getRecent());
+    setOpen(next);
+  };
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen(o => !o);
+        setOpen(o => {
+          const next = !o;
+          if (next) setRecent(getRecent());
+          return next;
+        });
       }
     };
     window.addEventListener('keydown', down);
-    const handler = () => setOpen(true);
-    document.addEventListener('open-global-search', handler);
+    document.addEventListener('open-global-search', openPalette);
     return () => {
       window.removeEventListener('keydown', down);
-      document.removeEventListener('open-global-search', handler);
+      document.removeEventListener('open-global-search', openPalette);
     };
   }, []);
 
    const recentItems = useMemo(
-     () => recent.map(id => allItems.find(i => i.id === id)).filter(Boolean) as any[],
+     () => recent.map(id => allItems.find(i => i.id === id)).filter((i): i is NonNullable<typeof i> => Boolean(i)),
      [recent, allItems]
    );
 
@@ -85,7 +93,7 @@ function pushRecent(id: string) {
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={handleOpenChange}>
       <CommandInput placeholder="Buscar módulo… (ex: pipeline, chatbot)" />
       <CommandList className="max-h-[400px]">
         <CommandEmpty>Nenhum módulo encontrado.</CommandEmpty>
