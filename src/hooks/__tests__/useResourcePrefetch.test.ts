@@ -101,6 +101,53 @@ describe('usePrefetch', () => {
     expect(data).toBeNull();
     expect(getPrefetchedData('key11')).toBe('data-after-unmount');
   });
+
+  it('a follower call does not leak data to a caller that unmounted, even while the leader stays mounted', async () => {
+    let resolveFetch: (value: string) => void;
+    const pending = new Promise<string>((resolve) => {
+      resolveFetch = resolve;
+    });
+    const fetcher = vi.fn(() => pending);
+
+    const leader = renderHook(() => usePrefetch('key12', fetcher));
+    const follower = renderHook(() => usePrefetch('key12', fetcher));
+
+    let leaderData: string | null = 'not-set';
+    let followerData: string | null = 'not-set';
+    const leaderDone = leader.result.current.prefetch().then((d) => { leaderData = d; });
+    const followerDone = follower.result.current.prefetch().then((d) => { followerData = d; });
+
+    follower.unmount();
+    resolveFetch!('shared-data');
+    await act(async () => {
+      await Promise.all([leaderDone, followerDone]);
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(leaderData).toBe('shared-data');
+    expect(followerData).toBeNull();
+    expect(getPrefetchedData('key12')).toBe('shared-data');
+  });
+
+  it('a follower call resolves to null instead of rejecting when the shared fetch fails', async () => {
+    let rejectFetch: (error: Error) => void;
+    const pending = new Promise<string>((_resolve, reject) => {
+      rejectFetch = reject;
+    });
+    const fetcher = vi.fn(() => pending);
+
+    const leader = renderHook(() => usePrefetch('key13', fetcher));
+    const follower = renderHook(() => usePrefetch('key13', fetcher));
+
+    const leaderDone = leader.result.current.prefetch();
+    const followerDone = follower.result.current.prefetch();
+
+    rejectFetch!(new Error('fail'));
+    const [leaderData, followerData] = await act(async () => Promise.all([leaderDone, followerDone]));
+
+    expect(leaderData).toBeNull();
+    expect(followerData).toBeNull();
+  });
 });
 
 describe('useRoutePrefetch', () => {
