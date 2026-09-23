@@ -120,11 +120,11 @@ interface NewTaskDialogProps {
   isStaff: boolean;
   myProfileId: string;
   teamProfiles: Array<{ id: string; name: string }>;
-  onCreate: (input: { title: string; contactId: string; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => Promise<void>;
+  onCreate: (input: { title: string; contactId?: string | null; priority?: string; dueDate?: string | null; assignedTo?: string | null; createdBy?: string | null; description?: string | null }) => Promise<void>;
   isCreating: boolean;
 }
 
-/** Diálogo de criação — exige um contato (a policy de INSERT de conversation_tasks exige contato visível). */
+/** Diálogo de criação — contato opcional: sem contato vira tarefa pessoal (policy de INSERT aceita contact_id nulo quando created_by é o próprio usuário). */
 function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles, onCreate, isCreating }: NewTaskDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -134,6 +134,7 @@ function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles,
   const [contactQuery, setContactQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedContact, setSelectedContact] = useState<ContactOption | null>(null);
+  const [noContact, setNoContact] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Reset dos campos no fechamento — dentro do handler de onOpenChange, nunca
@@ -142,7 +143,7 @@ function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles,
     if (!next) {
       setTitle(''); setDescription(''); setPriority('medium'); setDueDate('');
       setAssignedTo(isStaff ? '' : myProfileId);
-      setContactQuery(''); setDebouncedQuery(''); setSelectedContact(null);
+      setContactQuery(''); setDebouncedQuery(''); setSelectedContact(null); setNoContact(false);
     }
     onOpenChange(next);
   };
@@ -164,10 +165,10 @@ function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles,
   });
 
   const submit = async () => {
-    if (!title.trim() || !selectedContact) return;
+    if (!title.trim() || (!selectedContact && !noContact)) return;
     await onCreate({
       title: title.trim(),
-      contactId: selectedContact.id,
+      contactId: noContact ? null : selectedContact?.id,
       priority,
       dueDate: dueDate || null,
       assignedTo: assignedTo || myProfileId,
@@ -184,8 +185,13 @@ function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles,
           <div className="col-span-2"><Label>Título *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="O que precisa ser feito" /></div>
 
           <div className="col-span-2">
-            <Label>Contato *</Label>
-            {selectedContact ? (
+            <div className="flex items-center justify-between">
+              <Label>{noContact ? 'Contato' : 'Contato *'}</Label>
+              <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => { setNoContact(!noContact); setSelectedContact(null); setContactQuery(''); }}>
+                {noContact ? 'Vincular a um contato' : 'Tarefa pessoal, sem contato'}
+              </button>
+            </div>
+            {noContact ? null : selectedContact ? (
               <div className="h-9 rounded-md border border-border bg-muted/40 px-3 flex items-center justify-between text-sm">
                 <span className="truncate">{selectedContact.name}{selectedContact.phone ? ` · ${selectedContact.phone}` : ''}</span>
                 <button type="button" className="text-xs text-muted-foreground hover:text-foreground shrink-0 ml-2" onClick={() => setSelectedContact(null)}>Trocar</button>
@@ -230,7 +236,7 @@ function NewTaskDialog({ open, onOpenChange, isStaff, myProfileId, teamProfiles,
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={!title.trim() || !selectedContact || isCreating}>{isCreating ? 'Criando...' : 'Criar tarefa'}</Button>
+          <Button onClick={submit} disabled={!title.trim() || (!selectedContact && !noContact) || isCreating}>{isCreating ? 'Criando...' : 'Criar tarefa'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
