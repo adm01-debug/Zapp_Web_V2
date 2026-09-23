@@ -623,7 +623,7 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should use 16px font on mobile to prevent zoom', () => {
-      expect(inputSrc).toContain('text-[16px]');
+      expect(inputSrc).toContain('text-base');
     });
 
     it('should have touch-manipulation for buttons', () => {

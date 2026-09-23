@@ -82,7 +82,7 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
         {data.title && (
           <p
             className={cn(
-              'text-[12.5px] font-semibold leading-snug line-clamp-2',
+              'text-xs font-semibold leading-snug line-clamp-2',
               isSent ? 'text-primary-foreground' : 'text-foreground',
             )}
           >
@@ -92,7 +92,7 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
         {data.description && (
           <p
             className={cn(
-              'text-[11.5px] leading-snug line-clamp-2',
+              'text-[11px] leading-snug line-clamp-2',
               isSent ? 'text-primary-foreground/80' : 'text-muted-foreground',
             )}
           >

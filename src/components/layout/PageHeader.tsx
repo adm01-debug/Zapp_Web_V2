@@ -144,7 +144,7 @@ export function PageHeader({
           <div className="min-w-0">
             <h1 className={cn(
               variant === 'plain'
-                ? 'text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate'
+                ? 'text-4xl font-extrabold tracking-[-0.02em] leading-none text-foreground truncate'
                 : 'text-xl font-display font-bold text-foreground truncate'
             )}>{title}</h1>
             {subtitle && (

@@ -1,0 +1,215 @@
+{
+  "geradoEm": "2026-09-22T21:11:16.113Z",
+  "commit": "7761a5704b6745f1d0f91ab22de5f7b006f25432",
+  "escala": {
+    "xs": {
+      "fontSizePx": 12,
+      "lineHeightPx": 16,
+      "lineHeightDeclarado": "1rem",
+      "usos": 1718
+    },
+    "sm": {
+      "fontSizePx": 14,
+      "lineHeightPx": 20,
+      "lineHeightDeclarado": "1.25rem",
+      "usos": 1101
+    },
+    "base": {
+      "fontSizePx": 16,
+      "lineHeightPx": 24,
+      "lineHeightDeclarado": "1.5rem",
+      "usos": 140
+    },
+    "lg": {
+      "fontSizePx": 18,
+      "lineHeightPx": 28,
+      "lineHeightDeclarado": "1.75rem",
+      "usos": 188
+    },
+    "xl": {
+      "fontSizePx": 20,
+      "lineHeightPx": 28,
+      "lineHeightDeclarado": "1.75rem",
+      "usos": 73
+    },
+    "2xl": {
+      "fontSizePx": 24,
+      "lineHeightPx": 32,
+      "lineHeightDeclarado": "2rem",
+      "usos": 127
+    },
+    "3xl": {
+      "fontSizePx": 30,
+      "lineHeightPx": 36,
+      "lineHeightDeclarado": "2.25rem",
+      "usos": 18
+    },
+    "4xl": {
+      "fontSizePx": 36,
+      "lineHeightPx": 40,
+      "lineHeightDeclarado": "2.5rem",
+      "usos": 12
+    },
+    "5xl": {
+      "fontSizePx": 48,
+      "lineHeightPx": 48,
+      "lineHeightDeclarado": "1",
+      "usos": 3
+    },
+    "6xl": {
+      "fontSizePx": 60,
+      "lineHeightPx": 60,
+      "lineHeightDeclarado": "1",
+      "usos": 2
+    },
+    "7xl": {
+      "fontSizePx": 72,
+      "lineHeightPx": 72,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    },
+    "8xl": {
+      "fontSizePx": 96,
+      "lineHeightPx": 96,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    },
+    "9xl": {
+      "fontSizePx": 128,
+      "lineHeightPx": 128,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    }
+  },
+  "arbitrarios": {
+    "7": {
+      "fontSizePx": 7,
+      "lineHeightPx": 10.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 3,
+      "equivalenteNaEscala": null
+    },
+    "8": {
+      "fontSizePx": 8,
+      "lineHeightPx": 12,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 13,
+      "equivalenteNaEscala": null
+    },
+    "9": {
+      "fontSizePx": 9,
+      "lineHeightPx": 13.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 103,
+      "equivalenteNaEscala": null
+    },
+    "10": {
+      "fontSizePx": 10,
+      "lineHeightPx": 15,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 603,
+      "equivalenteNaEscala": null
+    },
+    "11": {
+      "fontSizePx": 11,
+      "lineHeightPx": 16.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 323,
+      "equivalenteNaEscala": null
+    },
+    "12": {
+      "fontSizePx": 12,
+      "lineHeightPx": 18,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": "text-xs"
+    },
+    "13": {
+      "fontSizePx": 13,
+      "lineHeightPx": 19.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 159,
+      "equivalenteNaEscala": null
+    },
+    "15": {
+      "fontSizePx": 15,
+      "lineHeightPx": 22.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 28,
+      "equivalenteNaEscala": null
+    },
+    "16": {
+      "fontSizePx": 16,
+      "lineHeightPx": 24,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": "text-base"
+    },
+    "18": {
+      "fontSizePx": 18,
+      "lineHeightPx": 27,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": "text-lg"
+    },
+    "120": {
+      "fontSizePx": 120,
+      "lineHeightPx": 180,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "13.5": {
+      "fontSizePx": 13.5,
+      "lineHeightPx": 20.25,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    }
+  },
+  "totais": {
+    "usosNomeados": 3382,
+    "usosArbitrarios": 1237,
+    "arquivosAnalisados": 1414
+  },
+  "violacoes": {
+    "meiaMedida": 1,
+    "acima16px": 2,
+    "comEquivalenteExato": 3
+  },
+  "detalheViolacoes": {
+    "halfStep": [
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:234",
+        "px": 13.5
+      }
+    ],
+    "above16": [
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
+        "px": 18
+      },
+      {
+        "where": "src/pages/NotFound.tsx:27",
+        "px": 120
+      }
+    ],
+    "hasExactEquivalent": [
+      {
+        "where": "src/components/inbox/chat/ChatInputArea.tsx:201",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:192",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
+        "px": 18,
+        "equivalent": "text-lg"
+      }
+    ]
+  }
+}

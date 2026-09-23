@@ -26,11 +26,13 @@ describe('sentiment-alert security contract', () => {
     expect(source).toContain('recentAnalyses?.[0]?.id !== analysisId');
   });
 
-  it('claims stable database identities and suppresses duplicate side effects', () => {
+  it('uses recipient-owned preferences and an atomic database primitive', () => {
+    expect(source).toContain('sentimentSettingsOwnerId(auth.userId, agentProfile?.user_id)');
+    expect(source).toContain(".eq('user_id', settingsOwnerId)");
     expect(source).toContain('notificationId: analysisId');
-    expect(source).toContain('id: analysisId');
-    expect(source).toContain("notificationError?.code === '23505'");
-    expect(source).toContain("logError?.code === '23505'");
+    expect(source).toContain(".rpc('persist_sentiment_alert'");
+    expect(source).not.toContain(".from('notifications')\n        .insert");
+    expect(source).not.toContain(".from('audit_logs')\n      .insert");
   });
 
   it('escapes the HTML body and strips newlines from the subject', () => {

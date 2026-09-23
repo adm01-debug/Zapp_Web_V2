@@ -1,0 +1,5466 @@
+{
+  "geradoEm": "2026-09-22T20:57:29.130Z",
+  "commit": "7761a5704b6745f1d0f91ab22de5f7b006f25432",
+  "escala": {
+    "2xs": {
+      "fontSizePx": 10,
+      "lineHeightPx": 14,
+      "usos": 0
+    },
+    "xs": {
+      "fontSizePx": 12,
+      "lineHeightPx": 16,
+      "usos": 1431
+    },
+    "sm": {
+      "fontSizePx": 14,
+      "lineHeightPx": 20,
+      "usos": 1051
+    },
+    "base": {
+      "fontSizePx": 16,
+      "lineHeightPx": 24,
+      "usos": 132
+    },
+    "lg": {
+      "fontSizePx": 18,
+      "lineHeightPx": 28,
+      "usos": 168
+    },
+    "xl": {
+      "fontSizePx": 20,
+      "lineHeightPx": 30,
+      "usos": 68
+    },
+    "2xl": {
+      "fontSizePx": 24,
+      "lineHeightPx": 32,
+      "usos": 114
+    },
+    "3xl": {
+      "fontSizePx": 30,
+      "lineHeightPx": 36,
+      "usos": 13
+    },
+    "4xl": {
+      "fontSizePx": 36,
+      "lineHeightPx": 40,
+      "usos": 7
+    },
+    "5xl": {
+      "fontSizePx": 48,
+      "lineHeightPx": 52,
+      "usos": 2
+    },
+    "6xl": {
+      "fontSizePx": 60,
+      "lineHeightPx": 64,
+      "usos": 2
+    },
+    "7xl": {
+      "fontSizePx": 72,
+      "lineHeightPx": 76,
+      "usos": 0
+    },
+    "8xl": {
+      "fontSizePx": 96,
+      "lineHeightPx": 100,
+      "usos": 0
+    },
+    "9xl": {
+      "fontSizePx": 128,
+      "lineHeightPx": 132,
+      "usos": 0
+    }
+  },
+  "arbitrarios": {
+    "7": {
+      "fontSizePx": 7,
+      "lineHeightPx": 10.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 3,
+      "equivalenteNaEscala": null
+    },
+    "8": {
+      "fontSizePx": 8,
+      "lineHeightPx": 12,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 12,
+      "equivalenteNaEscala": null
+    },
+    "9": {
+      "fontSizePx": 9,
+      "lineHeightPx": 13.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 99,
+      "equivalenteNaEscala": null
+    },
+    "10": {
+      "fontSizePx": 10,
+      "lineHeightPx": 15,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 581,
+      "equivalenteNaEscala": "text-2xs"
+    },
+    "11": {
+      "fontSizePx": 11,
+      "lineHeightPx": 16.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 273,
+      "equivalenteNaEscala": null
+    },
+    "12": {
+      "fontSizePx": 12,
+      "lineHeightPx": 18,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 183,
+      "equivalenteNaEscala": "text-xs"
+    },
+    "13": {
+      "fontSizePx": 13,
+      "lineHeightPx": 19.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 159,
+      "equivalenteNaEscala": null
+    },
+    "14": {
+      "fontSizePx": 14,
+      "lineHeightPx": 21,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 39,
+      "equivalenteNaEscala": "text-sm"
+    },
+    "15": {
+      "fontSizePx": 15,
+      "lineHeightPx": 22.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 28,
+      "equivalenteNaEscala": null
+    },
+    "16": {
+      "fontSizePx": 16,
+      "lineHeightPx": 24,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 9,
+      "equivalenteNaEscala": "text-base"
+    },
+    "17": {
+      "fontSizePx": 17,
+      "lineHeightPx": 25.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 4,
+      "equivalenteNaEscala": null
+    },
+    "18": {
+      "fontSizePx": 18,
+      "lineHeightPx": 27,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 17,
+      "equivalenteNaEscala": "text-lg"
+    },
+    "19": {
+      "fontSizePx": 19,
+      "lineHeightPx": 28.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "20": {
+      "fontSizePx": 20,
+      "lineHeightPx": 30,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 4,
+      "equivalenteNaEscala": "text-xl"
+    },
+    "22": {
+      "fontSizePx": 22,
+      "lineHeightPx": 33,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 11,
+      "equivalenteNaEscala": null
+    },
+    "24": {
+      "fontSizePx": 24,
+      "lineHeightPx": 36,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 2,
+      "equivalenteNaEscala": "text-2xl"
+    },
+    "26": {
+      "fontSizePx": 26,
+      "lineHeightPx": 39,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "28": {
+      "fontSizePx": 28,
+      "lineHeightPx": 42,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 3,
+      "equivalenteNaEscala": null
+    },
+    "30": {
+      "fontSizePx": 30,
+      "lineHeightPx": 45,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": "text-3xl"
+    },
+    "32": {
+      "fontSizePx": 32,
+      "lineHeightPx": 48,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 3,
+      "equivalenteNaEscala": null
+    },
+    "34": {
+      "fontSizePx": 34,
+      "lineHeightPx": 51,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "38": {
+      "fontSizePx": 38,
+      "lineHeightPx": 57,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "42": {
+      "fontSizePx": 42,
+      "lineHeightPx": 63,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "120": {
+      "fontSizePx": 120,
+      "lineHeightPx": 180,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    },
+    "12.5": {
+      "fontSizePx": 12.5,
+      "lineHeightPx": 18.75,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 105,
+      "equivalenteNaEscala": null
+    },
+    "10.5": {
+      "fontSizePx": 10.5,
+      "lineHeightPx": 15.75,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 22,
+      "equivalenteNaEscala": null
+    },
+    "13.5": {
+      "fontSizePx": 13.5,
+      "lineHeightPx": 20.25,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 12,
+      "equivalenteNaEscala": null
+    },
+    "11.5": {
+      "fontSizePx": 11.5,
+      "lineHeightPx": 17.25,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 50,
+      "equivalenteNaEscala": null
+    },
+    "9.5": {
+      "fontSizePx": 9.5,
+      "lineHeightPx": 14.25,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 4,
+      "equivalenteNaEscala": null
+    },
+    "7.5": {
+      "fontSizePx": 7.5,
+      "lineHeightPx": 11.25,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    }
+  },
+  "totais": {
+    "usosNomeados": 2988,
+    "usosArbitrarios": 1631,
+    "arquivosAnalisados": 1414
+  },
+  "violacoes": {
+    "meiaMedida": 194,
+    "acima16px": 51,
+    "comEquivalenteExato": 836
+  },
+  "detalheViolacoes": {
+    "halfStep": [
+      {
+        "where": "src/components/catalog/catalogShared.tsx:535",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/catalog/catalogShared.tsx:569",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:105",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:115",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:123",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:136",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:166",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/contacts/ContactListItem.tsx:69",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/contacts/ContactTypeTabs.tsx:33",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/contacts/ContactsTable.tsx:178",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:76",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:81",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:98",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:114",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:137",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:162",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:172",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/SatisfactionMetrics.tsx:21",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:155",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:157",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:227",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:237",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:97",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/inbox/chat/LinkPreviewCard.tsx:85",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/inbox/chat/LinkPreviewCard.tsx:95",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:234",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:208",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:264",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:350",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:371",
+        "px": 9.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:394",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:481",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:484",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:485",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:203",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:206",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:207",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:266",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:278",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:279",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:284",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:299",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:306",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:402",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:406",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:447",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:455",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:616",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:643",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:671",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:685",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:690",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:694",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:706",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:711",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:730",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:740",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:745",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:752",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:757",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:762",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:170",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:174",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:185",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:210",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:221",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:236",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:257",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:282",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignScheduled.tsx:329",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:102",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:119",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:155",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:157",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:162",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:166",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:168",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:214",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:215",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:266",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:340",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:364",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:368",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:389",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:390",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:433",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:434",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:139",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:147",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:148",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:149",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:151",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:155",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:172",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:217",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:218",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:221",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:225",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:241",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:246",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:246",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:247",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:253",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:259",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:264",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:264",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:268",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:268",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:386",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:390",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:398",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:122",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:123",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:130",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:132",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:172",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:215",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:290",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:315",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:316",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:322",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:323",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:332",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:357",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:362",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:364",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:390",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:394",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:400",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:404",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:213",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:216",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:250",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:256",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:262",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:291",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:188",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:203",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:218",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:324",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:335",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:361",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:402",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:441",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:499",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:523",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:551",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:564",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:564",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:185",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:189",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:248",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:250",
+        "px": 9.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:257",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:260",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:270",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/TalkXView.tsx:228",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXView.tsx:246",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXView.tsx:274",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:40",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:68",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:86",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:86",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:92",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:119",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:119",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:129",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:133",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:149",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:151",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:220",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:228",
+        "px": 13.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:244",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:248",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:235",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:247",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:248",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:286",
+        "px": 9.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:287",
+        "px": 7.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:304",
+        "px": 9.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:333",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:344",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:366",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:381",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:384",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:402",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:481",
+        "px": 10.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:497",
+        "px": 11.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:712",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:792",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:806",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:856",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:863",
+        "px": 12.5
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:874",
+        "px": 12.5
+      }
+    ],
+    "above16": [
+      {
+        "where": "src/components/contacts/ContactKpiCard.tsx:134",
+        "px": 34
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:75",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:80",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:97",
+        "px": 28
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:113",
+        "px": 28
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:134",
+        "px": 17
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:241",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:255",
+        "px": 20
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:276",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/SatisfactionMetrics.tsx:115",
+        "px": 22
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:133",
+        "px": 22
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:177",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:202",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:247",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:265",
+        "px": 20
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:26",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:41",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:79",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/overview/CsatCard.tsx:51",
+        "px": 30
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:89",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:221",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardKpiCard.tsx:243",
+        "px": 22
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardKpiCard.tsx:276",
+        "px": 32
+      },
+      {
+        "where": "src/components/dashboard/overview/NowPanel.tsx:50",
+        "px": 18
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:61",
+        "px": 24
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:74",
+        "px": 22
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:84",
+        "px": 22
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
+        "px": 18
+      },
+      {
+        "where": "src/components/inbox/tabs/KpiStrip.tsx:49",
+        "px": 22
+      },
+      {
+        "where": "src/components/layout/PageHeader.tsx:147",
+        "px": 38
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:348",
+        "px": 42
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:460",
+        "px": 22
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:445",
+        "px": 22
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:454",
+        "px": 22
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:606",
+        "px": 18
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:118",
+        "px": 22
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:410",
+        "px": 18
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:425",
+        "px": 24
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:138",
+        "px": 20
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:165",
+        "px": 17
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:278",
+        "px": 18
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:359",
+        "px": 32
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:239",
+        "px": 32
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:263",
+        "px": 19
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:243",
+        "px": 20
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:181",
+        "px": 26
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:482",
+        "px": 17
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:499",
+        "px": 22
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:782",
+        "px": 17
+      },
+      {
+        "where": "src/pages/Auth.tsx:98",
+        "px": 28
+      },
+      {
+        "where": "src/pages/NotFound.tsx:27",
+        "px": 120
+      }
+    ],
+    "hasExactEquivalent": [
+      {
+        "where": "src/components/CommandPalette.tsx:120",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/AIUsageLogsTab.tsx:53",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/AIUsageLogsTab.tsx:61",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/CrisisRoom.tsx:136",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/CrisisRoom.tsx:142",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/CrisisRoom.tsx:144",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:61",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:63",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:64",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:65",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:66",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/GmailWebhookMonitor.tsx:67",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/PlaybooksManager.tsx:181",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/PlaybooksManager.tsx:222",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/PlaybooksManager.tsx:254",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/SicoobBridgeDashboard.tsx:149",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/SupervisorCopilot.tsx:93",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/TrainingMode.tsx:165",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/admin/TrainingMode.tsx:185",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ai/ChurnPredictionDashboard.tsx:249",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/auth/HeroBenefits.tsx:97",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/calls/VoIPPanel.tsx:127",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/calls/VoIPPanel.tsx:164",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/calls/VoIPPanel.tsx:225",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/calls/VoIPPanel.tsx:229",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/calls/VoIPPanel.tsx:302",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/campaigns/CampaignABTesting.tsx:92",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/campaigns/CampaignABTesting.tsx:118",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/CatalogFavoritesTab.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/CatalogProductCard.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/CatalogProductCard.tsx:319",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ExternalProductManagement.tsx:60",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:140",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:141",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:142",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:143",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:144",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:145",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:146",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:216",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:222",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:228",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:234",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:240",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:246",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:273",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/ProductDetailDialog.tsx:275",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/WhatsAppTemplatesManager.tsx:199",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/catalog/catalogShared.tsx:544",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/chatbot/ChatbotExecutionsDashboard.tsx:155",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/ConnectionCard.tsx:91",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/ConnectionCard.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:124",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:132",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:139",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:145",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/connections/NumberReputationMonitor.tsx:154",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/AdvancedCRMSearch.tsx:68",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/AdvancedCRMSearch.tsx:98",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/CRMContactCard.tsx:53",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/CompanyLogo.tsx:45",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactActivityTimeline.tsx:157",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactActivityTimeline.tsx:185",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAdvancedFilters.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAdvancedFilters.tsx:175",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAdvancedFilters.tsx:187",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAnalyticsDashboard.tsx:133",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAnalyticsDashboard.tsx:182",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAnalyticsDashboard.tsx:190",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactAnalyticsDashboard.tsx:196",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactBirthdayPanel.tsx:74",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactBirthdayPanel.tsx:98",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactBirthdayPanel.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactBirthdayPanel.tsx:110",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactBulkTagDialog.tsx:190",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:111",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:152",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactCard.tsx:157",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactCompareDialog.tsx:118",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactDetailPanel.tsx:163",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactDetailPanel.tsx:195",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactDetailPanel.tsx:203",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactEmptyState.tsx:66",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactEngagementScore.tsx:108",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactGroupedList.tsx:77",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactKanbanView.tsx:172",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactKanbanView.tsx:215",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactKanbanView.tsx:224",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactKpiCard.tsx:132",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/contacts/ContactKpiCard.tsx:138",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/contacts/ContactListItem.tsx:125",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactListItem.tsx:130",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMapView.tsx:133",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMapView.tsx:135",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMapView.tsx:173",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMapView.tsx:179",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMergeDialog.tsx:94",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactMergePanel.tsx:124",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactNotes.tsx:119",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactNotes.tsx:195",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactNotes.tsx:196",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactPurchaseHistory.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactPurchaseHistory.tsx:97",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactPurchaseHistory.tsx:122",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactPurchaseHistory.tsx:136",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactQuickPeek.tsx:59",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactQuickPeek.tsx:102",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactQuickPeek.tsx:107",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactQuickPeek.tsx:115",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactResultsSummary.tsx:34",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/contacts/ContactResultsSummary.tsx:41",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/contacts/ContactResultsSummary.tsx:77",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/contacts/ContactSearchWithSuggestions.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactSearchWithSuggestions.tsx:141",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactSearchWithSuggestions.tsx:146",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactSearchWithSuggestions.tsx:167",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactToolbar.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactTypeTabs.tsx:139",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/contacts/ContactsTable.tsx:222",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/ContactsTable.tsx:225",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/CustomFieldsSection.tsx:114",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/contacts/FilterPresets.tsx:76",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/crm360/CRM360StatsCards.tsx:55",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/crm360/DataExplorerTable.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/crm360/DataExplorerTable.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/crm360/DataExplorerTable.tsx:115",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/crm360/DataExplorerTable.tsx:142",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:38",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:46",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:75",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:80",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:139",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:156",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:161",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/AIQuickAccess.tsx:171",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/AIStatsWidget.tsx:37",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AIStatsWidget.tsx:50",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AIStatsWidget.tsx:148",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AIStatsWidget.tsx:160",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AIStatsWidget.tsx:181",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/ActivityHeatmap.tsx:241",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:32",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:41",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:148",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:176",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:189",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:216",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:228",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:241",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:255",
+        "px": 20,
+        "equivalent": "text-xl"
+      },
+      {
+        "where": "src/components/dashboard/AgentPerformancePanel.tsx:276",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/DashboardFilters.tsx:161",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/GoalsDashboard.tsx:59",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/MetricComparison.tsx:268",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SLAMetricsDashboard.tsx:31",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/SatisfactionMetrics.tsx:20",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SatisfactionMetrics.tsx:84",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SatisfactionMetrics.tsx:252",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:134",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:152",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:177",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:191",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:192",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:202",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/ScheduledReportsManager.tsx:225",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:103",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:164",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:174",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTabContent.tsx:210",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:119",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:128",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:156",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:207",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:226",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:238",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:247",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/SentimentTrendChart.tsx:265",
+        "px": 20,
+        "equivalent": "text-xl"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:26",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:41",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:44",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:62",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:79",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:90",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsRail.tsx:106",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:88",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:95",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:96",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:97",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:98",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:99",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:100",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:101",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:116",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:117",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/goals/GoalsTable.tsx:129",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/AIToolsCard.tsx:39",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/CsatCard.tsx:45",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/CsatCard.tsx:51",
+        "px": 30,
+        "equivalent": "text-3xl"
+      },
+      {
+        "where": "src/components/dashboard/overview/DailyGoalsCard.tsx:64",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DailyGoalsCard.tsx:88",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/dashboard/overview/DailyGoalsCard.tsx:89",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DailyGoalsCard.tsx:92",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:89",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:90",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:199",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:221",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:221",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:221",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:249",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:249",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardCard.tsx:275",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardKpiCard.tsx:203",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardKpiCard.tsx:242",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/DashboardKpiCard.tsx:271",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:34",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:41",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:50",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:71",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:75",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:79",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/GreetingBanner.tsx:88",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/NowPanel.tsx:50",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/dashboard/overview/NowPanel.tsx:51",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/QueueHealthTable.tsx:51",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/QueueHealthTable.tsx:55",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/RecentActivityCard.tsx:24",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/RecentActivityCard.tsx:37",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/SentimentTrendCard.tsx:33",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/TeamHighlightCard.tsx:21",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/TeamHighlightCard.tsx:44",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/TeamHighlightCard.tsx:63",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/VolumeChart.tsx:22",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/overview/VolumeChart.tsx:73",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:91",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:99",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:100",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:101",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:102",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:103",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:104",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:115",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:118",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:136",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAAgentTable.tsx:153",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:43",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:46",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:52",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:53",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:54",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLAConfigTable.tsx:55",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:31",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:37",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:60",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:61",
+        "px": 24,
+        "equivalent": "text-2xl"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:72",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/dashboard/sla/SLASummaryCard.tsx:82",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/diagnostics/ConnectionHealthPanel.tsx:237",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/diagnostics/DiagnosticsView.tsx:139",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/diagnostics/DiagnosticsView.tsx:305",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/diagnostics/DiagnosticsView.tsx:306",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/docs/SystemFeaturesView.tsx:75",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:64",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:122",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:171",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:193",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:209",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatBubble.tsx:225",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatReplyBar.tsx:183",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatReplyBar.tsx:212",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatReplyBar.tsx:266",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatThread.tsx:40",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailChatThread.tsx:125",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailContactPanel.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailContactPanel.tsx:119",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailContactPanel.tsx:160",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailContactPanel.tsx:180",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailContactPanel.tsx:191",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailFullViewDialog.tsx:66",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailThreadList.tsx:89",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailThreadList.tsx:134",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailThreadList.tsx:147",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailThreadList.tsx:224",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/email/EmailThreadList.tsx:272",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementBadge.tsx:200",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementBadge.tsx:221",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementsSystem.tsx:169",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementsSystem.tsx:177",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementsSystem.tsx:182",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gamification/AchievementsSystem.tsx:187",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailComposer.tsx:141",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailComposer.tsx:261",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailThreadView.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailThreadView.tsx:107",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailThreadView.tsx:133",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailThreadView.tsx:144",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/EmailThreadView.tsx:192",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/GmailInboxView.tsx:57",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/GmailInboxView.tsx:88",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/gmail/ThreadListItem.tsx:61",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AIConversationAssistant.tsx:189",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AIConversationAssistant.tsx:195",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AIConversationAssistant.tsx:201",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AISuggestions.tsx:134",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AISuggestions.tsx:178",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AnalysisBadges.tsx:66",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AnalysisBadges.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AnalysisBadges.tsx:77",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:38",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:174",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:175",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:193",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMemePicker.tsx:194",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:76",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:83",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:89",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:120",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:125",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:149",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/AudioMessagePlayer.tsx:156",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/BulkActionsToolbar.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/BusinessHoursBadge.tsx:20",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ContactPurchasesPanel.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ContactPurchasesPanel.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationHistory.tsx:229",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationList.tsx:34",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationList.tsx:257",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationList.tsx:284",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationList.tsx:290",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationMemoryPanel.tsx:126",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationSummary.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationSummary.tsx:99",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationTasksPanel.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationTasksPanel.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationTimeline.tsx:102",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ConversationTimeline.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/CustomEmojiPicker.tsx:24",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/CustomEmojiPicker.tsx:60",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/CustomEmojiPicker.tsx:152",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/CustomEmojiPicker.tsx:209",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/DeletedMessagePlaceholder.tsx:53",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/FileUploader.tsx:76",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/FileUploader.tsx:78",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/FileUploader.tsx:80",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/FileUploader.tsx:81",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/FileUploader.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/GlobalSearch.tsx:99",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/GlobalSearch.tsx:101",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/GlobalSearch.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/GlobalSearch.tsx:107",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/GlobalSearch.tsx:130",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxEmptyChat.tsx:37",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxEmptyChat.tsx:38",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxEmptyChat.tsx:43",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxEmptyChat.tsx:48",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:168",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:177",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:270",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:292",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:308",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:358",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:365",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:382",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:397",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:410",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InboxFilters.tsx:421",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:80",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:87",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:94",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:112",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:149",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:159",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:174",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/InteractiveMessageBuilder.tsx:185",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/LocationMessage.tsx:163",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/LocationPicker.tsx:74",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/LocationPicker.tsx:126",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/MessageReactions.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/MessageTemplates.tsx:113",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/MessageTemplates.tsx:114",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/MessageTemplates.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:38",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:56",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:61",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:63",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:147",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:149",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:160",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ObjectionDetector.tsx:210",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/PrivateNotes.tsx:148",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/RemindersPanel.tsx:145",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ReplyQuote.tsx:133",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SLAIndicator.tsx:85",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SlashCommands.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SlashCommands.tsx:83",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SlashCommands.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SlashCommands.tsx:107",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/SlashCommands.tsx:124",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/StickerPicker.tsx:92",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/StickerPicker.tsx:98",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/TextToAudioButton.tsx:158",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/TypingIndicator.tsx:157",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/UniversityHelp.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/UniversityHelp.tsx:91",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/UniversityHelp.tsx:142",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VirtualMessageBubble.tsx:93",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VirtualizedConversationList.tsx:68",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VirtualizedConversationList.tsx:69",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VirtualizedConversationList.tsx:70",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VirtualizedConversationList.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VoiceChanger.tsx:139",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VoiceChangerPicker.tsx:200",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VoiceChangerPicker.tsx:299",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VoiceSelector.tsx:145",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/VoiceSelector.tsx:184",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/WhisperMode.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/__tests__/SLAIndicator.test.tsx:89",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/AIResponseCard.tsx:45",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/AIResponseCard.tsx:59",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/AIResponseCard.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/AIResponseCard.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/HistoryTab.tsx:76",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/HistoryTab.tsx:86",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/HistoryTab.tsx:92",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/HistoryTab.tsx:94",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx:35",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx:199",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx:224",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx:251",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SentimentTab.tsx:37",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SentimentTab.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SummaryTab.tsx:23",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SummaryTab.tsx:29",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SummaryTab.tsx:35",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SummaryTab.tsx:40",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/ai-tools/SummaryTab.tsx:99",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatAssignedBar.tsx:26",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatHeader.tsx:99",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatHeader.tsx:111",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatHeader.tsx:131",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatInputArea.tsx:201",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatInputArea.tsx:207",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatMessageBubble.tsx:283",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatMessageInput.tsx:146",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatQuickRepliesPopover.tsx:56",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatSearchFilters.tsx:62",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatSearchFilters.tsx:87",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatSearchFilters.tsx:113",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatSearchResultsList.tsx:46",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/ChatSearchResultsList.tsx:58",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/CrmBadges.tsx:36",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/CrmBadges.tsx:42",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/CrmBadges.tsx:50",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/CrmBadges.tsx:64",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/InputExtraTools.tsx:68",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/LinkPreviewCard.tsx:74",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:91",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:192",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/inbox/chat/MessageBubble.tsx:272",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/QuickActionChips.tsx:68",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/chat/RichTextToolbar.tsx:90",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/AssignmentSection.tsx:46",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/AssignmentSection.tsx:55",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/AssignmentSection.tsx:73",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/AssignmentSection.tsx:91",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:86",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:90",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:91",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:111",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:112",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:129",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:141",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:145",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:146",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:147",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:158",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:163",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:164",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:184",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/Contact360Helpers.tsx:218",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactAccordionSections.tsx:151",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactAccordionSections.tsx:170",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:121",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:157",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:81",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:85",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:123",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:164",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:192",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:218",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:230",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx:241",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactStatsSection.tsx:112",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactStatsSection.tsx:118",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ContactStatsSection.tsx:127",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx:77",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx:153",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ExternalContact360Panel.tsx:56",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ExternalContact360Panel.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/ExternalContact360Panel.tsx:85",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx:41",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx:46",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx:51",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx:67",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/StoryViewer.tsx:139",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/StoryViewer.tsx:143",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/WhatsAppStatusSection.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/contact-details/WhatsAppStatusSection.tsx:87",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/conversation-list/ConversationItem.tsx:96",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/conversation-list/ConversationItem.tsx:112",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/conversation-list/ConversationItem.tsx:165",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/conversation-list/ConversationItem.tsx:182",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/conversation-list/ConversationItem.tsx:183",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/interactive-builder/MessagePreview.tsx:46",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/interactive-builder/MessagePreview.tsx:51",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/quick-replies/QuickReplyCardList.tsx:83",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/search/GlobalSearchResults.tsx:101",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/search/GlobalSearchResults.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/stickers/CategorySelector.tsx:23",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/stickers/StickerGrid.tsx:191",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/stickers/StickerGrid.tsx:194",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/stickers/StickerUploadPreview.tsx:51",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/tabs/FilesTab.tsx:106",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/inbox/tabs/TaskCard.tsx:70",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/keyboard/KeyboardShortcutsDialog.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/keyboard/KeyboardShortcutsDialog.tsx:207",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/keyboard/KeyboardShortcutsDialog.tsx:211",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/knowledge/KnowledgeBaseView.tsx:86",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/knowledge/KnowledgeBaseView.tsx:95",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/knowledge/KnowledgeBaseView.tsx:96",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/knowledge/KnowledgeBaseView.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/layout/GlobalSearchTrigger.tsx:12",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/layout/HeaderSectionAnchor.tsx:7",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/layout/Sidebar.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/layout/Sidebar.tsx:82",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/layout/SidebarNavItem.tsx:124",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/leaderboard/LeaderboardHelpers.tsx:141",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/meta-capi/MetaCAPIView.tsx:149",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MiniChatPiP.tsx:88",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MiniChatPiP.tsx:98",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MiniChatPiP.tsx:199",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MobileDrawerMenu.tsx:213",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MobileDrawerMenu.tsx:238",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MobileNavigation.tsx:48",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/MobileNavigation.tsx:53",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/NotificationsPanel.tsx:83",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/mobile/NotificationsPanel.tsx:161",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:57",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:111",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:221",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:231",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:241",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/EvolutionMonitoringDashboard.tsx:252",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx:140",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx:144",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringConnectionsList.tsx:80",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringConnectionsList.tsx:81",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringConnectionsList.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringDiagnosticPanel.tsx:178",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringDiagnosticPanel.tsx:187",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringEventTimeline.tsx:131",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringEventTimeline.tsx:150",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringEventTimeline.tsx:193",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringHealthLogs.tsx:56",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringHealthLogs.tsx:57",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringHealthLogs.tsx:103",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:64",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:69",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:74",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:107",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:119",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:129",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:133",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringSLAPanel.tsx:137",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringStatsCards.tsx:154",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringWebhookPanel.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringWebhookPanel.tsx:111",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringWebhookPanel.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/monitoring/MonitoringWebhookPanel.tsx:138",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/nps/NPSDashboard.tsx:101",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/nps/NPSDashboard.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/nps/NPSDashboard.tsx:117",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/omnichannel/ChannelRoutingRules.tsx:186",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/omnichannel/OmnichannelInbox.tsx:180",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/payments/PaymentLinksView.tsx:176",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/performance/PerformanceMonitor.tsx:103",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/performance/PerformanceMonitor.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/performance/PerformanceMonitor.tsx:105",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/performance/PerformanceMonitor.tsx:221",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/pipeline/DealCard.tsx:69",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/pipeline/DealCard.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/pipeline/DealCard.tsx:73",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/ConversationHeatmap.tsx:126",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/DemandForecast.tsx:96",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/DemandForecast.tsx:100",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/DemandForecast.tsx:104",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/DemandForecast.tsx:129",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/PeriodComparison.tsx:81",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/PeriodComparison.tsx:127",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/PeriodComparison.tsx:132",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/ScheduledReportConfigs.tsx:115",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/reports/ScheduledReportConfigs.tsx:118",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/schedule/ScheduleCalendarView.tsx:212",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/schedule/ScheduleCalendarView.tsx:219",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/security/QuarantineBadge.tsx:37",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/security/QuarantinePanel.tsx:110",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/security/QuarantinePanel.tsx:240",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/security/QuarantinePanel.tsx:244",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/FollowUpExecutionsHistory.tsx:70",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/MediaLibraryAdmin.tsx:30",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/SLAConfigurationManager.tsx:75",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/SLAConfigurationManager.tsx:76",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/ai-providers/AIProviderCard.tsx:65",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx:170",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/AIGenerateDialog.tsx:67",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/AIGenerateDialog.tsx:71",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/AIGenerateDialog.tsx:72",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/StatsCards.tsx:15",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/StatsCards.tsx:16",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/StatsCards.tsx:17",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/StatsCards.tsx:18",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/media-library/StatsCards.tsx:20",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/sla/SLARuleRow.tsx:56",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/sla/SLARuleRow.tsx:58",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/theme/BorderRadiusControl.tsx:27",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/theme/BorderRadiusControl.tsx:36",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/theme/BorderRadiusControl.tsx:84",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/theme/BorderRadiusControl.tsx:90",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/settings/theme/BorderRadiusControl.tsx:111",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:233",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:234",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:276",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:294",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:301",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:307",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:320",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:344",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:349",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:362",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:374",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:399",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:401",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:419",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:451",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:454",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:482",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXAnalytics.tsx:483",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:75",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:112",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:188",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:204",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:205",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:305",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:394",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:606",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:607",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:631",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:728",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:738",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:743",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:750",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignRunning.tsx:755",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:199",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:216",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:228",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:230",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:237",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:246",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:247",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:267",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:276",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:310",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:312",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:315",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:318",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:321",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:332",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:347",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:379",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:390",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:410",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:425",
+        "px": 24,
+        "equivalent": "text-2xl"
+      },
+      {
+        "where": "src/components/talkx/TalkXCampaignWizard.tsx:425",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXContactSelector.tsx:29",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXContactSelector.tsx:86",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXContactSelector.tsx:128",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:138",
+        "px": 20,
+        "equivalent": "text-xl"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:143",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:165",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:179",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:179",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:203",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXLiveMonitor.tsx:205",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:177",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:260",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:265",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:268",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:322",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:385",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:396",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXOverview.tsx:397",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:136",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:137",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:177",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:205",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:278",
+        "px": 18,
+        "equivalent": "text-lg"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:292",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:305",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:308",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:335",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:345",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:360",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSegments.tsx:372",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSettings.tsx:62",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:215",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:217",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:221",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:240",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:244",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:244",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:267",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:277",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:280",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:289",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXSuppression.tsx:295",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:193",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:237",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:264",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:284",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:286",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:293",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:304",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:314",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:346",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:367",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:371",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:390",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:411",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:414",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:430",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:460",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:477",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:509",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:518",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:532",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:545",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:546",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplateEditor.tsx:560",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:188",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:247",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:261",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXTemplates.tsx:266",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:30",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:66",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:71",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:82",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:83",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:94",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:102",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:110",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:114",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:153",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:229",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:236",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:243",
+        "px": 20,
+        "equivalent": "text-xl"
+      },
+      {
+        "where": "src/components/talkx/TalkXWizardDelivery.tsx:253",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:199",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:231",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:252",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:260",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:360",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:371",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:575",
+        "px": 14,
+        "equivalent": "text-sm"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:575",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:678",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:686",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:732",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:741",
+        "px": 12,
+        "equivalent": "text-xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:861",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:936",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/talkx/talkxShared.tsx:951",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatInputArea.tsx:101",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatInputArea.tsx:143",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatInputArea.tsx:148",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:132",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:134",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:137",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:138",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:152",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamChatPanel.tsx:195",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamConversationList.tsx:102",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamConversationList.tsx:115",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamMemberDetails.tsx:109",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamMemberDetails.tsx:130",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamMemberProfileHeader.tsx:53",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamMemberProfileHeader.tsx:93",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/TeamMemberProfileHeader.tsx:94",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts:626",
+        "px": 16,
+        "equivalent": "text-base"
+      },
+      {
+        "where": "src/components/ui/avatar.tsx:12",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/command-palette.tsx:151",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/command-palette.tsx:181",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/command-palette.tsx:182",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/emoji-picker.tsx:154",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/emoji-picker.tsx:175",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/emoji-picker.tsx:180",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/emoji-picker.tsx:218",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/mobile-components.tsx:170",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/step-progress.tsx:39",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/ui/tooltip.tsx:78",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/voice/VoiceSearchOverlay.tsx:132",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/voice/VoiceSuggestions.tsx:27",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/voice/VoiceTranscriptArea.tsx:108",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:163",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:164",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:218",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:238",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/Auth.tsx:83",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/Auth.tsx:90",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/Auth.tsx:185",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/Install.tsx:90",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/NotFound.tsx:74",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/TelemetryTable.tsx:52",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/TelemetryTopOffenders.tsx:35",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/telemetryUtils.tsx:18",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/telemetryUtils.tsx:20",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/telemetryUtils.tsx:22",
+        "px": 10,
+        "equivalent": "text-2xs"
+      },
+      {
+        "where": "src/pages/admin-telemetria/telemetryUtils.tsx:24",
+        "px": 10,
+        "equivalent": "text-2xs"
+      }
+    ]
+  }
+}

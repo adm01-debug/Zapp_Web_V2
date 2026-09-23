@@ -78,8 +78,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "bytes": 16911,
-      "sha256": "6ccdba000c676371147a84240c1568d1a0ca101d6d254e0aa136a0d4ade3ac57"
+      "bytes": 16571,
+      "sha256": "240ea935f92a666d165a15e3767cd391d4691ac087f01fab1eb2b9bb619efef2"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -103,8 +103,8 @@
     },
     {
       "path": "supabase/functions/_shared/notification-events.ts",
-      "bytes": 2898,
-      "sha256": "84751b4ffb6c308af8b5529dd5ea4a328cc29a845c66d71996d51467eb929380"
+      "bytes": 3197,
+      "sha256": "38a957bcc07ca5e4415bed67a34debea89f34fb50896600c9e7c1611e550ed98"
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
@@ -413,8 +413,8 @@
     },
     {
       "path": "supabase/functions/sentiment-alert/index.ts",
-      "bytes": 9833,
-      "sha256": "f2e8c55f17aa34c58de5a22edbb7cd0ddab2683a9c36ff46522fbc0f10c74d60"
+      "bytes": 9578,
+      "sha256": "d3aae3ba3839e1cf9b11c7b5f58efc695427f31f61d8814ff3858ea161af060f"
     },
     {
       "path": "supabase/functions/sicoob-bridge-reply/index.ts",
@@ -919,7 +919,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "dced1f803c96894b648e9977ebeacbfa5488c4779fc0f7ef33f7b23168f65d4f",
+      "source_sha256": "a4791c37803b93226810ef06a35bcf654a3c55b4215dcb4a0028cc61e51ed83c",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1156,7 +1156,7 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "68b7af70b9a970427a938dcdfcb0973dbb1c3c19136636e78082724d0e05b19a",
+      "source_sha256": "975dae03a01e88f05a28a754161354792805a3f1df35f3cb06fda939e78fe32b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/notification-events.ts",
@@ -1309,5 +1309,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2b0b8a386982e9ec5ade7b4e05e616cfde68c75412c25ccf79f1ea2f3159a69b"
+  "manifest_sha256": "a8948ca5b407b5189623766ba9e4fe8cfd2c6ad2b904c953f29a0292ce7cf374"
 }

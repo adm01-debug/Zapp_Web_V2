@@ -5,6 +5,7 @@ import {
   escapeHtml,
   normalizeEvolutionCallVideo,
   normalizeEvolutionCallStatus,
+  sentimentSettingsOwnerId,
   shouldNotifyIncomingCall,
   singleLineLabel,
 } from '../../supabase/functions/_shared/notification-events';
@@ -22,6 +23,12 @@ describe('notification event contracts', () => {
     ['failed', 'failed'],
   ] as const)('normalizes Evolution call status %s to %s', (source, expected) => {
     expect(normalizeEvolutionCallStatus(source)).toBe(expected);
+  });
+
+  it('does not resolve inherited object property names as call states', () => {
+    expect(normalizeEvolutionCallStatus('__proto__')).toBe('ringing');
+    expect(normalizeEvolutionCallStatus('constructor')).toBe('ringing');
+    expect(normalizeEvolutionCallStatus('toString')).toBe('ringing');
   });
 
   it('only rings for offer/ringing and fails closed for absent or terminal states', () => {
@@ -83,6 +90,11 @@ describe('notification event contracts', () => {
       message: 'Alerta',
       metadata: { analysis_id: 'analysis-1', sentiment_score: 15, message: 'Alerta' },
     });
+  });
+
+  it('loads sentiment preferences for the notification recipient, not an admin caller', () => {
+    expect(sentimentSettingsOwnerId('admin-user', 'assigned-agent-user')).toBe('assigned-agent-user');
+    expect(sentimentSettingsOwnerId('caller-user', null)).toBe('caller-user');
   });
 
   it('escapes HTML and removes header-breaking newlines from customer labels', () => {

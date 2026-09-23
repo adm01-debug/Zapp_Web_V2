@@ -116,7 +116,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
           footer={stats && (
             <div className="mt-1">
               <ProgressBar value={stats.avgPositive} tone="success" height={6} />
-              <p className="text-[12px] text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgPositive / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
+              <p className="text-xs text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgPositive / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
             </div>
           )}
         />
@@ -125,7 +125,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
           footer={stats && (
             <div className="mt-1">
               <ProgressBar value={stats.avgNegative} tone="danger" height={6} />
-              <p className="text-[12px] text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgNegative / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
+              <p className="text-xs text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgNegative / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
             </div>
           )}
         />
@@ -153,8 +153,8 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
             {!data || data.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <Smile className="w-10 h-10 opacity-30" />
-                <p className="text-[14px] font-medium text-foreground">Sem dados de sentimento no período</p>
-                <p className="text-[12.5px]">Os dados aparecem quando houver análises processadas</p>
+                <p className="text-sm font-medium text-foreground">Sem dados de sentimento no período</p>
+                <p className="text-xs">Os dados aparecem quando houver análises processadas</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -204,7 +204,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                     <ins.icon className="w-5 h-5 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold text-foreground">{ins.title}</p>
+                    <p className="text-sm font-bold text-foreground">{ins.title}</p>
                     <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">{ins.text}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-3" />
@@ -223,8 +223,8 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
           {!recent || recent.alerts.length === 0 ? (
             <div className="py-8 flex flex-col items-center text-muted-foreground gap-2">
               <AlertTriangle className="w-9 h-9 opacity-30" />
-              <p className="text-[14px] font-medium text-foreground">Sem alertas recentes</p>
-              <p className="text-[12.5px]">Alertas aparecem quando há sentimento negativo detectado</p>
+              <p className="text-sm font-medium text-foreground">Sem alertas recentes</p>
+              <p className="text-xs">Alertas aparecem quando há sentimento negativo detectado</p>
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -234,8 +234,8 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                   <Pill label={a.sentiment === 'negativo' ? 'Negativo' : 'Neutro'} tone={a.sentiment === 'negativo' ? 'danger' : 'warning'} className="w-[84px] justify-center" />
                   <span className="text-[13px] text-foreground truncate">“{a.summary}”</span>
                   <span className="flex items-center gap-2 min-w-0"><InitialsAvatar name={a.contactName} size={24} /><span className="text-[13px] font-medium text-foreground truncate">{a.contactName}</span></span>
-                  <span className="text-[12.5px] text-muted-foreground truncate">{a.department ?? '—'}</span>
-                  <span className="text-[12px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(a.createdAt), { locale: ptBR, addSuffix: true }).replace('cerca de ', '')}</span>
+                  <span className="text-xs text-muted-foreground truncate">{a.department ?? '—'}</span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(a.createdAt), { locale: ptBR, addSuffix: true }).replace('cerca de ', '')}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </button>
               ))}
@@ -244,7 +244,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
         </DashboardCard>
 
         <DashboardCard testid="sentiment-distribution-card" variant="comfortable">
-          <p className="text-[18px] font-bold text-foreground tracking-[-0.01em] mb-4">Distribuição de Sentimento</p>
+          <p className="text-lg font-bold text-foreground tracking-[-0.01em] mb-4">Distribuição de Sentimento</p>
           {!stats ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground gap-2">
               <Smile className="w-8 h-8 opacity-30" />
@@ -262,7 +262,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-[11px] text-muted-foreground">Total</span>
-                  <span className="text-[20px] font-bold text-foreground leading-none">{totalAnalyses.toLocaleString('pt-BR')}</span>
+                  <span className="text-xl font-bold text-foreground leading-none">{totalAnalyses.toLocaleString('pt-BR')}</span>
                   <span className="text-[11px] text-muted-foreground mt-0.5">conversas</span>
                 </div>
               </div>

@@ -29,7 +29,7 @@ const RANK_TILE_CLASS = ['bg-dash-amber/20 text-dash-amber', 'bg-muted/50 text-m
 
 function StatusLabel({ online }: { online: boolean }) {
   return (
-    <span className={cn('flex items-center gap-1.5 text-[12px]', online ? 'text-dash-green' : 'text-muted-foreground')}>
+    <span className={cn('flex items-center gap-1.5 text-xs', online ? 'text-dash-green' : 'text-muted-foreground')}>
       <span className={cn('w-1.5 h-1.5 rounded-full', online ? 'bg-dash-green' : 'bg-muted-foreground/50')} />
       {online ? 'Online' : 'Offline'}
     </span>
@@ -38,7 +38,7 @@ function StatusLabel({ online }: { online: boolean }) {
 
 function ColHead({ icon: Icon, label, align = 'left' }: { icon?: typeof MessageSquare; label: string; align?: 'left' | 'right' }) {
   return (
-    <th className={cn('pb-3 px-2 text-[12px] font-semibold text-muted-foreground whitespace-nowrap', align === 'right' ? 'text-right' : 'text-left')}>
+    <th className={cn('pb-3 px-2 text-xs font-semibold text-muted-foreground whitespace-nowrap', align === 'right' ? 'text-right' : 'text-left')}>
       <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
         {Icon && <Icon className="w-3.5 h-3.5" />}{label}
       </span>
@@ -145,7 +145,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
               <table className="w-full text-[13px] border-separate border-spacing-y-1.5 px-1">
                 <thead>
                   <tr>
-                    <th className="pb-1 pl-3 text-left text-[12px] font-semibold text-muted-foreground w-12">#</th>
+                    <th className="pb-1 pl-3 text-left text-xs font-semibold text-muted-foreground w-12">#</th>
                     <ColHead label="Agente" />
                     <ColHead icon={MessageSquare} label="Resolvidas" />
                     <ColHead icon={MessageSquare} label="Mensagens" />
@@ -173,7 +173,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                           <div className="flex items-center gap-3">
                             <InitialsAvatar name={a.name} src={a.avatar} size={36} />
                             <div className="min-w-0">
-                              <div className="text-[14px] font-semibold text-foreground truncate max-w-[140px]">{a.name}</div>
+                              <div className="text-sm font-semibold text-foreground truncate max-w-[140px]">{a.name}</div>
                               <StatusLabel online={a.isOnline} />
                             </div>
                           </div>
@@ -186,7 +186,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                         <td className={cn('px-2 border-y', isTop3 ? RANK_ROW_CLASS[i] : 'border-transparent')}>
                           {sla === null ? <span className="text-muted-foreground">—</span> : (
                             <div className="w-[110px]">
-                              <div className={cn('text-[12px] font-bold tabular-nums mb-1', slaTone === 'success' ? 'text-dash-green' : slaTone === 'warning' ? 'text-dash-amber' : 'text-dash-red')}>{Math.round(sla)}%</div>
+                              <div className={cn('text-xs font-bold tabular-nums mb-1', slaTone === 'success' ? 'text-dash-green' : slaTone === 'warning' ? 'text-dash-amber' : 'text-dash-red')}>{Math.round(sla)}%</div>
                               <ProgressBar value={sla} tone={slaTone === 'success' ? 'success' : slaTone === 'warning' ? 'warning' : 'danger'} height={4} />
                             </div>
                           )}
@@ -213,7 +213,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
               <div className="flex items-center gap-4">
                 <InitialsAvatar name={top.name} src={top.avatar} size={56} />
                 <div className="min-w-0">
-                  <div className="text-[16px] font-bold text-foreground">{top.name}</div>
+                  <div className="text-base font-bold text-foreground">{top.name}</div>
                   <div className="text-[13px] text-muted-foreground">Maior número de conversas resolvidas no período. Excelente trabalho!</div>
                 </div>
               </div>
@@ -225,7 +225,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                   { label: 'Satisfação', v: (top.satisfaction / 100).toFixed(1) },
                 ].map((x) => (
                   <div key={x.label} className="rounded-xl bg-muted/20 border border-border/50 p-2.5 text-center">
-                    <div className="font-bold text-[16px] text-foreground tabular-nums">{x.v}</div>
+                    <div className="font-bold text-base text-foreground tabular-nums">{x.v}</div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">{x.label}</div>
                   </div>
                 ))}
@@ -238,7 +238,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
           )}
 
           <DashboardCard testid="team-distribution-card" variant="comfortable">
-            <p className="text-[18px] font-bold text-foreground tracking-[-0.01em] mb-4">Distribuição da equipe</p>
+            <p className="text-lg font-bold text-foreground tracking-[-0.01em] mb-4">Distribuição da equipe</p>
             {agents.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-[13px]"><Users className="w-8 h-8 mx-auto mb-2 opacity-30" />Sem agentes</div>
             ) : (
@@ -252,7 +252,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[20px] font-bold text-foreground leading-none">{agents.length}</span>
+                    <span className="text-xl font-bold text-foreground leading-none">{agents.length}</span>
                     <span className="text-[11px] text-muted-foreground mt-0.5">Agentes</span>
                   </div>
                 </div>
@@ -273,7 +273,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
 
           <DashboardCard testid="team-goals-card" variant="comfortable">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[18px] font-bold text-foreground tracking-[-0.01em]">Metas da equipe</p>
+              <p className="text-lg font-bold text-foreground tracking-[-0.01em]">Metas da equipe</p>
               {onNavigateTab && <VerTodasButton onClick={() => onNavigateTab('goals')} />}
             </div>
             <div className="text-center py-5 text-muted-foreground">

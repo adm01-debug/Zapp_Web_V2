@@ -102,17 +102,17 @@ export function ContactCard({
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <Badge
               variant="outline"
-              className={cn("h-6 px-2.5 rounded-full text-[12.5px] font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
+              className={cn("h-6 px-2.5 rounded-full text-xs font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
             >
               {typeConfig.iconNode}
               {typeConfig.label}
             </Badge>
             {contact.nickname && (
-              <span className="text-[12px] text-muted-foreground truncate">({contact.nickname})</span>
+              <span className="text-xs text-muted-foreground truncate">({contact.nickname})</span>
             )}
           </div>
           {company && (
-            <p className="text-[13.5px] text-muted-foreground truncate mt-1">{company}</p>
+            <p className="text-sm text-muted-foreground truncate mt-1">{company}</p>
           )}
         </div>
       </div>
@@ -120,7 +120,7 @@ export function ContactCard({
       {/* Contact info — space-y-1.5 per Navy plan spec */}
       <div className="mt-3 space-y-1.5">
         {contact.phone && (
-          <div className="flex items-center gap-2 text-[13.5px]" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
             <Phone className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
             <a
               href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
@@ -133,7 +133,7 @@ export function ContactCard({
           </div>
         )}
         {contact.email && (
-          <div className="flex items-center gap-2 text-[13.5px]" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
             <Mail className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
             <a
               href={`mailto:${contact.email}`}
@@ -163,7 +163,7 @@ export function ContactCard({
 
       {/* Footer — pt-2 fecha o gap final */}
       <div className="mt-auto pt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground/80 min-w-0">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80 min-w-0">
           <Clock className="w-[14px] h-[14px] shrink-0" />
           <span className="truncate">{footerLabel}</span>
         </div>

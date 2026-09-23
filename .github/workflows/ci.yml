@@ -69,6 +69,7 @@ jobs:
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/message-delivery/index.test.ts
+          supabase/functions/sentiment-alert/index.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
@@ -107,6 +108,9 @@ jobs:
 
       - name: 🚫 Run implicit-any ratchet
         run: node scripts/ci/implicit-any-ratchet.mjs
+
+      - name: 🔤 Run typography parity guard
+        run: node scripts/qa/medir-tipografia.cjs --check
 
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs

@@ -30,7 +30,7 @@ export function SentimentTrendCard() {
         )}
       />
       {!data || data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground min-h-[100px]">
+        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[100px]">
           Sem análises de sentimento no período
         </div>
       ) : (

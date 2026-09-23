@@ -178,7 +178,7 @@ export function ModuleHeader({ icon, color = 'blue', title, subtitle, right }: {
       <div className="flex items-center gap-3.5 min-w-0">
         <IconTile icon={icon} color={color} size={56} className="rounded-2xl shadow-[0_8px_24px_-10px_hsl(var(--primary)/.6)]" />
         <div className="min-w-0">
-          <h1 className="text-[26px] leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate">{title}</h1>
+          <h1 className="text-3xl leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate">{title}</h1>
           {subtitle && <p className="text-[13px] text-foreground-secondary mt-0.5">{subtitle}</p>}
         </div>
       </div>
@@ -196,7 +196,7 @@ export function RailCard({ icon, color = 'blue', title, subtitle, right, childre
         {icon && <IconTile icon={icon} color={color} size={40} />}
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-bold text-foreground leading-tight">{title}</p>
-          {subtitle && <p className="text-[12px] text-foreground-secondary mt-0.5 leading-snug">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-foreground-secondary mt-0.5 leading-snug">{subtitle}</p>}
         </div>
         {right}
       </div>
@@ -228,11 +228,11 @@ export function RailAction({ icon, color = 'blue', title, subtitle, onClick, dis
 export function MetaRow({ icon: Icon, label, value, valueClassName }: { icon?: LucideIcon; label: string; value: ReactNode; valueClassName?: string }) {
   return (
     <div className="flex items-start justify-between gap-3 py-2 border-b border-border/50 last:border-0">
-      <span className="flex items-center gap-2 text-[12px] text-foreground-secondary shrink-0">
+      <span className="flex items-center gap-2 text-xs text-foreground-secondary shrink-0">
         {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground" />}
         {label}
       </span>
-      <span className={cn('text-[12.5px] font-medium text-foreground text-right min-w-0 break-words', valueClassName)}>{value}</span>
+      <span className={cn('text-xs font-medium text-foreground text-right min-w-0 break-words', valueClassName)}>{value}</span>
     </div>
   );
 }
@@ -244,8 +244,8 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
       <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50 bg-card">
         <div className="w-8 h-8 rounded-full bg-whatsapp/20 flex items-center justify-center text-[11px] font-bold text-whatsapp">{senderName.slice(0, 1)}</div>
         <div className="min-w-0">
-          <p className="text-[12.5px] font-semibold text-foreground leading-tight truncate">{senderName}</p>
-          <p className="text-[10.5px] text-whatsapp">online</p>
+          <p className="text-xs font-semibold text-foreground leading-tight truncate">{senderName}</p>
+          <p className="text-[10px] text-whatsapp">online</p>
         </div>
       </div>
       <div className="p-3 bg-[radial-gradient(hsl(var(--primary)/.06)_1px,transparent_1px)] [background-size:14px_14px]">
@@ -283,8 +283,8 @@ export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empres
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(151_52%_21%)]">
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0">{initials}</div>
           <div className="min-w-0">
-            <p className="text-[9.5px] font-semibold text-white leading-tight truncate">{senderName}</p>
-            <p className="text-[7.5px] text-white/70">online</p>
+            <p className="text-[9px] font-semibold text-white leading-tight truncate">{senderName}</p>
+            <p className="text-[8px] text-white/70">online</p>
           </div>
         </div>
         {/* chat area */}
@@ -301,7 +301,7 @@ export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empres
             <span className="text-[7px] px-1.5 py-0.5 rounded bg-black/20 text-white/50">Hoje</span>
           </div>
           <div className="flex justify-end">
-            <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-[9.5px] text-foreground whitespace-pre-wrap leading-snug break-words">
+            <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-[9px] text-foreground whitespace-pre-wrap leading-snug break-words">
               {mediaUrl && mediaType === 'image' && (
                 /^https?:\/\//i.test(mediaUrl) && <img src={mediaUrl} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />
               )}
@@ -330,7 +330,7 @@ export function FilterBar({ search, onSearch, placeholder, selects, onClear, rig
       <div className="flex items-center gap-2 flex-wrap">
         {selects.map((s) => (
           <Select key={s.key} value={s.value} onValueChange={s.onChange}>
-            <SelectTrigger className="h-9 rounded-lg bg-input/40 border-border/70 text-[12.5px] min-w-[140px] w-auto gap-2">
+            <SelectTrigger className="h-9 rounded-lg bg-input/40 border-border/70 text-xs min-w-[140px] w-auto gap-2">
               {s.icon && <s.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
               <SelectValue placeholder={s.label} />
             </SelectTrigger>
@@ -341,7 +341,7 @@ export function FilterBar({ search, onSearch, placeholder, selects, onClear, rig
           </Select>
         ))}
         {onClear && (
-          <button type="button" onClick={onClear} className="h-9 px-3 rounded-lg text-[12.5px] font-medium text-primary-glow hover:bg-primary/10 transition-colors">Limpar filtros</button>
+          <button type="button" onClick={onClear} className="h-9 px-3 rounded-lg text-xs font-medium text-primary-glow hover:bg-primary/10 transition-colors">Limpar filtros</button>
         )}
         {right}
       </div>
@@ -357,18 +357,18 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
   const visible = Array.from({ length: pages }, (_, i) => i + 1).filter((p) => p === 1 || p === pages || Math.abs(p - page) <= 1);
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-      <p className="text-[12px] text-foreground-secondary">Mostrando {from} a {to} de {fmtInt(total)} {noun}</p>
+      <p className="text-xs text-foreground-secondary">Mostrando {from} a {to} de {fmtInt(total)} {noun}</p>
       <div className="flex items-center gap-1.5">
         <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Página anterior" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronLeft className="w-4 h-4" /></button>
         {visible.map((p, i) => (
           <span key={p} className="flex items-center gap-1.5">
             {i > 0 && visible[i - 1] !== p - 1 && <span className="text-muted-foreground text-xs px-1">…</span>}
-            <button type="button" onClick={() => onPage(p)} className={cn('h-8 min-w-8 px-2 rounded-lg text-[12.5px] font-semibold border transition-colors', p === page ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{p}</button>
+            <button type="button" onClick={() => onPage(p)} className={cn('h-8 min-w-8 px-2 rounded-lg text-xs font-semibold border transition-colors', p === page ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{p}</button>
           </span>
         ))}
         <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Próxima página" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronRight className="w-4 h-4" /></button>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
-          <SelectTrigger className="h-8 rounded-lg bg-input/40 border-border/70 text-[12px] w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8 rounded-lg bg-input/40 border-border/70 text-xs w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
           <SelectContent>{[8, 10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>)}</SelectContent>
         </Select>
       </div>
@@ -378,10 +378,10 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
 
 /** Cabeçalho de tabela padronizado. */
 export function Th({ children, className }: { children?: ReactNode; className?: string }) {
-  return <th className={cn('text-left text-[11.5px] font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
+  return <th className={cn('text-left text-[11px] font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
 }
 export function Td({ children, className }: { children?: ReactNode; className?: string }) {
-  return <td className={cn('px-3 py-3 text-[12.5px] text-foreground align-middle', className)}>{children}</td>;
+  return <td className={cn('px-3 py-3 text-xs text-foreground align-middle', className)}>{children}</td>;
 }
 
 export function StatusPill({ status, map }: { status: string; map: Record<string, { label: string; tone: PillTone }> }) {
@@ -399,7 +399,7 @@ function StateShell({ icon: Icon, tone, title, description, children }: { icon: 
     <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 flex flex-col items-center justify-center text-center px-6 py-12 gap-3">
       <div className={cn('w-16 h-16 rounded-2xl border-2 flex items-center justify-center', ring)}><Icon className="w-7 h-7" /></div>
       <p className="text-[15px] font-bold text-foreground">{title}</p>
-      {description && <p className="text-[12.5px] text-foreground-secondary max-w-sm leading-relaxed">{description}</p>}
+      {description && <p className="text-xs text-foreground-secondary max-w-sm leading-relaxed">{description}</p>}
       {children && <div className="flex items-center gap-2 mt-1 flex-wrap justify-center">{children}</div>}
     </div>
   );
@@ -478,8 +478,8 @@ export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint,
       >
         <IconTile icon={icon} color={color} size={32} glow />
         <div className="flex-1 min-w-0">
-          <p className="text-[10.5px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
-          <span className="text-[17px] font-semibold tracking-tight text-foreground leading-none tabular-nums">{value}</span>
+          <p className="text-[10px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
+          <span className="text-lg font-semibold tracking-tight text-foreground leading-none tabular-nums">{value}</span>
         </div>
       </div>
     );
@@ -494,9 +494,9 @@ export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint,
     >
       <IconTile icon={icon} color={color} size={40} glow />
       <div className="flex-1 min-w-0">
-        <p className="text-[11.5px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
+        <p className="text-[11px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
         <div className="flex items-baseline gap-2">
-          <span className="text-[22px] font-semibold tracking-tight text-foreground leading-none">{value}</span>
+          <span className="text-2xl font-semibold tracking-tight text-foreground leading-none">{value}</span>
           {delta && (
             <span className={cn('flex items-center gap-0.5 text-[11px] font-semibold', delta.tone === 'down' ? 'text-destructive' : 'text-success')}>
               {delta.tone === 'down' ? '↓' : '↑'}{Math.abs(delta.value).toFixed(1)}{delta.suffix ?? '%'}
@@ -572,7 +572,7 @@ export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'prim
   tone?: 'primary' | 'danger' | 'success'; glow?: boolean; loading?: boolean;
   size?: 'sm' | 'md' | 'lg'; className?: string;
 }) {
-  const h = size === 'lg' ? 'h-11 px-5 text-[14px]' : size === 'sm' ? 'h-8 px-3 text-[12px]' : 'h-9 px-4 text-[13px]';
+  const h = size === 'lg' ? 'h-11 px-5 text-sm' : size === 'sm' ? 'h-8 px-3 text-xs' : 'h-9 px-4 text-[13px]';
   const bg = tone === 'danger' ? 'bg-destructive hover:bg-destructive/90' : tone === 'success' ? 'bg-success hover:bg-success/90' : 'bg-primary hover:bg-primary/90';
   const shadow = glow && tone === 'primary' ? 'shadow-[var(--shadow-glow-primary)] hover:shadow-[var(--glow-primary-md)]' : '';
   return (
@@ -675,7 +675,7 @@ export function HeroCard({ icon, title, subtitle, metrics }: {
         <IconTile icon={icon} color="blue" size={48} glow />
         <div className="min-w-0 flex-1">
           <h3 className="text-[15px] font-semibold text-foreground leading-tight">{title}</h3>
-          {subtitle && <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>}
         </div>
       </div>
       {metrics && metrics.length > 0 && (
@@ -709,7 +709,7 @@ export function RecentList({ items }: { items: RecentItem[] }) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] font-medium text-foreground truncate">{item.name}</p>
+            <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={cn('inline-flex h-1.5 w-1.5 rounded-full', item.statusTone === 'success' ? 'bg-success' : item.statusTone === 'warning' ? 'bg-warning' : 'bg-muted-foreground')} />
               <span className="text-[11px] text-muted-foreground">{item.statusLabel}{item.pct !== undefined ? ` · ${item.pct}%` : ''}</span>
@@ -729,7 +729,7 @@ export function TipCard({ tip }: { tip: string }) {
       </div>
       <div>
         <p className="text-[11px] font-semibold text-success uppercase tracking-wide mb-0.5">Dica do dia</p>
-        <p className="text-[12px] text-foreground leading-snug">{tip}</p>
+        <p className="text-xs text-foreground leading-snug">{tip}</p>
       </div>
     </div>
   );
@@ -738,7 +738,7 @@ export function TipCard({ tip }: { tip: string }) {
 export function AlertCard({ children, tone = 'warning', actionLabel, onAction }: { children: ReactNode; tone?: 'warning' | 'info' | 'danger'; actionLabel?: string; onAction?: () => void }) {
   const s = tone === 'danger' ? 'bg-destructive/8 border-destructive/25 text-destructive' : tone === 'info' ? 'bg-primary/8 border-primary/25 text-primary' : 'bg-warning/8 border-warning/25 text-warning';
   return (
-    <div className={cn('p-3 rounded-xl border text-[12px] leading-snug', s)}>
+    <div className={cn('p-3 rounded-xl border text-xs leading-snug', s)}>
       {children}
       {actionLabel && onAction && (
         <button type="button" onClick={onAction} className="mt-2 underline font-semibold text-[11px]">{actionLabel}</button>
@@ -779,7 +779,7 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
         <AlertDialogHeader>
           <div className="flex flex-col items-center gap-3 pb-2">
             <IconTile icon={icon} color={iconColor} size={48} glow />
-            <AlertDialogTitle className="text-center text-[17px]">{title}</AlertDialogTitle>
+            <AlertDialogTitle className="text-center text-lg">{title}</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[13px]">
               {entityName ? <><span className="font-semibold text-foreground">"{entityName}"</span> — </> : null}{description}
             </AlertDialogDescription>
@@ -789,7 +789,7 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
         {details.length > 0 && (
           <div className="bg-muted/30 rounded-lg p-3 space-y-1.5 -mt-1">
             {details.map(d => (
-              <div key={d.label} className="flex justify-between text-[12.5px]">
+              <div key={d.label} className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{d.label}</span>
                 <span className="font-medium text-foreground">{d.value}</span>
               </div>
@@ -803,7 +803,7 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
               <label key={c.id} className="flex items-start gap-2.5 cursor-pointer group">
                 <input type="checkbox" checked={checked.has(c.id)} onChange={() => toggle(c.id)}
                   className="mt-0.5 w-4 h-4 accent-primary cursor-pointer rounded" />
-                <span className="text-[12.5px] text-foreground leading-snug group-hover:text-foreground">{c.label}</span>
+                <span className="text-xs text-foreground leading-snug group-hover:text-foreground">{c.label}</span>
               </label>
             ))}
           </div>
@@ -853,14 +853,14 @@ export function FilterBarV2({
           <div className='relative'>
             <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none' />
             <Input value={local} onChange={e => setLocal(e.target.value)} placeholder={placeholder}
-              className='h-9 pl-8 pr-3 w-52 text-[12.5px] bg-input/40 border-border/70 rounded-lg' />
+              className='h-9 pl-8 pr-3 w-52 text-xs bg-input/40 border-border/70 rounded-lg' />
           </div>
         )}
         {filters.map(fd => (
           <div key={fd.key} className='flex flex-col'>
             {fd.labeled && <label className='text-[10px] font-medium text-muted-foreground mb-0.5 px-0.5 uppercase tracking-wide'>{fd.label}</label>}
             <Select value={values?.[fd.key] ?? 'all'} onValueChange={v => onFilter?.(fd.key, v)}>
-              <SelectTrigger className='h-9 text-[12.5px] bg-input/40 border-border/70 rounded-lg min-w-[120px]'>
+              <SelectTrigger className='h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]'>
                 <SelectValue placeholder={!fd.labeled ? fd.label : undefined} />
               </SelectTrigger>
               <SelectContent>
@@ -871,7 +871,7 @@ export function FilterBarV2({
           </div>
         ))}
         {hasActive && onClear && (
-          <button type='button' onClick={onClear} className='h-9 px-3 rounded-lg text-[12.5px] font-medium text-primary hover:bg-primary/10 transition-colors'>
+          <button type='button' onClick={onClear} className='h-9 px-3 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 transition-colors'>
             Limpar filtros
           </button>
         )}

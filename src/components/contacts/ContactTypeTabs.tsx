@@ -30,7 +30,7 @@ function CountBadge({ count, active }: { count: number; active: boolean }) {
     <span
       data-testid="tab-count"
       className={cn(
-        'h-6 min-w-[24px] px-2 rounded-full text-[12.5px] font-semibold tabular-nums flex items-center justify-center shrink-0',
+        'h-6 min-w-[24px] px-2 rounded-full text-xs font-semibold tabular-nums flex items-center justify-center shrink-0',
         active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
       )}
     >
@@ -136,7 +136,7 @@ export function ContactTypeTabs({ activeTab, setActiveTab, contactCountByType }:
                       {resizeIcon(CONTACT_TYPE_ICONS[type.value])}
                       <span className="flex-1">{type.label}</span>
                       {count > 0 && (
-                        <span className="text-[12px] tabular-nums text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {count.toLocaleString('pt-BR')}
                         </span>
                       )}
