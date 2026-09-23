@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays } from 'date-fns';
 import { log } from '@/lib/logger';
@@ -23,6 +23,14 @@ interface DateRange {
 export function useQueuesComparison(dateRange: DateRange) {
   const [queuesPerformance, setQueuesPerformance] = useState<QueuePerformance[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     fetchComparison();
@@ -40,8 +48,10 @@ export function useQueuesComparison(dateRange: DateRange) {
 
       if (queuesError) throw queuesError;
       if (!queues || queues.length === 0) {
-        setQueuesPerformance([]);
-        setLoading(false);
+        if (isMountedRef.current) {
+          setQueuesPerformance([]);
+          setLoading(false);
+        }
         return;
       }
 
@@ -127,11 +137,15 @@ export function useQueuesComparison(dateRange: DateRange) {
       // Sort by total contacts descending
       performance.sort((a, b) => b.totalContacts - a.totalContacts);
 
-      setQueuesPerformance(performance);
+      if (isMountedRef.current) {
+        setQueuesPerformance(performance);
+      }
     } catch (error) {
       log.error('Error fetching queues comparison:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
