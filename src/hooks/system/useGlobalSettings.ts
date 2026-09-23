@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -15,6 +15,14 @@ export interface GlobalSetting {
 export function useGlobalSettings() {
   const [settings, setSettings] = useState<GlobalSetting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -24,11 +32,15 @@ export function useGlobalSettings() {
         .select('*')
         .order('key');
       if (error) throw error;
-      setSettings(data || []);
+      if (isMountedRef.current) {
+        setSettings(data || []);
+      }
     } catch (err) {
       log.error('Error fetching global settings:', err);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
