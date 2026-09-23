@@ -11,7 +11,7 @@
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-22",
+    "generated_at": "2026-09-23",
     "anon_table_select": [
         "agent_achievements",
         "agent_skills",
@@ -154,6 +154,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 122,
+    "service_role_execute_count": 124,
     "authenticated_execute_count": 81
 }
