@@ -60,7 +60,7 @@ function main() {
   const named = Object.keys(scale);
   // so tokens de tamanho; evita text-primary / text-foreground (cores)
   const namedRe = new RegExp(`\\btext-(${named.map((n) => n.replace(/[-]/g, '\\-')).join('|')})\\b`, 'g');
-  const arbRe = /\btext-\[([0-9.]+)px\]/g;
+  const arbRe = /\btext-\[([0-9.]+)(px|rem|em)\]/g;
 
   const files = walk(SRC);
   const usage = { named: {}, arbitrary: {} };
@@ -85,7 +85,8 @@ function main() {
     }
     arbRe.lastIndex = 0;
     while ((m = arbRe.exec(txt))) {
-      const px = parseFloat(m[1]);
+      const raw = parseFloat(m[1]);
+      const px = m[2] === 'px' ? raw : raw * 16; // rem/em: 1 unidade = 16px (raiz do documento)
       usage.arbitrary[px] = (usage.arbitrary[px] || 0) + 1;
       (byFile[rel] ||= { named: 0, arbitrary: 0 }).arbitrary++;
       const line = txt.slice(0, m.index).split('\n').length;
