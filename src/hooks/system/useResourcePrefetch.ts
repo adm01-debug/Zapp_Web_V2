@@ -39,6 +39,14 @@ export function usePrefetch<T>(
   } = options;
 
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const prefetch = useCallback(async (): Promise<T | null> => {
     // Check cache
@@ -60,6 +68,14 @@ export function usePrefetch<T>(
     try {
       const data = await promise;
       prefetchCache.set(key, { data, timestamp: Date.now() });
+      // Se o componente que chamou prefetch() já desmontou enquanto o
+      // fetch estava em voo, não devolve os dados pra ele — evita que o
+      // padrão comum `const data = await prefetch(); setState(data)`
+      // rode setState num componente desmontado. O cache global continua
+      // sendo populado normalmente para outros consumidores.
+      if (!isMountedRef.current) {
+        return null;
+      }
       return data;
     } catch (error) {
       log.warn(`Prefetch failed for ${key}:`, error);
@@ -211,14 +227,17 @@ export function useIntersectionPrefetch<T>(
   const { threshold = 0.1, rootMargin = '100px', enabled = true } = options;
   const elementRef = useRef<HTMLElement>(null);
   const hasPrefetched = useRef(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     if (!enabled || hasPrefetched.current || !elementRef.current) return;
 
+    isMountedRef.current = true;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasPrefetched.current) {
+          if (entry.isIntersecting && !hasPrefetched.current && isMountedRef.current) {
             hasPrefetched.current = true;
             fetcher().catch((err) => log.warn('Intersection prefetch failed:', err));
             observer.disconnect();
@@ -230,7 +249,10 @@ export function useIntersectionPrefetch<T>(
 
     observer.observe(elementRef.current);
 
-    return () => observer.disconnect();
+    return () => {
+      isMountedRef.current = false;
+      observer.disconnect();
+    };
   }, [fetcher, threshold, rootMargin, enabled]);
 
   return elementRef;
@@ -243,11 +265,17 @@ export function useCriticalDataPrefetch(
   fetchers: Array<{ key: string; fetch: () => Promise<unknown> }>
 ) {
   useEffect(() => {
+    const isMountedRef = { current: true };
+    let idleCallbackId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const prefetchAll = async () => {
       for (const { key, fetch } of fetchers) {
+        if (!isMountedRef.current) return;
         if (!prefetchCache.has(key)) {
           try {
             const data = await fetch();
+            if (!isMountedRef.current) return;
             prefetchCache.set(key, { data, timestamp: Date.now() });
           } catch (error) {
             log.warn(`Failed to prefetch ${key}:`, error);
@@ -257,10 +285,20 @@ export function useCriticalDataPrefetch(
     };
 
     if ('requestIdleCallback' in window) {
-      (window as Window).requestIdleCallback(() => prefetchAll());
+      idleCallbackId = (window as Window).requestIdleCallback(() => prefetchAll());
     } else {
-      setTimeout(prefetchAll, 1000);
+      timeoutId = setTimeout(prefetchAll, 1000);
     }
+
+    return () => {
+      isMountedRef.current = false;
+      if (idleCallbackId !== undefined && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [fetchers]);
 }
 
