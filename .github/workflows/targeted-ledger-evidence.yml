@@ -26,7 +26,7 @@ jobs:
     name: Exportar ledger alvo cifrado
     if: github.ref == 'refs/heads/main'
     environment: db-ledger-evidence
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout confiavel da main
