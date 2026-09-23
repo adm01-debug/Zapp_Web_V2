@@ -85,10 +85,44 @@ TalkX entrou; os 3 arquivos acima ficaram de fora e mantêm seus arbitrários.
 ratchets. Teto congelado em `scripts/qa/tipografia-budget.json` (1 / 2 / 3), só pode cair.
 DoD verificado: com violação proposital o guard sai com código 1; revertida, com 0.
 
+## F5 — concluído (2026-09-23)
+
+Os 3 arquivos preservados aplicados em PR separado (#526). A branch que originalmente
+justificou a exclusão (`redesign/inbox-fidelidade-carvao-codex`, PR #384) está closed sem
+merge desde 14/09, dormente, e não toca `MessageBubble.tsx`. As duas branches citadas no
+desvio original do F5 (`redesign/inbox-fidelidade-carvao` → PR #301, `feat/inbox-painel-direito`
+→ PR #299) já estavam mergeadas desde 09/09. Zero PRs abertas no repositório no momento da
+verificação — sem conflito real.
+
+## F6.5 — D5/D6 resolvidas (2026-09-23)
+
+**D5 — headings.** Decisão: recalibrar `clamp()` (recomendação do plano), não trocar pelo
+mecanismo discreto. Extremos recalculados com min = tamanho mobile do Promo, max = tamanho
+`lg` do Promo, interpolação linear entre viewport 375px–1024px:
+
+| Heading | Antes (min→max) | Depois (min→max) | Referência Promo (mobile→lg) |
+|---|---|---|---|
+| h1 | 24px → 40px | 36px → 60px | text-4xl → text-6xl |
+| h2 | 20px → 32px | 30px → 48px | text-3xl → text-5xl |
+| h3 | 17.6px → 24px | 24px → 36px | text-2xl → text-4xl |
+| h4 | 16px → 20px | 20px → 30px | text-xl → text-3xl |
+| h5 | 14.8px → 17.6px | **inalterado** | Promo não define tamanho próprio para h5 (só herda peso/tracking da regra geral h1–h6); sem referência para recalibrar |
+
+Editado em `src/styles/base.css`. Mecanismo `clamp()` preservado — fluidez mantida, só os
+extremos mudaram.
+
+**D6 — cor global de texto no dark.** Decisão: não replicar (recomendação do plano). Zero
+mudança de código — a regra do Promo (`color` forçado em `span/p/label/td/th/li`) tem efeito
+colateral documentado (quebra `text-primary` em qualquer `<span>` no dark por especificidade
+CSS maior) e não compensa o ganho de paridade visual.
+
 ## Pendente
 
 - **F3 item 12** — revisão visual das telas densas. 193 trocas de meia-medida mudam quebra
-  de linha em tabela; nenhuma foi inspecionada em tela.
-- **F5** — os 3 arquivos preservados, quando as branches de inbox fecharem.
-- **F6.5 (D5/D6)** — headings com `clamp()` e cor global de texto no dark seguem pendentes
-  de decisão, conforme §4 do plano.
+  de linha em tabela; nenhuma foi inspecionada em tela. Tentativa de automação (Playwright/
+  Bright Data) nesta sessão: credenciais resolvidas (usuário `qa.visual@promobrindes.com.br`
+  com senha redefinida), mas bloqueada por falha de ferramenta — Cloudflare Browser Rendering
+  com token inválido/expirado (precisa permissão "Browser Rendering: Edit" renovada), e a
+  sessão Bright Data rejeitou consistentemente `fill`/`type` no campo de senha do formulário
+  de login (3 tentativas, mesmo erro "waiting for element to be visible, enabled and editable").
+  Requer nova tentativa com ferramenta de browser funcional, ou revisão manual.

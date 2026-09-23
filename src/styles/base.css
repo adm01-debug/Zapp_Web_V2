@@ -115,25 +115,25 @@
   /* ===== TYPOGRAPHY — Fluid responsive with clamp() ===== */
   h1 {
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    font-size: clamp(2.25rem, 1.383rem + 3.7vw, 3.75rem);
     @apply font-bold tracking-tight leading-tight;
   }
 
   h2 {
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 0.9rem + 1.5vw, 2rem);
+    font-size: clamp(1.875rem, 1.225rem + 2.77vw, 3rem);
     @apply font-semibold tracking-tight leading-snug;
   }
 
   h3 {
     font-family: var(--font-display);
-    font-size: clamp(1.1rem, 0.85rem + 1vw, 1.5rem);
+    font-size: clamp(1.5rem, 1.067rem + 1.85vw, 2.25rem);
     @apply font-semibold leading-snug;
   }
 
   h4 {
     font-family: var(--font-display);
-    font-size: clamp(1rem, 0.85rem + 0.6vw, 1.25rem);
+    font-size: clamp(1.25rem, 0.889rem + 1.54vw, 1.875rem);
     @apply font-medium leading-normal;
   }
 
