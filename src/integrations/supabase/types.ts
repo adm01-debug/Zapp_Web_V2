@@ -9265,7 +9265,7 @@ export type Database = {
           p_details: Json
           p_notification_message: string
           p_notification_title: string
-          p_recipient_user_id: string | null
+          p_recipient_user_id: string
         }
         Returns: {
           audit_created: boolean
@@ -9295,11 +9295,19 @@ export type Database = {
         Returns: number
       }
       reassign_overloaded_agents: { Args: never; Returns: number }
+      record_failed_login: {
+        Args: { p_email: string; p_ip_address?: string; p_user_agent?: string }
+        Returns: {
+          attempts: number
+          is_locked: boolean
+          locked_until: string
+        }[]
+      }
       record_incoming_call_event: {
         Args: {
           p_contact_id: string
           p_is_video: boolean
-          p_provider_event_id?: string | null
+          p_provider_event_id?: string
           p_should_notify?: boolean
           p_status: string
           p_whatsapp_connection_id: string
@@ -9308,15 +9316,7 @@ export type Database = {
           call_id: string
           duplicate: boolean
           notification_created: boolean
-          notification_id: string | null
-        }[]
-      }
-      record_failed_login: {
-        Args: { p_email: string; p_ip_address?: string; p_user_agent?: string }
-        Returns: {
-          attempts: number
-          is_locked: boolean
-          locked_until: string
+          notification_id: string
         }[]
       }
       record_talkx_link_click: {
