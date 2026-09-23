@@ -6,7 +6,7 @@ import { useAgentGamification, levelProgress, xpForNextLevel } from '@/hooks/gam
 import { cn } from '@/lib/utils';
 import { MOTIVATION_PHRASES, dayOfYear } from './motivationPhrases';
 
-export function GreetingBanner() {
+export function GreetingBanner({ personal = false }: { personal?: boolean } = {}) {
   const { profile } = useAuth();
   const { stats } = useAgentGamification();
   const reducedMotion = useReducedMotion();
@@ -38,7 +38,7 @@ export function GreetingBanner() {
         )}
         <div className="min-w-0">
           <p className="text-xl font-bold text-foreground leading-tight truncate">{greeting}</p>
-          <p className="text-xs text-foreground-secondary">Aqui está o resumo da sua operação hoje.</p>
+          <p className="text-xs text-foreground-secondary">{personal ? 'Aqui está o resumo do seu dia.' : 'Aqui está o resumo da sua operação hoje.'}</p>
         </div>
       </div>
 
