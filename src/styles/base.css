@@ -113,37 +113,42 @@
   }
 
   /* ===== TYPOGRAPHY — Fluid responsive with clamp() ===== */
-  h1 {
+  /* Prefixo html. eleva especificidade pra (0,0,2): sem isso, o preflight do
+     Tailwind (h1..h6 { font-size: inherit }, tambem (0,0,1)) vence o empate
+     por vir depois no cascade (@tailwind base roda depois deste @import em
+     src/index.css) e o clamp() abaixo nunca é aplicado. Uma classe explicita
+     tipo text-2xl continua vencendo (especificidade de classe > 2 elementos). */
+  html h1 {
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    font-size: clamp(2.25rem, 1.383rem + 3.7vw, 3.75rem);
     @apply font-bold tracking-tight leading-tight;
   }
 
-  h2 {
+  html h2 {
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 0.9rem + 1.5vw, 2rem);
+    font-size: clamp(1.875rem, 1.225rem + 2.77vw, 3rem);
     @apply font-semibold tracking-tight leading-snug;
   }
 
-  h3 {
+  html h3 {
     font-family: var(--font-display);
-    font-size: clamp(1.1rem, 0.85rem + 1vw, 1.5rem);
+    font-size: clamp(1.5rem, 1.067rem + 1.85vw, 2.25rem);
     @apply font-semibold leading-snug;
   }
 
-  h4 {
+  html h4 {
     font-family: var(--font-display);
-    font-size: clamp(1rem, 0.85rem + 0.6vw, 1.25rem);
+    font-size: clamp(1.25rem, 0.889rem + 1.54vw, 1.875rem);
     @apply font-medium leading-normal;
   }
 
-  h5 {
+  html h5 {
     font-family: var(--font-display);
     font-size: clamp(0.925rem, 0.85rem + 0.3vw, 1.1rem);
     @apply font-medium leading-normal;
   }
 
-  h6 {
+  html h6 {
     font-family: var(--font-display);
     @apply text-sm md:text-base font-medium leading-normal uppercase tracking-wide;
   }
