@@ -62,7 +62,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
               'absolute inset-0 transition-all duration-300 ease-out',
               collapsed
                 ? 'rounded-full bg-secondary/20 border border-secondary/30 shadow-glow-secondary-sm'
-                : 'rounded-xl bg-sidebar-accent border border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/.25),0_6px_18px_-8px_hsl(var(--primary)/.6)]'
+                : 'rounded-xl bg-sidebar-accent/60'
             )}
           />
           {/* Active indicator bar — highly visible in collapsed mode */}
