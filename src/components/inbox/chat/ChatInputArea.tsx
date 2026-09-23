@@ -198,7 +198,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",
                   "placeholder:text-muted-foreground resize-none transition-all",
                   "focus:ring-0",
-                  logic.isMobile ? "px-1 py-2.5 text-[16px] min-h-[42px] max-h-[200px]" : "py-3.5 min-h-[52px] max-h-[200px]",
+                  logic.isMobile ? "px-1 py-2.5 text-base min-h-[42px] max-h-[200px]" : "py-3.5 min-h-[52px] max-h-[200px]",
                 )}
                 aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
                 aria-describedby={logic.charCount > 0 ? "char-counter" : undefined}

@@ -141,7 +141,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="font-bold text-[18px] text-foreground leading-tight truncate">{firstName}</h4>
+                <h4 className="font-bold text-lg text-foreground leading-tight truncate">{firstName}</h4>
                 <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
                   aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
                   <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />

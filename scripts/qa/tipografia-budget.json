@@ -1,30 +1,30 @@
 {
-  "geradoEm": "2026-09-22T21:11:16.113Z",
-  "commit": "7761a5704b6745f1d0f91ab22de5f7b006f25432",
+  "geradoEm": "2026-09-23T10:09:36.159Z",
+  "commit": null,
   "escala": {
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1718
+      "usos": 1719
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1101
+      "usos": 1102
     },
     "base": {
       "fontSizePx": 16,
       "lineHeightPx": 24,
       "lineHeightDeclarado": "1.5rem",
-      "usos": 140
+      "usos": 141
     },
     "lg": {
       "fontSizePx": 18,
       "lineHeightPx": 28,
       "lineHeightDeclarado": "1.75rem",
-      "usos": 188
+      "usos": 189
     },
     "xl": {
       "fontSizePx": 20,
@@ -117,13 +117,6 @@
       "usos": 323,
       "equivalenteNaEscala": null
     },
-    "12": {
-      "fontSizePx": 12,
-      "lineHeightPx": 18,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 1,
-      "equivalenteNaEscala": "text-xs"
-    },
     "13": {
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
@@ -138,78 +131,32 @@
       "usos": 28,
       "equivalenteNaEscala": null
     },
-    "16": {
-      "fontSizePx": 16,
-      "lineHeightPx": 24,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 1,
-      "equivalenteNaEscala": "text-base"
-    },
-    "18": {
-      "fontSizePx": 18,
-      "lineHeightPx": 27,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 1,
-      "equivalenteNaEscala": "text-lg"
-    },
     "120": {
       "fontSizePx": 120,
       "lineHeightPx": 180,
       "lineHeightOrigem": "herdado (preflight 1.5)",
       "usos": 1,
       "equivalenteNaEscala": null
-    },
-    "13.5": {
-      "fontSizePx": 13.5,
-      "lineHeightPx": 20.25,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 1,
-      "equivalenteNaEscala": null
     }
   },
   "totais": {
-    "usosNomeados": 3382,
-    "usosArbitrarios": 1237,
+    "usosNomeados": 3386,
+    "usosArbitrarios": 1233,
     "arquivosAnalisados": 1414
   },
   "violacoes": {
-    "meiaMedida": 1,
-    "acima16px": 2,
-    "comEquivalenteExato": 3
+    "meiaMedida": 0,
+    "acima16px": 1,
+    "comEquivalenteExato": 0
   },
   "detalheViolacoes": {
-    "halfStep": [
-      {
-        "where": "src/components/inbox/chat/MessageBubble.tsx:234",
-        "px": 13.5
-      }
-    ],
+    "halfStep": [],
     "above16": [
-      {
-        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
-        "px": 18
-      },
       {
         "where": "src/pages/NotFound.tsx:27",
         "px": 120
       }
     ],
-    "hasExactEquivalent": [
-      {
-        "where": "src/components/inbox/chat/ChatInputArea.tsx:201",
-        "px": 16,
-        "equivalent": "text-base"
-      },
-      {
-        "where": "src/components/inbox/chat/MessageBubble.tsx:192",
-        "px": 12,
-        "equivalent": "text-xs"
-      },
-      {
-        "where": "src/components/inbox/contact-details/ContactHeaderSection.tsx:144",
-        "px": 18,
-        "equivalent": "text-lg"
-      }
-    ]
+    "hasExactEquivalent": []
   }
 }

@@ -189,7 +189,7 @@ export const MessageBubble = memo(function MessageBubble({
                     <DocumentPreview url={message.mediaUrl} fileName={searchQuery && highlightedMessageIds?.has(message.id) && message.content ? '' : (message.content || 'documento')} isSent={isSent} />
                     <QuarantineBadge messageId={message.id} className="mt-1" />
                     {searchQuery && highlightedMessageIds?.has(message.id) && message.content && (
-                      <p className="text-[12px] mt-1 px-1"><HighlightedText text={message.content} query={searchQuery} /></p>
+                      <p className="text-xs mt-1 px-1"><HighlightedText text={message.content} query={searchQuery} /></p>
                     )}
                   </div>
                 )}
@@ -231,7 +231,7 @@ export const MessageBubble = memo(function MessageBubble({
                   {message.link_preview && (
                     <LinkPreviewCard preview={message.link_preview} isSent={isSent} />
                   )}
-                  <p className="text-[13.5px] whitespace-pre-wrap leading-[1.45]">
+                  <p className="text-sm whitespace-pre-wrap leading-[1.45]">
                     {searchQuery && highlightedMessageIds?.has(message.id) ? <HighlightedText text={message.content} query={searchQuery} /> : message.content}
                   </p>
                   </>
