@@ -19,7 +19,7 @@ export default defineConfig({
       // funcionando mesmo sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD definidas.
       name: 'chromium',
       testMatch: /auth\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'], executablePath: '/opt/pw-browsers/chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       // Login real (e2e/auth.setup.ts), executado só quando o projeto
@@ -27,7 +27,7 @@ export default defineConfig({
       // o projeto "chromium" acima.
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
-      use: { ...devices['Desktop Chrome'], executablePath: '/opt/pw-browsers/chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
@@ -37,7 +37,6 @@ export default defineConfig({
       dependsOn: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
-        executablePath: '/opt/pw-browsers/chromium',
         storageState: 'e2e/.auth/user.json',
       },
     },
