@@ -1,18 +1,19 @@
 # Relatório — paridade tipográfica ZAPP Web V2 ↔ Promo Gifts V4 (F0–F7)
 
-Execução de 22/09/2026 sobre `origin/main` (`7761a570`).
+Execução de 22/09/2026 sobre `origin/main` (`7761a570`). F5 e F6.5 concluídos em
+23/09/2026 (PR #526).
 Plano de origem: `PLANO_PARIDADE_TIPOGRAFICA_ZAPP_PROMO.md`.
 
 ## Resultado
 
 | Violação | Antes | Depois | Restante é |
 |---|---|---|---|
-| Meia-medida (`text-[N.5px]`) | 194 | **1** | arquivo de branch ativa |
-| Arbitrário acima de 16px | 51 | **2** | branch ativa + `text-[120px]` |
-| Arbitrário com equivalente exato | 836 | **3** | 3 arquivos de branch ativa |
+| Meia-medida (`text-[N.5px]`) | 194 | **0** | — |
+| Arbitrário acima de 16px | 51 | **1** | `text-[120px]` proposital (`NotFound.tsx`) |
+| Arbitrário com equivalente exato | 836 | **0** | — |
 
-**471 substituições** aplicadas (F2 251 · F3 193 · F4 27), mais o `tailwind.config.ts`
-e o guard-rail de CI.
+**475 substituições** aplicadas (F2 251 · F3 193 · F4 27 · F5 4), mais o
+`tailwind.config.ts` e o guard-rail de CI.
 
 ## Correção ao plano: o DoD do F2 estava incompleto
 
@@ -82,7 +83,7 @@ TalkX entrou; os 3 arquivos acima ficaram de fora e mantêm seus arbitrários.
 ## F6 — guard-rail
 
 `node scripts/qa/medir-tipografia.cjs --check`, plugado no `ci.yml` junto dos demais
-ratchets. Teto congelado em `scripts/qa/tipografia-budget.json` (1 / 2 / 3), só pode cair.
+ratchets. Teto congelado em `scripts/qa/tipografia-budget.json` (0 / 1 / 0), só pode cair.
 DoD verificado: com violação proposital o guard sai com código 1; revertida, com 0.
 
 ## F5 — concluído (2026-09-23)
@@ -115,6 +116,17 @@ extremos mudaram.
 mudança de código — a regra do Promo (`color` forçado em `span/p/label/td/th/li`) tem efeito
 colateral documentado (quebra `text-primary` em qualquer `<span>` no dark por especificidade
 CSS maior) e não compensa o ganho de paridade visual.
+
+## Fix pós-review: especificidade do bloco de headings (2026-09-23)
+
+O codex review da PR #526 apontou que `src/index.css` importa `base.css` **antes** de
+`@tailwind base`. O preflight do Tailwind reseta `h1..h6 { font-size: inherit }` na mesma
+especificidade (0,0,1) do seletor `h1` usado no bloco de tipografia — e por rodar depois no
+cascade gerado, vencia o empate e sobrescrevia o `clamp()` inteiro (D5 incluído: o
+recalibre nunca teve efeito visual). Corrigido elevando a especificidade do bloco pra
+`html h1`...`html h6` (0,0,2), mesma técnica já usada no bloco `html.dark` deste arquivo.
+Confirmado por leitura direta do cascade gerado (import order + seletores); não depende
+mais de revisão visual pra ser considerado corrigido — é uma garantia estrutural de CSS.
 
 ## Pendente
 
