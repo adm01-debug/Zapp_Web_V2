@@ -90,12 +90,30 @@ jobs:
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
-            -f scripts/db-audit/catalog.sql > /tmp/catalog.new.json
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
-            -f scripts/db-audit/manifest.sql > /tmp/manifest.new.json
-          psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
-            -f scripts/db-audit/grants-baseline.sql > /tmp/grants.new.json
+
+          # DESTINO_URL nunca vai pro argv do psql (visivel via `ps`/logs de
+          # processo) — withPsqlEnvironment() traduz a URL em PGHOST/PGUSER/
+          # PGPASSFILE etc, o mesmo transporte ja usado por check-triple-parity.mjs.
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import fs from 'node:fs';
+          import { withPsqlEnvironment } from './scripts/db-audit/psql-environment.mjs';
+
+          const PSQL_BIN = process.env.PSQL_BIN || 'psql';
+          const url = process.env.DESTINO_URL;
+
+          function psqlFile(file) {
+            return withPsqlEnvironment(url, (env) => execFileSync(
+              PSQL_BIN,
+              ['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file],
+              { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env },
+            ));
+          }
+
+          fs.writeFileSync('/tmp/catalog.new.json', psqlFile('scripts/db-audit/catalog.sql'));
+          fs.writeFileSync('/tmp/manifest.new.json', psqlFile('scripts/db-audit/manifest.sql'));
+          fs.writeFileSync('/tmp/grants.new.json', psqlFile('scripts/db-audit/grants-baseline.sql'));
+          NODE
 
           TYPE_SIZE=$(wc -c < /tmp/types.new.ts)
           echo "types.ts gerado: ${TYPE_SIZE} bytes"
@@ -131,38 +149,7 @@ jobs:
           CATALOG_STATUS=$?
           node scripts/db-audit/check-manifest-fresh.mjs /tmp/manifest.new.json
           MANIFEST_STATUS=$?
-          GRANTS_CANDIDATE=/tmp/grants.new.json \
-          GRANTS_COMMITTED=scripts/db-audit/grants-baseline.json \
-            node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-
-          try {
-            const fresh = JSON.parse(fs.readFileSync(process.env.GRANTS_CANDIDATE, 'utf8'));
-            const committed = JSON.parse(fs.readFileSync(process.env.GRANTS_COMMITTED, 'utf8'));
-            const isSortedUniqueStrings = (value) => Array.isArray(value)
-              && value.every((item) => typeof item === 'string' && item.length > 0)
-              && value.every((item, index) => index === 0 || value[index - 1] < item);
-            const valid = (value) => value && typeof value === 'object' && !Array.isArray(value)
-              && isSortedUniqueStrings(value.anon_execute)
-              && isSortedUniqueStrings(value.anon_table_select)
-              && Number.isInteger(value.authenticated_execute_count)
-              && value.authenticated_execute_count >= 0
-              && Number.isInteger(value.service_role_execute_count)
-              && value.service_role_execute_count >= 0;
-            if (!valid(fresh) || !valid(committed)) process.exit(2);
-            const metadata = new Set(['generated_at', 'note', 'how_to_regenerate']);
-            const canon = (value) => Array.isArray(value) ? value.map(canon)
-              : value && typeof value === 'object'
-                ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canon(value[key])]))
-                : value;
-            const aclOnly = (value) => Object.fromEntries(
-              Object.entries(value).filter(([key]) => !metadata.has(key)),
-            );
-            process.exit(JSON.stringify(canon(aclOnly(fresh))) === JSON.stringify(canon(aclOnly(committed))) ? 0 : 1);
-          } catch {
-            process.exit(2);
-          }
-          NODE
+          node scripts/db-audit/check-grants-fresh.mjs /tmp/grants.new.json
           GRANTS_STATUS=$?
           set -e
 
