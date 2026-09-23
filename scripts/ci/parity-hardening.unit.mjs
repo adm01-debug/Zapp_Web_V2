@@ -12,12 +12,30 @@ test('production parity requires live legs, and runtime metadata is archived', (
 });
 test('types-sync includes the grants baseline in generation, drift and PR paths', () => {
   const workflow = read('../../.github/workflows/types-sync.yml');
-  assert.match(workflow, /grants-baseline\.sql > \/tmp\/grants\.new\.json/);
+  assert.match(workflow, /psqlFile\('scripts\/db-audit\/grants-baseline\.sql'\)/);
+  assert.match(workflow, /\/tmp\/grants\.new\.json/);
+  assert.match(workflow, /check-grants-fresh\.mjs \/tmp\/grants\.new\.json/);
   assert.match(workflow, /GRANTS_STATUS=\$\?/);
   assert.match(workflow, /grants_changed=\$\{GRANTS_CHANGED\}/);
   assert.match(workflow, /cp \/tmp\/grants\.new\.json scripts\/db-audit\/grants-baseline\.json/);
-  assert.equal((workflow.match(/scripts\/db-audit\/grants-baseline\.json/g) || []).length, 4);
+  assert.equal((workflow.match(/scripts\/db-audit\/grants-baseline\.json/g) || []).length, 3);
   assert.match(workflow, /baseline de grants alterado/);
+});
+test('types-sync generates catalog/manifest/grants via psql without the connection string in argv', () => {
+  const workflow = read('../../.github/workflows/types-sync.yml');
+  // DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env,
+  // via withPsqlEnvironment(). Regressao real: PR anterior deste fix.
+  assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
+  assert.match(workflow, /withPsqlEnvironment\(url, \(env\) => execFileSync\(/);
+  assert.match(workflow, /psqlFile\('scripts\/db-audit\/catalog\.sql'\)/);
+  assert.match(workflow, /psqlFile\('scripts\/db-audit\/manifest\.sql'\)/);
+});
+test('grants comparison logic lives in a standalone, unit-tested script (not just a regex-checked heredoc)', () => {
+  const workflow = read('../../.github/workflows/types-sync.yml');
+  assert.doesNotMatch(workflow, /GRANTS_CANDIDATE=/);
+  assert.doesNotMatch(workflow, /GRANTS_COMMITTED=/);
+  assert.ok(fs.existsSync(new URL('../db-audit/check-grants-fresh.mjs', import.meta.url)));
+  assert.ok(fs.existsSync(new URL('../db-audit/check-grants-fresh.test.mjs', import.meta.url)));
 });
 test('deployment brackets mutation with snapshots and stable post-collection', () => {
   const workflow = read('../../.github/workflows/deploy-functions.yml');
