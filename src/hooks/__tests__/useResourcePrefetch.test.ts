@@ -81,6 +81,22 @@ describe('useRoutePrefetch', () => {
     const { result } = renderHook(() => useRoutePrefetch());
     expect(() => result.current.prefetchRoute('/test')).not.toThrow();
   });
+
+  it('cancels fallback prefetch when the hook unmounts', () => {
+    vi.useFakeTimers();
+    try {
+      const { result, unmount } = renderHook(() => useRoutePrefetch());
+      const before = document.head.querySelectorAll('link[rel="prefetch"]').length;
+
+      act(() => result.current.prefetchRoute('/cancelled-after-unmount'));
+      unmount();
+      act(() => vi.runAllTimers());
+
+      expect(document.head.querySelectorAll('link[rel="prefetch"]')).toHaveLength(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('useImagePrefetch', () => {
