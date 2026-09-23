@@ -69,6 +69,7 @@ jobs:
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/message-delivery/index.test.ts
+          supabase/functions/sentiment-alert/index.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-

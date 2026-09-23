@@ -1,22 +1,22 @@
 export type PersistedCallStatus = 'ringing' | 'answered' | 'ended' | 'missed' | 'busy' | 'failed';
 
-const CALL_STATUS_MAP: Record<string, PersistedCallStatus> = {
-  offer: 'ringing',
-  ringing: 'ringing',
-  answered: 'answered',
-  accept: 'answered',
-  ended: 'ended',
-  terminate: 'ended',
-  reject: 'missed',
-  timeout: 'missed',
-  missed: 'missed',
-  busy: 'busy',
-  failed: 'failed',
-};
+const CALL_STATUS_MAP = new Map<string, PersistedCallStatus>([
+  ['offer', 'ringing'],
+  ['ringing', 'ringing'],
+  ['answered', 'answered'],
+  ['accept', 'answered'],
+  ['ended', 'ended'],
+  ['terminate', 'ended'],
+  ['reject', 'missed'],
+  ['timeout', 'missed'],
+  ['missed', 'missed'],
+  ['busy', 'busy'],
+  ['failed', 'failed'],
+]);
 
 export function normalizeEvolutionCallStatus(value: unknown): PersistedCallStatus {
   if (typeof value !== 'string') return 'ringing';
-  return CALL_STATUS_MAP[value.trim().toLowerCase()] ?? 'ringing';
+  return CALL_STATUS_MAP.get(value.trim().toLowerCase()) ?? 'ringing';
 }
 
 export function shouldNotifyIncomingCall(value: unknown): boolean {
@@ -78,6 +78,11 @@ export function buildSentimentNotification(input: SentimentNotificationInput) {
       : `Sentimento negativo detectado para ${input.contactName}`,
     metadata: input.metadata,
   };
+}
+
+/** Preferences belong to the recipient; the caller is only the fallback for unassigned alerts. */
+export function sentimentSettingsOwnerId(callerUserId: string, recipientUserId?: string | null): string {
+  return recipientUserId || callerUserId;
 }
 
 export function escapeHtml(value: string): string {

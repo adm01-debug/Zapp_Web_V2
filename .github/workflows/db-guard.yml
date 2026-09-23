@@ -156,6 +156,11 @@ jobs:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
+      - name: Simular notificações atômicas de chamadas e sentimento
+        env:
+          NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
+
       - name: Simular reconciliação segura do ledger
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine

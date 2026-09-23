@@ -17,59 +17,25 @@ vi.mock('../../supabase/functions/_shared/evolution-helpers.ts', async (importOr
 const { handleCallEvent } = await import('../../supabase/functions/_shared/evolution-webhook-handlers.ts');
 
 interface SupabaseSimulation {
-  client: { from: (table: string) => Record<string, unknown> };
-  calls: Array<Record<string, unknown>>;
-  notifications: Array<Record<string, unknown>>;
+  client: {
+    from: (table: string) => Record<string, unknown>;
+    rpc: (name: string, params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
+  rpcCalls: Array<{ name: string; params: Record<string, unknown> }>;
 }
 
-function createSupabaseSimulation(profileUserId: string | null = 'user-1'): SupabaseSimulation {
-  const calls: Array<Record<string, unknown>> = [];
-  const notifications: Array<Record<string, unknown>> = [];
+function createSupabaseSimulation(rpcError: Record<string, unknown> | null = null): SupabaseSimulation {
+  const rpcCalls: Array<{ name: string; params: Record<string, unknown> }> = [];
 
   return {
-    calls,
-    notifications,
+    rpcCalls,
     client: {
       from(table: string) {
-        if (table === 'calls') {
-          return {
-            insert(payload: Record<string, unknown>) {
-              calls.push(payload);
-              return {
-                select: () => ({
-                  maybeSingle: async () => ({
-                    data: { id: `call-${calls.length}`, started_at: payload.started_at },
-                    error: null,
-                  }),
-                }),
-              };
-            },
-          };
-        }
-
-        if (table === 'profiles') {
-          return {
-            select: () => ({
-              eq: () => ({
-                single: async () => ({
-                  data: profileUserId ? { user_id: profileUserId, name: 'Agente' } : null,
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-
-        if (table === 'notifications') {
-          return {
-            insert: async (payload: Record<string, unknown>) => {
-              notifications.push(payload);
-              return { data: null, error: null };
-            },
-          };
-        }
-
         throw new Error(`Unexpected table in call simulation: ${table}`);
+      },
+      async rpc(name: string, params: Record<string, unknown>) {
+        rpcCalls.push({ name, params });
+        return { data: rpcError ? null : [{ call_id: 'call-1' }], error: rpcError };
       },
     },
   };
@@ -97,27 +63,19 @@ describe('Evolution call handler contract', () => {
       status: ' OFFER ',
     });
 
-    expect(simulation.calls).toHaveLength(1);
-    expect(simulation.calls[0]).toMatchObject({
-      contact_id: 'contact-1',
-      whatsapp_connection_id: 'connection-1',
-      agent_id: 'profile-1',
-      direction: 'inbound',
-      status: 'ringing',
-      notes: 'Chamada de voz',
-    });
-    expect(simulation.notifications).toHaveLength(1);
-    expect(simulation.notifications[0]).toMatchObject({
-      user_id: 'user-1',
-      type: 'incoming_call',
-      metadata: {
-        contact_id: 'contact-1',
-        is_video: false,
-        call_status: 'ringing',
-        call_id: 'call-1',
-        event_id: 'event-1',
+    expect(simulation.rpcCalls).toEqual([
+      {
+        name: 'record_incoming_call_event',
+        params: {
+          p_contact_id: 'contact-1',
+          p_whatsapp_connection_id: 'connection-1',
+          p_status: 'ringing',
+          p_is_video: false,
+          p_provider_event_id: 'event-1',
+          p_should_notify: true,
+        },
       },
-    });
+    ]);
   });
 
   it.each([
@@ -135,23 +93,20 @@ describe('Evolution call handler contract', () => {
       status: source,
     });
 
-    expect(simulation.calls).toHaveLength(1);
-    expect(simulation.calls[0]?.status).toBe(expected);
-    expect(simulation.notifications).toHaveLength(0);
+    expect(simulation.rpcCalls).toHaveLength(1);
+    expect(simulation.rpcCalls[0]?.params).toMatchObject({
+      p_status: expected,
+      p_should_notify: false,
+    });
   });
 
-  it('keeps the call history but skips notification when no agent user can be resolved', async () => {
-    const simulation = createSupabaseSimulation(null);
-
-    await handleCallEvent(simulation.client, 'instance-1', {
+  it('propagates atomic persistence failures so the webhook returns a retryable error', async () => {
+    const simulation = createSupabaseSimulation({ code: 'XX001' });
+    await expect(handleCallEvent(simulation.client, 'instance-1', {
       from: '5511999999999@s.whatsapp.net',
       status: 'ringing',
       isVideo: true,
-    });
-
-    expect(simulation.calls).toHaveLength(1);
-    expect(simulation.calls[0]?.notes).toBe('Chamada de vídeo');
-    expect(simulation.notifications).toHaveLength(0);
+    })).rejects.toThrow('Unable to persist incoming call event');
   });
 
   it('fails closed before persistence when caller identity is absent', async () => {
@@ -160,7 +115,6 @@ describe('Evolution call handler contract', () => {
     await handleCallEvent(simulation.client, 'instance-1', { status: 'offer' });
 
     expect(helperMocks.getConnectionByInstance).not.toHaveBeenCalled();
-    expect(simulation.calls).toHaveLength(0);
-    expect(simulation.notifications).toHaveLength(0);
+    expect(simulation.rpcCalls).toHaveLength(0);
   });
 });

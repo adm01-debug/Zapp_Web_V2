@@ -7,6 +7,7 @@ test('Edge contract CI pins its runtime and isolated frozen lock', () => {
   const workflow = read('../../.github/workflows/ci.yml');
   assert.match(workflow, /deno-version: '2\.9\.5'/);
   assert.match(workflow, /deno test --config scripts\/ci\/deno\.json --frozen --allow-env/);
+  assert.match(workflow, /supabase\/functions\/sentiment-alert\/index\.test\.ts/);
   const config = JSON.parse(read('./deno.json'));
   assert.deepEqual(config.lock, { path: './deno.lock', frozen: true });
   assert.equal(config.nodeModulesDir, 'none');

@@ -481,6 +481,10 @@ jobs:
               RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
                 -f scripts/db-audit/talkx-recovery-runtime.sql)
               ;;
+            20260922220000)
+              RUNTIME=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+                -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
+              ;;
             *)
               echo "::error::Migration sem contrato runtime permitido neste workflow."
               exit 1
@@ -1037,6 +1041,40 @@ jobs:
             targetOk = commonTalkX && (
               process.env.NEEDS_APPLY === 'true' ? beforeHardening : afterHardening
             );
+          } else if (process.env.TARGET_VERSION === '20260922220000') {
+            const commonNotifications = proof.base_table_count === 3
+              && proof.calls_table_count === 1
+              && proof.function_name_count === proof.function_signature_count
+              && /^[a-f0-9]{64}$/.test(proof.function_definition_sha256 || '');
+            const beforeAtomicity = proof.provider_event_column_count === 0
+              && proof.constraint_count === 0
+              && proof.validated_constraint_count === 0
+              && proof.index_count === 0
+              && proof.valid_unique_partial_index_count === 0
+              && proof.function_signature_count === 0
+              && proof.security_definer_count === 0
+              && proof.safe_path_count === 0
+              && proof.trusted_owner_count === 0
+              && proof.public_execute_count === 0
+              && proof.anon_execute_count === 0
+              && proof.authenticated_execute_count === 0
+              && proof.service_execute_count === 0;
+            const afterAtomicity = proof.provider_event_column_count === 1
+              && proof.constraint_count === 1
+              && proof.validated_constraint_count === 1
+              && proof.index_count === 1
+              && proof.valid_unique_partial_index_count === 1
+              && proof.function_signature_count === 2
+              && proof.security_definer_count === 2
+              && proof.safe_path_count === 2
+              && proof.trusted_owner_count === 2
+              && proof.public_execute_count === 0
+              && proof.anon_execute_count === 0
+              && proof.authenticated_execute_count === 0
+              && proof.service_execute_count === 2;
+            targetOk = commonNotifications && (
+              process.env.NEEDS_APPLY === 'true' ? beforeAtomicity : afterAtomicity
+            );
           }
           const ok = common && targetOk;
           if (!ok) {
@@ -1120,6 +1158,41 @@ jobs:
           )
           test "$BUNDLE_COUNT" = "11"
           echo "OK: ledger possui as 11 migrations ordenadas da recuperacao Talk X."
+
+      - name: Validar runtime atomico de chamadas e sentimento
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20260922220000'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          RESULT=$(psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
+          printf '%s\n' "$RESULT"
+          RESULT_JSON="$RESULT" node --input-type=module <<'NODE'
+          const proof = JSON.parse(process.env.RESULT_JSON);
+          const ok = proof.server_major === 17
+            && proof.database === 'postgres'
+            && proof.base_table_count === 3
+            && proof.calls_table_count === 1
+            && proof.provider_event_column_count === 1
+            && proof.constraint_count === 1
+            && proof.validated_constraint_count === 1
+            && proof.index_count === 1
+            && proof.valid_unique_partial_index_count === 1
+            && proof.function_name_count === 2
+            && proof.function_signature_count === 2
+            && proof.security_definer_count === 2
+            && proof.safe_path_count === 2
+            && proof.trusted_owner_count === 2
+            && proof.public_execute_count === 0
+            && proof.anon_execute_count === 0
+            && proof.authenticated_execute_count === 0
+            && proof.service_execute_count === 2
+            && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
+            && /^[a-f0-9]{64}$/.test(proof.function_definition_sha256 || '');
+          if (!ok) process.exit(1);
+          NODE
 
       - name: Validar runtime completo do bundle Talk X
         if: >-
