@@ -10,6 +10,8 @@ import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtect
 import { SoundMuteToggle } from '@/components/notifications/SoundMuteToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
+import { SidebarUserPill } from './SidebarUserPill';
+import { SidebarBackButton } from './SidebarBackButton';
  import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
  import { useUserRole } from '@/hooks/system/useUserRole';
  import { NavigationService } from '@/services/navigation.service';
@@ -18,12 +20,22 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   inboxBadge?: number;
+  profile?: { name?: string | null; avatar_url?: string | null } | null;
+  userEmail?: string;
+  signOut?: () => void;
+  canGoBack?: boolean;
+  onGoBack?: () => void;
 }
 
 export const Sidebar = React.memo(function Sidebar({
   currentView,
   onViewChange,
   inboxBadge,
+  profile,
+  userEmail,
+  signOut,
+  canGoBack,
+  onGoBack,
 }: SidebarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -64,12 +76,13 @@ export const Sidebar = React.memo(function Sidebar({
           <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
         </button>
         {!collapsed && <span className="font-display text-xl font-bold leading-none tracking-[-0.01em] text-foreground ml-2 mr-auto">ZAPP</span>}
+        {!collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed={false} />}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
               <PanelLeftClose className="w-[15px] h-[15px]" />
             </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘B</kbd></TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
         )}
       </div>
 
@@ -79,9 +92,11 @@ export const Sidebar = React.memo(function Sidebar({
             <button onClick={toggle} className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-border/40 hover:border-border focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Expandir menu">
               <PanelLeftOpen className="w-[16px] h-[16px]" />
             </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Expandir <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘B</kbd></TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Expandir <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
         </div>
       )}
+
+      {collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed />}
 
        <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Menu principal">
          <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
@@ -114,7 +129,7 @@ export const Sidebar = React.memo(function Sidebar({
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
               <span>Buscar</span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">⌘K</kbd>
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -167,15 +182,23 @@ export const Sidebar = React.memo(function Sidebar({
       <div className="flex flex-col items-center gap-1.5 pt-1.5 pb-3 shrink-0">
         <div className="mx-3 h-px bg-border self-stretch" />
         {!collapsed && <div className="px-3 self-stretch flex items-center gap-1.5 pb-0.5"><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Controles rápidos</span></div>}
-        <div className={cn('flex items-center gap-1 rounded-xl border border-border bg-muted/50 px-1.5 py-1.5 shadow-sm', collapsed ? 'flex-col' : 'flex-row self-stretch mx-2')}>
-          <ScreenProtectionToggle className="w-[36px] h-[36px]" />
-          <PushNotificationToggle className="w-[36px] h-[36px]" />
-          <SoundMuteToggle className="w-[36px] h-[36px]" />
-          <Tooltip delayDuration={200}><TooltipTrigger asChild>
-            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
-              {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
-            </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+        <div className={cn('flex flex-col gap-1 rounded-xl border border-border bg-muted/50 px-1.5 py-1.5 shadow-sm', collapsed ? 'items-center' : 'self-stretch mx-2')}>
+          {signOut && (
+            <>
+              <SidebarUserPill profile={profile ?? null} userEmail={userEmail ?? ''} signOut={signOut} onViewChange={onViewChange} collapsed={collapsed} />
+              <div className="h-px bg-border/60 self-stretch mx-1" />
+            </>
+          )}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <ScreenProtectionToggle className="w-[36px] h-[36px]" />
+            <PushNotificationToggle className="w-[36px] h-[36px]" />
+            <SoundMuteToggle className="w-[36px] h-[36px]" />
+            <Tooltip delayDuration={200}><TooltipTrigger asChild>
+              <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
+                {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
+              </button>
+            </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+          </div>
         </div>
       </div>
     </aside>

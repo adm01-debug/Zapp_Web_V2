@@ -145,7 +145,7 @@ export function PrivateNotes({ contactId }: PrivateNotesProps) {
                     {note.author?.name?.[0] || '?'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-3xs text-muted-foreground">
                   {note.author?.name || 'Desconhecido'} • {format(new Date(note.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                 </span>
               </div>

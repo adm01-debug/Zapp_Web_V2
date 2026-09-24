@@ -234,7 +234,7 @@ export function ConnectionHealthPanel() {
                   <div key={log.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/50 text-sm">
                     <Icon className={cn('w-4 h-4 flex-shrink-0', cfg.color)} />
                     <span className="font-medium min-w-[120px]">{log.instance_id}</span>
-                    <Badge variant="outline" className={cn('text-[10px]', cfg.color)}>
+                    <Badge variant="outline" className={cn('text-3xs', cfg.color)}>
                       {cfg.label}
                     </Badge>
                     <span className="text-muted-foreground text-xs">

@@ -130,7 +130,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
             <CardTitle className="text-sm flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary" />
               Novos Contatos (14 dias)
-              <Badge variant="default" className="ml-auto text-[10px]">+{analytics.newThisWeek} semana</Badge>
+              <Badge variant="default" className="ml-auto text-3xs">+{analytics.newThisWeek} semana</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -179,7 +179,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
                     className="flex items-center justify-between text-xs"
                   >
                     <span className="font-medium truncate mr-2">{company}</span>
-                    <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
+                    <Badge variant="secondary" className="text-3xs shrink-0">{count}</Badge>
                   </motion.div>
                 ))}
               </div>
@@ -187,13 +187,13 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
 
             {analytics.topTags.length > 0 && (
               <>
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   <Tag className="w-3 h-3" />
                   Tags populares
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {analytics.topTags.map(([tag, count]) => (
-                    <Badge key={tag} variant="outline" className="text-[10px] gap-1">
+                    <Badge key={tag} variant="outline" className="text-3xs gap-1">
                       {tag}
                       <span className="text-muted-foreground/60">{count}</span>
                     </Badge>

@@ -63,18 +63,18 @@ export function AnalysisBadges({ contactId, compact = false, className }: Analys
   return (
     <div className={cn('flex items-center gap-1.5 flex-wrap', className)}>
       {sentCfg && (
-        <Badge variant="outline" className={cn('text-[10px] border gap-0.5', sentCfg.color === 'text-success' && 'border-success/30 bg-success/10', sentCfg.color === 'text-warning' && 'border-warning/30 bg-warning/10', sentCfg.color === 'text-destructive' && 'border-destructive/30 bg-destructive/10')}>
+        <Badge variant="outline" className={cn('text-3xs border gap-0.5', sentCfg.color === 'text-success' && 'border-success/30 bg-success/10', sentCfg.color === 'text-warning' && 'border-warning/30 bg-warning/10', sentCfg.color === 'text-destructive' && 'border-destructive/30 bg-destructive/10')}>
           <sentCfg.icon className="w-3 h-3" />
           {sentCfg.label}
         </Badge>
       )}
       {urgCfg && (
-        <Badge variant="outline" className={cn('text-[10px] border', urgCfg.color)}>
+        <Badge variant="outline" className={cn('text-3xs border', urgCfg.color)}>
           Urg: {urgCfg.label}
         </Badge>
       )}
       {analysis.department && (
-        <Badge variant="outline" className="text-[10px] border border-border/50">
+        <Badge variant="outline" className="text-3xs border border-border/50">
           {analysis.department}
         </Badge>
       )}

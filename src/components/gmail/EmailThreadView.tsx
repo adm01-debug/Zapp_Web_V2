@@ -79,7 +79,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
               </span>
               {message.is_starred && <Star className="w-3 h-3 text-warning fill-warning shrink-0" />}
               {message.has_attachments && <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />}
-              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+              <span className="text-3xs text-muted-foreground ml-auto shrink-0">
                 {formatDate(message.internal_date)}
               </span>
             </div>
@@ -104,7 +104,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
             >
               <div className="px-3 pb-3 pl-14">
                 {/* Addresses */}
-                <div className="text-[10px] text-muted-foreground space-y-0.5 mb-3">
+                <div className="text-3xs text-muted-foreground space-y-0.5 mb-3">
                   <p>De: <span className="text-foreground">{message.from_name ? `${message.from_name} <${message.from_address}>` : message.from_address}</span></p>
                   <p>Para: <span className="text-foreground">{message.to_addresses.join(', ')}</span></p>
                   {message.cc_addresses.length > 0 && (
@@ -130,7 +130,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-[10px] mt-2 h-6 px-2"
+                    className="text-3xs mt-2 h-6 px-2"
                     onClick={() => setShowHtml(!showHtml)}
                   >
                     {showHtml ? 'Ver texto simples' : 'Ver HTML'}
@@ -141,7 +141,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
                 {message.has_attachments && (
                   <div className="mt-2 flex items-center gap-1">
                     <Paperclip className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">Este email possui anexos</span>
+                    <span className="text-3xs text-muted-foreground">Este email possui anexos</span>
                   </div>
                 )}
               </div>
@@ -189,7 +189,7 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
 
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold truncate">{thread.subject || '(Sem assunto)'}</h3>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-2 text-3xs text-muted-foreground">
             <span>{thread.message_count} mensage{thread.message_count !== 1 ? 'ns' : 'm'}</span>
             {thread.contact && (
               <>

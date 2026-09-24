@@ -73,20 +73,20 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     switch (transcriptionStatus) {
       case 'processing':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium', isSent ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-primary/10 text-primary')}>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-primary/10 text-primary')}>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><Sparkles className="w-3 h-3" /></motion.div>
             <span>Transcrevendo...</span>
           </motion.div>
         );
       case 'completed':
         return transcription ? (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
             <CheckCircle2 className="w-3 h-3" /><span>Transcrito</span>
           </motion.div>
         ) : null;
       case 'failed':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')} onClick={handleTranscribe}>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')} onClick={handleTranscribe}>
             <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
           </motion.div>
         );
@@ -117,12 +117,12 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
               })}
             </div>
           </div>
-          <div className={cn('flex justify-between text-[10px]', hasError ? 'text-destructive' : isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+          <div className={cn('flex justify-between text-3xs', hasError ? 'text-destructive' : isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
             {hasError ? <span>Erro ao carregar — toque para tentar</span> : <><span>{formatTime(currentTime)}</span><span>{duration ? formatTime(duration) : '--:--'}</span></>}
           </div>
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-[10px] font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : isSent ? 'bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
+          <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : isSent ? 'bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? (isSent ? 'text-primary-foreground' : 'text-primary') : (isSent ? 'text-primary-foreground/50' : 'text-muted-foreground'))}
@@ -146,14 +146,14 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
             {isProcessing ? (
               <div className="flex items-center gap-2">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}><Sparkles className="w-4 h-4 text-primary" /></motion.div>
-                <div className="flex-1"><p className="font-medium">Transcrevendo áudio...</p><p className="text-[10px] opacity-60 mt-0.5">A IA está convertendo o áudio em texto</p></div>
+                <div className="flex-1"><p className="font-medium">Transcrevendo áudio...</p><p className="text-3xs opacity-60 mt-0.5">A IA está convertendo o áudio em texto</p></div>
                 <motion.div className="flex gap-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   {[0, 1, 2].map((i) => <motion.div key={i} className={cn('w-1.5 h-1.5 rounded-full', isSent ? 'bg-primary-foreground/50' : 'bg-primary/50')} animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />)}
                 </motion.div>
               </div>
             ) : transcription ? (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-[10px] opacity-60 mb-1"><Volume2 className="w-3 h-3" /><span>Transcrição</span><CheckCircle2 className="w-3 h-3 text-success ml-auto" /></div>
+                <div className="flex items-center gap-1.5 text-3xs opacity-60 mb-1"><Volume2 className="w-3 h-3" /><span>Transcrição</span><CheckCircle2 className="w-3 h-3 text-success ml-auto" /></div>
                 <p className="leading-relaxed italic">"{transcription}"</p>
               </div>
             ) : (

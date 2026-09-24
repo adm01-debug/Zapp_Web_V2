@@ -85,7 +85,7 @@ export function MiniChatPiP({
             <div className="relative">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={contactAvatar} alt="Avatar do contato" />
-                <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-semibold">
+                <AvatarFallback className="bg-primary/15 text-primary text-3xs font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -95,7 +95,7 @@ export function MiniChatPiP({
             {isExpanded ? (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">{contactName}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{lastMessage}</p>
+                <p className="text-3xs text-muted-foreground truncate">{lastMessage}</p>
               </div>
             ) : (
               <div className="flex-1 min-w-0 max-w-[140px]">
@@ -144,7 +144,7 @@ export function MiniChatPiP({
                 {/* Last message preview */}
                 {lastMessage && (
                   <div className="px-3 py-2 bg-muted/30 border-t border-border/50">
-                    <p className="text-[11px] text-muted-foreground line-clamp-2">{lastMessage}</p>
+                    <p className="text-2xs text-muted-foreground line-clamp-2">{lastMessage}</p>
                   </div>
                 )}
 
@@ -180,7 +180,7 @@ export function MiniChatPiP({
                     e.stopPropagation();
                     onExpand();
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] text-primary hover:bg-primary/5 transition-colors border-t border-border/50"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-2xs text-primary hover:bg-primary/5 transition-colors border-t border-border/50"
                 >
                   <MessageSquare className="w-3 h-3" />
                   Abrir conversa completa
@@ -196,7 +196,7 @@ export function MiniChatPiP({
                 e.stopPropagation();
                 setIsExpanded(true);
               }}
-              className="w-full px-3 py-1.5 text-[10px] text-primary hover:bg-primary/5 transition-colors border-t border-border/50"
+              className="w-full px-3 py-1.5 text-3xs text-primary hover:bg-primary/5 transition-colors border-t border-border/50"
             >
               Toque para responder
             </button>

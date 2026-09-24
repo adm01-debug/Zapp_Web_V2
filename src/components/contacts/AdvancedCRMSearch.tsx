@@ -65,7 +65,7 @@ function AdvancedCRMSearchInner({ onSelectContact, className }: AdvancedCRMSearc
               <SlidersHorizontal className="w-4 h-4" />
               <span className="hidden sm:inline text-xs">Filtros</span>
               {activeFilterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">{activeFilterCount}</span>
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-3xs text-primary-foreground flex items-center justify-center">{activeFilterCount}</span>
               )}
             </Button>
           </SheetTrigger>
@@ -95,7 +95,7 @@ function AdvancedCRMSearchInner({ onSelectContact, className }: AdvancedCRMSearc
       {hasActiveFilters && (
         <div className="flex items-center justify-between px-3 py-1.5 bg-muted/10 border-b border-border/20 text-xs text-muted-foreground">
           <span>{isLoading ? '...' : `${total.toLocaleString('pt-BR')} contato${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}`}</span>
-          {activeFilterCount > 0 && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-5 text-[10px] px-1.5">Limpar filtros</Button>}
+          {activeFilterCount > 0 && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-5 text-3xs px-1.5">Limpar filtros</Button>}
         </div>
       )}
 

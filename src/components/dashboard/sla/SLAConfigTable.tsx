@@ -64,7 +64,7 @@ export function SLAConfigTable() {
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT_CLASS[cfg.priority] ?? 'bg-dash-blue'}`} />
                       <span className="font-medium text-foreground">{cfg.name}</span>
-                      <span className="text-[11px] text-muted-foreground">({pCfg.label})</span>
+                      <span className="text-2xs text-muted-foreground">({pCfg.label})</span>
                     </div>
                   </td>
                   <td className="pr-2 text-foreground-secondary">{formatSLAMinutes(cfg.first_response_minutes)}</td>

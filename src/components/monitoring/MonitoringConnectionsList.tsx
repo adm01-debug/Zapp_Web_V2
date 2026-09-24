@@ -77,10 +77,10 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">{conn.instance_id}</span>
-                        <Badge variant={conn.status === 'connected' ? 'default' : 'destructive'} className="text-[10px]">{conn.status}</Badge>
-                        {conn.health_status && <Badge variant="outline" className="text-[10px] gap-1">{statusIcon(conn.health_status)}{conn.health_status}</Badge>}
+                        <Badge variant={conn.status === 'connected' ? 'default' : 'destructive'} className="text-3xs">{conn.status}</Badge>
+                        {conn.health_status && <Badge variant="outline" className="text-3xs gap-1">{statusIcon(conn.health_status)}{conn.health_status}</Badge>}
                       </div>
-                      <div className="flex gap-3 mt-1 text-[11px] text-muted-foreground flex-wrap">
+                      <div className="flex gap-3 mt-1 text-2xs text-muted-foreground flex-wrap">
                         {conn.phone_number && <span>📱 {conn.phone_number}</span>}
                         {conn.health_response_ms != null && (
                           <span className={cn('font-medium', conn.health_response_ms < 300 ? 'text-emerald-500' : conn.health_response_ms < 800 ? 'text-amber-500' : 'text-destructive')}>
@@ -114,7 +114,7 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-4 flex justify-center">
                     <div className="p-4 bg-white rounded-xl border shadow-sm">
                       <img src={qrCodes[conn.instance_id]} alt={`QR ${conn.instance_id}`} className="w-48 h-48 object-contain"  loading="lazy" decoding="async"/>
-                      <p className="text-[10px] text-center text-muted-foreground mt-2">Escaneie com WhatsApp</p>
+                      <p className="text-3xs text-center text-muted-foreground mt-2">Escaneie com WhatsApp</p>
                     </div>
                   </motion.div>
                 )}

@@ -23,7 +23,7 @@ export function ChatAssignedBar({ conversation, onOpenTransfer }: ChatAssignedBa
             <span className="text-muted-foreground">Atribuído a:</span>
             <Avatar className="w-5 h-5">
               <AvatarImage src={conversation.assignedTo.avatar ?? undefined} alt={conversation.assignedTo.name || 'Agente'} />
-              <AvatarFallback className="text-[10px]">
+              <AvatarFallback className="text-3xs">
                 {conversation.assignedTo.name[0]}
               </AvatarFallback>
             </Avatar>

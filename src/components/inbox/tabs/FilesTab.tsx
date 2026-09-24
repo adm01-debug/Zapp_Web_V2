@@ -103,7 +103,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             )}
           >
             {chip.label}
-            <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-[10px] font-bold flex items-center justify-center', typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
+            <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center', typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
               {counts[chip.id]}
             </span>
           </button>

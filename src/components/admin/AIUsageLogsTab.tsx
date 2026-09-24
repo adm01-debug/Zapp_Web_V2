@@ -50,7 +50,7 @@ export function AIUsageLogsTab({ logs, logsPage, setLogsPage, profileMap }: AIUs
                     <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{format(new Date(l.created_at), 'dd/MM HH:mm:ss', { locale: ptBR })}</td>
                     <td className="px-3 py-2 text-foreground">{profile?.name || profile?.email || l.user_id?.slice(0, 8) || '-'}</td>
                     <td className="px-3 py-2">
-                      <Badge variant="secondary" className="text-[10px]" style={{ backgroundColor: (FUNCTION_COLORS[l.function_name] || '#666') + '20', color: FUNCTION_COLORS[l.function_name] || '#666' }}>
+                      <Badge variant="secondary" className="text-3xs" style={{ backgroundColor: (FUNCTION_COLORS[l.function_name] || '#666') + '20', color: FUNCTION_COLORS[l.function_name] || '#666' }}>
                         {FUNCTION_LABELS[l.function_name] || l.function_name}
                       </Badge>
                     </td>
@@ -58,7 +58,7 @@ export function AIUsageLogsTab({ logs, logsPage, setLogsPage, profileMap }: AIUs
                     <td className="px-3 py-2 text-right font-mono text-foreground">{l.total_tokens.toLocaleString()}</td>
                     <td className="px-3 py-2 text-right text-muted-foreground">{l.duration_ms ? `${l.duration_ms}ms` : '-'}</td>
                     <td className="px-3 py-2 text-center">
-                      <Badge variant={l.status === 'success' ? 'default' : 'destructive'} className="text-[10px]">{l.status === 'success' ? '✓' : '✗'}</Badge>
+                      <Badge variant={l.status === 'success' ? 'default' : 'destructive'} className="text-3xs">{l.status === 'success' ? '✓' : '✗'}</Badge>
                     </td>
                   </tr>
                 );

@@ -111,7 +111,7 @@ export function CustomFieldsSection({ contactId }: CustomFieldsSectionProps) {
               className="flex items-center justify-between bg-muted/20 rounded-lg p-2.5 group hover:bg-muted/30 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                <span className="text-3xs uppercase tracking-wider text-muted-foreground font-medium">
                   {field.field_name}
                 </span>
                 <p className="text-sm text-foreground truncate">{field.field_value}</p>

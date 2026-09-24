@@ -130,9 +130,9 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{region}</p>
-                      <p className="text-[10px] text-muted-foreground">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
+                      <p className="text-3xs text-muted-foreground">{members.length} contato{members.length !== 1 ? 's' : ''}</p>
                     </div>
-                    <Badge variant="secondary" className="text-[10px] h-5 shrink-0">{percentage}%</Badge>
+                    <Badge variant="secondary" className="text-3xs h-5 shrink-0">{percentage}%</Badge>
                   </div>
 
                   {/* Bar */}
@@ -168,15 +168,15 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                                     {getInitials(c.name)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="text-[11px] truncate flex-1">{c.name}</span>
+                                <span className="text-2xs truncate flex-1">{c.name}</span>
                                 {c.company && (
-                                  <span className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
+                                  <span className="text-3xs text-muted-foreground/60 truncate max-w-[80px]">{c.company}</span>
                                 )}
                               </button>
                             );
                           })}
                           {members.length > 20 && (
-                            <p className="text-[10px] text-muted-foreground/50 text-center py-1">
+                            <p className="text-3xs text-muted-foreground/50 text-center py-1">
                               +{members.length - 20} mais
                             </p>
                           )}

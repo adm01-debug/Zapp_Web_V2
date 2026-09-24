@@ -197,7 +197,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
             <Wand2 className="w-4 h-4 text-primary" />
             <h4 className="text-sm font-semibold text-foreground">Voice Changer</h4>
-            <span className="text-[10px] text-muted-foreground ml-auto">Powered by ElevenLabs</span>
+            <span className="text-3xs text-muted-foreground ml-auto">Powered by ElevenLabs</span>
           </div>
 
           <div className="p-3 space-y-3">
@@ -237,7 +237,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                     >
                       <Mic className="w-7 h-7" />
                     </Button>
-                    <p className="text-[11px] text-muted-foreground text-center mt-1.5">Toque para gravar</p>
+                    <p className="text-2xs text-muted-foreground text-center mt-1.5">Toque para gravar</p>
                   </motion.div>
                 )}
 
@@ -296,7 +296,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
           </div>
 
           <div className="px-3 py-1.5 border-t border-border/30">
-            <p className="text-[10px] text-muted-foreground text-center">
+            <p className="text-3xs text-muted-foreground text-center">
               Grave → Escolha a voz → Transforme → Envie 🎭
             </p>
           </div>

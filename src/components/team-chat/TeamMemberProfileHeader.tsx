@@ -50,7 +50,7 @@ export function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType;
     <div className="flex items-start gap-3 py-2">
       <Icon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-3xs text-muted-foreground">{label}</p>
         <p className="text-sm text-foreground break-words">{value}</p>
       </div>
     </div>
@@ -90,8 +90,8 @@ export function DirectProfileHeader({ memberProfile, isLoading }: DirectProfileH
       <h3 className="text-base font-bold text-foreground">{memberProfile.name}</h3>
       {memberProfile.job_title && <p className="text-xs text-muted-foreground mt-0.5">{memberProfile.job_title}</p>}
       <div className="flex items-center gap-2 mt-2">
-        <Badge variant="outline" className={cn('text-[10px] px-2', roleBadge.className)}><Shield className="w-2.5 h-2.5 mr-1" />{roleBadge.label}</Badge>
-        <Badge variant="outline" className={cn('text-[10px] px-2', memberProfile.is_active ? 'bg-success/10 text-success border-success/20' : '')}>
+        <Badge variant="outline" className={cn('text-3xs px-2', roleBadge.className)}><Shield className="w-2.5 h-2.5 mr-1" />{roleBadge.label}</Badge>
+        <Badge variant="outline" className={cn('text-3xs px-2', memberProfile.is_active ? 'bg-success/10 text-success border-success/20' : '')}>
           {memberProfile.is_active ? 'Online' : 'Offline'}
         </Badge>
       </div>

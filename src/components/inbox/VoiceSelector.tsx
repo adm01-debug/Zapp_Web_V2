@@ -142,7 +142,7 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
       <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
           <span>Vozes ElevenLabs</span>
-          <span className="text-[10px] font-normal">Clique ▶ para ouvir</span>
+          <span className="text-3xs font-normal">Clique ▶ para ouvir</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="max-h-[350px] overflow-y-auto">
@@ -181,7 +181,7 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{voice.name}</span>
                       <span className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded flex-shrink-0",
+                        "text-3xs px-1.5 py-0.5 rounded flex-shrink-0",
                         voice.gender === 'female' 
                           ? "bg-destructive/10 text-destructive" 
                           : "bg-info/10 text-info"

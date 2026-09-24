@@ -43,7 +43,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">{currentAgent.name}</p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-3xs text-muted-foreground">
               {currentAgent.is_active ? 'Online' : 'Offline'}
             </p>
           </div>
@@ -52,7 +52,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
 
       <div className="space-y-2.5">
         <div>
-          <label className="text-[10px] text-muted-foreground mb-1 block uppercase tracking-wider flex items-center gap-1">
+          <label className="text-3xs text-muted-foreground mb-1 block uppercase tracking-wider flex items-center gap-1">
             <User className="w-3 h-3" />
             Atendente
           </label>
@@ -70,7 +70,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
                     <div className="relative">
                       <Avatar className="w-5 h-5 ring-1 ring-border/30">
                         <AvatarImage src={agent.avatar_url || undefined} alt={agent.name || 'Agente'} />
-                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                        <AvatarFallback className="text-3xs bg-primary/10 text-primary">
                           {agent.name[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -88,7 +88,7 @@ export function AssignmentSection({ conversation }: AssignmentSectionProps) {
         </div>
 
         <div>
-          <label className="text-[10px] text-muted-foreground mb-1 block uppercase tracking-wider flex items-center gap-1">
+          <label className="text-3xs text-muted-foreground mb-1 block uppercase tracking-wider flex items-center gap-1">
             <Users className="w-3 h-3" />
             Fila
           </label>

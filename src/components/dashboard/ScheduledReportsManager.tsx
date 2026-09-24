@@ -210,7 +210,7 @@ export function ScheduledReportsManager() {
                       active ? 'bg-primary/15 border-primary/60 text-primary-glow' : 'border-border/60 bg-input/20 text-foreground hover:bg-muted/40')}>
                     {f.value === 'monthly' ? <Calendar className="w-5 h-5" /> : f.value === 'biweekly' ? <Clock className="w-5 h-5" /> : f.value === 'daily' ? <Calendar className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
                     <span className="text-[13px] font-semibold leading-none">{f.label}</span>
-                    <span className={cn('text-[11px]', active ? 'text-primary-glow/80' : 'text-muted-foreground')}>{f.sub}</span>
+                    <span className={cn('text-2xs', active ? 'text-primary-glow/80' : 'text-muted-foreground')}>{f.sub}</span>
                   </button>
                 );
               })}

@@ -34,7 +34,7 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
             <span className={`text-3xl font-black tabular-nums ${sentimentConfig[currentSentiment]?.color}`}>{sentimentScore}%</span>
           </div>
           <div className="space-y-1.5">
-            <div className="flex justify-between text-[10px] text-muted-foreground">
+            <div className="flex justify-between text-3xs text-muted-foreground">
               <span>Negativo</span><span>Positivo</span>
             </div>
             <Progress value={sentimentScore} className="h-2.5 rounded-full" />
@@ -125,7 +125,7 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
               </TooltipProvider>
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+          <div className="mt-1 flex justify-between text-3xs text-muted-foreground">
             <span>Antiga</span><span>Recente</span>
           </div>
         </div>

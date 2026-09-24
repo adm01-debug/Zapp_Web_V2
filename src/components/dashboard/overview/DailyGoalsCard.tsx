@@ -65,7 +65,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
           <button
             type="button"
             onClick={() => setConfigDialogOpen(true)}
-            className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-[11px] font-medium text-foreground-secondary hover:bg-muted/60"
+            className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-2xs font-medium text-foreground-secondary hover:bg-muted/60"
           >
             Configurar metas
           </button>
@@ -90,7 +90,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
               </div>
             </div>
             <p className="text-xs font-semibold text-foreground text-center">{message}</p>
-            <p className="text-[11px] text-foreground-secondary text-center leading-snug">{submessage}</p>
+            <p className="text-2xs text-foreground-secondary text-center leading-snug">{submessage}</p>
           </div>
           <div className="space-y-1.5">
             {items.map((item, i) => (
@@ -98,7 +98,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
                 <span className={cn('w-4 h-4 rounded shrink-0 flex items-center justify-center', item.done ? 'bg-dash-green' : 'border border-border')}>
                   {item.done && <Check className="w-3 h-3 text-white" />}
                 </span>
-                <span className={cn('text-[11px] font-medium truncate', item.done ? 'text-foreground' : 'text-foreground-secondary')}>{item.label}</span>
+                <span className={cn('text-2xs font-medium truncate', item.done ? 'text-foreground' : 'text-foreground-secondary')}>{item.label}</span>
               </div>
             ))}
           </div>

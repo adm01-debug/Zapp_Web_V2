@@ -105,7 +105,7 @@ export function ContactEngagementScore({
               {engagement.score}
             </span>
             {size === 'md' && (
-              <span className="text-[10px] text-muted-foreground leading-tight">
+              <span className="text-3xs text-muted-foreground leading-tight">
                 {engagement.label}
               </span>
             )}

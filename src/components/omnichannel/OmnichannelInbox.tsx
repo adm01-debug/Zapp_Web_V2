@@ -177,7 +177,7 @@ export function OmnichannelInbox() {
                         </div>
                         <div>
                           <p className="text-lg font-bold">{count}</p>
-                          <p className="text-[10px] text-muted-foreground">{config.label}</p>
+                          <p className="text-3xs text-muted-foreground">{config.label}</p>
                         </div>
                       </div>
                     </CardContent>

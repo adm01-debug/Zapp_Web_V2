@@ -123,7 +123,7 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
           <div className="flex items-center gap-1.5">
             <Icon className={`w-3.5 h-3.5 ${color}`} />
             <span className="text-xs font-medium text-muted-foreground">{label}</span>
-            <Badge variant="outline" className="text-[10px] h-4">{memory[key].length}</Badge>
+            <Badge variant="outline" className="text-3xs h-4">{memory[key].length}</Badge>
           </div>
           <div className="space-y-1">
             {memory[key].map((item: string, idx: number) => (

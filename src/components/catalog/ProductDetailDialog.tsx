@@ -108,7 +108,7 @@ function ImageGallery({ product }: { product: ExternalProduct }) {
           />
         </button>
         {images.length > 1 && (
-          <span className="absolute left-2 top-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm text-[11px] font-medium tabular-nums pointer-events-none">
+          <span className="absolute left-2 top-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm text-2xs font-medium tabular-nums pointer-events-none">
             {idx + 1} / {images.length}
           </span>
         )}
@@ -210,13 +210,13 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
               </div>
               {/* meta: badges */}
               <div className="flex flex-wrap gap-1 pt-1">
-                {dp.is_new && <Badge className="bg-emerald-500 text-white text-[10px]"><Sparkles className="w-2.5 h-2.5 mr-0.5" />Novo</Badge>}
-                {dp.is_bestseller && <Badge className="bg-orange-500 text-white text-[10px]"><TrendingUp className="w-2.5 h-2.5 mr-0.5" />Top</Badge>}
-                {dp.is_featured && <Badge variant="secondary" className="text-[10px]"><Star className="w-2.5 h-2.5 mr-0.5" />Destaque</Badge>}
-                {dp.categories && <Badge variant="secondary" className="text-[10px]">{dp.categories.name}</Badge>}
-                {dp.brand && <Badge variant="outline" className="text-[10px]">{dp.brand}</Badge>}
-                {dp.is_kit && <Badge className="bg-violet-500 text-white text-[10px]">Kit</Badge>}
-                {dp.allows_personalization && <Badge variant="outline" className="border-primary/50 text-primary text-[10px]">Personalizável</Badge>}
+                {dp.is_new && <Badge className="bg-emerald-500 text-white text-3xs"><Sparkles className="w-2.5 h-2.5 mr-0.5" />Novo</Badge>}
+                {dp.is_bestseller && <Badge className="bg-orange-500 text-white text-3xs"><TrendingUp className="w-2.5 h-2.5 mr-0.5" />Top</Badge>}
+                {dp.is_featured && <Badge variant="secondary" className="text-3xs"><Star className="w-2.5 h-2.5 mr-0.5" />Destaque</Badge>}
+                {dp.categories && <Badge variant="secondary" className="text-3xs">{dp.categories.name}</Badge>}
+                {dp.brand && <Badge variant="outline" className="text-3xs">{dp.brand}</Badge>}
+                {dp.is_kit && <Badge className="bg-violet-500 text-white text-3xs">Kit</Badge>}
+                {dp.allows_personalization && <Badge variant="outline" className="border-primary/50 text-primary text-3xs">Personalizável</Badge>}
               </div>
             </SheetHeader>
 
@@ -298,37 +298,37 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
                   {dp.dimensions_display && (
                     <div className="flex items-start gap-1.5">
                       <Ruler className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">Dimensões</span><span className="text-xs">{dp.dimensions_display}</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">Dimensões</span><span className="text-xs">{dp.dimensions_display}</span></div>
                     </div>
                   )}
                   {dp.weight_g != null && dp.weight_g > 0 && (
                     <div className="flex items-start gap-1.5">
                       <Weight className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">Peso</span><span className="text-xs">{dp.weight_g >= 1000 ? `${(dp.weight_g / 1000).toFixed(2)} kg` : `${dp.weight_g} g`}</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">Peso</span><span className="text-xs">{dp.weight_g >= 1000 ? `${(dp.weight_g / 1000).toFixed(2)} kg` : `${dp.weight_g} g`}</span></div>
                     </div>
                   )}
                   {dp.origin_country && (
                     <div className="flex items-start gap-1.5">
                       <Globe className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">Origem</span><span className="text-xs">{dp.origin_country}</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">Origem</span><span className="text-xs">{dp.origin_country}</span></div>
                     </div>
                   )}
                   {dp.lead_time_days != null && (
                     <div className="flex items-start gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">Prazo</span><span className="text-xs">{dp.lead_time_days} dias úteis</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">Prazo</span><span className="text-xs">{dp.lead_time_days} dias úteis</span></div>
                     </div>
                   )}
                   {dp.min_quantity != null && (
                     <div className="flex items-start gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">Qtd. mínima</span><span className="text-xs">{dp.min_quantity} un.</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">Qtd. mínima</span><span className="text-xs">{dp.min_quantity} un.</span></div>
                     </div>
                   )}
                   {dp.ncm_code && (
                     <div className="flex items-start gap-1.5">
                       <Box className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <div><span className="text-[10px] text-muted-foreground block">NCM</span><span className="text-xs">{dp.ncm_code}</span></div>
+                      <div><span className="text-3xs text-muted-foreground block">NCM</span><span className="text-xs">{dp.ncm_code}</span></div>
                     </div>
                   )}
                 </div>
@@ -355,14 +355,14 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{v.name}</p>
-                        <p className="text-[10px] text-muted-foreground">SKU: {v.sku}</p>
+                        <p className="text-3xs text-muted-foreground">SKU: {v.sku}</p>
                         {v.stock_quantity <= 0 && fmtShortDate(v.next_entry_date) && (
-                          <p className="text-[10px] text-amber-600 dark:text-amber-500">
+                          <p className="text-3xs text-amber-600 dark:text-amber-500">
                             Previsão de entrada {fmtShortDate(v.next_entry_date)}
                           </p>
                         )}
                       </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0">{v.stock_quantity} un.</span>
+                      <span className="text-3xs text-muted-foreground shrink-0">{v.stock_quantity} un.</span>
                     </div>
                   ))}
                 </div>
@@ -375,7 +375,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
         {(onSend || dp.suppliers) && (
           <div className="border-t border-border/40 p-4 space-y-2">
             {dp.suppliers && (
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <p className="flex items-center gap-1.5 text-2xs text-muted-foreground">
                 <Store className="w-3.5 h-3.5" />
                 Fornecedor: <span className="text-foreground font-medium">{dp.suppliers.name}</span>
               </p>

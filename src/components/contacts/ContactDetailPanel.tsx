@@ -160,7 +160,7 @@ export function ContactDetailPanel({
                       <Icon className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+                      <p className="text-3xs text-muted-foreground uppercase tracking-wider">{label}</p>
                       <p className="text-sm font-medium text-foreground">{value}</p>
                     </div>
                   </div>
@@ -192,7 +192,7 @@ export function ContactDetailPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <p className="text-lg font-bold text-foreground">{messageCount}</p>
-                  <p className="text-[10px] text-muted-foreground">Mensagens</p>
+                  <p className="text-3xs text-muted-foreground">Mensagens</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <p className="text-sm font-medium text-foreground">
@@ -200,7 +200,7 @@ export function ContactDetailPanel({
                       ? format(new Date(lastMessageAt), 'dd/MM', { locale: ptBR })
                       : '—'}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Última msg</p>
+                  <p className="text-3xs text-muted-foreground">Última msg</p>
                 </div>
               </div>
             </div>
