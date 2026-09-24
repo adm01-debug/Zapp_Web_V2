@@ -44,14 +44,14 @@ export const Sidebar = React.memo(function Sidebar({
    const { roles } = useUserRole();
  
    const filteredPrimaryNav = useMemo(() => 
-     NavigationService.filterNavItems(primaryNav as any, roles),
+     NavigationService.filterNavItems(primaryNav, roles),
      [roles]
    );
 
    const filteredGroups = useMemo(() => 
      sidebarGroups.map(group => ({
        ...group,
-       items: NavigationService.filterNavItems(group.items as any, roles)
+       items: NavigationService.filterNavItems(group.items, roles)
      })).filter(group => group.items.length > 0),
      [roles]
    );
@@ -103,7 +103,7 @@ export const Sidebar = React.memo(function Sidebar({
            {filteredPrimaryNav.map((item) => (
              <li key={item.id}>
                <SidebarNavItem
-                 item={item as any}
+                 item={item}
                  currentView={currentView}
                  onViewChange={onViewChange}
                  badge={item.id === 'inbox' ? inboxBadge : undefined}
@@ -167,7 +167,7 @@ export const Sidebar = React.memo(function Sidebar({
                key={group.label}
                label={group.label}
                icon={group.icon}
-               items={group.items as any}
+               items={group.items}
                currentView={currentView}
                onViewChange={onViewChange}
                collapsed={collapsed}
