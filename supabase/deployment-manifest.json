@@ -148,8 +148,8 @@
     },
     {
       "path": "supabase/functions/ai-auto-tag/index.ts",
-      "bytes": 7419,
-      "sha256": "ac8a1f631d321ceca1faf047706d0c9d36496fd142c7383ed1314da94fc3f2ae"
+      "bytes": 9178,
+      "sha256": "099b8c114b95413286096bff8ae594e9771366ad9fc0e53ded2bdedb9cf4724b"
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
@@ -487,7 +487,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "14f945f783061458e0ac6b972f7753f7bd02f112943cf29ab441f51fafe6488b",
+      "source_sha256": "ad453d55072747c34131dfa246d0040655ef9461675c8145aceef83cd1702d02",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0a9904e38451da0333292b3be95045be7b8e7cf5dae52bfa64f58920db699c16"
+  "manifest_sha256": "758bc664fd2a0ba4472e33af062278e0bb4949cae80afe9b8ee781862e167536"
 }
