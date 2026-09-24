@@ -17,7 +17,7 @@ interface ProfileMenuContentProps {
   onClose: () => void;
 }
 
-/** Conteúdo do menu de perfil — usado pelo HeaderUserPill. */
+/** Conteúdo do menu de perfil — usado pelo SidebarUserPill. */
 export function ProfileMenuContent({ agent, onStatusChange, onViewChange, onLogout, onClose }: ProfileMenuContentProps) {
   return (
     <>
