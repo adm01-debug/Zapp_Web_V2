@@ -82,7 +82,7 @@ function sanitizeFtsQuery(input: string): string {
  */
 function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
   const clauses = values
-    .map((v) => sanitizeSearch(v).toUpperCase())
+    .map((v) => sanitizeSearch(v))
     .filter((v) => v.length > 0)
     .flatMap((v) => [`${column}.cs.${JSON.stringify([v])}`, `${column}.cs.${JSON.stringify([{ nome: v }])}`]);
   return clauses.length > 0 ? clauses.join(",") : null;
