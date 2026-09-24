@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { HeaderSectionAnchor } from './HeaderSectionAnchor';
-import { GlobalSearchTrigger } from './GlobalSearchTrigger';
 import { HeaderUserPill } from './HeaderUserPill';
 
 interface AppHeaderProps {
@@ -22,7 +21,6 @@ export function AppHeader({ currentView, profile, userEmail, signOut, onViewChan
     >
       <HeaderSectionAnchor currentView={currentView} />
       <div className="flex-1" />
-      <GlobalSearchTrigger />
       <HeaderUserPill profile={profile} userEmail={userEmail} signOut={signOut} onViewChange={onViewChange} />
     </header>
   );
