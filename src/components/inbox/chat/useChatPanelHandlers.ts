@@ -219,10 +219,6 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, []);
 
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
-    if (location.isLive) {
-      toast({ title: 'Localização em tempo real indisponível', description: 'Envie uma localização pontual ou configure um canal que suporte atualização ao vivo.', variant: 'destructive' });
-      throw new Error('Live location is not supported by the configured delivery provider.');
-    }
     try {
       await sendOutboundMessage({
         contactId,
