@@ -7,7 +7,7 @@ export function SocialProof() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.8 }}
-      className="mt-6 flex items-center justify-between gap-3 border-t border-border/30 pt-4 text-[11px] text-muted-foreground"
+      className="mt-6 flex items-center justify-between gap-3 border-t border-border/30 pt-4 text-2xs text-muted-foreground"
     >
       <div className="flex items-center gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5 text-success" />

@@ -188,10 +188,10 @@ export function StickerGrid({
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs max-w-[180px]">
                     <p className="font-medium">{sticker.name || 'Figurinha'}</p>
-                    <p className="text-muted-foreground text-[10px]">
+                    <p className="text-muted-foreground text-3xs">
                       {CATEGORY_LABELS[sticker.category]?.emoji} {CATEGORY_LABELS[sticker.category]?.label} · {sticker.use_count || 0}× usada
                     </p>
-                    <p className="text-muted-foreground text-[10px] mt-0.5">
+                    <p className="text-muted-foreground text-3xs mt-0.5">
                       Enter: enviar · F: favorito · Del: excluir
                     </p>
                   </TooltipContent>

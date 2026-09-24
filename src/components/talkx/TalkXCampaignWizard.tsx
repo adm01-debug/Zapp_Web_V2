@@ -99,7 +99,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* E61: Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-[11px] text-muted-foreground px-0.5">
+      <nav className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
         <span>Talk X</span>
         <span className="text-border">›</span>
         <span>Campanhas</span>
@@ -130,7 +130,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
                   </span>
                   <span className="hidden md:block text-left">
                     <span className={cn('block text-[13px] font-semibold leading-tight', active ? 'text-foreground' : 'text-foreground-secondary')}>{s.label}</span>
-                    <span className="block text-[11px] text-muted-foreground">{s.hint}</span>
+                    <span className="block text-2xs text-muted-foreground">{s.hint}</span>
                   </span>
                 </button>
                 {i < STEPS.length - 1 && <span className={cn('hidden xl:block h-px w-10 mx-3', done ? 'bg-dash-green' : 'bg-border')} />}
@@ -152,20 +152,20 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
-              {ed.autosaveStatus === 'saving' && <span className="text-[10px] text-muted-foreground" role="status">Salvando alterações…</span>}
+              {ed.autosaveStatus === 'saving' && <span className="text-3xs text-muted-foreground" role="status">Salvando alterações…</span>}
               {ed.autosaveStatus === 'offline' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-[10px] text-dash-amber hover:underline">
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-dash-amber hover:underline">
                   Sem conexão — tentar novamente
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-[10px] text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
                   Não salvo — tentar novamente
                 </button>
               )}
-              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-[10px] text-dash-amber">Alterações não salvas</span>}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-3xs text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
                 </span>
               )}
@@ -212,8 +212,8 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
       <IconTile icon={Icon as never} size={40} color={active ? 'blue' : 'blue'} />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-[11px] text-foreground-secondary leading-snug mt-0.5">{desc}</p>
-        {badge && <span className="inline-block mt-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground">{badge}</span>}
+        <p className="text-2xs text-foreground-secondary leading-snug mt-0.5">{desc}</p>
+        {badge && <span className="inline-block mt-1.5 text-3xs font-semibold px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground">{badge}</span>}
       </div>
       <span className={cn('w-4 h-4 rounded-full border-2 shrink-0 mt-0.5', active ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_hsl(var(--card))]' : 'border-border')} />
     </button>
@@ -263,7 +263,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
                     <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
                     <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                   </div>
-                  <p className="text-[11px] text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
+                  <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
                   <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
                 </button>
               );
@@ -309,16 +309,16 @@ function StepMessage({ ed }: { ed: WizardState }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
-              {approved.length > 0 && <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
+              {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
                 <DropdownMenuItem key={t.id} onClick={() => ed.applyTemplate(t.id)} className="flex flex-col items-start gap-0.5">
-                  <span className="font-medium text-xs">{t.name}</span><span className="text-[10px] text-muted-foreground line-clamp-1">{t.content}</span>
+                  <span className="font-medium text-xs">{t.name}</span><span className="text-3xs text-muted-foreground line-clamp-1">{t.content}</span>
                 </DropdownMenuItem>
               ))}
-              <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Rápidos</p>
+              <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Rápidos</p>
               {MESSAGE_TEMPLATES.map((t) => (
                 <DropdownMenuItem key={t.name} onClick={() => ed.setMessageTemplate(t.template)} className="flex flex-col items-start gap-0.5">
-                  <span className="font-medium text-xs">{t.name}</span><span className="text-[10px] text-muted-foreground line-clamp-1">{t.template}</span>
+                  <span className="font-medium text-xs">{t.name}</span><span className="text-3xs text-muted-foreground line-clamp-1">{t.template}</span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -338,7 +338,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
           <div className="rounded-xl border border-border/70 bg-input/30 overflow-hidden">
             <Textarea value={ed.messageTemplate} onChange={(e) => ed.setMessageTemplate(e.target.value)} placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…" rows={7} className="resize-none border-0 bg-transparent text-sm leading-relaxed focus-visible:ring-0" />
-            <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
               <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
               <span>{ed.messageTemplate.length}/4096</span>
             </div>
@@ -349,7 +349,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-[11px] font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>
@@ -362,7 +362,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
             <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground">Adicionar mídia ({ed.mediaType || 'imagem'})</p>
-              <p className="text-[11px] text-muted-foreground">Imagens, vídeos, documentos ou áudios via URL pública. Máx. 16 MB.</p>
+              <p className="text-2xs text-muted-foreground">Imagens, vídeos, documentos ou áudios via URL pública. Máx. 16 MB.</p>
             </div>
             <div className="relative w-full max-w-sm">
               <Input value={ed.mediaUrl} onChange={(e) => ed.setMediaUrl(e.target.value)} placeholder="https://exemplo.com/arquivo.jpg" className="h-9 pr-8 bg-input/40 border-border/70 text-xs" />
@@ -386,8 +386,8 @@ function StepMessage({ ed }: { ed: WizardState }) {
             {approved.slice(0, 3).map((t) => (
               <button key={t.id} type="button" onClick={() => ed.applyTemplate(t.id)} className={cn('text-left rounded-xl border p-3 transition-all', ed.templateId === t.id ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
                 <p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p>
-                <p className="text-[11px] text-foreground-secondary line-clamp-2 mt-0.5">{t.content}</p>
-                <div className="flex items-center gap-2 mt-2"><Badge variant="outline" className="text-[10px] h-4">{t.category}</Badge><span className="text-[10px] text-muted-foreground">{fmtInt(t.use_count)} usos</span></div>
+                <p className="text-2xs text-foreground-secondary line-clamp-2 mt-0.5">{t.content}</p>
+                <div className="flex items-center gap-2 mt-2"><Badge variant="outline" className="text-3xs h-4">{t.category}</Badge><span className="text-3xs text-muted-foreground">{fmtInt(t.use_count)} usos</span></div>
               </button>
             ))}
           </div>
@@ -406,9 +406,9 @@ function StatTile({ icon, color, label, value, sub, subTone }: { icon: React.Ele
     <div className="rounded-xl border border-border/60 bg-input/20 p-3 flex items-start gap-2.5 min-w-0">
       <IconTile icon={icon as never} color={color} size={36} />
       <div className="min-w-0">
-        <p className="text-[11px] text-foreground-secondary leading-tight">{label}</p>
+        <p className="text-2xs text-foreground-secondary leading-tight">{label}</p>
         <p className="text-lg font-bold text-foreground leading-tight tabular-nums mt-0.5 truncate">{value}</p>
-        {sub && <p className={cn('text-[11px] mt-0.5', subTone ?? 'text-muted-foreground')}>{sub}</p>}
+        {sub && <p className={cn('text-2xs mt-0.5', subTone ?? 'text-muted-foreground')}>{sub}</p>}
       </div>
     </div>
   );
@@ -421,17 +421,17 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
     <RailCard icon={Bookmark} color="violet" title={segment.name} subtitle={segment.description || 'Segmento salvo'}
       right={isFetching ? <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" /> : undefined}
     >
-      <p className="text-[11px] text-foreground-secondary">Público estimado</p>
+      <p className="text-2xs text-foreground-secondary">Público estimado</p>
       <p className={cn('text-2xl font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-xs font-normal text-muted-foreground ml-1">contatos</span></p>
       {est?.sample && est.sample.length > 0 && (
         <div className="mt-2 space-y-1.5">
-          <p className="text-[11px] text-foreground-secondary">Amostra (5)</p>
+          <p className="text-2xs text-foreground-secondary">Amostra (5)</p>
           {est.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2">
               <InitialsAvatar name={c.name || '?'} size={24} />
               <div className="min-w-0">
-                <p className="text-[11px] font-medium text-foreground truncate">{c.name}</p>
-                <p className="text-[10px] text-foreground-secondary truncate">{c.company || c.phone}</p>
+                <p className="text-2xs font-medium text-foreground truncate">{c.name}</p>
+                <p className="text-3xs text-foreground-secondary truncate">{c.company || c.phone}</p>
               </div>
             </div>
           ))}

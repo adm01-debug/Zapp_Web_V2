@@ -65,7 +65,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
             <div className="md:col-span-2">
               <Label className="text-xs text-foreground-secondary">Data e horário de início</Label>
               <Input type="datetime-local" value={ed.scheduledAt} min={ed.minimumScheduledAt} onChange={(e) => ed.setScheduledAt(e.target.value)} aria-invalid={!!ed.scheduleConfigError} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-[11px] text-dash-red">{ed.scheduleConfigError}</p>}
+              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-2xs text-dash-red">{ed.scheduleConfigError}</p>}
             </div>
             <div>
               <Label className="text-xs text-foreground-secondary">Fuso horário</Label>
@@ -83,13 +83,13 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           <div><Label className="text-xs text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
             <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-            <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-[11px] text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
+            <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-2xs text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
           <div className="flex items-center gap-3">
             <IconTile icon={CalendarDays as never} size={36} />
-            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-[11px] text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
+            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-2xs text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
           </div>
           <div className="flex items-center gap-2"><span className={cn('text-xs font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
         </div>
@@ -107,16 +107,16 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           </div>
           <div className="space-y-5 rounded-xl border border-border/60 bg-input/20 p-4">
             <div>
-              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Tempo "digitando…"</Label><span className="text-[11px] font-mono text-foreground">{ed.typingDelay[0]}s – {ed.typingDelay[1]}s</span></div>
+              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Tempo "digitando…"</Label><span className="text-2xs font-mono text-foreground">{ed.typingDelay[0]}s – {ed.typingDelay[1]}s</span></div>
               <Slider value={ed.typingDelay} onValueChange={ed.setTypingDelay} min={0.5} max={10} step={0.5} />
             </div>
             <div>
-              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Intervalo entre envios</Label><span className="text-[11px] font-mono text-foreground">{ed.sendInterval[0]}s – {ed.sendInterval[1]}s</span></div>
+              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Intervalo entre envios</Label><span className="text-2xs font-mono text-foreground">{ed.sendInterval[0]}s – {ed.sendInterval[1]}s</span></div>
               <Slider value={ed.sendInterval} onValueChange={ed.setSendInterval} min={3} max={60} step={1} />
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
               <Sliders className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-              <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-[11px] text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
+              <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-2xs text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
             </div>
           </div>
         </div>
@@ -126,11 +126,11 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           <label className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3 cursor-pointer">
             <Checkbox checked={ed.respectSuppression} onCheckedChange={(v) => ed.setRespectSuppression(!!v)} className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Não enviar para contatos em lista de supressão</p><p className="text-[11px] text-foreground-secondary">Opt-outs, bloqueios manuais e LGPD são removidos do público{ed.suppressedCount > 0 ? ` (${ed.suppressedCount} no público atual)` : ''}.</p></div>
+            <div><p className="text-[13px] font-medium text-foreground">Não enviar para contatos em lista de supressão</p><p className="text-2xs text-foreground-secondary">Opt-outs, bloqueios manuais e LGPD são removidos do público{ed.suppressedCount > 0 ? ` (${ed.suppressedCount} no público atual)` : ''}.</p></div>
           </label>
           <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
             <Checkbox checked disabled className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Respeitar opt-outs e bloqueados no envio</p><p className="text-[11px] text-foreground-secondary">O motor de envio sempre pula contatos suprimidos, mesmo os adicionados após o agendamento.</p></div>
+            <div><p className="text-[13px] font-medium text-foreground">Respeitar opt-outs e bloqueados no envio</p><p className="text-2xs text-foreground-secondary">O motor de envio sempre pula contatos suprimidos, mesmo os adicionados após o agendamento.</p></div>
           </div>
         </div>
       </Section>
@@ -146,9 +146,9 @@ const Row = ({ icon, label, value, sub, ok, step, ed }: { icon: React.ElementTyp
     <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] text-foreground-secondary">{label}</p>
+        <p className="text-2xs text-foreground-secondary">{label}</p>
         <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
-        {sub && <p className={cn('text-[11px]', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
+        {sub && <p className={cn('text-2xs', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
       </div>
       <button type="button" onClick={() => ed.setStep(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
     </div>

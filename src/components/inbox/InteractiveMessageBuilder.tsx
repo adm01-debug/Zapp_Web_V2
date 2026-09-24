@@ -77,21 +77,21 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Cabeçalho (opcional)</Label>
               <Input placeholder="Título da mensagem..." value={headerText} onChange={(e) => setHeaderText(e.target.value)} maxLength={60} />
-              <p className="text-[10px] text-muted-foreground text-right">{headerText.length}/60</p>
+              <p className="text-3xs text-muted-foreground text-right">{headerText.length}/60</p>
             </div>
 
             {/* Body */}
             <div className="space-y-2">
               <Label>Mensagem *</Label>
               <Textarea placeholder="Digite o corpo da mensagem..." value={body} onChange={(e) => setBody(e.target.value)} maxLength={1024} rows={3} />
-              <p className="text-[10px] text-muted-foreground text-right">{body.length}/1024</p>
+              <p className="text-3xs text-muted-foreground text-right">{body.length}/1024</p>
             </div>
 
             {/* Footer */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Rodapé (opcional)</Label>
               <Input placeholder="Texto do rodapé..." value={footer} onChange={(e) => setFooter(e.target.value)} maxLength={60} />
-              <p className="text-[10px] text-muted-foreground text-right">{footer.length}/60</p>
+              <p className="text-3xs text-muted-foreground text-right">{footer.length}/60</p>
             </div>
 
             {/* Buttons Tab */}
@@ -109,7 +109,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                     </Button>
                   ))}
                 </div>
-                <p className="text-[10px] text-muted-foreground">{buttons.length}/3 botões (limite WhatsApp)</p>
+                <p className="text-3xs text-muted-foreground">{buttons.length}/3 botões (limite WhatsApp)</p>
               </div>
 
               <AnimatePresence mode="popLayout">
@@ -146,7 +146,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
               <div className="space-y-2">
                 <Label>Texto do Botão de Lista *</Label>
                 <Input placeholder="Ver opções" value={listButtonText} onChange={(e) => setListButtonText(e.target.value)} maxLength={20} />
-                <p className="text-[10px] text-muted-foreground">{listButtonText.length}/20 - Este botão abrirá a lista de opções</p>
+                <p className="text-3xs text-muted-foreground">{listButtonText.length}/20 - Este botão abrirá a lista de opções</p>
               </div>
 
               <div className="space-y-2">
@@ -156,7 +156,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                     <Plus className="w-3.5 h-3.5" />Seção
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">{sections.length}/10 seções · {getTotalRows()} itens total</p>
+                <p className="text-3xs text-muted-foreground">{sections.length}/10 seções · {getTotalRows()} itens total</p>
               </div>
 
               <AnimatePresence mode="popLayout">
@@ -171,7 +171,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
                             <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
                             {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
-                            <Badge variant="secondary" className="text-[10px]">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
+                            <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
                           </div>
                           <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(sectionIndex); }}>
                             <Trash2 className="w-4 h-4" />
@@ -182,7 +182,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                             <div className="space-y-1">
                               <Label className="text-xs">Título da Seção *</Label>
                               <Input placeholder="Ex: Categorias, Opções, Produtos..." value={section.title} onChange={(e) => updateSection(sectionIndex, { title: e.target.value })} maxLength={24} />
-                              <p className="text-[10px] text-muted-foreground text-right">{section.title.length}/24</p>
+                              <p className="text-3xs text-muted-foreground text-right">{section.title.length}/24</p>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">

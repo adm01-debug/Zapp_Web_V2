@@ -93,11 +93,11 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
                 {sentiment && <SentimentEmoji sentiment={sentiment} animated={false} />}
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(conversation.updatedAt, { addSuffix: false, locale: ptBR })}</span>
+                <span className="text-3xs text-muted-foreground">{formatDistanceToNow(conversation.updatedAt, { addSuffix: false, locale: ptBR })}</span>
                 {conversation.unreadCount > 0 && <span className="min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold bg-primary text-primary-foreground">{conversation.unreadCount}</span>}
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">{conversation.lastMessage?.content || 'Sem mensagens'}</p>
+            <p className="text-2xs text-muted-foreground truncate">{conversation.lastMessage?.content || 'Sem mensagens'}</p>
           </div>
           {conversation.priority === 'high' && <div className="w-0.5 h-5 rounded-full bg-destructive flex-shrink-0" />}
         </div>
@@ -109,7 +109,7 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-foreground">{conversation.contact.name}</p>
       {conversation.lastMessage?.content && <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">{conversation.lastMessage.content}</p>}
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60 pt-1 border-t border-border/30">
+      <div className="flex items-center gap-2 text-3xs text-muted-foreground/60 pt-1 border-t border-border/30">
         <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
         {conversation.status && <span>• {conversation.status === 'resolved' ? 'Resolvido' : 'Aberto'}</span>}
       </div>
@@ -162,7 +162,7 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground truncate pr-2">{conversation.lastMessage?.content || 'Sem mensagens'}</p>
-              {conversation.unreadCount > 0 && <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground">{conversation.unreadCount}</span>}
+              {conversation.unreadCount > 0 && <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-3xs font-bold bg-primary text-primary-foreground">{conversation.unreadCount}</span>}
             </div>
             <div className="flex items-center gap-0.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
               <TooltipProvider delayDuration={200}>
@@ -179,8 +179,8 @@ function ConversationItemBase({ conversation, isSelected, onSelect, compact = fa
             </div>
             {conversation.tags.length > 0 && (
               <div className="flex items-center gap-1 mt-2 flex-wrap">
-                {conversation.tags.slice(0, 2).map((tag) => <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50 border-border/20">{tag}</Badge>)}
-                {conversation.tags.length > 2 && <span className="text-[10px] text-muted-foreground">+{conversation.tags.length - 2}</span>}
+                {conversation.tags.slice(0, 2).map((tag) => <Badge key={tag} variant="secondary" className="text-3xs px-1.5 py-0 bg-muted/50 border-border/20">{tag}</Badge>)}
+                {conversation.tags.length > 2 && <span className="text-3xs text-muted-foreground">+{conversation.tags.length - 2}</span>}
               </div>
             )}
           </div>

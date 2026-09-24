@@ -169,7 +169,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                       </div>
                       {column.label}
                     </div>
-                    <Badge variant="secondary" className="text-[10px] h-5">
+                    <Badge variant="secondary" className="text-3xs h-5">
                       {column.contacts.length}
                     </Badge>
                   </CardTitle>
@@ -212,7 +212,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                       </div>
                                       <Avatar className="w-8 h-8">
                                         <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-                                        <AvatarFallback className={cn(colors.bg, colors.text, 'text-[10px] font-bold')}>
+                                        <AvatarFallback className={cn(colors.bg, colors.text, 'text-3xs font-bold')}>
                                           {getInitials(contact.name)}
                                         </AvatarFallback>
                                       </Avatar>
@@ -221,7 +221,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                           {contact.name} {contact.surname || ''}
                                         </p>
                                         {contact.company && (
-                                          <p className="text-[10px] text-muted-foreground truncate">
+                                          <p className="text-3xs text-muted-foreground truncate">
                                             {contact.company}
                                           </p>
                                         )}

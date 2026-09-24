@@ -6,6 +6,7 @@ import { useSatisfactionBreakdown } from '@/hooks/business/useCSAT';
 import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
 import { DashboardCard, SectionHeader, CardSelect, PrimaryButton, InitialsAvatar } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
+import { CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -29,7 +30,7 @@ function KpiEmptyAside({ icon: Icon, label }: { icon: React.ElementType; label: 
   return (
     <div className="flex flex-col items-center gap-1 w-[100px] text-muted-foreground/70">
       <Icon className="w-6 h-6" strokeWidth={1.6} />
-      <span className="text-[11px] text-center leading-tight">{label}</span>
+      <span className="text-2xs text-center leading-tight">{label}</span>
     </div>
   );
 }
@@ -137,13 +138,13 @@ export function SatisfactionMetrics() {
                 <>
                   {/* Eixos desenhados mesmo sem dado (mockup) */}
                   <div className="absolute inset-0 flex">
-                    <div className="w-10 flex flex-col justify-between py-2 text-[11px] text-muted-foreground/70 text-right pr-2 relative">
-                      <span className="absolute -left-4 top-1/2 -rotate-90 origin-center text-[11px] text-muted-foreground/60 whitespace-nowrap">Pontuação</span>
+                    <div className="w-10 flex flex-col justify-between py-2 text-2xs text-muted-foreground/70 text-right pr-2 relative">
+                      <span className="absolute -left-4 top-1/2 -rotate-90 origin-center text-2xs text-muted-foreground/60 whitespace-nowrap">Pontuação</span>
                       {[100, 75, 50, 25, 0].map((v) => <span key={v}>{v}</span>)}
                     </div>
                     <div className="flex-1 border-l border-b border-border/50 relative">
                       {[0, 1, 2, 3].map((i) => <div key={i} className="absolute left-0 right-0 border-t border-dashed border-border/30" style={{ top: `${(i + 1) * 20}%` }} />)}
-                      <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-[11px] text-muted-foreground/70 px-2">
+                      <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-2xs text-muted-foreground/70 px-2">
                         {['08h', '10h', '12h', '14h', '16h', '18h', '20h'].map((h) => <span key={h}>{h}</span>)}
                       </div>
                     </div>
@@ -159,9 +160,9 @@ export function SatisfactionMetrics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={timelineData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} />
-                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                     <Line type="monotone" dataKey="CSAT" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: 'hsl(var(--primary))' }} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>
@@ -182,9 +183,9 @@ export function SatisfactionMetrics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={distributionData} margin={{ top: 12, right: 12, left: -12, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
-                    <XAxis dataKey="nota" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <XAxis dataKey="nota" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                     <Bar dataKey="count" name="Respostas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -232,7 +233,7 @@ export function SatisfactionMetrics() {
                   {breakdown.byAgent.slice(0, parseInt(topN)).map((a, i) => (
                     <div key={a.agentId} className="flex items-center justify-between gap-2 text-[13px]">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-[11px] font-bold text-muted-foreground w-3">{i + 1}.</span>
+                        <span className="text-2xs font-bold text-muted-foreground w-3">{i + 1}.</span>
                         <InitialsAvatar name={a.agentName} size={24} />
                         <span className="truncate text-foreground">{a.agentName}</span>
                       </div>

@@ -27,7 +27,7 @@ function InlineCategorySelect({ value, categories, onChange }: { value: string; 
   if (value && !(value in allCategories)) allCategories[value] = '❓';
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-6 text-[10px] w-[130px] border-border/40"><SelectValue /></SelectTrigger>
+      <SelectTrigger className="h-6 text-3xs w-[130px] border-border/40"><SelectValue /></SelectTrigger>
       <SelectContent>{Object.entries(allCategories).map(([cat, emoji]) => <SelectItem key={cat} value={cat} className="text-xs">{emoji} {cat}</SelectItem>)}</SelectContent>
     </Select>
   );

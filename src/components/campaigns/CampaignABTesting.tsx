@@ -89,7 +89,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
         <div className="flex items-center gap-2">
           <FlaskConical className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">Teste A/B</span>
-          <Badge variant="outline" className="text-[10px]">{variants.length} variantes</Badge>
+          <Badge variant="outline" className="text-3xs">{variants.length} variantes</Badge>
         </div>
         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setDialogOpen(true)}>
           <Plus className="w-3 h-3 mr-1" /> Variante
@@ -115,7 +115,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
                     </div>
                     <div className="flex gap-1">
                       {!v.is_winner && variants.length >= 2 && (
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => declareWinner(v.id)}>
+                        <Button variant="ghost" size="sm" className="h-6 text-3xs" onClick={() => declareWinner(v.id)}>
                           <Trophy className="w-3 h-3 mr-1" /> Vencedor
                         </Button>
                       )}

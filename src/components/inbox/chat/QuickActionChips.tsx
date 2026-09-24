@@ -65,7 +65,7 @@ export function QuickActionChips({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium truncate">{reply.content}</span>
-                  <Badge variant="outline" className="text-[10px] border-primary/30 shrink-0">{reply.shortcut}</Badge>
+                  <Badge variant="outline" className="text-3xs border-primary/30 shrink-0">{reply.shortcut}</Badge>
                 </div>
               </motion.button>
             ))}

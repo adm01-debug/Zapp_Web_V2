@@ -131,7 +131,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="font-medium text-sm">Copilot IA</span>
-                <Badge variant="secondary" className="text-[10px]">KB</Badge>
+                <Badge variant="secondary" className="text-3xs">KB</Badge>
               </div>
               <Button
                 variant="ghost"
@@ -175,7 +175,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
                         {suggestion.emoji} {suggestion.text}
                       </p>
                       {suggestion.source && (
-                        <p className="text-[10px] text-primary/70 mt-1 flex items-center gap-1">
+                        <p className="text-3xs text-primary/70 mt-1 flex items-center gap-1">
                           📚 Fonte: {suggestion.source}
                         </p>
                       )}

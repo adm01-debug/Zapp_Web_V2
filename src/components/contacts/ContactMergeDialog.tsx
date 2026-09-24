@@ -91,7 +91,7 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
                         selections[field.key] === v.index ? 'border-primary/50 bg-primary/5' : 'border-transparent hover:bg-muted/50')}>
                       <RadioGroupItem value={String(v.index)} id={`${field.key}-${v.index}`} />
                       <span className="text-sm">{v.value}</span>
-                      {v.index === 0 && <Badge variant="secondary" className="text-[10px] h-4">principal</Badge>}
+                      {v.index === 0 && <Badge variant="secondary" className="text-3xs h-4">principal</Badge>}
                     </Label>
                   ))}
                 </RadioGroup>

@@ -54,7 +54,7 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
 
         {/* Slider */}
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-muted-foreground/60 font-mono w-4">0</span>
+          <span className="text-3xs text-muted-foreground/60 font-mono w-4">0</span>
           <Slider
             value={[borderRadius]}
             onValueChange={(v) => onChange(v[0])}
@@ -64,12 +64,12 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
             thumbLabel="Raio da borda em pixels"
             className="flex-1"
           />
-          <span className="text-[10px] text-muted-foreground/60 font-mono w-5">20</span>
+          <span className="text-3xs text-muted-foreground/60 font-mono w-5">20</span>
         </div>
 
         {/* Live preview */}
         <div className="space-y-3">
-          <p className="text-[11px] text-muted-foreground/50 uppercase tracking-wider font-medium">
+          <p className="text-2xs text-muted-foreground/50 uppercase tracking-wider font-medium">
             Preview em tempo real
           </p>
 
@@ -112,13 +112,13 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
                 <span className="text-xs text-muted-foreground/40">Buscar...</span>
               </div>
               <div
-                className="bg-primary/15 text-primary px-2.5 h-6 text-[10px] font-semibold flex items-center gap-1 transition-all"
+                className="bg-primary/15 text-primary px-2.5 h-6 text-3xs font-semibold flex items-center gap-1 transition-all"
                 style={{ borderRadius: r }}
               >
                 <Star className="w-3 h-3" /> Novo
               </div>
               <div
-                className="bg-accent text-accent-foreground px-2.5 h-6 text-[10px] font-medium flex items-center gap-1 transition-all"
+                className="bg-accent text-accent-foreground px-2.5 h-6 text-3xs font-medium flex items-center gap-1 transition-all"
                 style={{ borderRadius: r }}
               >
                 <Bell className="w-3 h-3" /> 3
@@ -139,7 +139,7 @@ export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRad
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground">João da Silva</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Última mensagem enviada há 5 min</p>
+                  <p className="text-3xs text-muted-foreground truncate">Última mensagem enviada há 5 min</p>
                 </div>
                 <div
                   className="w-2 h-2 bg-primary rounded-full shrink-0"

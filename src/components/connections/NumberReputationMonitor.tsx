@@ -121,28 +121,28 @@ export function NumberReputationMonitor() {
                   <div className="grid grid-cols-3 gap-2">
                     <div className="text-center">
                       <p className="text-lg font-bold">{rep.messages_sent_today}</p>
-                      <p className="text-[10px] text-muted-foreground">Enviadas</p>
+                      <p className="text-3xs text-muted-foreground">Enviadas</p>
                     </div>
                     <div className="text-center">
                       <p className="text-lg font-bold text-destructive">{rep.failures_today}</p>
-                      <p className="text-[10px] text-muted-foreground">Falhas</p>
+                      <p className="text-3xs text-muted-foreground">Falhas</p>
                     </div>
                     <div className="text-center">
                       <p className="text-lg font-bold text-warning">{rep.complaints_count}</p>
-                      <p className="text-[10px] text-muted-foreground">Reclamações</p>
+                      <p className="text-3xs text-muted-foreground">Reclamações</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-border/30">
                     <div className="flex items-center gap-1.5">
                       <Thermometer className="w-3.5 h-3.5 text-muted-foreground" />
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-3xs">
                         {warmupLabels[rep.warmup_status] || rep.warmup_status}
                         {rep.warmup_day ? ` (Dia ${rep.warmup_day})` : ''}
                       </Badge>
                     </div>
                     {rep.warmup_status === 'none' && (
-                      <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => startWarmup(rep.id)}>
+                      <Button variant="outline" size="sm" className="h-6 text-3xs" onClick={() => startWarmup(rep.id)}>
                         <Flame className="w-3 h-3 mr-1" />
                         Aquecer
                       </Button>
@@ -151,7 +151,7 @@ export function NumberReputationMonitor() {
 
                   {rep.daily_limit && (
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <div className="flex justify-between text-3xs text-muted-foreground">
                         <span>Limite diário</span>
                         <span>{rep.messages_sent_today}/{rep.daily_limit}</span>
                       </div>

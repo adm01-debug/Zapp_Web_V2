@@ -109,13 +109,13 @@ export function ContactStatsSection({ contactId }: ContactStatsSectionProps) {
 
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1.5">
             <item.icon className="w-3.5 h-3.5" />
-            <span className="text-[10px] uppercase tracking-wider">{item.label}</span>
+            <span className="text-3xs uppercase tracking-wider">{item.label}</span>
           </div>
           <div className="flex items-end gap-1.5">
             <span className="text-lg font-semibold text-primary leading-none">{item.value}</span>
             {item.change !== 0 && typeof item.value === 'number' && (
               <span className={cn(
-                'text-[10px] flex items-center gap-0.5 leading-none mb-0.5',
+                'text-3xs flex items-center gap-0.5 leading-none mb-0.5',
                 item.change > 0 ? 'text-success' : 'text-destructive'
               )}>
                 {item.change > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
@@ -124,7 +124,7 @@ export function ContactStatsSection({ contactId }: ContactStatsSectionProps) {
             )}
           </div>
           {item.subtitle && (
-            <p className="text-[10px] text-muted-foreground mt-0.5">{item.subtitle}</p>
+            <p className="text-3xs text-muted-foreground mt-0.5">{item.subtitle}</p>
           )}
         </motion.div>
       ))}

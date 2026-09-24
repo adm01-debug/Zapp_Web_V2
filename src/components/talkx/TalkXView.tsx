@@ -243,7 +243,7 @@ export default function TalkXView() {
         right={
           <div className="flex items-center gap-3">
             {isLive && (
-              <span className="flex items-center gap-1.5 text-[11px] text-success font-medium">
+              <span className="flex items-center gap-1.5 text-2xs text-success font-medium">
                 <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
                 Ao vivo
               </span>

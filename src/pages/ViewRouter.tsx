@@ -211,7 +211,7 @@ function FallbackView({ currentView }: { currentView: string }) {
         </h2>
 
         {mod.group && (
-          <span className="inline-block text-[11px] font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full mb-3">
+          <span className="inline-block text-2xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full mb-3">
             {mod.group}
           </span>
         )}

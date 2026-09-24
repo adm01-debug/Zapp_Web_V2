@@ -162,7 +162,7 @@ export function DashboardFilters({
             <CalendarIcon className="w-4 h-4 text-foreground-secondary shrink-0" />
             <span className="flex flex-col leading-tight min-w-0">
               <span className="text-xs font-semibold text-foreground truncate">{periodLabel}</span>
-              <span className="text-[11px] text-muted-foreground truncate">{rangeLabel}</span>
+              <span className="text-2xs text-muted-foreground truncate">{rangeLabel}</span>
             </span>
           </button>
         </PopoverTrigger>

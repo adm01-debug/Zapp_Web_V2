@@ -149,12 +149,12 @@ export function ContactCard({
       {contact.tags && contact.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {contact.tags.slice(0, 2).map(tag => (
-            <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5 rounded">
+            <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5 rounded">
               {tag}
             </Badge>
           ))}
           {contact.tags.length > 2 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 rounded">
+            <Badge variant="secondary" className="text-3xs h-4 px-1.5 rounded">
               +{contact.tags.length - 2}
             </Badge>
           )}
