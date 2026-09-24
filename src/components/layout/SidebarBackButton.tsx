@@ -13,7 +13,12 @@ interface SidebarBackButtonProps {
  * histórico para voltar. Atalhos Alt+← e Esc continuam valendo.
  */
 export function SidebarBackButton({ canGoBack, onGoBack, collapsed }: SidebarBackButtonProps) {
-  if (!canGoBack || !onGoBack) return null;
+  if (!canGoBack || !onGoBack) {
+    // No modo recolhido reserva o espaço do botão mesmo escondido: sem isso o
+    // menu abaixo pula ~42px quando o histórico muda de vazio para "pode voltar"
+    // (ex.: primeira navegação da sessão), arriscando clique no item errado.
+    return collapsed ? <div className="mb-1 h-[38px]" aria-hidden="true" /> : null;
+  }
 
   const button = (
     <Tooltip delayDuration={200}>
