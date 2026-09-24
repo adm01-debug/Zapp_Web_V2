@@ -6,6 +6,13 @@ import { cn } from '@/lib/utils';
 import { ProfileMenuContent } from './ProfileMenuContent';
 import { RoleBadge } from './RoleBadge';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { setMyPresenceStatus, useMyPresenceStatus, type PresenceStatus } from '@/hooks/crm/useAgentPresence';
+
+const STATUS_DOT: Record<PresenceStatus, string> = {
+  online: 'bg-[hsl(var(--online))]',
+  away: 'bg-[hsl(var(--away))]',
+  offline: 'bg-[hsl(var(--offline))]',
+};
 
 interface SidebarUserPillProps {
   profile: { name?: string | null; avatar_url?: string | null } | null;
@@ -19,6 +26,7 @@ interface SidebarUserPillProps {
 export function SidebarUserPill({ profile, userEmail, signOut, onViewChange, collapsed = false }: SidebarUserPillProps) {
   const [open, setOpen] = useState(false);
   const { roles } = useUserRole();
+  const status = useMyPresenceStatus();
   const primaryRole = roles[0];
   const name = profile?.name || userEmail || 'Usuário';
 
@@ -39,7 +47,7 @@ export function SidebarUserPill({ profile, userEmail, signOut, onViewChange, col
                 {name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-sidebar bg-success" />
+            <span className={cn('absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-sidebar', STATUS_DOT[status])} />
           </span>
           {!collapsed && (
             <>
@@ -59,7 +67,8 @@ export function SidebarUserPill({ profile, userEmail, signOut, onViewChange, col
         className="w-48 p-2"
       >
         <ProfileMenuContent
-          agent={{ name, status: 'online' }}
+          agent={{ name, status }}
+          onStatusChange={setMyPresenceStatus}
           onViewChange={(view) => { onViewChange(view); setOpen(false); }}
           onLogout={() => { signOut(); setOpen(false); }}
           onClose={() => setOpen(false)}
