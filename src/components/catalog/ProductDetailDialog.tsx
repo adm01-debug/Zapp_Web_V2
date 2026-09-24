@@ -2,8 +2,13 @@
  * ProductDetailDialog — E46 redesign: painel lateral (Sheet) em vez de modal.
  * Galeria de imagens no topo + secões colapsáveis de detalhes.
  * Mantido o mesmo contrato de props para não quebrar callers existentes.
+ *
+ * Fase 6 (E59-E68) — decisão do dono do produto: aproveitar este painel em
+ * vez de reconstruir como modal de 2 colunas. Fechadas as lacunas funcionais:
+ * contador "N / M" e navegação por teclado/swipe na galeria, zoom da imagem,
+ * copiar SKU, "previsão de entrada" por variante e fornecedor no rodapé.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,13 +16,31 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Send, Heart, Palette, Ruler, Weight, Globe, Clock, Layers, Tag, Box,
-  ChevronLeft, ChevronRight, Sparkles, TrendingUp, Star,
+  ChevronLeft, ChevronRight, Sparkles, TrendingUp, Star, Copy, Store,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct, useCatalogFavorites } from '@/hooks/integrations/useExternalCatalog';
 import { formatPrice, ProductThumb, handleImageError } from './catalogShared';
+import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
+
+/**
+ * dd/MM para "Previsão de entrada" (E61) — null se data inválida/ausente.
+ * next_entry_date e uma data de calendario (sem hora); le os componentes
+ * direto da string em vez de instanciar Date + toLocaleDateString, que
+ * converteria pra UTC-meia-noite e, em fuso negativo (-03, BR), voltaria
+ * um dia.
+ */
+function fmtShortDate(iso?: string | null): string | null {
+  if (!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (m) return m[3] + '/' + m[2];
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
 
 interface ProductDetailDialogProps {
   product: ExternalProduct;
@@ -26,7 +49,7 @@ interface ProductDetailDialogProps {
   onSend?: (product: ExternalProduct) => void;
 }
 
-// ── galeria de imagens ─────────────────────────────────────────────────────
+// ── galeria de imagens ───────────────────────────────────────────────────────────────────────────────
 function ImageGallery({ product }: { product: ExternalProduct }) {
   const images = [
     ...(product.primary_image_url ? [product.primary_image_url] : []),
@@ -34,22 +57,63 @@ function ImageGallery({ product }: { product: ExternalProduct }) {
   ].filter(Boolean) as string[];
 
   const [idx, setIdx] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const current = images[idx] ?? product.primary_image_url;
   const hasPrev = idx > 0;
   const hasNext = idx < images.length - 1;
+  const touchStartX = useRef<number | null>(null);
+
+  const goPrev = () => setIdx((i) => Math.max(0, i - 1));
+  const goNext = () => setIdx((i) => Math.min(images.length - 1, i + 1));
+
+  // navegacao por teclado esquerda/direita (E60) — so enquanto montado
+  useEffect(() => {
+    if (images.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0]?.clientX ?? null; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 40) { if (delta > 0) goPrev(); else goNext(); }
+    touchStartX.current = null;
+  };
 
   return (
     <div className="relative bg-muted select-none">
       {/* imagem principal */}
-      <div className="relative aspect-square w-full overflow-hidden">
-        <ProductThumb
-          src={current}
-          fallbackSrc={product.primary_image_fallback_url}
-          alt={product.name}
-          iconSize="w-16 h-16"
-        />
+      <div
+        className="relative aspect-square w-full overflow-hidden"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <button
+          type="button"
+          onClick={() => current && setZoomOpen(true)}
+          className="w-full h-full block cursor-zoom-in"
+          aria-label="Ampliar imagem"
+        >
+          <ProductThumb
+            src={current}
+            fallbackSrc={product.primary_image_fallback_url}
+            alt={product.name}
+            iconSize="w-16 h-16"
+          />
+        </button>
+        {images.length > 1 && (
+          <span className="absolute left-2 top-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm text-[11px] font-medium tabular-nums pointer-events-none">
+            {idx + 1} / {images.length}
+          </span>
+        )}
         {product.is_stockout && (
-          <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/70 flex items-center justify-center pointer-events-none">
             <span className="px-3 py-1 rounded text-sm font-bold bg-destructive text-destructive-foreground">
               Esgotado
             </span>
@@ -59,8 +123,9 @@ function ImageGallery({ product }: { product: ExternalProduct }) {
         {hasPrev && (
           <button
             type="button"
-            onClick={() => setIdx((i) => i - 1)}
+            onClick={goPrev}
             className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors"
+            aria-label="Imagem anterior"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -68,8 +133,9 @@ function ImageGallery({ product }: { product: ExternalProduct }) {
         {hasNext && (
           <button
             type="button"
-            onClick={() => setIdx((i) => i + 1)}
+            onClick={goNext}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors"
+            aria-label="Próxima imagem"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -93,10 +159,17 @@ function ImageGallery({ product }: { product: ExternalProduct }) {
           ))}
         </div>
       )}
+      {/* zoom (E60) */}
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-3xl p-2 bg-background/95">
+          {current && (
+            <img src={current} alt={product.name} className="w-full h-auto rounded-md" onError={handleImageError} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
 export function ProductDetailDialog({ product, open, onOpenChange, onSend }: ProductDetailDialogProps) {
   const needsFullProduct = !product.variants?.length;
   const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
@@ -165,7 +238,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Tag className="w-3.5 h-3.5" />
               <span>SKU: <strong className="text-foreground">{dp.sku}</strong></span>
-              {dp.suppliers && <span>· {dp.suppliers.name}</span>}
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(dp.sku).then(
+                    () => toast({ title: '✅ SKU copiado' }),
+                    () => toast({ title: 'Erro ao copiar', variant: 'destructive' }),
+                  );
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Copiar SKU"
+              >
+                <Copy className="w-3 h-3" />
+              </button>
             </div>
 
             <Separator />
@@ -271,6 +356,11 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{v.name}</p>
                         <p className="text-[10px] text-muted-foreground">SKU: {v.sku}</p>
+                        {v.stock_quantity <= 0 && fmtShortDate(v.next_entry_date) && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-500">
+                            Previsão de entrada {fmtShortDate(v.next_entry_date)}
+                          </p>
+                        )}
                       </div>
                       <span className="text-[10px] text-muted-foreground shrink-0">{v.stock_quantity} un.</span>
                     </div>
@@ -281,17 +371,25 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend }: Pro
           </div>
         </ScrollArea>
 
-        {/* rodapé fixo com botão de envio */}
-        {onSend && (
-          <div className="border-t border-border/40 p-4">
-            <Button
-              className="w-full"
-              onClick={() => { onSend(dp); onOpenChange(false); }}
-              disabled={dp.is_stockout}
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Enviar produto no chat
-            </Button>
+        {/* rodapé: fornecedor + envio (E66) */}
+        {(onSend || dp.suppliers) && (
+          <div className="border-t border-border/40 p-4 space-y-2">
+            {dp.suppliers && (
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Store className="w-3.5 h-3.5" />
+                Fornecedor: <span className="text-foreground font-medium">{dp.suppliers.name}</span>
+              </p>
+            )}
+            {onSend && (
+              <Button
+                className="w-full"
+                onClick={() => { onSend(dp); onOpenChange(false); }}
+                disabled={dp.is_stockout}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Enviar produto no chat
+              </Button>
+            )}
           </div>
         )}
       </SheetContent>
