@@ -1,4 +1,4 @@
-import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
+ import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
 import { LayoutProvider } from '@/contexts/LayoutContext';
