@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import {
   handleCors, errorResponse, jsonResponse,
   sanitizeString, isValidUUID, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth,
+  createAuthedClient,
 } from "../_shared/validation.ts";
 import { AiAutoTagSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
@@ -29,12 +30,28 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, messages: inputMessages } = parsed.data;
-    const validContactId = contactId && isValidUUID(contactId) ? contactId : null;
+    let validContactId = contactId && isValidUUID(contactId) ? contactId : null;
 
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    if (validContactId) {
+      // Este client roda com service_role (bypassa RLS). Sem esta checagem,
+      // qualquer usuário autenticado poderia usar contactId de um contato que
+      // não enxerga para ler resumo/sentimento (PII) e gravar tags/prioridade
+      // nele — a RLS real de `contacts` é a fonte de verdade de visibilidade.
+      const authedClient = await createAuthedClient(req);
+      const { data: visibleContact } = await authedClient
+        .from('contacts')
+        .select('id')
+        .eq('id', validContactId)
+        .maybeSingle();
+      if (!visibleContact) {
+        validContactId = null;
+      }
+    }
 
     let conversationMessages = inputMessages;
     if (!conversationMessages && validContactId) {
@@ -147,7 +164,36 @@ Responda APENAS em JSON:
       if (validPriorities.includes(result.priority)) updateData.ai_priority = result.priority;
 
       if (result.suggested_queue_id && isValidUUID(result.suggested_queue_id)) {
-        updateData.queue_id = result.suggested_queue_id;
+        // Este client roda com service_role (bypassa RLS e o trigger
+        // trg_prevent_contact_queue_hijack, que só restringe role=authenticated).
+        // Sem esta checagem, a sugestão da IA (prompt-injetável via mensagens do
+        // cliente) poderia rotear o contato para qualquer fila.
+        const { data: isAdmin } = await supabase
+          .rpc('is_admin_or_supervisor', { _user_id: __uid });
+
+        let canRouteToQueue = Boolean(isAdmin);
+        if (!canRouteToQueue) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', __uid)
+            .maybeSingle();
+
+          if (profile) {
+            const { data: membership } = await supabase
+              .from('queue_members')
+              .select('id')
+              .eq('queue_id', result.suggested_queue_id)
+              .eq('profile_id', profile.id)
+              .eq('is_active', true)
+              .maybeSingle();
+            canRouteToQueue = Boolean(membership);
+          }
+        }
+
+        if (canRouteToQueue) {
+          updateData.queue_id = result.suggested_queue_id;
+        }
       }
 
       if (Object.keys(updateData).length > 0) {

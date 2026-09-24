@@ -1,5 +1,7 @@
 # PAINEL DIREITO COM 5 ABAS — Ledger de execução
 
+> **Atualização 2026-09-24 — documento histórico.** O painel do contato deixou de ter abas: a #603 removeu Histórico/Tarefas/Notas/Arquivos (essas ferramentas já vivem nas abas do painel central do chat) e a #610 removeu a seção "Tarefas da Conversa" e o atalho Ctrl+N. Hoje o painel é só o conteúdo da antiga aba Contato. Foram apagados por falta de uso: `ConversationHistory`, `ConversationTasksPanel`, `RemindersPanel` (Lembretes), `PrivateNotes` e `ContactTasksWidget`. `MediaGalleryContent` (Arquivos) continua no repo porque tem teste. A Fase 3 e a etapa 6 abaixo descrevem o que existiu, não o estado atual.
+
 > Branch: `feat/inbox-painel-direito` · Worktree: `/workspace/repos/Zapp_Web_V2-painel`
 > Plano: `docs/design/PLANO_PAINEL_DIREITO_TABBED.md`
 

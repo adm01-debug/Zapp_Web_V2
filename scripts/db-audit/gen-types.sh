@@ -76,14 +76,20 @@ else
     pgbouncer "$PROXY_DIR/pgbouncer.ini" &
     PROXY_PID=$!
 
+    # sslmode=disable explicito: o passo anterior ("Exigir credencial do
+    # banco oficial") grava PGSSLMODE=verify-full no $GITHUB_ENV, que
+    # persiste pra todos os steps seguintes do job. Essa variavel e para a
+    # perna producao (DESTINO_URL); o pgbouncer local so fala TLS na perna
+    # de saida dele mesmo pra producao (server_tls_sslmode=verify-full em
+    # local-pg-proxy.mjs) — o lado que escuta em 127.0.0.1 (auth_type=trust)
+    # nao tem TLS. Sem sslmode=disable aqui, tanto o pg_isready quanto o
+    # supabase CLI herdam PGSSLMODE=verify-full do ambiente do job e tentam
+    # TLS contra um endpoint loopback que nao fala TLS — falha sempre.
+    PROXY_URL="postgresql://proxy:unused@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
+
     i=0
     while [ "$i" -lt 50 ]; do
-      # -d/-U tem que bater com o unico banco/usuario que o pgbouncer.ini
-      # (local-pg-proxy.mjs) conhece: sem isso, pg_isready usa o dbname
-      # padrao do libpq (usuario do SO no runner), pgbouncer rejeita com
-      # "no such database" antes do handshake, e libpq classifica isso
-      # como PQPING_NO_RESPONSE — falso negativo constante, nunca timing.
-      if pg_isready -h 127.0.0.1 -p "$PROXY_PORT" -d proxydb -U proxy >/dev/null 2>&1; then
+      if pg_isready -d "$PROXY_URL" >/dev/null 2>&1; then
         break
       fi
       i=$((i + 1))
@@ -95,7 +101,7 @@ else
     fi
 
     supabase gen types typescript \
-      --db-url "postgresql://proxy:unused@127.0.0.1:${PROXY_PORT}/proxydb" \
+      --db-url "$PROXY_URL" \
       --schema public \
       > "$TMP"
   else
