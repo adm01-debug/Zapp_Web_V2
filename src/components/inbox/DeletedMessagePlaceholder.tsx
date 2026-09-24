@@ -33,7 +33,7 @@ export function DeletedMessagePlaceholder({ isSent, content }: DeletedMessagePla
       <div className="relative z-10">
         {/* Deleted indicator badge */}
         <div className={cn(
-          'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold mb-2',
+          'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-2xs font-semibold mb-2',
           isSent
             ? 'bg-primary/10 text-primary/60'
             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
@@ -50,7 +50,7 @@ export function DeletedMessagePlaceholder({ isSent, content }: DeletedMessagePla
         {hasOriginalContent ? (
           <div>
             {!isSent && (
-              <div className="flex items-center gap-1 mb-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+              <div className="flex items-center gap-1 mb-1.5 text-3xs text-emerald-600 dark:text-emerald-400 font-medium">
                 <Eye className="w-3 h-3" />
                 <span>Conteúdo original preservado</span>
               </div>

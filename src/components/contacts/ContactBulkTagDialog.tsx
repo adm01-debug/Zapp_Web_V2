@@ -187,7 +187,7 @@ export function ContactBulkTagDialog({
               <Badge
                 key={t}
                 variant={mode === 'add' ? 'default' : 'destructive'}
-                className="text-[10px] h-5 cursor-pointer"
+                className="text-3xs h-5 cursor-pointer"
                 onClick={() => toggleTag(t)}
               >
                 {t} ×

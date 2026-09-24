@@ -83,7 +83,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }
                 <span
                   data-testid={`conversation-tab-count-${tab.id}`}
                   className={cn(
-                    'h-5 min-w-[20px] px-1.5 rounded-full text-[11px] font-semibold tabular-nums',
+                    'h-5 min-w-[20px] px-1.5 rounded-full text-2xs font-semibold tabular-nums',
                     'flex items-center justify-center shrink-0',
                     active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   )}

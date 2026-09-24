@@ -105,7 +105,7 @@ export function VoiceTranscriptArea({
               <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
               {error}
             </div>
-            <span className="text-[10px] text-white/30">Toque no orbe para tentar novamente</span>
+            <span className="text-3xs text-white/30">Toque no orbe para tentar novamente</span>
           </motion.div>
         )}
       </AnimatePresence>

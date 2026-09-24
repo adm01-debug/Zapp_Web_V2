@@ -195,7 +195,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                                     {group.colorHex && <div className="w-3 h-3 rounded-full border border-border/50 flex-shrink-0" style={{ backgroundColor: group.colorHex }} />}
                                     <span className="font-medium text-sm truncate">{group.colorName}</span>
                                   </div>
-                                  <span className="text-[11px] text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
+                                  <span className="text-2xs text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
                                 </div>
                                 {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                               </button>

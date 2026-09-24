@@ -86,7 +86,7 @@ export function EmailThreadList({
           <Mail className="w-5 h-5 text-destructive shrink-0" />
           <h2 className="text-sm font-semibold flex-1">Email</h2>
           {unreadCount > 0 && (
-            <Badge variant="default" className="text-[10px] px-1.5 py-0">
+            <Badge variant="default" className="text-3xs px-1.5 py-0">
               {unreadCount}
             </Badge>
           )}
@@ -131,7 +131,7 @@ export function EmailThreadList({
           <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-thin">
             <Badge
               variant={labelFilter === 'all' ? 'default' : 'outline'}
-              className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-3xs px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setLabelFilter('all')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter('all'); } }}
               role="button"
@@ -144,7 +144,7 @@ export function EmailThreadList({
               <Badge
                 key={label.id}
                 variant={labelFilter === label.gmail_label_id ? 'default' : 'outline'}
-                className="text-[10px] px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
+                className="text-3xs px-2 py-0.5 cursor-pointer shrink-0 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => setLabelFilter(label.gmail_label_id)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLabelFilter(label.gmail_label_id); } }}
                 role="button"
@@ -221,7 +221,7 @@ export function EmailThreadList({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-2 border-t border-border/30 text-[10px] text-muted-foreground flex items-center gap-1 shrink-0">
+      <div className="p-2 border-t border-border/30 text-3xs text-muted-foreground flex items-center gap-1 shrink-0">
         <Mail className="w-3 h-3" />
         <span className="truncate">{activeAccountEmail}</span>
       </div>
@@ -269,7 +269,7 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
           <span className="text-sm truncate">{name}</span>
-          <span className="text-[10px] text-muted-foreground shrink-0" title={thread.last_message_at ? new Date(thread.last_message_at).toLocaleString('pt-BR') : undefined}>
+          <span className="text-3xs text-muted-foreground shrink-0" title={thread.last_message_at ? new Date(thread.last_message_at).toLocaleString('pt-BR') : undefined}>
             {thread.last_message_at && formatDate(thread.last_message_at)}
           </span>
         </div>

@@ -35,7 +35,7 @@ export function SidebarUserPill({ profile, userEmail, signOut, onViewChange, col
           <span className="relative shrink-0">
             <Avatar className="w-8 h-8">
               <AvatarImage src={profile?.avatar_url || undefined} alt={name} />
-              <AvatarFallback className="bg-primary/15 text-primary text-[11px] font-semibold">
+              <AvatarFallback className="bg-primary/15 text-primary text-2xs font-semibold">
                 {name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>

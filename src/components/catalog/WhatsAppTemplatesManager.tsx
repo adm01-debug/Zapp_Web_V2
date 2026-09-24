@@ -196,7 +196,7 @@ export function WhatsAppTemplatesManager() {
                   {previewTemplate.header_text && <p className="text-primary-foreground font-bold text-sm mb-1">{renderPreviewContent(previewTemplate.header_text, previewVariables)}</p>}
                   <p className="text-primary-foreground text-sm whitespace-pre-wrap">{renderPreviewContent(previewTemplate.content, previewVariables)}</p>
                   {previewTemplate.footer_text && <p className="text-primary-foreground/60 text-xs mt-2">{renderPreviewContent(previewTemplate.footer_text, previewVariables)}</p>}
-                  <p className="text-primary-foreground/40 text-[10px] text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-primary-foreground/40 text-3xs text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
             </div>

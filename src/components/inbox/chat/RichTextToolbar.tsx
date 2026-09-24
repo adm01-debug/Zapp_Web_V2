@@ -87,7 +87,7 @@ export function RichTextToolbar({ inputRef, inputValue, onInputChange, visible, 
                 </TooltipContent>
               </Tooltip>
             ))}
-            <span className="ml-auto text-[10px] text-muted-foreground/60">Formatação WhatsApp</span>
+            <span className="ml-auto text-3xs text-muted-foreground/60">Formatação WhatsApp</span>
           </div>
         </motion.div>
       )}

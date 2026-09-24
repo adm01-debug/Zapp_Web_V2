@@ -166,7 +166,7 @@ export const AchievementsSystem = ({ userId, showCompact = false }: Achievements
                             onClick={() => setSelectedAchievement(achievement)}
                             className={`relative p-3 rounded-lg border text-left transition-all ${achievement.isUnlocked ? `${rarity.border} hover:shadow-md` : 'border-border opacity-60 hover:opacity-80'}`}
                           >
-                            {achievement.isNew && <span className="absolute -top-1 -right-1 px-2 py-0.5 text-[10px] bg-destructive text-primary-foreground rounded-full">NOVO</span>}
+                            {achievement.isNew && <span className="absolute -top-1 -right-1 px-2 py-0.5 text-3xs bg-destructive text-primary-foreground rounded-full">NOVO</span>}
                             <div className="flex items-start gap-3">
                               <div className={`p-2 rounded-lg ${achievement.isUnlocked ? rarity.color + '/20' : 'bg-muted'}`}>
                                 {achievement.isUnlocked ? <Icon className={`h-6 w-6 ${rarity.color.replace('bg-', 'text-')}`} /> : <Lock className="h-6 w-6 text-muted-foreground" />}
@@ -174,17 +174,17 @@ export const AchievementsSystem = ({ userId, showCompact = false }: Achievements
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-sm truncate">{achievement.name}</span>
-                                  <Badge variant="outline" className="text-[10px] shrink-0">{rarity.label}</Badge>
+                                  <Badge variant="outline" className="text-3xs shrink-0">{rarity.label}</Badge>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{achievement.description}</p>
                                 {!achievement.isUnlocked && (
                                   <div className="mt-2">
-                                    <div className="flex items-center justify-between text-[10px] mb-1"><span>{achievement.progress}/{achievement.target}</span><span>{Math.round(progressPercent)}%</span></div>
+                                    <div className="flex items-center justify-between text-3xs mb-1"><span>{achievement.progress}/{achievement.target}</span><span>{Math.round(progressPercent)}%</span></div>
                                     <Progress value={progressPercent} className="h-1" />
                                   </div>
                                 )}
                                 <div className="flex items-center gap-2 mt-2">
-                                  <Badge variant="secondary" className="text-[10px]"><Gift className="h-2 w-2 mr-1" />{achievement.xpReward} XP</Badge>
+                                  <Badge variant="secondary" className="text-3xs"><Gift className="h-2 w-2 mr-1" />{achievement.xpReward} XP</Badge>
                                   {achievement.isUnlocked && <Check className="h-4 w-4 text-success" />}
                                 </div>
                               </div>

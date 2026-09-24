@@ -261,9 +261,9 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[11px] text-muted-foreground">Total</span>
+                  <span className="text-2xs text-muted-foreground">Total</span>
                   <span className="text-xl font-bold text-foreground leading-none">{totalAnalyses.toLocaleString('pt-BR')}</span>
-                  <span className="text-[11px] text-muted-foreground mt-0.5">conversas</span>
+                  <span className="text-2xs text-muted-foreground mt-0.5">conversas</span>
                 </div>
               </div>
               <div className="flex-1 space-y-3">

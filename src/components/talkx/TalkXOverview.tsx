@@ -159,7 +159,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-dash-amber" />
                   <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
-                  <span className="text-[11px] text-muted-foreground">({drafts.length})</span>
+                  <span className="text-2xs text-muted-foreground">({drafts.length})</span>
                 </div>
               </div>
               <div className="divide-y divide-border/50">
@@ -171,7 +171,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground truncate">{c.name || 'Sem nome'}</p>
-                        <p className="text-[11px] text-muted-foreground">{fmtAgo(c.updated_at)}</p>
+                        <p className="text-2xs text-muted-foreground">{fmtAgo(c.updated_at)}</p>
                       </div>
                     </div>
                     <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
@@ -244,13 +244,13 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                             <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
                             <span className="min-w-0">
                               <span className="block text-sm font-semibold text-foreground truncate group-hover:text-primary-glow">{c.name}</span>
-                              <span className="block text-[11px] text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
+                              <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
                             </span>
                           </button>
                         </Td>
                         <Td>
-                          <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
-                          <span className="block text-[11px] text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
+                          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
+                          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
                         </Td>
                         <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-whatsapp" /></span></Td>
                         <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
@@ -261,11 +261,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                         </Td>
                         <Td>
                           {done > 0 ? (
-                            <><span className="block text-xs font-semibold text-foreground">{fmtInt(c.sent_count)} enviados</span><span className="block text-[11px] text-foreground-secondary">{c.failed_count > 0 ? `${fmtInt(c.failed_count)} falhas (${fmtPct(c.failed_count, done)})` : `${fmtPct(c.sent_count, done)} de sucesso`}</span></>
+                            <><span className="block text-xs font-semibold text-foreground">{fmtInt(c.sent_count)} enviados</span><span className="block text-2xs text-foreground-secondary">{c.failed_count > 0 ? `${fmtInt(c.failed_count)} falhas (${fmtPct(c.failed_count, done)})` : `${fmtPct(c.sent_count, done)} de sucesso`}</span></>
                           ) : <span className="text-muted-foreground text-xs">—</span>}
                         </Td>
                         <Td>
-                          {when ? (<><span className="block text-xs text-foreground">{fmtDateTime(when)}</span><span className="block text-[11px] text-foreground-secondary">por {creators[c.created_by ?? ''] ?? '—'}</span></>) : <span className="text-muted-foreground text-xs">—</span>}
+                          {when ? (<><span className="block text-xs text-foreground">{fmtDateTime(when)}</span><span className="block text-2xs text-foreground-secondary">por {creators[c.created_by ?? ''] ?? '—'}</span></>) : <span className="text-muted-foreground text-xs">—</span>}
                         </Td>
                         <Td className="text-right">
                           <DropdownMenu>
@@ -383,11 +383,11 @@ function CampaignGridCard({ c, segmentName, onView, onEdit }: { c: TalkXCampaign
         <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={44} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-          <p className="text-[11px] text-foreground-secondary line-clamp-2">{c.description || c.message_template}</p>
+          <p className="text-2xs text-foreground-secondary line-clamp-2">{c.description || c.message_template}</p>
         </div>
         <StatusPill status={c.status} map={CAMPAIGN_STATUS} />
       </div>
-      <div className="mt-3 flex items-center justify-between text-[11px] text-foreground-secondary">
+      <div className="mt-3 flex items-center justify-between text-2xs text-foreground-secondary">
         <span>{segmentName ?? 'Seleção manual'} · {fmtInt(c.total_recipients)} contatos</span>
         <span>{done > 0 ? `${fmtInt(c.sent_count)} enviados` : '—'}</span>
       </div>
@@ -395,7 +395,7 @@ function CampaignGridCard({ c, segmentName, onView, onEdit }: { c: TalkXCampaign
       <div className="mt-3 flex items-center gap-2">
         <button type="button" onClick={onView} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{c.status === 'completed' ? 'Relatório' : 'Monitorar'}</button>
         {(c.status === 'draft' || c.status === 'scheduled') && <button type="button" onClick={onEdit} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" />Editar</button>}
-        <span className="ml-auto text-[10px] text-muted-foreground">{fmtAgo(c.updated_at)}</span>
+        <span className="ml-auto text-3xs text-muted-foreground">{fmtAgo(c.updated_at)}</span>
       </div>
     </div>
   );

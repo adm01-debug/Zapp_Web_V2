@@ -32,7 +32,7 @@ export function TelemetryTopOffenders({ topOffenders }: TelemetryTopOffendersPro
                 <span className="text-xs text-muted-foreground">{stats.count}× alertas</span>
                 <span className="text-xs text-destructive">max {formatDuration(stats.maxMs)}</span>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-3xs text-muted-foreground mt-0.5">
                 média: {formatDuration(Math.round(stats.totalMs / stats.count))}
               </p>
             </div>

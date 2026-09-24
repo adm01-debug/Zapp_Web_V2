@@ -226,7 +226,7 @@ export function ConversationHistory({ contactId, contactPhone, onSelectConversat
                     </div>
                     <Badge 
                       variant="outline" 
-                      className={`text-[10px] ${statusConfig[conv.status].className}`}
+                      className={`text-3xs ${statusConfig[conv.status].className}`}
                     >
                       <StatusIcon className="w-3 h-3 mr-1" />
                       {statusConfig[conv.status].label}

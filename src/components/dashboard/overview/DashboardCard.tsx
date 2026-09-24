@@ -104,7 +104,7 @@ export function VerTodasButton({ onClick }: VerTodasButtonProps) {
       type="button"
       data-testid="ver-todas"
       onClick={onClick}
-      className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-[11px] font-medium text-foreground-secondary hover:bg-muted/60 flex items-center gap-1 shrink-0 transition-colors"
+      className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-2xs font-medium text-foreground-secondary hover:bg-muted/60 flex items-center gap-1 shrink-0 transition-colors"
     >
       Ver todas
       <ArrowRight className="w-3 h-3" />
@@ -123,7 +123,7 @@ export function StatusChip({ label, tone, pulse }: StatusChipProps) {
   return (
     <span
       className={cn(
-        'h-[22px] px-2 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shrink-0',
+        'h-[22px] px-2 rounded-md text-2xs font-semibold flex items-center gap-1.5 shrink-0',
         tone === 'success' ? 'bg-success/15 border border-success/30 text-success' : 'bg-muted/40 border border-border/60 text-muted-foreground',
       )}
     >
@@ -159,7 +159,7 @@ interface CardSelectProps {
 export function CardSelect({ value, onValueChange, options, testid }: CardSelectProps) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger data-testid={testid} className="h-7 rounded-lg bg-input/60 border-border/60 text-[11px] font-medium w-auto gap-1.5">
+      <SelectTrigger data-testid={testid} className="h-7 rounded-lg bg-input/60 border-border/60 text-2xs font-medium w-auto gap-1.5">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -218,7 +218,7 @@ export function InitialsAvatar({ name, size = 32, src, className }: InitialsAvat
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const bg = avatarHue[h % avatarHue.length];
-  const font = size >= 44 ? 'text-lg' : size >= 32 ? 'text-xs' : 'text-[10px]';
+  const font = size >= 44 ? 'text-lg' : size >= 32 ? 'text-xs' : 'text-3xs';
   if (src) {
     return <img src={src} alt={name} style={{ width: size, height: size }} className={cn('rounded-full object-cover shrink-0', className)} />;
   }

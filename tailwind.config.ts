@@ -27,6 +27,12 @@ export default {
         "fluid-2xl": "var(--text-2xl)",
         "fluid-3xl": "var(--text-3xl)",
         "fluid-4xl": "var(--text-4xl)",
+        // Abaixo da escala modular — faixa de badge/rotulo/atalho (F3 do
+        // PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24, achado A5/E37).
+        // text-[10px]/text-[11px] eram os 2 arbitrarios mais usados do repo
+        // (932 ocorrencias) sem nenhum token cobrindo essa faixa.
+        "3xs": ["0.625rem", { lineHeight: "0.8125rem" }], // 10px / 13px
+        "2xs": ["0.6875rem", { lineHeight: "0.875rem" }], // 11px / 14px
         // Modular typographic scale (1.25 ratio)
         xs: ["0.75rem", { lineHeight: "1rem" }],
         sm: ["0.875rem", { lineHeight: "1.25rem" }],

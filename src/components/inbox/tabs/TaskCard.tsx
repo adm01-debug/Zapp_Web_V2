@@ -42,7 +42,7 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete, contactName, 
           <div className="min-w-0 flex-1">
             <p className={cn('text-[13px] font-semibold', completed && 'line-through text-muted-foreground')}>{task.title}</p>
             {contactName && (
-              <button type="button" onClick={onOpenContact} disabled={!onOpenContact} className="text-[11px] text-primary hover:underline disabled:no-underline disabled:cursor-default disabled:text-muted-foreground mt-0.5 truncate block text-left">
+              <button type="button" onClick={onOpenContact} disabled={!onOpenContact} className="text-2xs text-primary hover:underline disabled:no-underline disabled:cursor-default disabled:text-muted-foreground mt-0.5 truncate block text-left">
                 {contactName}
               </button>
             )}
@@ -63,9 +63,9 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete, contactName, 
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {completed ? (
-            <span className="h-6 px-2.5 rounded-full border text-[11px] font-semibold inline-flex items-center bg-success/15 text-success border-success/30">Concluída</span>
+            <span className="h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center bg-success/15 text-success border-success/30">Concluída</span>
           ) : (
-            <span className={cn('h-6 px-2.5 rounded-full border text-[11px] font-semibold inline-flex items-center', priority.className)}>{priority.label}</span>
+            <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center', priority.className)}>{priority.label}</span>
           )}
           {due && (
             <span className={cn('text-xs inline-flex items-center gap-1', dueUrgent ? 'text-destructive' : isToday ? 'text-warning' : 'text-muted-foreground')}>
@@ -75,7 +75,7 @@ export function TaskCard({ task, assigneeName, onToggle, onDelete, contactName, 
           )}
           {assigneeName && (
             <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-muted/60 flex items-center justify-center text-[10px] font-semibold shrink-0">{assigneeName[0]?.toUpperCase()}</span>
+              <span className="w-5 h-5 rounded-full bg-muted/60 flex items-center justify-center text-3xs font-semibold shrink-0">{assigneeName[0]?.toUpperCase()}</span>
               {assigneeName}
             </span>
           )}

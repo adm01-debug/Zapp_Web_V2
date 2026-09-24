@@ -21,7 +21,7 @@ export function LastActivityWidget({ contactId }: LastActivityWidgetProps) {
           <Clock className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-foreground truncate">{event.title}</p>
-            <p className="text-[11px] text-muted-foreground">{format(new Date(event.at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
+            <p className="text-2xs text-muted-foreground">{format(new Date(event.at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
           </div>
         </div>
       ))}

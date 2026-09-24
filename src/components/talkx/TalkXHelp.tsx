@@ -104,9 +104,9 @@ export function TalkXHelp({ open, onOpenChange }: TalkXHelpProps) {
 
             <HelpSection icon={FileText} title="Templates de mensagem">
               <p>
-                Templates são modelos de mensagem com variáveis como <code className="text-[11px] bg-muted/50 px-1 py-0.5 rounded">{'{{nome}}'}</code>,{' '}
-                <code className="text-[11px] bg-muted/50 px-1 py-0.5 rounded">{'{{empresa}}'}</code> e{' '}
-                <code className="text-[11px] bg-muted/50 px-1 py-0.5 rounded">{'{{saudacao}}'}</code>, que são
+                Templates são modelos de mensagem com variáveis como <code className="text-2xs bg-muted/50 px-1 py-0.5 rounded">{'{{nome}}'}</code>,{' '}
+                <code className="text-2xs bg-muted/50 px-1 py-0.5 rounded">{'{{empresa}}'}</code> e{' '}
+                <code className="text-2xs bg-muted/50 px-1 py-0.5 rounded">{'{{saudacao}}'}</code>, que são
                 substituídas automaticamente para cada contato no envio. Passam por rascunho,
                 revisão e aprovação antes de poderem ser usados em campanhas.
               </p>

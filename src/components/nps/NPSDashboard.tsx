@@ -98,7 +98,7 @@ export function NPSDashboard() {
             <div className="flex h-6 rounded-full overflow-hidden">
               {metrics.promoters > 0 && (
                 <div
-                  className="bg-primary flex items-center justify-center text-[10px] text-primary-foreground font-medium"
+                  className="bg-primary flex items-center justify-center text-3xs text-primary-foreground font-medium"
                   style={{ width: `${(metrics.promoters / metrics.totalResponses) * 100}%` }}
                 >
                   {Math.round((metrics.promoters / metrics.totalResponses) * 100)}%
@@ -106,7 +106,7 @@ export function NPSDashboard() {
               )}
               {metrics.passives > 0 && (
                 <div
-                  className="bg-secondary flex items-center justify-center text-[10px] text-secondary-foreground font-medium"
+                  className="bg-secondary flex items-center justify-center text-3xs text-secondary-foreground font-medium"
                   style={{ width: `${(metrics.passives / metrics.totalResponses) * 100}%` }}
                 >
                   {Math.round((metrics.passives / metrics.totalResponses) * 100)}%
@@ -114,7 +114,7 @@ export function NPSDashboard() {
               )}
               {metrics.detractors > 0 && (
                 <div
-                  className="bg-destructive flex items-center justify-center text-[10px] text-destructive-foreground font-medium"
+                  className="bg-destructive flex items-center justify-center text-3xs text-destructive-foreground font-medium"
                   style={{ width: `${(metrics.detractors / metrics.totalResponses) * 100}%` }}
                 >
                   {Math.round((metrics.detractors / metrics.totalResponses) * 100)}%

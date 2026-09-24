@@ -28,7 +28,7 @@ export function ContactTasksWidget({ contactId }: ContactTasksWidgetProps) {
             <Clock className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate flex-1 text-foreground">{task.title}</span>
             {due && (
-              <span className={cn('text-[11px] shrink-0', isPast ? 'text-destructive' : isDueToday ? 'text-warning' : 'text-muted-foreground')}>
+              <span className={cn('text-2xs shrink-0', isPast ? 'text-destructive' : isDueToday ? 'text-warning' : 'text-muted-foreground')}>
                 {format(due, 'dd/MM HH:mm', { locale: ptBR })}
               </span>
             )}

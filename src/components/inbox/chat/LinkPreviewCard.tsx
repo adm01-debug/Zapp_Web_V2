@@ -71,7 +71,7 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
         {host && (
           <div
             className={cn(
-              'flex items-center gap-1 text-[10px] uppercase tracking-wide font-medium',
+              'flex items-center gap-1 text-3xs uppercase tracking-wide font-medium',
               isSent ? 'text-primary-foreground/70' : 'text-muted-foreground',
             )}
           >
@@ -92,7 +92,7 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
         {data.description && (
           <p
             className={cn(
-              'text-[11px] leading-snug line-clamp-2',
+              'text-2xs leading-snug line-clamp-2',
               isSent ? 'text-primary-foreground/80' : 'text-muted-foreground',
             )}
           >

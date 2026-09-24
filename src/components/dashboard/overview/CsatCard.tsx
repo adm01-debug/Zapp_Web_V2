@@ -54,10 +54,10 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
                 <Star key={n} className={cn('w-3 h-3', n <= Math.round(average) ? 'fill-dash-amber text-dash-amber' : 'fill-muted-foreground/40 text-muted-foreground/40')} />
               ))}
             </div>
-            <p className={cn('text-[11px] font-semibold mt-1.5', trend >= 0 ? 'text-dash-green' : 'text-dash-red')}>
+            <p className={cn('text-2xs font-semibold mt-1.5', trend >= 0 ? 'text-dash-green' : 'text-dash-red')}>
               {trend > 0 ? '+' : ''}{trend}%
             </p>
-            <p className="text-[11px] text-foreground-secondary">vs. período anterior</p>
+            <p className="text-2xs text-foreground-secondary">vs. período anterior</p>
           </div>
           <div className="flex flex-col gap-0.5 justify-center">
             {[5, 4, 3, 2, 1].map((n) => {
@@ -65,7 +65,7 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
               const pct = total > 0 ? Math.round((count / total) * 100) : 0;
               return (
                 <div key={n} data-testid="csat-row" className="h-5 flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground w-7 shrink-0">{n} ★</span>
+                  <span className="text-2xs text-muted-foreground w-7 shrink-0">{n} ★</span>
                   <div className="h-2.5 rounded-full bg-muted/60 flex-1 overflow-hidden">
                     <motion.div
                       className={cn('h-full rounded-full', BAR_COLOR[n])}
@@ -74,7 +74,7 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
                       transition={reducedMotion ? { duration: 0 } : { duration: 0.5 }}
                     />
                   </div>
-                  <span className="text-[11px] font-semibold text-foreground w-8 text-right shrink-0">{pct}%</span>
+                  <span className="text-2xs font-semibold text-foreground w-8 text-right shrink-0">{pct}%</span>
                 </div>
               );
             })}

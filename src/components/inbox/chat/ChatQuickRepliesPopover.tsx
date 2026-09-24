@@ -53,7 +53,7 @@ export function ChatQuickRepliesPopover({ show, replies, onSelect, onClose }: Ch
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{reply.title}</span>
-                  <Badge variant="outline" className="text-[10px]">
+                  <Badge variant="outline" className="text-3xs">
                     {reply.shortcut}
                   </Badge>
                 </div>

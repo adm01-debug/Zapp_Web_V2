@@ -347,7 +347,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <div className="text-center py-4">
               <p className="text-5xl font-bold text-foreground tabular-nums leading-none">{String(bestHour.hour).padStart(2, '0')}h</p>
               {bestHour.day && <p className="text-sm text-foreground-secondary mt-1">{bestHour.day} &mdash; {bestHour.count} envios</p>}
-              <p className="text-[11px] text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
+              <p className="text-2xs text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
             </div>
           ) : (
             <p className="text-[13px] text-muted-foreground text-center py-6">Sem dados de envio no período selecionado.</p>
@@ -361,7 +361,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <IconTile icon={Calendar} color="green" size={36} />
             <div><p className="text-[15px] font-bold text-foreground">Melhores horários de envio</p><p className="text-xs text-foreground-secondary">Volume por dia da semana e horário</p></div>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2 text-2xs text-muted-foreground">
             <span className="w-8 h-2.5 rounded-sm bg-muted/50 inline-block" />Menor
             <span className="w-8 h-2.5 rounded-sm bg-primary/80 inline-block" />Maior
           </div>
@@ -371,7 +371,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <div className="flex ml-9 mb-1">{Array.from({ length: 8 }, (_, i) => i * 3).map((h) => <div key={h} className="flex-1 text-[9px] text-muted-foreground text-center">{String(h).padStart(2, '0')}h</div>)}</div>
             {DAY_LABELS.map((day, dw) => (
               <div key={day} className="flex items-center mb-0.5 gap-1">
-                <span className="text-[10px] text-foreground-secondary w-8 text-right shrink-0">{day}</span>
+                <span className="text-3xs text-foreground-secondary w-8 text-right shrink-0">{day}</span>
                 <div className="flex-1 flex gap-0.5">
                   {Array.from({ length: 24 }, (_, h) => {
                     const count = hourlyData?.heatmap[dw][h] ?? 0;
@@ -391,7 +391,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <thead><tr>
-                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-[11px] font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
+                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
               </tr></thead>
               <tbody>
                 {topCampaigns.map((c, i) => (
@@ -434,8 +434,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-4 justify-end">
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-[11px] text-foreground-secondary">Taxa de entrega</span></div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-red" /><span className="text-[11px] text-foreground-secondary">Taxa de falha</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-2xs text-foreground-secondary">Taxa de entrega</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-red" /><span className="text-2xs text-foreground-secondary">Taxa de falha</span></div>
           </div>
         </section>
       )}
@@ -458,7 +458,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
               {([['Enviadas', fmtInt(panelCampaign.sent_count), 'text-primary'], ['Entregues', fmtInt(panelCampaign.delivered_count), 'text-dash-green'], ['Falhas', fmtInt(panelCampaign.failed_count), 'text-dash-red']] as [string, string, string][]).map(([label, value, color]) => (
                 <div key={label} className="rounded-xl border border-border/60 bg-input/20 p-3 text-center">
                   <p className={`text-2xl font-bold ${color}`}>{value}</p>
-                  <p className="text-[11px] text-foreground-secondary mt-0.5">{label}</p>
+                  <p className="text-2xs text-foreground-secondary mt-0.5">{label}</p>
                 </div>
               ))}
             </div>
@@ -470,7 +470,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
               <table className="w-full min-w-[480px] border-collapse">
                 <thead><tr>
                   {([['Contato', '180px'], ['Telefone', '130px'], ['Status', '80px'], ['Enviada em', '130px'], ['Entregue em', '130px']] as [string, string][]).map(([h, w]) => (
-                    <th key={h} style={{ minWidth: w }} className="text-left text-[11px] font-semibold text-foreground-secondary px-2 py-2">{h}</th>
+                    <th key={h} style={{ minWidth: w }} className="text-left text-2xs font-semibold text-foreground-secondary px-2 py-2">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
@@ -481,14 +481,14 @@ export function TalkXAnalytics({ campaigns }: Props) {
                         <td className="px-2 py-2 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
                         <td className="px-2 py-2 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
                         <td className={`px-2 py-2 text-xs font-semibold ${tone}`}>{r.status || '—'}</td>
-                        <td className="px-2 py-2 text-[11px] text-muted-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</td>
-                        <td className="px-2 py-2 text-[11px] text-muted-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</td>
+                        <td className="px-2 py-2 text-2xs text-muted-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</td>
+                        <td className="px-2 py-2 text-2xs text-muted-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-              {(panelRecipients?.length ?? 0) >= 200 && <p className="text-[11px] text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros. Use CSV para o conjunto completo.</p>}
+              {(panelRecipients?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros. Use CSV para o conjunto completo.</p>}
             </div>
           )}
         </section>

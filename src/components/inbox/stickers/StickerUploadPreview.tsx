@@ -48,7 +48,7 @@ export function StickerUploadPreview({ pending, onConfirm, onCancel }: UploadPre
 
       <div className="flex items-center gap-2">
         <Tag className="w-3 h-3 text-muted-foreground shrink-0" aria-hidden="true" />
-        <span className="text-[10px] text-muted-foreground shrink-0">Categoria:</span>
+        <span className="text-3xs text-muted-foreground shrink-0">Categoria:</span>
         <CategorySelector value={category} onChange={setCategory} size="sm" />
         {pending.aiCategory !== 'outros' && pending.aiCategory !== 'enviadas' && category !== pending.aiCategory && (
           <button

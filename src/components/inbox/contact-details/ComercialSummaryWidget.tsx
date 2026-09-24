@@ -10,7 +10,7 @@ function Tile({ value, label }: { value: string | number; label: string }) {
   return (
     <div className="bg-muted/40 rounded-lg p-2.5">
       <p className="text-[15px] font-bold tabular-nums text-foreground">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="text-2xs text-muted-foreground">{label}</p>
     </div>
   );
 }

@@ -117,14 +117,14 @@ export function AIRewriteButton({ inputValue, onRewrite, contactName }: AIRewrit
                 )}
                 <div className="min-w-0">
                   <span className="text-sm font-medium text-foreground block">{tone.label}</span>
-                  <span className="text-[11px] text-muted-foreground">{tone.description}</span>
+                  <span className="text-2xs text-muted-foreground">{tone.description}</span>
                 </div>
               </button>
             );
           })}
         </div>
         {!hasText && (
-          <p className="text-[11px] text-warning text-center mt-2 px-2">
+          <p className="text-2xs text-warning text-center mt-2 px-2">
             Digite uma mensagem primeiro
           </p>
         )}
