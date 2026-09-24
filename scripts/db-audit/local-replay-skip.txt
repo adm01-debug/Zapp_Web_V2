@@ -1,0 +1,30 @@
+# Migrations puladas no replay local (`supabase db start`) do types-sync.yml.
+#
+# Uma linha por nome de arquivo, relativo a supabase/migrations/.
+# Linhas vazias e comecadas por # sao ignoradas. Nome que nao existir em
+# supabase/migrations derruba o job de proposito — a lista nao pode
+# apodrecer silenciosamente.
+#
+# CRITERIO DE ENTRADA (os tres, juntos):
+#   1. a migration e puramente operacional — cron, vault, http_post, GUC de
+#      instancia — e nao cria nem altera schema;
+#   2. depende de estado de runtime que so existe no banco de producao;
+#   3. nao contribui nada para o que `supabase gen types typescript` le.
+#
+# Migration de schema NUNCA entra aqui. Se uma falhar no replay, isso e um
+# sinal real de que a cadeia de migrations nao reconstroi o banco, e o job
+# tem que quebrar.
+#
+# O arquivo versionado em supabase/migrations nao e modificado: ele sai da
+# copia efemera do checkout so durante o `supabase db start` e volta em
+# seguida, com verificacao de worktree limpo antes de seguir.
+
+# Reagendamento do cron 'avatars-refresh' aplicado direto no banco em 02/09,
+# sem captura de SQL no ledger (ver justification em migration-evidence.json);
+# o .sql e reconstrucao documental posterior, nao um script que o sistema de
+# migrations executou. Faz `cron.alter_job(job_id := 8)`, e o jobid do pg_cron
+# vem de uma sequence por instancia: num banco local recem-criado o job
+# 'avatars-refresh' recebe outro numero e o replay morre com
+# "Job 8 does not exist or you don't own it (SQLSTATE XX000)".
+# Trocar so a chave do vault que o cron usa nao muda uma linha dos types.
+20260902000200_fix_cron_avatars_refresh_key.sql
