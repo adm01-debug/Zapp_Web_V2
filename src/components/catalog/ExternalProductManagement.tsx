@@ -37,6 +37,8 @@ import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
+import { CatalogRail } from './CatalogRail';
+import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
@@ -88,7 +90,11 @@ export const ExternalProductManagement: React.FC = () => {
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
+    fetchProduct,
   } = useExternalCatalog();
+
+  // E56 — recentes/mais enviados do rail (catalog_send_events).
+  const { recent: recentSends, topSent } = useCatalogRecentSends();
 
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string>(
@@ -286,6 +292,14 @@ export const ExternalProductManagement: React.FC = () => {
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
   const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
+
+  /** E56 — reabrir envio a partir do rail. catalog_send_events guarda só
+   * o id do produto, então busca o produto completo antes de abrir o
+   * diálogo; se ele tiver sumido do catálogo, não abre nada. */
+  const handleOpenProductFromRail = useCallback(async (productId: string) => {
+    const product = await fetchProduct(productId);
+    if (product) setSendProduct(product);
+  }, [fetchProduct]);
 
   return (
     <Tabs defaultValue="produtos" className="w-full min-w-0">
@@ -599,7 +613,20 @@ export const ExternalProductManagement: React.FC = () => {
       />
     </div>
 
-    <aside className="catalog-rail sticky top-4 hidden xl:block" />
+    <aside className="catalog-rail sticky top-4 hidden xl:block">
+      {/* E51-E53: o rail nasceu vazio na E31 (layout). onApplyFilter reusa
+          handleKpiSelect — as chaves do rail são keyof CatalogStats de
+          propósito, pra não duplicar a lógica de aplicar filtro. */}
+      <CatalogRail
+        stats={stats}
+        loading={statsLoading}
+        products={products}
+        onApplyFilter={handleKpiSelect}
+        recentSends={recentSends}
+        topSent={topSent}
+        onOpenProduct={handleOpenProductFromRail}
+      />
+    </aside>
     </div>
       </TabsContent>
 

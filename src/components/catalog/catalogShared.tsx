@@ -346,7 +346,7 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
   const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
   if (visible.length === 0) return null;
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+    <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
       {visible.map((d, i) => (
         <button
           key={d.key}

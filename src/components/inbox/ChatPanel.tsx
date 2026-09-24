@@ -189,7 +189,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
 
-  const handleTransfer = (type: 'agent' | 'queue', targetId: string, message?: string) => {
+  const handleTransfer = async (type: 'agent' | 'queue', targetId: string, message?: string) => {
+    const updateData: { assigned_to?: string; queue_id?: string } = type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
+    const { error } = await supabase.from('contacts').update(updateData).eq('id', conversation.contact.id);
+    if (error) {
+      log.error('Failed to transfer conversation:', error);
+      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
+      return;
+    }
     toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
   };
 
