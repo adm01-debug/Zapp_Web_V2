@@ -142,7 +142,6 @@ export class NavigationService {
       { id: 'media-migration', icon: HardDrive, label: 'Migração Mídia', roles: ADMIN_ONLY },
       { id: 'sicoob-bridge', icon: Landmark, label: 'Sicoob Bridge', roles: ADMIN_ONLY },
       { id: 'evolution-monitor', icon: Activity, label: 'Monitor Evolution', roles: ADMIN_ONLY },
-      { id: 'public-api', icon: Webhook, label: 'API Pública', roles: ADMIN_ONLY },
     ];
   }
 
