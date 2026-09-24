@@ -1,17 +1,12 @@
 import { cn } from '@/lib/utils';
 import { HeaderSectionAnchor } from './HeaderSectionAnchor';
-import { HeaderUserPill } from './HeaderUserPill';
 
 interface AppHeaderProps {
   currentView: string;
-  profile: { name?: string | null; avatar_url?: string | null } | null;
-  userEmail: string;
-  signOut: () => void;
-  onViewChange: (view: string) => void;
   className?: string;
 }
 
-export function AppHeader({ currentView, profile, userEmail, signOut, onViewChange, className }: AppHeaderProps) {
+export function AppHeader({ currentView, className }: AppHeaderProps) {
   return (
     <header
       className={cn(
@@ -21,7 +16,6 @@ export function AppHeader({ currentView, profile, userEmail, signOut, onViewChan
     >
       <HeaderSectionAnchor currentView={currentView} />
       <div className="flex-1" />
-      <HeaderUserPill profile={profile} userEmail={userEmail} signOut={signOut} onViewChange={onViewChange} />
     </header>
   );
 }

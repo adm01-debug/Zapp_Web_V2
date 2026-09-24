@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useAgentPresenceMap } from './useAgentPresence';
 
 export interface AgentProfile {
   id: string;
@@ -37,6 +38,7 @@ const getAgentStatus = (lastActivity?: string): 'online' | 'away' | 'offline' =>
 };
 
 export function useAgents() {
+  const presence = useAgentPresenceMap();
   // Fetch profiles
   const { data: profiles, isLoading: loadingProfiles, error: profilesError, refetch: refetchProfiles } = useQuery({
     queryKey: ['agents-profiles'],
@@ -110,8 +112,8 @@ export function useAgents() {
       // Get active chats count
       const activeChats = activeChatsData?.[profile.id] || 0;
 
-      // Simulate status based on updated_at
-      const status = getAgentStatus(profile.updated_at);
+      // Presença real quando o agente está conectado; senão, estimativa por updated_at
+      const status = presence[profile.user_id] ?? getAgentStatus(profile.updated_at);
 
       return {
         ...profile,
@@ -120,7 +122,7 @@ export function useAgents() {
         queues: agentQueues,
       };
     });
-  }, [profiles, queuesData, activeChatsData]);
+  }, [profiles, queuesData, activeChatsData, presence]);
 
   const isLoading = loadingProfiles || loadingQueues;
 
