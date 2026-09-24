@@ -60,7 +60,6 @@ interface VirtualizedRealtimeListProps {
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelection?: (contactId: string) => void;
-  onMarkAsRead?: (contactId: string) => void;
   onArchive?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   pinnedIds?: Set<string>;
@@ -90,7 +89,6 @@ export function VirtualizedRealtimeList({
   selectionMode = false,
   selectedIds = EMPTY_SET,
   onToggleSelection,
-  onMarkAsRead,
   onArchive,
   onPin,
   pinnedIds = EMPTY_SET,
