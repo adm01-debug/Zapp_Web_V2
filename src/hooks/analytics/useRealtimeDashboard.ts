@@ -40,6 +40,14 @@ export function useRealtimeDashboard() {
 
   const messageCountRef = useRef(0);
   const minuteCountRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Fetch initial counts
   const fetchInitialData = useCallback(async () => {
@@ -79,6 +87,8 @@ export function useRealtimeDashboard() {
         .not('contact_id', 'is', null);
 
       const uniqueContacts = new Set(activeContacts?.map(m => m.contact_id) || []);
+
+      if (!isMountedRef.current) return;
 
       setState(prev => ({
         ...prev,

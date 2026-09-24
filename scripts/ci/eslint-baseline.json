@@ -622,7 +622,7 @@
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "d07e9a299ca7737c61c7e8cb853a2d36a5f6379d02c2684226dbfad7d82d0933"
+      "sha256": "63a072ba5656c15cfef0a13f5a0054ceb097178e96e2016ab022c49e0e9e7849"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -915,10 +915,6 @@
     {
       "path": "src/components/settings/SoundCustomizationPanel.tsx",
       "sha256": "e0e28546cdb2d7184020d5bf1c64b2dd7900d94cd2d72833382b986ca5cc27df"
-    },
-    {
-      "path": "src/components/settings/theme/useThemePreset.ts",
-      "sha256": "b190657cc867b8095f64a40462c93ec1a00529bd54c7486bb5f612d24cc36fce"
     },
     {
       "path": "src/components/sla/SLACharts.tsx",
@@ -1322,7 +1318,7 @@
     },
     {
       "path": "src/hooks/analytics/useRealtimeDashboard.ts",
-      "sha256": "b486512ea749803201b36ad08f494dbfbad8c87c5d786c9d463c051adce29c52"
+      "sha256": "3052f85823951d5aad626a0450fe7207ac59b1a96001f7f8d6cea968eb541c5a"
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
@@ -9039,20 +9035,6 @@
       "contextHash": "860d4f4361d2fe8421a78bcef969514d4d7cabee4f1225a7369d91c626fb632b"
     },
     {
-      "file": "src/components/settings/theme/useThemePreset.ts",
-      "line": 70,
-      "column": 9,
-      "endLine": 70,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/settings/theme/useThemePreset.ts:70:9 68 | const radius = parsed.borderRadius ?? 8; 69 | > 70 | setActivePreset(presetId); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 71 | setBorderRadius(radius); 72 | applyBorderRadius(radius); 73 |",
-      "spanHash": "0e3561846d84d3a17e555acac1c14514248563f75df90caf6dd0b929cbb93ef2",
-      "lineHash": "ef54d113f9721986fe073af470ef64e47fbe629e0894640d67bdb8d3b7323804",
-      "contextHash": "1a3c93ca4f9201e53a355764a9735ef933460af6f0f05e7952958899287d96c1"
-    },
-    {
       "file": "src/components/sla/SLACharts.tsx",
       "line": 42,
       "column": 159,
@@ -13268,14 +13250,14 @@
     },
     {
       "file": "src/hooks/analytics/useRealtimeDashboard.ts",
-      "line": 101,
+      "line": 111,
       "column": 5,
-      "endLine": 101,
+      "endLine": 111,
       "endColumn": 21,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/useRealtimeDashboard.ts:101:5 99 | // Subscribe to realtime changes 100 | useEffect(() => { > 101 | fetchInitialData(); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 102 | 103 | const channel = supabase 104 | .channel('dashboard-realtime')",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/analytics/useRealtimeDashboard.ts:111:5 109 | // Subscribe to realtime changes 110 | useEffect(() => { > 111 | fetchInitialData(); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 112 | 113 | const channel = supabase 114 | .channel('dashboard-realtime')",
       "spanHash": "1450bcd7275fa735cb599c6c2c5133c417db6ebf22e6104da5e6e316779700cf",
       "lineHash": "0102d66dac05808a6f6044d7ec24ee6eb93ccadfc280637899e56b3fec5d99b0",
       "contextHash": "e829827e7dfb73315059852b859cd077b03f5b3f6a21ea2c90a4e6fdafffe259"
