@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const roleState = { isAdmin: false, isSupervisor: false };
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
 
 vi.mock('@/hooks/analytics/useDashboardData', () => ({
   useDashboardData: () => ({
