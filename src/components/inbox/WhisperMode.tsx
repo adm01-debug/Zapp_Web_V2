@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,6 +29,12 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const isSupervisor = profile?.role === 'admin' || profile?.role === 'supervisor';
 
@@ -107,6 +113,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
       content: message.trim(),
     });
 
+    if (!isMountedRef.current) return;
     setMessage('');
     queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
   };

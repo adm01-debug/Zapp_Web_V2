@@ -63,7 +63,7 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
       .eq('id', contactId);
     if (!error) toast.success('Scores atualizados');
     else toast.error('Erro ao salvar');
-    setSaving(false);
+    if (isMountedRef.current) setSaving(false);
   };
 
   useEffect(() => {

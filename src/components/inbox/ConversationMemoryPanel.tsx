@@ -103,7 +103,7 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
     } else {
       toast.error('Erro ao salvar');
     }
-    setSaving(false);
+    if (isMountedRef.current) setSaving(false);
   };
 
   if (loading) {
