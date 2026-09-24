@@ -88,7 +88,13 @@ export function DashboardView() {
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
 
-  const goToTab = (v: string) => setTab(v);
+  // Agente só pode navegar para as próprias abas — bloqueia o vazamento por
+  // clique nos cards (Ferramentas de IA → Sentimento → Relatórios etc.), já
+  // que a barra de abas em si já filtra, mas os cards chamam onNavigateTab direto.
+  const goToTab = (v: string) => {
+    if (!isStaff && !AGENT_TAB_VALUES.has(v)) return;
+    setTab(v);
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -129,7 +135,7 @@ export function DashboardView() {
               Conteúdo real chega nas Fases 5-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
               deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). */}
           <div data-testid="dash-banner">
-            <GreetingBanner />
+            <GreetingBanner personal={!isStaff} />
           </div>
           <div data-testid="dash-kpis">
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} />
@@ -140,7 +146,7 @@ export function DashboardView() {
               realtime={realtime}
               pendingConversations={stats.pendingConversations}
               slaBreachedToday={kpi?.slaBreachedToday}
-              busiestQueue={busiestQueue}
+              busiestQueue={isStaff ? busiestQueue : null}
             />
             <DailyGoalsCard
               onSeeAll={() => setTab('goals')}
@@ -172,7 +178,7 @@ export function DashboardView() {
             <SentimentTrendCard />
           </div>
           <div data-testid="dash-gamification">
-            <GamificationSection stats={stats} />
+            <GamificationSection stats={stats} isStaff={isStaff} />
           </div>
         </TabsContent>
 
