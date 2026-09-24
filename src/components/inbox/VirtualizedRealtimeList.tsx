@@ -273,7 +273,12 @@ const ConversationRow = memo(({
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
   const assignedToId = conversation.contact.assigned_to;
   const assignedAgent = assignedToId && assignedToId !== currentUserId ? agentsMap.get(assignedToId) : null;
-  const slaRow = conversation.contact.conversation_sla?.[0];
+  // conversation_sla vem do embed do select (RealtimeService.fetchContacts:
+  // '*, conversation_sla(...)'), presente em runtime mas ausente no tipo
+  // genérico ContactRow (que so cobre as colunas da tabela contacts).
+  const slaRow = (conversation.contact as unknown as {
+    conversation_sla?: Array<{ first_message_at: string | null; first_response_at: string | null }>;
+  }).conversation_sla?.[0];
   const firstMessageAt = slaRow?.first_message_at ?? conversation.contact.created_at;
   const tags = conversation.contact.tags ?? [];
 
