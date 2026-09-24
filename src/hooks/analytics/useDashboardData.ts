@@ -2,6 +2,7 @@
  import { startOfDay, endOfDay } from 'date-fns';
  import { useDashboardStats, DashboardFilters } from '../dashboard/useDashboardStats';
  import { useDashboardKpi } from '../dashboard/useDashboardKpi';
+ import { useAgentPresenceMap } from '../crm/useAgentPresence';
 
  const getDefaultFilters = (): DashboardFilters => ({
    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
@@ -17,6 +18,7 @@
    // heurística local (updated_at hoje && !assigned_to contava devolução à fila
    // como resolvida) nem o slaQuery de últimos-50-all-time.
    const { data: kpi } = useDashboardKpi();
+   const presence = useAgentPresenceMap();
 
    const stats = useMemo(() => {
      if (!agents || !contacts) return null;
@@ -27,7 +29,7 @@
 
      const queuesStats = (queues || []).map(queue => {
        const members = (queue as any).queue_members || [];
-       const onlineMembers = members.filter((m: any) => m.is_active && m.profiles?.is_active).length;
+       const onlineMembers = members.filter((m: any) => m.is_active && m.profiles?.is_active && presence[m.profiles?.user_id] === 'online').length;
        return {
          id: queue.id,
          name: queue.name,
@@ -49,7 +51,7 @@
        queuesStats,
        recentActivity: [],
      };
-   }, [agents, contacts, queues, kpi]);
+   }, [agents, contacts, queues, kpi, presence]);
  
    // contacts/queues crus expostos para useQueueHealth (Fase 6) — mesmos dados já
    // carregados por useDashboardStats, sem query nova.

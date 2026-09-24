@@ -2,6 +2,7 @@
  import { useQuery } from '@tanstack/react-query';
  import { supabase } from '@/integrations/supabase/client';
  import { startOfDay, endOfDay } from 'date-fns';
+ import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
  
  export interface DashboardFilters {
    dateRange?: { from: Date; to: Date };
@@ -11,24 +12,32 @@
  
  export function useDashboardStats(filters: DashboardFilters) {
    const todayStart = startOfDay(new Date()).toISOString();
+   const presence = useAgentPresenceMap();
  
    const agentsQuery = useQuery({
      queryKey: ['dashboard-agents', filters.agentId],
      queryFn: async () => {
        let query = supabase
          .from('profiles')
-         .select('id, name, is_active, role')
+         .select('id, user_id, name, is_active, role')
          .or('role.eq.agent,role.eq.supervisor');
        if (filters.agentId) query = query.eq('id', filters.agentId);
        const { data, error } = await query;
        if (error) throw error;
        return {
          agents: data || [],
-         onlineAgents: data?.filter(a => a.is_active).length || 0,
          totalAgents: data?.length || 0,
        };
      },
    });
+
+   // "Online" = conta ativa E conectada agora com status Online (presença real do Realtime).
+   // Fica fora do queryFn: presença muda em tempo real e não pode ficar presa no cache da query.
+   const agentsData = useMemo(() => {
+     if (!agentsQuery.data) return undefined;
+     const onlineAgents = agentsQuery.data.agents.filter(a => a.is_active && presence[a.user_id] === 'online').length;
+     return { ...agentsQuery.data, onlineAgents };
+   }, [agentsQuery.data, presence]);
  
    const contactsQuery = useQuery({
      queryKey: ['dashboard-contacts', filters],
@@ -52,7 +61,7 @@
      queryFn: async () => {
        const { data, error } = await supabase
          .from('queues')
-         .select(`id, name, color, queue_members (profile_id, is_active, profiles (id, is_active))`)
+         .select(`id, name, color, queue_members (profile_id, is_active, profiles (id, user_id, is_active))`)
          .eq('is_active', true);
        if (error) throw error;
        return data || [];
@@ -64,7 +73,7 @@
    // achado A5. useDashboardData agora lê o tempo médio só de useDashboardKpi.
 
    return {
-     agents: agentsQuery.data,
+     agents: agentsData,
      contacts: contactsQuery.data,
      queues: queuesQuery.data,
      isLoading: agentsQuery.isLoading || contactsQuery.isLoading || queuesQuery.isLoading,
