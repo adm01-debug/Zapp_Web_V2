@@ -121,7 +121,7 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
                         <p className="text-sm font-semibold truncate">{contact.name}</p>
                         <p className="text-xs text-muted-foreground font-mono">{contact.phone}</p>
                       </div>
-                      {idx === 0 && <Badge variant="default" className="ml-auto text-[10px]">Principal</Badge>}
+                      {idx === 0 && <Badge variant="default" className="ml-auto text-3xs">Principal</Badge>}
                     </CardContent>
                   </Card>
                 );
@@ -138,7 +138,7 @@ export function ContactMergePanel({ open, onOpenChange, contacts, onMergeComplet
 
               return (
                 <div key={field.key} className="py-2.5 border-b border-border/20 last:border-0">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     {field.label}
                   </p>
                   <RadioGroup

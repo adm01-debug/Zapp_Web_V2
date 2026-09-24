@@ -105,7 +105,7 @@ export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
             {/* Grid rows */}
             {grid.map((row, dayIdx) => (
               <div key={dayIdx} className="flex items-center gap-px mb-px">
-                <div className="w-[100px] text-[11px] text-muted-foreground truncate pr-2 text-right capitalize">
+                <div className="w-[100px] text-2xs text-muted-foreground truncate pr-2 text-right capitalize">
                   {dayLabels[dayIdx]}
                 </div>
                 {row.map((cell, hIdx) => (
@@ -137,11 +137,11 @@ export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
 
             {/* Legend */}
             <div className="flex items-center gap-2 mt-3 ml-[100px]">
-              <span className="text-[10px] text-muted-foreground">Menos</span>
+              <span className="text-3xs text-muted-foreground">Menos</span>
               {['bg-muted/20', 'bg-destructive', 'bg-orange-500', 'bg-amber-400', 'bg-emerald-400', 'bg-emerald-500'].map((c, i) => (
                 <div key={i} className={cn('w-3 h-3 rounded-sm', c)} />
               ))}
-              <span className="text-[10px] text-muted-foreground">Mais</span>
+              <span className="text-3xs text-muted-foreground">Mais</span>
             </div>
           </div>
         </div>

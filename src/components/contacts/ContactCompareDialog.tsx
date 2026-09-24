@@ -115,7 +115,7 @@ export function ContactCompareDialog({ open, onOpenChange, contacts }: ContactCo
                     <td key={c.id} className="p-3 text-center">
                       <div className="flex flex-wrap gap-1 justify-center">
                         {(c.tags || []).length > 0
-                          ? c.tags!.map(t => <Badge key={t} variant="secondary" className="text-[10px] h-4">{t}</Badge>)
+                          ? c.tags!.map(t => <Badge key={t} variant="secondary" className="text-3xs h-4">{t}</Badge>)
                           : <span className="text-xs text-muted-foreground/40 italic">—</span>
                         }
                       </div>

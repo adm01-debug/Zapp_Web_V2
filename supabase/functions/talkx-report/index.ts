@@ -5,6 +5,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────────────────
 function escCsv(v: string): string {
@@ -155,7 +156,7 @@ Deno.serve(async (req: Request) => {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:Arial,Helvetica,sans-serif">
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:${EMAIL_FONT_STACK}">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
   <div style="background:#6366f1;padding:28px 32px">
     <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">📊 Relatório de Campanha</h1>

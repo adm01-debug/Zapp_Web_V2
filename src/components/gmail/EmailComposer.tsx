@@ -138,7 +138,7 @@ export function EmailComposer({
             <Send className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">{modeLabels[mode]}</span>
             {activeAccount && (
-              <Badge variant="outline" className="text-[10px] px-1">
+              <Badge variant="outline" className="text-3xs px-1">
                 {activeAccount.email_address}
               </Badge>
             )}
@@ -258,7 +258,7 @@ export function EmailComposer({
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {attachments.map((file, i) => (
-                      <Badge key={i} variant="secondary" className="text-[10px] gap-1">
+                      <Badge key={i} variant="secondary" className="text-3xs gap-1">
                         <Paperclip className="w-2.5 h-2.5" />
                         {file.name}
                         <button onClick={() => removeAttachment(i)} className="ml-0.5 hover:text-destructive">

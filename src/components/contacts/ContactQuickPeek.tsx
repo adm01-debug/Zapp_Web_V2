@@ -56,7 +56,7 @@ export function ContactQuickPeek({ contact, companyLogo, companyName, children }
               )}
               <Badge
                 variant="outline"
-                className={cn("mt-1 text-[10px] h-5 px-1.5 font-medium gap-1", typeConfig.badgeClass)}
+                className={cn("mt-1 text-3xs h-5 px-1.5 font-medium gap-1", typeConfig.badgeClass)}
               >
                 {typeConfig.iconNode}
                 {typeConfig.label}
@@ -85,7 +85,7 @@ export function ContactQuickPeek({ contact, companyLogo, companyName, children }
             )}
             <div className="flex items-center gap-2 text-muted-foreground">
               <Phone className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-mono text-[11px]">{contact.phone}</span>
+              <span className="font-mono text-2xs">{contact.phone}</span>
             </div>
             {contact.email && (
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -99,12 +99,12 @@ export function ContactQuickPeek({ contact, companyLogo, companyName, children }
           {contact.tags && contact.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {contact.tags.slice(0, 4).map(tag => (
-                <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5">
+                <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">
                   {tag}
                 </Badge>
               ))}
               {contact.tags.length > 4 && (
-                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                <Badge variant="secondary" className="text-3xs h-5 px-1.5">
                   +{contact.tags.length - 4}
                 </Badge>
               )}
@@ -112,7 +112,7 @@ export function ContactQuickPeek({ contact, companyLogo, companyName, children }
           )}
 
           {/* Footer */}
-          <div className="flex items-center gap-1.5 pt-1 border-t border-border/30 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 pt-1 border-t border-border/30 text-3xs text-muted-foreground">
             <Calendar className="w-3 h-3" />
             Desde {format(new Date(contact.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </div>

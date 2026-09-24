@@ -87,7 +87,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
             <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
               <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
               {images.length > 1 && (
-                <span className="absolute bottom-1 right-1 text-[10px] leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
+                <span className="absolute bottom-1 right-1 text-3xs leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
                   1/{images.length}
                 </span>
               )}
@@ -96,7 +96,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
           <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
             <p className="text-sm whitespace-pre-line text-black">{message}</p>
             <div className="flex items-center justify-end gap-0.5 mt-1">
-              <span className="text-[10px] text-black/50 mr-1">{time}</span>
+              <span className="text-3xs text-black/50 mr-1">{time}</span>
               <Check className="w-3 h-3 text-blue-500" />
               <Check className="w-3 h-3 text-blue-500 -ml-2" />
             </div>
@@ -365,7 +365,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                                     {group.colorHex && <div className="w-3 h-3 rounded-full border border-border/50 flex-shrink-0" style={{ backgroundColor: group.colorHex }} />}
                                     <span className="font-medium text-sm truncate">{group.colorName}</span>
                                   </div>
-                                  <span className="text-[11px] text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
+                                  <span className="text-2xs text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
                                 </div>
                                 {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                               </button>

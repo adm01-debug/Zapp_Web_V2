@@ -125,7 +125,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
         <EyeOff className="w-3.5 h-3.5" />
         Sussurro
         {unreadCount > 0 && (
-          <Badge variant="destructive" className="h-4 w-4 p-0 text-[10px] flex items-center justify-center">
+          <Badge variant="destructive" className="h-4 w-4 p-0 text-3xs flex items-center justify-center">
             {unreadCount}
           </Badge>
         )}

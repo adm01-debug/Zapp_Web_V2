@@ -179,7 +179,7 @@ export const ContactTypeFilter = React.forwardRef<HTMLDivElement, ContactTypeFil
       value={value || 'all'}
       onValueChange={(v) => onChange(v === 'all' ? null : v)}
     >
-      <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md focus:ring-1 focus:ring-primary/30 px-2 gap-1">
+      <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md focus:ring-1 focus:ring-primary/30 px-2 gap-1">
         <div className="flex items-center gap-1 truncate">
           <TriggerIcon className={cn('w-3 h-3 shrink-0', activeOption?.iconColor || 'text-muted-foreground')} />
           <span className="truncate">{activeOption?.label || 'Todos'}</span>
@@ -194,7 +194,7 @@ export const ContactTypeFilter = React.forwardRef<HTMLDivElement, ContactTypeFil
               <SelectItem value={opt.value}>
                 <span className={cn('flex items-center gap-2', opt.indent && 'pl-3')}>
                   <Icon className={cn('w-3.5 h-3.5 shrink-0', opt.iconColor)} />
-                  <span className="flex-1 truncate text-[11px]">{opt.label}</span>
+                  <span className="flex-1 truncate text-2xs">{opt.label}</span>
                   {st.count > 0 && (
                     <span className="ml-auto flex items-center gap-1 shrink-0">
                       <span className="text-[9px] text-muted-foreground font-medium tabular-nums">

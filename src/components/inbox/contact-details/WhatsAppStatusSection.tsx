@@ -79,12 +79,12 @@ export function WhatsAppStatusSection({ phone }: WhatsAppStatusSectionProps) {
         <div className="flex flex-col items-center gap-1.5 py-4 text-center">
           <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center"><Clock className="w-5 h-5 text-muted-foreground/30" /></div>
           <p className="text-xs text-muted-foreground/60">Nenhum status disponível</p>
-          <p className="text-[10px] text-muted-foreground/40">Os status desaparecem após 24h</p>
+          <p className="text-3xs text-muted-foreground/40">Os status desaparecem após 24h</p>
         </div>
       ) : (
         <Button variant="outline" size="sm" onClick={() => openViewer(0)} className="w-full h-9 text-xs gap-2 border-primary/20 hover:bg-primary/10 hover:border-primary/30">
           <ImageIcon className="w-3.5 h-3.5 text-primary" />Ver Status
-          <Badge variant="secondary" className="text-[10px] ml-auto px-1.5 py-0 h-4 bg-primary/10 text-primary border-0">{statusMessages.length}</Badge>
+          <Badge variant="secondary" className="text-3xs ml-auto px-1.5 py-0 h-4 bg-primary/10 text-primary border-0">{statusMessages.length}</Badge>
         </Button>
       )}
 

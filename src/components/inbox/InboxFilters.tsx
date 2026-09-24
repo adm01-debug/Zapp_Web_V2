@@ -165,7 +165,7 @@ export function InboxFilters({
                 <button
                   onClick={onRefetch}
                   disabled={isRefetching}
-                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-3xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <RefreshCw className={cn('w-3 h-3', isRefetching && 'animate-spin')} />
                   Atualizar
@@ -174,7 +174,7 @@ export function InboxFilters({
               {activeFiltersCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-3xs text-muted-foreground hover:text-destructive transition-colors"
                 >
                   Limpar tudo
                 </button>
@@ -189,7 +189,7 @@ export function InboxFilters({
                 <section className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3 h-3 text-muted-foreground" />
-                    <Label htmlFor="show-all" className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
+                    <Label htmlFor="show-all" className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Mostrar Todos</Label>
                   </div>
                   <Switch id="show-all" checked={showAll} onCheckedChange={onShowAllChange} />
                 </section>
@@ -201,13 +201,13 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Headphones className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Tipo de contato</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Tipo de contato</Label>
               </div>
               <Select
                 value={selectedContactType ?? 'all'}
                 onValueChange={(v) => onContactTypeChange?.(v === 'all' ? null : v)}
               >
-                <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md">
+                <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md">
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -224,13 +224,13 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Inbox className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fila</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Fila</Label>
               </div>
               <Select
                 value={selectedQueueId ?? 'all'}
                 onValueChange={(v) => onQueueChange?.(v === 'all' ? null : v)}
               >
-                <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md">
+                <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md">
                   <SelectValue placeholder="Todas as filas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -253,7 +253,7 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <MessageCircle className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Status</Label>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {STATUS_OPTIONS.map(status => (
@@ -261,13 +261,13 @@ export function InboxFilters({
                     key={status.value}
                     onClick={() => toggleStatus(status.value)}
                     className={cn(
-                      'flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] transition-all border',
+                      'flex items-center gap-1.5 px-2 py-1.5 rounded-md text-2xs transition-all border',
                       filters.status.includes(status.value)
                         ? 'border-primary/40 bg-primary/10 text-primary font-medium'
                         : 'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
-                    <span className="text-[10px]">{status.icon}</span>
+                    <span className="text-3xs">{status.icon}</span>
                     {status.label}
                   </button>
                 ))}
@@ -280,7 +280,7 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Tag className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Etiquetas</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Etiquetas</Label>
               </div>
               {tags.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
@@ -289,7 +289,7 @@ export function InboxFilters({
                       key={tag.id}
                       onClick={() => toggleTag(tag.id)}
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-medium transition-all',
                         filters.tags.includes(tag.id)
                           ? 'ring-1.5 ring-primary shadow-sm'
                           : 'hover:opacity-80'
@@ -305,7 +305,7 @@ export function InboxFilters({
                   ))}
                 </div>
               ) : (
-                <p className="text-[10px] text-muted-foreground/60 italic">Nenhuma etiqueta</p>
+                <p className="text-3xs text-muted-foreground/60 italic">Nenhuma etiqueta</p>
               )}
             </section>
 
@@ -315,13 +315,13 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <User className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Atendente</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Atendente</Label>
               </div>
               <Select
                 value={filters.agentId || 'all'}
                 onValueChange={setAgent}
               >
-                <SelectTrigger className="h-7 text-[11px] bg-muted/40 border-0 rounded-md">
+                <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -348,21 +348,21 @@ export function InboxFilters({
             <section className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-3 h-3 text-muted-foreground" />
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Período</Label>
+                <Label className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Período</Label>
               </div>
               <div className="flex flex-wrap gap-1">
                 {DATE_PRESETS.map(preset => (
                   <button
                     key={preset.label}
                     onClick={() => setDateRange(preset.getValue())}
-                    className="px-2 py-1 rounded-md text-[10px] font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="px-2 py-1 rounded-md text-3xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
               {filters.dateRange.from && (
-                <div className="text-[10px] text-muted-foreground bg-muted/30 rounded px-2 py-1">
+                <div className="text-3xs text-muted-foreground bg-muted/30 rounded px-2 py-1">
                   {format(filters.dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
                   {filters.dateRange.to && ` → ${format(filters.dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`}
                 </div>
@@ -379,7 +379,7 @@ export function InboxFilters({
           <Badge
             key={status}
             variant="secondary"
-            className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
+            className="h-5 gap-0.5 px-1.5 text-3xs cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
             onClick={() => removeFilter('status', status)}
           >
             {opt?.label}
@@ -394,7 +394,7 @@ export function InboxFilters({
           <Badge
             key={tagId}
             variant="secondary"
-            className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 transition-colors"
+            className="h-5 gap-0.5 px-1.5 text-3xs cursor-pointer hover:bg-destructive/15 transition-colors"
             style={{ backgroundColor: `${tag.color}15`, color: tag.color }}
             onClick={() => removeFilter('tag', tagId)}
           >
@@ -407,7 +407,7 @@ export function InboxFilters({
       {filters.agentId && (
         <Badge
           variant="secondary"
-          className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
+          className="h-5 gap-0.5 px-1.5 text-3xs cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
           onClick={() => removeFilter('agent')}
         >
           {agents.find(a => a.id === filters.agentId)?.name || 'Atendente'}
@@ -418,7 +418,7 @@ export function InboxFilters({
       {filters.dateRange.from && (
         <Badge
           variant="secondary"
-          className="h-5 gap-0.5 px-1.5 text-[10px] cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
+          className="h-5 gap-0.5 px-1.5 text-3xs cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors"
           onClick={() => removeFilter('date')}
         >
           {format(filters.dateRange.from, "dd/MM", { locale: ptBR })}

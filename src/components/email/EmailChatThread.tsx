@@ -37,7 +37,7 @@ function DateSeparator({ date }: { date: string }) {
   return (
     <div className="flex items-center gap-3 my-4">
       <div className="flex-1 h-px bg-border/50" />
-      <span className="text-[10px] text-muted-foreground font-medium px-2">{label}</span>
+      <span className="text-3xs text-muted-foreground font-medium px-2">{label}</span>
       <div className="flex-1 h-px bg-border/50" />
     </div>
   );
@@ -122,7 +122,7 @@ export function EmailChatThread({ thread, onBack, onToggleDetails, showDetailsBu
 
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold truncate">{thread.subject || '(Sem assunto)'}</h3>
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-2 text-3xs text-muted-foreground">
               {thread.contact && <span className="truncate">{thread.contact.name}</span>}
               <span>•</span>
               <span>{thread.message_count} msg</span>

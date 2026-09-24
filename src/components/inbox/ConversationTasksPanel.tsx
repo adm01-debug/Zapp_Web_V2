@@ -102,11 +102,11 @@ export function ConversationTasksPanel({ contactId, profileId }: ConversationTas
                   className="shrink-0"
                 />
                 <span className="text-sm flex-1 truncate">{task.title}</span>
-                <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>
+                <Badge variant="outline" className={`text-3xs ${cfg.color}`}>
                   {cfg.label}
                 </Badge>
                 {task.due_date && (
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <span className="text-3xs text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     {format(new Date(task.due_date), 'dd/MM', { locale: ptBR })}
                   </span>

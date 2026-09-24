@@ -38,17 +38,17 @@ export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProp
               <span className="text-muted-foreground">1ª Resposta</span>
             </div>
             {slaInfo.first_response_breached ? (
-              <Badge variant="outline" className="text-[10px] bg-destructive/15 text-destructive border-destructive/30 animate-pulse">
+              <Badge variant="outline" className="text-3xs bg-destructive/15 text-destructive border-destructive/30 animate-pulse">
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 Violado
               </Badge>
             ) : slaInfo.first_response_at ? (
-              <Badge variant="outline" className="text-[10px] bg-success/15 text-success border-success/30">
+              <Badge variant="outline" className="text-3xs bg-success/15 text-success border-success/30">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 OK
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] bg-warning/15 text-warning border-warning/30">
+              <Badge variant="outline" className="text-3xs bg-warning/15 text-warning border-warning/30">
                 Pendente
               </Badge>
             )}
@@ -64,7 +64,7 @@ export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProp
       {/* AI Tags — color-coded by confidence */}
       {hasAITags && (
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+          <div className="flex items-center gap-1.5 text-3xs text-muted-foreground/60">
             <Zap className="w-3 h-3" />
             <span>Tags geradas por IA</span>
           </div>
@@ -81,7 +81,7 @@ export function SLAAndAITagsSection({ slaInfo, aiTags }: SLAAndAITagsSectionProp
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[10px] cursor-default transition-all hover:scale-105',
+                          'text-3xs cursor-default transition-all hover:scale-105',
                           tag.confidence ? confidenceColor(tag.confidence) : 'bg-primary/10 border-primary/20 text-foreground'
                         )}
                       >

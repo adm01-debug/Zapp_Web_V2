@@ -184,7 +184,7 @@ export function MobileDrawerMenu({
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm text-foreground leading-tight truncate">{agentName || 'Usuário'}</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     {agentStatus === 'online' ? '● Online' : agentStatus === 'away' ? '● Ausente' : '● Offline'}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export function MobileDrawerMenu({
               {/* Recentes */}
               {!search.trim() && recentItems.length > 0 && (
                 <div className="mb-2">
-                  <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Recentes
                   </p>
                   {recentItems.map((item) => {
@@ -243,7 +243,7 @@ export function MobileDrawerMenu({
               )}
               {filteredSections.map((section, sectionIdx) => (
                 <div key={section.title} className="mb-2">
-                  <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70">
                     {section.title}
                   </p>
                   {section.items.map((item, itemIdx) => {

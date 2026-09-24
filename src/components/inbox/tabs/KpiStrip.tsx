@@ -47,7 +47,7 @@ export function KpiStrip({ cells, className }: KpiStripProps) {
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground truncate">{cell.label}</p>
             <p className="text-2xl font-bold tabular-nums leading-tight truncate">{cell.value}</p>
-            {cell.sublabel && <p className="text-[11px] text-muted-foreground/70 truncate">{cell.sublabel}</p>}
+            {cell.sublabel && <p className="text-2xs text-muted-foreground/70 truncate">{cell.sublabel}</p>}
           </div>
         </div>
       ))}

@@ -17,12 +17,12 @@ const STATUS_LABEL: Record<NonNullable<QueueHealthRow['status']>, string> = {
 };
 
 function StatusBadge({ status }: { status: QueueHealthRow['status'] }) {
-  if (status === null) return <span className="text-[11px] text-muted-foreground">—</span>;
+  if (status === null) return <span className="text-2xs text-muted-foreground">—</span>;
   return (
     <span
       data-testid="queue-status"
       className={cn(
-        'h-[22px] px-2 rounded-md text-[11px] font-semibold inline-flex items-center',
+        'h-[22px] px-2 rounded-md text-2xs font-semibold inline-flex items-center',
         status === 'atencao' ? 'bg-dash-tile-amber text-dash-amber' : 'bg-dash-tile-green text-dash-green',
       )}
     >
@@ -54,7 +54,7 @@ export function QueueHealthTable({ rows, isConnected, onSeeAll }: QueueHealthTab
       ) : (
         <table className="w-full text-xs">
           <thead>
-            <tr className="h-[22px] text-[11px] font-medium text-muted-foreground text-left">
+            <tr className="h-[22px] text-2xs font-medium text-muted-foreground text-left">
               <th className="font-medium">Fila</th>
               <th className="font-medium">Aguardando</th>
               <th className="font-medium">Em atendimento</th>

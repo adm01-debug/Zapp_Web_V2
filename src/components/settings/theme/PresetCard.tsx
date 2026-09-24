@@ -77,7 +77,7 @@ export function PresetCard({ preset, isActive, onSelect }: PresetCardProps) {
                 <h3 className="truncate font-display text-xs font-bold text-foreground">
                   {emoji} {name}
                 </h3>
-                <p className="truncate text-[11px] italic text-muted-foreground">{description}</p>
+                <p className="truncate text-2xs italic text-muted-foreground">{description}</p>
               </div>
               <AnimatePresence mode="wait">
                 {isActive ? (

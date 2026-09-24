@@ -37,7 +37,7 @@ export function SentimentTrendCard() {
         <>
           <div className="flex items-center gap-3 h-4 mb-1">
             {LEGEND.map((item) => (
-              <span key={item.key} className="flex items-center gap-1.5 text-[11px] text-foreground-secondary">
+              <span key={item.key} className="flex items-center gap-1.5 text-2xs text-foreground-secondary">
                 <span className={`w-2 h-2 rounded-full ${item.dot}`} />
                 {item.label}
               </span>

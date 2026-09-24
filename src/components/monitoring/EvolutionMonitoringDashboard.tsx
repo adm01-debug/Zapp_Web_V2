@@ -54,7 +54,7 @@ function LastUpdatedBadge() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="text-[10px] text-muted-foreground/60 tabular-nums hidden md:inline-flex items-center gap-1">
+    <span className="text-3xs text-muted-foreground/60 tabular-nums hidden md:inline-flex items-center gap-1">
       <Clock className="w-3 h-3" />
       {now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
     </span>
@@ -108,7 +108,7 @@ export function EvolutionMonitoringDashboard() {
             </div>
             <p className="text-sm text-muted-foreground">
               Status, webhook e health checks em tempo real
-              <span className="hidden sm:inline text-[10px] ml-2 text-muted-foreground/60">[R] health check · [1-5] período</span>
+              <span className="hidden sm:inline text-3xs ml-2 text-muted-foreground/60">[R] health check · [1-5] período</span>
             </p>
           </div>
         </div>
@@ -218,7 +218,7 @@ export function EvolutionMonitoringDashboard() {
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="connections" className="gap-1.5">
             <Wifi className="w-4 h-4" />Conexões
-            <Badge variant="secondary" className="h-5 min-w-5 px-1 text-[10px] rounded-full">{activeConns}/{connections.length}</Badge>
+            <Badge variant="secondary" className="h-5 min-w-5 px-1 text-3xs rounded-full">{activeConns}/{connections.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="webhook" className="gap-1.5">
             <Webhook className="w-4 h-4" />Webhook
@@ -228,7 +228,7 @@ export function EvolutionMonitoringDashboard() {
             {diagnostic && (
               <Badge
                 variant={diagnostic.overallHealth.score >= 80 ? 'default' : 'destructive'}
-                className="h-5 min-w-5 px-1 text-[10px] rounded-full"
+                className="h-5 min-w-5 px-1 text-3xs rounded-full"
               >
                 {diagnostic.overallHealth.score}
               </Badge>
@@ -238,7 +238,7 @@ export function EvolutionMonitoringDashboard() {
             <BarChart3 className="w-4 h-4" />SLA
             <Badge
               variant="outline"
-              className={cn('h-5 min-w-5 px-1 text-[10px] rounded-full', uptime.percentage >= 99 ? 'text-emerald-500 border-emerald-500/30' : 'text-amber-500 border-amber-500/30')}
+              className={cn('h-5 min-w-5 px-1 text-3xs rounded-full', uptime.percentage >= 99 ? 'text-emerald-500 border-emerald-500/30' : 'text-amber-500 border-amber-500/30')}
             >
               {uptime.percentage}%
             </Badge>
@@ -249,7 +249,7 @@ export function EvolutionMonitoringDashboard() {
           <TabsTrigger value="health-logs" className="gap-1.5">
             <Activity className="w-4 h-4" />Logs
             {errLogs > 0 && (
-              <Badge variant="destructive" className="h-5 min-w-5 px-1 text-[10px] rounded-full">{errLogs}</Badge>
+              <Badge variant="destructive" className="h-5 min-w-5 px-1 text-3xs rounded-full">{errLogs}</Badge>
             )}
           </TabsTrigger>
         </TabsList>

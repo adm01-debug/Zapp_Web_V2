@@ -125,7 +125,7 @@ export function ContactSearchWithSuggestions({
             {/* Quick stats */}
             {!value && (
               <div className="px-3 py-2 bg-muted/30 border-b border-border/30">
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-2 text-3xs text-muted-foreground">
                   <Sparkles className="w-3 h-3" />
                   <span>{totalCount} contatos na base</span>
                   <span>·</span>
@@ -138,12 +138,12 @@ export function ContactSearchWithSuggestions({
             {!value && recentSearches.length > 0 && (
               <div className="p-2">
                 <div className="flex items-center justify-between px-2 mb-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-3xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Recentes
                   </span>
                   <button
                     onClick={() => { clearRecentSearches(); setRecentSearches([]); }}
-                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Limpar
                   </button>
@@ -164,7 +164,7 @@ export function ContactSearchWithSuggestions({
             {/* Suggestions */}
             {suggestions.length > 0 && (
               <div className="p-2 border-t border-border/30">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2">
+                <span className="text-3xs font-medium text-muted-foreground uppercase tracking-wider px-2">
                   Sugestões
                 </span>
                 {suggestions.map((item) => {

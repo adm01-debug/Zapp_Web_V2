@@ -88,7 +88,7 @@ export function ConnectionCard({
                     </span>
                   )}
                   {(connection.retry_count ?? 0) > 0 && (
-                    <Badge variant="outline" className="text-[10px] border-warning/30 text-warning">
+                    <Badge variant="outline" className="text-3xs border-warning/30 text-warning">
                       Retry {connection.retry_count}/{connection.max_retries || 5}
                     </Badge>
                   )}
@@ -106,7 +106,7 @@ export function ConnectionCard({
                         (connection.health_status === 'error' || connection.health_status === 'timeout' || connection.health_status === 'disconnected') && 'bg-destructive',
                       )} />
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-3xs text-muted-foreground">
                       {connection.health_status === 'healthy' ? 'Saudável' : connection.health_status === 'degraded' ? 'Degradado' :
                        connection.health_status === 'timeout' ? 'Timeout' : connection.health_status === 'error' ? 'Erro' : 'Desconectado'}
                       {connection.health_response_ms != null && <> · {connection.health_response_ms}ms</>}

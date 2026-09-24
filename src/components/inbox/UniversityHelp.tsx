@@ -81,14 +81,14 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
           {filterButtons.map(f => (
             <button key={f.mode} type="button"
               onClick={() => { setFilterMode(f.mode); }}
-              className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-full text-3xs font-medium transition-all ${
                 filterMode === f.mode ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >{f.label}</button>
           ))}
         </div>
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={selectAll} className="text-[10px] text-primary hover:underline font-medium">
+          <button type="button" onClick={selectAll} className="text-3xs text-primary hover:underline font-medium">
             {selectedIds.size === filteredMessages.length && filteredMessages.length > 0 ? 'Limpar' : 'Todos'}
           </button>
           <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-semibold tabular-nums">
@@ -109,7 +109,7 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
                   <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 mb-0.5 ${isAgent ? 'text-primary border-primary/30 bg-primary/5' : 'text-warning border-warning/30 bg-warning/5'}`}>
                     {isAgent ? '🧑‍💼 Atendente' : '👤 Cliente'}
                   </Badge>
-                  <p className="text-[11px] text-foreground line-clamp-2 leading-snug">{m.content}</p>
+                  <p className="text-2xs text-foreground line-clamp-2 leading-snug">{m.content}</p>
                 </div>
               </label>
             );
@@ -117,7 +117,7 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
           {filteredMessages.length === 0 && (
             <div className="flex flex-col items-center py-8 gap-2">
               <MessageSquare className="w-5 h-5 text-muted-foreground/40" />
-              <p className="text-[11px] text-muted-foreground">Nenhuma mensagem disponível</p>
+              <p className="text-2xs text-muted-foreground">Nenhuma mensagem disponível</p>
             </div>
           )}
         </div>
@@ -138,8 +138,8 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
           <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
             <p className="text-xs text-destructive font-semibold mb-0.5">Erro ao gerar resposta</p>
-            <p className="text-[11px] text-destructive/80 mb-2">{error}</p>
-            <Button variant="outline" size="sm" className="h-6 text-[10px] px-2.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+            <p className="text-2xs text-destructive/80 mb-2">{error}</p>
+            <Button variant="outline" size="sm" className="h-6 text-3xs px-2.5 border-destructive/30 text-destructive hover:bg-destructive/10"
               onClick={() => generateResponse()} disabled={loading}>
               <RefreshCw className="w-3 h-3 mr-1" />Tentar novamente
             </Button>

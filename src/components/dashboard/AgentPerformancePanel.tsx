@@ -226,7 +226,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                 ].map((x) => (
                   <div key={x.label} className="rounded-xl bg-muted/20 border border-border/50 p-2.5 text-center">
                     <div className="font-bold text-base text-foreground tabular-nums">{x.v}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{x.label}</div>
+                    <div className="text-2xs text-muted-foreground mt-0.5">{x.label}</div>
                   </div>
                 ))}
               </div>
@@ -253,7 +253,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-xl font-bold text-foreground leading-none">{agents.length}</span>
-                    <span className="text-[11px] text-muted-foreground mt-0.5">Agentes</span>
+                    <span className="text-2xs text-muted-foreground mt-0.5">Agentes</span>
                   </div>
                 </div>
                 <div className="flex-1 space-y-2.5">

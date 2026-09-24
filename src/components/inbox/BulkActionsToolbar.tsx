@@ -114,7 +114,7 @@ export function BulkActionsToolbar({
                 <TooltipContent side="bottom">
                   <div className="flex items-center gap-1.5">
                     Arquivar selecionados
-                    <kbd className="text-[10px] px-1 py-0.5 bg-muted/50 rounded font-mono">Del</kbd>
+                    <kbd className="text-3xs px-1 py-0.5 bg-muted/50 rounded font-mono">Del</kbd>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">Você pode desfazer em 5s</p>
                 </TooltipContent>

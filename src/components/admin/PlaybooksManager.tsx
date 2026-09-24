@@ -178,7 +178,7 @@ export function PlaybooksManager() {
                         <h3 className="text-sm font-medium">{pb.name}</h3>
                         {pb.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{pb.description}</p>}
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="text-[10px]">{pb.steps.length} passos</Badge>
+                          <Badge variant="secondary" className="text-3xs">{pb.steps.length} passos</Badge>
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
@@ -219,7 +219,7 @@ export function PlaybooksManager() {
                       {step.description && <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>}
                       {step.tips && (
                         <div className="mt-1.5 p-2 rounded bg-primary/5 border border-primary/10">
-                          <p className="text-[10px] text-primary">💡 {step.tips}</p>
+                          <p className="text-3xs text-primary">💡 {step.tips}</p>
                         </div>
                       )}
                     </div>
@@ -251,7 +251,7 @@ export function PlaybooksManager() {
               {steps.map((step, idx) => (
                 <div key={idx} className="space-y-2 p-3 rounded-lg bg-muted/10 border border-border/30">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-[10px]">Passo {idx + 1}</Badge>
+                    <Badge variant="outline" className="text-3xs">Passo {idx + 1}</Badge>
                     {steps.length > 1 && (
                       <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => removeStep(idx)}>
                         <Trash2 className="w-3 h-3 text-destructive" />

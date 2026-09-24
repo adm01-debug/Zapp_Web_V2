@@ -102,7 +102,7 @@ export function MessageReactions({
                 <span className="text-sm">{reaction.emoji}</span>
                 {reaction.count > 1 && (
                   <span className={cn(
-                    'text-[10px] font-medium',
+                    'text-3xs font-medium',
                     reaction.hasCurrentUser ? 'text-primary' : 'text-muted-foreground'
                   )}>
                     {reaction.count}

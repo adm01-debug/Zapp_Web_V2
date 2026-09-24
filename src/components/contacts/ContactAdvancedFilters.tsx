@@ -69,7 +69,7 @@ export function ContactAdvancedFilters({
           <Sparkles className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">Filtros Avançados</span>
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-5">{activeFiltersCount} ativo{activeFiltersCount > 1 ? 's' : ''}</Badge>
+            <Badge variant="secondary" className="text-3xs h-5">{activeFiltersCount} ativo{activeFiltersCount > 1 ? 's' : ''}</Badge>
           )}
         </div>
         {activeFiltersCount > 0 && (
@@ -172,7 +172,7 @@ export function ContactAdvancedFilters({
             <Label className="text-xs font-medium flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="w-3.5 h-3.5" />
               Lead Score
-              <Badge variant="outline" className="ml-auto text-[10px] h-4 px-1.5">
+              <Badge variant="outline" className="ml-auto text-3xs h-4 px-1.5">
                 {filterLeadScoreRange[0]} – {filterLeadScoreRange[1]}
               </Badge>
             </Label>
@@ -184,7 +184,7 @@ export function ContactAdvancedFilters({
               step={5}
               className="py-1"
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground/60">
+            <div className="flex justify-between text-3xs text-muted-foreground/60">
               <span>Frio (0)</span>
               <span>Quente (100)</span>
             </div>

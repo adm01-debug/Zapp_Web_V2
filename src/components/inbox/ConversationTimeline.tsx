@@ -99,15 +99,15 @@ export function ConversationTimeline({ contactId }: { contactId: string }) {
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-medium">
+                <Badge variant="outline" className="text-3xs h-5 px-1.5 font-medium">
                   {config.label}
                 </Badge>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-3xs text-muted-foreground">
                   {format(new Date(event.created_at), "dd/MM HH:mm", { locale: ptBR })}
                 </span>
               </div>
 
-              <p className="text-[11px] text-foreground/80 mt-0.5 leading-relaxed">
+              <p className="text-2xs text-foreground/80 mt-0.5 leading-relaxed">
                 {event.event_type === 'transfer' && (
                   <>
                     De <strong>{event.from_agent?.name || '—'}</strong> para{' '}
