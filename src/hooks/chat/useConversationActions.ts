@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addHours, startOfTomorrow, addDays, setHours } from 'date-fns';
+import { undoToast } from '@/lib/undoToast';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -160,6 +161,19 @@ export function useConversationActions() {
     }
   }, [profileId]);
 
+  const archiveContact = useCallback(async (contactId: string) => {
+    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
+    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+    if (error) { toast.error('Erro ao arquivar conversa'); return; }
+    undoToast({
+      message: 'Conversa arquivada',
+      icon: '📦',
+      onUndo: async () => {
+        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
+      },
+    });
+  }, []);
+
   const isPinned = useCallback((contactId: string) => pinnedIds.has(contactId), [pinnedIds]);
   const isFavorite = useCallback((contactId: string) => favoriteIds.has(contactId), [favoriteIds]);
   const isSnoozed = useCallback((contactId: string) => snoozedIds.has(contactId), [snoozedIds]);
@@ -176,6 +190,7 @@ export function useConversationActions() {
     favoriteContact,
     unfavoriteContact,
     snoozeConversation,
+    archiveContact,
     profileId,
   };
 }

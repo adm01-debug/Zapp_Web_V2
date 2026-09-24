@@ -14,6 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/ui/use-toast';
+import { CloseConversationDialog } from './CloseConversationDialog';
+import { TransferDialog } from './TransferDialog';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -33,6 +37,27 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   const isMobile = useIsMobile();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
+  const [resolveTarget, setResolveTarget] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<string | null>(null);
+
+  const handleArchive = useCallback(async (contactId: string) => {
+    if (!conversationActions) return;
+    await conversationActions.archiveContact(contactId);
+    inbox.refetch();
+  }, [conversationActions, inbox]);
+
+  const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
+    if (!transferTarget) return;
+    const updateData: { assigned_to?: string; queue_id?: string } =
+      type === 'agent' ? { assigned_to: targetId } : type === 'queue' ? { queue_id: targetId } : {};
+    const { error } = await supabase.from('contacts').update(updateData).eq('id', transferTarget);
+    if (error) {
+      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
+    inbox.refetch();
+  }, [transferTarget, inbox]);
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
@@ -200,10 +225,31 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 if (conversationActions?.isFavorite(contactId)) conversationActions.unfavoriteContact(contactId);
                 else conversationActions?.favoriteContact(contactId);
               }}
+              onResolve={(contactId) => setResolveTarget(contactId)}
+              onTransfer={(contactId) => setTransferTarget(contactId)}
+              onSnooze={(contactId, duration) => conversationActions?.snoozeConversation(contactId, duration)}
+              onArchive={handleArchive}
             />
           </ErrorBoundary>
         )}
       </div>
+
+      {resolveTarget && (
+        <CloseConversationDialog
+          open={!!resolveTarget}
+          onOpenChange={(open) => !open && setResolveTarget(null)}
+          contactId={resolveTarget}
+          onClosed={() => { setResolveTarget(null); inbox.refetch(); }}
+        />
+      )}
+
+      {transferTarget && (
+        <TransferDialog
+          open={!!transferTarget}
+          onOpenChange={(open) => !open && setTransferTarget(null)}
+          onTransfer={async (type, targetId) => { await handleListTransfer(type, targetId); setTransferTarget(null); }}
+        />
+      )}
     </div>
   );
 }
