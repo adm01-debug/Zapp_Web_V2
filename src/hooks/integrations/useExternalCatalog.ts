@@ -302,6 +302,15 @@ export interface CatalogStats {
   last_sync_at: string | null;
   last_update_at: string | null;
   by_month: { month: string; count: number }[];
+  // E36 — faixa de preço e top cores/materiais (para o slider e o
+  // multi-select de filtros avançados). Opcionais: a RPC
+  // zapp_catalog_stats() pode ainda não ter esses campos em todo ambiente
+  // (lag de migration) — undefined/null é esperado e a UI cobre isso com
+  // fallback (ver CatalogAdvancedFilters.tsx).
+  price_min?: number | null;
+  price_max?: number | null;
+  top_colors?: { label: string; count: number }[];
+  top_materials?: { label: string; count: number }[];
 }
 
 interface CatalogBootstrap {

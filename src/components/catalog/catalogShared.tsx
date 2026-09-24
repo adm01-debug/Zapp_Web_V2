@@ -588,13 +588,30 @@ export interface AdvancedFilters {
   isBestseller: boolean;
   priceMin: string;
   priceMax: string;
+  /** Nomes exatos (rótulos de stats.top_colors) selecionados — OR entre si. */
+  colors: string[];
+  /** Nomes exatos (rótulos de stats.top_materials) selecionados — OR entre si. */
+  materials: string[];
 }
+
+/** Estado "zerado" de AdvancedFilters — fonte única de verdade para reset
+ * (Sheet "Limpar" e ExternalProductManagement), evita literais divergentes
+ * espalhados pelos dois arquivos. */
+export const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
+  isBestseller: false,
+  priceMin: '',
+  priceMax: '',
+  colors: [],
+  materials: [],
+};
 
 export function countAdvancedFilters(f: AdvancedFilters): number {
   return (
     (f.isBestseller ? 1 : 0) +
     (f.priceMin ? 1 : 0) +
-    (f.priceMax ? 1 : 0)
+    (f.priceMax ? 1 : 0) +
+    f.colors.length +
+    f.materials.length
   );
 }
 
@@ -606,10 +623,30 @@ export function AdvancedFilterChips({
   filters: AdvancedFilters;
   onChange: (next: AdvancedFilters) => void;
 }) {
-  const chips: Array<{ label: string; key: keyof AdvancedFilters; value: unknown }> = [];
-  if (filters.isBestseller) chips.push({ label: 'Mais pedidos', key: 'isBestseller', value: false });
-  if (filters.priceMin) chips.push({ label: 'Preço min R$ ' + filters.priceMin, key: 'priceMin', value: '' });
-  if (filters.priceMax) chips.push({ label: 'Preço máx R$ ' + filters.priceMax, key: 'priceMax', value: '' });
+  const chips: Array<{ label: string; key: string; onRemove: () => void }> = [];
+  if (filters.isBestseller) {
+    chips.push({ label: 'Mais pedidos', key: 'isBestseller', onRemove: () => onChange({ ...filters, isBestseller: false }) });
+  }
+  if (filters.priceMin) {
+    chips.push({ label: 'Preço min R$ ' + filters.priceMin, key: 'priceMin', onRemove: () => onChange({ ...filters, priceMin: '' }) });
+  }
+  if (filters.priceMax) {
+    chips.push({ label: 'Preço máx R$ ' + filters.priceMax, key: 'priceMax', onRemove: () => onChange({ ...filters, priceMax: '' }) });
+  }
+  filters.colors.forEach((c) => {
+    chips.push({
+      label: 'Cor: ' + c,
+      key: 'color:' + c,
+      onRemove: () => onChange({ ...filters, colors: filters.colors.filter((x) => x !== c) }),
+    });
+  });
+  filters.materials.forEach((m) => {
+    chips.push({
+      label: 'Material: ' + m,
+      key: 'material:' + m,
+      onRemove: () => onChange({ ...filters, materials: filters.materials.filter((x) => x !== m) }),
+    });
+  });
   if (chips.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -617,7 +654,7 @@ export function AdvancedFilterChips({
         <button
           key={chip.key}
           type="button"
-          onClick={() => onChange({ ...filters, [chip.key]: chip.value })}
+          onClick={chip.onRemove}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
             'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors'
@@ -625,6 +662,86 @@ export function AdvancedFilterChips({
         >
           {chip.label}
           <X className="w-3 h-3" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── E36: multi-select de cor/material (chips clicáveis) ────────────────────
+/**
+ * Normaliza um elemento de products.colors/materials (jsonb) para uma
+ * label exibível. O dado real tem duas formas (mesma heterogeneidade já
+ * tratada no filtro server-side de supabase/functions/promogifts-catalog/
+ * index.ts, action list_products): a maioria dos elementos é string pura
+ * ("Azul"), uma minoria é objeto `{ nome: "Azul" }`. Qualquer outro
+ * formato (número, null, objeto sem `nome`) é ignorado silenciosamente.
+ */
+function normalizeTagLabel(entry: unknown): string | null {
+  if (typeof entry === 'string') return entry;
+  if (entry && typeof entry === 'object' && 'nome' in entry) {
+    const nome = (entry as { nome?: unknown }).nome;
+    return typeof nome === 'string' ? nome : null;
+  }
+  return null;
+}
+
+/**
+ * true se `raw` (products.colors ou products.materials — array jsonb de
+ * strings e/ou `{nome}`) contém algum dos valores de `selected`
+ * (comparação por label, case-insensitive; é OR entre os selecionados).
+ * `selected` vazio sempre casa — filtro inativo não exclui produto nenhum.
+ * Usada pelo filtro client-side em ExternalProductManagement (E36-2):
+ * segunda camada sobre o que o edge promogifts-catalog já filtrou
+ * (agora aceita array em color/material, OR entre valores) — mantida
+ * como salvaguarda, sem custo real.
+ */
+export function matchesAnySelected(raw: unknown, selected: string[]): boolean {
+  if (selected.length === 0) return true;
+  if (!Array.isArray(raw)) return false;
+  const wanted = new Set(selected.map((s) => s.toLowerCase()));
+  return raw.some((entry) => {
+    const label = normalizeTagLabel(entry);
+    return label != null && wanted.has(label.toLowerCase());
+  });
+}
+
+interface TagMultiSelectChipsProps {
+  /** stats.top_colors / stats.top_materials (E24) — já vem limitado a 20 pela RPC. */
+  options: { label: string; count: number }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}
+
+/**
+ * Chips clicáveis de seleção múltipla (cor/material no Sheet de filtros
+ * avançados). Mesmas classes visuais de CategoryChips
+ * (catalog-category-chip[--active]) — sem o overflow "+N mais" daquele
+ * componente: top_colors/top_materials já chegam limitados a 20 itens, e
+ * um DropdownMenu fecharia a cada clique (ruim para multi-seleção).
+ */
+export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSelectChipsProps) {
+  if (!options || options.length === 0) return null;
+  const isSelected = (label: string) => selected.some((s) => s.toLowerCase() === label.toLowerCase());
+  const toggle = (label: string) => {
+    onChange(
+      isSelected(label)
+        ? selected.filter((s) => s.toLowerCase() !== label.toLowerCase())
+        : [...selected, label]
+    );
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt.label}
+          type="button"
+          onClick={() => toggle(opt.label)}
+          title={`${opt.count} produtos`}
+          aria-pressed={isSelected(opt.label)}
+          className={`catalog-category-chip ${isSelected(opt.label) ? 'catalog-category-chip--active' : ''}`}
+        >
+          {opt.label}
         </button>
       ))}
     </div>
