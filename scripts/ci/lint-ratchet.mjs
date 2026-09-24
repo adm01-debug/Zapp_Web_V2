@@ -13,6 +13,10 @@ const MAX_REPORTED_ISSUES = 50;
 // .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os
 // exclui explicitamente para que uma execucao de coverage nao altere o gate.
 const GENERATED_ARTIFACT_IGNORES = ["coverage/**"];
+// Modo --staged (pre-commit): so os arquivos do commit sao lintados. Acima do limite o custo da
+// linha de comando nao compensa e o gate volta a rodar o repositorio inteiro.
+const STAGED_LINTABLE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
+const MAX_STAGED_FILES = 400;
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -371,12 +375,51 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
   };
 }
 
+// --no-renames: renomeacao aparece como remocao do caminho antigo + adicao do novo, que e
+// exatamente o par que o reconhecimento de renomeacao por hash do baseline precisa.
+function stagedPaths(root, diffFilter) {
+  const result = spawnSync("git", ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
+    cwd: root,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(`git diff --cached falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)}`);
+  }
+  return result.stdout.split("\0").filter((file) => file && STAGED_LINTABLE.test(file));
+}
+
+export function stagedLintableFiles(root = process.cwd()) {
+  return stagedPaths(root, "ACMR").filter((file) => existsSync(path.join(root, file)));
+}
+
+export function stagedRemovedFiles(root = process.cwd()) {
+  return stagedPaths(root, "D");
+}
+
+// No modo --staged o ESLint so viu os arquivos do commit: o baseline e recortado para os mesmos
+// arquivos, mais os removidos/renomeados no commit (o caminho antigo alimenta o reconhecimento
+// de renomeacao por hash). Divida de arquivos fora do commit nao entra na conta.
+export function scopeBaseline(baseline, scannedFiles, removedFiles = []) {
+  validateBaseline(baseline);
+  const scanned = new Set(scannedFiles);
+  const removed = new Set(removedFiles);
+  const inScope = (file) => scanned.has(file) || removed.has(file);
+  return {
+    ...baseline,
+    files: baseline.files.filter((entry) => inScope(entry.path)),
+    issues: baseline.issues.filter((issue) => inScope(issue.file)),
+  };
+}
+
 function parseArguments(argv) {
   const options = {
     baseline: DEFAULT_BASELINE,
     report: null,
     root: process.cwd(),
     updateBaseline: false,
+    staged: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -388,6 +431,8 @@ function parseArguments(argv) {
       if (!value) throw new Error(`Valor ausente para ${argument}.`);
       options[argument.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase())] = value;
       index += 1;
+    } else if (argument === "--staged") {
+      options.staged = true;
     } else if (argument === "--help") {
       options.help = true;
     } else {
@@ -401,23 +446,24 @@ function parseArguments(argv) {
   return options;
 }
 
-export function eslintCommandArguments(eslintEntry) {
+export function eslintCommandArguments(eslintEntry, { targets = ["."], noWarnIgnored = false } = {}) {
   return [
     eslintEntry,
-    ".",
+    ...targets,
     "--format",
     "json",
+    ...(noWarnIgnored ? ["--no-warn-ignored"] : []),
     ...GENERATED_ARTIFACT_IGNORES.flatMap((pattern) => ["--ignore-pattern", pattern]),
   ];
 }
 
-function runEslint(root) {
+function runEslint(root, targets = null) {
   const eslintEntry = path.join(root, "node_modules", "eslint", "bin", "eslint.js");
   if (!existsSync(eslintEntry)) {
     throw new Error("ESLint local nao encontrado. Execute a instalacao das dependencias primeiro.");
   }
 
-  const result = spawnSync(process.execPath, eslintCommandArguments(eslintEntry), {
+  const result = spawnSync(process.execPath, eslintCommandArguments(eslintEntry, targets ? { targets, noWarnIgnored: true } : {}), {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
@@ -456,12 +502,30 @@ export function main(argv = process.argv.slice(2)) {
       console.log(`Uso:
   node scripts/ci/lint-ratchet.mjs
   node scripts/ci/lint-ratchet.mjs --update-baseline
+  node scripts/ci/lint-ratchet.mjs --staged     (so os arquivos staged; usado no pre-commit)
 
 Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`);
       return 0;
     }
 
-    const report = options.report ? readJson(options.report, "relatorio ESLint") : runEslint(options.root);
+    if (options.staged && options.updateBaseline) {
+      throw new Error("--staged nao combina com --update-baseline.");
+    }
+    let stagedTargets = null;
+    if (options.staged) {
+      const staged = stagedLintableFiles(options.root);
+      if (staged.length === 0) {
+        console.log("Lint ratchet (staged): nenhum arquivo lintavel no commit.");
+        return 0;
+      }
+      if (staged.length > MAX_STAGED_FILES) {
+        console.log(`Lint ratchet (staged): ${staged.length} arquivos (> ${MAX_STAGED_FILES}), rodando o repositorio inteiro.`);
+      } else {
+        stagedTargets = staged;
+      }
+    }
+
+    const report = options.report ? readJson(options.report, "relatorio ESLint") : runEslint(options.root, stagedTargets);
     const current = createBaseline(report, options.root);
 
     if (options.updateBaseline) {
@@ -470,10 +534,18 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       return 0;
     }
 
-    const baseline = readJson(options.baseline, "baseline ESLint");
+    const fullBaseline = readJson(options.baseline, "baseline ESLint");
+    const baseline = stagedTargets
+      ? scopeBaseline(
+          fullBaseline,
+          report.map((entry) => normalizeFilePath(entry.filePath, options.root)),
+          stagedRemovedFiles(options.root),
+        )
+      : fullBaseline;
     const comparison = compareBaseline(baseline, report, options.root);
+    const label = stagedTargets ? `Lint ratchet (staged, ${stagedTargets.length} arquivo(s))` : "Lint ratchet";
     console.log(
-      `Lint ratchet: baseline=${comparison.baselineCount}, atual=${comparison.currentCount}, ` +
+      `${label}: baseline=${comparison.baselineCount}, atual=${comparison.currentCount}, ` +
         `mantidas=${comparison.matchedCount}, removidas=${comparison.removed.length}, novas=${comparison.added.length}`,
     );
 

@@ -1,3 +1,5 @@
 #!/bin/sh
 # Ratchet de lint (baseline em scripts/ci/eslint-baseline.json): falha so com divida NOVA.
-node scripts/ci/lint-ratchet.mjs
+# Aqui roda so nos arquivos do commit (segundos). O ratchet do repositorio inteiro continua no
+# pre-push e no job "Lint & TypeCheck" do CI; rodar tudo a cada commit levava 10-17 min sob carga.
+node scripts/ci/lint-ratchet.mjs --staged

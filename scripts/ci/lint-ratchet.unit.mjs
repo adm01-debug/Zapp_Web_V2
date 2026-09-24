@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { compareBaseline, createBaseline, eslintCommandArguments, main } from "./lint-ratchet.mjs";
+import {
+  compareBaseline,
+  createBaseline,
+  eslintCommandArguments,
+  main,
+  scopeBaseline,
+  stagedLintableFiles,
+  stagedRemovedFiles,
+} from "./lint-ratchet.mjs";
 
 test("ignora artefatos gerados de coverage no comando do ESLint", () => {
   assert.deepEqual(eslintCommandArguments("eslint.js"), [
@@ -314,6 +323,160 @@ test("CLI retorna falha quando uma nova divida aparece", () => {
   } finally {
     console.error = originalError;
     console.log = originalLog;
+    cleanup();
+  }
+});
+
+test("eslintCommandArguments aceita alvos e silencia aviso de arquivo ignorado", () => {
+  assert.deepEqual(
+    eslintCommandArguments("eslint.js", { targets: ["src/a.ts", "src/b.tsx"], noWarnIgnored: true }),
+    ["eslint.js", "src/a.ts", "src/b.tsx", "--format", "json", "--no-warn-ignored", "--ignore-pattern", "coverage/**"],
+  );
+});
+
+function gitFixture() {
+  const { root, cleanup } = fixture();
+  const git = (...args) => {
+    const run = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+    return run.stdout;
+  };
+  git("init", "-q");
+  git("config", "user.email", "ratchet@example.com");
+  git("config", "user.name", "ratchet");
+  return { root, git, cleanup };
+}
+
+function write(root, file, content) {
+  mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+  writeFileSync(path.join(root, file), content);
+}
+
+function silenced(t) {
+  t.mock.method(console, "log", () => {});
+  t.mock.method(console, "error", () => {});
+}
+
+test("stagedLintableFiles devolve so fontes staged que ainda existem", () => {
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "a();\n");
+    write(root, "src/b.tsx", "b();\n");
+    write(root, "src/c.mjs", "c();\n");
+    write(root, "README.md", "# x\n");
+    write(root, "src/unstaged.ts", "u();\n");
+    git("add", "src/a.ts", "src/b.tsx", "src/c.mjs", "README.md");
+    assert.deepEqual(stagedLintableFiles(root).sort(), ["src/a.ts", "src/b.tsx", "src/c.mjs"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("scopeBaseline mantem so os arquivos escaneados e os removidos no commit", () => {
+  const { root, cleanup } = fixture();
+  try {
+    const baseline = createBaseline(
+      [
+        result(root, "src/a.ts", "missing();\n"),
+        result(root, "src/b.ts", "missing();\n"),
+        result(root, "src/removed.ts", "missing();\n"),
+        result(root, "src/stale-elsewhere.ts", "missing();\n"),
+      ],
+      root,
+    );
+    const scoped = scopeBaseline(baseline, ["src/a.ts"], ["src/removed.ts"]);
+    assert.deepEqual(scoped.files.map((entry) => entry.path), ["src/a.ts", "src/removed.ts"]);
+    assert.deepEqual(scoped.issues.map((issue) => issue.file).sort(), ["src/a.ts", "src/removed.ts"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("stagedRemovedFiles lista remocoes e origens de renomeacao do commit", () => {
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/old.ts", "old();\n");
+    write(root, "src/deleted.ts", "deleted();\n");
+    write(root, "docs/notes.md", "# n\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("mv", "src/old.ts", "src/new.ts");
+    git("rm", "-q", "src/deleted.ts", "docs/notes.md");
+    assert.deepEqual(stagedRemovedFiles(root).sort(), ["src/deleted.ts", "src/old.ts"]);
+    assert.deepEqual(stagedLintableFiles(root), ["src/new.ts"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--staged ignora divida antiga fora do commit e acusa divida nova nos arquivos staged", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "missing();\nother();\n");
+    write(root, "src/legacy.ts", "missing();\n");
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(
+      baselinePath,
+      JSON.stringify(
+        createBaseline(
+          [result(root, "src/a.ts", "missing();\nother();\n"), result(root, "src/legacy.ts", "missing();\n")],
+          root,
+        ),
+      ),
+    );
+    git("add", "src/a.ts");
+    const reportPath = path.join(root, "report.json");
+    const args = ["--staged", "--root", root, "--baseline", baselinePath, "--report", reportPath];
+
+    // legacy.ts tem divida no baseline mas nao esta no commit: nao pode contar como remocao nem como nova.
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n")]));
+    assert.equal(main(args), 0);
+
+    const extra = message({ line: 2, endLine: 2, message: "'other' is not defined." });
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n", [message(), extra])]));
+    assert.equal(main(args), 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--staged reconhece arquivo renomeado pelo hash em vez de contar divida nova", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(baselinePath, JSON.stringify(createBaseline([result(root, "src/old.ts", "missing();\n")], root)));
+    write(root, "src/old.ts", "missing();\n");
+    git("add", "src/old.ts");
+    git("commit", "-q", "-m", "base");
+    git("mv", "src/old.ts", "src/new.ts");
+    const reportPath = path.join(root, "report.json");
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/new.ts", "missing();\n")]));
+    assert.equal(main(["--staged", "--root", root, "--baseline", baselinePath, "--report", reportPath]), 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--staged sem arquivo lintavel no commit sai com sucesso sem rodar o ESLint", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "README.md", "# x\n");
+    git("add", "README.md");
+    assert.equal(main(["--staged", "--root", root]), 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--staged nao combina com --update-baseline", (t) => {
+  silenced(t);
+  const { root, cleanup } = gitFixture();
+  try {
+    assert.equal(main(["--staged", "--update-baseline", "--root", root]), 2);
+  } finally {
     cleanup();
   }
 });
