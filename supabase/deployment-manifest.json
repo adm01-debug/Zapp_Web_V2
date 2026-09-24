@@ -423,8 +423,8 @@
     },
     {
       "path": "supabase/functions/sicoob-bridge-reply/index.ts",
-      "bytes": 3410,
-      "sha256": "5e9dd9ce245063d74ed961ff232f3209ca5c5dedef1b8c1778a42683bb5cd910"
+      "bytes": 4121,
+      "sha256": "4cbe87b0edb091b79eeb452d9312cbac2cc9d286435d33d688b889b358fba432"
     },
     {
       "path": "supabase/functions/sicoob-bridge/index.ts",
@@ -1191,7 +1191,7 @@
       "name": "sicoob-bridge-reply",
       "entrypoint": "supabase/functions/sicoob-bridge-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ad80f86960f574c50f7dc181f754ff6fdd3a480fc3640ff556d05b14d91de238",
+      "source_sha256": "1276237e901c6baa3c6701ba6aa030705a620f012b16ea1b228ee3ac3478545c",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ba5cd01e1636adec20e377b170e16602efb8861b843480b219f9b3ef7ca04234"
+  "manifest_sha256": "ce1ca2b2f47ddc96cc96d57063e7e00584e696bd2c48b36947076dfe1f903848"
 }
