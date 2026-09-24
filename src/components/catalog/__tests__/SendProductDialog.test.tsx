@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -128,5 +128,111 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Formal' }));
     expect(screen.getAllByText(/Prezado\(a\)/).length).toBe(2);
+  });
+});
+
+describe('SendProductDialog — Fase 7 (E77-E78)', () => {
+  beforeEach(() => {
+    mockUseAuth.mockReset();
+    mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
+    mockToast.mockReset();
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    sessionStorage.clear();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('salva rascunho no sessionStorage apos editar mensagem e esperar o debounce (E77)', async () => {
+    renderDialog({ product: mockProduct({ id: 'draft-p1' }) });
+
+    fireEvent.click(screen.getByRole('button', { name: /Editar/i }));
+    const textarea = screen.getByPlaceholderText('Escreva sua mensagem personalizada...');
+    fireEvent.change(textarea, { target: { value: 'Mensagem personalizada de teste' } });
+
+    expect(sessionStorage.getItem('catalog.sendDraft.draft-p1')).toBeNull();
+
+    await act(async () => { vi.advanceTimersByTime(500); });
+
+    const raw = sessionStorage.getItem('catalog.sendDraft.draft-p1');
+    expect(raw).not.toBeNull();
+    const draft = JSON.parse(raw!);
+    expect(draft.customMessage).toBe('Mensagem personalizada de teste');
+  });
+
+  it('nao salva rascunho quando nao esta editando (estado default)', async () => {
+    renderDialog({ product: mockProduct({ id: 'draft-p2' }) });
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(sessionStorage.getItem('catalog.sendDraft.draft-p2')).toBeNull();
+  });
+
+  it('mostra banner de restauracao ao reabrir com rascunho salvo e restaura corretamente (E77)', () => {
+    sessionStorage.setItem('catalog.sendDraft.draft-p3', JSON.stringify({
+      template: 'formal', customMessage: 'Texto salvo anteriormente', sendMode: 'product',
+      selectedColorGroup: null, savedAt: Date.now(),
+    }));
+
+    renderDialog({ product: mockProduct({ id: 'draft-p3' }) });
+
+    expect(screen.getByText('Você tem um rascunho não enviado para este produto.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restaurar rascunho' }));
+
+    expect(screen.queryByText('Você tem um rascunho não enviado para este produto.')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('Texto salvo anteriormente')).toBeInTheDocument();
+  });
+
+  it('descartar rascunho remove a chave do sessionStorage (E77)', () => {
+    sessionStorage.setItem('catalog.sendDraft.draft-p4', JSON.stringify({
+      template: 'formal', customMessage: 'Texto a descartar', sendMode: 'product',
+      selectedColorGroup: null, savedAt: Date.now(),
+    }));
+
+    renderDialog({ product: mockProduct({ id: 'draft-p4' }) });
+    expect(screen.getByText('Você tem um rascunho não enviado para este produto.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar' }));
+
+    expect(sessionStorage.getItem('catalog.sendDraft.draft-p4')).toBeNull();
+    expect(screen.queryByText('Você tem um rascunho não enviado para este produto.')).not.toBeInTheDocument();
+  });
+
+  it('confirmacao aparece ao tentar fechar com edicao pendente e "Fechar mesmo assim" chama onOpenChange(false) (E77)', () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ product: mockProduct({ id: 'draft-p5' }), onOpenChange });
+
+    fireEvent.click(screen.getByRole('button', { name: /Editar/i }));
+    const textarea = screen.getByPlaceholderText('Escreva sua mensagem personalizada...');
+    fireEvent.change(textarea, { target: { value: 'Edicao nao enviada' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.getByText('Descartar alterações não enviadas?')).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar mesmo assim' }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('fecha sem confirmacao quando nao ha edicao pendente', () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ product: mockProduct({ id: 'draft-p6' }), onOpenChange });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByText('Descartar alterações não enviadas?')).not.toBeInTheDocument();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('Ctrl+Enter aciona o mesmo fluxo do botao "Selecionar Contato" (E78)', () => {
+    renderDialog({ product: mockProduct({ id: 'draft-p7' }) });
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
+
+    expect(screen.getByRole('heading', { name: /Selecionar Contato/i })).toBeInTheDocument();
   });
 });
