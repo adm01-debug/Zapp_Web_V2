@@ -20,8 +20,14 @@ const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "
  * e a versão sem acento produzem lexemas diferentes.
  */
 function stripDiacritics(input: string): string {
-  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return input.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
+
+// E36-2: color/material aceitam 1 valor (compat com chamadores antigos)
+// ou array (multi-seleção real — OR entre os valores). Antes só string
+// era aceito, o que obrigava o client a aplicar o filtro multi-valor
+// localmente e a exibir total/paginação incorretos com 2+ selecionados.
+const ColorOrMaterialValue = z.union([z.string().max(60), z.array(z.string().max(60)).min(1).max(20)]);
 
 const ListProductsSchema = z.object({
   search: z.string().max(200).optional(),
@@ -43,8 +49,8 @@ const ListProductsSchema = z.object({
   low_stock: z.boolean().optional(), // 1 <= stock_quantity <= 10
   price_min: z.number().min(0).optional(),
   price_max: z.number().min(0).optional(),
-  color: z.string().max(60).optional(),
-  material: z.string().max(60).optional(),
+  color: ColorOrMaterialValue.optional(),
+  material: ColorOrMaterialValue.optional(),
   has_engraving: z.boolean().optional(),
 }).default({});
 
@@ -64,6 +70,22 @@ function sanitizeSearch(input: string): string {
 /** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */
 function sanitizeFtsQuery(input: string): string {
   return input.trim().slice(0, 100);
+}
+
+/**
+ * Monta o OR-expr do PostgREST para filtrar colors/materials (jsonb array
+ * que guarda string ou {nome}) por 1+ valores (E36-2 — substitui o
+ * if(color)/if(material) escalar único). Cada valor vira 2 cláusulas
+ * (string pura e {nome}), todas OR'd entre si: casa se a coluna contém
+ * QUALQUER um dos valores selecionados, em QUALQUER um dos dois formatos.
+ * contains (.cs.) evita ilike direto em jsonb (Postgres rejeita sem cast).
+ */
+function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
+  const clauses = values
+    .map((v) => sanitizeSearch(v).toUpperCase())
+    .filter((v) => v.length > 0)
+    .flatMap((v) => [`${column}.cs.${JSON.stringify([v])}`, `${column}.cs.${JSON.stringify([{ nome: v }])}`]);
+  return clauses.length > 0 ? clauses.join(",") : null;
 }
 
 const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id),
@@ -218,19 +240,12 @@ Deno.serve(async (req) => {
       if (price_max != null) query = query.lte("sale_price", price_max);
       if (has_engraving) query = query.not("engraving_type", "is", null);
       if (color) {
-        // colors e jsonb; a maioria dos itens e string ("BAMBU"), ~4% (XBZ)
-        // e objeto {"nome": "..."} - contains cobre os dois formatos, sem
-        // ilike direto em jsonb (o Postgres rejeita ilike sem cast em jsonb).
-        const safeColor = sanitizeSearch(color).toUpperCase();
-        if (safeColor.length > 0) {
-          query = query.or(`colors.cs.${JSON.stringify([safeColor])},colors.cs.${JSON.stringify([{ nome: safeColor }])}`);
-        }
+        const orExpr = buildTagOrExpr("colors", Array.isArray(color) ? color : [color]);
+        if (orExpr) query = query.or(orExpr);
       }
       if (material) {
-        const safeMaterial = sanitizeSearch(material).toUpperCase();
-        if (safeMaterial.length > 0) {
-          query = query.or(`materials.cs.${JSON.stringify([safeMaterial])},materials.cs.${JSON.stringify([{ nome: safeMaterial }])}`);
-        }
+        const orExpr = buildTagOrExpr("materials", Array.isArray(material) ? material : [material]);
+        if (orExpr) query = query.or(orExpr);
       }
       if (search) {
         // FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT
