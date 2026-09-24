@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
@@ -125,7 +125,9 @@ describe('ExternalProductManagement', () => {
     const hookReturn = baseHookReturn();
     mockUseExternalCatalog.mockReturnValue(hookReturn);
     renderManagement();
-    fireEvent.click(screen.getByText('Em destaque'));
+    // O rail (E53) exibe a mesma label "Em destaque" na lista de contagens;
+    // o clique precisa ser escopado no strip de KPIs para nao ficar ambiguo.
+    fireEvent.click(within(screen.getByTestId('catalog-kpi-strip')).getByText('Em destaque'));
     await new Promise((r) => setTimeout(r, 350));
     const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
     const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
