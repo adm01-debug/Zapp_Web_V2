@@ -16,11 +16,9 @@ import { getStoredAccordionState, saveAccordionState } from './contact-details/c
 interface ContactDetailsProps {
   conversation: Conversation;
   onClose: () => void;
-  /** Abre a aba "Tarefas" do painel do chat (Histórico/Tarefas/Notas/Arquivos vivem lá, não aqui). */
-  onOpenTasksTab?: () => void;
 }
 
-export function ContactDetails({ conversation, onClose, onOpenTasksTab }: ContactDetailsProps) {
+export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
   const { contact } = conversation;
   const { enrichedData, aiTags, slaInfo } = useContactEnrichedData(contact.id);
   const { profileId } = useConversationActions();
@@ -47,11 +45,6 @@ export function ContactDetails({ conversation, onClose, onOpenTasksTab }: Contac
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault(); onClose();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && panelRef.current) {
-        e.preventDefault();
-        panelRef.current.querySelector('textarea')?.focus();
-        toast.info('📝 Notas Privadas');
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 't' && panelRef.current) {
         e.preventDefault(); toast.info('🏷️ Seção de Tags');
@@ -123,7 +116,6 @@ export function ContactDetails({ conversation, onClose, onOpenTasksTab }: Contac
             <ContactAccordionSections
               contact={contact} conversation={conversation} enrichedData={enrichedData ?? null}
               aiTags={aiTags} slaInfo={slaInfo ?? null} profileId={profileId}
-              onPanelTabChange={(tab) => { if (tab === 'tasks') onOpenTasksTab?.(); }}
             />
           </Accordion>
         </div>

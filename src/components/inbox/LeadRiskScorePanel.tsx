@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
@@ -29,7 +29,7 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
   const [leadOrigin, setLeadOrigin] = useState('');
   const [consentStatus, setConsentStatus] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false); const isMountedRef = useRef(true);
 
   useEffect(() => {
     loadData();
@@ -41,7 +41,7 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
       .select('lead_score, risk_score, lead_origin, consent_status')
       .eq('id', contactId)
       .single();
-    if (data) {
+    if (!isMountedRef.current) return; if (data) {
       setLeadScore(data.lead_score ?? 0);
       setRiskScore(data.risk_score ?? 0);
       setLeadOrigin(data.lead_origin ?? '');
@@ -65,6 +65,11 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
     else toast.error('Erro ao salvar');
     setSaving(false);
   };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-success';

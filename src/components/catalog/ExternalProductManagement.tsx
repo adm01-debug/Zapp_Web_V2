@@ -318,6 +318,35 @@ export const ExternalProductManagement: React.FC = () => {
     if (product && lastRequestedProductIdRef.current === productId) setSendProduct(product);
   }, [fetchProduct]);
 
+  // E78 — deep link ?product=<id>&send=1[&variant=<cor>] abre o dialog de
+  // envio direto ao carregar a página, sem precisar clicar em nada. O valor
+  // inicial de deepLinkVariant vem do lazy initializer (lido uma vez, na
+  // primeira render) pra não precisar de um setState síncrono dentro do
+  // efeito de mount abaixo.
+  const [deepLinkVariant, setDeepLinkVariant] = useState<string | undefined>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('send') === '1' && params.get('product') ? (params.get('variant') ?? undefined) : undefined;
+  });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+    const send = params.get('send');
+    if (send === '1' && productId) {
+      // setTimeout(0) move o fetch inicial pra fora do corpo síncrono do
+      // efeito, mesmo padrão já usado em RateLimitRealtimeAlerts.tsx (E62)
+      // pra satisfazer react-hooks/set-state-in-effect.
+      setTimeout(() => void handleOpenProductFromRail(productId), 0);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('product');
+        url.searchParams.delete('send');
+        url.searchParams.delete('variant');
+        history.replaceState(null, '', url.toString());
+      } catch { /* ignore */ }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Tabs defaultValue="produtos" className="w-full min-w-0">
       <TabsList className="mb-4 h-9">
@@ -619,7 +648,8 @@ export const ExternalProductManagement: React.FC = () => {
         <SendProductDialog
           product={sendProduct}
           open={!!sendProduct}
-          onOpenChange={(open) => { if (!open) setSendProduct(null); }}
+          onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); } }}
+          initialVariantColor={deepLinkVariant}
         />
       )}
 

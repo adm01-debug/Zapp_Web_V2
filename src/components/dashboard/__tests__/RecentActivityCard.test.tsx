@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { RecentActivityCard } from '../overview/RecentActivityCard';
 
 describe('RecentActivityCard', () => {
-  it('sem itens, mostra "Sem atividade hoje"', () => {
+  it('sem itens, mostra "Sem atividade nas últimas 24h" (E21 — janela real, nunca "há 22 dias")', () => {
     render(<RecentActivityCard items={[]} />);
-    expect(screen.getByText('Sem atividade hoje')).toBeInTheDocument();
+    expect(screen.getByText('Sem atividade nas últimas 24h')).toBeInTheDocument();
   });
 
   it('renderiza até 4 linhas com nome, texto e avatar', () => {
