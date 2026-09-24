@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -41,6 +41,12 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     async function fetchTimeline() {
@@ -118,6 +124,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
 
       // Sort by timestamp descending
       timeline.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      if (!isMountedRef.current) return;
       setEvents(timeline);
       setLoading(false);
     }
