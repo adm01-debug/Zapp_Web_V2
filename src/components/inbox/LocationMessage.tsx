@@ -21,12 +21,19 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [mapError, setMapError] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     // Fetch Mapbox token from edge function
     const fetchToken = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!isMountedRef.current) return;
         if (!error && data?.token) {
           setMapboxToken(data.token);
         }
