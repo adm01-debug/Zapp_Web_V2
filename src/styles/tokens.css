@@ -107,7 +107,7 @@
     /* ===== PRIMARY — Corporate Blue ===== */
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 230 86% 59%;
+    --primary-glow: 230 83% 63%;
 
     /* ===== SECONDARY ===== */
     --secondary: 215 70% 55%;
@@ -193,14 +193,14 @@
     --priority-low: 210 25% 48%;
 
     /* ===== GRADIENTS ===== */
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(215 70% 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(230 78% 59%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%));
     --gradient-success: linear-gradient(135deg, hsl(160 70% 42%), hsl(160 70% 52%));
-    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 78% 59%));
+    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%));
     --gradient-gold: linear-gradient(135deg, hsl(45 93% 50%), hsl(38 92% 55%));
     --gradient-surface: linear-gradient(180deg, hsl(221 20% 97%), hsl(221 15% 95%));
     --gradient-divider: linear-gradient(90deg, transparent, hsl(221 15% 88% / 0.5), transparent);
-    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(210 80% 55%), hsl(230 78% 59%));
+    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%));
     --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(160 70% 42%));
 
     /* ===== SHAOWS ===== */
@@ -212,7 +212,7 @@
     --shadow-glow-primary: 0 4px 14px hsl(221 83% 53% / 0.25);
     --shadow-glow-secondary: 0 4px 14px hsl(215 70% 55% / 0.2);
     --shadow-glow-success: 0 4px 14px hsl(160 70% 42% / 0.2);
-    --shadow-glow-accent: 0 4px 14px hsl(230 78% 59% / 0.25);
+    --shadow-glow-accent: 0 4px 14px hsl(230 83% 63% / 0.25);
     --shadow-glow-purple: 0 4px 14px hsl(221 83% 53% / 0.3);
     --shadow-header: 0 1px 3px hsl(221 20% 12% / 0.06);
 
@@ -416,14 +416,14 @@
     --priority-high: 0 90% 60%;
     --priority-medium: 38 100% 58%;
     --priority-low: 210 35% 60%;
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 78% 57%));
-    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(230 62% 60%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 83% 63%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 70% 55%), hsl(215 70% 65%));
     --gradient-success: linear-gradient(135deg, hsl(155 80% 50%), hsl(165 75% 55%));
-    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 78% 57%));
+    --gradient-xp: linear-gradient(90deg, hsl(221 83% 53%), hsl(230 83% 63%));
     --gradient-gold: linear-gradient(135deg, hsl(42 100% 58%), hsl(35 95% 52%));
     --gradient-surface: linear-gradient(180deg, hsl(240 5% 10%), hsl(240 6% 6%));
     --gradient-divider: linear-gradient(90deg, transparent, hsl(221 50% 40% / 0.15), transparent);
-    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(210 95% 62%), hsl(230 78% 57%));
+    --gradient-vibrant: linear-gradient(135deg, hsl(221 83% 53%), hsl(230 95% 62%), hsl(230 83% 63%));
     --gradient-purple-green: linear-gradient(135deg, hsl(221 83% 53%), hsl(155 80% 50%));
     --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.5);
     --shadow-sm: 0 1px 3px hsl(0 0% 0% / 0.6), 0 1px 2px hsl(0 0% 0% / 0.5);
@@ -433,14 +433,14 @@
     --shadow-glow-primary: 0 0 30px hsl(221 83% 53% / 0.4), 0 0 60px hsl(221 83% 53% / 0.15);
     --shadow-glow-secondary: 0 4px 24px hsl(215 70% 55% / 0.4);
     --shadow-glow-success: 0 0 25px hsl(142 71% 45% / 0.35);
-    --shadow-glow-accent: 0 4px 24px hsl(230 78% 59% / 0.4);
+    --shadow-glow-accent: 0 4px 24px hsl(230 83% 63% / 0.4);
     --shadow-glow-purple: 0 4px 24px hsl(221 83% 53% / 0.5);
     --shadow-header: 0 1px 3px hsl(225 20% 2% / 0.7), 0 0 20px hsl(221 83% 53% / 0.03), inset 0 1px 0 hsl(225 15% 18% / 0.3);
     --glass-bg: 240 6% 8% / 0.85;
     --glass-border: 221 30% 30% / 0.15;
     --elevated: 240 5% 12%;
     --elevated-hover: 240 5% 15%;
-    --chart-1: 221 83% 58%;
+    --chart-1: 221 83% 53%;
     --chart-2: 210 95% 64%;
     --chart-3: 155 80% 52%;
     --chart-4: 42 100% 62%;
@@ -453,7 +453,7 @@
     --chart-status-resolved: 155 80% 52%;
     --chart-status-pending: 42 100% 62%;
     --chart-status-waiting: 210 95% 64%;
-    --chart-status-open: 221 83% 58%;
+    --chart-status-open: 221 83% 53%;
     --chart-sentiment-positive: 155 80% 52%;
     --chart-sentiment-neutral: 220 25% 65%;
     --chart-sentiment-negative: 0 85% 62%;

@@ -5,6 +5,7 @@
 @import './styles/animations.css';
 @import './styles/sidebar.css';
 @import './styles/accessibility.css';
+@import './styles/diversity-overrides.css';
 
 @tailwind base;
 @tailwind components;
