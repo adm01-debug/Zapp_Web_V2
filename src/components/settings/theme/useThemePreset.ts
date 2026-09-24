@@ -1,173 +1,96 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
-  PRESETS,
-  CSS_VARS_TO_APPLY,
-  STORAGE_KEY, STORAGE_VERSION,
-  DEFAULT_PRESET_ID,
-  normalizeStoredPresetId,
+  applyThemePreset,
+  applyRadius,
+  loadThemeConfig,
+  saveThemeConfig,
+  clearThemeOverrides,
+  getDefaultConfig,
+  getPresetById,
+  type ThemeConfig,
 } from './presets';
-import type { ThemePreset, ThemeModeColors } from './presets';
 import { useTheme } from '@/hooks/ui/useTheme';
 
-interface ThemeConfig {
-  borderRadius?: number; v?: number;
-  cacheMode?: 'light' | 'dark';
-  cachePreset?: string;
-  cssVarsCache?: Record<string, string>;
-  preset?: string;
-}
-
+/**
+ * Hook fino da página de Skins: mantém `config` (o que está aplicado) e
+ * `savedConfig` (o que está gravado), com auto-save a cada seleção de skin
+ * e snap de raio ao entrar/sair de uma skin GX.
+ */
 export function useThemePreset() {
   const { resolvedTheme } = useTheme();
-  const [activePreset, setActivePreset] = useState<string>(DEFAULT_PRESET_ID);
-  const [borderRadius, setBorderRadius] = useState<number>(8);
+  const [config, setConfig] = useState<ThemeConfig>(loadThemeConfig);
+  const [savedConfig, setSavedConfig] = useState<ThemeConfig>(config);
 
-  const save = useCallback((presetId: string, radius: number) => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ v: STORAGE_VERSION, preset: normalizeStoredPresetId(presetId), borderRadius: radius }),
-    );
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(config) !== JSON.stringify(savedConfig),
+    [config, savedConfig],
+  );
+
+  useEffect(() => {
+    applyThemePreset(config.preset, resolvedTheme);
+    applyRadius(config.borderRadius);
+  }, [config, resolvedTheme]);
+
+  const updateConfig = useCallback((partial: Partial<ThemeConfig>, autoSave = true) => {
+    setConfig((prev) => {
+      let next = { ...prev, ...partial };
+      if (partial.preset && partial.preset !== prev.preset) {
+        const prevPreset = getPresetById(prev.preset);
+        const nextPreset = getPresetById(partial.preset);
+        if (nextPreset?.borderRadius !== undefined) {
+          next = { ...next, borderRadius: nextPreset.borderRadius };
+        } else if (prevPreset?.borderRadius !== undefined) {
+          next = { ...next, borderRadius: getDefaultConfig().borderRadius };
+        }
+      }
+      if (autoSave) {
+        saveThemeConfig(next);
+        setSavedConfig(next);
+      }
+      return next;
+    });
   }, []);
 
-  const applyPresetColors = useCallback((preset: ThemePreset, mode: 'light' | 'dark') => {
-    const colors: ThemeModeColors = mode === 'dark' ? preset.dark : preset.light;
-    const root = document.documentElement;
-    for (const key of CSS_VARS_TO_APPLY) {
-      root.style.setProperty(`--${key}`, colors[key]);
-    }
-  }, []);
-
-  const applyPresetById = useCallback((presetId: string, notify = true) => {
-    const preset = PRESETS.find(p => p.id === presetId);
+  const applyPreset = useCallback((id: string) => {
+    const preset = getPresetById(id);
     if (!preset) return;
+    updateConfig({ preset: id });
+    toast.success(`Tema "${preset.name}" aplicado!`);
+  }, [updateConfig]);
 
-    const root = document.documentElement;
-    root.classList.add('theme-transitioning');
-
-    applyPresetColors(preset, resolvedTheme);
-    setActivePreset(presetId);
-    if (notify) {
-      save(presetId, borderRadius);
-      toast.success(`Tema "${preset.label}" aplicado!`);
-    }
-
-    setTimeout(() => root.classList.remove('theme-transitioning'), 350);
-  }, [applyPresetColors, resolvedTheme, borderRadius, save]);
-
-  const applyBorderRadius = useCallback((radius: number) => {
-    document.documentElement.style.setProperty('--radius', `${radius / 16}rem`);
-  }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed: ThemeConfig = JSON.parse(saved);
-        const presetId = normalizeStoredPresetId(parsed.preset);
-        const radius = parsed.borderRadius ?? 8;
-
-        setActivePreset(presetId);
-        setBorderRadius(radius);
-        applyBorderRadius(radius);
-
-        const preset = PRESETS.find(p => p.id === presetId);
-        if (preset) applyPresetColors(preset, resolvedTheme);
-
-        if (
-          parsed.v !== STORAGE_VERSION ||
-          parsed.preset !== presetId ||
-          parsed.cssVarsCache ||
-          parsed.cacheMode ||
-          parsed.cachePreset
-        ) {
-          save(presetId, radius);
-        }
-      } catch {
-        const corporate = PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
-        if (corporate) {
-          applyPresetColors(corporate, resolvedTheme);
-          save(DEFAULT_PRESET_ID, borderRadius);
-        }
-      }
+  const handleSave = useCallback(() => {
+    const ok = saveThemeConfig(config);
+    if (ok) {
+      setSavedConfig(config);
+      const preset = getPresetById(config.preset);
+      toast.success('Tema salvo com sucesso!', {
+        description: `Skin "${preset?.name ?? config.preset}" aplicada.`,
+      });
     } else {
-      const corporate = PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
-      if (corporate) {
-        applyPresetColors(corporate, resolvedTheme);
-        save(DEFAULT_PRESET_ID, borderRadius);
-      }
+      toast.error('Não foi possível salvar o tema', {
+        description: 'O armazenamento local está indisponível ou cheio. Tente em uma janela normal.',
+      });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config]);
 
-  useEffect(() => {
-    const preset = PRESETS.find(p => p.id === activePreset);
-    if (preset) {
-      applyPresetColors(preset, resolvedTheme);
-    }
-  }, [resolvedTheme, activePreset, applyPresetColors]);
-
-  const handleBorderRadiusChange = useCallback((value: number[]) => {
-    const radius = value[0];
-    setBorderRadius(radius);
-    applyBorderRadius(radius);
-    save(activePreset, radius);
-  }, [activePreset, applyBorderRadius, save]);
-
-  const resetTheme = useCallback(() => {
-    const corporate = PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
-    if (corporate) {
-      applyPresetColors(corporate, resolvedTheme);
-    }
-    setActivePreset(DEFAULT_PRESET_ID);
-    setBorderRadius(8);
-    document.documentElement.style.setProperty('--radius', '0.5rem');
-    save(DEFAULT_PRESET_ID, 8);
-    toast.success('Tema restaurado ao padrão!');
-  }, [applyPresetColors, resolvedTheme, save]);
-
-  const exportTheme = useCallback(() => {
-    const config: ThemeConfig = { preset: activePreset, borderRadius };
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `skin-${activePreset}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Tema exportado!');
-  }, [activePreset, borderRadius]);
-
-  const importTheme = useCallback((onThemeChange?: (theme: string) => void) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const config = JSON.parse(text);
-        if (config.preset) applyPresetById(config.preset);
-        if (config.borderRadius != null) {
-          setBorderRadius(config.borderRadius);
-          applyBorderRadius(config.borderRadius);
-        }
-        if (config.theme && onThemeChange) onThemeChange(config.theme);
-        toast.success('Tema importado!');
-      } catch {
-        toast.error('Arquivo de tema inválido');
-      }
-    };
-    input.click();
-  }, [applyPresetById, applyBorderRadius]);
+  const handleReset = useCallback(() => {
+    clearThemeOverrides();
+    const def = getDefaultConfig();
+    setConfig(def);
+    setSavedConfig(def);
+    saveThemeConfig(def);
+    applyThemePreset(def.preset, resolvedTheme);
+    applyRadius(def.borderRadius);
+    toast.success('Tema restaurado ao padrão');
+  }, [resolvedTheme]);
 
   return {
-    activePreset,
-    borderRadius,
-    applyPreset: applyPresetById,
-    handleBorderRadiusChange,
-    resetTheme,
-    exportTheme,
-    importTheme,
+    config,
+    hasUnsavedChanges,
+    updateConfig,
+    applyPreset,
+    handleSave,
+    handleReset,
   };
 }
