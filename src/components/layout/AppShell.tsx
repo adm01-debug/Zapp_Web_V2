@@ -15,8 +15,6 @@ import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
 import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
-import { useTheme } from '@/hooks/ui/useTheme';
- import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
 import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
@@ -61,7 +59,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const isMobile = useIsMobile();
   useAgentPresenceJoin(userId);
   const { isZen, toggleZen } = useZenMode();
-  const { isDark } = useTheme();
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -71,7 +68,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
-  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: !isMobile && !isZen }), [isMobile, isZen]);
+  const layoutContextValue = useMemo(() => ({ hidePageBreadcrumbs: !isMobile && !isZen }), [isMobile, isZen]);
   useNavShortcuts(handleViewChange);
 
   // Mobile edge-swipe navigation
