@@ -21,6 +21,7 @@ import { useTheme } from '@/hooks/ui/useTheme';
  import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
+import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
 
 const LazyVoiceOverlay = lazy(() => import('@/components/voice/VoiceSearchOverlayConnected'));
 
@@ -60,6 +61,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   loading,
 }, _ref) {
   const isMobile = useIsMobile();
+  useAgentPresenceJoin(userId);
   const { isZen, toggleZen } = useZenMode();
   const { isDark } = useTheme();
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
