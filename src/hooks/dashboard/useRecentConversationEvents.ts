@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { subHours } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ConversationEventItem {
@@ -36,11 +37,15 @@ export function useRecentConversationEvents(limit = 4) {
   return useQuery({
     queryKey: ['recent-conversation-events', limit],
     queryFn: async () => {
+      // Janela de 24h (E21): sem isso, um evento de 22 dias atrás (silêncio do
+      // conversation_events, ver A7) aparecia como "atividade recente" honesta.
+      const since = subHours(new Date(), 24).toISOString();
       let usedEmbed = true;
       let events: EventRow[];
       const embedRes = await supabase
         .from('conversation_events')
         .select('id, event_type, created_at, contact_id, performed_by, to_agent_id, to_queue_id, contacts(name)')
+        .gte('created_at', since)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -49,6 +54,7 @@ export function useRecentConversationEvents(limit = 4) {
         const plainRes = await supabase
           .from('conversation_events')
           .select('id, event_type, created_at, contact_id, performed_by, to_agent_id, to_queue_id')
+          .gte('created_at', since)
           .order('created_at', { ascending: false })
           .limit(limit);
         if (plainRes.error) throw plainRes.error;
