@@ -96,15 +96,15 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Command className="h-3 w-3" />
               <span>Pressione</span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono">Ctrl</kbd>
               <span>+</span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">K</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono">K</kbd>
               <span>para abrir a busca</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↑↓</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono">↑↓</kbd>
               <span>navegar</span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Enter</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono">Enter</kbd>
               <span>selecionar</span>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
               <Button variant={showFilters ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8 relative" onClick={() => setShowFilters(!showFilters)}>
                 <Filter className="h-4 w-4" />
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-3xs rounded-full flex items-center justify-center">
                     {activeFiltersCount}
                   </span>
                 )}

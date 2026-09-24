@@ -20,7 +20,7 @@ export function CategorySelector({ value, onChange, size = 'sm' }: CategorySelec
         <button
           className={cn(
             'flex items-center gap-1 rounded-md border border-border/50 transition-colors hover:bg-muted/60',
-            size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'
+            size === 'xs' ? 'px-1.5 py-0.5 text-3xs' : 'px-2 py-1 text-xs'
           )}
           onClick={(e) => e.stopPropagation()}
           aria-label={`Categoria: ${info.label}`}

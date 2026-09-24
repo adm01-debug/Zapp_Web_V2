@@ -136,7 +136,7 @@ export function DiagnosticsView() {
           <TabsTrigger value="logs" className="gap-2 relative">
             <FileWarning className="w-4 h-4" />Logs de Erros
             {errorLogs.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-3xs flex items-center justify-center">
                 {errorLogs.length > 9 ? '9+' : errorLogs.length}
               </span>
             )}
@@ -302,8 +302,8 @@ export function DiagnosticsView() {
                           <div className={cn('p-2 rounded-lg mt-0.5', sev.bg)}><SevIcon className={cn('w-4 h-4', sev.color)} /></div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{logItem.type}</Badge>
-                              <Badge variant="outline" className={cn('text-[10px] uppercase tracking-wider', sev.bg, sev.color, sev.border)}>{logItem.severity}</Badge>
+                              <Badge variant="outline" className="text-3xs uppercase tracking-wider">{logItem.type}</Badge>
+                              <Badge variant="outline" className={cn('text-3xs uppercase tracking-wider', sev.bg, sev.color, sev.border)}>{logItem.severity}</Badge>
                             </div>
                             <p className="text-sm font-medium text-foreground">{logItem.message}</p>
                             <p className="text-xs text-muted-foreground mt-1">{logItem.details}</p>

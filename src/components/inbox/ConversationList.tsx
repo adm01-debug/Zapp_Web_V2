@@ -31,7 +31,7 @@ function CRMConversationBadge({ crmInfo }: { crmInfo: CRMBatchResult | undefined
   return (
     <div className="flex items-center gap-1 mt-0.5">
       <Sparkles className="w-3 h-3 text-primary/60 shrink-0" />
-      <span className="text-[10px] text-primary/70 truncate max-w-[140px]">
+      <span className="text-3xs text-primary/70 truncate max-w-[140px]">
         {crmInfo.company_name}
       </span>
     </div>
@@ -254,7 +254,7 @@ export function ConversationList({
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                              className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground"
+                              className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-3xs font-bold bg-primary text-primary-foreground"
                             >
                               {conversation.unreadCount}
                             </motion.span>
@@ -281,13 +281,13 @@ export function ConversationList({
                               <Badge
                                 key={tag}
                                 variant="secondary"
-                                className="text-[10px] px-1.5 py-0 bg-muted/50 border-border/20"
+                                className="text-3xs px-1.5 py-0 bg-muted/50 border-border/20"
                               >
                                 {tag}
                               </Badge>
                             ))}
                             {conversation.tags.length > 2 && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-3xs text-muted-foreground">
                                 +{conversation.tags.length - 2}
                               </span>
                             )}

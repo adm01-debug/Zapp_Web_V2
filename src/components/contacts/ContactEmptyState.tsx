@@ -63,7 +63,7 @@ export function ContactEmptyState({
               >
                 <span className="text-2xl">{tip.icon}</span>
                 <p className="text-xs font-medium text-foreground mt-1">{tip.title}</p>
-                <p className="text-[10px] text-muted-foreground">{tip.desc}</p>
+                <p className="text-3xs text-muted-foreground">{tip.desc}</p>
               </motion.div>
             ))}
           </div>

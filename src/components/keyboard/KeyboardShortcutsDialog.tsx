@@ -79,7 +79,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <span className="text-sm text-foreground truncate">{shortcut.name}</span>
         {isCustomized && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 opacity-60 group-hover:opacity-100">
+          <Badge variant="outline" className="text-3xs px-1.5 py-0 opacity-60 group-hover:opacity-100">
             Personalizado
           </Badge>
         )}
@@ -204,11 +204,11 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
                     <div className="flex items-center gap-0.5">
                       {shortcut.keys.map((key, keyIndex) => (
                         <span key={keyIndex} className="flex items-center">
-                          <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-background border border-border rounded">
+                          <kbd className="px-1.5 py-0.5 text-3xs font-medium bg-background border border-border rounded">
                             {key}
                           </kbd>
                           {keyIndex < shortcut.keys.length - 1 && (
-                            <span className="mx-0.5 text-muted-foreground text-[10px]">+</span>
+                            <span className="mx-0.5 text-muted-foreground text-3xs">+</span>
                           )}
                         </span>
                       ))}

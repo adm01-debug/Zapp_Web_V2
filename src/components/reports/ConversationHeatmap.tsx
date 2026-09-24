@@ -123,7 +123,7 @@ export function ConversationHeatmap() {
             {/* Grid */}
             {DAYS.map((dayName, dayIdx) => (
               <div key={dayIdx} className="flex items-center gap-0.5">
-                <span className="text-[10px] text-muted-foreground w-10 text-right pr-1">{dayName}</span>
+                <span className="text-3xs text-muted-foreground w-10 text-right pr-1">{dayName}</span>
                 <div className="flex gap-0.5 flex-1">
                   {HOURS.map(h => {
                     const cell = data.find(c => c.day === dayIdx && c.hour === h);

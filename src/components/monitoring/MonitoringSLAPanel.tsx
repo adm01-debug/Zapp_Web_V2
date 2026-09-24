@@ -61,17 +61,17 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
             <div className="p-3 rounded-lg bg-muted/30 text-center">
               <TrendingUp className="w-4 h-4 mx-auto text-emerald-500 mb-1" />
               <p className="text-xl font-bold">{uptime.healthyChecks}</p>
-              <p className="text-[10px] text-muted-foreground">Checks OK</p>
+              <p className="text-3xs text-muted-foreground">Checks OK</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/30 text-center">
               <Clock className="w-4 h-4 mx-auto text-primary mb-1" />
               <p className="text-xl font-bold">{uptime.totalChecks}</p>
-              <p className="text-[10px] text-muted-foreground">Total Checks</p>
+              <p className="text-3xs text-muted-foreground">Total Checks</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/30 text-center">
               <Zap className="w-4 h-4 mx-auto text-amber-500 mb-1" />
               <p className="text-xl font-bold">{uptime.totalChecks - uptime.healthyChecks}</p>
-              <p className="text-[10px] text-muted-foreground">Falhas</p>
+              <p className="text-3xs text-muted-foreground">Falhas</p>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
                       <span className="font-semibold text-sm">{inst.instanceId}</span>
                       <Badge
                         variant={met ? 'default' : 'destructive'}
-                        className={cn('text-[10px]', met && 'bg-emerald-500/80 hover:bg-emerald-500/70')}
+                        className={cn('text-3xs', met && 'bg-emerald-500/80 hover:bg-emerald-500/70')}
                       >
                         {inst.percentage}%
                       </Badge>
@@ -116,7 +116,7 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
                         <p className="text-sm font-bold">{inst.healthyChecks}/{inst.totalChecks}</p>
-                        <p className="text-[10px] text-muted-foreground">Checks OK</p>
+                        <p className="text-3xs text-muted-foreground">Checks OK</p>
                       </div>
                       <div>
                         <p className={cn(
@@ -126,15 +126,15 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
                         )}>
                           {inst.avgLatency}ms
                         </p>
-                        <p className="text-[10px] text-muted-foreground">Latência</p>
+                        <p className="text-3xs text-muted-foreground">Latência</p>
                       </div>
                       <div>
                         <p className="text-sm font-bold">{inst.totalChecks - inst.healthyChecks}</p>
-                        <p className="text-[10px] text-muted-foreground">Falhas</p>
+                        <p className="text-3xs text-muted-foreground">Falhas</p>
                       </div>
                     </div>
                     {inst.lastError && (
-                      <p className="text-[10px] text-destructive mt-2 truncate">⚠️ {inst.lastError}</p>
+                      <p className="text-3xs text-destructive mt-2 truncate">⚠️ {inst.lastError}</p>
                     )}
                   </CardContent>
                 </Card>

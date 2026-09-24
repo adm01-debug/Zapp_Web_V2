@@ -77,9 +77,9 @@ function FavoriteCard({ fav, onRemove, onSend }: {
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-semibold text-foreground truncate">{fav.product_name}</p>
         {fav.product_sku && (
-          <p className="text-[11px] text-muted-foreground">SKU: {fav.product_sku}</p>
+          <p className="text-2xs text-muted-foreground">SKU: {fav.product_sku}</p>
         )}
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-3xs text-muted-foreground">
           Favoritado {new Date(fav.created_at).toLocaleDateString('pt-BR')}
         </p>
       </div>

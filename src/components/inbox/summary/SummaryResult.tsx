@@ -46,7 +46,7 @@ export function SummaryResult({ summary, isTtsPlaying, isTtsLoading, lastTtsText
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={() => onPlayTts(buildFullNarrationText())} disabled={isTtsLoading}>
+                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-2xs" onClick={() => onPlayTts(buildFullNarrationText())} disabled={isTtsLoading}>
                   {isTtsPlaying ? <><VolumeX className="h-3.5 w-3.5" />Parar</> : <><Headphones className="h-3.5 w-3.5" />Ouvir Tudo</>}
                 </Button>
               </TooltipTrigger>

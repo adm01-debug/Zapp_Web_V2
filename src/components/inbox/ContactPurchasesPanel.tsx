@@ -81,7 +81,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-3xs">
             <DollarSign className="w-3 h-3 mr-0.5" />
             R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </Badge>
@@ -114,7 +114,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{p.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-3xs text-muted-foreground">
                     {format(new Date(p.created_at), 'dd/MM/yy', { locale: ptBR })}
                   </p>
                 </div>

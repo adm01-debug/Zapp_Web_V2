@@ -129,7 +129,7 @@ export function VoiceSearchOverlay({
             <VoiceTranscriptArea phase={phase} partialTranscript={partialTranscript} finalTranscript={finalTranscript} agentResponse={agentResponse} error={error} colors={colors} />
             <VoiceSuggestions visible={showSuggestions && phase === 'idle' && !agentResponse} />
             <div className="flex items-center justify-between w-full pt-1">
-              <span className="text-[10px] text-white/20"><kbd className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/10 text-[9px] font-mono">ESC</kbd>{' '}para fechar</span>
+              <span className="text-3xs text-white/20"><kbd className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/10 text-[9px] font-mono">ESC</kbd>{' '}para fechar</span>
               <button ref={closeButtonRef} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent border border-white/10" aria-label="Fechar assistente de voz">
                 <X className="w-4 h-4 text-white/40" />
               </button>

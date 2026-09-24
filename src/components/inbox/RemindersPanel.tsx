@@ -142,7 +142,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
               <Bell className={`w-4 h-4 shrink-0 ${isPast(r.remind_at) ? 'text-warning animate-pulse' : 'text-muted-foreground'}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{r.title}</p>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <p className="text-3xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {isPast(r.remind_at) ? 'Vencido' : formatDistanceToNow(new Date(r.remind_at), { locale: ptBR, addSuffix: true })}
                 </p>

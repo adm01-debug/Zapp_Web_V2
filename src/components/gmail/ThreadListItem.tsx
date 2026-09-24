@@ -58,7 +58,7 @@ export function ThreadListItem({ thread, isSelected, onClick }: ThreadListItemPr
         <div className="flex items-center gap-1.5">
           <span className={`text-sm truncate ${thread.is_unread ? 'font-semibold' : 'font-normal'}`}>{displayName}</span>
           {thread.message_count > 1 && <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">{thread.message_count}</Badge>}
-          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{thread.last_message_at && formatThreadDate(thread.last_message_at)}</span>
+          <span className="text-3xs text-muted-foreground ml-auto shrink-0">{thread.last_message_at && formatThreadDate(thread.last_message_at)}</span>
         </div>
         <p className={`text-xs truncate ${thread.is_unread ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{thread.subject || '(Sem assunto)'}</p>
         <div className="flex items-start gap-1.5 mt-0.5">

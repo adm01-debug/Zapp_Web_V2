@@ -136,7 +136,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
           <Wand2 className="w-4 h-4 text-primary" />
           <h4 className="text-sm font-semibold text-foreground">Alterar Voz</h4>
-          <span className="text-[10px] text-muted-foreground ml-auto">ElevenLabs</span>
+          <span className="text-3xs text-muted-foreground ml-auto">ElevenLabs</span>
         </div>
 
         {/* Voice list */}
@@ -186,7 +186,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
                       {voice.gender === 'female' ? '♀' : '♂'}
                     </span>
                   </div>
-                  <span className="text-[11px] text-muted-foreground truncate block">
+                  <span className="text-2xs text-muted-foreground truncate block">
                     {voice.description}
                   </span>
                 </div>

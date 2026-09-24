@@ -35,7 +35,7 @@ interface ObjectionDetectorProps {
 const ConfidenceBadge = memo(function ConfidenceBadge({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold bg-primary/15 text-primary">
       <Zap className="w-2.5 h-2.5" />{pct}%
     </span>
   );
@@ -53,12 +53,12 @@ const ActionBar = memo(function ActionBar({ text, idx, copiedIdx, isRewriting, r
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onCopy(text, idx)} disabled={rewritingAny}>
             {copiedIdx === idx ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
           </Button>
-        </TooltipTrigger><TooltipContent side="bottom" className="text-[10px]">{copiedIdx === idx ? 'Copiado!' : 'Copiar'}</TooltipContent></Tooltip>
+        </TooltipTrigger><TooltipContent side="bottom" className="text-3xs">{copiedIdx === idx ? 'Copiado!' : 'Copiar'}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onRewrite(idx)} disabled={rewritingAny}>
             <RefreshCw className={cn('w-4 h-4', isRewriting && 'animate-spin')} />
           </Button>
-        </TooltipTrigger><TooltipContent side="bottom" className="text-[10px]">Reescrever</TooltipContent></Tooltip>
+        </TooltipTrigger><TooltipContent side="bottom" className="text-3xs">Reescrever</TooltipContent></Tooltip>
       </div>
       <Button size="sm" className="h-9 px-5 text-xs font-bold gap-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={() => onSelect(text)} disabled={rewritingAny}>
         <Send className="w-3.5 h-3.5" />Usar resposta
@@ -144,9 +144,9 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
         )}
         <ToneSelector selected={detector.selectedTone} onChange={detector.setSelectedTone} />
         <Button className="w-full h-11 text-[13px] font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98]" onClick={() => detector.analyze()} disabled={detector.loading || detector.clientMessages.length === 0}>
-          {detector.loading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analisando...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Detectar objeções{detector.clientMessages.length > 0 && <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-foreground/20 text-[10px] font-bold tabular-nums">{detector.clientMessages.length}</span>}</>)}
+          {detector.loading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analisando...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Detectar objeções{detector.clientMessages.length > 0 && <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-foreground/20 text-3xs font-bold tabular-nums">{detector.clientMessages.length}</span>}</>)}
         </Button>
-        {detector.clientMessages.length === 0 && <p className="text-[10px] text-muted-foreground text-center italic">Nenhuma mensagem do cliente no período</p>}
+        {detector.clientMessages.length === 0 && <p className="text-3xs text-muted-foreground text-center italic">Nenhuma mensagem do cliente no período</p>}
       </div>
     );
   }
@@ -157,7 +157,7 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
       <div className="space-y-4">
         <div className="flex items-center gap-3 px-1">
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          <div><p className="text-xs font-semibold text-foreground">Analisando mensagens...</p><p className="text-[10px] text-muted-foreground">{detector.clientMessages.length} mensagens em análise</p></div>
+          <div><p className="text-xs font-semibold text-foreground">Analisando mensagens...</p><p className="text-3xs text-muted-foreground">{detector.clientMessages.length} mensagens em análise</p></div>
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
@@ -178,14 +178,14 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
         {detector.error ? (
           <div className="flex items-start gap-3 p-4 rounded-2xl bg-destructive/8 border border-destructive/15">
             <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
-            <div className="min-w-0"><p className="text-xs text-destructive font-semibold mb-1">Erro na análise</p><p className="text-[11px] text-destructive/80 leading-relaxed">{detector.error}</p></div>
+            <div className="min-w-0"><p className="text-xs text-destructive font-semibold mb-1">Erro na análise</p><p className="text-2xs text-destructive/80 leading-relaxed">{detector.error}</p></div>
           </div>
         ) : (
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center py-8 gap-3">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.1 }} className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/15">
               <Check className="w-7 h-7 text-primary" />
             </motion.div>
-            <div className="text-center space-y-1"><p className="text-sm font-semibold text-foreground">Nenhuma objeção!</p><p className="text-[11px] text-muted-foreground max-w-[260px]">O cliente não apresentou resistências. Conversa fluindo bem 🎉</p></div>
+            <div className="text-center space-y-1"><p className="text-sm font-semibold text-foreground">Nenhuma objeção!</p><p className="text-2xs text-muted-foreground max-w-[260px]">O cliente não apresentou resistências. Conversa fluindo bem 🎉</p></div>
           </motion.div>
         )}
         <Button variant="outline" className="w-full h-10 text-xs font-medium rounded-2xl border-border/30" onClick={detector.resetAnalysis}>
@@ -201,13 +201,13 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 border border-primary/15"><span className="text-sm font-bold text-primary">{detector.objections.length}</span></div>
-          <div><p className="text-[13px] font-bold text-foreground leading-none">{detector.objections.length === 1 ? 'Objeção detectada' : 'Objeções detectadas'}</p><p className="text-[11px] text-muted-foreground mt-0.5">Contra-argumentos prontos</p></div>
+          <div><p className="text-[13px] font-bold text-foreground leading-none">{detector.objections.length === 1 ? 'Objeção detectada' : 'Objeções detectadas'}</p><p className="text-2xs text-muted-foreground mt-0.5">Contra-argumentos prontos</p></div>
         </div>
         <Tooltip><TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted/30" onClick={() => detector.analyze()} disabled={detector.loading}>
             <motion.div animate={detector.loading ? { rotate: 360 } : {}} transition={{ duration: 1, repeat: detector.loading ? Infinity : 0, ease: 'linear' }}><RefreshCw className="w-4 h-4" /></motion.div>
           </Button>
-        </TooltipTrigger><TooltipContent side="left" className="text-[10px]">Reanalisar</TooltipContent></Tooltip>
+        </TooltipTrigger><TooltipContent side="left" className="text-3xs">Reanalisar</TooltipContent></Tooltip>
       </div>
 
       <ToneSelector selected={detector.selectedTone} onChange={(tone) => { detector.setSelectedTone(tone); detector.analyze(tone); }} disabled={detector.loading} />

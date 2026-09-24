@@ -43,7 +43,7 @@ export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResult
               )}
             >
               <TypeIcon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-primary" : "opacity-50")} />
-              <span className="text-[10px] text-muted-foreground shrink-0 w-10 tabular-nums">{format(msg.timestamp, 'HH:mm')}</span>
+              <span className="text-3xs text-muted-foreground shrink-0 w-10 tabular-nums">{format(msg.timestamp, 'HH:mm')}</span>
               <span className="truncate flex-1">
                 <HighlightedText text={snippet} query={debouncedQuery} />
                 {(msg.content || '').length > 80 && '…'}
@@ -55,7 +55,7 @@ export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResult
           );
         })}
         {results.length > 5 && (
-          <span className="text-[10px] text-muted-foreground px-2.5 py-1 block">+{results.length - 5} resultados — use ↑↓ para navegar</span>
+          <span className="text-3xs text-muted-foreground px-2.5 py-1 block">+{results.length - 5} resultados — use ↑↓ para navegar</span>
         )}
       </div>
     );

@@ -25,7 +25,7 @@ import type {
 // ─── Section header ──────────────────────────────────────────
 export function SectionTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+    <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
       <Icon className="w-3.5 h-3.5 text-primary" />
       {children}
     </h5>
@@ -79,16 +79,16 @@ export function RFMBadge({ rfm }: { rfm: Contact360RFM }) {
       <div className="space-y-1.5">
         {[{ abbr: 'R', value: rfm.recency_score }, { abbr: 'F', value: rfm.frequency_score }, { abbr: 'M', value: rfm.monetary_score }].map(({ abbr, value }) => (
           <div key={abbr} className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground w-3 font-semibold">{abbr}</span>
+            <span className="text-3xs text-muted-foreground w-3 font-semibold">{abbr}</span>
             <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
               <motion.div className={cn('h-full rounded-full', barColor)} initial={{ width: 0 }} animate={{ width: `${((value ?? 0) / 5) * 100}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
             </div>
-            <span className="text-[10px] text-muted-foreground w-4 text-right font-medium">{value ?? '—'}</span>
+            <span className="text-3xs text-muted-foreground w-4 text-right font-medium">{value ?? '—'}</span>
           </div>
         ))}
       </div>
-      {rfm.overall_trend && <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><TrendingUp className="w-3 h-3" /> Tendência: <span className="font-medium">{rfm.overall_trend}</span></div>}
-      {rfm.last_interaction_date && <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><Clock className="w-3 h-3" /> Última interação: {format(new Date(rfm.last_interaction_date), 'dd/MM/yyyy', { locale: ptBR })}</div>}
+      {rfm.overall_trend && <div className="flex items-center gap-1 text-3xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Tendência: <span className="font-medium">{rfm.overall_trend}</span></div>}
+      {rfm.last_interaction_date && <div className="flex items-center gap-1 text-3xs text-muted-foreground"><Clock className="w-3 h-3" /> Última interação: {format(new Date(rfm.last_interaction_date), 'dd/MM/yyyy', { locale: ptBR })}</div>}
     </div>
   );
 }
@@ -108,8 +108,8 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
         )}
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{displayName}</p>
-          {company.razao_social && company.razao_social !== displayName && <p className="text-[10px] text-muted-foreground truncate">{company.razao_social}</p>}
-          {company.cnpj && <p className="text-[10px] text-muted-foreground font-mono">{company.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')}</p>}
+          {company.razao_social && company.razao_social !== displayName && <p className="text-3xs text-muted-foreground truncate">{company.razao_social}</p>}
+          {company.cnpj && <p className="text-3xs text-muted-foreground font-mono">{company.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')}</p>}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-1.5 text-xs">
@@ -126,7 +126,7 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
           </a>
         )}
       </div>
-      {company.status && <Badge variant="outline" className="text-[10px]">Status: {company.status}</Badge>}
+      {company.status && <Badge variant="outline" className="text-3xs">Status: {company.status}</Badge>}
     </div>
   );
 }
@@ -138,13 +138,13 @@ export function CustomerProfile({ customer }: { customer: Contact360Customer }) 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-primary" /><span className="text-xs text-muted-foreground">Vendedor:</span><span className="text-xs font-medium">{customer.vendedor_nome || '—'}</span></div>
-        <Badge variant="outline" className={cn('text-[10px]', customer.cliente_ativado ? 'bg-success/15 text-success border-success/30' : 'bg-destructive/15 text-destructive border-destructive/30')}>{customer.cliente_ativado ? 'Ativo' : 'Inativo'}</Badge>
+        <Badge variant="outline" className={cn('text-3xs', customer.cliente_ativado ? 'bg-success/15 text-success border-success/30' : 'bg-destructive/15 text-destructive border-destructive/30')}>{customer.cliente_ativado ? 'Ativo' : 'Inativo'}</Badge>
       </div>
       {customer.sdr_nome && <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><User className="w-3 h-3" /> SDR: <span className="font-medium text-foreground">{customer.sdr_nome}</span></div>}
       <div className="grid grid-cols-2 gap-1.5">
-        <div className="bg-muted/20 rounded-lg p-2 text-center"><ShoppingCart className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{customer.total_pedidos}</p><p className="text-[10px] text-muted-foreground">Pedidos</p></div>
-        <div className="bg-muted/20 rounded-lg p-2 text-center"><CircleDollarSign className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{formatCurrency(customer.ticket_medio)}</p><p className="text-[10px] text-muted-foreground">Ticket médio</p></div>
-        <div className="bg-muted/20 rounded-lg p-2 text-center col-span-2"><TrendingUp className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{formatCurrency(customer.valor_total_compras)}</p><p className="text-[10px] text-muted-foreground">Total compras</p></div>
+        <div className="bg-muted/20 rounded-lg p-2 text-center"><ShoppingCart className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{customer.total_pedidos}</p><p className="text-3xs text-muted-foreground">Pedidos</p></div>
+        <div className="bg-muted/20 rounded-lg p-2 text-center"><CircleDollarSign className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{formatCurrency(customer.ticket_medio)}</p><p className="text-3xs text-muted-foreground">Ticket médio</p></div>
+        <div className="bg-muted/20 rounded-lg p-2 text-center col-span-2"><TrendingUp className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" /><p className="text-sm font-medium">{formatCurrency(customer.valor_total_compras)}</p><p className="text-3xs text-muted-foreground">Total compras</p></div>
       </div>
       <div className="space-y-1">
         <InfoRow label="Poder de Compra" value={customer.poder_compra} />
@@ -155,13 +155,13 @@ export function CustomerProfile({ customer }: { customer: Contact360Customer }) 
         <InfoRow label="Ramo" value={customer.ramo_atividade} />
       </div>
       {(customer.data_primeira_compra || customer.data_ultima_compra) && (
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground bg-muted/10 rounded-md p-1.5">
+        <div className="flex items-center justify-between text-3xs text-muted-foreground bg-muted/10 rounded-md p-1.5">
           {customer.data_primeira_compra && <span>1ª: {format(new Date(customer.data_primeira_compra), 'dd/MM/yyyy', { locale: ptBR })}</span>}
           {customer.data_ultima_compra && <span>Última: {format(new Date(customer.data_ultima_compra), 'dd/MM/yyyy', { locale: ptBR })}</span>}
         </div>
       )}
-      {customer.data_ativacao && <div className="text-[10px] text-muted-foreground">Ativado em: {format(new Date(customer.data_ativacao), 'dd/MM/yyyy', { locale: ptBR })}</div>}
-      {customer.motivo_inativacao && <div className="text-[10px] text-destructive bg-destructive/10 rounded-md p-1.5">Motivo inativação: {customer.motivo_inativacao}</div>}
+      {customer.data_ativacao && <div className="text-3xs text-muted-foreground">Ativado em: {format(new Date(customer.data_ativacao), 'dd/MM/yyyy', { locale: ptBR })}</div>}
+      {customer.motivo_inativacao && <div className="text-3xs text-destructive bg-destructive/10 rounded-md p-1.5">Motivo inativação: {customer.motivo_inativacao}</div>}
     </div>
   );
 }
@@ -181,7 +181,7 @@ export function ContactDetailCard({ contact }: { contact: Contact360Contact }) {
       <InfoRow label="Estágio" value={contact.relationship_stage} icon={Star} />
       <InfoRow label="Fonte" value={contact.source} />
       {contact.tags && contact.tags.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{contact.tags.map((tag, i) => <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0">{tag}</Badge>)}</div>}
-      {contact.notes && <div className="text-[10px] text-muted-foreground bg-muted/10 rounded-md p-1.5 mt-1">{contact.notes}</div>}
+      {contact.notes && <div className="text-3xs text-muted-foreground bg-muted/10 rounded-md p-1.5 mt-1">{contact.notes}</div>}
     </div>
   );
 }
@@ -215,7 +215,7 @@ export function InteractionsTimeline({ interactions }: { interactions: Contact36
           </div>
           <div className="text-right shrink-0">
             <p className="text-muted-foreground">{format(new Date(i.data_interacao), 'dd/MM', { locale: ptBR })}</p>
-            {i.sentiment && <span className="text-[10px]">{sentimentEmoji[i.sentiment] || ''}</span>}
+            {i.sentiment && <span className="text-3xs">{sentimentEmoji[i.sentiment] || ''}</span>}
           </div>
         </div>
       ))}

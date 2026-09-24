@@ -36,7 +36,7 @@ export function StepProgress({ steps, currentStep, className }: StepProgressProp
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 border-2 transition-colors',
+                  'w-6 h-6 rounded-full flex items-center justify-center text-3xs font-bold shrink-0 border-2 transition-colors',
                   isCompleted && 'border-primary text-primary-foreground',
                   isCurrent && 'border-primary text-primary',
                   !isCompleted && !isCurrent && 'border-muted-foreground/20 text-muted-foreground/40',
@@ -50,7 +50,7 @@ export function StepProgress({ steps, currentStep, className }: StepProgressProp
               </motion.div>
               <span
                 className={cn(
-                  'text-[11px] font-medium whitespace-nowrap hidden sm:inline',
+                  'text-2xs font-medium whitespace-nowrap hidden sm:inline',
                   isCurrent && 'text-foreground',
                   isCompleted && 'text-primary',
                   !isCompleted && !isCurrent && 'text-muted-foreground/40',

@@ -54,7 +54,7 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
                   className="h-full text-sm border-none bg-transparent shadow-none focus-visible:ring-0 px-0 min-w-0" />
                 {query && <button aria-label="Limpar busca" onClick={() => setQuery('')} className="p-1 rounded-full hover:bg-background shrink-0"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
                 {(debouncedQuery.trim() || filter !== 'all' || hasDateFilter) && (
-                  <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 tabular-nums font-medium" aria-live="polite">
+                  <span className="text-2xs text-muted-foreground whitespace-nowrap shrink-0 tabular-nums font-medium" aria-live="polite">
                     {results.length > 0 ? `${activeIndex + 1}/${results.length}` : '0'}
                   </span>
                 )}

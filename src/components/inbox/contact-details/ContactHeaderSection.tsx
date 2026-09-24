@@ -118,7 +118,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-background"
+                    <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"
                       style={{ backgroundColor: getScoreColor(engagementScore), color: 'white' }}>
                       {engagementScore}
                     </div>
@@ -154,7 +154,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
             </div>
 
             {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate"><Building className="w-3 h-3 shrink-0" />{companyName}</p>}
-            {nomeTratamento && <p className="text-[10px] text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
+            {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
             {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
               {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
             </p>}

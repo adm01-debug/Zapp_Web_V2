@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getClientIP } from "../_shared/validation.ts";
 import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
             <!DOCTYPE html>
             <html>
             <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <body style="font-family: ${EMAIL_FONT_STACK}; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
                 <h1 style="color: white; margin: 0; font-size: 24px;">🔐 Alerta de Segurança</h1>
               </div>

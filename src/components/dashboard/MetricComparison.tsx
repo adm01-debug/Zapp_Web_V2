@@ -265,7 +265,7 @@ export function TeamComparison({
         />
       </div>
 
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+      <div className="flex justify-between text-3xs text-muted-foreground">
         <span>Média</span>
         <span>Melhor</span>
       </div>
