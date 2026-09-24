@@ -1732,6 +1732,7 @@
         "whisper_messages.created_at:timestamp with time zone:nullable"
     ],
     "functions": [
+        "admin_set_role",
         "calculate_level",
         "claim_crm_sync_outbox",
         "claim_crm_sync_outbox_by_id",
@@ -1827,7 +1828,7 @@
         "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-23",
+    "generated_at": "2026-09-24",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
@@ -1836,6 +1837,7 @@
     },
     "how_to_regenerate": "scripts/db-audit/catalog.sql",
     "function_signatures": [
+        "admin_set_role(_user_id uuid, _role app_role)->TABLE(out_user_id uuid, out_old_role app_role, out_new_role app_role)|kind=f",
         "calculate_level(xp_amount integer)->integer|kind=f",
         "claim_crm_sync_outbox(p_worker text, p_limit integer)->SETOF crm_sync_outbox|kind=f",
         "claim_crm_sync_outbox_by_id(p_id uuid, p_worker text)->SETOF crm_sync_outbox|kind=f",
