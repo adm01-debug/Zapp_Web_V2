@@ -52,6 +52,12 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
   // snapshot da prop foi capturado antes dele e nao pode sobrescreve-lo — senao
   // um rollback posterior voltaria para uma coluna ja superada.
   const confirmedTypes = useRef<Map<string, { type: KanbanContact['contact_type']; pending: boolean }>>(new Map());
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // Merge server data into local state, preserving contact_type for in-flight drags
   useEffect(() => {
@@ -133,9 +139,11 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
       // pode cair no capturado, que pode ser otimista.
       const known = confirmedTypes.current.get(draggableId);
       const serverType = known ? known.type : contact.contact_type;
-      setLocalContacts(prev =>
-        prev.map(c => c.id === draggableId ? { ...c, contact_type: serverType } : c)
-      );
+      if (isMountedRef.current) {
+        setLocalContacts(prev =>
+          prev.map(c => c.id === draggableId ? { ...c, contact_type: serverType } : c)
+        );
+      }
       toast.error('Erro ao mover contato');
     } else {
       confirmedTypes.current.set(draggableId, { type: newType, pending: true });

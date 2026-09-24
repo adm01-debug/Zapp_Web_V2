@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,12 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   const [transcriptionStatus, setTranscriptionStatus] = useState<string>(initialStatus || 'pending');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showTranscription, setShowTranscription] = useState(!!existingTranscription);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const {
     audioRef, resolvedUrl, isPlaying, isLoading, hasError,
@@ -51,20 +57,23 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       const { data, error } = await supabase.functions.invoke('ai-transcribe-audio', { body: { audioUrl: freshUrl, messageId } });
       if (error) throw error;
       if (data?.fallback) {
+        if (!isMountedRef.current) return;
         setTranscriptionStatus('failed');
         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
         return;
       }
       if (data?.transcription) {
-        setTranscription(data.transcription); setTranscriptionStatus('completed');
+        if (isMountedRef.current) { setTranscription(data.transcription); setTranscriptionStatus('completed'); }
         await supabase.from('messages').update({ transcription: data.transcription, transcription_status: 'completed' }).eq('id', messageId);
       }
     } catch (error) {
       log.error('Transcription error:', error);
-      setTranscriptionStatus('failed');
+      if (isMountedRef.current) {
+        setTranscriptionStatus('failed');
+        setTranscription(null);
+      }
       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
-      setTranscription(null);
-    } finally { setIsTranscribing(false); }
+    } finally { if (isMountedRef.current) setIsTranscribing(false); }
   };
 
   const isProcessing = transcriptionStatus === 'processing' || isTranscribing;
