@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Cobre exatamente os dois achados centrais da auditoria desta sessão:
  * 1) o badge de canal (Instagram/Facebook/...) some para WhatsApp (bug
@@ -64,7 +63,7 @@ function makeConversation(overrides: Partial<ConversationWithMessages['contact']
       created_at: '2026-09-24T10:00:00Z',
       updated_at: '2026-09-24T10:00:00Z',
       ...overrides,
-    } as ConversationWithMessages['contact'],
+    } as unknown as ConversationWithMessages['contact'],
     messages: [],
     unreadCount: 0,
     lastMessage: null,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Cobre o achado da auditoria de 5 agentes: o diálogo de Resolver/Transferir
  * fechava sozinho quando a conversa some da lista em tempo real. A correção
@@ -9,13 +8,14 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/components/mobile/MobilePullToRefresh', () => ({
   MobilePullToRefreshIndicator: () => null,
 }));
 vi.mock('@/components/errors/ErrorBoundary', () => ({
-  ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  ErrorBoundary: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 vi.mock('@/components/inbox/BulkActionsToolbar', () => ({ BulkActionsToolbar: () => null }));
 vi.mock('@/components/inbox/InboxFilters', () => ({ InboxFilters: () => null }));
