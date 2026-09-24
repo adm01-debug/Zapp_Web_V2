@@ -311,9 +311,11 @@ export const ExternalProductManagement: React.FC = () => {
   /** E56 — reabrir envio a partir do rail. catalog_send_events guarda só
    * o id do produto, então busca o produto completo antes de abrir o
    * diálogo; se ele tiver sumido do catálogo, não abre nada. */
+  const lastRequestedProductIdRef = useRef<string | null>(null);
   const handleOpenProductFromRail = useCallback(async (productId: string) => {
+    lastRequestedProductIdRef.current = productId;
     const product = await fetchProduct(productId);
-    if (product) setSendProduct(product);
+    if (product && lastRequestedProductIdRef.current === productId) setSendProduct(product);
   }, [fetchProduct]);
 
   return (
