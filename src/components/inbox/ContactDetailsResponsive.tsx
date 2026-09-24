@@ -6,20 +6,21 @@ import type { Conversation } from '@/types/chat';
 interface Props {
   conversation: Conversation;
   onClose: () => void;
+  onOpenTasksTab?: () => void;
 }
 
 /**
  * Renders ContactDetails as a side panel on desktop
  * and as a bottom Sheet on mobile.
  */
-export function ContactDetailsResponsive({ conversation, onClose }: Props) {
+export function ContactDetailsResponsive({ conversation, onClose, onOpenTasksTab }: Props) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
       <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
         <SheetContent side="bottom" className="max-h-[85vh] p-0 rounded-t-2xl">
-          <ContactDetails conversation={conversation} onClose={onClose} />
+          <ContactDetails conversation={conversation} onClose={onClose} onOpenTasksTab={onOpenTasksTab} />
         </SheetContent>
       </Sheet>
     );
@@ -27,7 +28,7 @@ export function ContactDetailsResponsive({ conversation, onClose }: Props) {
 
   return (
     <div className="h-full shrink-0 overflow-hidden">
-      <ContactDetails conversation={conversation} onClose={onClose} />
+      <ContactDetails conversation={conversation} onClose={onClose} onOpenTasksTab={onOpenTasksTab} />
     </div>
   );
 }
