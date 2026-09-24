@@ -69,6 +69,12 @@ export function CloseConversationDialog({
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const clientRequestIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // A transport failure can occur after the RPC commits. Keep the same key for
   // a retry while this dialog remains open; reset only for a newly opened form.
@@ -110,16 +116,18 @@ export function CloseConversationDialog({
       toast.success('Conversa encerrada com registro');
       clientRequestIdRef.current = null;
       onOpenChange(false);
-      setReason('');
-      setOutcome('');
-      setClassification('');
-      setNotes('');
+      if (isMountedRef.current) {
+        setReason('');
+        setOutcome('');
+        setClassification('');
+        setNotes('');
+      }
       onClosed?.();
     } catch (error) {
       console.warn('[CloseConversationDialog] Falha no encerramento atômico:', error);
       toast.error('Não foi possível encerrar a conversa. Nenhuma alteração parcial foi salva.');
     } finally {
-      setSaving(false);
+      if (isMountedRef.current) setSaving(false);
     }
   };
 

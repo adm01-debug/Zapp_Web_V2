@@ -18,7 +18,7 @@ export function ContactDetailsResponsive({ conversation, onClose }: Props) {
   if (isMobile) {
     return (
       <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
-        <SheetContent side="bottom" className="max-h-[85vh] p-0 rounded-t-2xl">
+        <SheetContent side="bottom" className="max-h-[85vh] p-0 rounded-t-2xl [&>button]:hidden">
           <ContactDetails conversation={conversation} onClose={onClose} />
         </SheetContent>
       </Sheet>

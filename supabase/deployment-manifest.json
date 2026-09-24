@@ -463,8 +463,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 5244,
-      "sha256": "f80706091a5c6d04c8e88424c29777419b6cb12085ae0d87a829b615befa6776"
+      "bytes": 5999,
+      "sha256": "9aeb15f8080e6ac32377dbb138d7457885103cf260e02d3bcd1fccf7bf24888a"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -1276,7 +1276,7 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "be379d83fed68fb5990fbb456cbb45507d4cac49b572824b84d0359397e19a73",
+      "source_sha256": "a296bb693ca71c7b921d8def773fe60946ed7488fe50f7d4290e1fb093191b86",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "14ed9b60eaab4435113b85e67cdda44dd37ba2c180f3059ef93896bf9a2b6110"
+  "manifest_sha256": "f3246012c2c31c17377adba4868c187b36c8aabd0c9c3dedf8ecf9abc27ffd75"
 }
