@@ -12,7 +12,7 @@ import type { useConversationActions } from '@/hooks/chat/useConversationActions
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Search as SearchIcon, Plus, X } from 'lucide-react';
+import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SKELETON_WIDTHS = [
@@ -70,13 +70,6 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
               </div>
             </div>
-            <Button
-              onClick={() => inbox.setShowNewConversation(true)}
-              className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              Nova conversa
-            </Button>
           </div>
         )}
 
