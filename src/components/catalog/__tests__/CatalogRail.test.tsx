@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CatalogRail, CATALOG_RAIL_COPY } from '../CatalogRail';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
+import type { CatalogSendEventRow } from '@/hooks/integrations/useCatalogRecentSends';
 
 // recharts nao desenha em jsdom (ResponsiveContainer mede 0x0), entao os
 // testes do grafico cobrem o que e observavel: titulo, delta e skeleton.
@@ -36,6 +37,16 @@ describe('CatalogRail — E51 banner', () => {
     );
     expect(screen.getByText('Caneta Bambu')).toBeInTheDocument();
     expect(screen.queryByText('Sem foto')).not.toBeInTheDocument();
+  });
+
+  it('le a foto de primary_image_url (campo canonico do ExternalProduct)', () => {
+    render(
+      <CatalogRail
+        stats={mockStats()}
+        products={[{ id: 'b', name: 'Squeeze Inox', is_featured: true, primary_image_url: 'https://x/s.jpg' }]}
+      />,
+    );
+    expect(screen.getByText('Squeeze Inox')).toBeInTheDocument();
   });
 
   it('sem produto em destaque nao inventa imagem', () => {
@@ -97,9 +108,13 @@ describe('CatalogRail — E53 contagens', () => {
 });
 
 describe('CatalogRail — E56 enviados recentemente / mais enviados', () => {
-  const ev = (o: Partial<{ id: string; product_id: string; product_name: string; product_sku: string | null; status: string | null; created_at: string }> = {}) => ({
+  // Derivado de CatalogSendEventRow de proposito: campo novo no tipo passa
+  // a aparecer aqui como erro de compilacao, nao como fixture silenciosamente
+  // desatualizado.
+  const ev = (o: Partial<CatalogSendEventRow> = {}): CatalogSendEventRow => ({
     id: 'e1', product_id: 'p1', product_name: 'Caneta Bambu', product_sku: 'CB-1',
-    status: 'sent', created_at: new Date().toISOString(), ...o,
+    status: 'sent', created_at: new Date().toISOString(),
+    contact_id: 'c1', contact_name: 'Maria Souza', ...o,
   });
 
   it('sem eventos a secao inteira fica oculta', () => {
@@ -123,6 +138,18 @@ describe('CatalogRail — E56 enviados recentemente / mais enviados', () => {
     expect(screen.getByText('Caneta Bambu')).toBeInTheDocument();
     expect(screen.getByText(/Falhou/)).toBeInTheDocument();
     expect(screen.getByText(/Parcial/)).toBeInTheDocument();
+  });
+
+  it('mostra o destinatario na legenda do envio', () => {
+    render(<CatalogRail stats={mockStats()} recentSends={[ev({ contact_name: 'Joana Prado' })]} />);
+    expect(screen.getByText(/Joana Prado/)).toBeInTheDocument();
+  });
+
+  it('sem nome de contato a legenda nao quebra nem mostra separador solto', () => {
+    render(<CatalogRail stats={mockStats()} recentSends={[ev({ contact_name: null })]} />);
+    const legenda = screen.getByText(/Enviado/);
+    expect(legenda).toBeInTheDocument();
+    expect(legenda.textContent?.trim().endsWith('·')).toBe(false);
   });
 
   it('clicar num envio recente reabre o produto pelo id', () => {
