@@ -60,6 +60,10 @@ jobs:
       - name: Instalar cliente PostgreSQL
         run: bash scripts/ci/install-postgresql-client.sh
 
+      - name: Instalar pgbouncer (proxy local para credencial do gen types)
+        continue-on-error: true
+        run: bash scripts/ci/install-pgbouncer.sh
+
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
