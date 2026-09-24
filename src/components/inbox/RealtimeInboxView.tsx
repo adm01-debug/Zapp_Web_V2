@@ -195,7 +195,7 @@ export function RealtimeInboxView() {
                     Sem este wrapper, cada toggle de showDetails crashava o Chat.
                   */}
                   <Suspense fallback={null}>
-                    <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} />
+                    <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} onOpenTasksTab={() => { setActiveTab('tasks'); if (isMobile) inbox.setShowDetails(false); }} />
                   </Suspense>
                 </SectionErrorBoundary>
               )}
