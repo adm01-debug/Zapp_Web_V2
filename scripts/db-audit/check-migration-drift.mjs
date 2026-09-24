@@ -16,6 +16,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const DIR = process.env.MIGRATIONS_DIR || 'supabase/migrations';
 const EVIDENCE_PATH = process.env.MIGRATION_EVIDENCE_PATH
@@ -65,7 +66,7 @@ function ledgerStatementsSha256(statements) {
  * preservados integralmente: mudar o corpo de uma funcao continua sendo drift.
  */
 function sqlTokens(input) {
-  const source = input.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const source = input.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
   const tokens = [];
   let i = 0;
 
@@ -419,7 +420,7 @@ function loadMigrations(dir, evidence) {
     const content = buffer.toString('utf8');
     const rawHash = sha256(buffer);
     const hasCode = hasSqlCode(content);
-    const blank = content.replace(/^\uFEFF/, '').trim() === '';
+    const blank = content.replace(/^﻿/, '').trim() === '';
     const commentOnly = !hasCode && !blank && /--|\/\*/u.test(content);
     if (buffer.includes(0)) errors.push(`arquivo contem byte NUL: ${entry.name}`);
     if (!hasCode && !commentOnly) errors.push(`arquivo vazio ou sem SQL: ${entry.name}`);
@@ -513,14 +514,14 @@ function loadMigrations(dir, evidence) {
 
 function queryLedger() {
   try {
-    return execFileSync(
+    return withPsqlEnvironment(url, (env) => execFileSync(
       PSQL_BIN,
       [
         '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align',
-        '--quiet', '--dbname', url, '--command', LEDGER_QUERY,
+        '--quiet', '--command', LEDGER_QUERY,
       ],
-      { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 },
-    );
+      { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env },
+    ));
   } catch (error) {
     const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
     const safe = stderr ? stderr.replaceAll(url, '<DESTINO_URL>').slice(0, 2000) : 'sem detalhe';

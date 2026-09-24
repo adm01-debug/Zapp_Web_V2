@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const VERSION_RE = /^\d{14}$/u;
 const OUTPUT_PATH = process.env.LEDGER_EVIDENCE_OUTPUT
@@ -153,18 +154,18 @@ function main() {
 
   let raw;
   try {
-    raw = execFileSync(PSQL_BIN, [
+    raw = withPsqlEnvironment(connectionString, (env) => execFileSync(PSQL_BIN, [
       '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align',
-      '--quiet', '--dbname', connectionString, '--command', buildLedgerQuery(versions),
+      '--quiet', '--command', buildLedgerQuery(versions),
     ], {
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
-        ...process.env,
+        ...env,
         PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=15000',
       },
-    });
+    }));
   } catch (error) {
     throw new Error(`falha na consulta read-only: ${safeError(error?.stderr, connectionString)}`);
   }

@@ -150,7 +150,7 @@ function runGuard({
     PSQL_BIN: fakePsql,
     FAKE_PSQL_OUTPUT: ledger.map((record) => JSON.stringify(record)).join('\n') + '\n',
   };
-  if (destino) env.DESTINO_URL = 'postgres://fixture.invalid/test';
+  if (destino) env.DESTINO_URL = 'postgres://tester@fixture.invalid/test';
   else delete env.DESTINO_URL;
 
   try {
