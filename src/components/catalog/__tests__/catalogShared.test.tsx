@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard } from '../catalogShared';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, type AdvancedFilters } from '../catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Layers } from 'lucide-react';
 
@@ -361,5 +361,160 @@ describe('SectionCard', () => {
     render(<SectionCard title="Descrição"><p>Texto do produto</p></SectionCard>);
     expect(screen.getByText('Descrição')).toBeInTheDocument();
     expect(screen.getByText('Texto do produto')).toBeInTheDocument();
+  });
+});
+
+describe('countAdvancedFilters (E36)', () => {
+  it('filtros zerados conta 0', () => {
+    expect(countAdvancedFilters(DEFAULT_ADVANCED_FILTERS)).toBe(0);
+  });
+
+  it('soma isBestseller + priceMin + priceMax + cores + materiais', () => {
+    expect(countAdvancedFilters({
+      isBestseller: true, priceMin: '10', priceMax: '50',
+      colors: ['Azul', 'Preto'], materials: ['Metal'],
+    })).toBe(6);
+  });
+
+  it('cada cor/material selecionado conta individualmente, não como 1 grupo', () => {
+    expect(countAdvancedFilters({
+      isBestseller: false, priceMin: '', priceMax: '',
+      colors: ['Azul', 'Preto', 'Branco'], materials: [],
+    })).toBe(3);
+  });
+});
+
+describe('AdvancedFilterChips (E36 — cor/material)', () => {
+  const base: AdvancedFilters = { ...DEFAULT_ADVANCED_FILTERS };
+
+  it('sem filtros ativos, não renderiza nada', () => {
+    const { container } = render(<AdvancedFilterChips filters={base} onChange={vi.fn()} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('um chip por cor e por material selecionados, com o rótulo certo', () => {
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, colors: ['Azul', 'Preto'], materials: ['Metal'] }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Cor: Azul')).toBeInTheDocument();
+    expect(screen.getByText('Cor: Preto')).toBeInTheDocument();
+    expect(screen.getByText('Material: Metal')).toBeInTheDocument();
+  });
+
+  it('remover o chip de uma cor tira só ela, preservando as demais cores e outros filtros', () => {
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, isBestseller: true, colors: ['Azul', 'Preto'], materials: ['Metal'] }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Cor: Azul'));
+    expect(onChange).toHaveBeenCalledWith({
+      ...base, isBestseller: true, colors: ['Preto'], materials: ['Metal'],
+    });
+  });
+
+  it('remover o chip de um material tira só ele, preservando as cores', () => {
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, colors: ['Azul'], materials: ['Metal', 'Plástico'] }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Material: Metal'));
+    expect(onChange).toHaveBeenCalledWith({
+      ...base, colors: ['Azul'], materials: ['Plástico'],
+    });
+  });
+});
+
+describe('matchesAnySelected (E36)', () => {
+  it('seleção vazia sempre casa — filtro inativo não exclui produto nenhum', () => {
+    expect(matchesAnySelected(['Azul'], [])).toBe(true);
+    expect(matchesAnySelected(null, [])).toBe(true);
+    expect(matchesAnySelected(undefined, [])).toBe(true);
+  });
+
+  it('casa com string simples — formato majoritário de products.colors/materials', () => {
+    expect(matchesAnySelected(['Azul', 'Preto'], ['Azul'])).toBe(true);
+    expect(matchesAnySelected(['Verde'], ['Azul'])).toBe(false);
+  });
+
+  it('casa com objeto {nome} — formato minoritário, mesma dualidade do filtro server-side', () => {
+    expect(matchesAnySelected([{ nome: 'Azul' }], ['Azul'])).toBe(true);
+    expect(matchesAnySelected([{ nome: 'Verde' }], ['Azul'])).toBe(false);
+  });
+
+  it('mistura string e {nome} no mesmo array', () => {
+    expect(matchesAnySelected(['Preto', { nome: 'Azul' }], ['Azul'])).toBe(true);
+  });
+
+  it('é OR entre os selecionados: casa se tiver pelo menos um', () => {
+    expect(matchesAnySelected(['Verde'], ['Azul', 'Verde'])).toBe(true);
+  });
+
+  it('comparação por label é case-insensitive', () => {
+    expect(matchesAnySelected(['azul'], ['Azul'])).toBe(true);
+    expect(matchesAnySelected(['AZUL'], ['azul'])).toBe(true);
+  });
+
+  it('raw que não é array (null, string solta, número) não casa com seleção não-vazia', () => {
+    expect(matchesAnySelected(null, ['Azul'])).toBe(false);
+    expect(matchesAnySelected(undefined, ['Azul'])).toBe(false);
+    expect(matchesAnySelected('Azul', ['Azul'])).toBe(false);
+  });
+
+  it('elemento em formato desconhecido (número, objeto sem nome) é ignorado silenciosamente', () => {
+    expect(matchesAnySelected([42, { cor: 'Azul' }], ['Azul'])).toBe(false);
+  });
+});
+
+describe('TagMultiSelectChips (E36)', () => {
+  it('sem opções, não renderiza nada', () => {
+    const { container } = render(<TagMultiSelectChips options={[]} selected={[]} onChange={vi.fn()} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renderiza um chip por opção; selecionados vêm com aria-pressed=true', () => {
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }, { label: 'Preto', count: 12 }]}
+        selected={['Azul']}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Azul' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Preto' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('clicar numa opção não selecionada adiciona ela à seleção', () => {
+    const onChange = vi.fn();
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }, { label: 'Preto', count: 12 }]}
+        selected={['Azul']}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Preto' }));
+    expect(onChange).toHaveBeenCalledWith(['Azul', 'Preto']);
+  });
+
+  it('clicar numa opção já selecionada remove ela (toggle)', () => {
+    const onChange = vi.fn();
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }]}
+        selected={['Azul']}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Azul' }));
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 });

@@ -120,20 +120,20 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-sm font-semibold text-foreground">{s.name}</p>
-                        <p className="text-[11px] text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
+                        <p className="text-2xs text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
                       </Td>
                       <Td><Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} /></Td>
                       <Td>
                         <div className="flex flex-wrap gap-1 max-w-[280px]">
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
                             const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
+                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
                           })}
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-[10px] text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-[11px] text-muted-foreground italic">Toda a base</span>}
+                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-3xs text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
+                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
                         </div>
                       </Td>
-                      <Td><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-[11px] text-foreground-secondary ml-1">contatos</span></Td>
+                      <Td><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-2xs text-foreground-secondary ml-1">contatos</span></Td>
                       <Td><span className="text-xs text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
                       <Td><ProgressBar value={Math.min(100, (s.estimated_count / Math.max(...segments.map((x) => x.estimated_count), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
                       <Td className="text-right">
@@ -208,11 +208,11 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
       {est?.sample && est.sample.length > 0 && (
         <div className="mt-2">
-          <p className="text-[11px] text-foreground-secondary mb-1.5">Amostra de contatos</p>
+          <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos</p>
           {est.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2 py-1.5">
               <InitialsAvatar name={c.name || '?'} size={28} />
-              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.company || c.phone}</p></div>
+              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
             </div>
           ))}
         </div>
@@ -303,7 +303,7 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
               >
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
                   <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
-                  <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-[11px] font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
+                  <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                   <Select value={g.match} onValueChange={(v) => setRules({ groups: rules.groups.map((x) => x.id !== g.id ? x : { ...x, match: v as 'and' | 'or' }) })}>
                     <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
@@ -329,10 +329,10 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
       {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
       <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
         <p className="text-[13px] font-bold text-foreground">Filtros</p>
-        <p className="text-[11px] text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
         {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
           <div key={cat}>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
             <div className="flex flex-col gap-1">
               {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
                 <button
@@ -354,22 +354,22 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-[11px] font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
-          <p className="text-[11px] text-foreground-secondary">Audiência estimada</p>
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
+          <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
           <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
           <div className="mt-3 rounded-xl border border-border/50 bg-input/20 p-3">
             <p className="text-xs font-semibold text-foreground mb-1">Risco de entrega</p>
             <Pill label={riskLevel === 'low' ? 'Baixo' : riskLevel === 'moderate' ? 'Moderado' : 'Alto'} tone={riskLevel === 'low' ? 'success' : riskLevel === 'moderate' ? 'warning' : 'danger'} dot />
-            <p className="text-[11px] text-foreground-secondary mt-1.5">{riskLevel === 'low' ? 'Excelente potencial de entrega para campanhas no WhatsApp.' : riskLevel === 'moderate' ? 'Valide os contatos antes de lançar.' : 'Público muito pequeno — revise as regras.'}</p>
+            <p className="text-2xs text-foreground-secondary mt-1.5">{riskLevel === 'low' ? 'Excelente potencial de entrega para campanhas no WhatsApp.' : riskLevel === 'moderate' ? 'Valide os contatos antes de lançar.' : 'Público muito pequeno — revise as regras.'}</p>
           </div>
           {est?.sample && est.sample.length > 0 && (
             <div className="mt-3">
-              <p className="text-[11px] text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
+              <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
               {est.sample.map((c) => (
                 <div key={c.id} className="flex items-center gap-2 py-1">
                   <InitialsAvatar name={c.name || '?'} size={28} />
-                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-[11px] text-foreground-secondary truncate">{c.phone}</p></div>
+                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.phone}</p></div>
                 </div>
               ))}
             </div>

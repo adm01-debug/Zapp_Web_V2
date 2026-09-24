@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,7 +37,9 @@ import { ExternalProductCard } from './ExternalProductCard';
 import { CatalogProductCardSkeleton } from './CatalogProductCard';
 import { SendProductDialog } from './SendProductDialog';
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination } from '@/components/talkx/talkxShared';
-import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, type AdvancedFilters } from './catalogShared';
+import { CatalogRail } from './CatalogRail';
+import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
+import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, type AdvancedFilters } from './catalogShared';
 import { CatalogAdvancedFilters } from './CatalogAdvancedFilters';
 import { parseCatalogCategoryRoute, replaceCatalogCategoryRoute } from './catalogCategoryRoute';
 import { CatalogBulkBar } from './CatalogBulkBar';
@@ -88,7 +90,11 @@ export const ExternalProductManagement: React.FC = () => {
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
+    fetchProduct,
   } = useExternalCatalog();
+
+  // E56 — recentes/mais enviados do rail (catalog_send_events).
+  const { recent: recentSends, topSent } = useCatalogRecentSends();
 
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string>(
@@ -115,8 +121,19 @@ export const ExternalProductManagement: React.FC = () => {
   const [ascending, setAscending] = useState<boolean>(() => sessionStorage.getItem('catalog.ascending') !== 'false');
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ isBestseller: false, priceMin: '', priceMax: '' });
+  const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ ...DEFAULT_ADVANCED_FILTERS });
   const advCount = countAdvancedFilters(advFilters);
+
+  // E36-2: o edge promogifts-catalog (list_products) agora aceita array
+  // em color/material (OR entre valores) — contagem/paginação (totalProducts)
+  // já vêm corretas do servidor com 2+ selecionados. Este filtro client-side
+  // fica como segunda camada (idempotente, sem custo real: já bate 100% com
+  // o que o servidor devolveu), tolerando os dois formatos jsonb que a
+  // coluna tem hoje (string simples ou `{nome}}`, via matchesAnySelected).
+  const visibleProducts = useMemo(
+    () => products.filter((p) => matchesAnySelected(p.colors, advFilters.colors) && matchesAnySelected(p.materials, advFilters.materials)),
+    [products, advFilters.colors, advFilters.materials]
+  );
 
   // E43: favoritos Supabase
   const { isFavorite: isFav, toggle } = useCatalogFavorites();
@@ -136,7 +153,7 @@ export const ExternalProductManagement: React.FC = () => {
   }, []);
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
   const toggleSelectAll = useCallback(() => {
-    const pageIds = products.map((p) => p.id);
+    const pageIds = visibleProducts.map((p) => p.id);
     const allSelected = pageIds.every((id) => selectedIds.has(id));
     if (allSelected) {
       setSelectedIds((prev) => {
@@ -151,8 +168,8 @@ export const ExternalProductManagement: React.FC = () => {
         return next;
       });
     }
-  }, [products, selectedIds]);
-  const allPageSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
+  }, [visibleProducts, selectedIds]);
+  const allPageSelected = visibleProducts.length > 0 && visibleProducts.every((p) => selectedIds.has(p.id));
 
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
   const handleBulkSend = useCallback(() => { setBulkSendOpen(true); }, []);
@@ -200,6 +217,10 @@ export const ExternalProductManagement: React.FC = () => {
     if (advFilters.isBestseller) params.is_bestseller = true;
     if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
     if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
+    // E36-2 — o edge aceita 1 valor ou array (OR entre si); manda a
+    // seleção completa direto, servidor filtra e pagina certo com 2+.
+    if (advFilters.colors.length > 0) params.color = advFilters.colors;
+    if (advFilters.materials.length > 0) params.material = advFilters.materials;
     return params;
   }, [page, pageSize, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
@@ -247,7 +268,7 @@ export const ExternalProductManagement: React.FC = () => {
     setPage(0);
     sessionStorage.removeItem('catalog.order_by');
     sessionStorage.removeItem('catalog.ascending');
-    setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' });
+    setAdvFilters({ ...DEFAULT_ADVANCED_FILTERS });
   };
 
   type SortOption = { label: string; order_by: string; ascending: boolean };
@@ -286,6 +307,14 @@ export const ExternalProductManagement: React.FC = () => {
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
   const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
+
+  /** E56 — reabrir envio a partir do rail. catalog_send_events guarda só
+   * o id do produto, então busca o produto completo antes de abrir o
+   * diálogo; se ele tiver sumido do catálogo, não abre nada. */
+  const handleOpenProductFromRail = useCallback(async (productId: string) => {
+    const product = await fetchProduct(productId);
+    if (product) setSendProduct(product);
+  }, [fetchProduct]);
 
   return (
     <Tabs defaultValue="produtos" className="w-full min-w-0">
@@ -497,7 +526,7 @@ export const ExternalProductManagement: React.FC = () => {
                 : <CatalogProductCardSkeleton key={i} mode="list" />
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : visibleProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
             <Package className="w-16 h-16 opacity-40" />
             {hasFilters ? (
@@ -528,7 +557,7 @@ export const ExternalProductManagement: React.FC = () => {
                   : 'space-y-2'
               }
             >
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <motion.div
                   key={product.id}
                   layout
@@ -568,14 +597,15 @@ export const ExternalProductManagement: React.FC = () => {
         open={advancedOpen}
         onOpenChange={setAdvancedOpen}
         filters={advFilters}
+        stats={stats}
         onApply={(next) => { setAdvFilters(next); setPage(0); }}
-        onClear={() => { setAdvFilters({ isBestseller: false, priceMin: '', priceMax: '' }); setPage(0); }}
+        onClear={() => { setAdvFilters({ ...DEFAULT_ADVANCED_FILTERS }); setPage(0); }}
       />
 
       {selectedIds.size > 0 && (
         <CatalogBulkBar
           count={selectedIds.size}
-          pageTotal={products.length}
+          pageTotal={visibleProducts.length}
           allPageSelected={allPageSelected}
           onToggleSelectAll={toggleSelectAll}
           onClear={clearSelection}
@@ -599,7 +629,20 @@ export const ExternalProductManagement: React.FC = () => {
       />
     </div>
 
-    <aside className="catalog-rail sticky top-4 hidden xl:block" />
+    <aside className="catalog-rail sticky top-4 hidden xl:block">
+      {/* E51-E53: o rail nasceu vazio na E31 (layout). onApplyFilter reusa
+          handleKpiSelect — as chaves do rail são keyof CatalogStats de
+          propósito, pra não duplicar a lógica de aplicar filtro. */}
+      <CatalogRail
+        stats={stats}
+        loading={statsLoading}
+        products={products}
+        onApplyFilter={handleKpiSelect}
+        recentSends={recentSends}
+        topSent={topSent}
+        onOpenProduct={handleOpenProductFromRail}
+      />
+    </aside>
     </div>
       </TabsContent>
 

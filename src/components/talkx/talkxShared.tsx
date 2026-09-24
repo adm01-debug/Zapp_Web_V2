@@ -217,7 +217,7 @@ export function RailAction({ icon, color = 'blue', title, subtitle, onClick, dis
       <IconTile icon={icon} color={color} size={36} />
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-semibold text-foreground truncate">{title}</p>
-        {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
+        {subtitle && <p className="text-2xs text-muted-foreground truncate">{subtitle}</p>}
       </div>
       <Chevron className="w-4 h-4 text-muted-foreground shrink-0" />
     </button>
@@ -242,22 +242,22 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
   return (
     <div className={cn('rounded-2xl border border-border/60 bg-[hsl(240_5%_7%)] overflow-hidden', className)}>
       <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50 bg-card">
-        <div className="w-8 h-8 rounded-full bg-whatsapp/20 flex items-center justify-center text-[11px] font-bold text-whatsapp">{senderName.slice(0, 1)}</div>
+        <div className="w-8 h-8 rounded-full bg-whatsapp/20 flex items-center justify-center text-2xs font-bold text-whatsapp">{senderName.slice(0, 1)}</div>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground leading-tight truncate">{senderName}</p>
-          <p className="text-[10px] text-whatsapp">online</p>
+          <p className="text-3xs text-whatsapp">online</p>
         </div>
       </div>
       <div className="p-3 bg-[radial-gradient(hsl(var(--primary)/.06)_1px,transparent_1px)] [background-size:14px_14px]">
-        <div className="flex justify-center mb-2"><span className="text-[10px] px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground">Hoje</span></div>
+        <div className="flex justify-center mb-2"><span className="text-3xs px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground">Hoje</span></div>
         <div className="flex justify-end">
           <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
             {mediaUrl && mediaType === 'image' && /^https?:\/\//i.test(mediaUrl) && <img src={mediaUrl} alt="" className="rounded-lg mb-2 max-h-40 w-full object-cover" loading="lazy" decoding="async" />}
             {mediaUrl && mediaType && mediaType !== 'image' && (
-              <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-[11px] text-muted-foreground">📎 {mediaType} anexado</div>
+              <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-2xs text-muted-foreground">📎 {mediaType} anexado</div>
             )}
             {text || <span className="text-muted-foreground italic">Digite uma mensagem…</span>}
-            <span className="block text-right text-[10px] text-muted-foreground mt-1">{time ?? format(new Date(), 'HH:mm')} ✓✓</span>
+            <span className="block text-right text-3xs text-muted-foreground mt-1">{time ?? format(new Date(), 'HH:mm')} ✓✓</span>
           </div>
         </div>
       </div>
@@ -378,7 +378,7 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
 
 /** Cabeçalho de tabela padronizado. */
 export function Th({ children, className }: { children?: ReactNode; className?: string }) {
-  return <th className={cn('text-left text-[11px] font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
+  return <th className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
 }
 export function Td({ children, className }: { children?: ReactNode; className?: string }) {
   return <td className={cn('px-3 py-3 text-xs text-foreground align-middle', className)}>{children}</td>;
@@ -478,7 +478,7 @@ export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint,
       >
         <IconTile icon={icon} color={color} size={32} glow />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
+          <p className="text-3xs font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
           <span className="text-lg font-semibold tracking-tight text-foreground leading-none tabular-nums">{value}</span>
         </div>
       </div>
@@ -494,11 +494,11 @@ export function KpiCard({ icon, color = 'blue', label, value, delta, bars, hint,
     >
       <IconTile icon={icon} color={color} size={40} glow />
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
+        <p className="text-2xs font-medium text-muted-foreground leading-none mb-1 uppercase tracking-wide truncate">{label}</p>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-semibold tracking-tight text-foreground leading-none">{value}</span>
           {delta && (
-            <span className={cn('flex items-center gap-0.5 text-[11px] font-semibold', delta.tone === 'down' ? 'text-destructive' : 'text-success')}>
+            <span className={cn('flex items-center gap-0.5 text-2xs font-semibold', delta.tone === 'down' ? 'text-destructive' : 'text-success')}>
               {delta.tone === 'down' ? '↓' : '↑'}{Math.abs(delta.value).toFixed(1)}{delta.suffix ?? '%'}
             </span>
           )}
@@ -683,7 +683,7 @@ export function HeroCard({ icon, title, subtitle, metrics }: {
           {metrics.map((m, i) => (
             <div key={i} className="text-center">
               <p className="text-[15px] font-bold text-foreground">{m.value}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{m.label}</p>
+              <p className="text-3xs text-muted-foreground leading-tight mt-0.5">{m.label}</p>
             </div>
           ))}
         </div>
@@ -712,7 +712,7 @@ export function RecentList({ items }: { items: RecentItem[] }) {
             <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={cn('inline-flex h-1.5 w-1.5 rounded-full', item.statusTone === 'success' ? 'bg-success' : item.statusTone === 'warning' ? 'bg-warning' : 'bg-muted-foreground')} />
-              <span className="text-[11px] text-muted-foreground">{item.statusLabel}{item.pct !== undefined ? ` · ${item.pct}%` : ''}</span>
+              <span className="text-2xs text-muted-foreground">{item.statusLabel}{item.pct !== undefined ? ` · ${item.pct}%` : ''}</span>
             </div>
           </div>
         </button>
@@ -728,7 +728,7 @@ export function TipCard({ tip }: { tip: string }) {
         <Lightbulb className="w-3 h-3 text-success" />
       </div>
       <div>
-        <p className="text-[11px] font-semibold text-success uppercase tracking-wide mb-0.5">Dica do dia</p>
+        <p className="text-2xs font-semibold text-success uppercase tracking-wide mb-0.5">Dica do dia</p>
         <p className="text-xs text-foreground leading-snug">{tip}</p>
       </div>
     </div>
@@ -741,7 +741,7 @@ export function AlertCard({ children, tone = 'warning', actionLabel, onAction }:
     <div className={cn('p-3 rounded-xl border text-xs leading-snug', s)}>
       {children}
       {actionLabel && onAction && (
-        <button type="button" onClick={onAction} className="mt-2 underline font-semibold text-[11px]">{actionLabel}</button>
+        <button type="button" onClick={onAction} className="mt-2 underline font-semibold text-2xs">{actionLabel}</button>
       )}
     </div>
   );
@@ -858,7 +858,7 @@ export function FilterBarV2({
         )}
         {filters.map(fd => (
           <div key={fd.key} className='flex flex-col'>
-            {fd.labeled && <label className='text-[10px] font-medium text-muted-foreground mb-0.5 px-0.5 uppercase tracking-wide'>{fd.label}</label>}
+            {fd.labeled && <label className='text-3xs font-medium text-muted-foreground mb-0.5 px-0.5 uppercase tracking-wide'>{fd.label}</label>}
             <Select value={values?.[fd.key] ?? 'all'} onValueChange={v => onFilter?.(fd.key, v)}>
               <SelectTrigger className='h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]'>
                 <SelectValue placeholder={!fd.labeled ? fd.label : undefined} />
@@ -933,7 +933,7 @@ export function InsightCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-semibold text-foreground">{title}</span>
-            <span className="text-[10px] font-medium text-muted-foreground border rounded px-1 py-0 leading-4">
+            <span className="text-3xs font-medium text-muted-foreground border rounded px-1 py-0 leading-4">
               Heurístico
             </span>
           </div>
@@ -948,7 +948,7 @@ export function InsightCard({
             </button>
           )}
         </div>
-        <span className="shrink-0 text-[10px] text-muted-foreground">{PRIORITY_LABEL[priority]}</span>
+        <span className="shrink-0 text-3xs text-muted-foreground">{PRIORITY_LABEL[priority]}</span>
       </div>
     </div>
   );

@@ -83,7 +83,7 @@ export function CRM360ExplorerView() {
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
-                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-[11px] px-2.5 py-1.5 whitespace-nowrap">
+                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-2xs px-2.5 py-1.5 whitespace-nowrap">
                   <Icon className="h-3 w-3" />{tab.label}
                   {tab.editable && <Pencil className="h-2.5 w-2.5 text-primary/60" />}
                 </TabsTrigger>
@@ -106,7 +106,7 @@ export function CRM360ExplorerView() {
                           {tab.label}
                           {tab.editable && <Badge variant="secondary" className="text-[9px] px-1.5 py-0"><Pencil className="h-2.5 w-2.5 mr-0.5" /> Editável</Badge>}
                         </CardTitle>
-                        <CardDescription className="text-[11px] mt-0.5">{tab.description}</CardDescription>
+                        <CardDescription className="text-2xs mt-0.5">{tab.description}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>

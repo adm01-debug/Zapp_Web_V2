@@ -213,8 +213,9 @@
   background: hsl(var(--primary));
 }
 
-/* ── Tabela densa ── */
-.talkx-table { font-size: 12.5px; width: 100%; }
+/* Tabela densa. 12px = text-xs (era 12.5px, unica meia-medida sobrevivente
+   no repo fora de JSX; ver PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24). */
+.talkx-table { font-size: 12px; width: 100%; }
 .talkx-table thead th {
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -34,7 +34,7 @@ const TrendIndicator = ({ trend, label, periodDays }: { trend: TrendData; label:
   if (trend.direction === 'stable') {
     return (
       <TooltipProvider><TooltipUI><TooltipTrigger asChild>
-        <div className="flex items-center gap-0.5 text-muted-foreground cursor-help"><Minus className="w-3 h-3" /><span className="text-[10px]">0%</span></div>
+        <div className="flex items-center gap-0.5 text-muted-foreground cursor-help"><Minus className="w-3 h-3" /><span className="text-3xs">0%</span></div>
       </TooltipTrigger><TooltipContent side="top" className="max-w-[200px] text-xs"><p>{getTooltipMessage()}</p></TooltipContent></TooltipUI></TooltipProvider>
     );
   }
@@ -47,7 +47,7 @@ const TrendIndicator = ({ trend, label, periodDays }: { trend: TrendData; label:
     <TooltipProvider><TooltipUI><TooltipTrigger asChild>
       <motion.div className={cn("flex items-center gap-0.5 cursor-help", colorClass, isSignificant && "animate-pulse")} initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
         <Icon className={cn("w-3 h-3", isSignificant && "drop-shadow-[0_0_3px_currentColor]")} />
-        <span className={cn("text-[10px] font-medium", isSignificant && "font-bold")}>{isUp ? '+' : ''}{trend.percentage.toFixed(0)}%</span>
+        <span className={cn("text-3xs font-medium", isSignificant && "font-bold")}>{isUp ? '+' : ''}{trend.percentage.toFixed(0)}%</span>
       </motion.div>
     </TooltipTrigger><TooltipContent side="top" className="max-w-[200px] text-xs"><p>{getTooltipMessage()}</p></TooltipContent></TooltipUI></TooltipProvider>
   );
@@ -145,7 +145,7 @@ export function AIStatsWidget() {
                   <div className="relative"><Bell className="w-4 h-4 text-destructive" /><span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" /></div>
                   <span className="text-sm font-medium text-destructive">{stats.activeAlerts.length} Alerta{stats.activeAlerts.length > 1 ? 's' : ''} Ativo{stats.activeAlerts.length > 1 ? 's' : ''}</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">Últimas 24h</span>
+                <span className="text-3xs text-muted-foreground">Últimas 24h</span>
               </div>
               <div className="space-y-1">
                 {stats.activeAlerts.slice(0, 3).map((alert) => (
@@ -157,7 +157,7 @@ export function AIStatsWidget() {
                     </div>
                   </div>
                 ))}
-                {stats.activeAlerts.length > 3 && <p className="text-[10px] text-muted-foreground text-center pt-1">+{stats.activeAlerts.length - 3} mais alertas</p>}
+                {stats.activeAlerts.length > 3 && <p className="text-3xs text-muted-foreground text-center pt-1">+{stats.activeAlerts.length - 3} mais alertas</p>}
               </div>
             </motion.div>
           )}
@@ -178,7 +178,7 @@ export function AIStatsWidget() {
                 <p className="text-xs text-muted-foreground font-medium">Evolução do Sentimento ({periodLabels[selectedPeriod]})</p>
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                   {(['positive', 'negative', 'neutral'] as SentimentType[]).map((sentiment) => (
-                    <label key={sentiment} className="flex items-center gap-1.5 cursor-pointer text-[10px]">
+                    <label key={sentiment} className="flex items-center gap-1.5 cursor-pointer text-3xs">
                       <Checkbox checked={visibleSentiments.has(sentiment)} onCheckedChange={() => toggleSentiment(sentiment)} className="w-3 h-3" />
                       <div className={cn("w-2 h-2 rounded-full", sentimentTypeLabels[sentiment].color)} />
                       <span className="text-muted-foreground">{sentimentTypeLabels[sentiment].label}</span>

@@ -200,7 +200,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 type="button"
                 onClick={() => setLibCat(c)}
                 className={cn(
-                  'h-6 px-2 rounded-md text-[10px] font-medium border transition-colors',
+                  'h-6 px-2 rounded-md text-3xs font-medium border transition-colors',
                   libCat === c
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border/60 text-muted-foreground hover:border-primary/40',
@@ -215,7 +215,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             {isLoading
               ? <TalkXSkeletonRows rows={5} />
               : libFiltered.length === 0
-                ? <p className="text-[11px] text-muted-foreground text-center pt-4">Nenhum template</p>
+                ? <p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>
                 : libFiltered.map((t) => {
                   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
                   return (
@@ -232,9 +232,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     >
                       <div className="flex items-center gap-1 mb-0.5">
                         <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
-                        <p className="text-[11px] font-semibold text-foreground truncate flex-1">{t.name}</p>
+                        <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
+                      <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
                     </button>
                   );
                 })
@@ -302,7 +302,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <Label className="text-xs text-foreground-secondary">Mensagem</Label>
-              <span className={cn('text-[11px]', eContent.length > 980 ? 'text-dash-red' : 'text-muted-foreground')}>{eContent.length}/1024</span>
+              <span className={cn('text-2xs', eContent.length > 980 ? 'text-dash-red' : 'text-muted-foreground')}>{eContent.length}/1024</span>
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 mb-1.5 p-1 rounded-t-lg border border-border/60 bg-muted/20 border-b-0">
@@ -311,7 +311,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               <button type="button" title="Lista (- item)" onClick={() => insertAtCursor('\n- ', '', 'item')} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted/50 text-foreground-secondary hover:text-foreground"><List className="w-3.5 h-3.5" /></button>
               <div className="w-px h-4 bg-border/60 mx-0.5" />
               {VARIABLE_KEYS.slice(0, 6).map((v) => (
-                <button key={v} type="button" title={`Inserir ${v}`} onClick={() => insertAtCursor(v)} className="h-7 px-1.5 rounded text-[10px] font-mono border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 whitespace-nowrap">{v.replace(/[{}]/g, '')}</button>
+                <button key={v} type="button" title={`Inserir ${v}`} onClick={() => insertAtCursor(v)} className="h-7 px-1.5 rounded text-3xs font-mono border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 whitespace-nowrap">{v.replace(/[{}]/g, '')}</button>
               ))}
               
               
@@ -332,10 +332,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
           {/* Todas as variáveis disponíveis */}
           <div>
-            <p className="text-[11px] text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
+            <p className="text-2xs text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLE_KEYS.map((v) => (
-                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-[11px] font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
+                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
               ))}
             </div>
           </div>
@@ -351,7 +351,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     <button key={l} type="button" onClick={() => {
                       if (v === '') { setEHasMedia(false); setEMediaType(''); }
                       else { setEHasMedia(true); setEMediaType(v); }
-                    }} className={cn('h-7 px-2 rounded-md text-[11px] font-medium border flex items-center gap-1', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:border-primary/40')}>
+                    }} className={cn('h-7 px-2 rounded-md text-2xs font-medium border flex items-center gap-1', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:border-primary/40')}>
                       <Icon className="w-3 h-3" />{l}
                     </button>
                   );
@@ -365,7 +365,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variaveis personalizadas</p>
-            <p className="text-[11px] text-muted-foreground mb-2">Defina variaveis proprias para este template. Serao inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variaveis proprias para este template. Serao inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
@@ -399,7 +399,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     setECustomVarInput('');
                   }
                 }}
-                className="h-7 px-2 rounded-md text-[11px] font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
+                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
               >
                 + Inserir
               </button>
@@ -441,7 +441,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             <button type="button"
               onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }}
-              className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
+              className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
             >{showVariants ? 'Ocultar' : variants.length > 0 ? variants.length + ' variante(s)' : 'Adicionar variante'}</button>
           </div>
           {showVariants && (
@@ -449,32 +449,32 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               {variants.map((v) => (
                 <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                    <span className="text-2xs font-bold text-primary flex items-center gap-1">
                       Variante {v.label} {'·'} <input type="number" min={1} max={100} value={v.weight}
                         onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, parseInt(e.target.value)||1))} : x))}
                         onBlur={async (e) => { const w = Math.max(1, Math.min(100, parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }}
-                        className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-[11px] font-bold text-primary" />%
+                        className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%
                     </span>
                     <button type="button"
                       onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm('Variante usada em ' + rc + ' envio(s). Excluir apaga atribuição A/B. Continuar?')) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }}
-                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-[10px]">x</button>
+                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">x</button>
                   </div>
                   <textarea value={v.content}
                     onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))}
                     onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }}
-                    className="w-full h-16 text-[11px] bg-transparent border-0 resize-none outline-none text-foreground"
+                    className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground"
                     placeholder="Conteúdo da variante..." />
                 </div>
               ))}
               {variants.length < 3 && (
                 <button type="button" disabled={savingVariant || !activeTemplateId}
                   onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } catch { if (activeTemplateId) { const vs = await fetchVariants(activeTemplateId).catch(() => variants); setVariants(vs); } } finally { setSavingVariant(false); } }}
-                  className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-[11px] text-primary hover:bg-primary/5 disabled:opacity-50">
+                  className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">
                   + Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}
                 </button>
               )}
               {variants.length > 0 && (
-                <p className={"text-[10px] " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground')}>
+                <p className={"text-3xs " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground')}>
                   Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}
                 </p>
               )}
@@ -498,38 +498,38 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               <History className="w-3.5 h-3.5 text-foreground-secondary" />
               <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             </div>
-            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
           </div>
           {showVariants && (
             <div className="space-y-2 mt-1 mb-3">
               {variants.map((v) => (
                 <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-[11px] font-bold text-primary" />%</span>
-                    <button type="button" onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-[10px]">×</button>
+                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                    <button type="button" onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
                   </div>
-                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-[11px] bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
                 </div>
               ))}
               {variants.length < 3 && (
-                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } catch { if (activeTemplateId) { const vs = await fetchVariants(activeTemplateId).catch(() => variants); setVariants(vs); } } finally { setSavingVariant(false); } }} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-[11px] text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } catch { if (activeTemplateId) { const vs = await fetchVariants(activeTemplateId).catch(() => variants); setVariants(vs); } } finally { setSavingVariant(false); } }} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
               )}
               {variants.length > 0 && (
-                <p className={`text-[10px] ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+                <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
               )}
             </div>
           )}
           <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
             <p className="text-xs font-semibold text-foreground">Historico</p>
-            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-[11px] font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>
+            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versoes'}</button>
           </div>
           {showVersions && (
             <div className="space-y-1">
-              {loadingVersions ? <p className="text-[11px] text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-[11px] text-muted-foreground">Nenhuma versao salva.</p> : versions.map((v) => (
+              {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versao salva.</p> : versions.map((v) => (
                 <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
+                    <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
                 </div>
@@ -543,12 +543,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               {([['—', 'Taxa resposta'], ['—', 'Conversão'], ['—', 'Rejeição'], [fmtInt(editing.use_count), 'Envios']]).map(([v, l]) => (
                 <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1">
                   <p className="text-sm font-bold text-foreground tabular-nums">{v}</p>
-                  <p className="text-[10px] text-foreground-secondary">{l}</p>
+                  <p className="text-3xs text-foreground-secondary">{l}</p>
                 </div>
               ))}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-[10px]">#{t}</Badge>)}
+              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
             </div>
           </RailCard>
         )}

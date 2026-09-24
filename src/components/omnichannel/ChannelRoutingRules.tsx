@@ -183,7 +183,7 @@ export function ChannelRoutingRules() {
                       </p>
                     )}
                   </div>
-                  <Badge variant="secondary" className="text-[10px]">
+                  <Badge variant="secondary" className="text-3xs">
                     Prioridade {rule.priority ?? 0}
                   </Badge>
                   <Button

@@ -67,7 +67,7 @@ export function FollowUpExecutionsHistory() {
                       <span className="font-medium text-sm text-foreground truncate">
                         {exec.sequence?.name || 'Sequência removida'}
                       </span>
-                      <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>
+                      <Badge variant="outline" className={`text-3xs ${cfg.color}`}>
                         {cfg.label}
                       </Badge>
                     </div>

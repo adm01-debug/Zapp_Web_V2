@@ -110,11 +110,11 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
                     <button onClick={() => handleSelectTemplate(template)} className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{template.title}</span>
-                        {template.shortcut && <Badge variant="outline" className="text-[10px]">{template.shortcut}</Badge>}
-                        <Badge variant="secondary" className="text-[10px] capitalize">{template.category}</Badge>
+                        {template.shortcut && <Badge variant="outline" className="text-3xs">{template.shortcut}</Badge>}
+                        <Badge variant="secondary" className="text-3xs capitalize">{template.category}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">{template.content}</p>
-                      <span className="text-[10px] text-muted-foreground mt-1 block">Usado {template.use_count}x</span>
+                      <span className="text-3xs text-muted-foreground mt-1 block">Usado {template.use_count}x</span>
                     </button>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingTemplate(template)}><Edit2 className="h-3 w-3" /></Button>

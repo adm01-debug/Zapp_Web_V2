@@ -21,12 +21,19 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [mapError, setMapError] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     // Fetch Mapbox token from edge function
     const fetchToken = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!isMountedRef.current) return;
         if (!error && data?.token) {
           setMapboxToken(data.token);
         }
@@ -40,11 +47,9 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    let cancelled = false;
-
     loadMapbox()
       .then((mapboxgl) => {
-        if (cancelled || !mapContainer.current) return;
+        if (!isMountedRef.current || !mapContainer.current) return;
 
         mapboxgl.accessToken = mapboxToken;
 
@@ -72,16 +77,16 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           .addTo(map.current);
 
         map.current.on('load', () => {
+          if (!isMountedRef.current) return;
           setIsMapLoaded(true);
         });
       })
       .catch((err) => {
         log.error('Error loading Mapbox:', err);
-        if (!cancelled) setMapError(true);
+        if (isMountedRef.current) setMapError(true);
       });
 
     return () => {
-      cancelled = true;
       map.current?.remove();
       map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(false);
     };
@@ -160,7 +165,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           </p>
         )}
         <p className={cn(
-          "text-[10px] font-mono",
+          "text-3xs font-mono",
           isSent ? "text-primary-foreground/50" : "text-muted-foreground/70"
         )}>
           {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}

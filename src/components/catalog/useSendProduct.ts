@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/ui/use-toast';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { fetchCatalogContactResults, logCatalogSendEvent, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
+import { CATALOG_SEND_EVENTS_KEY } from '@/hooks/integrations/useCatalogRecentSends';
 
 const log = getLogger('useSendProduct');
 
@@ -69,6 +71,7 @@ export interface SendEventProductInfo {
 
 export function useSendToContact(onSuccess: () => void) {
   const [isSending, setIsSending] = useState(false);
+  const queryClient = useQueryClient();
 
   const sendProductToContact = useCallback(async (
     contact: ContactResult,
@@ -119,6 +122,11 @@ export function useSendToContact(onSuccess: () => void) {
           messageLength: message.length,
           status,
           messageIds,
+        }).then(() => {
+          // O rail do catálogo (E56) lê esta tabela: sem invalidar, o envio
+          // recém-registrado só apareceria num refetch por foco de janela
+          // ou remount, porque staleTime apenas marca o cache como velho.
+          void queryClient.invalidateQueries({ queryKey: CATALOG_SEND_EVENTS_KEY });
         });
       }
 
@@ -134,7 +142,7 @@ export function useSendToContact(onSuccess: () => void) {
     } finally {
       setIsSending(false);
     }
-  }, [onSuccess]);
+  }, [onSuccess, queryClient]);
 
   return { isSending, sendProductToContact };
 }

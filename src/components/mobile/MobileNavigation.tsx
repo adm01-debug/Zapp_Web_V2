@@ -45,12 +45,12 @@ export function MobileTabBar({ items, activeId, onChange, className, variant = '
               <div className="relative">
                 <motion.div animate={{ scale: isActive ? 1.1 : 1 }} transition={{ type: 'spring', stiffness: 400 }}>{item.icon}</motion.div>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-3xs font-bold flex items-center justify-center">
                     {item.badge > 99 ? '99+' : item.badge}
                   </motion.span>
                 )}
               </div>
-              <span className={cn('text-[10px] mt-1 font-medium transition-colors', isActive ? 'text-primary' : 'text-muted-foreground')}>{item.label}</span>
+              <span className={cn('text-3xs mt-1 font-medium transition-colors', isActive ? 'text-primary' : 'text-muted-foreground')}>{item.label}</span>
             </motion.button>
           );
         })}

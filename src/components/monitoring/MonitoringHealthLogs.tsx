@@ -53,8 +53,8 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
             <CardDescription>{filtered.length} de {healthLogs.length} registros</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className="text-[10px] text-emerald-500">✓ {okCount}</Badge>
-            <Badge variant="outline" className="text-[10px] text-destructive">✗ {errCount}</Badge>
+            <Badge variant="outline" className="text-3xs text-emerald-500">✓ {okCount}</Badge>
+            <Badge variant="outline" className="text-3xs text-destructive">✗ {errCount}</Badge>
           </div>
         </div>
       </CardHeader>
@@ -100,9 +100,9 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">{log.instance_id}</span>
-                        <Badge variant="outline" className={cn('text-[10px]', cfg.color)}>{log.status}</Badge>
+                        <Badge variant="outline" className={cn('text-3xs', cfg.color)}>{log.status}</Badge>
                       </div>
-                      {log.error_message && <p className="text-[11px] text-destructive mt-0.5 truncate max-w-sm">{log.error_message}</p>}
+                      {log.error_message && <p className="text-2xs text-destructive mt-0.5 truncate max-w-sm">{log.error_message}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">

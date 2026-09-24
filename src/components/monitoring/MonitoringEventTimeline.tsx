@@ -128,7 +128,7 @@ export function MonitoringEventTimeline() {
             {hasErrors && <Badge variant="destructive" className="text-[9px] h-4 px-1">Erros</Badge>}
           </span>
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="text-[10px]">{filtered.length} eventos</Badge>
+            <Badge variant="outline" className="text-3xs">{filtered.length} eventos</Badge>
             <Button
               variant="ghost"
               size="icon"
@@ -147,7 +147,7 @@ export function MonitoringEventTimeline() {
             <Button key={f.value} variant="ghost" size="sm"
               role="tab"
               aria-selected={filter === f.value}
-              className={cn('h-6 text-[10px] px-2', filter === f.value && 'bg-muted font-semibold')}
+              className={cn('h-6 text-3xs px-2', filter === f.value && 'bg-muted font-semibold')}
               onClick={() => setFilter(f.value)}
             >
               {f.label} ({f.count})
@@ -160,7 +160,7 @@ export function MonitoringEventTimeline() {
             <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
               <Radio className="w-10 h-10 mb-2 opacity-20" />
               <p className="text-sm font-medium">Nenhuma atividade</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-1">Eventos aparecerão aqui em tempo real</p>
+              <p className="text-2xs text-muted-foreground/60 mt-1">Eventos aparecerão aqui em tempo real</p>
             </div>
           ) : (
             <div className="relative space-y-0" role="log" aria-label="Feed de eventos em tempo real">
@@ -190,11 +190,11 @@ export function MonitoringEventTimeline() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium">{ev.label}</span>
                           {ev.isNew && <span className="text-[9px] text-primary font-semibold uppercase">Novo</span>}
-                          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+                          <span className="text-3xs text-muted-foreground ml-auto shrink-0">
                             {formatDistanceToNow(new Date(ev.timestamp), { addSuffix: true, locale: ptBR })}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{ev.detail}</p>
+                        <p className="text-2xs text-muted-foreground truncate mt-0.5">{ev.detail}</p>
                       </div>
                     </motion.div>
                   );

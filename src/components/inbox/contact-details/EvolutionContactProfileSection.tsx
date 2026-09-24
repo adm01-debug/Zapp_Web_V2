@@ -74,12 +74,12 @@ export function EvolutionContactProfileSection({ phone, fallbackName }: Evolutio
               <BadgeCheck className="w-4 h-4 text-primary fill-primary/20" aria-label="Conta verificada" />
             )}
             {profile.is_business && (
-              <Badge variant="outline" className="h-5 text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+              <Badge variant="outline" className="h-5 text-3xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
                 <Briefcase className="w-3 h-3 mr-1" />Business
               </Badge>
             )}
             {profile.is_enterprise && (
-              <Badge variant="outline" className="h-5 text-[10px] bg-primary/10 text-primary border-primary/30">
+              <Badge variant="outline" className="h-5 text-3xs bg-primary/10 text-primary border-primary/30">
                 <Building2 className="w-3 h-3 mr-1" />Enterprise
               </Badge>
             )}
@@ -93,7 +93,7 @@ export function EvolutionContactProfileSection({ phone, fallbackName }: Evolutio
       {/* Business profile */}
       {business && (
         <div className="rounded-lg border border-border/40 bg-card/30 p-3 space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Perfil Comercial</p>
+          <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Perfil Comercial</p>
           {business.category && (
             <div className="flex items-center gap-2 text-xs">
               <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
@@ -131,7 +131,7 @@ export function EvolutionContactProfileSection({ phone, fallbackName }: Evolutio
       {/* Device info */}
       {device && (device.platform || device.device_model) && (
         <div className="rounded-lg border border-border/40 bg-card/30 p-3 space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Dispositivo</p>
+          <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Dispositivo</p>
           <div className="flex items-center gap-2 text-xs">
             <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="truncate">
@@ -139,7 +139,7 @@ export function EvolutionContactProfileSection({ phone, fallbackName }: Evolutio
             </span>
           </div>
           {(device.os_version || device.wa_version) && (
-            <p className="text-[11px] text-muted-foreground ml-5">
+            <p className="text-2xs text-muted-foreground ml-5">
               {device.platform && `${device.platform} `}{device.os_version && `${device.os_version} `}{device.wa_version && `· WA ${device.wa_version}`}
             </p>
           )}
@@ -150,14 +150,14 @@ export function EvolutionContactProfileSection({ phone, fallbackName }: Evolutio
       {profile.labels && profile.labels.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {profile.labels.map((label) => (
-            <Badge key={label} variant="secondary" className="text-[10px] h-5">{label}</Badge>
+            <Badge key={label} variant="secondary" className="text-3xs h-5">{label}</Badge>
           ))}
         </div>
       )}
 
       {/* Last seen */}
       {profile.last_seen && (
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
           <Clock className="w-3 h-3" />
           Visto por último {formatRelativeTime(new Date(profile.last_seen))}
         </div>

@@ -64,12 +64,12 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
             <Button variant={genMode === 'music' ? 'default' : 'outline'} size="sm" onClick={() => { setGenMode('music'); setGenDuration(15); }} className="flex-1 gap-1.5"><Music className="w-4 h-4" /> Música</Button>
           </div>
           <div className="space-y-2"><Label>Descrição do áudio</Label><Textarea value={genPrompt} onChange={e => setGenPrompt(e.target.value)} placeholder={genMode === 'sfx' ? 'Ex: Risada de vilão ecoando...' : 'Ex: Música de suspense cinematográfica...'} rows={3} /></div>
-          <div className="space-y-2"><Label>Duração: {genDuration}s</Label><input type="range" min={genMode === 'sfx' ? 1 : 5} max={genMode === 'sfx' ? 22 : 60} value={genDuration} onChange={e => setGenDuration(Number(e.target.value))} className="w-full accent-primary" /><div className="flex justify-between text-[10px] text-muted-foreground"><span>{genMode === 'sfx' ? '1s' : '5s'}</span><span>{genMode === 'sfx' ? '22s' : '60s'}</span></div></div>
+          <div className="space-y-2"><Label>Duração: {genDuration}s</Label><input type="range" min={genMode === 'sfx' ? 1 : 5} max={genMode === 'sfx' ? 22 : 60} value={genDuration} onChange={e => setGenDuration(Number(e.target.value))} className="w-full accent-primary" /><div className="flex justify-between text-3xs text-muted-foreground"><span>{genMode === 'sfx' ? '1s' : '5s'}</span><span>{genMode === 'sfx' ? '22s' : '60s'}</span></div></div>
           {genPreviewUrl && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/50">
               <Button variant="outline" size="icon" className="w-8 h-8 shrink-0" onClick={() => { audioRef.current?.pause(); const a = new Audio(genPreviewUrl); a.play().catch(() => {}); audioRef.current = a; }}><Play className="w-4 h-4" /></Button>
-              <div className="flex-1 min-w-0"><p className="text-xs font-medium truncate">{genPrompt}</p><p className="text-[10px] text-muted-foreground">{genDuration}s • {genMode === 'sfx' ? 'Efeito' : 'Música'}</p></div>
-              <Badge className="bg-success/10 text-success border-success/20 text-[10px]">Pronto</Badge>
+              <div className="flex-1 min-w-0"><p className="text-xs font-medium truncate">{genPrompt}</p><p className="text-3xs text-muted-foreground">{genDuration}s • {genMode === 'sfx' ? 'Efeito' : 'Música'}</p></div>
+              <Badge className="bg-success/10 text-success border-success/20 text-3xs">Pronto</Badge>
             </div>
           )}
         </div>

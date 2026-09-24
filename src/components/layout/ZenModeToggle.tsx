@@ -23,7 +23,7 @@
            aria-label={isZen ? 'Sair do modo zen' : 'Modo zen'}
          >
            {isZen ? <Minimize2 className="w-3.5 h-3.5" /> : <Target className="w-4 h-4" />}
-           <span className="text-[11px] font-medium tracking-wide">
+           <span className="text-2xs font-medium tracking-wide">
              {isZen ? 'Sair' : 'Zen'}
            </span>
          </button>

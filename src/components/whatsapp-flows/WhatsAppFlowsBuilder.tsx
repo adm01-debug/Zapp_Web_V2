@@ -160,8 +160,8 @@ export function WhatsAppFlowsBuilder() {
                     <h3 className="font-semibold text-sm mb-1">{flow.name}</h3>
                     <p className="text-xs text-muted-foreground line-clamp-2">{flow.description || 'Sem descrição'}</p>
                     <div className="flex items-center gap-2 mt-3">
-                      <Badge variant="outline" className="text-[10px]">{flow.screens.length} telas</Badge>
-                      <Badge variant={flow.status === 'published' ? 'default' : 'secondary'} className="text-[10px]">{flow.status === 'published' ? 'Publicado' : 'Rascunho'}</Badge>
+                      <Badge variant="outline" className="text-3xs">{flow.screens.length} telas</Badge>
+                      <Badge variant={flow.status === 'published' ? 'default' : 'secondary'} className="text-3xs">{flow.status === 'published' ? 'Publicado' : 'Rascunho'}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -215,7 +215,7 @@ export function WhatsAppFlowsBuilder() {
               className={cn("w-full text-left p-3 rounded-lg border transition-all text-sm",
                 idx === editingScreen ? "border-secondary bg-secondary/10 text-secondary" : "border-border/30 bg-card/30 text-muted-foreground hover:border-border")}>
               <div className="font-medium">{screen.title}</div>
-              <div className="text-[10px] mt-0.5">{screen.layout.length} componentes</div>
+              <div className="text-3xs mt-0.5">{screen.layout.length} componentes</div>
             </button>
           ))}
         </div>
@@ -235,7 +235,7 @@ export function WhatsAppFlowsBuilder() {
             <div className="w-[320px] bg-card border border-border/30 rounded-token-2xl p-2 shadow-xl">
               <div className="bg-background rounded-token-2xl overflow-hidden">
                 <div className="h-8 bg-primary/10 flex items-center justify-center">
-                  <span className="text-[10px] text-muted-foreground font-medium">{currentScreen?.title}</span>
+                  <span className="text-3xs text-muted-foreground font-medium">{currentScreen?.title}</span>
                 </div>
                 <div className="p-4 space-y-3 min-h-[400px]">
                   {currentScreen?.layout.map((comp, idx) => (

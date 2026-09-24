@@ -171,7 +171,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-[11px] text-muted-foreground hidden sm:inline">
+        <span className="text-2xs text-muted-foreground hidden sm:inline">
           Campanhas / <span className="text-foreground">{campaign.name}</span>
         </span>
       </div>
@@ -182,7 +182,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
             <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-[11px] text-muted-foreground">{campaign.name}</p>
+            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <RailCard title="Configurações de Agendamento" icon={Clock}>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-[11px] text-muted-foreground mb-1.5 block">Data e hora</Label>
+              <Label className="text-2xs text-muted-foreground mb-1.5 block">Data e hora</Label>
               <Input
                 type="datetime-local"
                 value={localDate}
@@ -218,7 +218,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             </div>
 
             <div>
-              <Label className="text-[11px] text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
                 <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
@@ -234,7 +234,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-foreground">Janela de envio</p>
-                <p className="text-[11px] text-muted-foreground">Envia somente neste intervalo</p>
+                <p className="text-2xs text-muted-foreground">Envia somente neste intervalo</p>
               </div>
               <Switch checked={windowEnabled} onCheckedChange={setWindowEnabled} />
             </div>
@@ -242,11 +242,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             {windowEnabled && (
               <div className="grid grid-cols-2 gap-2 pl-2 border-l-2 border-border/50">
                 <div>
-                  <Label className="text-[11px] text-muted-foreground mb-1 block">Início</Label>
+                  <Label className="text-2xs text-muted-foreground mb-1 block">Início</Label>
                   <Input type="time" value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-muted-foreground mb-1 block">Fim</Label>
+                  <Label className="text-2xs text-muted-foreground mb-1 block">Fim</Label>
                   <Input type="time" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
               </div>
@@ -255,7 +255,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-foreground">Somente horário comercial</p>
-                <p className="text-[11px] text-muted-foreground">Seg–Sex, 08:00–18:00</p>
+                <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00</p>
               </div>
               <Switch checked={bizHours} onCheckedChange={setBizHours} />
             </div>
@@ -279,7 +279,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
             <div className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-2">
-              <p className="text-[11px] font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
+              <p className="text-2xs font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
               <div className="space-y-1.5">
                 <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
                 <MetaRow icon={Clock} label="Hora" value={localDate.split('T')[1] || '—'} />
@@ -319,7 +319,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             </div>
             {campaign.message_template && (
               <div>
-                <p className="text-[11px] text-muted-foreground mb-1.5 font-medium">Mensagem</p>
+                <p className="text-2xs text-muted-foreground mb-1.5 font-medium">Mensagem</p>
                 <WhatsAppBubble text={campaign.message_template.slice(0, 120) + (campaign.message_template.length > 120 ? '…' : '')} />
               </div>
             )}
@@ -327,7 +327,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
                 <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
-                <p className="text-[11px] text-muted-foreground">Aguardando {scheduledLabel}.</p>
+                <p className="text-2xs text-muted-foreground">Aguardando {scheduledLabel}.</p>
               </div>
             </div>
           </div>

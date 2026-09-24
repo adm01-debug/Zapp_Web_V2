@@ -146,7 +146,7 @@ export function MetaCAPIView() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{event.event_name}</span>
-                      <Badge variant={event.sent_to_meta ? 'default' : 'secondary'} className="text-[10px] h-4">
+                      <Badge variant={event.sent_to_meta ? 'default' : 'secondary'} className="text-3xs h-4">
                         {event.sent_to_meta ? 'Enviado' : 'Pendente'}
                       </Badge>
                     </div>

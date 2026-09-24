@@ -100,9 +100,9 @@ export function PerformanceMonitor() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'good': return <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px]">Bom</Badge>;
-      case 'warning': return <Badge className="bg-warning/10 text-warning border-warning/30 text-[10px]">Atenção</Badge>;
-      case 'critical': return <Badge variant="destructive" className="text-[10px]">Crítico</Badge>;
+      case 'good': return <Badge className="bg-primary/10 text-primary border-primary/30 text-3xs">Bom</Badge>;
+      case 'warning': return <Badge className="bg-warning/10 text-warning border-warning/30 text-3xs">Atenção</Badge>;
+      case 'critical': return <Badge variant="destructive" className="text-3xs">Crítico</Badge>;
       default: return null;
     }
   };
@@ -218,7 +218,7 @@ export function PerformanceMonitor() {
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="w-5 h-5" />
               Histórico Persistido
-              <Badge variant="secondary" className="text-[10px] ml-auto">{dbChartData.length} pontos</Badge>
+              <Badge variant="secondary" className="text-3xs ml-auto">{dbChartData.length} pontos</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>

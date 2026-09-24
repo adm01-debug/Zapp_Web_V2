@@ -7,6 +7,7 @@ import { SlashCommand } from '../SlashCommands';
 import { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
 
 interface UseChatPanelHandlersOptions {
   conversationId: string;
@@ -45,6 +46,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ações reais (favoritar, adiar) para os comandos de barra — mesmo hook usado em
+  // RealtimeInboxView/ContactHeaderSection; múltiplas instâncias ficam em sync via _favBus.
+  const { isFavorite, favoriteContact, unfavoriteContact, snoozeConversation } = useConversationActions();
 
   // ── Refs for stable callbacks (avoid re-renders on every keystroke) ──
   const inputValueRef = useLatest(inputValue);
@@ -138,22 +143,50 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     closeDialog('slashCommands'); setInputValue('');
     switch (command.id) {
       case 'transfer': openDialog('transferDialog'); break;
-      case 'resolve': toast({ title: '✅ Conversa Resolvida', description: 'A conversa foi marcada como resolvida.' }); break;
+      // Mesma dialog do header ("Encerrar Conversa" → close_conversation_atomic), igual ao /transfer.
+      case 'resolve': openDialog('closeDialog'); break;
       case 'template': toast({ title: '📝 Templates', description: 'Use o botão de templates no input para selecionar.' }); break;
       case 'note': toast({ title: '📝 Nota Privada', description: 'Funcionalidade de notas será aberta.' }); break;
       case 'tag': toast({ title: subCommand === 'add' ? '🏷️ Adicionar Tag' : '🏷️ Remover Tag', description: subCommand === 'add' ? 'Selecione uma tag para adicionar.' : 'Selecione uma tag para remover.' }); break;
-      case 'priority': { const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' }; toast({ title: '⚡ Prioridade Definida', description: `Prioridade definida como ${labels[subCommand || ''] || subCommand}.` }); break; }
-      case 'assign': toast({ title: '👤 Atribuir Conversa', description: 'Selecione um agente para atribuir.' }); break;
-      case 'snooze': { const labels: Record<string, string> = { '1h': '1 hora', '3h': '3 horas', tomorrow: 'amanhã', nextweek: 'próxima semana' }; toast({ title: '⏰ Conversa Adiada', description: `Conversa adiada para ${labels[subCommand || ''] || subCommand}.` }); break; }
-      case 'star': toast({ title: '⭐ Conversa Favoritada', description: 'A conversa foi marcada como favorita.' }); break;
-      case 'archive': toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' }); break;
+      case 'priority': {
+        if (!subCommand) break;
+        const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+        (async () => {
+          const { error } = await supabase.from('contacts').update({ ai_priority: subCommand }).eq('id', contactId);
+          if (error) {
+            log.error('Failed to set priority:', error);
+            toast({ title: 'Erro ao definir prioridade', description: 'Não foi possível atualizar a prioridade.', variant: 'destructive' });
+          } else {
+            toast({ title: '⚡ Prioridade Definida', description: `Prioridade definida como ${labels[subCommand] || subCommand}.` });
+          }
+        })();
+        break;
+      }
+      case 'assign': openDialog('transferDialog'); break;
+      // useConversationActions.snoozeConversation já grava em conversation_snoozes e mostra o toast.
+      case 'snooze': if (subCommand) snoozeConversation(contactId, subCommand); break;
+      // useConversationActions já grava em favorite_contacts e mostra o toast.
+      case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
+      case 'archive': {
+        (async () => {
+          const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+          if (error) {
+            log.error('Failed to archive contact:', error);
+            toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+          } else {
+            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
+          }
+        })();
+        break;
+      }
       case 'remind': toast({ title: '🔔 Lembrete Criado', description: 'Um lembrete foi criado para esta conversa.' }); break;
-      case 'quick': toast({ title: '⚡ Resposta Rápida', description: 'Use / seguido do atalho para respostas rápidas.' }); break;
+      // Reaproveita o popover de respostas rápidas já ligado a dialogs.quickReplies em ChatPanel.
+      case 'quick': openDialog('quickReplies'); break;
       case 'summary': handleSetActiveTool('aiAssistant'); break;
       case 'produto': openDialog('catalogDirect'); break;
       default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
     }
-  }, [closeDialog, openDialog, handleSetActiveTool]);
+  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation]);
 
   const handleSendProduct = useCallback(async (product: ExternalProduct) => {
     const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);

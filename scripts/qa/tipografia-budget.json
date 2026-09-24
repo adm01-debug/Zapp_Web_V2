@@ -1,18 +1,30 @@
 {
-  "geradoEm": "2026-09-23T14:14:01.148Z",
+  "geradoEm": "2026-09-24T16:35:24.565Z",
   "commit": null,
   "escala": {
+    "3xs": {
+      "fontSizePx": 10,
+      "lineHeightPx": 13,
+      "lineHeightDeclarado": "0.8125rem",
+      "usos": 605
+    },
+    "2xs": {
+      "fontSizePx": 11,
+      "lineHeightPx": 14,
+      "lineHeightDeclarado": "0.875rem",
+      "usos": 327
+    },
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1720
+      "usos": 1732
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1102
+      "usos": 1110
     },
     "base": {
       "fontSizePx": 16,
@@ -36,7 +48,7 @@
       "fontSizePx": 24,
       "lineHeightPx": 32,
       "lineHeightDeclarado": "2rem",
-      "usos": 127
+      "usos": 128
     },
     "3xl": {
       "fontSizePx": 30,
@@ -100,28 +112,14 @@
       "fontSizePx": 9,
       "lineHeightPx": 13.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 103,
-      "equivalenteNaEscala": null
-    },
-    "10": {
-      "fontSizePx": 10,
-      "lineHeightPx": 15,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 603,
-      "equivalenteNaEscala": null
-    },
-    "11": {
-      "fontSizePx": 11,
-      "lineHeightPx": 16.5,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 323,
+      "usos": 104,
       "equivalenteNaEscala": null
     },
     "13": {
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 159,
+      "usos": 161,
       "equivalenteNaEscala": null
     },
     "15": {
@@ -140,9 +138,9 @@
     }
   },
   "totais": {
-    "usosNomeados": 3387,
-    "usosArbitrarios": 1233,
-    "arquivosAnalisados": 1414
+    "usosNomeados": 4340,
+    "usosArbitrarios": 310,
+    "arquivosAnalisados": 1432
   },
   "violacoes": {
     "meiaMedida": 0,

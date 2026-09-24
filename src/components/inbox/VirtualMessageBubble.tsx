@@ -90,7 +90,7 @@ export function MessageBubble({
             {message.type === 'document' && message.mediaUrl && <div className="mb-2"><DocumentPreview url={message.mediaUrl} fileName="document" isSent={isSent} /></div>}
             {message.type === 'location' && message.location && <Suspense fallback={<div className="w-full h-32 bg-muted animate-pulse rounded-lg" />}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
             {message.content && message.type === 'text' && <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>}
-            <div className={cn('flex items-center gap-1 mt-1 text-[10px]', isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+            <div className={cn('flex items-center gap-1 mt-1 text-3xs', isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
               <span>{formatMessageTime(message.timestamp)}</span>
               {isSent && <MessageStatusIcon status={message.status} />}
             </div>

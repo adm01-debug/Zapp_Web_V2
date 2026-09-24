@@ -148,7 +148,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
 function MoreDetailsBlock({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
+      <div className="flex items-center gap-1.5 text-3xs font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
       {children}
     </div>
   );
@@ -167,7 +167,7 @@ function Section({ index, value, icon, label, badge, action, children }: {
               <div className="w-6 h-6 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">{icon}</div>
               <span className="text-sm font-semibold text-foreground">{label}</span>
               {badge !== undefined && (
-                <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
+                <span className="text-3xs bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
               )}
             </div>
           </AccordionTrigger>

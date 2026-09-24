@@ -162,7 +162,7 @@ export function TrainingMode() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-medium">{s.name}</h3>
-                      <Badge variant="outline" className="text-[10px]">{s.type === 'sales' ? 'Vendas' : 'Suporte'}</Badge>
+                      <Badge variant="outline" className="text-3xs">{s.type === 'sales' ? 'Vendas' : 'Suporte'}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">{s.customerScript.length} interações simuladas</p>
                     <Button size="sm" variant="outline" className="mt-3 h-7 text-xs w-full">
@@ -182,7 +182,7 @@ export function TrainingMode() {
                 <div key={s.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
                   <div>
                     <p className="text-xs font-medium">{s.scenario_name}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.status === 'completed' ? 'Concluído' : 'Em andamento'}</p>
+                    <p className="text-3xs text-muted-foreground">{s.status === 'completed' ? 'Concluído' : 'Em andamento'}</p>
                   </div>
                   {s.score && (
                     <Badge variant={s.score >= 80 ? 'default' : 'outline'} className="text-xs">
