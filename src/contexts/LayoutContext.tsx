@@ -1,10 +1,11 @@
 import { createContext, useContext } from 'react';
 
 interface LayoutContextValue {
-  hasBreadcrumbBar: boolean;
+  /** true = o PageHeader não desenha a própria trilha (desktop: sem texto de módulo/submódulo no topo). */
+  hidePageBreadcrumbs: boolean;
 }
 
-const LayoutContext = createContext<LayoutContextValue>({ hasBreadcrumbBar: false });
+const LayoutContext = createContext<LayoutContextValue>({ hidePageBreadcrumbs: false });
 
 export const LayoutProvider = LayoutContext.Provider;
 
