@@ -45,9 +45,15 @@
     --neutral-900: 221 18% 12%;
     --neutral-950: 221 20% 6%;
 
-    /* ===== FONTS ===== */
+    /* ===== FONTS =====
+       Fonte de verdade unica — nao redeclarar em outro arquivo (era o caso
+       de src/index.css ate 24/09/2026, ver PLANO_AUDITORIA_FONTES_100_ETAPAS).
+       --font-mono carrega JetBrains Mono de verdade: antes disso 117 usos de
+       font-mono e .text-code citavam a fonte sem nenhum @font-face carregando
+       ela em lugar nenhum (index.html so pedia Jakarta/Outfit). */
     --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-display: 'Outfit', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
     /* ===== TYPOGRAPHY SCALE (fluid clamp) ===== */
     --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem);

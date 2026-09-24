@@ -73,14 +73,22 @@
   .dark { --border: 0 0% 100%; }
 }
 
-/* ===== LARGE TEXT MODE ===== */
+/* ===== LARGE TEXT MODE =====
+   Correcao 24/09/2026 (achado A8, PLANO_AUDITORIA_FONTES_100_ETAPAS): a
+   lista antiga (h1-h3/p/span/li/button/input/textarea) so cobria essas
+   tags com tamanho ABSOLUTO — nao alcancava div/td/th/a/label/small/strong
+   nem badges (onde vive boa parte dos 722 usos de text-[Npx] abaixo de
+   12px), e podia ATE encolher texto que ja era maior (um p em text-2xl
+   virava 17.6px). Piso min de 14px via max() em qualquer tag: so eleva
+   quem esta abaixo do piso, nunca reduz quem ja esta acima, e nao depende
+   de listar cada tag/componente. !important e necessario porque
+   text-[Npx] do Tailwind e uma classe unica sem !important — a ordem de
+   cascata sozinha nao garante a vitoria do piso em todo elemento. */
 .large-text { font-size: 1.125em; line-height: 1.6; }
-.large-text h1 { font-size: 2.5rem; }
-.large-text h2 { font-size: 2rem; }
-.large-text h3 { font-size: 1.75rem; }
-.large-text p, .large-text span, .large-text li { font-size: 1.1rem; }
-.large-text button { font-size: 1rem; }
-.large-text input, .large-text textarea { font-size: 1.1rem; }
+.large-text :where(*):not(svg, svg *, path) { font-size: max(1em, 0.875rem) !important; }
+.large-text h1 { font-size: max(1em, 2.5rem) !important; }
+.large-text h2 { font-size: max(1em, 2rem) !important; }
+.large-text h3 { font-size: max(1em, 1.75rem) !important; }
 
 /* ===== SKELETON LOADING ===== */
 .skeleton-shimmer {
