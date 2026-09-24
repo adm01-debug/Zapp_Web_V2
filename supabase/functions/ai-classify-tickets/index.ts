@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
     if (!allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const supabaseUrl = requireEnv("SUPABASE_URL");
-    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return errorResponse("Não autorizado", 401, req);
@@ -32,9 +31,13 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { limit } = parsed.data;
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: tags } = await adminClient
+    // callerClient roda com RLS real (anon key + Authorization do chamador).
+    // A tabela ai_conversation_tags carrega contact_id (PII indireta) e a
+    // policy real dela já restringe por fila/atribuição — usar o client
+    // service_role aqui devolveria tags de TODA a base pra qualquer agente
+    // autenticado, ignorando essa restrição.
+    const { data: tags } = await callerClient
       .from("ai_conversation_tags")
       .select("id, contact_id, tag_name, confidence, source")
       .order("created_at", { ascending: false })

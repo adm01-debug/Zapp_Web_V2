@@ -66,8 +66,12 @@ describe('useAgentsLite', () => {
     selectResult = { data: null, error: { message: 'falhou' } };
     const { result } = renderAgentsLite();
 
-    // useQuery entra em estado de erro; o hook não relança — só não tem dados.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Espera o estado real de erro do react-query (não um setTimeout(0), que
+    // não distingue "ainda carregando" de "chegou no erro") — queryFn relança
+    // o error do Supabase, então o status só vira 'error' depois disso.
+    await waitFor(() =>
+      expect(activeQueryClient?.getQueryState(['profiles-lite'])?.status).toBe('error')
+    );
     expect(result.current.size).toBe(0);
   });
 });
