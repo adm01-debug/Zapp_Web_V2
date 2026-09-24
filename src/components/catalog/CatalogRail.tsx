@@ -31,10 +31,13 @@ export const CATALOG_RAIL_COPY = {
 
 /** Forma mínima do produto usada pelo rail — estrutural, como
  * CatalogCategoryLike no catalogShared: o rail não precisa (nem deve)
- * conhecer o tipo completo do catálogo. */
+ * conhecer o tipo completo do catálogo.
+ * primary_image_url é o campo canônico do ExternalProduct; image_url e
+ * images ficam como fallback para outras formas de produto. */
 export interface CatalogRailProduct {
   id: string;
   name: string;
+  primary_image_url?: string | null;
   image_url?: string | null;
   images?: string[] | null;
   is_featured?: boolean | null;
@@ -66,7 +69,7 @@ function pickFeatured(products: CatalogRailProduct[] | undefined): { name: strin
   if (!products?.length) return null;
   for (const p of products) {
     if (!p.is_featured) continue;
-    const src = p.image_url || p.images?.[0];
+    const src = p.primary_image_url || p.image_url || p.images?.[0];
     if (src) return { name: p.name, src };
   }
   return null;
