@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -12,6 +12,14 @@ export interface ConnectionQueue {
 export function useConnectionQueues(connectionId?: string) {
   const [connectionQueues, setConnectionQueues] = useState<ConnectionQueue[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchQueues = useCallback(async () => {
     if (!connectionId) return;
@@ -22,11 +30,15 @@ export function useConnectionQueues(connectionId?: string) {
         .select('*')
         .eq('whatsapp_connection_id', connectionId);
       if (error) throw error;
-      setConnectionQueues(data || []);
+      if (isMountedRef.current) {
+        setConnectionQueues(data || []);
+      }
     } catch (err) {
       log.error('Error fetching connection queues:', err);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [connectionId]);
 
