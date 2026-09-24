@@ -18,6 +18,12 @@ export function InlineEditCell({ contactId, field, value, onUpdate }: InlineEdit
   const [editValue, setEditValue] = useState(value);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     if (editing) {
@@ -40,6 +46,7 @@ export function InlineEditCell({ contactId, field, value, onUpdate }: InlineEdit
       toast.success('Atualizado!');
       onUpdate();
     }
+    if (!isMountedRef.current) return;
     setSaving(false);
     setEditing(false);
   };

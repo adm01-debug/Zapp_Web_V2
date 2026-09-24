@@ -21,7 +21,8 @@
 
 ## 2. Como o acesso funciona hoje no Singu (o problema real)
 
-- `customers`, `suppliers`, `carriers`, `contact_phones`, `company_phones` e mais **74 tabelas**: qualquer pessoa logada vê **tudo** — e pode **apagar**. É o oposto do que você pediu.
+- `customers`, `suppliers`, `carriers`, `contact_phones`, `company_phones`: qualquer pessoa logada vê **tudo**. Medido em 24/09 com a suíte da etapa 84, para um usuário logado **sem linha em `user_roles` e sem carteira**: `customers` 1001+ (a base inteira, ~48k), `contact_phones` 1001+, `company_phones` 1001+, `suppliers` 754 (todos), `carriers` 114 (todas).
+  > **Correção de 24/09 (auditoria):** a versão original desta linha dizia "74 tabelas … e pode apagar". Os 74 vinham da contagem de **GRANTs** (253 tabelas com SELECT grant para `anon`, 396 com DELETE grant para `authenticated`) — mas a RLS é que decide, e ela segura. A contagem real de **policies** que abrem sem filtro de dono é: 8 tabelas com SELECT livre, 4 com DELETE sem filtro (`contact_predictive_roadmap`, `crm_objection_intelligence`, `sequence_events`, `sequence_send_log`), 0 tabelas sem RLS. A Fase 3 é menor do que o plano previa — ver a lista nominal na etapa 71.
 - `companies` e `contacts`: regra `auth.uid() = user_id` (modelo de SaaS "dono da linha"). **53.842 das 57.675 empresas têm `user_id` vazio** → invisíveis para todo mundo pelo app; só o service_role enxerga. Contatos: 100% pertencem a 2 usuários.
 - `user_roles` tem **0 linhas** → `has_role()` é sempre falso → ninguém é admin pelo banco.
 - A carteira existe (`customers.vendedor_id`, chave inteira do Bitrix) mas **nenhuma policy usa isso**. Não há ponte entre o ID do Bitrix (inteiro) e o login (uuid) — só o e-mail em `salespeople`.
@@ -31,15 +32,18 @@
 
 ## 3. Riscos críticos encontrados (corrigir antes de qualquer migração)
 
-1. **`exec_sql(query text)` é SECURITY DEFINER e executável pelo `anon`** — qualquer pessoa com a chave pública do projeto roda SQL arbitrário como dono do banco. Gravidade máxima. **[FEITO 24/09 — PR #44 mergeada]**
+1. **`exec_sql(query text)` é SECURITY DEFINER e executável pelo `anon`** — qualquer pessoa com a chave pública do projeto roda SQL arbitrário como dono do banco. Gravidade máxima. **[PARCIAL 24/09 — PR #44 fechou o caminho PostgREST (anon/authenticated), mas a função continua existindo e a edge function `mcp-query` (`verify_jwt=false`) a chama com `service_role`, autenticando só por header `x-mcp-secret`. O filtro de destrutivo é regex (`DROP|TRUNCATE|ALTER SYSTEM`) — `DELETE`/`UPDATE`/`GRANT` passam — e há um modo `admin` que proxia `auth/v1/` e `storage/v1/` com `service_role`. Em uso ativo em produção (dezenas de chamadas/hora em 24/09), por isso não foi desligada. É exatamente o gap que a etapa 8b existia para pegar.]**
 2. `execute_readonly_query` executável por qualquer logado. **[FEITO 24/09 — PR #44 mergeada]**
 3. `decrypt_connection_config` / `encrypt_connection_config` executáveis pelo `anon`. **[FEITO 24/09 — PR #44 mergeada]**
 4. 78 funções SECURITY DEFINER chamáveis pelo `anon`, 82 por logados — a maioria são trigger functions que nunca deveriam ser expostas. **[FEITO 24/09 — PR #45 aberta aguardando aprovação; anon 75→9, authenticated 80→10, restantes são fluxos públicos legítimos por token]**
 5. `abm_account_plans` sem RLS. **[FEITO 24/09 — PR #44 mergeada]**
-6. 22 edge functions sem verify_jwt (bitrix24-proxy, evolution-proxy, bling-proxy, lusha-proxy, cloudflare-proxy…).
-7. `users` (espelho Bitrix, com `bitrix_data` jsonb) legível por qualquer logado.
-8. Leaked-password protection desligada no Auth.
-9. `pg_net` no schema public; `vw_singu_data_health` SECURITY DEFINER. **[vw_singu_data_health FEITO 24/09 — PR #44 mergeada; pg_net ainda pendente, etapa 21]**
+6. ~~22~~ **25** edge functions sem verify_jwt (recontado em 24/09; entraram `external-data` e `mcp-query`).
+7. `users` (espelho Bitrix, com `bitrix_data` jsonb) legível por qualquer logado. **[FEITO 24/09 — PR #48: view `users_public` com colunas seguras para `authenticated`, tabela crua só `service_role`. Verificado: 26 linhas via view, 0 na tabela.]**
+8. Leaked-password protection desligada no Auth. **[BLOQUEADO — é toggle do Auth, não SQL. Não existe tool de MCP para isso; precisa do dashboard: Authentication → Settings → Password Security.]**
+9. `pg_net` no schema public; `vw_singu_data_health` SECURITY DEFINER. **[vw_singu_data_health FEITO 24/09 — PR #44 mergeada; `pg_net` BLOQUEADO: a extensão não suporta `ALTER EXTENSION … SET SCHEMA` (erro 0A000), exigiria DROP/CREATE com risco no worker interno do Supabase. Fica como WARN.]**
+10. **[NOVO 24/09]** `csat_surveys` e `document_signatures` têm policy para `anon` com `qual = token IS NOT NULL` — não valida *qual* token. Hoje inócuo (as duas tabelas estão **vazias**), mas quando o módulo de assinatura entrar em uso, qualquer `anon` com a chave publishable lê `signer_email`, `signer_phone`, `ip_address`, `rendered_html` e `signature_image` de **todos** os documentos. Correção certa é o padrão que o projeto já usa em `get_deal_room_by_token` (RPC SECDEF com token), mas depende do contrato do front, que ainda não existe — por isso não foi aplicada.
+11. **[NOVO 24/09]** 4 tabelas do módulo rodízio (`customer_purchases`, `customer_rotation_state`, `rodizio_distribuicao_staging`, `rodizio_execucoes`) estão com RLS ligada e **zero policy** — fail-closed. Não vaza nada, mas o módulo não lê nada pelo app. Trabalho de outra sessão, mergeado em `main` em 24/09.
+12. **[NOVO 24/09]** A trilha de auditoria está **morta**: `audit_log` não recebe evento desde 31/07 (304k linhas paradas) e `query_telemetry` está vazia (0 linhas). A etapa 20 (varrer por chamadas anônimas suspeitas) não tem dado para varrer, e a etapa 194 (relatório de acessos fora de carteira) não tem fonte.
 
 ## 4. Modelo-alvo (decisão de arquitetura)
 
@@ -104,6 +108,25 @@ Nenhum desses gaps muda a arquitetura-alvo (seção 4) nem o número de fases �
 - Etapas 12a (checklist dos fluxos públicos pós-revoke) e 8b (inventário de chamadores via query_logs) ainda não feitas.
 - Etapas 17–26 (leaked-password, edge functions sem verify_jwt, rotação de chaves, pg_net, policies duplicadas, roles={public}→{authenticated}, view users_public) não iniciadas.
 
+## 10. Auditoria e execução — 2º turno (24/09, tarde)
+
+Auditoria do estado real do banco contra o que este documento marcava como `[FEITO]`. Nenhum número abaixo é estimado — todos medidos em `pgxfvjmuubtbowutlide`.
+
+**Confirmado feito (bate com o banco):** etapas 9, 10, 11 (sem grant para anon/authenticated/public), 14 (RLS + 3 policies), 15 (`security_invoker=on`), 16 (`search_path` nas 3), 12 (advisors anon 9 / authenticated 10, exatamente os fluxos públicos por token + `has_role`).
+
+**Marcado feito mas não estava — corrigido neste turno:**
+- Etapa 13: 77 trigger functions ainda expostas. Fechado pelo t204 (PR #48).
+- Risco 1 (`exec_sql`): fechado só pelo caminho PostgREST; `mcp-query` mantém o caminho aberto (ver risco 1 atualizado).
+
+**Drift banco × repo:** `t202` e `t203` estão aplicadas em produção e **não estão em `main`** — só no branch da PR #45, aberta. `t201` está em `main` (PR #44 mergeada). O arquivo do t201 é `20260924142900_…` mas o ledger registrou `20260924142818` — divergência de prefixo que quebra checagem de paridade.
+
+**Entregue neste turno:**
+- PR #48 (Singu_V2): etapas 13 e 24.
+- PR #52 (Singu_V2): etapa 84 — a suíte de RLS, antecipada para destravar 22/23/58–64.
+- Inventário do lado ZAPP (etapas 6 e 7, parcial): 82 `functions.invoke` no front, 10 ocorrências de URL Supabase hardcoded (a canônica é `src/config/supabase.ts`), e o mapa de consumo — `contacts` 92 usos, `profiles` 72, `messages` 70, `whatsapp_connections` 27, `stickers` 27. Confirma o dimensionamento das etapas 145/146 como o maior refactor da Fase 6.
+- Etapa 5 (rebuild do grafo): **não é possível neste ambiente** — `graphify-out/GRAPH_REPORT.md` não existe no repo e o `graphify` é ferramenta do container da VPS. Precisa rodar lá.
+- Etapa 3 (congelar migrations que criam tabela no ZAPP): **está sendo respeitada de fato** — nenhuma migration de setembro cria tabela.
+
 ---
 
 ## 6. As 200 etapas
@@ -125,7 +148,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 10. Idem `execute_readonly_query`. [SEC] **[FEITO]**
 11. Idem `decrypt_connection_config` e `encrypt_connection_config`. [SEC] **[FEITO]**
 12. Classificar as 78 SECDEF expostas ao anon: (a) públicas legítimas — `submit_public_form`, `increment_form_view`, `track_magnet_download`, `buyer_*`, `get_deal_room_by_token`; (b) trigger functions; (c) internas. Revogar b e c. [SEC] **[FEITO — PR #45]**
-13. Revogar EXECUTE em bloco de toda função que retorna `trigger` (nunca deve ser chamável por API). [SEC] **[FEITO — PR #45]**
+13. Revogar EXECUTE em bloco de toda função que retorna `trigger` (nunca deve ser chamável por API). [SEC] **[FEITO de verdade em 24/09 — PR #48 (t204). A PR #45 cobriu 31 de ~108; a auditoria encontrou 77 ainda com EXECUTE para `anon` e grant para `public`. Agora 0.]**
 14. `ALTER TABLE abm_account_plans ENABLE ROW LEVEL SECURITY` (já tem 3 policies escritas). [SEC] **[FEITO]**
 15. `vw_singu_data_health` → `security_invoker = on` ou revogar de authenticated. [SEC] **[FEITO]**
 16. `SET search_path` em `normalizar_cnpj`, `title_case_pt`, `title_case_pt_aux`. [SEC] **[FEITO]**
@@ -136,7 +159,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 21. Mover `pg_net` para schema `extensions`. [DB]
 22. Consolidar policies duplicadas (contacts: 10 → 4; companies: 7 → 4; interactions: 10 → 4; deals: 8 → 4). [DB]
 23. Trocar `roles={public}` por `{authenticated}` em toda policy. [DB]
-24. `users` (Bitrix): view `users_public(id, name, email, departamento, is_vendedor, is_active)` para authenticated; tabela só service_role. [SEC]
+24. `users` (Bitrix): view `users_public(id, name, email, departamento, is_vendedor, is_active)` para authenticated; tabela só service_role. [SEC] **[FEITO 24/09 — PR #48 (t206/t207). Confirmado antes de aplicar: zero consumidor `.from('users')` no front e nas edge functions do Singu_V2. A view roda com `security_invoker=off` de propósito, o que gera 1 finding `security_definer_view` no advisor — esperado e aceito para este padrão.]**
 25. Manter `feature_flags.crm.integration=false` até o cutover (etapa 148 remove o gate). [APP]
 26. Tudo desta fase como migration versionada (verificar qual repo GitHub versiona o Singu; se nenhum, criar `singu-db`). [DB] **[FEITO — repo é `Singu_V2`, migrations em `supabase/migrations/`]**
 
@@ -188,7 +211,13 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 68. RLS `company_rfm_scores`, `rfm_analysis`, `rfm_history`: seguem `companies`. [DB]
 69. RLS `salespeople`, `sales_team_members`: leitura Comercial; escrita admin. [DB]
 70. RLS `workspace_accounts`: DP RW; demais leitura de nome/e-mail via view. [DB]
-71. Classificar as 74 tabelas com SELECT aberto: catálogo interno (cnaes, cidades, estados, tags, configs) fica aberto; o resto entra em `can_access`. [DB]
+71. Classificar as tabelas com SELECT aberto. **[LISTA NOMINAL levantada em 24/09 — não são 74, são 19 policies em 17 tabelas.]**
+    - **Herdam filtro via EXISTS (já corretas, nada a fazer):** `contact_family_history`, `suggested_rapport_intel` — ambas com `EXISTS (SELECT 1 FROM contacts …)`, que é o padrão da etapa 61.
+    - **Fluxo público por design (`is_published = true`), mantém:** `forms`, `landing_pages`, `lead_magnets`.
+    - **Fluxo público por token, mas com IDOR latente (ver risco 10):** `csat_surveys`, `document_signatures`.
+    - **Catálogo/config, fica aberto conforme a regra desta etapa:** `disc_profile_config`, `entity_relationships`, `feature_flags`, `permissions`, `product_novelties`, `role_permissions`, `system_config`, `pipeline_stage_transitions` (esta última com 2 policies duplicadas — candidata da etapa 22).
+    - **Falso positivo do primeiro levantamento:** `login_attempts` e `password_reset_requests` parecem abertas num filtro textual de `qual`, mas têm policy `*_internal_deny_all` com `qual = false` somada a policies corretas por dono (`user_id = auth.uid()`) e admin. Estão certas.
+    - **DELETE sem filtro de dono (entram em `can_access`):** `contact_predictive_roadmap`, `crm_objection_intelligence`, `sequence_events`, `sequence_send_log`. [DB]
 72. Remover DELETE de vendedor em `customers/companies/contacts`; exclusão vira soft-delete por RPC auditada. [DB]
 73. View `contacts_safe` sem cpf, data_nascimento, family_info, personal_notes para departamentos não-comerciais; grant por coluna. [DB]
 74. Garantir que mudança de `customers.vendedor_id` grava trilha em `audit_log` (transferência de carteira). [DB]
@@ -201,7 +230,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 81. `search_contacts`, `search_contacts_advanced`, `search_contacts_fuzzy`, `get_contact_360_by_phone`: SECURITY INVOKER (respeitam RLS) ou filtro interno com `can_access`. [DB]
 82. `find_contacts_by_role`, `get_contacts_by_role`, `search_contacts_unaccent`: idem. [DB]
 83. Views `vw_*` que expõem empresas: `security_invoker = on`. [DB]
-84. Suíte de teste de RLS: para cada perfil (set role + jwt claims) conta linhas visíveis por tabela — matriz esperada × obtida, roda no CI. [DB]
+84. Suíte de teste de RLS: para cada perfil (set role + jwt claims) conta linhas visíveis por tabela — matriz esperada × obtida, roda no CI. [DB] **[FEITO 24/09 — PR #52 no Singu_V2: `scripts/rls-matrix/check-rls-baseline.mjs` + `rls-baseline.json` + workflow. Mede via PostgREST (o caminho do front), distingue `-1` (sem grant) de `0` (grant + RLS filtrou), e falha com exit 1 se qualquer tabela passar a expor mais linhas. Validado contra produção (38 tabelas, perfil anon) e com teste negativo. Esta etapa foi antecipada de propósito: sem ela, as etapas 22, 23 e 58–64 são chute.]**
 85. Teste com Letícia (carteira 5.770): vê 5.770 clientes, suas empresas e contatos, fornecedores liberados, zero transportadora não liberada. [DB]
 86. Teste com Compras (Thaina), Logística (Thiago), DP, Financeiro. [DB]
 87. `EXPLAIN ANALYZE` na listagem de `companies` (57k) e `customers` (48k) por vendedora — meta < 100 ms. [DB]
