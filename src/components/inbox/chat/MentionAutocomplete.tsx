@@ -24,6 +24,12 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionStart, setMentionStart] = useState(-1);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // Fetch agents once
   useEffect(() => {
@@ -32,6 +38,7 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
         .from('profiles')
         .select('id, name, email, avatar_url')
         .limit(50);
+      if (!isMountedRef.current) return;
       if (data) setAgents(data as AgentMention[]);
     };
     fetchAgents();
