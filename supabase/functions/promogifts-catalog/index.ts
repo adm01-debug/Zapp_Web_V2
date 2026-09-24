@@ -80,7 +80,7 @@ function sanitizeFtsQuery(input: string): string {
  * QUALQUER um dos valores selecionados, em QUALQUER um dos dois formatos.
  * contains (.cs.) evita ilike direto em jsonb (Postgres rejeita sem cast).
  */
-function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
+export function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
   const clauses = values
     .map((v) => sanitizeSearch(v))
     .filter((v) => v.length > 0)
