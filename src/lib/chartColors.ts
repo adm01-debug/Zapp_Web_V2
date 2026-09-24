@@ -8,6 +8,8 @@
 // ===== COLOR PALETTE =====
 // These map to CSS variables defined in index.css
 
+import { CHART_TICK_FONT_SIZE_LG } from '@/lib/chart-theme';
+
 export const CHART_COLORS = {
   // Primary palette (10 colors for general use)
   primary: 'hsl(var(--chart-1))',
@@ -161,7 +163,7 @@ export const CHART_STYLES = {
     stroke: 'hsl(var(--border))',
     tickLine: false,
     axisLine: false,
-    fontSize: 12,
+    fontSize: CHART_TICK_FONT_SIZE_LG,
     tickMargin: 8,
   },
   
