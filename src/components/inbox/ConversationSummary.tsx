@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { PeriodFilterSelector, usePeriodFilter } from './ai-tools/PeriodFilterSelector';
@@ -49,6 +49,13 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
     return parts.join('. ');
   }, [summary]);
 
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
   const generateSummary = async () => {
     if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; }
     setIsLoading(true);
@@ -57,9 +64,10 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
         body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId },
       });
       if (error) throw error;
-      setSummary(data); setHasGenerated(true); toast.success('Resumo gerado com sucesso!');
+      if (isMountedRef.current) { setSummary(data); setHasGenerated(true); }
+      toast.success('Resumo gerado com sucesso!');
     } catch (error) { log.error('Error generating summary:', error); toast.error('Erro ao gerar resumo. Tente novamente.'); }
-    finally { setIsLoading(false); }
+    finally { if (isMountedRef.current) setIsLoading(false); }
   };
 
   const StatusIcon = summary ? statusConfig[summary.status]?.icon || Clock : Clock;

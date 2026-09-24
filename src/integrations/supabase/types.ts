@@ -54,6 +54,24 @@ export type Database = {
           },
         ]
       }
+      agent_presence: {
+        Row: {
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agent_skills: {
         Row: {
           created_at: string | null

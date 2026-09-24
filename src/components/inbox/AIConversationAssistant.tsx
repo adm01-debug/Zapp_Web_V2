@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { PeriodFilterSelector, usePeriodFilter, getPeriodDays } from './ai-tools/PeriodFilterSelector';
@@ -37,7 +37,7 @@ interface AIConversationAssistantProps {
 export function AIConversationAssistant({ messages, contactId, contactName, isOpen }: AIConversationAssistantProps) {
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('resumo');
+  const [activeTab, setActiveTab] = useState('resumo'); const isMountedRef = useRef(true);
 
   const {
     analysisPeriod,
@@ -116,6 +116,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
         }
       );
 
+      if (!isMountedRef.current) return;
       setAnalysis(result);
       setActiveTab('resumo');
       await refetch();
@@ -137,9 +138,14 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       log.error('Error analyzing conversation:', error);
       toast.error('Erro ao analisar conversa. Tente novamente.');
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   }, [analysisPeriod, analyses, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, refetch]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const sentimentTrend = getSentimentTrend();
   const currentSentiment = analysis?.sentiment || 'neutro';

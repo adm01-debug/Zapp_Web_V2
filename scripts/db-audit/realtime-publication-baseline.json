@@ -3,6 +3,7 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "publication": "supabase_realtime",
   "tables": [
+    "public.agent_presence",
     "public.agent_stats",
     "public.contacts",
     "public.conversation_sla",

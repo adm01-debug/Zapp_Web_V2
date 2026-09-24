@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
-import { MapPin, Search, Crosshair, Clock, Radio, Loader2, Send, LocateFixed } from 'lucide-react';
+import { MapPin, Search, Crosshair, Clock, Loader2, Send, LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/ui/use-toast';
 import { LocationMessage } from '@/types/chat';
 import { useLocationPicker } from './location-picker/useLocationPicker';
@@ -22,8 +18,6 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerProps) {
-  const [isLive, setIsLive] = useState(false);
-  const [liveDuration, setLiveDuration] = useState('15');
   const [activeTab, setActiveTab] = useState<'map' | 'current'>('current');
 
   const { mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
@@ -32,7 +26,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
     try {
       await onSend({
-        latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address, isLive,
+        latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address,
       });
       handleClose();
     } catch {
@@ -41,7 +35,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     }
   };
 
-  const handleClose = () => { reset(); setIsLive(false); setLiveDuration('15'); setActiveTab('current'); onOpenChange(false); };
+  const handleClose = () => { reset(); setActiveTab('current'); onOpenChange(false); };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -117,33 +111,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
           </TabsContent>
         </Tabs>
 
-        <div className="px-4 py-3 border-t border-border bg-muted/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio className={cn("w-4 h-4", isLive && "text-success animate-pulse")} />
-              <div>
-                <Label htmlFor="live-toggle" className="text-sm font-medium cursor-pointer">Localização em tempo real</Label>
-                <p className="text-3xs text-muted-foreground">Compartilhar atualizações contínuas</p>
-              </div>
-            </div>
-            <Switch id="live-toggle" checked={isLive} onCheckedChange={setIsLive} />
-          </div>
-          {isLive && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3">
-              <Label className="text-xs text-muted-foreground">Duração</Label>
-              <Select value={liveDuration} onValueChange={setLiveDuration}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                  <SelectItem value="480">8 horas</SelectItem>
-                </SelectContent>
-              </Select>
-            </motion.div>
-          )}
-        </div>
-
-        <DialogFooter className="p-4 pt-0 gap-2 sm:gap-0">
+        <DialogFooter className="p-4 border-t border-border bg-muted/30 gap-2 sm:gap-0">
           <Button variant="outline" onClick={handleClose}>Cancelar</Button>
           <Button onClick={handleSend} disabled={!selectedLocation} className="gap-2"><Send className="w-4 h-4" />Enviar Localização</Button>
         </DialogFooter>
