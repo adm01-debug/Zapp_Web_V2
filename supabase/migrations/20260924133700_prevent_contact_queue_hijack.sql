@@ -5,7 +5,12 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
-  IF NEW.queue_id IS NOT NULL
+  -- Guard: chamadas via service_role (Edge Functions, ex. ai-auto-tag) nao tem
+  -- auth.uid() de usuario e devem poder rotear contatos livremente; so
+  -- usuarios autenticados comuns sao restritos por este trigger (mesmo padrao
+  -- de reassign_absent_agents/reassign_overloaded_agents).
+  IF (current_setting('request.jwt.claims', true)::jsonb->>'role') = 'authenticated'
+     AND NEW.queue_id IS NOT NULL
      AND NOT is_admin_or_supervisor(auth.uid())
      AND NOT EXISTS (
        SELECT 1
