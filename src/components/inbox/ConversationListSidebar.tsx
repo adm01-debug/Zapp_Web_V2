@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useRef, useEffect } from 'react';
+import { lazy, Suspense, useState, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { MobilePullToRefreshIndicator } from '@/components/mobile/MobilePullToRefresh';
@@ -54,15 +54,14 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
 
   // Se a conversa sumir da lista em tempo real (ex: outro agente ja
   // resolveu/moveu) enquanto o dialogo de Resolver/Transferir esta aberto
-  // pra ela, fecha o dialogo em vez de deixa-lo orfao com um contactId que
-  // nao existe mais na visao atual.
-  useEffect(() => {
-    const visibleIds = new Set(
-      (inboxFilters.filteredConversations ?? []).map((c: { contact: { id: string } }) => c.contact.id)
-    );
-    if (resolveTarget && !visibleIds.has(resolveTarget)) setResolveTarget(null);
-    if (transferTarget && !visibleIds.has(transferTarget)) setTransferTarget(null);
-  }, [inboxFilters.filteredConversations, resolveTarget, transferTarget]);
+  // pra ela, o dialogo fecha (derivado no render, sem setState em effect)
+  // em vez de ficar orfao com um contactId que nao existe mais na visao atual.
+  const visibleContactIds = useMemo(
+    () => new Set((inboxFilters.filteredConversations ?? []).map((c: { contact: { id: string } }) => c.contact.id)),
+    [inboxFilters.filteredConversations]
+  );
+  const activeResolveTarget = resolveTarget && visibleContactIds.has(resolveTarget) ? resolveTarget : null;
+  const activeTransferTarget = transferTarget && visibleContactIds.has(transferTarget) ? transferTarget : null;
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
@@ -239,18 +238,18 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
         )}
       </div>
 
-      {resolveTarget && (
+      {activeResolveTarget && (
         <CloseConversationDialog
-          open={!!resolveTarget}
+          open={!!activeResolveTarget}
           onOpenChange={(open) => !open && setResolveTarget(null)}
-          contactId={resolveTarget}
+          contactId={activeResolveTarget}
           onClosed={() => { setResolveTarget(null); inbox.refetch(); }}
         />
       )}
 
-      {transferTarget && (
+      {activeTransferTarget && (
         <TransferDialog
-          open={!!transferTarget}
+          open={!!activeTransferTarget}
           onOpenChange={(open) => !open && setTransferTarget(null)}
           onTransfer={async (type, targetId) => { await handleListTransfer(type, targetId); setTransferTarget(null); }}
         />
