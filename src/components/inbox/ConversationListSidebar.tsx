@@ -14,8 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/ui/use-toast';
 import { CloseConversationDialog } from './CloseConversationDialog';
 import { TransferDialog } from './TransferDialog';
 
@@ -47,17 +45,10 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   }, [conversationActions, inbox]);
 
   const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
-    if (!transferTarget) return;
-    const updateData: { assigned_to?: string; queue_id?: string } =
-      type === 'agent' ? { assigned_to: targetId } : type === 'queue' ? { queue_id: targetId } : {};
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', transferTarget);
-    if (error) {
-      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
-      return;
-    }
-    toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
+    if (!transferTarget || !conversationActions) return;
+    await conversationActions.transferContact(transferTarget, type, targetId);
     inbox.refetch();
-  }, [transferTarget, inbox]);
+  }, [transferTarget, conversationActions, inbox]);
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {

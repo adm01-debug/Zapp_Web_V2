@@ -174,6 +174,14 @@ export function useConversationActions() {
     });
   }, []);
 
+  const transferContact = useCallback(async (contactId: string, type: 'agent' | 'queue' | 'connection', targetId: string) => {
+    const updateData: { assigned_to?: string; queue_id?: string } =
+      type === 'agent' ? { assigned_to: targetId } : type === 'queue' ? { queue_id: targetId } : {};
+    const { error } = await supabase.from('contacts').update(updateData).eq('id', contactId);
+    if (error) { toast.error('Erro ao transferir conversa'); return; }
+    toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
+  }, []);
+
   const isPinned = useCallback((contactId: string) => pinnedIds.has(contactId), [pinnedIds]);
   const isFavorite = useCallback((contactId: string) => favoriteIds.has(contactId), [favoriteIds]);
   const isSnoozed = useCallback((contactId: string) => snoozedIds.has(contactId), [snoozedIds]);
@@ -191,6 +199,7 @@ export function useConversationActions() {
     unfavoriteContact,
     snoozeConversation,
     archiveContact,
+    transferContact,
     profileId,
   };
 }
