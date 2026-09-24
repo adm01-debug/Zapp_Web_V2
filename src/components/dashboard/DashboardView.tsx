@@ -149,7 +149,7 @@ export function DashboardView() {
               busiestQueue={isStaff ? busiestQueue : null}
             />
             <DailyGoalsCard
-              onSeeAll={() => setTab('goals')}
+              onSeeAll={() => goToTab('goals')}
               stats={{
                 totalConversations: stats.totalConversations,
                 resolvedToday: kpi?.resolvedToday ?? stats.resolvedToday,
@@ -160,7 +160,7 @@ export function DashboardView() {
           </div>
           <div data-testid="dash-row3" className={isStaff ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5' : 'grid grid-cols-1 gap-2.5'}>
             {isStaff && (
-              <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => setTab('sla')} />
+              <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => goToTab('sla')} />
             )}
             <RecentActivityCard items={recentEvents?.items ?? []} />
             {isStaff && (
@@ -173,7 +173,7 @@ export function DashboardView() {
             )}
           </div>
           <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
-            <AIToolsCard onSeeAll={() => setTab('ai')} />
+            <AIToolsCard onSeeAll={() => goToTab('ai')} />
             <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
             <SentimentTrendCard />
           </div>
