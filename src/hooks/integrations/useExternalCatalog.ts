@@ -5,7 +5,7 @@ const log = getLogger('ExternalCatalog');
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// ─── Types ────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────
 export interface ExternalCategory {
   id: string;
   name: string;
@@ -160,12 +160,12 @@ async function invokeAction<T = unknown>(action: string, params: Record<string, 
   return data as T;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────
+// ─── Hook ────────────────────────────────────────────────────
 export function useExternalCatalog() {
   const queryClient = useQueryClient();
   // null = ainda nao pedido (nenhuma query dispara). Vira {} ou os filtros
   // explicitos assim que fetchProducts/fetchCategories/fetchSuppliers e
-  // chamada pela primeira vez - substitui o antigo par filters+ready por
+  // chamado pela primeira vez - substitui o antigo par filters+ready por
   // um unico sinal, preservando o acoplamento atual: qualquer um dos 3
   // fetch* libera as 3 queries (useExternalCatalog.test.ts depende disso
   // em 'handles concurrent fetchProducts and fetchCategories').
