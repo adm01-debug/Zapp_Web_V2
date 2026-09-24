@@ -10,17 +10,32 @@
  * nomeada (`text-xs`, que define os dois) NAO e neutra. O DoD original do plano
  * so conferia tamanho e deixaria essa mudanca passar despercebida.
  *
+ * F8 (24/09/2026, PLANO_AUDITORIA_FONTES_100_ETAPAS, achado A15): as 4
+ * checagens abaixo fecham a zona cega que deixou passar os achados A1/A2/
+ * A9/A10 sem nenhum guard reprovar — o guard original so lia `text-*` em
+ * `src/**\/*.tsx`:
+ *   - meia-medida e tamanho cru em CSS puro (src/styles/*.css), nao so JSX
+ *   - `fontSize: N` inline em .tsx fora do tema de graficos centralizado
+ *   - `font-family: 'Nome'` literal fora de `var(--font-*)`
+ *   - peso de font-weight pedido no CSS fora da faixa que o Google Fonts
+ *     carrega em index.html (a causa raiz do achado A1)
+ * Todas seguem o mesmo padrao ratchet dos outros guards do repo
+ * (lint-ratchet.mjs, typecheck-ratchet.mjs): o teto vem do budget
+ * versionado, reprova so se a divida SOBE — nao exige zerar tudo de uma vez.
+ *
  * Uso:
  *   node scripts/qa/medir-tipografia.cjs                 # relatorio humano
  *   node scripts/qa/medir-tipografia.cjs --json out.json # baseline versionavel
- *   node scripts/qa/medir-tipografia.cjs --check         # modo guard-rail (F6)
+ *   node scripts/qa/medir-tipografia.cjs --check         # modo guard-rail (F6/F8)
  */
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, 'src');
+const STYLES = path.join(ROOT, 'src/styles');
 const CONFIG = path.join(ROOT, 'tailwind.config.ts');
+const INDEX_HTML = path.join(ROOT, 'index.html');
 
 // line-height herdado quando a classe nao declara um (preflight do Tailwind).
 const INHERITED_LH_RATIO = 1.5;
@@ -53,6 +68,130 @@ function walk(dir, acc = []) {
     else if (/\.(tsx?|jsx?)$/.test(e.name)) acc.push(p);
   }
   return acc;
+}
+
+function walkCss(dir, acc = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkCss(p, acc);
+    else if (e.name.endsWith('.css')) acc.push(p);
+  }
+  return acc;
+}
+
+/** src/styles/*.css: mesma regra de meia-medida do JSX (achado A10), mais
+ *  font-family literal fora de var(--font-*) (achado A2/A3/A15). */
+function scanCss(stylesDir = STYLES) {
+  const files = fs.existsSync(stylesDir) ? walkCss(stylesDir) : [];
+  const halfStep = [];
+  const literalFamily = [];
+  const fontSizeRe = /font-size:\s*([0-9.]+)px/g;
+  const familyRe = /font-family:\s*(['"])((?:(?!\1).)+)\1/g;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const txt = fs.readFileSync(f, 'utf8');
+    let m;
+    fontSizeRe.lastIndex = 0;
+    while ((m = fontSizeRe.exec(txt))) {
+      const px = parseFloat(m[1]);
+      if (!Number.isInteger(px)) {
+        const line = txt.slice(0, m.index).split('\n').length;
+        halfStep.push({ where: `${rel}:${line}`, px });
+      }
+    }
+    if (rel.endsWith('tokens.css')) continue; // declara as variaveis --font-*, nao e violacao
+    familyRe.lastIndex = 0;
+    while ((m = familyRe.exec(txt))) {
+      const line = txt.slice(0, m.index).split('\n').length;
+      literalFamily.push({ where: `${rel}:${line}`, value: m[2] });
+    }
+  }
+  return { halfStep, literalFamily };
+}
+
+/** .tsx: fontSize numerico inline (achado A9) e fontFamily literal (achado
+ *  A2/A3). Um arquivo migrado para src/lib/chart-theme.ts passa a usar
+ *  identificadores (CHART_TICK_FONT_SIZE), nao numeros — some do regex
+ *  sozinho, sem precisar checar import. */
+function scanTsxInline(srcDir = SRC) {
+  const files = walk(srcDir);
+  const fontSizeInline = [];
+  const literalFamily = [];
+  const fontSizeRe = /fontSize:\s*([0-9.]+)\b/g;
+  const familyRe = /fontFamily:\s*(['"])((?:(?!\1).)+)\1/g;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const txt = fs.readFileSync(f, 'utf8');
+    let m;
+    fontSizeRe.lastIndex = 0;
+    while ((m = fontSizeRe.exec(txt))) {
+      const line = txt.slice(0, m.index).split('\n').length;
+      fontSizeInline.push({ where: `${rel}:${line}`, px: +m[1] });
+    }
+    familyRe.lastIndex = 0;
+    while ((m = familyRe.exec(txt))) {
+      const line = txt.slice(0, m.index).split('\n').length;
+      literalFamily.push({ where: `${rel}:${line}`, value: m[2] });
+    }
+  }
+  return { fontSizeInline, literalFamily };
+}
+
+/** Faixa de peso que cada familia carrega, extraida da URL do Google Fonts
+ *  em index.html. wght@min..max (variavel) vira [min,max]; wght@a;b;c
+ *  (lista estatica) vira [min(lista),max(lista)]. */
+function parseLoadedWeights(indexHtmlPath = INDEX_HTML) {
+  if (!fs.existsSync(indexHtmlPath)) return {};
+  const html = fs.readFileSync(indexHtmlPath, 'utf8');
+  const urlMatch = html.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"']+/);
+  if (!urlMatch) return {};
+  const families = {};
+  const familyRe = /family=([^&"']+)/g;
+  let m;
+  while ((m = familyRe.exec(urlMatch[0]))) {
+    const [namePart, spec] = m[1].split(':wght@');
+    const name = decodeURIComponent(namePart.replace(/\+/g, ' '));
+    if (!spec) { families[name] = [400, 400]; continue; }
+    const range = spec.match(/^([0-9]+)\.\.([0-9]+)$/);
+    if (range) {
+      families[name] = [+range[1], +range[2]];
+    } else {
+      const weights = spec.split(';').map(Number).filter((n) => !Number.isNaN(n));
+      if (weights.length) families[name] = [Math.min(...weights), Math.max(...weights)];
+    }
+  }
+  return families;
+}
+
+/** Achado A1: font-weight pedido no CSS "sans" (base/utilities/tokens —
+ *  onde vivem as regras de peso do dark) fora da faixa que a fonte padrao
+ *  (Plus Jakarta Sans) carrega. E exatamente o bug original: 450/550/650
+ *  pedidos sem nenhum peso estatico cobrindo. 900 (font-black) fica fora
+ *  do eixo publicado da Jakarta (max 800) por limitacao da propria fonte —
+ *  vira teto no budget, nao zero, ver PR que introduziu a faixa variavel. */
+function scanOrphanWeights(stylesDir = STYLES, indexHtmlPath = INDEX_HTML) {
+  const loaded = parseLoadedWeights(indexHtmlPath);
+  const jakarta = loaded['Plus Jakarta Sans'];
+  if (!jakarta) return []; // URL ausente/formato mudou — nao quebra o guard por conta disso
+  const files = ['base.css', 'utilities.css', 'tokens.css']
+    .map((f) => path.join(stylesDir, f))
+    .filter((f) => fs.existsSync(f));
+  const orphan = [];
+  const re = /font-weight:\s*([0-9]{2,3})\b/g;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const txt = fs.readFileSync(f, 'utf8');
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(txt))) {
+      const w = +m[1];
+      if (w < jakarta[0] || w > jakarta[1]) {
+        const line = txt.slice(0, m.index).split('\n').length;
+        orphan.push({ where: `${rel}:${line}`, weight: w, faixaCarregada: jakarta });
+      }
+    }
+  }
+  return orphan;
 }
 
 function main() {
@@ -122,6 +261,11 @@ function main() {
   const totalArb = Object.values(usage.arbitrary).reduce((a, b) => a + b, 0);
   const totalNamed = Object.values(usage.named).reduce((a, b) => a + b, 0);
 
+  // F8 — zona cega fora de text-* em .tsx (achados A1/A2/A9/A10/A15).
+  const css = scanCss();
+  const tsxInline = scanTsxInline();
+  const orphanWeights = scanOrphanWeights();
+
   const report = {
     geradoEm: new Date().toISOString(),
     commit: process.env.GIT_SHA || null,
@@ -136,8 +280,20 @@ function main() {
       meiaMedida: violations.halfStep.length,
       acima16px: violations.above16.length,
       comEquivalenteExato: violations.hasExactEquivalent.length,
+      cssMeiaMedida: css.halfStep.length,
+      cssFontFamilyLiteral: css.literalFamily.length,
+      tsxFontSizeInline: tsxInline.fontSizeInline.length,
+      tsxFontFamilyLiteral: tsxInline.literalFamily.length,
+      pesoOrfao: orphanWeights.length,
     },
-    detalheViolacoes: violations,
+    detalheViolacoes: {
+      ...violations,
+      cssMeiaMedida: css.halfStep,
+      cssFontFamilyLiteral: css.literalFamily,
+      tsxFontSizeInline: tsxInline.fontSizeInline,
+      tsxFontFamilyLiteral: tsxInline.literalFamily,
+      pesoOrfao: orphanWeights,
+    },
   };
 
   const jsonIdx = process.argv.indexOf('--json');
@@ -159,10 +315,16 @@ function main() {
       const eq = v.equivalenteNaEscala ? `  -> ${v.equivalenteNaEscala}` : '';
       console.log(`  text-[${px}px]`.padEnd(18) + `usos: ${String(v.usos).padStart(4)}  lh herdado ${v.lineHeightPx}px${eq}`);
     });
-  console.log('\n=== VIOLACOES ===');
+  console.log('\n=== VIOLACOES (src/**/*.tsx, text-*) ===');
   console.log(`  meia-medida (N.5px)      : ${report.violacoes.meiaMedida}`);
   console.log(`  arbitrario > 16px        : ${report.violacoes.acima16px}`);
   console.log(`  tem equivalente na escala: ${report.violacoes.comEquivalenteExato}`);
+  console.log('\n=== VIOLACOES (F8 — CSS puro, inline, pesos) ===');
+  console.log(`  CSS meia-medida           : ${report.violacoes.cssMeiaMedida}`);
+  console.log(`  CSS font-family literal   : ${report.violacoes.cssFontFamilyLiteral}`);
+  console.log(`  tsx fontSize inline       : ${report.violacoes.tsxFontSizeInline}`);
+  console.log(`  tsx fontFamily literal    : ${report.violacoes.tsxFontFamilyLiteral}`);
+  console.log(`  peso orfao (fora do eixo) : ${report.violacoes.pesoOrfao}`);
   console.log(`\n  totais: ${totalNamed} nomeados / ${totalArb} arbitrarios em ${files.length} arquivos`);
 
   if (process.argv.includes('--check')) {
@@ -173,7 +335,13 @@ function main() {
     }
     const budget = JSON.parse(fs.readFileSync(budgetPath, 'utf8'));
     let failed = false;
-    for (const k of ['meiaMedida', 'acima16px', 'comEquivalenteExato']) {
+    const checked = [
+      'meiaMedida', 'acima16px', 'comEquivalenteExato',
+      'cssMeiaMedida', 'cssFontFamilyLiteral',
+      'tsxFontSizeInline', 'tsxFontFamilyLiteral',
+      'pesoOrfao',
+    ];
+    for (const k of checked) {
       const atual = report.violacoes[k];
       const teto = budget.violacoes[k];
       const ok = atual <= teto;
@@ -185,4 +353,6 @@ function main() {
   }
 }
 
-main();
+module.exports = { parseScale, toPx, walk, walkCss, scanCss, scanTsxInline, parseLoadedWeights, scanOrphanWeights, main };
+
+if (require.main === module) main();

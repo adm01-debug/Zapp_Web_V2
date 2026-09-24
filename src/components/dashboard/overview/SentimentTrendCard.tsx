@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
 import { useRealSentimentData } from '../SentimentHelpers';
 
@@ -46,9 +47,9 @@ export function SentimentTrendCard() {
           <div data-testid="sentiment-plot" className="h-[100px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(data.length / 5) - 1)} />
+                <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(data.length / 5) - 1)} />
                 <YAxis
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }}
                   ticks={[0, 50, 100]}
                   tickFormatter={(v) => `${v}%`}
                   width={32}

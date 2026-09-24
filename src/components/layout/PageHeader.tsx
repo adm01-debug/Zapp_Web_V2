@@ -47,7 +47,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasBreadcrumbBar } = useLayoutContext();
+  const { hidePageBreadcrumbs } = useLayoutContext();
 
   const handleBack = () => {
     if (onBack) {
@@ -71,10 +71,10 @@ export function PageHeader({
         : 'flex flex-col gap-2 px-6 py-4 border-b border-border/50 bg-card',
       className
     )}>
-      {/* Breadcrumbs row — omitido quando o BreadcrumbBar global (AppShell) já cobre a trilha */}
-      {((!hasBreadcrumbBar && breadcrumbs.length > 0) || topRight) && (
+      {/* Breadcrumbs row — omitida no desktop (sem trilha no topo); mobile e modo zen mantêm */}
+      {((!hidePageBreadcrumbs && breadcrumbs.length > 0) || topRight) && (
         <div className={cn('flex items-center justify-between gap-3 flex-wrap', variant === 'plain' && 'sm:h-14')}>
-          {!hasBreadcrumbBar && breadcrumbs.length > 0 && (
+          {!hidePageBreadcrumbs && breadcrumbs.length > 0 && (
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
