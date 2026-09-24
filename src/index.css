@@ -22,11 +22,6 @@
   }
 }
 
-/* ===== FONT VARIABLES ===== */
-:root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-}
-
 /* ===== VIEWPORT LOCK — Allowed overflow on mobile for Auth page compatibility ===== */
 html, body, #root {
   min-height: 100vh;
