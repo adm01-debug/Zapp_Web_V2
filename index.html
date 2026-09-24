@@ -8,9 +8,16 @@
     <!-- Preconnect to Google Fonts for faster font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Preload critical fonts for faster LCP -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" as="style" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Preload critical fonts for faster LCP.
+         Faixas variaveis (wght@min..max), nao pesos estaticos: o CSS pede
+         450/550/650/800/900 no dark (src/styles/base.css) que nenhum peso
+         estatico cobre — o navegador tinha que sintetizar. Faixa continua
+         cobre qualquer peso pedido dentro do eixo da fonte (Jakarta vai ate
+         800 — nao existe corte 900 publicado; Outfit cobre 100-900 inteiro).
+         JetBrains Mono entra pela mesma URL: font-mono/.text-code citavam
+         essa familia sem nenhum @font-face carregando ela. -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <script>
       (function() {
         try {

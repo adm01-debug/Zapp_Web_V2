@@ -56,7 +56,7 @@
   }
 
   .text-code {
-    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    font-family: var(--font-mono);
     @apply text-sm;
   }
 
