@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useRef, useEffect } from 'react';
+import { lazy, Suspense, useState, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { MobilePullToRefreshIndicator } from '@/components/mobile/MobilePullToRefresh';
@@ -14,6 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { CloseConversationDialog } from './CloseConversationDialog';
+import { TransferDialog } from './TransferDialog';
 
 const SKELETON_WIDTHS = [
   { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
@@ -33,6 +36,32 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   const isMobile = useIsMobile();
   const contactSearchRef = useRef<HTMLInputElement>(null);
   const [contactSearch, setContactSearch] = useState('');
+  const [resolveTarget, setResolveTarget] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<string | null>(null);
+
+  const handleArchive = useCallback(async (contactId: string) => {
+    if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
+    await conversationActions.archiveContact(contactId);
+    inbox.refetch();
+  }, [conversationActions, inbox]);
+
+  const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
+    if (!transferTarget) return;
+    if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
+    await conversationActions.transferContact(transferTarget, type, targetId);
+    inbox.refetch();
+  }, [transferTarget, conversationActions, inbox]);
+
+  // Se a conversa sumir da lista em tempo real (ex: outro agente ja
+  // resolveu/moveu) enquanto o dialogo de Resolver/Transferir esta aberto
+  // pra ela, o dialogo fecha (derivado no render, sem setState em effect)
+  // em vez de ficar orfao com um contactId que nao existe mais na visao atual.
+  const visibleContactIds = useMemo(
+    () => new Set((inboxFilters.filteredConversations ?? []).map((c: { contact: { id: string } }) => c.contact.id)),
+    [inboxFilters.filteredConversations]
+  );
+  const activeResolveTarget = resolveTarget && visibleContactIds.has(resolveTarget) ? resolveTarget : null;
+  const activeTransferTarget = transferTarget && visibleContactIds.has(transferTarget) ? transferTarget : null;
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
@@ -200,10 +229,31 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
                 if (conversationActions?.isFavorite(contactId)) conversationActions.unfavoriteContact(contactId);
                 else conversationActions?.favoriteContact(contactId);
               }}
+              onResolve={(contactId) => setResolveTarget(contactId)}
+              onTransfer={(contactId) => setTransferTarget(contactId)}
+              onSnooze={(contactId, duration) => conversationActions?.snoozeConversation(contactId, duration)}
+              onArchive={handleArchive}
             />
           </ErrorBoundary>
         )}
       </div>
+
+      {activeResolveTarget && (
+        <CloseConversationDialog
+          open={!!activeResolveTarget}
+          onOpenChange={(open) => !open && setResolveTarget(null)}
+          contactId={activeResolveTarget}
+          onClosed={() => { setResolveTarget(null); inbox.refetch(); }}
+        />
+      )}
+
+      {activeTransferTarget && (
+        <TransferDialog
+          open={!!activeTransferTarget}
+          onOpenChange={(open) => !open && setTransferTarget(null)}
+          onTransfer={async (type, targetId) => { await handleListTransfer(type, targetId); setTransferTarget(null); }}
+        />
+      )}
     </div>
   );
 }

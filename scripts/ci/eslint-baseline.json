@@ -482,7 +482,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "a1c00c849d7ed247af8de2a404770d73dcfdd26fdd51af21a737d6424b11b99c"
+      "sha256": "873171b58941715b514be9cb860bace07fc7e0f1e15d35672401afeec1fb367f"
     },
     {
       "path": "src/components/inbox/ConversationMemoryPanel.tsx",
@@ -542,7 +542,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "ff42208ef5593e42c1c82ace8b1ab85c74794ed2994845ff45b3141de580f4cc"
+      "sha256": "732a9a7c3a9451d456ec80458f350c2a2e0724c9f49187bf8fee19fa37781df5"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -1303,10 +1303,6 @@
     {
       "path": "src/hooks/__tests__/useWebAuthn.test.tsx",
       "sha256": "cfae7cd087661f0a4802be5b40eddd3838da22ef3d5d86cc68d8f009aabfb556"
-    },
-    {
-      "path": "src/hooks/analytics/useDashboardData.ts",
-      "sha256": "9a300453221b26ca0d434ddf9c43aacb15737c6ada839d035b0e9507b1d7c5a0"
     },
     {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
@@ -6250,9 +6246,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 96,
+      "line": 97,
       "column": 6,
-      "endLine": 96,
+      "endLine": 97,
       "endColumn": 45,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -13093,48 +13089,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "b72f87a81be42e0db2c8a3b05c4683b68ba06a12412ae6d0f5e86c5ebadd7f25",
       "contextHash": "ac2fa9db07aad14e0e50651e192e189c2eb65be1fab98e4801510b030e335755"
-    },
-    {
-      "file": "src/hooks/analytics/useDashboardData.ts",
-      "line": 27,
-      "column": 34,
-      "endLine": 27,
-      "endColumn": 37,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "1d44d8be460007e8c8b96aa44a35763a5f3019199c491eeb640032c1ad5fce2e",
-      "contextHash": "3ce0753e3d1ca08db6a0ec1f0fa172586c71ce60cb40677a41012e97fc26a922"
-    },
-    {
-      "file": "src/hooks/analytics/useDashboardData.ts",
-      "line": 28,
-      "column": 49,
-      "endLine": 28,
-      "endColumn": 52,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "0e457c248476ded48f4f0b41d5b3b233c15c4692c8b2d520bc481e15c36856bd",
-      "contextHash": "4a5c21a4fa67246ce68daae6ecd775635cd54bfca6d1fc521a83c2ad8384047d"
-    },
-    {
-      "file": "src/hooks/analytics/useDashboardData.ts",
-      "line": 32,
-      "column": 27,
-      "endLine": 32,
-      "endColumn": 30,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "869c007cdee0cf1036614c4feeeb1d9b2a87c243e3f0f4165b958c049290ba55",
-      "contextHash": "db08571d7e39695bdff494aa71f68791073ddd64e26d231a57e9470c27086282"
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",

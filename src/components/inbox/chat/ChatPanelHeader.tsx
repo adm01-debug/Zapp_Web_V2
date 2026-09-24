@@ -48,6 +48,7 @@ interface ChatPanelHeaderProps {
   isSummaryLoading?: boolean;
   canGenerateSummary?: boolean;
   onCloseConversation?: () => void;
+  onArchive?: () => void;
   lastMessages?: string[];
   allMessages?: ChatMessage[];
   onSelectSuggestion?: (text: string) => void;
@@ -58,7 +59,7 @@ interface ChatPanelHeaderProps {
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
-  onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, activeTool, onSetActiveTool,
+  onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
   isFavorite, onToggleFavorite,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
@@ -187,8 +188,8 @@ function ChatPanelHeaderBase({
             <DropdownMenuItem onClick={onOpenTransfer}><ArrowRight className="w-4 h-4 mr-2" />Transferir</DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenSchedule}><Clock className="w-4 h-4 mr-2" />Agendar mensagem</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem><CheckCircle className="w-4 h-4 mr-2" />Marcar como resolvido</DropdownMenuItem>
-            <DropdownMenuItem><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
+            <DropdownMenuItem onClick={onCloseConversation}><CheckCircle className="w-4 h-4 mr-2" />Marcar como resolvido</DropdownMenuItem>
+            <DropdownMenuItem onClick={onArchive}><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onCloseConversation} className="text-destructive focus:text-destructive">
               <XCircle className="w-4 h-4 mr-2" />Encerrar Conversa
