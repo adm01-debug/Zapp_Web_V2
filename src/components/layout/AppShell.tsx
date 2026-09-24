@@ -1,8 +1,6 @@
  import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
-import { AppHeader } from '@/components/layout/AppHeader';
-import { BreadcrumbBar } from '@/components/layout/BreadcrumbBar';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
 import { cn } from '@/lib/utils';
@@ -21,6 +19,7 @@ import { useTheme } from '@/hooks/ui/useTheme';
  import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
+import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
 
 const LazyVoiceOverlay = lazy(() => import('@/components/voice/VoiceSearchOverlayConnected'));
 
@@ -60,6 +59,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   loading,
 }, _ref) {
   const isMobile = useIsMobile();
+  useAgentPresenceJoin(userId);
   const { isZen, toggleZen } = useZenMode();
   const { isDark } = useTheme();
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
@@ -111,31 +111,14 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           currentView={currentView}
           onViewChange={handleViewChange}
           inboxBadge={unreadNotifications || undefined}
+          profile={profile}
+          userEmail={userEmail}
+          signOut={signOut}
         />
       )}
 
       <LayoutProvider value={layoutContextValue}>
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {!isMobile && !isZen && (
-          <>
-            <AppHeader
-              className="sticky top-0 z-40 shrink-0"
-              currentView={currentView}
-              profile={profile}
-              userEmail={userEmail}
-              signOut={signOut}
-              onViewChange={handleViewChange}
-            />
-            <BreadcrumbBar
-              className="sticky top-14 z-30 shrink-0"
-              breadcrumbTrail={breadcrumbTrail}
-              currentView={currentView}
-              canGoBack={canGoBack}
-              goBack={goBack}
-            />
-          </>
-        )}
-
         <main
           id="main-content"
           role="main"
