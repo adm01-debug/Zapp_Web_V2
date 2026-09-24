@@ -53,7 +53,7 @@
 | 3 · Tela principal: header, KPIs, chips, filtros | E31–E40 | topo da tela A completo com dados reais | A |
 | 4 · Grid e lista de produtos | E41–E50 | card e linha iguais ao mock, badges reais, favoritos, paginação/ordenação | A |
 | 5 · Rail direito + responsivo | E51–E58 | banner, Resumo do catálogo (gráfico real), Ações rápidas, colapso < 1280 | A |
-| 6 · Modal de detalhes | E59–E68 | galeria, ficha técnica, cores, variantes, rodapé | B |
+| 6 · Modal de detalhes | E59–E68 | **ENCERRADA (escopo reduzido)** — ver nota abaixo | B |
 | 7 · Enviar Produto | E69–E80 | 2 colunas, fotos, modelo, preview WhatsApp, variação | C |
 | 8 · Selecionar contato & envio real | E81–E90 | lista, resumo do envio, envio via fila atômica, log, toasts | D |
 | 9 · Chat, favoritos, QA, a11y, e2e, release | E91–E100 | dialog do chat unificado, aba Favoritos, PARIDADE, e2e, tag v1.0.0 | A–D |
@@ -1180,6 +1180,10 @@ etapa como escrita exigiria trabalho de backend fora do escopo deste plano.
 ---
 
 # FASE 6 — MODAL DE DETALHES (E59–E68) · mock B
+
+> **STATUS: ENCERRADA (24/09/2026), escopo reduzido.** Decisão do dono do produto: em vez de reconstruir o detalhe como modal de 2 colunas (E59, mock B), foi aproveitado o painel lateral (`Sheet`) já existente (`ProductDetailDialog.tsx`, da E46). Fechadas as lacunas funcionais reais que o painel tinha: contador "N / M" e navegação por teclado/swipe na galeria, zoom de imagem ao clicar, copiar SKU, "previsão de entrada" por variante e fornecedor no rodapé (E60/E61/E65/E66 parcial). PR [#583](https://github.com/adm01-debug/Zapp_Web_V2/pull/583), mergeada e em produção (commit `ac01285d`).
+>
+> **Não entrou neste fechamento** (ficam fora do escopo do Sheet; viram backlog só se algum cliente sentir falta): layout 2 colunas do mock B (E59); ficha técnica completa — material, capacidade, gravação, embalagem (E63, hoje só dimensão/peso/origem/prazo/qtd. mínima/NCM); swatches de cor com estoque por cor e clique sincronizando a galeria (E64, hoje só mostra as cores); lista de variantes agrupada por cor com seleção que troca o CTA do rodapé (E65, hoje é lista estática); deep link e navegação entre produtos (E67). Os checklists abaixo continuam como registro do escopo original do mock B — não refletem mais o que está em produção.
 
 ### E59 · Layout 2 colunas e cabeçalho
 **Objetivo:** estrutura do mock B.
