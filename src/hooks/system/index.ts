@@ -21,7 +21,16 @@ export * from './usePermissions';
 export * from './usePrefetch';
 export * from './usePushNotifications';
 export * from './useRateLimitLogs';
-// export * from './useResourcePrefetch'; // Temporarily disabled to avoid conflicts
+// useResourcePrefetch exporta um hook 'usePrefetch' diferente do de ./usePrefetch (colisao de nome);
+// reexportamos so os utilitarios sem conflito, mantendo './usePrefetch' como o unico 'usePrefetch' do barrel.
+export {
+  useRoutePrefetch,
+  useImagePrefetch,
+  useIntersectionPrefetch,
+  useCriticalDataPrefetch,
+  clearPrefetchCache,
+  getPrefetchedData,
+} from './useResourcePrefetch';
 export * from './useSearch';
 export * from './useSearchHistory';
 export * from './useSecurityPushNotifications';
