@@ -111,6 +111,9 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           currentView={currentView}
           onViewChange={handleViewChange}
           inboxBadge={unreadNotifications || undefined}
+          profile={profile}
+          userEmail={userEmail}
+          signOut={signOut}
         />
       )}
 
@@ -121,10 +124,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
             <AppHeader
               className="sticky top-0 z-40 shrink-0"
               currentView={currentView}
-              profile={profile}
-              userEmail={userEmail}
-              signOut={signOut}
-              onViewChange={handleViewChange}
             />
             <BreadcrumbBar
               className="sticky top-14 z-30 shrink-0"
