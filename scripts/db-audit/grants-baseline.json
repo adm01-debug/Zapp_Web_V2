@@ -3,15 +3,13 @@
     "anon_execute": [
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
-        "reschedule_talkx_recipient(p_recipient_id uuid, p_claim_token uuid, p_retry_after timestamp with time zone, p_error_message text)",
         "talkx_campaign_report(p_campaign uuid)",
         "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone)",
         "talkx_segment_tags(p_segment uuid)",
-        "transition_talkx_campaign(p_campaign_id uuid, p_action text, p_pause_reason text)",
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-23",
+    "generated_at": "2026-09-24",
     "anon_table_select": [
         "agent_achievements",
         "agent_skills",
@@ -155,5 +153,5 @@
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
     "service_role_execute_count": 124,
-    "authenticated_execute_count": 81
+    "authenticated_execute_count": 79
 }
