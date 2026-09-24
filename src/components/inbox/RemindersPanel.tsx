@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [when, setWhen] = useState('1h');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const isMountedRef = useRef(true);
 
   useEffect(() => {
     loadReminders();
@@ -49,7 +49,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
       .eq('profile_id', profileId)
       .eq('is_dismissed', false)
       .order('remind_at', { ascending: true });
-    if (data) setReminders(data);
+    if (!isMountedRef.current) return; if (data) setReminders(data);
     setLoading(false);
   };
 
@@ -80,6 +80,11 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
       loadReminders();
     }
   };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const dismissReminder = async (id: string) => {
     await supabase.from('reminders').update({ is_dismissed: true }).eq('id', id);

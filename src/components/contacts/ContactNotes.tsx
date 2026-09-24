@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +33,12 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const fetchNotes = useCallback(async () => {
     const { data } = await supabase
@@ -42,6 +48,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       .order('created_at', { ascending: false })
       .limit(20);
 
+    if (!isMountedRef.current) return;
+
     if (data) {
       // Fetch author names
       const authorIds = [...new Set(data.map(n => n.author_id))];
@@ -49,6 +57,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
         .from('profiles')
         .select('id, name')
         .in('id', authorIds);
+
+      if (!isMountedRef.current) return;
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
 

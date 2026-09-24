@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,12 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     async function fetch() {
@@ -45,6 +51,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false })
         .limit(20);
+      if (!isMountedRef.current) return;
       setPurchases(data || []);
       setLoading(false);
     }

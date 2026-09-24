@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,7 +37,7 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [newItems, setNewItems] = useState<Record<string, string>>({});
+  const [newItems, setNewItems] = useState<Record<string, string>>({}); const isMountedRef = useRef(true);
 
   useEffect(() => {
     loadMemory();
@@ -50,7 +50,7 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
       .select('*')
       .eq('contact_id', contactId)
       .maybeSingle();
-    if (data) {
+    if (!isMountedRef.current) return; if (data) {
       setMemory({
         id: data.id,
         facts: Array.isArray(data.facts) ? (data.facts as Json[]).map(String) : [],
@@ -70,6 +70,11 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
     setMemory(prev => ({ ...prev, [key]: [...prev[key], value] }));
     setNewItems(prev => ({ ...prev, [key]: '' }));
   };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const removeItem = (key: keyof Pick<MemoryData, 'facts' | 'objections_handled' | 'promises_made' | 'pending_items'>, index: number) => {
     setMemory(prev => ({ ...prev, [key]: prev[key].filter((_: string, i: number) => i !== index) }));

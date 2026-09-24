@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,12 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('purchase');
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
   useEffect(() => { loadPurchases(); }, [contactId]);
@@ -53,6 +59,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       .select('*')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
+    if (!isMountedRef.current) return;
     if (data) setPurchases(data as Purchase[]);
     setLoading(false);
   };
