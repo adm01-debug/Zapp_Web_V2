@@ -69,7 +69,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
     <div className="space-y-4">
       {summary && (
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={`text-[10px] ${statusConfig[summary.status]?.className || ''}`}>
+          <Badge variant="outline" className={`text-3xs ${statusConfig[summary.status]?.className || ''}`}>
             <StatusIcon className="h-3 w-3 mr-1" />{statusConfig[summary.status]?.label || summary.status}
           </Badge>
           <span className={sentimentConfig[summary.sentiment]?.className || ''}><SentimentIcon className="h-4 w-4" /></span>
@@ -87,7 +87,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
 
       {isLoading && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 animate-pulse">
-          <div className="flex items-center gap-2 px-1"><Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /><span className="text-[11px] font-medium text-muted-foreground">Gerando resumo de {filteredMessages.length} mensagens...</span></div>
+          <div className="flex items-center gap-2 px-1"><Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /><span className="text-2xs font-medium text-muted-foreground">Gerando resumo de {filteredMessages.length} mensagens...</span></div>
           <div className="h-16 rounded-xl bg-muted/40 border border-border/20" />
           <div className="space-y-1.5"><div className="h-3 bg-muted/30 rounded w-full" /><div className="h-3 bg-muted/30 rounded w-4/5" /><div className="h-3 bg-muted/30 rounded w-3/5" /></div>
         </motion.div>
@@ -96,7 +96,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
       {tts.autoplayBlocked && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 p-2 rounded-lg bg-warning/10 border border-warning/30 text-warning text-xs">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" /><span className="flex-1">Áudio bloqueado pelo navegador</span>
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={tts.handleRetryAutoplay}><RefreshCcw className="h-3 w-3" /> Tentar</Button>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-3xs gap-1" onClick={tts.handleRetryAutoplay}><RefreshCcw className="h-3 w-3" /> Tentar</Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tts.handleDismissAutoplayWarning}><X className="h-3 w-3" /></Button>
         </motion.div>
       )}

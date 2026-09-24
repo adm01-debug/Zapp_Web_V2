@@ -40,7 +40,7 @@ export function ThemeCustomizer() {
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Palette className="w-5 h-5 text-primary" />
               Skins
-              <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+              <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 text-2xs font-medium text-primary">
                 ✓ {activeName}
               </span>
             </h3>
@@ -130,7 +130,7 @@ export function ThemeCustomizer() {
       <motion.div initial={motionInitial} animate="visible" variants={fadeUp} custom={1}>
         <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Gamepad2 className="h-4 w-4" /> Skins Opera GX <span>({gxPresets.length})</span>
-          <span className="rounded-md border border-primary/30 bg-primary/15 text-[10px] font-bold uppercase tracking-wide text-primary px-1.5 py-0.5">
+          <span className="rounded-md border border-primary/30 bg-primary/15 text-3xs font-bold uppercase tracking-wide text-primary px-1.5 py-0.5">
             GAMER
           </span>
         </h4>

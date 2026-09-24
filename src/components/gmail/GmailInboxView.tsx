@@ -54,7 +54,7 @@ export default function GmailInboxView() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">
             <Mail className="w-5 h-5 text-destructive shrink-0" /><h2 className="text-base font-semibold">Gmail</h2>
-            {unreadCount > 0 && <Badge variant="default" className="text-[10px] px-1.5 py-0">{unreadCount} novo{unreadCount > 1 ? 's' : ''}</Badge>}
+            {unreadCount > 0 && <Badge variant="default" className="text-3xs px-1.5 py-0">{unreadCount} novo{unreadCount > 1 ? 's' : ''}</Badge>}
           </div>
           <Button variant="default" size="sm" onClick={() => setShowComposer(true)}><Pencil className="w-3.5 h-3.5 mr-1" />Compor</Button>
           <Button variant="outline" size="sm" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}><RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncInbox.isPending ? 'animate-spin' : ''}`} />Sync</Button>
@@ -85,7 +85,7 @@ export default function GmailInboxView() {
         </TabsContent>
       </Tabs>
 
-      <div className="p-2 border-t flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="p-2 border-t flex items-center justify-between text-3xs text-muted-foreground">
         <span className="flex items-center gap-1 min-w-0"><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{activeAccount?.email_address}</span></span>
         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{activeAccount?.last_sync_at ? `Sync: ${new Date(activeAccount.last_sync_at).toLocaleString('pt-BR')}` : 'Nunca sincronizado'}</span>
       </div>

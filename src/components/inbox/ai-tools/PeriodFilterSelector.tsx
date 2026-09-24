@@ -32,7 +32,7 @@ const PERIOD_PRESETS: { key: AnalysisPeriod; label: string }[] = [
 const calendarClassNames = {
   day_selected: 'bg-primary text-primary-foreground hover:bg-primary',
   day_today: 'bg-accent text-accent-foreground font-bold',
-  head_cell: 'text-[10px] font-semibold text-muted-foreground w-9',
+  head_cell: 'text-3xs font-semibold text-muted-foreground w-9',
   cell: 'h-9 w-9 text-center text-sm p-0',
   day: 'h-9 w-9 p-0 text-sm font-normal',
   caption_label: 'text-sm font-bold',
@@ -196,7 +196,7 @@ export function PeriodFilterSelector({
           <CalendarDays className="w-3.5 h-3.5" />
           <PeriodLabel period={period} from={customFrom} to={customTo} />
           <span className={cn(
-            'ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums',
+            'ml-1 px-1.5 py-0.5 rounded-full text-3xs font-bold tabular-nums',
             hasFilter ? 'bg-primary-foreground/20' : 'bg-foreground/10'
           )}>
             {filteredCount}{totalCount !== filteredCount ? `/${totalCount}` : ''}
@@ -221,7 +221,7 @@ export function PeriodFilterSelector({
         <div className="flex min-h-[340px]">
           {/* Presets column */}
           <div className="w-[160px] border-r border-border bg-muted/30 p-2 flex flex-col gap-0.5">
-            <p className="text-[10px] text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
+            <p className="text-3xs text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
             {PERIOD_PRESETS.map((p) => (
               <button
                 key={p.key}
@@ -245,10 +245,10 @@ export function PeriodFilterSelector({
           {/* Custom calendar area */}
           <div className="p-4 flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest">Período personalizado</p>
+              <p className="text-2xs text-muted-foreground font-semibold uppercase tracking-widest">Período personalizado</p>
               {(customFrom || customTo) && (
                 <button
-                  className="text-[10px] text-destructive hover:underline font-medium"
+                  className="text-3xs text-destructive hover:underline font-medium"
                   onClick={() => {
                     onClearCustom();
                     onPeriodChange('all');
@@ -260,7 +260,7 @@ export function PeriodFilterSelector({
             </div>
             <div className="flex gap-6">
               <div className="space-y-1.5">
-                <span className="text-[11px] text-muted-foreground font-semibold px-0.5 uppercase tracking-wide">De</span>
+                <span className="text-2xs text-muted-foreground font-semibold px-0.5 uppercase tracking-wide">De</span>
                 <CalendarComponent
                   mode="single"
                   selected={customFrom}
@@ -276,7 +276,7 @@ export function PeriodFilterSelector({
                 />
               </div>
               <div className="space-y-1.5">
-                <span className="text-[11px] text-muted-foreground font-semibold px-0.5 uppercase tracking-wide">Até</span>
+                <span className="text-2xs text-muted-foreground font-semibold px-0.5 uppercase tracking-wide">Até</span>
                 <CalendarComponent
                   mode="single"
                   selected={customTo}

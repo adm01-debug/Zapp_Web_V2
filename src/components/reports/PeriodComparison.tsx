@@ -78,7 +78,7 @@ export function PeriodComparison() {
     const variation = getVariation(current, previous);
     const isPositive = inverted ? variation < 0 : variation > 0;
     return (
-      <Badge variant="outline" className={`text-[10px] ${isPositive ? 'text-success border-success/30' : variation < 0 ? 'text-destructive border-destructive/30' : 'text-muted-foreground'}`}>
+      <Badge variant="outline" className={`text-3xs ${isPositive ? 'text-success border-success/30' : variation < 0 ? 'text-destructive border-destructive/30' : 'text-muted-foreground'}`}>
         {isPositive ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
         {variation > 0 ? '+' : ''}{variation}%
       </Badge>
@@ -124,12 +124,12 @@ export function PeriodComparison() {
               <div className="flex items-center gap-3">
                 <div className="flex-1 text-center p-2 rounded-lg bg-muted/20">
                   <p className="text-lg font-bold">{m.previous}</p>
-                  <p className="text-[10px] text-muted-foreground">{comparison.previous.label}</p>
+                  <p className="text-3xs text-muted-foreground">{comparison.previous.label}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 text-center p-2 rounded-lg bg-primary/10">
                   <p className="text-lg font-bold text-primary">{m.current}</p>
-                  <p className="text-[10px] text-muted-foreground">{comparison.current.label}</p>
+                  <p className="text-3xs text-muted-foreground">{comparison.current.label}</p>
                 </div>
               </div>
             </div>

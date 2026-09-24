@@ -35,7 +35,7 @@ export const ToneSelector = memo(function ToneSelector({ selected, onChange, dis
             onClick={() => onChange(t.key)}
             disabled={disabled}
             className={cn(
-              'flex flex-col items-center gap-1 py-2.5 px-3 rounded-2xl text-[11px] font-semibold transition-all duration-200 flex-1 min-w-0',
+              'flex flex-col items-center gap-1 py-2.5 px-3 rounded-2xl text-2xs font-semibold transition-all duration-200 flex-1 min-w-0',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                 : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground',

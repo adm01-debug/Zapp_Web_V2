@@ -61,7 +61,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
         {/* Avatar for inbound */}
         {!isSent && (
           <Avatar className="h-8 w-8 shrink-0 mt-1">
-            <AvatarFallback className="text-[10px] bg-accent text-accent-foreground">
+            <AvatarFallback className="text-3xs bg-accent text-accent-foreground">
               {getInitials(message.from_name, message.from_address)}
             </AvatarFallback>
           </Avatar>
@@ -119,7 +119,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
           {/* Sender name for inbound */}
           {!isSent && (
-            <p className="text-[10px] text-muted-foreground ml-1 truncate">
+            <p className="text-3xs text-muted-foreground ml-1 truncate">
               {message.from_name || message.from_address}
               {hasMultipleRecipients && (
                 <span className="opacity-60"> → {message.to_addresses?.length || 0} destinatários</span>
@@ -142,7 +142,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             {/* Subject line if present */}
             {message.subject && (
               <p className={cn(
-                'text-[11px] font-semibold mb-1.5 pb-1.5 border-b',
+                'text-2xs font-semibold mb-1.5 pb-1.5 border-b',
                 isSent ? 'border-primary-foreground/20' : 'border-border/30'
               )}>
                 {message.subject}
@@ -168,7 +168,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
               <button
                 onClick={() => (sanitizedHtml ? setFullView(true) : setExpanded(!expanded))}
                 className={cn(
-                  'text-[10px] mt-1 flex items-center gap-0.5 transition-colors',
+                  'text-3xs mt-1 flex items-center gap-0.5 transition-colors',
                   isSent ? 'text-primary-foreground/70 hover:text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
                 aria-label={expanded && !sanitizedHtml ? 'Ver menos' : 'Ver e-mail completo'}
@@ -190,7 +190,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             {/* Attachments */}
             {message.has_attachments && (
               <div className={cn(
-                'flex items-center gap-1 mt-1.5 pt-1.5 border-t text-[10px]',
+                'flex items-center gap-1 mt-1.5 pt-1.5 border-t text-3xs',
                 isSent ? 'border-primary-foreground/20 text-primary-foreground/70' : 'border-border/30 text-muted-foreground'
               )}>
                 <Paperclip className="w-3 h-3" />
@@ -206,7 +206,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
               {message.is_starred && <Star className="w-2.5 h-2.5 fill-current text-accent-foreground" />}
               <Tooltip>
                 <TooltipTrigger>
-                  <span className="text-[10px]">{formatTime(message.internal_date)}</span>
+                  <span className="text-3xs">{formatTime(message.internal_date)}</span>
                 </TooltipTrigger>
                 <TooltipContent>{formatFullDate(message.internal_date)}</TooltipContent>
               </Tooltip>
@@ -222,7 +222,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
         {/* Avatar for outbound */}
         {isSent && (
           <Avatar className="h-8 w-8 shrink-0 mt-1">
-            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+            <AvatarFallback className="text-3xs bg-primary/10 text-primary">
               Eu
             </AvatarFallback>
           </Avatar>

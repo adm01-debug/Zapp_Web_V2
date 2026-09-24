@@ -1,18 +1,30 @@
 {
-  "geradoEm": "2026-09-24T16:19:30.975Z",
+  "geradoEm": "2026-09-24T18:05:49.316Z",
   "commit": null,
   "escala": {
+    "3xs": {
+      "fontSizePx": 10,
+      "lineHeightPx": 13,
+      "lineHeightDeclarado": "0.8125rem",
+      "usos": 606
+    },
+    "2xs": {
+      "fontSizePx": 11,
+      "lineHeightPx": 14,
+      "lineHeightDeclarado": "0.875rem",
+      "usos": 327
+    },
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1732
+      "usos": 1734
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1110
+      "usos": 1111
     },
     "base": {
       "fontSizePx": 16,
@@ -103,20 +115,6 @@
       "usos": 104,
       "equivalenteNaEscala": null
     },
-    "10": {
-      "fontSizePx": 10,
-      "lineHeightPx": 15,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 605,
-      "equivalenteNaEscala": null
-    },
-    "11": {
-      "fontSizePx": 11,
-      "lineHeightPx": 16.5,
-      "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 327,
-      "equivalenteNaEscala": null
-    },
     "13": {
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
@@ -140,19 +138,19 @@
     }
   },
   "totais": {
-    "usosNomeados": 3408,
-    "usosArbitrarios": 1242,
-    "arquivosAnalisados": 1432
+    "usosNomeados": 4344,
+    "usosArbitrarios": 310,
+    "arquivosAnalisados": 1436
   },
   "violacoes": {
     "meiaMedida": 0,
     "acima16px": 1,
     "comEquivalenteExato": 0,
-    "cssMeiaMedida": 1,
-    "cssFontFamilyLiteral": 2,
-    "tsxFontSizeInline": 56,
+    "cssMeiaMedida": 0,
+    "cssFontFamilyLiteral": 0,
+    "tsxFontSizeInline": 34,
     "tsxFontFamilyLiteral": 0,
-    "pesoOrfao": 3
+    "pesoOrfao": 1
   },
   "detalheViolacoes": {
     "halfStep": [],
@@ -163,22 +161,8 @@
       }
     ],
     "hasExactEquivalent": [],
-    "cssMeiaMedida": [
-      {
-        "where": "src/styles/components.css:217",
-        "px": 12.5
-      }
-    ],
-    "cssFontFamilyLiteral": [
-      {
-        "where": "src/styles/base.css:170",
-        "value": "JetBrains Mono"
-      },
-      {
-        "where": "src/styles/utilities.css:59",
-        "value": "JetBrains Mono"
-      }
-    ],
+    "cssMeiaMedida": [],
+    "cssFontFamilyLiteral": [],
     "tsxFontSizeInline": [
       {
         "where": "src/components/admin/telemetry/TelemetryCharts.tsx:93",
@@ -209,18 +193,6 @@
         "px": 10
       },
       {
-        "where": "src/components/catalog/CatalogRail.tsx:157",
-        "px": 10
-      },
-      {
-        "where": "src/components/catalog/CatalogRail.tsx:158",
-        "px": 10
-      },
-      {
-        "where": "src/components/catalog/CatalogRail.tsx:161",
-        "px": 12
-      },
-      {
         "where": "src/components/catalog/catalogShared.tsx:74",
         "px": 10
       },
@@ -235,42 +207,6 @@
       {
         "where": "src/components/dashboard/DemandPrediction.tsx:116",
         "px": 10
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:162",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:163",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:164",
-        "px": 12
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:185",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:186",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SatisfactionMetrics.tsx:187",
-        "px": 12
-      },
-      {
-        "where": "src/components/dashboard/SentimentTrendChart.tsx:173",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SentimentTrendChart.tsx:174",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/SentimentTrendChart.tsx:175",
-        "px": 12
       },
       {
         "where": "src/components/dashboard/overview/SentimentTrendCard.tsx:49",
@@ -329,50 +265,6 @@
         "px": 12
       },
       {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:281",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:282",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:283",
-        "px": 12
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:325",
-        "px": 11
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:326",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:327",
-        "px": 12
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:334",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:426",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:427",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:428",
-        "px": 12
-      },
-      {
-        "where": "src/components/talkx/TalkXAnalytics.tsx:430",
-        "px": 10
-      },
-      {
         "where": "src/components/talkx/TalkXCampaignRunning.tsx:134",
         "px": 10
       },
@@ -397,6 +289,10 @@
         "px": 12
       },
       {
+        "where": "src/lib/chart-theme.ts:5",
+        "px": 10
+      },
+      {
         "where": "src/lib/chartColors.ts:164",
         "px": 12
       },
@@ -408,27 +304,11 @@
     "tsxFontFamilyLiteral": [],
     "pesoOrfao": [
       {
-        "where": "src/styles/base.css:73",
-        "weight": 800,
-        "faixaCarregada": [
-          300,
-          700
-        ]
-      },
-      {
-        "where": "src/styles/base.css:78",
-        "weight": 800,
-        "faixaCarregada": [
-          300,
-          700
-        ]
-      },
-      {
         "where": "src/styles/base.css:82",
         "weight": 900,
         "faixaCarregada": [
-          300,
-          700
+          200,
+          800
         ]
       }
     ]

@@ -80,7 +80,7 @@ export function QuickReplyCardList({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium truncate">{template.title}</span>
-                          {template.shortcut && <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded">{template.shortcut}</kbd>}
+                          {template.shortcut && <kbd className="px-1.5 py-0.5 text-3xs bg-muted rounded">{template.shortcut}</kbd>}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">{template.content}</p>
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">

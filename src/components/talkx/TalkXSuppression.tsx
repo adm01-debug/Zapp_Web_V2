@@ -207,13 +207,13 @@ export function TalkXSuppression() {
                         <Td>
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-dash-red shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
-                            <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-[11px] text-foreground-secondary truncate">{b.contacts?.company}</p></div>
+                            <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-2xs text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
                         <Td><span className="text-xs text-foreground-secondary">+{b.contacts?.phone?.replace(/\D/g,'')}</span></Td>
                         <Td><Pill label={om.label} tone={om.tone} /></Td>
                         <Td><span className="text-xs text-foreground-secondary max-w-[180px] block truncate">{b.reason || '—'}</span></Td>
-                        <Td><span className="text-[11px] text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
+                        <Td><span className="text-2xs text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
                         <Td><span className="text-xs text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>
                         <Td className="text-right">
@@ -241,7 +241,7 @@ export function TalkXSuppression() {
           </div>
           <div className="grid grid-cols-2 gap-2 text-center">
             {[[fmtInt(totals.total), 'Suprimidos'], [fmtInt(totals.optouts), 'Opt-outs'], [fmtInt(totals.manual), 'Manuais'], ['0', 'LGPD']].map(([v, l]) => (
-              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2"><p className="text-sm font-bold text-foreground">{v}</p><p className="text-[10px] text-foreground-secondary">{l}</p></div>
+              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2"><p className="text-sm font-bold text-foreground">{v}</p><p className="text-3xs text-foreground-secondary">{l}</p></div>
             ))}
           </div>
         </RailCard>
@@ -253,7 +253,7 @@ export function TalkXSuppression() {
               <input type="file" className="sr-only" accept=".csv,.txt,.tsv" onChange={handleImportCSV} />
             </label>
             {importResults && (
-              <div className="text-[11px] text-foreground-secondary flex flex-col gap-0.5 px-1">
+              <div className="text-2xs text-foreground-secondary flex flex-col gap-0.5 px-1">
                 <span className="text-dash-green">✓ {importResults.added} adicionados</span>
                 {importResults.notFound > 0 && <span className="text-muted-foreground">{importResults.notFound} não encontrados na base</span>}
                 {importResults.alreadyBlocked > 0 && <span className="text-muted-foreground">{importResults.alreadyBlocked} já bloqueados</span>}

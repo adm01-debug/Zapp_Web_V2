@@ -86,7 +86,7 @@ describe('SLAIndicator', () => {
       />
     );
     // Compact mode should render smaller with less detail
-    expect(container.querySelector('[class*="text-[10px]"]')).toBeTruthy();
+    expect(container.querySelector('[class*="text-3xs"]')).toBeTruthy();
   });
 
   it('applies custom className', () => {

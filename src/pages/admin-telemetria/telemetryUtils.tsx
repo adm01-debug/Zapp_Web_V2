@@ -15,13 +15,13 @@ export function formatTime(iso: string) {
 export function getSeverityBadge(severity: string) {
   switch (severity) {
     case "very_slow":
-      return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">🔴 Muito Lenta</Badge>;
+      return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-3xs">🔴 Muito Lenta</Badge>;
     case "slow":
-      return <Badge className="bg-warning/20 text-warning border-warning/30 text-[10px]">🟡 Lenta</Badge>;
+      return <Badge className="bg-warning/20 text-warning border-warning/30 text-3xs">🟡 Lenta</Badge>;
     case "error":
-      return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">❌ Erro</Badge>;
+      return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-3xs">❌ Erro</Badge>;
     default:
-      return <Badge variant="secondary" className="text-[10px]">{severity}</Badge>;
+      return <Badge variant="secondary" className="text-3xs">{severity}</Badge>;
   }
 }
 

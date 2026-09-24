@@ -180,7 +180,7 @@ export function EmailChatReplyBar({
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 shrink-0">
+            <Button variant="outline" size="sm" className="h-7 text-3xs gap-1 shrink-0">
               <ModeIcon className="w-3 h-3" />
               {modeLabel[mode]}
               <ChevronDown className="w-2.5 h-2.5" />
@@ -209,7 +209,7 @@ export function EmailChatReplyBar({
         )}
 
         {(mode === 'reply' || mode === 'reply-all') && resolvedTo && (
-          <span className="text-[10px] text-muted-foreground truncate flex-1">
+          <span className="text-3xs text-muted-foreground truncate flex-1">
             para: {resolvedTo}
           </span>
         )}
@@ -263,7 +263,7 @@ export function EmailChatReplyBar({
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {attachments.map((f, i) => (
-            <Badge key={i} variant="secondary" className="text-[10px] gap-1 py-0.5 max-w-[180px]">
+            <Badge key={i} variant="secondary" className="text-3xs gap-1 py-0.5 max-w-[180px]">
               <Paperclip className="w-2.5 h-2.5 shrink-0" />
               <span className="truncate">{f.name}</span>
               <span className="text-muted-foreground shrink-0">({formatFileSize(f.size)})</span>

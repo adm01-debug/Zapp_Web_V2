@@ -98,10 +98,10 @@ export function GlobalSearchResults({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm truncate">{result.title}</span>
-                <Badge variant="secondary" className="text-[10px]">{getResultLabel(result.type, result.messageType)}</Badge>
+                <Badge variant="secondary" className="text-3xs">{getResultLabel(result.type, result.messageType)}</Badge>
               </div>
               <p className="text-xs text-muted-foreground truncate mt-0.5">{result.preview}</p>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-3xs text-muted-foreground">
                 {format(result.timestamp, "d 'de' MMM, HH:mm", { locale: ptBR })}
               </span>
             </div>

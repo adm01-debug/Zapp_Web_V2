@@ -19,6 +19,7 @@ import type { CatalogSendEventRow, CatalogTopSent } from '@/hooks/integrations/u
 import { ProductThumb } from './catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 
 /** Texto do banner isolado numa constante (E51 item 4): trocar a copy não
  * exige mexer no componente. A marca "SUA MARCA AQUI" do mock NÃO entra —
@@ -154,11 +155,11 @@ function RailMonthlyChart({ stats, loading }: Pick<CatalogRailProps, 'stats' | '
       <div className="h-28 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={bars} margin={{ top: 4, right: 0, bottom: 0, left: -24 }}>
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-            <YAxis tickCount={4} tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--muted-foreground))' }} />
+            <YAxis tickCount={4} tickLine={false} axisLine={false} tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--muted-foreground))' }} />
             <Tooltip
               cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
-              contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+              contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }}
               // ValueType do recharts pode ser number|string|array|undefined -
               // Number() normaliza os 3 primeiros casos, fmtInt ja cobre undefined.
               formatter={(v: unknown) => [fmtInt(typeof v === 'number' ? v : Number(v) || undefined), 'Produtos']}

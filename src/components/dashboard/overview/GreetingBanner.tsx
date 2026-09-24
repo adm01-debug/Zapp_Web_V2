@@ -59,9 +59,9 @@ export function GreetingBanner({ personal = false }: { personal?: boolean } = {}
                   transition={reducedMotion ? { duration: 0 } : { duration: 0.5 }}
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-2xs text-muted-foreground mt-0.5">
                 {stats.xp.toLocaleString('pt-BR')} / {nextLevelXp.toLocaleString('pt-BR')} XP
-                <span className="text-[11px] font-semibold text-foreground ml-1">{Math.round(progress)}%</span>
+                <span className="text-2xs font-semibold text-foreground ml-1">{Math.round(progress)}%</span>
               </p>
             </div>
           </div>

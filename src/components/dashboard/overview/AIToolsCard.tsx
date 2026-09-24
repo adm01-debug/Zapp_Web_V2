@@ -37,7 +37,7 @@ export function AIToolsCard({ onSeeAll }: AIToolsCardProps) {
               </span>
               <span>
                 <p className="text-xs font-semibold text-foreground truncate">{feature.title}</p>
-                <p className="text-[11px] text-foreground-secondary line-clamp-2 leading-snug">{feature.description}</p>
+                <p className="text-2xs text-foreground-secondary line-clamp-2 leading-snug">{feature.description}</p>
               </span>
             </button>
           );

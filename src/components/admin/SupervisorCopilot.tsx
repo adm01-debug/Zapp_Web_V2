@@ -90,7 +90,7 @@ Agentes: ${agentData.data?.map(a => `${a.name} (${a.role})`).join(', ') || 'nenh
               key={q}
               variant="outline"
               size="sm"
-              className="h-7 text-[10px]"
+              className="h-7 text-3xs"
               onClick={() => askQuestion(q)}
               disabled={loading}
             >

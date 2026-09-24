@@ -89,13 +89,13 @@ export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
             />
 
             <div className="px-3 py-2 border-t border-border/30 flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-3xs text-muted-foreground">
                 {filtered.length}/{stickers.length} figurinhas
                 {showRecent && ' · Mais usadas'}{showFavorites && ' · Favoritas'}{activeCategory && ` · ${CATEGORY_LABELS[activeCategory]?.label}`}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] text-muted-foreground/60">Arraste uma imagem ou</span>
-                <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-primary gap-1" onClick={() => fileInputRef.current?.click()} disabled={uploading || !!pendingUpload}>
+                <Button variant="ghost" size="sm" className="h-6 text-3xs text-muted-foreground hover:text-primary gap-1" onClick={() => fileInputRef.current?.click()} disabled={uploading || !!pendingUpload}>
                   <Upload className="w-3 h-3" />Upload
                 </Button>
               </div>

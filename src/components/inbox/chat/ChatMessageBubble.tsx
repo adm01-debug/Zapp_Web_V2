@@ -280,7 +280,7 @@ export function ChatMessageBubble({
               isSent ? 'text-primary-foreground/70' : 'text-muted-foreground'
             )}
           >
-            <span className="text-[10px]">
+            <span className="text-3xs">
               {formatMessageTime(message.timestamp)}
             </span>
             {isSent && <MessageStatusIcon status={message.status} />}

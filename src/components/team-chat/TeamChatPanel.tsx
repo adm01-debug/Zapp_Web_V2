@@ -129,13 +129,13 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
               <ContextMenu key={msg.id}>
                 <ContextMenuTrigger asChild>
                   <div id={`msg-${msg.id}`} className="scroll-mt-20">
-                    {showDate && <div className="flex justify-center py-4"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/30 px-4 py-1.5 rounded-full border border-border/10">{formatDateSep(msg.created_at)}</span></div>}
+                    {showDate && <div className="flex justify-center py-4"><span className="text-3xs font-bold uppercase tracking-widest text-muted-foreground bg-muted/30 px-4 py-1.5 rounded-full border border-border/10">{formatDateSep(msg.created_at)}</span></div>}
                     <div className={cn("flex gap-3 py-1 group", isMine ? "flex-row-reverse" : "flex-row")}>
-                      {!isMine && <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm"><AvatarImage src={msg.sender?.avatar_url || undefined} alt={msg.sender?.name || 'Remetente'} /><AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{msg.sender?.name?.charAt(0) || '?'}</AvatarFallback></Avatar>}
+                      {!isMine && <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm"><AvatarImage src={msg.sender?.avatar_url || undefined} alt={msg.sender?.name || 'Remetente'} /><AvatarFallback className="text-3xs font-bold bg-primary/10 text-primary">{msg.sender?.name?.charAt(0) || '?'}</AvatarFallback></Avatar>}
                       <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300", 
                         isMine ? "bg-primary text-primary-foreground rounded-tr-none border border-primary/20" : "bg-card border border-border/50 text-foreground rounded-tl-none")}>
-                        {!isMine && conversation.type === 'group' && <p className="text-[10px] font-bold mb-1 text-primary/80 uppercase tracking-tighter">{msg.sender?.name}</p>}
-                        {repliedMsg && <div className={cn("text-[10px] mb-1.5 px-2 py-1 rounded border-l-2", isMine ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-muted/50 border-muted-foreground/30")}><span className="font-medium">{repliedMsg.sender?.name}</span><p className="truncate opacity-80 flex items-center gap-1">{repliedMsg.media_type && <MediaTypeIcon type={repliedMsg.media_type} />}{repliedMsg.content || 'Mídia'}</p></div>}
+                        {!isMine && conversation.type === 'group' && <p className="text-3xs font-bold mb-1 text-primary/80 uppercase tracking-tighter">{msg.sender?.name}</p>}
+                        {repliedMsg && <div className={cn("text-3xs mb-1.5 px-2 py-1 rounded border-l-2", isMine ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-muted/50 border-muted-foreground/30")}><span className="font-medium">{repliedMsg.sender?.name}</span><p className="truncate opacity-80 flex items-center gap-1">{repliedMsg.media_type && <MediaTypeIcon type={repliedMsg.media_type} />}{repliedMsg.content || 'Mídia'}</p></div>}
                         {isEditing ? (
                           <div className="space-y-1.5 min-w-[150px]">
                             <Input value={s.editText} onChange={e => s.setEditText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') s.handleSaveEdit(); if (e.key === 'Escape') s.handleCancelEdit(); }} className="h-8 text-sm bg-background text-foreground border-primary/50" autoFocus />
@@ -149,7 +149,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                             {repliedMsg && (
                               <div 
                                 className={cn(
-                                  "text-[10px] mb-2 px-2 py-1.5 rounded bg-muted/30 border-l-2 border-primary/50 cursor-pointer hover:bg-muted/50 transition-colors",
+                                  "text-3xs mb-2 px-2 py-1.5 rounded bg-muted/30 border-l-2 border-primary/50 cursor-pointer hover:bg-muted/50 transition-colors",
                                   isMine ? "bg-white/10" : "bg-muted/50"
                                 )}
                                 onClick={() => {
@@ -192,7 +192,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                                   {isThisTtsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : isThisTtsPlaying ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
                                 </button>
                               )}
-                              <span className={cn("text-[10px] tabular-nums opacity-70 font-medium", isMine ? "text-primary-foreground" : "text-muted-foreground")}>
+                              <span className={cn("text-3xs tabular-nums opacity-70 font-medium", isMine ? "text-primary-foreground" : "text-muted-foreground")}>
                                 {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
                               </span>
                             </div>

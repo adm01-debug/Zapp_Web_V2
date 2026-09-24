@@ -65,7 +65,7 @@ export function InputExtraTools({
               <motion.button key={reply.id} whileHover={{ x: 4 }} onClick={() => onQuickReply(reply)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{reply.title}</span>
-                  <Badge variant="outline" className="text-[10px] border-primary/30">{reply.shortcut}</Badge>
+                  <Badge variant="outline" className="text-3xs border-primary/30">{reply.shortcut}</Badge>
                 </div>
               </motion.button>
             ))}

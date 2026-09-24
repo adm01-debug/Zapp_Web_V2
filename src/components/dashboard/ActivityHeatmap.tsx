@@ -238,7 +238,7 @@ export const ActivityHeatmap = ({
                 {WEEKDAYS.map((day, i) => (
                   <div
                     key={day}
-                    className="h-3 text-[10px] text-muted-foreground flex items-center"
+                    className="h-3 text-3xs text-muted-foreground flex items-center"
                     style={{ visibility: i % 2 === 1 ? 'visible' : 'hidden' }}
                   >
                     {day}

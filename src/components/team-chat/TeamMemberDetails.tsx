@@ -106,7 +106,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-muted-foreground truncate">{member.job_title || mRole.label}</span>
+                          <span className="text-3xs text-muted-foreground truncate">{member.job_title || mRole.label}</span>
                           {mBirthday && mBirthday.daysUntil <= 7 && mBirthday.daysUntil > 0 && <Badge variant="outline" className="text-[8px] px-1 py-0 bg-chart-4/10 text-chart-4 border-chart-4/20">🎂 {mBirthday.daysUntil}d</Badge>}
                         </div>
                       </div>
@@ -127,7 +127,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                   <div key={member.id} className="flex items-center gap-2.5 text-sm">
                     <Cake className={cn('w-3.5 h-3.5 shrink-0', member.bInfo.isToday ? 'text-chart-4' : 'text-muted-foreground')} />
                     <span className="truncate flex-1">{member.name}</span>
-                    <span className={cn('text-[10px] shrink-0', member.bInfo.isToday ? 'text-chart-4 font-semibold' : 'text-muted-foreground')}>
+                    <span className={cn('text-3xs shrink-0', member.bInfo.isToday ? 'text-chart-4 font-semibold' : 'text-muted-foreground')}>
                       {member.bInfo.isToday ? '🎉 Hoje!' : `${format(member.bInfo.date, 'dd/MM')} (${member.bInfo.daysUntil}d)`}
                     </span>
                   </div>

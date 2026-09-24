@@ -72,8 +72,8 @@ export function SLAConfigurationManager() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-foreground truncate">{cfg.name}</span>
-                            <Badge variant="outline" className={`text-[10px] ${pCfg.color}`}>{pCfg.label}</Badge>
-                            {cfg.is_default && <Badge variant="secondary" className="text-[10px]">Padrão</Badge>}
+                            <Badge variant="outline" className={`text-3xs ${pCfg.color}`}>{pCfg.label}</Badge>
+                            {cfg.is_default && <Badge variant="secondary" className="text-3xs">Padrão</Badge>}
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 1ª Resp: <span className="font-medium text-foreground/80">{formatSLAMinutes(cfg.first_response_minutes)}</span></span>
@@ -128,7 +128,7 @@ export function SLAConfigurationManager() {
             <div>
               <Label className="text-xs font-medium">1ª Resposta (min)</Label>
               <Input type="number" min={1} max={5} value={5} disabled className="mt-1 opacity-70" aria-describedby="sla-fr-hint" />
-              <p id="sla-fr-hint" className="text-[11px] text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
+              <p id="sla-fr-hint" className="text-2xs text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_default} onCheckedChange={v => setForm(f => ({ ...f, is_default: v }))} />
