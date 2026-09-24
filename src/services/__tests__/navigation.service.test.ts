@@ -67,11 +67,12 @@ describe('NavigationService role gating', () => {
     expect(NavigationService.canAccess('audit-logs', ['admin'])).toBe(true);
   });
 
-  it('filterNavItems drops every staff-only item for a plain agent', () => {
+  it('filterNavItems drops every staff-only item for a plain agent, except the always-visible Configurações', () => {
     const groups = NavigationService.getGroups();
     for (const group of groups) {
       const visible = NavigationService.filterNavItems(group.items, ['agent']);
-      expect(visible).toEqual([]);
+      const visibleIds = visible.map(({ id }) => id);
+      expect(visibleIds).toEqual(group.label === 'Sistema' ? ['settings'] : []);
     }
     const advanced = NavigationService.filterNavItems(NavigationService.getAdvancedNav(), ['agent']);
     expect(advanced).toEqual([]);

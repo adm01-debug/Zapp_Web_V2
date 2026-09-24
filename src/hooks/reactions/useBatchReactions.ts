@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import type { MessageReaction } from './types';
@@ -9,6 +9,14 @@ import type { MessageReaction } from './types';
 export function useMessagesReactions(messageIds: string[]) {
   const [reactionsMap, setReactionsMap] = useState<Record<string, MessageReaction[]>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (messageIds.length === 0) return;
@@ -29,11 +37,15 @@ export function useMessagesReactions(messageIds: string[]) {
           return acc;
         }, {} as Record<string, MessageReaction[]>);
 
-        setReactionsMap(grouped);
+        if (isMountedRef.current) {
+          setReactionsMap(grouped);
+        }
       } catch (err) {
         log.error('Error fetching reactions:', err);
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 

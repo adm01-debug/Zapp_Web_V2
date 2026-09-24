@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('NPSSurveys');
@@ -27,6 +27,14 @@ interface NPSMetrics {
 export function useNPSSurveys() {
   const [surveys, setSurveys] = useState<NPSSurvey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchSurveys = useCallback(async () => {
     setIsLoading(true);
@@ -38,11 +46,15 @@ export function useNPSSurveys() {
         .limit(500);
 
       if (error) throw error;
-      setSurveys((data as NPSSurvey[]) || []);
+      if (isMountedRef.current) {
+        setSurveys((data as NPSSurvey[]) || []);
+      }
     } catch (err) {
       log.error('Error fetching NPS surveys:', err);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, []);
 

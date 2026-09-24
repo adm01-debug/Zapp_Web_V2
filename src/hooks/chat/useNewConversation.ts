@@ -29,13 +29,18 @@ export function useNewConversation(
 
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     supabase.from('whatsapp_connections').select('id, name').eq('status', 'connected')
       .then(({ data }) => {
+        if (cancelled) return;
         if (data && data.length > 0) {
           setConnections(data);
           setSelectedConnection(data[0].id);
         }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   useEffect(() => {
