@@ -13,6 +13,7 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
 import { IconTile, TalkXEmptyState, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
 interface Props { campaigns: TalkXCampaign[] }
 type Period = '7d' | '30d' | '90d';
@@ -278,9 +279,9 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} />
+                <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
+                <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                 <Bar dataKey="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Falhas" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -322,16 +323,16 @@ export function TalkXAnalytics({ campaigns }: Props) {
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={dayTotals} margin={{ top: 4, right: 4, left: -25, bottom: 2 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-              <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} />
+              <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM }} stroke="hsl(var(--muted-foreground))" />
+              <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
+              <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
               <Bar dataKey="Envios" radius={[4, 4, 0, 0]}>
                 {dayTotals.map((entry) => {
                   const max = Math.max(...dayTotals.map((d) => d.Envios), 1);
                   const intensity = entry.Envios / max;
                   return <Cell key={entry.name} fill={`hsl(var(--primary) / ${0.3 + intensity * 0.7})`} />;
                 })}
-                <LabelList dataKey="Envios" position="top" style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} formatter={(v) => (typeof v === 'number' && v > 0 ? String(v) : '')} />
+                <LabelList dataKey="Envios" position="top" style={{ fontSize: CHART_LABEL_FONT_SIZE, fill: 'hsl(var(--muted-foreground))' }} formatter={(v) => (typeof v === 'number' && v > 0 ? String(v) : '')} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -423,11 +424,11 @@ export function TalkXAnalytics({ campaigns }: Props) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={compareData} margin={{ top: 4, right: 4, left: -12, bottom: 32 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
-                <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v) => [String(v) + '%', '']} />
+                <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
+                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
+                <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} formatter={(v) => [String(v) + '%', '']} />
                 <Bar dataKey="Envio (%)" fill="hsl(var(--dash-green))" radius={[4, 4, 0, 0]} maxBarSize={48}>
-                  <LabelList dataKey="Envio (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: 10, fill: "hsl(var(--foreground-secondary))" }} />
+                  <LabelList dataKey="Envio (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: CHART_LABEL_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} />
                 </Bar>
                 <Bar dataKey="Falha (%)" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
