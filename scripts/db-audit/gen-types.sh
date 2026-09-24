@@ -6,15 +6,19 @@
 #   Requer: DESTINO_URL no ambiente
 #           Formato: postgresql://... (porta 5432 ou 6543 session-mode — nao pooler transaction)
 #   Uso local: DESTINO_URL="postgresql://..." bash scripts/db-audit/gen-types.sh
-#   Uso em CI: chamado por db-live-guard.yml (guarda de drift do banco oficial).
+#   Uso em CI: chamado por db-live-guard.yml (guarda de drift do banco oficial)
+#              e por types-sync.yml (sincronizacao automatica de types/catalogo/
+#              manifesto) — os dois usam este mesmo modo padrao, via o proxy
+#              pgbouncer descrito abaixo.
 #
 # Modo --local: introspecta um Postgres LOCAL (supabase db start), que aplica
 #   automaticamente as migrations de supabase/migrations num volume novo.
 #   Reflete so o que esta commitado em supabase/migrations; nao detecta
 #   drift nao commitado no banco de producao.
 #   Uso local: supabase db start && bash scripts/db-audit/gen-types.sh --local
-#   Uso em CI: chamado por types-sync.yml, depois do step "Iniciar banco
-#              local (supabase db start)".
+#   Uso em CI: nenhum workflow atual usa --local (nao ha step "supabase db
+#              start" em nenhum workflow); e reservado para uso manual em
+#              dev.
 #
 # Binario: supabase CLI 2.116.0 (CI: supabase/setup-cli@v3 version: 2.116.0)
 #
@@ -73,7 +77,15 @@ else
 
     PROXY_PORT="$(node scripts/db-audit/local-pg-proxy.mjs "$PROXY_DIR")"
 
-    pgbouncer "$PROXY_DIR/pgbouncer.ini" &
+    # Saida redirecionada para dentro do PROXY_DIR (removido pela trap acima):
+    # sem isso, o pgbouncer roda em foreground e duplica cada linha de LOG no
+    # stdout/stderr herdado do job, que o GitHub Actions captura
+    # PERMANENTEMENTE no log do run (repo publico) — incluindo usuario real
+    # de producao (ex.: postgres.<project-ref>) e IP real do banco, que o
+    # `::add-mask::` do workflow nao cobre por serem apenas fragmentos da
+    # DESTINO_URL secreta, nao a string inteira. Isso derrubava a mesma
+    # opacidade que database-identity.mjs foi desenhado pra garantir.
+    pgbouncer "$PROXY_DIR/pgbouncer.ini" >"$PROXY_DIR/pgbouncer.stdout.log" 2>&1 &
     PROXY_PID=$!
 
     # sslmode=disable explicito: o passo anterior ("Exigir credencial do
@@ -129,4 +141,5 @@ awk '
 ' "$TMP" > "${TMP}.normalized"
 
 mv "${TMP}.normalized" "$OUTPUT"
-echo "types gerado: ${OUTPUT} ($(wc -c < "$OUTPUT") bytes)"
+BYTES="$(wc -c < "$OUTPUT")"
+echo "types gerado: ${OUTPUT} (${BYTES} bytes)"

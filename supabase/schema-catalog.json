@@ -12,6 +12,7 @@
     "source": "postgres schema public",
     "tables": [
         "agent_achievements",
+        "agent_presence",
         "agent_skills",
         "agent_stats",
         "agent_visibility_grants",
@@ -164,6 +165,9 @@
         "agent_achievements.achievement_description:text:nullable",
         "agent_achievements.xp_earned:integer:not-null",
         "agent_achievements.earned_at:timestamp with time zone:not-null",
+        "agent_presence.user_id:uuid:not-null",
+        "agent_presence.status:text:not-null",
+        "agent_presence.updated_at:timestamp with time zone:not-null",
         "agent_skills.id:uuid:not-null",
         "agent_skills.profile_id:uuid:not-null",
         "agent_skills.skill_name:text:not-null",
