@@ -97,6 +97,8 @@ export class NavigationService {
           { id: 'connections', icon: Link2, label: 'Conexões', roles: STAFF_ROLES },
           { id: 'integrations', icon: Plug, label: 'Integrações', roles: STAFF_ROLES },
           { id: 'omni-inbox', icon: Inbox, label: 'Omnichannel', layout: 'full', roles: STAFF_ROLES },
+          { id: 'gmail', icon: Mail, label: 'Gmail', roles: STAFF_ROLES },
+          { id: 'omnichannel', icon: Plug, label: 'Canais Omnichannel', roles: STAFF_ROLES },
         ],
       },
       {
@@ -109,7 +111,7 @@ export class NavigationService {
           { id: 'admin', icon: UserCog, label: 'Admin', roles: ADMIN_ONLY },
           { id: 'themes', icon: Palette, label: 'Skins', roles: STAFF_ROLES },
           { id: 'docs', icon: BookOpen, label: 'Documentação', roles: STAFF_ROLES },
-          { id: 'settings', icon: Settings, label: 'Configurações', roles: STAFF_ROLES },
+          { id: 'settings', icon: Settings, label: 'Configurações' }, // sem roles: SettingsView.tsx já filtra as 12 abas de sistema por isStaff; agente precisa das 4 pessoais
         ],
       },
       {
