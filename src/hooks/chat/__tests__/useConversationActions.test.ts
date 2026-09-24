@@ -25,6 +25,13 @@ let favoriteDeleteResult: Record<string, unknown> = { error: null };
 let snoozeInsertResult: Record<string, unknown> = { error: null };
 const snoozeInsertCalls: unknown[] = [];
 
+// favoriteContact/unfavoriteContact disparam _favBus, que aciona um
+// loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
+// do hook). Sem refletir o estado real aqui, esse refetch sempre lia []
+// e sobrescrevia o setFavoriteIds otimista numa corrida — precisa espelhar
+// inserts/deletes de verdade, não só devolver um resultado fixo.
+let fakeFavoriteRows: Array<{ contact_id: string }> = [];
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
@@ -41,9 +48,26 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'favorite_contacts') {
         return {
-          select: vi.fn(() => resultChain({ data: [], error: null })),
-          insert: vi.fn(() => resultChain(favoriteInsertResult)),
-          delete: vi.fn(() => resultChain(favoriteDeleteResult)),
+          select: vi.fn(() => resultChain({ data: fakeFavoriteRows, error: null })),
+          insert: vi.fn((payload: { contact_id: string }) => {
+            if (!favoriteInsertResult.error) fakeFavoriteRows = [...fakeFavoriteRows, { contact_id: payload.contact_id }];
+            return resultChain(favoriteInsertResult);
+          }),
+          delete: vi.fn(() => {
+            const chain: Record<string, unknown> = {};
+            let filterContactId: string | undefined;
+            chain.eq = vi.fn((column: string, value: string) => {
+              if (column === 'contact_id') filterContactId = value;
+              return chain;
+            });
+            chain.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) => {
+              if (!favoriteDeleteResult.error) {
+                fakeFavoriteRows = fakeFavoriteRows.filter((r) => r.contact_id !== filterContactId);
+              }
+              return Promise.resolve(favoriteDeleteResult).then(resolve, reject);
+            };
+            return chain;
+          }),
         };
       }
       if (table === 'conversation_snoozes') {
@@ -100,6 +124,7 @@ describe('useConversationActions', () => {
     pinnedDeleteResult = { error: null };
     favoriteInsertResult = { error: null };
     favoriteDeleteResult = { error: null };
+    fakeFavoriteRows = [];
     snoozeInsertResult = { error: null };
     snoozeInsertCalls.length = 0;
   });
@@ -298,12 +323,16 @@ describe('useConversationActions', () => {
       await act(async () => {
         await result.current.favoriteContact('contact-1');
       });
-      expect(result.current.isFavorite('contact-1')).toBe(true);
+      // waitFor (não expect direto): favoriteContact dispara _favBus, que
+      // aciona um loadFavorites() assíncrono em segundo plano — a asserção
+      // precisa esperar esse refetch assentar, não só o retorno da própria
+      // chamada.
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(true));
 
       await act(async () => {
         await result.current.unfavoriteContact('contact-1');
       });
-      expect(result.current.isFavorite('contact-1')).toBe(false);
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(false));
     });
   });
 });
