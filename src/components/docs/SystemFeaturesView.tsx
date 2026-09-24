@@ -72,7 +72,7 @@ export function SystemFeaturesView() {
                       <div className="flex items-center gap-3">
                         <div className={`p-1.5 rounded-lg bg-muted ${section.color}`}><Icon className="w-4 h-4" /></div>
                         <span className="font-semibold text-foreground">{section.id}. {section.title}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{section.items.length}</Badge>
+                        <Badge variant="secondary" className="text-3xs px-1.5 py-0">{section.items.length}</Badge>
                       </div>
                       {!searchTerm && (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />)}
                     </CardTitle>

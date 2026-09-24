@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Calendar, AlertTriangle, Clock } from 'lucide
 import { format, subDays, startOfDay, getDay, getHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart } from 'recharts';
+import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -93,15 +94,15 @@ export function DemandForecast() {
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-2 rounded-lg bg-primary/5">
             <p className="text-lg font-bold text-primary">{totalPredicted}</p>
-            <p className="text-[10px] text-muted-foreground">Msgs previstas</p>
+            <p className="text-3xs text-muted-foreground">Msgs previstas</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-warning/5">
             <p className="text-lg font-bold text-warning">{topPeaks[0]?.hour ?? '-'}h</p>
-            <p className="text-[10px] text-muted-foreground">Hora de pico</p>
+            <p className="text-3xs text-muted-foreground">Hora de pico</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/10">
             <p className="text-lg font-bold">{DAYS[getDay(new Date())]}</p>
-            <p className="text-[10px] text-muted-foreground">Dia atual</p>
+            <p className="text-3xs text-muted-foreground">Dia atual</p>
           </div>
         </div>
 
@@ -110,9 +111,9 @@ export function DemandForecast() {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={historicalData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <Tooltip contentStyle={{ fontSize: 12 }} />
+              <XAxis dataKey="day" tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" />
+              <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" />
+              <Tooltip contentStyle={{ fontSize: CHART_TOOLTIP_FONT_SIZE }} />
               <Bar dataKey="predicted" fill="hsl(var(--primary))" opacity={0.6} radius={[4, 4, 0, 0]} name="Previsto" />
               <Line type="monotone" dataKey="predicted" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Tendência" />
             </ComposedChart>
@@ -126,7 +127,7 @@ export function DemandForecast() {
           </p>
           <div className="flex flex-wrap gap-1.5">
             {topPeaks.map(p => (
-              <Badge key={p.hour} variant="outline" className="text-[10px]">
+              <Badge key={p.hour} variant="outline" className="text-3xs">
                 {String(p.hour).padStart(2, '0')}h — ~{p.avg} msg/dia
               </Badge>
             ))}

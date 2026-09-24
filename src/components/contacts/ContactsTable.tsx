@@ -168,7 +168,7 @@ export function ContactsTable({
                     </div>
                     <div className="min-w-0">
                       <HighlightText text={`${contact.name} ${contact.surname || ''}`.trim()} highlight={searchQuery} className="font-medium text-sm block truncate" />
-                      {contact.nickname && <span className="text-[11px] text-muted-foreground">({contact.nickname})</span>}
+                      {contact.nickname && <span className="text-2xs text-muted-foreground">({contact.nickname})</span>}
                     </div>
                   </div>
                 </td>
@@ -184,14 +184,14 @@ export function ContactsTable({
                 <td className="p-3">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span className="font-mono text-[11px]">{contact.phone}</span>
+                    <span className="font-mono text-2xs">{contact.phone}</span>
                   </div>
                 </td>
                 <td className="p-3">
                   {contact.email ? (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate max-w-[160px] text-[11px]">{contact.email}</span>
+                      <span className="truncate max-w-[160px] text-2xs">{contact.email}</span>
                     </div>
                   ) : <span className="text-muted-foreground/30">—</span>}
                 </td>
@@ -210,7 +210,7 @@ export function ContactsTable({
                 </td>
                 <td className="p-3">
                   {contact.job_title ? (
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
                       <Briefcase className="w-3 h-3 shrink-0" />
                       <span className="truncate max-w-[140px]">{contact.job_title}</span>
                     </div>
@@ -219,10 +219,10 @@ export function ContactsTable({
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1">
                     {contact.tags?.slice(0, 2).map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5">{tag}</Badge>
+                      <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
                     ))}
                     {(contact.tags?.length || 0) > 2 && (
-                      <Badge variant="secondary" className="text-[10px] h-5 px-1.5">+{(contact.tags?.length || 0) - 2}</Badge>
+                      <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{(contact.tags?.length || 0) - 2}</Badge>
                     )}
                   </div>
                 </td>

@@ -136,11 +136,11 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
             </div>
             <div>
               <p className="text-xs font-medium text-white/90">{pushName || 'Contato'}</p>
-              {time && <p className="text-[10px] text-white/50">{time}</p>}
+              {time && <p className="text-3xs text-white/50">{time}</p>}
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-white/40 mr-2">{index + 1}/{messages.length}</span>
+            <span className="text-3xs text-white/40 mr-2">{index + 1}/{messages.length}</span>
             <Button variant="ghost" size="icon" onClick={onClose} className="w-8 h-8 text-white/70 hover:text-white hover:bg-white/10"><X className="w-4 h-4" /></Button>
           </div>
         </div>

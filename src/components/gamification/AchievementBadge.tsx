@@ -197,7 +197,7 @@ export function AchievementBadge({
               {name}
             </h4>
             <span className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide",
+              "px-1.5 py-0.5 rounded text-3xs font-medium uppercase tracking-wide",
               config.rarity === 'common' && "bg-muted/20 text-muted-foreground",
               config.rarity === 'rare' && "bg-info/20 text-info",
               config.rarity === 'epic' && "bg-primary/20 text-primary",
@@ -218,7 +218,7 @@ export function AchievementBadge({
               <Zap className="w-3 h-3" />
               +{xpEarned} XP
             </span>
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1 text-3xs text-muted-foreground">
               <Clock className="w-3 h-3" />
               {formattedDate}
             </span>

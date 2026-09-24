@@ -154,7 +154,7 @@ export function TypingIndicator({
                   transition={{ delay: i * 0.1 }}
                   className="relative"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-[10px] font-bold text-primary-foreground border-2 border-background">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-3xs font-bold text-primary-foreground border-2 border-background">
                     {name.charAt(0).toUpperCase()}
                   </div>
                   <motion.div

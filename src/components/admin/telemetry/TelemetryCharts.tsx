@@ -3,6 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from "@/lib/chart-theme";
 import { Activity, TrendingUp, Timer } from "lucide-react";
 
 interface TelemetryRow {
@@ -90,7 +91,7 @@ export function TelemetryCharts({ rows, timeFilter }: TelemetryChartsProps) {
     background: "hsl(var(--card))",
     border: "1px solid hsl(var(--border))",
     borderRadius: 8,
-    fontSize: 12,
+    fontSize: CHART_TOOLTIP_FONT_SIZE,
   };
 
   return (
@@ -107,8 +108,8 @@ export function TelemetryCharts({ rows, timeFilter }: TelemetryChartsProps) {
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={timelineData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-              <XAxis dataKey="time" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" allowDecimals={false} />
+              <XAxis dataKey="time" tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" />
+              <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: "hsl(var(--foreground))" }} />
               <Area
                 type="monotone" dataKey="muitoLentas" name="Muito Lentas"
@@ -142,8 +143,8 @@ export function TelemetryCharts({ rows, timeFilter }: TelemetryChartsProps) {
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={timelineData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-              <XAxis dataKey="time" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+              <XAxis dataKey="time" tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" />
+              <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} className="fill-muted-foreground" />
               <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: "hsl(var(--foreground))" }} />
               <Area
                 type="monotone" dataKey="maxMs" name="Máxima"
@@ -172,8 +173,8 @@ export function TelemetryCharts({ rows, timeFilter }: TelemetryChartsProps) {
           <CardContent>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={barData} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+                <XAxis type="number" tick={{ fontSize: CHART_TICK_FONT_SIZE }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE }} width={120} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Alertas" />
               </BarChart>

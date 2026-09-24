@@ -22,11 +22,14 @@
 #
 # NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
 # register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
-# `gen types typescript --db-url` in-process via driver Postgres proprio, sem
-# spawnar Docker/postgres-meta. Esse driver nao respeita PGPASSFILE (convencao
-# exclusiva de libpq/psql/pgx) — por isso a credencial precisa ir direto no
-# --db-url. --local nao tem esse problema: nao usa credencial nenhuma, so o
-# Postgres do Docker subido por `supabase db start`.
+# `gen types typescript --db-url` subindo um container Docker
+# (ghcr.io/supabase/postgres-meta), com --network host, que conecta usando a
+# --db-url recebida em texto puro (confirmado empiricamente — nao e
+# in-process nem evita Docker, ao contrario do que versoes anteriores deste
+# comentario afirmavam). Esse caminho nao respeita PGPASSFILE (convencao
+# exclusiva de libpq/psql/pgx). Mitigacao: ver bloco "Proxy local" abaixo.
+# --local nao tem esse problema: nao usa credencial nenhuma, so o Postgres do
+# Docker subido por `supabase db start`.
 set -e
 
 MODE=db-url
@@ -50,10 +53,53 @@ else
     exit 1
   fi
 
-  supabase gen types typescript \
-    --db-url "$DESTINO_URL" \
-    --schema public \
-    > "$TMP"
+  # Proxy local: `--db-url` vai para um container Docker fora do nosso
+  # controle (ver comentario acima), entao a credencial real de producao
+  # ficaria em texto puro no argv/ambiente desse processo, visivel via
+  # /proc a qualquer processo irmao no mesmo job (ex.: dependencia
+  # comprometida por `bun install` mais adiante no workflow). Se pgbouncer
+  # estiver disponivel, sobe um proxy so-loopback (127.0.0.1) cuja config
+  # (com a credencial real) fica num arquivo 0600 dentro de um diretorio
+  # 0700; o `--db-url` passado ao supabase CLI usa credencial descartavel
+  # que nao aponta pra producao. server_tls_sslmode=verify-full com a CA
+  # Supabase pinada no trecho pgbouncer->producao preserva a mesma postura
+  # de TLS ja usada pelos outros scripts. Validado empiricamente (CLI
+  # 2.116.0 + Docker): o container gerado alcanca 127.0.0.1 do runner.
+  # Sem pgbouncer (ex.: uso manual local), cai no comportamento anterior.
+  if command -v pgbouncer >/dev/null 2>&1; then
+    PROXY_DIR="$(mktemp -d /tmp/pg-proxy.XXXXXX)"
+    chmod 700 "$PROXY_DIR"
+    trap 'rm -f "$TMP" "${TMP}.normalized"; kill "${PROXY_PID:-}" 2>/dev/null || true; rm -rf "$PROXY_DIR"' EXIT HUP INT TERM
+
+    PROXY_PORT="$(node scripts/db-audit/local-pg-proxy.mjs "$PROXY_DIR")"
+
+    pgbouncer "$PROXY_DIR/pgbouncer.ini" &
+    PROXY_PID=$!
+
+    i=0
+    while [ "$i" -lt 50 ]; do
+      if pg_isready -h 127.0.0.1 -p "$PROXY_PORT" >/dev/null 2>&1; then
+        break
+      fi
+      i=$((i + 1))
+      sleep 0.2
+    done
+    if [ "$i" -ge 50 ]; then
+      echo "Erro: proxy local (pgbouncer) nao subiu a tempo." >&2
+      exit 1
+    fi
+
+    supabase gen types typescript \
+      --db-url "postgresql://proxy:unused@127.0.0.1:${PROXY_PORT}/proxydb" \
+      --schema public \
+      > "$TMP"
+  else
+    echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
+    supabase gen types typescript \
+      --db-url "$DESTINO_URL" \
+      --schema public \
+      > "$TMP"
+  fi
 fi
 
 # A CLI pode emitir mais de uma quebra de linha no EOF. Normalize apenas as

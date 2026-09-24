@@ -73,7 +73,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
             {chip.label}
             <span
               className={cn(
-                'ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-[11px] font-bold flex items-center justify-center',
+                'ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center',
                 isActive ? tone.active : tone.inactive
               )}
             >

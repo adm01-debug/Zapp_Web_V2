@@ -68,7 +68,7 @@ export function OverviewTab({ dailyData, alerts, onViewAllAlerts }: {
                     <div className="w-full bg-muted-foreground/40 transition-all" style={{ height: `${(day.neutral / total) * 100}%` }} />
                     <div className="w-full bg-destructive/60 rounded-b transition-all" style={{ height: `${(day.negative / total) * 100}%` }} />
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{day.date}</span>
+                  <span className="text-3xs text-muted-foreground">{day.date}</span>
                 </div>
               );
             })}
@@ -100,8 +100,8 @@ export function OverviewTab({ dailyData, alerts, onViewAllAlerts }: {
                       <p className="text-xs text-muted-foreground">Sentimento: <span className="text-destructive">{alert.sentiment_score}%</span>{alert.consecutive_low && ` (${alert.consecutive_low}x consecutivas)`}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] text-muted-foreground">{format(new Date(alert.createdAt), 'dd/MM HH:mm')}</span>
-                      {alert.email_sent && <Badge variant="outline" className="text-[10px] gap-1 py-0"><Mail className="h-3 w-3" />Enviado</Badge>}
+                      <span className="text-3xs text-muted-foreground">{format(new Date(alert.createdAt), 'dd/MM HH:mm')}</span>
+                      {alert.email_sent && <Badge variant="outline" className="text-3xs gap-1 py-0"><Mail className="h-3 w-3" />Enviado</Badge>}
                     </div>
                   </div>
                 ))}
@@ -161,7 +161,7 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                 <div key={data.agent.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6"><AvatarImage src={data.agent.avatar_url || undefined} alt={data.agent.name || 'Agente'} /><AvatarFallback className="text-[10px]">{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                      <Avatar className="h-6 w-6"><AvatarImage src={data.agent.avatar_url || undefined} alt={data.agent.name || 'Agente'} /><AvatarFallback className="text-3xs">{data.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                       <span className="text-sm font-medium truncate max-w-[120px]">{data.agent.name}</span>
                     </div>
                     <span className={`text-sm font-bold ${getSentimentColor(data.avgScore)}`}>{data.avgScore}%</span>
@@ -171,7 +171,7 @@ export function AgentsTab({ agentData }: { agentData: AgentData[] }) {
                     <div className="bg-muted-foreground/50 transition-all" style={{ width: `${(data.neutral / Math.max(total, 1)) * 100}%` }} />
                     <div className="bg-destructive transition-all" style={{ width: `${(data.negative / Math.max(total, 1)) * 100}%` }} />
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <div className="flex items-center justify-between text-3xs text-muted-foreground">
                     <span className="text-success">{data.positive} positivas</span><span>{data.neutral} neutras</span><span className="text-destructive">{data.negative} negativas</span>
                   </div>
                 </div>
@@ -207,7 +207,7 @@ export function AlertsTab({ alerts }: { alerts: Alert[] }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{alert.contact_name || 'Cliente'}</h4>
-                      {(alert.sentiment_score || 50) < 20 && <Badge variant="destructive" className="text-[10px]">Crítico</Badge>}
+                      {(alert.sentiment_score || 50) < 20 && <Badge variant="destructive" className="text-3xs">Crítico</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">

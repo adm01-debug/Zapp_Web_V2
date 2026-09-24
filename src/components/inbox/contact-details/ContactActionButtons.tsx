@@ -72,7 +72,7 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
       )}
     >
       {icon}
-      <span className="text-[11px] font-medium text-muted-foreground leading-none">{label}</span>
+      <span className="text-2xs font-medium text-muted-foreground leading-none">{label}</span>
     </button>
   );
 });

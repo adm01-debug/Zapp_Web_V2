@@ -145,7 +145,7 @@ export interface CatalogFilters {
   low_stock?: boolean;
   price_min?: number;
   price_max?: number;
-  color?: string;
+  color?: string | string[];
   material?: string;
   has_engraving?: boolean;
 }

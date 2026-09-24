@@ -99,7 +99,7 @@ export const TeamConversationList = forwardRef<HTMLDivElement, Props>(function T
                       {conv.name || 'Sem nome'}
                     </span>
                     {conv.last_message && (
-                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                      <span className="text-3xs text-muted-foreground shrink-0 ml-2">
                         {formatDistanceToNow(new Date(conv.last_message.created_at), {
                           addSuffix: false,
                           locale: ptBR,
@@ -112,7 +112,7 @@ export const TeamConversationList = forwardRef<HTMLDivElement, Props>(function T
                       {conv.last_message?.content || 'Sem mensagens'}
                     </p>
                     {(conv.unread_count ?? 0) > 0 && (
-                      <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0">
+                      <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-3xs shrink-0">
                         {conv.unread_count}
                       </Badge>
                     )}

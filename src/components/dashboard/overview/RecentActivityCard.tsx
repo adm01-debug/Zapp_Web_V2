@@ -22,7 +22,7 @@ export function RecentActivityCard({ items }: RecentActivityCardProps) {
       />
       {items.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[120px]">
-          Sem atividade hoje
+          Sem atividade nas últimas 24h
         </div>
       ) : (
         <div className="flex flex-col">
@@ -30,15 +30,15 @@ export function RecentActivityCard({ items }: RecentActivityCardProps) {
             const { bg, text } = getAvatarColor(item.actorName);
             return (
               <div key={item.id} data-testid="activity-row" className="h-[41px] flex items-center gap-2.5">
-                <span className={cn('w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0', bg, text)}>
+                <span className={cn('w-[30px] h-[30px] rounded-full flex items-center justify-center text-2xs font-semibold shrink-0', bg, text)}>
                   {getInitials(item.actorName)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-foreground truncate">{item.actorName}</p>
-                  <p className="text-[11px] text-foreground-secondary truncate">{item.text}</p>
+                  <p className="text-2xs text-foreground-secondary truncate">{item.text}</p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  <span className="text-2xs text-muted-foreground whitespace-nowrap">
                     há {formatDistanceToNow(new Date(item.createdAt), { locale: ptBR })}
                   </span>
                   <span className="w-2 h-2 rounded-full bg-dash-blue" />

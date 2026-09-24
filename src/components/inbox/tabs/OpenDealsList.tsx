@@ -49,7 +49,7 @@ export function OpenDealsList({ deals, limit, emptyMessage = 'Nenhuma proposta e
             {deal.value != null && (
               <span className="text-sm font-semibold text-foreground tabular-nums">{formatBRL(deal.value)}</span>
             )}
-            <span className="h-6 px-2.5 rounded-full border text-[11px] font-semibold inline-flex items-center bg-warning/15 text-warning border-warning/30">
+            <span className="h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center bg-warning/15 text-warning border-warning/30">
               Em aberto
             </span>
           </div>

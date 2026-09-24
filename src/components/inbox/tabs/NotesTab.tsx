@@ -122,7 +122,7 @@ function ObjectionItem({ note, onDelete, canDelete }: { note: ContactNote; onDel
   return (
     <>
       <div className="flex items-center gap-2">
-        {tag && <span className="h-5 px-2 rounded-full bg-warning/15 text-warning border border-warning/30 text-[11px] font-semibold shrink-0">{tag}</span>}
+        {tag && <span className="h-5 px-2 rounded-full bg-warning/15 text-warning border border-warning/30 text-2xs font-semibold shrink-0">{tag}</span>}
         <p className="text-sm text-foreground italic">&ldquo;{text}&rdquo;</p>
       </div>
       <div className="flex items-center justify-between mt-1.5">

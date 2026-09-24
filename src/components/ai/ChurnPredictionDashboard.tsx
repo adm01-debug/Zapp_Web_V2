@@ -246,7 +246,7 @@ export function ChurnPredictionDashboard() {
                       </p>
                       <div className="flex flex-wrap gap-1 mt-1 justify-end">
                         {risk.reasons.slice(0, 2).map((reason, i) => (
-                          <Badge key={i} variant="outline" className="text-[10px] px-1 py-0">
+                          <Badge key={i} variant="outline" className="text-3xs px-1 py-0">
                             {reason.length > 25 ? reason.substring(0, 25) + '...' : reason}
                           </Badge>
                         ))}

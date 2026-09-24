@@ -51,7 +51,7 @@ export function ToolPanel({ isOpen, onClose, icon, title, subtitle, children, cl
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-foreground truncate">{title}</h3>
                 {subtitle && (
-                  <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+                  <p className="text-2xs text-muted-foreground truncate">{subtitle}</p>
                 )}
               </div>
               {headerRight}

@@ -68,7 +68,7 @@ function BriefingCard({ briefing }: { briefing: ContactBriefing }) {
       {/* Key metrics row */}
       <div className="grid grid-cols-3 gap-1.5">
         <div className="bg-muted/20 rounded-md p-1.5 text-center">
-          <p className="text-[10px] text-muted-foreground">Último contato</p>
+          <p className="text-3xs text-muted-foreground">Último contato</p>
           <p className="text-xs font-medium">
             {briefing.days_since_last_contact != null
               ? briefing.days_since_last_contact === 0
@@ -78,11 +78,11 @@ function BriefingCard({ briefing }: { briefing: ContactBriefing }) {
           </p>
         </div>
         <div className="bg-muted/20 rounded-md p-1.5 text-center">
-          <p className="text-[10px] text-muted-foreground">Interações</p>
+          <p className="text-3xs text-muted-foreground">Interações</p>
           <p className="text-xs font-medium">{briefing.total_interactions}</p>
         </div>
         <div className="bg-muted/20 rounded-md p-1.5 text-center">
-          <p className="text-[10px] text-muted-foreground">Score</p>
+          <p className="text-3xs text-muted-foreground">Score</p>
           <p className={cn(
             'text-xs font-medium',
             (briefing.relationship_score || 0) >= 70 ? 'text-success' :
@@ -118,14 +118,14 @@ function TriggersSection({ triggers }: { triggers: MentalTrigger[] }) {
               {trigger.category}
             </Badge>
           </div>
-          <p className="text-muted-foreground text-[11px] leading-relaxed">{trigger.description}</p>
+          <p className="text-muted-foreground text-2xs leading-relaxed">{trigger.description}</p>
           {trigger.examples?.[0] && (
-            <p className="text-[10px] text-primary/70 mt-1 italic">Ex: "{trigger.examples[0]}"</p>
+            <p className="text-3xs text-primary/70 mt-1 italic">Ex: "{trigger.examples[0]}"</p>
           )}
         </div>
       ))}
       {triggers.length > 4 && (
-        <p className="text-[10px] text-muted-foreground text-center py-1">+{triggers.length - 4} gatilhos adicionais</p>
+        <p className="text-3xs text-muted-foreground text-center py-1">+{triggers.length - 4} gatilhos adicionais</p>
       )}
     </div>
   );
@@ -161,7 +161,7 @@ function BestTimesSection({ times }: { times: BestTime[] }) {
     <div className="flex flex-wrap gap-1.5">
       {times.map((t, i) => (
         <div key={i} className="bg-muted/20 rounded-md px-2 py-1 text-center">
-          <p className="text-[10px] text-muted-foreground">{dayNames[t.day_of_week] || '?'}</p>
+          <p className="text-3xs text-muted-foreground">{dayNames[t.day_of_week] || '?'}</p>
           <p className="text-xs font-medium">{t.hour}h</p>
           {t.success_rate != null && t.success_rate > 0 && (
             <p className="text-[9px] text-success">{t.success_rate}%</p>
@@ -189,7 +189,7 @@ function ChurnAlert({ churn }: { churn: ChurnData }) {
         <span className="text-xs font-bold">{Math.round(churn.churn_probability)}%</span>
       </div>
       {churn.recommended_actions && churn.recommended_actions.length > 0 && (
-        <p className="text-[10px] opacity-80 mt-1">
+        <p className="text-3xs opacity-80 mt-1">
           {churn.recommended_actions[0]}
         </p>
       )}
@@ -215,9 +215,9 @@ function DISCSection({ disc }: { disc: DISCTips }) {
 
       {disc.communication_tips && disc.communication_tips.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase">Como comunicar:</p>
+          <p className="text-3xs text-muted-foreground font-medium uppercase">Como comunicar:</p>
           {disc.communication_tips.slice(0, 3).map((tip, i) => (
-            <div key={i} className="flex items-start gap-1.5 text-[11px]">
+            <div key={i} className="flex items-start gap-1.5 text-2xs">
               <ThumbsUp className="w-3 h-3 text-success mt-0.5 shrink-0" />
               <span>{tip}</span>
             </div>
@@ -227,7 +227,7 @@ function DISCSection({ disc }: { disc: DISCTips }) {
 
       {disc.keywords_to_use && disc.keywords_to_use.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          <span className="text-[10px] text-muted-foreground mr-1">Usar:</span>
+          <span className="text-3xs text-muted-foreground mr-1">Usar:</span>
           {disc.keywords_to_use.slice(0, 6).map((kw, i) => (
             <Badge key={i} variant="outline" className="text-[9px] py-0 px-1 bg-success/5 text-success border-success/20">
               {kw}
@@ -238,7 +238,7 @@ function DISCSection({ disc }: { disc: DISCTips }) {
 
       {disc.keywords_to_avoid && disc.keywords_to_avoid.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          <span className="text-[10px] text-muted-foreground mr-1">Evitar:</span>
+          <span className="text-3xs text-muted-foreground mr-1">Evitar:</span>
           {disc.keywords_to_avoid.slice(0, 6).map((kw, i) => (
             <Badge key={i} variant="outline" className="text-[9px] py-0 px-1 bg-destructive/5 text-destructive border-destructive/20">
               {kw}
@@ -277,7 +277,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
     >
       {/* Briefing */}
       <div className="space-y-1.5">
-        <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+        <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
           <Target className="w-3.5 h-3.5 text-primary" />
           Briefing pré-contato
         </h5>
@@ -287,7 +287,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
       {/* DISC Tips */}
       {data.disc_tips && (
         <div className="space-y-1.5">
-          <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+          <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <Brain className="w-3.5 h-3.5 text-primary" />
             Perfil DISC — comunicação
           </h5>
@@ -298,7 +298,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
       {/* Triggers */}
       {data.triggers.length > 0 && (
         <div className="space-y-1.5">
-          <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+          <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-primary" />
             Gatilhos mentais sugeridos
           </h5>
@@ -309,7 +309,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
       {/* Rapport */}
       {data.rapport.suggestions && data.rapport.suggestions.length > 0 && (
         <div className="space-y-1.5">
-          <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+          <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <Heart className="w-3.5 h-3.5 text-primary" />
             Rapport
           </h5>
@@ -319,7 +319,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
 
       {/* Best times */}
       <div className="space-y-1.5">
-        <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+        <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5 text-primary" />
           Melhores horários
         </h5>
@@ -329,7 +329,7 @@ function ContactIntelligencePanelInner({ contactId }: ContactIntelligencePanelPr
       {/* Churn */}
       {data.churn && (
         <div className="space-y-1.5">
-          <h5 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+          <h5 className="text-2xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-primary" />
             Risco de perda
           </h5>

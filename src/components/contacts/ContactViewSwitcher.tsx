@@ -96,7 +96,7 @@ export function ContactViewSwitcher({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuLabel className="text-[11px] text-muted-foreground">Mais visualizações</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-2xs text-muted-foreground">Mais visualizações</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {SECONDARY_MODES.map(({ value, label, icon: Icon }) => (
                 <DropdownMenuItem

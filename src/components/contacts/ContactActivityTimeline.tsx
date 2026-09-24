@@ -161,7 +161,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
           <Clock className="w-3 h-3" />
           Linha do Tempo
         </h3>
-        <Badge variant="secondary" className="text-[10px]">{events.length} eventos</Badge>
+        <Badge variant="secondary" className="text-3xs">{events.length} eventos</Badge>
       </div>
 
       <div className="relative">
@@ -189,12 +189,12 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
                 <div className="flex-1 min-w-0 pt-0.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-medium text-foreground truncate">{event.title}</p>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                    <span className="text-3xs text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ptBR })}
                     </span>
                   </div>
                   {event.description && (
-                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">{event.description}</p>
+                    <p className="text-2xs text-muted-foreground truncate mt-0.5">{event.description}</p>
                   )}
                 </div>
               </motion.div>

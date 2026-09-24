@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +33,12 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const fetchNotes = useCallback(async () => {
     const { data } = await supabase
@@ -42,6 +48,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       .order('created_at', { ascending: false })
       .limit(20);
 
+    if (!isMountedRef.current) return;
+
     if (data) {
       // Fetch author names
       const authorIds = [...new Set(data.map(n => n.author_id))];
@@ -49,6 +57,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
         .from('profiles')
         .select('id, name')
         .in('id', authorIds);
+
+      if (!isMountedRef.current) return;
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
 
@@ -116,7 +126,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
           Notas
         </h3>
         <div className="flex items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">{notes.length}</Badge>
+          <Badge variant="secondary" className="text-3xs">{notes.length}</Badge>
           <Button
             variant="ghost" size="icon"
             className="w-6 h-6"
@@ -192,8 +202,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       {getInitials(note.author_name || '')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-[10px] font-medium text-foreground">{note.author_name}</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">
+                  <span className="text-3xs font-medium text-foreground">{note.author_name}</span>
+                  <span className="text-3xs text-muted-foreground ml-auto">
                     {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale: ptBR })}
                   </span>
                 </div>

@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
 import { useTodayHourlyVolume } from '@/hooks/dashboard/useTodayHourlyVolume';
 import { useDemandPrediction } from '@/hooks/business/useDemandPrediction';
@@ -17,7 +18,7 @@ function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?
   if (!active) return null;
   const pct = avg7dCurrentHour && avg7dCurrentHour > 0 ? Math.round(((currentHourCount - avg7dCurrentHour) / avg7dCurrentHour) * 100) : null;
   return (
-    <div className="bg-popover border border-border rounded-lg px-3 py-2 text-[11px]">
+    <div className="bg-popover border border-border rounded-lg px-3 py-2 text-2xs">
       <p className="text-muted-foreground">Agora</p>
       <p className="text-xs font-semibold text-foreground">{currentHourCount} conversas</p>
       {pct !== null && (
@@ -86,13 +87,13 @@ export function VolumeChart() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / .5)" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }}
                 ticks={mode === 'hoje' ? HOUR_TICKS : undefined}
                 interval={mode === 'hoje' ? 0 : undefined}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
               />
-              <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={28} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} width={28} axisLine={false} tickLine={false} />
               <Tooltip
                 cursor={{ stroke: 'hsl(var(--border))', strokeDasharray: '4 4' }}
                 content={<CustomTooltip currentHourCount={volumeQuery.data?.currentHourCount ?? 0} avg7dCurrentHour={volumeQuery.data?.avg7dCurrentHour ?? null} />}
@@ -105,7 +106,7 @@ export function VolumeChart() {
           </ResponsiveContainer>
         </div>
       )}
-      <div className="flex items-center gap-4 h-4 mt-1 text-[11px] text-foreground-secondary">
+      <div className="flex items-center gap-4 h-4 mt-1 text-2xs text-foreground-secondary">
         <span>— Conversas reais</span>
         {hasPrediction && <span>╌ Previsão IA</span>}
       </div>

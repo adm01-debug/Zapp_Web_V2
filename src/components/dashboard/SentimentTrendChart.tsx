@@ -9,6 +9,7 @@ import { useRecentSentimentAlerts } from '@/hooks/analytics/useRecentSentimentAl
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, CardSelect, Pill, InitialsAvatar, ProgressBar } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
+import { CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -170,9 +171,9 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} ticks={[0, 25, 50, 75, 100]} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                  <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} ticks={[0, 25, 50, 75, 100]} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                   <Area type="monotone" dataKey="Positivo" stroke="hsl(var(--dash-green))" fill="url(#posGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-green))', strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="Negativo" stroke="hsl(var(--dash-red))" fill="url(#negGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-red))', strokeWidth: 0 }} />
                 </AreaChart>
@@ -261,9 +262,9 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[11px] text-muted-foreground">Total</span>
+                  <span className="text-2xs text-muted-foreground">Total</span>
                   <span className="text-xl font-bold text-foreground leading-none">{totalAnalyses.toLocaleString('pt-BR')}</span>
-                  <span className="text-[11px] text-muted-foreground mt-0.5">conversas</span>
+                  <span className="text-2xs text-muted-foreground mt-0.5">conversas</span>
                 </div>
               </div>
               <div className="flex-1 space-y-3">

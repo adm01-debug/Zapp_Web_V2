@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [when, setWhen] = useState('1h');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const isMountedRef = useRef(true);
 
   useEffect(() => {
     loadReminders();
@@ -49,7 +49,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
       .eq('profile_id', profileId)
       .eq('is_dismissed', false)
       .order('remind_at', { ascending: true });
-    if (data) setReminders(data);
+    if (!isMountedRef.current) return; if (data) setReminders(data);
     setLoading(false);
   };
 
@@ -80,6 +80,11 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
       loadReminders();
     }
   };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const dismissReminder = async (id: string) => {
     await supabase.from('reminders').update({ is_dismissed: true }).eq('id', id);
@@ -142,7 +147,7 @@ export function RemindersPanel({ contactId, profileId }: RemindersPanelProps) {
               <Bell className={`w-4 h-4 shrink-0 ${isPast(r.remind_at) ? 'text-warning animate-pulse' : 'text-muted-foreground'}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{r.title}</p>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <p className="text-3xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {isPast(r.remind_at) ? 'Vencido' : formatDistanceToNow(new Date(r.remind_at), { locale: ptBR, addSuffix: true })}
                 </p>

@@ -186,19 +186,19 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
           <VolumeX className="h-4 w-4 shrink-0 text-warning" />
           <div className="flex-1">
             <p className="text-xs font-medium text-warning">Áudio bloqueado pelo navegador</p>
-            <p className="text-[10px] text-warning/70">Clique abaixo para tentar novamente</p>
+            <p className="text-3xs text-warning/70">Clique abaixo para tentar novamente</p>
           </div>
           <div className="flex gap-1">
             <Button
               size="sm"
               variant="outline"
-              className="h-7 gap-1 rounded-lg border-warning/30 px-2 text-[10px] text-warning hover:bg-warning/20"
+              className="h-7 gap-1 rounded-lg border-warning/30 px-2 text-3xs text-warning hover:bg-warning/20"
               onClick={handleRetryAutoplay}
             >
               <RefreshCcw className="h-3 w-3" />
               Tentar
             </Button>
-            <Button size="sm" variant="ghost" className="h-7 rounded-lg px-1.5 text-[10px] text-muted-foreground" onClick={handleDismissAutoplayWarning}>
+            <Button size="sm" variant="ghost" className="h-7 rounded-lg px-1.5 text-3xs text-muted-foreground" onClick={handleDismissAutoplayWarning}>
               <X className="h-3 w-3" />
             </Button>
           </div>

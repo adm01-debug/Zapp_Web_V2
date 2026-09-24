@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
+import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
   Zap, CheckCircle2, AlertTriangle, Users, ChevronLeft,
   Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
@@ -131,9 +132,9 @@ function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: st
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
-                <ReTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                <XAxis dataKey="time" tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
+                <ReTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                 <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#rg-sent)" dot={false} />
                 <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false} />
               </AreaChart>
@@ -194,7 +195,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
           <table className="w-full min-w-[540px] border-collapse">
             <thead><tr>
               {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
-                <th key={h} className="text-left text-[11px] font-semibold text-foreground-secondary px-4 py-2">{h}</th>
+                <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
               ))}
             </tr></thead>
             <tbody>
@@ -203,13 +204,13 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
                   <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
                   <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
                   <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-[11px] text-muted-foreground text-center p-3">Mostrando 200 mais recentes. Use Exportar CSV no Monitor para o conjunto completo.</p>}
+          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes. Use Exportar CSV no Monitor para o conjunto completo.</p>}
         </div>
       )}
     </div>
@@ -263,9 +264,9 @@ function TabMessages({ campaignId }: { campaignId: string }) {
       <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
-          <p className="text-[11px] text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+          <p className="text-2xs text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground-secondary">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
           <Send className="h-3.5 w-3.5 text-primary" />
           {isLoading ? 'Carregando…' : `${snapshotCount} com conteúdo`}
         </span>
@@ -276,7 +277,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
       ) : isError ? (
         <div className="p-8 text-center">
           <p className="text-xs font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
-          <p className="text-[11px] text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
+          <p className="text-2xs text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
         </div>
       ) : (messages?.length ?? 0) === 0 ? (
         <div className="p-8 text-center">
@@ -297,13 +298,13 @@ function TabMessages({ campaignId }: { campaignId: string }) {
               <article key={message.id} className="px-4 py-3 hover:bg-muted/10">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <p className="text-xs font-semibold text-foreground">{message.contacts?.name ?? 'Contato indisponível'}</p>
-                  <span className="text-[11px] font-mono text-foreground-secondary">{message.contacts?.phone ?? '—'}</span>
-                  <span className={`ml-auto text-[11px] font-semibold ${STATUS_TONE[message.status] ?? 'text-foreground-secondary'}`}>
+                  <span className="text-2xs font-mono text-foreground-secondary">{message.contacts?.phone ?? '—'}</span>
+                  <span className={`ml-auto text-2xs font-semibold ${STATUS_TONE[message.status] ?? 'text-foreground-secondary'}`}>
                     {STATUS_LABEL[message.status] ?? message.status}
                   </span>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground-secondary">{shownContent}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-3xs text-muted-foreground">
                   {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
                   {canExpand && (
                     <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
@@ -311,13 +312,13 @@ function TabMessages({ campaignId }: { campaignId: string }) {
                     </button>
                   )}
                 </div>
-                {message.error_message && <p className="mt-2 text-[11px] text-dash-red break-words">Falha: {message.error_message}</p>}
+                {message.error_message && <p className="mt-2 text-2xs text-dash-red break-words">Falha: {message.error_message}</p>}
               </article>
             );
           })}
         </div>
       )}
-      {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-[11px] text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+      {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-2xs text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
     </div>
   );
 }
@@ -386,7 +387,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
       <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-dash-green">
+        <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
           <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
         </span>
       </div>
@@ -400,10 +401,10 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
-                  <span className={`text-[11px] font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
+                  <span className={`text-2xs font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
                 </div>
-                {ev.error && <p className="text-[11px] text-dash-red mt-0.5 truncate">{ev.error}</p>}
-                <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                {ev.error && <p className="text-2xs text-dash-red mt-0.5 truncate">{ev.error}</p>}
+                <p className="text-3xs text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
               </div>
             </div>
           ))}
@@ -443,8 +444,8 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
         {METRICS.map(({ label, value, sub }) => (
           <div key={label} className="rounded-xl border border-border/60 bg-card p-3">
             <p className="text-2xl font-bold text-foreground">{value}</p>
-            <p className="text-[11px] font-semibold text-foreground-secondary mt-0.5">{label}</p>
-            {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
+            <p className="text-2xs font-semibold text-foreground-secondary mt-0.5">{label}</p>
+            {sub && <p className="text-3xs text-muted-foreground mt-0.5">{sub}</p>}
           </div>
         ))}
       </div>
@@ -452,7 +453,7 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
         <div className="rounded-2xl bg-card border border-border/70 p-4">
           <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
           <p className="text-2xl font-bold text-primary">{Math.ceil(pending / avgRate)} min</p>
-          <p className="text-[11px] text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
+          <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
         </div>
       )}
     </div>

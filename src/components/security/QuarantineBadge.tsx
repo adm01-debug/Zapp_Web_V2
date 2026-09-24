@@ -34,7 +34,7 @@ export function QuarantineBadge({ messageId, className }: QuarantineBadgeProps) 
           role="status"
           aria-label={config.label}
           className={cn(
-            'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+            'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs font-medium ring-1 ring-inset',
             config.tone,
             className,
           )}

@@ -11,6 +11,7 @@ import { fromTable } from '@/lib/supabaseHelpers';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
+import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -152,7 +153,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           </div>
         </div>
         <Progress value={progress} className="h-3 mb-1.5"/>
-        <div className="flex items-center justify-between text-[11px] text-foreground-secondary">
+        <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
@@ -162,7 +163,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'A confirmar',v:fmtInt(outcomeUnknown),I:AlertTriangle,c:'text-dash-amber'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
           <motion.div key={l} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.05}} className="rounded-xl bg-card border border-border/70 p-3 flex items-center gap-2">
-            <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-lg font-bold text-foreground tabular-nums">{v}</p><p className="text-[10px] text-foreground-secondary truncate">{l}</p></div>
+            <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-lg font-bold text-foreground tabular-nums">{v}</p><p className="text-3xs text-foreground-secondary truncate">{l}</p></div>
           </motion.div>
         ))}
       </div>
@@ -181,9 +182,9 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
               <AreaChart data={chartData} margin={{top:5,right:5,left:-25,bottom:5}}>
                 <defs><linearGradient id="gS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false}/>
-                <XAxis dataKey="label" tick={{fontSize:10}} stroke="hsl(var(--muted-foreground))"/>
-                <YAxis tick={{fontSize:10}} stroke="hsl(var(--muted-foreground))"/>
-                <ReTooltip contentStyle={{background:'hsl(var(--popover))',border:'1px solid hsl(var(--border))',borderRadius:12,fontSize:12}}/>
+                <XAxis dataKey="label" tick={{fontSize: CHART_TICK_FONT_SIZE}} stroke="hsl(var(--muted-foreground))"/>
+                <YAxis tick={{fontSize: CHART_TICK_FONT_SIZE}} stroke="hsl(var(--muted-foreground))"/>
+                <ReTooltip contentStyle={{background:'hsl(var(--popover))',border:'1px solid hsl(var(--border))',borderRadius:12,fontSize: CHART_TOOLTIP_FONT_SIZE}}/>
                 <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gS)" dot={false}/>
                 <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false}/>
               </AreaChart>
@@ -214,11 +215,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                   <InitialsAvatar name={r.contacts?.name||'?'} src={r.contacts?.avatar_url} size={32}/>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium text-foreground truncate">{r.contacts?.name||'Desconhecido'}</p>
-                    {r.personalized_message && <p className="text-[11px] text-foreground-secondary truncate">{r.personalized_message}</p>}
-                    {r.error_message && <p className="text-[11px] text-dash-red truncate">{r.error_message}</p>}
+                    {r.personalized_message && <p className="text-2xs text-foreground-secondary truncate">{r.personalized_message}</p>}
+                    {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
                   </div>
                   <Pill label={sm.label} tone={sm.tone}/>
-                  {r.sent_at && <span className="text-[10px] text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                  {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
                 </motion.div>
               );
             })}
@@ -239,7 +240,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                 </div>
                 <div className="pb-3 min-w-0">
                   <p className="text-xs font-medium text-foreground">{ev.message||ev.event_type}</p>
-                  <p className="text-[11px] text-muted-foreground">{fmtDateTime(ev.created_at)}{ev.actor?.name?` · ${ev.actor.name}`:''}</p>
+                  <p className="text-2xs text-muted-foreground">{fmtDateTime(ev.created_at)}{ev.actor?.name?` · ${ev.actor.name}`:''}</p>
                 </div>
               </div>
             ))}

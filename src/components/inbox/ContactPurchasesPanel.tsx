@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,12 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('purchase');
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // eslint-disable-next-line react-hooks/immutability, react-hooks/exhaustive-deps
   useEffect(() => { loadPurchases(); }, [contactId]);
@@ -53,6 +59,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       .select('*')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
+    if (!isMountedRef.current) return;
     if (data) setPurchases(data as Purchase[]);
     setLoading(false);
   };
@@ -81,7 +88,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-3xs">
             <DollarSign className="w-3 h-3 mr-0.5" />
             R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </Badge>
@@ -114,7 +121,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{p.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-3xs text-muted-foreground">
                     {format(new Date(p.created_at), 'dd/MM/yy', { locale: ptBR })}
                   </p>
                 </div>

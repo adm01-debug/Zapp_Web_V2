@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
 import { useRealSentimentData } from '../SentimentHelpers';
 
@@ -37,7 +38,7 @@ export function SentimentTrendCard() {
         <>
           <div className="flex items-center gap-3 h-4 mb-1">
             {LEGEND.map((item) => (
-              <span key={item.key} className="flex items-center gap-1.5 text-[11px] text-foreground-secondary">
+              <span key={item.key} className="flex items-center gap-1.5 text-2xs text-foreground-secondary">
                 <span className={`w-2 h-2 rounded-full ${item.dot}`} />
                 {item.label}
               </span>
@@ -46,9 +47,9 @@ export function SentimentTrendCard() {
           <div data-testid="sentiment-plot" className="h-[100px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(data.length / 5) - 1)} />
+                <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(data.length / 5) - 1)} />
                 <YAxis
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }}
                   ticks={[0, 50, 100]}
                   tickFormatter={(v) => `${v}%`}
                   width={32}

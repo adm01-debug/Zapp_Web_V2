@@ -146,7 +146,7 @@ export function SicoobBridgeDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <MessageSquare className="w-5 h-5" /> Mensagens Recentes
-            <Badge variant="secondary" className="text-[10px] ml-auto">{recentMessages.length}</Badge>
+            <Badge variant="secondary" className="text-3xs ml-auto">{recentMessages.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>

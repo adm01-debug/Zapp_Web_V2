@@ -1,8 +1,6 @@
  import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
  import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
-import { AppHeader } from '@/components/layout/AppHeader';
-import { BreadcrumbBar } from '@/components/layout/BreadcrumbBar';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
 import { cn } from '@/lib/utils';
@@ -17,8 +15,6 @@ import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
 import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
-import { useTheme } from '@/hooks/ui/useTheme';
- import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
  import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
 import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
@@ -63,7 +59,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const isMobile = useIsMobile();
   useAgentPresenceJoin(userId);
   const { isZen, toggleZen } = useZenMode();
-  const { isDark } = useTheme();
   const isInboxView = currentView === 'inbox' || currentView === 'team-chat';
   const { startTransition } = useViewTransition();
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -73,7 +68,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
-  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: !isMobile && !isZen }), [isMobile, isZen]);
+  const layoutContextValue = useMemo(() => ({ hidePageBreadcrumbs: !isMobile && !isZen }), [isMobile, isZen]);
   useNavShortcuts(handleViewChange);
 
   // Mobile edge-swipe navigation
@@ -116,27 +111,13 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           profile={profile}
           userEmail={userEmail}
           signOut={signOut}
+          canGoBack={canGoBack}
+          onGoBack={goBack}
         />
       )}
 
       <LayoutProvider value={layoutContextValue}>
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {!isMobile && !isZen && (
-          <>
-            <AppHeader
-              className="sticky top-0 z-40 shrink-0"
-              currentView={currentView}
-            />
-            <BreadcrumbBar
-              className="sticky top-14 z-30 shrink-0"
-              breadcrumbTrail={breadcrumbTrail}
-              currentView={currentView}
-              canGoBack={canGoBack}
-              goBack={goBack}
-            />
-          </>
-        )}
-
         <main
           id="main-content"
           role="main"

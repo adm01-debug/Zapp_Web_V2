@@ -82,7 +82,7 @@ export function SLAIndicator({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className={cn(
-                'flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border',
+                'flex items-center gap-1 px-1.5 py-0.5 rounded-md text-3xs font-medium border',
                 style.bg, style.text, style.border,
                 sla.firstResponse.status === 'breached' && 'animate-pulse',
                 className

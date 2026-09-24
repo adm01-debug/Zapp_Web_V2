@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, CheckSquare, Layers, Activity } from 'lucide-react';
+import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, Layers, Activity } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
@@ -15,7 +15,6 @@ import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
 import { ComercialSummaryWidget } from './ComercialSummaryWidget';
-import { ContactTasksWidget } from './ContactTasksWidget';
 import { AIInsightsWidget } from './AIInsightsWidget';
 import { LastActivityWidget } from './LastActivityWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
@@ -43,10 +42,9 @@ interface ContactAccordionSectionsProps {
   aiTags: AIConversationTag[];
   slaInfo: SLAInfo | null;
   profileId: string | null;
-  onPanelTabChange?: (tab: string) => void;
 }
 
-export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId, onPanelTabChange }: ContactAccordionSectionsProps) {
+export function ContactAccordionSections({ contact, conversation, enrichedData, aiTags, slaInfo, profileId }: ContactAccordionSectionsProps) {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const [infoExpanded, setInfoExpanded] = useState(false);
   const hasMoreInfo = crmIntegrationEnabled || slaInfo || aiTags.length > 0;
@@ -84,11 +82,6 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
 
       <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
         <ComercialSummaryWidget contactId={contact.id} />
-      </Section>
-
-      <Section index={4} value="tasks" icon={<CheckSquare className="w-3.5 h-3.5" />} label="Tarefas da Conversa"
-        action={<Button size="sm" className="h-7 text-xs bg-primary/15 text-primary hover:bg-primary/25" onClick={() => onPanelTabChange?.('tasks')}>+ Nova tarefa</Button>}>
-        <ContactTasksWidget contactId={contact.id} />
       </Section>
 
       <AIInsightsWidget contactId={contact.id} />
@@ -148,7 +141,7 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
 function MoreDetailsBlock({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
+      <div className="flex items-center gap-1.5 text-3xs font-medium text-muted-foreground uppercase tracking-wider">{icon}{label}</div>
       {children}
     </div>
   );
@@ -167,7 +160,7 @@ function Section({ index, value, icon, label, badge, action, children }: {
               <div className="w-6 h-6 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">{icon}</div>
               <span className="text-sm font-semibold text-foreground">{label}</span>
               {badge !== undefined && (
-                <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
+                <span className="text-3xs bg-primary/10 text-primary rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
               )}
             </div>
           </AccordionTrigger>

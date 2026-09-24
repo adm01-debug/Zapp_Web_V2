@@ -1,7 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { groupVariantsByColor } from './sendProductUtils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -15,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Send, ChevronDown, Package, Copy, Download, Palette, Check,
-  Pencil, User, Link2,
+  Pencil, User, Link2, History,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
@@ -32,6 +36,7 @@ interface SendProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirmSend?: (text: string, images: string[]) => void;
+  initialVariantColor?: string;
 }
 
 const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
@@ -42,6 +47,26 @@ const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_IMAGES = 10;
+const DRAFT_DEBOUNCE_MS = 500;
+
+/** E77 — rascunho de mensagem personalizada não enviada, por produto. */
+interface SendDraft {
+  template: MessageTemplate;
+  customMessage: string;
+  sendMode: SendMode;
+  selectedColorGroup: string | null;
+  savedAt: number;
+}
+
+const draftKey = (productId: string) => `catalog.sendDraft.${productId}`;
+
+const readDraft = (productId: string): SendDraft | null => {
+  try {
+    const raw = sessionStorage.getItem(draftKey(productId));
+    if (!raw) return null;
+    return JSON.parse(raw) as SendDraft;
+  } catch { return null; }
+};
 
 /** Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74). */
 const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label: string }[] }> = ({ message, images }) => {
@@ -62,7 +87,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
             <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
               <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
               {images.length > 1 && (
-                <span className="absolute bottom-1 right-1 text-[10px] leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
+                <span className="absolute bottom-1 right-1 text-3xs leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
                   1/{images.length}
                 </span>
               )}
@@ -71,7 +96,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
           <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
             <p className="text-sm whitespace-pre-line text-black">{message}</p>
             <div className="flex items-center justify-end gap-0.5 mt-1">
-              <span className="text-[10px] text-black/50 mr-1">{time}</span>
+              <span className="text-3xs text-black/50 mr-1">{time}</span>
               <Check className="w-3 h-3 text-blue-500" />
               <Check className="w-3 h-3 text-blue-500 -ml-2" />
             </div>
@@ -83,7 +108,7 @@ const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label:
 };
 
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
-  product, open, onOpenChange, onConfirmSend,
+  product, open, onOpenChange, onConfirmSend, initialVariantColor,
 }) => {
   const needsFullProduct = !product.variants || product.variants.length === 0;
   const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
@@ -97,6 +122,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   const [selectedColorGroup, setSelectedColorGroup] = useState<string | null>(null);
   const [step, setStep] = useState<'configure' | 'selectContact'>('configure');
 
+  // E77 — rascunho de mensagem personalizada em sessionStorage.
+  const [hasDraft, setHasDraft] = useState(() => readDraft(product.id) !== null);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const hasPendingEdit = isEditing && customMessage.trim().length > 0;
+
+  useEffect(() => {
+    if (!hasPendingEdit) return;
+    const t = setTimeout(() => {
+      const draft: SendDraft = { template, customMessage, sendMode, selectedColorGroup, savedAt: Date.now() };
+      try { sessionStorage.setItem(draftKey(product.id), JSON.stringify(draft)); } catch { /* ignore */ }
+    }, DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [hasPendingEdit, template, customMessage, sendMode, selectedColorGroup, product.id]);
+
+  const handleRestoreDraft = () => {
+    const draft = readDraft(product.id);
+    if (!draft) { setHasDraft(false); return; }
+    setTemplate(draft.template);
+    setCustomMessage(draft.customMessage);
+    setSendMode(draft.sendMode);
+    setSelectedColorGroup(draft.selectedColorGroup);
+    setIsEditing(true);
+    setHasDraft(false);
+  };
+
+  const handleDiscardDraft = () => {
+    try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+    setHasDraft(false);
+  };
+
   const {
     contactSearch, setContactSearch,
     contactResults, searchingContacts,
@@ -106,6 +161,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const { profile } = useAuth();
   const { isSending, sendProductToContact } = useSendToContact(() => {
+    try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
     onOpenChange(false);
     setStep('configure');
     resetContactSelection();
@@ -115,6 +171,21 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     () => groupVariantsByColor(fullProduct.variants || []),
     [fullProduct.variants]
   );
+
+  // E78 — deep link com variante: aplica initialVariantColor só na primeira
+  // vez que o grupo correspondente aparece em variantGroups, sem sobrescrever
+  // uma troca manual do usuário depois disso. Ajuste de estado durante o
+  // render (sem efeito, sem ref-durante-render), mesmo padrão já usado abaixo
+  // para visibleImagesKey.
+  const [appliedInitialVariant, setAppliedInitialVariant] = useState(false);
+  if (!appliedInitialVariant && initialVariantColor) {
+    const initialMatch = variantGroups.find((g: { colorName: string }) => g.colorName === initialVariantColor);
+    if (initialMatch) {
+      setAppliedInitialVariant(true);
+      setSendMode('variant');
+      setSelectedColorGroup(initialMatch.colorName);
+    }
+  }
 
   const activeGroup = selectedColorGroup
     ? variantGroups.find((g: { colorName: string }) => g.colorName === selectedColorGroup) || null
@@ -195,6 +266,29 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     else { setStep('selectContact'); resetContactSelection(); }
   };
 
+  const closeDialog = () => {
+    onOpenChange(false);
+    setStep('configure');
+    resetContactSelection();
+  };
+
+  const requestClose = () => {
+    if (hasPendingEdit) { setConfirmCloseOpen(true); return; }
+    closeDialog();
+  };
+
+  const handleConfirmDiscardClose = () => {
+    setConfirmCloseOpen(false);
+    closeDialog();
+  };
+
+  const handleContentKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && step === 'configure' && !messageTooLong) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   const handleSendToContact = async () => {
     if (!selectedContact) { toast({ title: 'Selecione um contato', variant: 'destructive' }); return; }
     await sendProductToContact(
@@ -213,8 +307,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setStep('configure'); resetContactSelection(); } }}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { requestClose(); return; } onOpenChange(v); }}>
+      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown}>
         {step === 'configure' && (
           <>
             <DialogHeader className="p-5 pb-3">
@@ -229,6 +323,19 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
             <ScrollArea className="max-h-[60vh]">
               <div className="px-5 pb-5 space-y-4">
+                {hasDraft && (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <History className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-xs text-foreground">Você tem um rascunho não enviado para este produto.</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleDiscardDraft}>Descartar</Button>
+                      <Button variant="default" size="sm" className="h-7 text-xs" onClick={handleRestoreDraft}>Restaurar rascunho</Button>
+                    </div>
+                  </div>
+                )}
+
                 {variantGroups.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex gap-2">
@@ -258,7 +365,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                                     {group.colorHex && <div className="w-3 h-3 rounded-full border border-border/50 flex-shrink-0" style={{ backgroundColor: group.colorHex }} />}
                                     <span className="font-medium text-sm truncate">{group.colorName}</span>
                                   </div>
-                                  <span className="text-[11px] text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
+                                  <span className="text-2xs text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
                                 </div>
                                 {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                               </button>
@@ -340,7 +447,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             </ScrollArea>
 
             <div className="p-4 border-t flex items-center gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
               <div className="flex flex-1">
                 <Button className="flex-1 rounded-r-none gap-2" onClick={handleSend} disabled={messageTooLong}><User className="w-4 h-4" />Selecionar Contato</Button>
                 <DropdownMenu>
@@ -376,6 +483,21 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
           />
         )}
       </DialogContent>
+
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações não enviadas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem uma mensagem personalizada que ainda não foi enviada. Fechar agora vai descartá-la.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDiscardClose}>Fechar mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

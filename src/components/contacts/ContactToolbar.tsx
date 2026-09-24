@@ -101,7 +101,7 @@ export function ContactToolbar({
           <Filter className="w-[18px] h-[18px]" />
           Filtros
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-background/20 text-[10px] h-4 px-1">{activeFiltersCount}</Badge>
+            <Badge variant="secondary" className="ml-1 bg-background/20 text-3xs h-4 px-1">{activeFiltersCount}</Badge>
           )}
         </Button>
 

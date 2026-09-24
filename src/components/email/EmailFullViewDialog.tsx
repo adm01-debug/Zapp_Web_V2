@@ -63,7 +63,7 @@ export function EmailFullViewDialog({
             <Download className="w-3.5 h-3.5" /> Baixar e-mail (HTML)
           </a>
         </div>
-        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+        <p className="text-3xs text-muted-foreground flex items-center gap-1">
           <ExternalLink className="w-3 h-3" />
           Links abrem em nova aba com isolamento total (noopener).
         </p>

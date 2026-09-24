@@ -40,6 +40,7 @@ import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -61,6 +62,7 @@ const AGENT_TAB_VALUES = new Set(['overview', 'goals', 'satisfaction']);
 
 export function DashboardView() {
   const { isAdmin, isSupervisor } = useUserRole();
+  const { user } = useAuth();
   const isStaff = isAdmin || isSupervisor;
   const visibleTabs = isStaff ? DASHBOARD_TABS : DASHBOARD_TABS.filter(t => AGENT_TAB_VALUES.has(t.value));
   const [tab, setTab] = useState(OVERVIEW_TAB);
@@ -87,6 +89,9 @@ export function DashboardView() {
   const { data: slaMetrics } = useSLAMetrics('today');
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
+  // "Minhas conversas ativas" (E14, card pessoal que substitui "Atendentes
+  // Online" p/ não-staff) — mesmos `contacts` já carregados, sem query nova.
+  const myActiveConversations = (contacts ?? []).filter((c) => c.assigned_to === user?.id).length;
 
   // Agente só pode navegar para as próprias abas — bloqueia o vazamento por
   // clique nos cards (Ferramentas de IA → Sentimento → Relatórios etc.), já
@@ -138,7 +143,7 @@ export function DashboardView() {
             <GreetingBanner personal={!isStaff} />
           </div>
           <div data-testid="dash-kpis">
-            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} />
+            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
           </div>
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
             <VolumeChart />
@@ -152,7 +157,9 @@ export function DashboardView() {
               onSeeAll={() => goToTab('goals')}
               stats={{
                 totalConversations: stats.totalConversations,
-                resolvedToday: kpi?.resolvedToday ?? stats.resolvedToday,
+                // stats.resolvedToday/avgResponseTime já vêm de useDashboardKpi
+                // (fonte única, ver useDashboardData) — sem fallback duplicado.
+                resolvedToday: stats.resolvedToday,
                 avgResponseTime: stats.avgResponseTime,
                 pendingConversations: stats.pendingConversations,
               }}

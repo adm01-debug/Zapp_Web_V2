@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,12 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     async function fetch() {
@@ -45,6 +51,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false })
         .limit(20);
+      if (!isMountedRef.current) return;
       setPurchases(data || []);
       setLoading(false);
     }
@@ -81,7 +88,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
           <ShoppingBag className="w-3 h-3" />
           Compras
         </h3>
-        <Badge variant="secondary" className="text-[10px]">{purchases.length}</Badge>
+        <Badge variant="secondary" className="text-3xs">{purchases.length}</Badge>
       </div>
 
       {/* Total value */}
@@ -94,7 +101,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
             <p className="text-lg font-bold text-foreground">
               R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-[10px] text-muted-foreground">Valor total</p>
+            <p className="text-3xs text-muted-foreground">Valor total</p>
           </div>
         </div>
       )}
@@ -119,7 +126,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{purchase.title}</p>
                     {purchase.purchase_type && (
-                      <p className="text-[10px] text-muted-foreground">{purchase.purchase_type}</p>
+                      <p className="text-3xs text-muted-foreground">{purchase.purchase_type}</p>
                     )}
                   </div>
                   {purchase.amount != null && (
@@ -133,7 +140,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
                     {purchase.status === 'completed' ? 'Concluída' : purchase.status === 'pending' ? 'Pendente' : purchase.status || 'N/A'}
                   </Badge>
                   {purchase.purchased_at && (
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <span className="text-3xs text-muted-foreground flex items-center gap-1">
                       <Calendar className="w-2.5 h-2.5" />
                       {format(new Date(purchase.purchased_at), 'dd/MM/yyyy', { locale: ptBR })}
                     </span>

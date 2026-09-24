@@ -73,13 +73,13 @@ function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedF
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground">{formatFileSize(queuedFile.file.size)}</span>
             {queuedFile.validation.valid ? (
-              <Badge variant="outline" className="text-[10px] py-0 h-5 bg-success/10 text-success border-success/20">{queuedFile.validation.category}</Badge>
+              <Badge variant="outline" className="text-3xs py-0 h-5 bg-success/10 text-success border-success/20">{queuedFile.validation.category}</Badge>
             ) : (
-              <Badge variant="destructive" className="text-[10px] py-0 h-5">Inválido</Badge>
+              <Badge variant="destructive" className="text-3xs py-0 h-5">Inválido</Badge>
             )}
-            {queuedFile.status === 'uploading' && <Badge variant="secondary" className="text-[10px] py-0 h-5">Enviando...</Badge>}
-            {queuedFile.status === 'done' && <Badge variant="outline" className="text-[10px] py-0 h-5 bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />Enviado</Badge>}
-            {queuedFile.status === 'error' && <Badge variant="destructive" className="text-[10px] py-0 h-5"><AlertCircle className="w-3 h-3 mr-1" />Erro</Badge>}
+            {queuedFile.status === 'uploading' && <Badge variant="secondary" className="text-3xs py-0 h-5">Enviando...</Badge>}
+            {queuedFile.status === 'done' && <Badge variant="outline" className="text-3xs py-0 h-5 bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />Enviado</Badge>}
+            {queuedFile.status === 'error' && <Badge variant="destructive" className="text-3xs py-0 h-5"><AlertCircle className="w-3 h-3 mr-1" />Erro</Badge>}
           </div>
           {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" />}
         </div>

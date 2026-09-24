@@ -135,7 +135,7 @@ export function AIProviderHealthPanel() {
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <kpi.icon className={cn('w-3.5 h-3.5', kpi.color)} />
-                <span className="text-[11px] text-muted-foreground">{kpi.label}</span>
+                <span className="text-2xs text-muted-foreground">{kpi.label}</span>
               </div>
               <p className={cn('text-lg font-bold', kpi.color)}>{kpi.value}</p>
             </motion.div>
@@ -167,7 +167,7 @@ export function AIProviderHealthPanel() {
                     {providerType}{isFallback && ' → fallback'}
                   </span>
                   {log.model && (
-                    <span className="font-mono text-[10px] text-muted-foreground/70 truncate max-w-[120px]">
+                    <span className="font-mono text-3xs text-muted-foreground/70 truncate max-w-[120px]">
                       {log.model}
                     </span>
                   )}

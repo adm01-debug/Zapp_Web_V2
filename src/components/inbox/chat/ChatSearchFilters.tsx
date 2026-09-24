@@ -59,7 +59,7 @@ export function ChatSearchFilters({
   const calendarClassNames = {
     day_selected: 'bg-primary text-primary-foreground hover:bg-primary',
     day_today: 'bg-accent text-accent-foreground font-bold',
-    head_cell: 'text-[10px] font-semibold text-muted-foreground w-9',
+    head_cell: 'text-3xs font-semibold text-muted-foreground w-9',
     cell: 'h-9 w-9 text-center text-sm p-0',
     day: 'h-9 w-9 p-0 text-sm font-normal',
     caption_label: 'text-sm font-bold',
@@ -84,7 +84,7 @@ export function ChatSearchFilters({
           >
             {f.icon}<span>{f.label}</span>
             {showCount && (
-              <span className={cn("min-w-[18px] h-[18px] flex items-center justify-center rounded-md text-[10px] font-bold leading-none",
+              <span className={cn("min-w-[18px] h-[18px] flex items-center justify-center rounded-md text-3xs font-bold leading-none",
                 isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background text-foreground"
               )}>{count}</span>
             )}
@@ -110,7 +110,7 @@ export function ChatSearchFilters({
         <PopoverContent className="w-auto p-0 pointer-events-auto" align="start" side="bottom" sideOffset={8}>
           <div className="flex min-h-[340px]">
             <div className="w-[160px] border-r border-border bg-muted/30 p-2 flex flex-col gap-0.5">
-              <p className="text-[10px] text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
+              <p className="text-3xs text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
               {DATE_PRESETS.filter((p) => p.key !== 'custom').map((p) => (
                 <button key={p.key} className={cn('w-full text-left text-[13px] px-2.5 py-2 rounded-lg transition-all duration-150 font-medium',
                   datePreset === p.key ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/80 hover:bg-muted hover:text-foreground'
@@ -120,15 +120,15 @@ export function ChatSearchFilters({
               ))}
             </div>
             <div className="p-4 flex flex-col">
-              <p className="text-[11px] text-muted-foreground font-semibold mb-3 uppercase tracking-widest">Período personalizado</p>
+              <p className="text-2xs text-muted-foreground font-semibold mb-3 uppercase tracking-widest">Período personalizado</p>
               <div className="flex gap-6">
                 <div className="space-y-1.5">
-                  <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide">De</span>
+                  <span className="text-2xs text-muted-foreground font-semibold uppercase tracking-wide">De</span>
                   <Calendar mode="single" selected={customDateFrom ?? undefined} onSelect={(day) => { setCustomDateFrom(day ?? null); setDatePreset('custom'); }}
                     disabled={(date) => date > new Date()} locale={ptBR} className="rounded-lg border border-border/60 p-2.5 pointer-events-auto bg-background" classNames={calendarClassNames} />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide">Até</span>
+                  <span className="text-2xs text-muted-foreground font-semibold uppercase tracking-wide">Até</span>
                   <Calendar mode="single" selected={customDateTo ?? undefined} onSelect={(day) => { setCustomDateTo(day ?? null); setDatePreset('custom'); }}
                     disabled={(date) => date > new Date() || (customDateFrom ? date < customDateFrom : false)} locale={ptBR} className="rounded-lg border border-border/60 p-2.5 pointer-events-auto bg-background" classNames={calendarClassNames} />
                 </div>
