@@ -410,4 +410,4 @@ jobs:
             echo "| schema-manifest.json | ${{ steps.diff.outputs.manifest_changed || 'n/a' }} |"
             echo "| grants-baseline.json | ${{ steps.diff.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
-         } >> "$GITHUB_STEP_SUMMARY"
+          } >> "$GITHUB_STEP_SUMMARY"
