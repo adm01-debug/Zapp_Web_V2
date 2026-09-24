@@ -240,7 +240,9 @@ function RailRecentSends({ recentSends, topSent, onOpenProduct }: Pick<CatalogRa
     return {
       id: e.id,
       name: e.product_name,
-      statusLabel: label + ' · ' + fmtAgo(e.created_at),
+      // O destinatário entra na legenda: sem ele, o mesmo produto enviado
+      // a contatos diferentes fica indistinguível na lista.
+      statusLabel: [label, fmtAgo(e.created_at), e.contact_name].filter(Boolean).join(' · '),
       statusTone: tone,
       // catalog_send_events não guarda imagem (só id/nome/sku) — sem
       // thumb o RecentList cai no ícone, sem imagem inventada.
