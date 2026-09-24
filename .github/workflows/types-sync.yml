@@ -86,7 +86,48 @@ jobs:
 
       - name: Iniciar banco local (supabase db start)
         run: |
+          # Migrations puramente operacionais (cron, vault, http_post) dependem de
+          # estado de runtime que so existe na instancia de producao — jobid vindo
+          # de sequence, segredo presente no vault — e nao contribuem nada para o
+          # schema que `gen types typescript` le. Elas saem da copia efemera do
+          # checkout durante o replay e voltam logo em seguida: o arquivo
+          # versionado em supabase/migrations nunca e alterado, e mais adiante o
+          # create-pull-request faz `git add -A`, entao um arquivo que ficasse
+          # fora viraria uma remocao commitada no PR de sync.
+          skip_list=scripts/db-audit/local-replay-skip.txt
+          skip_dir=$(mktemp -d)
+          if [ -f "$skip_list" ]; then
+            while IFS= read -r entry; do
+              case "$entry" in ''|'#'*) continue ;; esac
+              if [ ! -f "supabase/migrations/$entry" ]; then
+                echo "::error::$skip_list lista '$entry', ausente em supabase/migrations"
+                exit 1
+              fi
+              mv "supabase/migrations/$entry" "$skip_dir/"
+              echo "replay local: pulando $entry"
+            done < "$skip_list"
+          fi
+
+          set +e
           supabase db start
+          start_rc=$?
+          set -e
+
+          # Restaura sempre, inclusive quando o start falha, para nenhum step
+          # seguinte ver supabase/migrations incompleto.
+          for restored in "$skip_dir"/*; do
+            [ -e "$restored" ] || continue
+            mv "$restored" supabase/migrations/
+          done
+          rmdir "$skip_dir" 2>/dev/null || true
+
+          if [ -n "$(git status --porcelain -- supabase/migrations)" ]; then
+            echo "::error::supabase/migrations ficou sujo apos o replay local"
+            git status --porcelain -- supabase/migrations
+            exit 1
+          fi
+
+          [ "$start_rc" -eq 0 ] || exit "$start_rc"
           echo "Banco local pronto: migrations de supabase/migrations aplicadas."
 
       - name: Gerar candidatos em diretorio temporario
