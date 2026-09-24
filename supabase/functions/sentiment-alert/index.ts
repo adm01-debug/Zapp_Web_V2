@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, errorResponse, getClientIP, handleCors, jsonResponse, Logger, requireAuth, requireEnv } from "../_shared/validation.ts";
 import { SentimentAlertSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildSentimentNotification, escapeHtml, sentimentSettingsOwnerId, singleLineLabel } from "../_shared/notification-events.ts";
+import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 export async function handleSentimentAlertRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -179,7 +180,7 @@ export async function handleSentimentAlertRequest(req: Request): Promise<Respons
             from: 'Alertas <onboarding@resend.dev>',
             to: [agentProfile.email],
             subject: `⚠️ Alerta: Sentimento negativo - ${singleLineLabel(contactName)}`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+            html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">
               <h2 style="color:#dc2626">⚠️ Alerta de Sentimento Negativo</h2>
               <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:16px 0">
                 <p style="margin:0;font-size:16px">O cliente <strong>${escapeHtml(contactName)}</strong> apresenta sentimento negativo em <strong>${consecutiveLow} análises consecutivas</strong>.</p>

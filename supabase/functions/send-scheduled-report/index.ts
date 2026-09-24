@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ScheduledReportSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -140,7 +141,7 @@ function buildReportEmail(data: Record<string, unknown>): string {
       </table>`;
   }
 
-  return `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px;background:#f9fafb;">
+  return `<!DOCTYPE html><html><body style="font-family:${EMAIL_FONT_STACK};margin:0;padding:20px;background:#f9fafb;">
     <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
       <div style="background:linear-gradient(135deg,#25D366,#128C7E);padding:24px;color:white;"><h1 style="margin:0;font-size:20px;">📊 ${data.title}</h1><p style="margin:4px 0 0;opacity:0.9;font-size:14px;">${data.period}</p></div>
       <div style="padding:24px;"><table style="width:100%;border-collapse:collapse;">${rows}</table>${agentsTable}</div>
