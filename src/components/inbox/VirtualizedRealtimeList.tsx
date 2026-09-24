@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, memo } from 'react';
+import { useRef, useCallback, useMemo, useState, useEffect, memo } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,16 +19,22 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
 
+// Alturas calibradas para o conteudo real da linha (nome + previa + cluster
+// de badges com SLA/tags, que pode quebrar em 2 linhas por causa do
+// flex-wrap) — nao so pro avatar de 48px. Com o cluster de badges quase
+// sempre visivel (SLA aparece pra toda conversa sem 1a resposta), o
+// conteudo minimo fica em ~76-84px; valores menores cortavam a linha ou
+// faziam o virtualizador sobrepor linhas adjacentes.
 const ITEM_HEIGHT_BY_DENSITY: Record<DensityMode, number> = {
-  comfortable: 88,
-  compact: 76,
-  dense: 68,
+  comfortable: 92,
+  compact: 84,
+  dense: 80,
 };
 
 const ROW_CLASSES_BY_DENSITY: Record<DensityMode, string> = {
-  comfortable: 'min-h-[72px] my-0.5 px-3 py-2.5',
-  compact: 'min-h-[60px] my-0.5 px-3 py-1.5',
-  dense: 'min-h-[52px] my-0 px-2.5 py-1',
+  comfortable: 'min-h-[76px] my-0.5 px-3 py-2.5',
+  compact: 'min-h-[68px] my-0.5 px-3 py-2',
+  dense: 'min-h-[64px] my-0.5 px-2.5 py-1.5',
 };
 
 const SNOOZE_OPTIONS: { value: string; label: string }[] = [
@@ -150,6 +156,15 @@ export function VirtualizedRealtimeList({
     estimateSize,
     overscan: 8,
   });
+
+  // @tanstack/react-virtual nao remede automaticamente linhas ja medidas
+  // quando so o valor de retorno de estimateSize muda (density) — a mudanca
+  // de referencia da funcao nao invalida o cache interno. Forca recalculo
+  // explicito, senao as linhas ficam com a altura antiga (espacamento
+  // errado / sobreposicao) ate um evento que mexa em `count`.
+  useEffect(() => {
+    virtualizer.measure();
+  }, [density, virtualizer]);
 
   const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
     if (selectionMode && onToggleSelection) {
@@ -276,11 +291,19 @@ const ConversationRow = memo(({
   // conversation_sla vem do embed do select (RealtimeService.fetchContacts:
   // '*, conversation_sla(...)'), presente em runtime mas ausente no tipo
   // genérico ContactRow (que so cobre as colunas da tabela contacts).
-  const slaRow = (conversation.contact as unknown as {
+  // NAO e 1:1 com o contato — historico se acumula (ate 72 linhas por
+  // contato em producao); so 1 linha por contato tem first_response_at
+  // NULL (indice parcial ux_conversation_sla_open_per_contact = a "aberta"
+  // agora). Pegar [0] sem filtro pega uma linha historica arbitraria e
+  // pode mostrar "SLA violado" de um atendimento antigo ja resolvido.
+  const slaRows = (conversation.contact as unknown as {
     conversation_sla?: Array<{ first_message_at: string | null; first_response_at: string | null }>;
-  }).conversation_sla?.[0];
-  const firstMessageAt = slaRow?.first_message_at ?? conversation.contact.created_at;
+  }).conversation_sla;
+  const openSlaRow = slaRows?.find((r) => r.first_response_at === null);
+  const firstMessageAt = openSlaRow?.first_message_at ?? (!slaRows?.length ? conversation.contact.created_at : undefined);
   const tags = conversation.contact.tags ?? [];
+
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
     e.stopPropagation();
@@ -351,20 +374,28 @@ const ConversationRow = memo(({
               </AvatarFallback>
             </Avatar>
             {channelBadge && (
-              <span className={cn('absolute -bottom-0.5 -left-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-card', channelBadge.bg)}>
+              <span aria-hidden="true" className={cn('absolute -bottom-0.5 -left-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-card', channelBadge.bg)}>
                 <channelBadge.Icon className="w-2.5 h-2.5 text-white" />
               </span>
             )}
             {assignedAgent && (
-              <Avatar
-                className="absolute -bottom-0.5 -right-0.5 w-4 h-4 ring-2 ring-card"
-                title={`Atendido por ${assignedAgent.name}`}
-              >
-                <AvatarImage src={assignedAgent.avatar_url || undefined} alt={assignedAgent.name} />
-                <AvatarFallback className="text-[7px] font-bold bg-secondary text-secondary-foreground">
-                  {assignedAgent.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 ring-2 ring-card"
+                      role="img"
+                      aria-label={`Atendido por ${assignedAgent.name}`}
+                    >
+                      <AvatarImage src={assignedAgent.avatar_url || undefined} alt="" />
+                      <AvatarFallback className="text-[7px] font-bold bg-secondary text-secondary-foreground">
+                        {assignedAgent.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-medium">Atendido por {assignedAgent.name}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {conversation.contact.ai_sentiment && (
               <span
@@ -442,7 +473,7 @@ const ConversationRow = memo(({
                 {firstMessageAt && (
                   <SLAIndicator
                     firstMessageAt={new Date(firstMessageAt)}
-                    firstResponseAt={slaRow?.first_response_at ? new Date(slaRow.first_response_at) : null}
+                    firstResponseAt={null}
                     firstResponseMinutes={5}
                     compact
                   />
@@ -498,13 +529,13 @@ const ConversationRow = memo(({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent>
             </Tooltip>
-            <Popover>
+            <Popover open={snoozeOpen} onOpenChange={setSnoozeOpen}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
                     <button
                       aria-label="Adiar conversa"
-                      onClick={(e) => { e.stopPropagation(); if (!onSnooze) toast.info('Adiar: em breve'); }}
+                      onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
@@ -518,7 +549,7 @@ const ConversationRow = memo(({
                   {SNOOZE_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
-                      onClick={() => onSnooze(contactId, opt.value)}
+                      onClick={() => { onSnooze(contactId, opt.value); setSnoozeOpen(false); }}
                       className="w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors"
                     >
                       {opt.label}

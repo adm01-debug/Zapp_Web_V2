@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { CloseConversationDialog } from './CloseConversationDialog';
 import { TransferDialog } from './TransferDialog';
 
@@ -39,16 +40,29 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
 
   const handleArchive = useCallback(async (contactId: string) => {
-    if (!conversationActions) return;
+    if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
     await conversationActions.archiveContact(contactId);
     inbox.refetch();
   }, [conversationActions, inbox]);
 
   const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
-    if (!transferTarget || !conversationActions) return;
+    if (!transferTarget) return;
+    if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
     await conversationActions.transferContact(transferTarget, type, targetId);
     inbox.refetch();
   }, [transferTarget, conversationActions, inbox]);
+
+  // Se a conversa sumir da lista em tempo real (ex: outro agente ja
+  // resolveu/moveu) enquanto o dialogo de Resolver/Transferir esta aberto
+  // pra ela, fecha o dialogo em vez de deixa-lo orfao com um contactId que
+  // nao existe mais na visao atual.
+  useEffect(() => {
+    const visibleIds = new Set(
+      (inboxFilters.filteredConversations ?? []).map((c: { contact: { id: string } }) => c.contact.id)
+    );
+    if (resolveTarget && !visibleIds.has(resolveTarget)) setResolveTarget(null);
+    if (transferTarget && !visibleIds.has(transferTarget)) setTransferTarget(null);
+  }, [inboxFilters.filteredConversations, resolveTarget, transferTarget]);
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
