@@ -79,9 +79,23 @@ serve(async (req) => {
       const data = await response.json();
       const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
       const qrData = await qrRes.json();
-      const qrcode = qrData?.data?.qrcode;
+      // A GO devolve o PNG do QR codificando 'https://wa.me/settings/linked_devices#2@...'.
+      // O leitor de "Conectar aparelho" do WhatsApp so aceita o payload cru "2@...": com a URL
+      // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
+      // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
+      const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
+      let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
+      if (rawQrCode.startsWith('2@')) {
+        try {
+          const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.3');
+          const svg = await QRCode.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+          qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
+        } catch (err: unknown) {
+          new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
+        }
+      }
       if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: rawQrCode || qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
