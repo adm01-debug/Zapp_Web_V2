@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Navigation, ExternalLink, Clock, Radio } from 'lucide-react';
-import { log } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LocationMessage as LocationMessageType } from '@/types/chat';
-import { supabase } from '@/integrations/supabase/client';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox } from '@/lib/mapboxLoader';
+import {
+  getMapboxToken,
+  mapboxFailureKindFromMapError,
+  mapboxFailureKindOf,
+  mapboxFailureMessage,
+  reportMapboxFailure,
+  MAPBOX_MAP_LOAD_TIMEOUT_MS,
+} from '@/lib/mapboxToken';
 
 interface LocationMessageDisplayProps {
   location: LocationMessageType;
@@ -19,7 +25,8 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [mapError, setMapError] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isMountedRef = useRef(true);
 
@@ -29,27 +36,31 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   }, []);
 
   useEffect(() => {
-    // Fetch Mapbox token from edge function
-    const fetchToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+    // Uma busca do token por janela, compartilhada entre todas as bolhas da conversa.
+    getMapboxToken({ force: attempt > 0 })
+      .then((token) => { if (isMountedRef.current) setMapboxToken(token); })
+      .catch((err) => {
         if (!isMountedRef.current) return;
-        if (!error && data?.token) {
-          setMapboxToken(data.token);
-        }
-      } catch (err) {
-        log.error('Error fetching Mapbox token:', err);
-      }
-    };
-    fetchToken();
-  }, []);
+        const kind = mapboxFailureKindOf(err);
+        reportMapboxFailure(kind, 'bubble', err);
+        setMapError(mapboxFailureMessage(kind));
+      });
+  }, [attempt]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
+    let cancelled = false;
+    let loaded = false;
+    // Sem `load` nem `error` no prazo: vira erro com retry em vez de spinner eterno.
+    const watchdog = setTimeout(() => {
+      if (loaded || cancelled || !isMountedRef.current) return;
+      reportMapboxFailure('timeout', 'bubble');
+      setMapError(mapboxFailureMessage('timeout'));
+    }, MAPBOX_MAP_LOAD_TIMEOUT_MS);
 
     loadMapbox()
       .then((mapboxgl) => {
-        if (!isMountedRef.current || !mapContainer.current) return;
+        if (cancelled || !isMountedRef.current || !mapContainer.current) return;
 
         mapboxgl.accessToken = mapboxToken;
 
@@ -76,21 +87,38 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           .setLngLat([location.longitude, location.latitude])
           .addTo(map.current);
 
+        // Token invalido, estilo ou rede falham no 'error' do mapa, nao no loadMapbox().
+        map.current.on('error', (e) => {
+          if (loaded || cancelled || !isMountedRef.current) return;
+          const kind = mapboxFailureKindFromMapError(e.error);
+          reportMapboxFailure(kind, 'bubble', e.error);
+          setMapError(mapboxFailureMessage(kind));
+        });
+
         map.current.on('load', () => {
-          if (!isMountedRef.current) return;
+          if (cancelled || !isMountedRef.current) return;
+          loaded = true;
+          clearTimeout(watchdog);
+          setMapError(null);
           setIsMapLoaded(true);
         });
       })
       .catch((err) => {
-        log.error('Error loading Mapbox:', err);
-        if (isMountedRef.current) setMapError(true);
+        if (cancelled || !isMountedRef.current) return;
+        const kind = mapboxFailureKindOf(err);
+        reportMapboxFailure(kind, 'bubble', err);
+        setMapError(mapboxFailureMessage(kind));
       });
 
     return () => {
+      cancelled = true;
+      clearTimeout(watchdog);
       map.current?.remove();
-      map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(false);
+      map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(null);
     };
-  }, [mapboxToken, location.latitude, location.longitude, location.isLive]);
+  }, [mapboxToken, location.latitude, location.longitude, location.isLive, attempt]);
+
+  const retry = () => { setMapError(null); setAttempt((n) => n + 1); };
 
   const openInMaps = () => {
     const url = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
@@ -140,8 +168,9 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           </div>
         )}
         {mapError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted px-2 text-center text-xs text-muted-foreground">
-            Mapa indisponível — abra a localização pelos botões abaixo.
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2 text-center text-xs text-muted-foreground">
+            <span>{mapError}</span>
+            <Button size="sm" variant="outline" className="h-6 text-xs" onClick={retry}>Tentar novamente</Button>
           </div>
         )}
       </div>
