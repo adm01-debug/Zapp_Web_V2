@@ -24,7 +24,7 @@ export function VoiceSuggestions({ visible }: VoiceSuggestionsProps) {
           transition={{ duration: 0.3 }}
           className="w-full space-y-2"
         >
-          <p className="text-[10px] text-white/25 text-center uppercase tracking-widest font-semibold">
+          <p className="text-3xs text-white/25 text-center uppercase tracking-widest font-semibold">
             Experimente dizer
           </p>
           <div className="flex flex-col items-center gap-1.5">

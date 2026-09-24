@@ -541,7 +541,7 @@ export function CatalogFilterBar({
               <SlidersHorizontal className="w-3.5 h-3.5" />
               Filtros avançados
               {!!advancedFiltersCount && (
-                <span className="ml-0.5 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 leading-4">
+                <span className="ml-0.5 rounded-full bg-primary text-primary-foreground text-3xs px-1.5 leading-4">
                   {advancedFiltersCount}
                 </span>
               )}
@@ -566,7 +566,7 @@ export function MetaTile({ icon: Icon, label, value }: { icon: LucideIcon; label
     <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5">
       <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
       <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-none mb-1">{label}</p>
+        <p className="text-3xs text-muted-foreground uppercase tracking-wide leading-none mb-1">{label}</p>
         <p className="text-[13px] font-semibold text-foreground leading-tight truncate">{value}</p>
       </div>
     </div>

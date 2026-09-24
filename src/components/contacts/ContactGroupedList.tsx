@@ -74,7 +74,7 @@ export function ContactGroupedList({
               <span className="text-sm font-semibold text-foreground flex-1 text-left truncate">
                 {company}
               </span>
-              <Badge variant="secondary" className="text-[10px] h-5 px-2 font-medium">
+              <Badge variant="secondary" className="text-3xs h-5 px-2 font-medium">
                 {members.length}
               </Badge>
               <ChevronDown className={cn(

@@ -82,7 +82,7 @@ export const Sidebar = React.memo(function Sidebar({
             <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
               <PanelLeftClose className="w-[15px] h-[15px]" />
             </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘B</kbd></TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
         )}
       </div>
 
@@ -92,7 +92,7 @@ export const Sidebar = React.memo(function Sidebar({
             <button onClick={toggle} className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-border/40 hover:border-border focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Expandir menu">
               <PanelLeftOpen className="w-[16px] h-[16px]" />
             </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Expandir <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘B</kbd></TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Expandir <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
         </div>
       )}
 
@@ -129,7 +129,7 @@ export const Sidebar = React.memo(function Sidebar({
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
               <span>Buscar</span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">⌘K</kbd>
             </TooltipContent>
           </Tooltip>
         ) : (

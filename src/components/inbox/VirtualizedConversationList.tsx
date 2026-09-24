@@ -65,10 +65,10 @@ export function VirtualizedConversationList({ conversations, selectedId, onSelec
         </div>
         <Tabs value={filter} onValueChange={setFilter} className="w-full">
           <TabsList className={cn("w-full grid grid-cols-4 bg-muted/30 border border-border/20", compactMode && "h-8")}>
-            <TabsTrigger value="all" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-[10px] py-1")}>Todas ({counts.all})</TabsTrigger>
-            <TabsTrigger value="open" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-[10px] py-1")}>Abertas ({counts.open})</TabsTrigger>
-            <TabsTrigger value="pending" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-[10px] py-1")}>Pendentes ({counts.pending})</TabsTrigger>
-            <TabsTrigger value="waiting" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-[10px] py-1")}>Aguardando ({counts.waiting})</TabsTrigger>
+            <TabsTrigger value="all" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-3xs py-1")}>Todas ({counts.all})</TabsTrigger>
+            <TabsTrigger value="open" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-3xs py-1")}>Abertas ({counts.open})</TabsTrigger>
+            <TabsTrigger value="pending" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-3xs py-1")}>Pendentes ({counts.pending})</TabsTrigger>
+            <TabsTrigger value="waiting" className={cn("text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground", compactMode && "text-3xs py-1")}>Aguardando ({counts.waiting})</TabsTrigger>
           </TabsList>
         </Tabs>
       </motion.div>

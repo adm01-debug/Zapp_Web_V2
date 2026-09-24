@@ -138,7 +138,7 @@ export function LeaderboardRow({ agent, index }: { agent: LeaderboardAgent; inde
         </div>
         <div className="flex items-center gap-1">
           {agent.achievements.slice(0, 2).map((a, idx) => <AchievementBadge key={`${a}-${idx}`} achievementKey={a} />)}
-          {agent.achievementsCount > 2 && <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted/50">+{agent.achievementsCount - 2}</Badge>}
+          {agent.achievementsCount > 2 && <Badge variant="secondary" className="text-3xs h-5 px-1.5 bg-muted/50">+{agent.achievementsCount - 2}</Badge>}
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>

@@ -204,13 +204,13 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               className={cn('mt-1', errors.name && 'border-destructive')}
               aria-invalid={!!errors.name}
             />
-            {errors.name && <p className="text-[11px] text-destructive mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-2xs text-destructive mt-1">{errors.name}</p>}
           </div>
 
           <div>
             <Label className="text-xs font-medium">{SCOPE_LABELS[scope]}</Label>
             {renderScopeSelector()}
-            {errors.scope && <p className="text-[11px] text-destructive mt-1">{errors.scope}</p>}
+            {errors.scope && <p className="text-2xs text-destructive mt-1">{errors.scope}</p>}
           </div>
 
           <div>
@@ -223,8 +223,8 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               className={cn('mt-1 opacity-70', errors.fr && 'border-destructive')}
               aria-describedby="sla-rule-fr-hint"
             />
-            <p id="sla-rule-fr-hint" className="text-[11px] text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
-            {errors.fr && <p className="text-[11px] text-destructive mt-1">{errors.fr}</p>}
+            <p id="sla-rule-fr-hint" className="text-2xs text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
+            {errors.fr && <p className="text-2xs text-destructive mt-1">{errors.fr}</p>}
           </div>
 
           <div>

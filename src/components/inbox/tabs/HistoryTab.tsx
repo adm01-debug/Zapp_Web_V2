@@ -178,7 +178,7 @@ export function HistoryTab({ contactId }: HistoryTabProps) {
                             {event.subtitle && <p className="text-xs text-muted-foreground truncate">{event.subtitle}</p>}
                           </div>
                           {event.pill && (
-                            <span className={cn('h-6 px-2.5 rounded-full border text-[11px] font-semibold inline-flex items-center shrink-0', PILL_CLASS[event.pill.tone])}>
+                            <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center shrink-0', PILL_CLASS[event.pill.tone])}>
                               {event.pill.label}
                             </span>
                           )}

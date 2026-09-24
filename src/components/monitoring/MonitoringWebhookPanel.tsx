@@ -68,7 +68,7 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
               <div key={conn.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <span className="font-medium text-sm">{conn.instance_id}</span>
-                  <p className="text-[10px] text-muted-foreground">Testa pipeline completo</p>
+                  <p className="text-3xs text-muted-foreground">Testa pipeline completo</p>
                 </div>
                 <Button size="sm" onClick={() => onTest(conn.instance_id)} disabled={webhookTest.status === 'testing'}>
                   {webhookTest.status === 'testing'
@@ -108,13 +108,13 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
                 <div className="flex items-center gap-2">
                   {webhookConfig.configured ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-destructive" />}
                   <span className="font-medium text-sm">{webhookConfig.configured ? 'Configurado' : 'NÃO Configurado'}</span>
-                  <Badge variant="outline" className="text-[10px] ml-auto">{configuredEvents.length}/{ALL_EXPECTED_EVENTS.length} eventos</Badge>
+                  <Badge variant="outline" className="text-3xs ml-auto">{configuredEvents.length}/{ALL_EXPECTED_EVENTS.length} eventos</Badge>
                 </div>
 
                 {webhookConfig.url && (
                   <div className="p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">URL</p>
+                      <p className="text-3xs text-muted-foreground uppercase tracking-wide">URL</p>
                       <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => copyUrl(webhookConfig.url!)}>
                         <Copy className="w-3 h-3" />
                       </Button>
@@ -134,8 +134,8 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
                       <div key={category} className="p-2.5 rounded-lg bg-muted/30">
                         <div className="flex items-center gap-2 mb-1.5">
                           {allOk ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <AlertTriangle className="w-3 h-3 text-amber-500" />}
-                          <span className="text-[11px] font-medium">{category}</span>
-                          <span className="text-[10px] text-muted-foreground ml-auto">{configured.length}/{events.length}</span>
+                          <span className="text-2xs font-medium">{category}</span>
+                          <span className="text-3xs text-muted-foreground ml-auto">{configured.length}/{events.length}</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {events.map(e => {

@@ -79,9 +79,9 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-muted rounded text-muted-foreground">↑↓</kbd>
-            <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-muted rounded text-muted-foreground">Enter</kbd>
-            <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-muted rounded text-muted-foreground">Esc</kbd>
+            <kbd className="px-1.5 py-0.5 text-3xs font-medium bg-muted rounded text-muted-foreground">↑↓</kbd>
+            <kbd className="px-1.5 py-0.5 text-3xs font-medium bg-muted rounded text-muted-foreground">Enter</kbd>
+            <kbd className="px-1.5 py-0.5 text-3xs font-medium bg-muted rounded text-muted-foreground">Esc</kbd>
           </div>
         </div>
 
@@ -104,7 +104,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
               Object.entries(groupedCommands).map(([category, commands]) => (
                 <div key={category} className="mb-2 last:mb-0">
                   <div className="px-3 py-1">
-                    <Badge variant="outline" className={cn("text-[10px] font-medium", categoryColors[category])}>{categoryLabels[category]}</Badge>
+                    <Badge variant="outline" className={cn("text-3xs font-medium", categoryColors[category])}>{categoryLabels[category]}</Badge>
                   </div>
                   <div className="space-y-0.5">
                     {commands.map((cmd) => {
@@ -121,7 +121,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className={cn("font-medium", selectedIndex === globalIndex ? "text-primary" : "text-foreground")}>{cmd.label}</span>
-                              <code className="text-[10px] px-1.5 py-0.5 bg-muted rounded font-mono text-muted-foreground">{cmd.command}</code>
+                              <code className="text-3xs px-1.5 py-0.5 bg-muted rounded font-mono text-muted-foreground">{cmd.command}</code>
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
                           </div>
@@ -138,7 +138,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
         </ScrollArea>
 
         <div className="px-3 py-2 border-t border-border/50 bg-muted/20">
-          <p className="text-[11px] text-muted-foreground text-center">
+          <p className="text-2xs text-muted-foreground text-center">
             Digite <code className="px-1 py-0.5 bg-muted rounded">/</code> para ver todos os comandos disponíveis
           </p>
         </div>

@@ -352,7 +352,7 @@ const ConversationRow = memo(({
                   : conversation.lastMessage?.content || 'Sem mensagens'}
               </p>
               {conversation.unreadCount > 0 && (
-                <span className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold bg-primary text-primary-foreground">
+                <span className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-2xs font-bold bg-primary text-primary-foreground">
                   {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
                 </span>
               )}
@@ -360,15 +360,15 @@ const ConversationRow = memo(({
             {(typeConfig || isVip || isHighPriority) && (
               <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                 {typeConfig && (
-                  <Badge variant="outline" className={cn('text-[11px] px-1.5 py-0 h-4 border', typeConfig.badgeClass)}>
+                  <Badge variant="outline" className={cn('text-2xs px-1.5 py-0 h-4 border', typeConfig.badgeClass)}>
                     {typeConfig.label}
                   </Badge>
                 )}
                 {isVip && (
-                  <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-4 bg-warning/15 text-warning border-warning/40">VIP</Badge>
+                  <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-warning/15 text-warning border-warning/40">VIP</Badge>
                 )}
                 {isHighPriority && (
-                  <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
+                  <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
                 )}
               </div>
             )}

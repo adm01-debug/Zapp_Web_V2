@@ -78,7 +78,7 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
           <button
             type="button"
             onClick={onConfigure}
-            className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-[11px] font-medium text-foreground-secondary hover:bg-muted/60"
+            className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-2xs font-medium text-foreground-secondary hover:bg-muted/60"
           >
             Configurar metas
           </button>

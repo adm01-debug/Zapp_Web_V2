@@ -88,7 +88,7 @@ export const MessageBubble = memo(function MessageBubble({
               {isLastInGroup && (
                 <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm">
                   <AvatarImage src={contactAvatar} alt="Avatar do contato" />
-                  <AvatarFallback className="bg-gradient-to-br from-accent to-accent/60 text-accent-foreground text-[10px] font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-accent to-accent/60 text-accent-foreground text-3xs font-bold">
                     {senderName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -98,7 +98,7 @@ export const MessageBubble = memo(function MessageBubble({
 
           <div className={cn('max-w-[68%] space-y-0.5 relative', isSent && 'items-end')}>
             {!isSent && isFirstInGroup && (
-              <span className="text-[11px] font-semibold text-primary/80 ml-1 block">{senderName}</span>
+              <span className="text-2xs font-semibold text-primary/80 ml-1 block">{senderName}</span>
             )}
 
             {/* Floating emoji reactions on hover — WhatsApp Web style */}
@@ -179,7 +179,7 @@ export const MessageBubble = memo(function MessageBubble({
                     <AudioMessagePlayer audioUrl={message.mediaUrl} messageId={message.id} isSent={isSent} existingTranscription={message.transcription} transcriptionStatus={message.transcriptionStatus} />
                     <QuarantineBadge messageId={message.id} className="mt-1" />
                     {searchQuery && highlightedMessageIds?.has(message.id) && message.transcription && (
-                      <p className="text-[11px] mt-1 px-1 italic text-muted-foreground"><HighlightedText text={message.transcription} query={searchQuery} /></p>
+                      <p className="text-2xs mt-1 px-1 italic text-muted-foreground"><HighlightedText text={message.transcription} query={searchQuery} /></p>
                     )}
                   </div>
                 )}
@@ -245,7 +245,7 @@ export const MessageBubble = memo(function MessageBubble({
                   (message.type === 'image' || message.type === 'video') && !message.content && 'px-3.5 pb-1'
                 )}>
                   {message.isEdited && <span className="text-[9px] italic mr-0.5">editada</span>}
-                  <span className="text-[11px] font-medium">{formatMessageTime(message.timestamp)}</span>
+                  <span className="text-2xs font-medium">{formatMessageTime(message.timestamp)}</span>
                   {isSent && <MessageStatusIcon status={message.status} />}
                 </div>
               </motion.div>
@@ -269,7 +269,7 @@ export const MessageBubble = memo(function MessageBubble({
               {isLastInGroup && (
                 <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm">
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/10 text-primary text-[10px] font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/10 text-primary text-3xs font-bold">
                     {agentInitials}
                   </AvatarFallback>
                 </Avatar>

@@ -21,7 +21,7 @@ function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onC
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className={cn('flex items-center gap-1 rounded-md border border-border/50 transition-colors hover:bg-muted/60', size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs')} onClick={(e) => e.stopPropagation()}>
+        <button className={cn('flex items-center gap-1 rounded-md border border-border/50 transition-colors hover:bg-muted/60', size === 'xs' ? 'px-1.5 py-0.5 text-3xs' : 'px-2 py-1 text-xs')} onClick={(e) => e.stopPropagation()}>
           <span>{info.emoji}</span><span className="text-muted-foreground">{info.label}</span>
           <ChevronDown className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3', 'text-muted-foreground/60')} />
         </button>
@@ -57,7 +57,7 @@ function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingEmoji
         <Input value={name} onChange={(e) => setName(e.target.value)} className="h-7 text-xs flex-1" placeholder="Nome do emoji" />
       </div>
       <div className="flex items-center gap-2">
-        <Tag className="w-3 h-3 text-muted-foreground shrink-0" /><span className="text-[10px] text-muted-foreground shrink-0">Categoria:</span>
+        <Tag className="w-3 h-3 text-muted-foreground shrink-0" /><span className="text-3xs text-muted-foreground shrink-0">Categoria:</span>
         <CategorySelector value={category} onChange={setCategory} size="sm" />
         {pending.aiCategory !== 'outros' && category !== pending.aiCategory && (
           <button onClick={() => setCategory(pending.aiCategory)} className="text-[9px] text-primary hover:underline shrink-0">IA sugere: {CATEGORY_LABELS[pending.aiCategory]?.label}</button>
@@ -138,7 +138,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                   </div>
                 </ScrollArea>
               </div>
-              <div className="px-3 py-1.5 border-b border-border/20"><span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{activeNativeCategory?.label}</span></div>
+              <div className="px-3 py-1.5 border-b border-border/20"><span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">{activeNativeCategory?.label}</span></div>
               <ScrollArea className="h-[280px]">
                 <div className="p-2">
                   <div className="grid grid-cols-8 gap-0.5">
@@ -149,7 +149,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                   </div>
                 </div>
               </ScrollArea>
-              <div className="px-3 py-1.5 border-t border-border/30"><span className="text-[10px] text-muted-foreground">{filteredNativeEmojis.length} emojis · {activeNativeCategory?.label}</span></div>
+              <div className="px-3 py-1.5 border-t border-border/30"><span className="text-3xs text-muted-foreground">{filteredNativeEmojis.length} emojis · {activeNativeCategory?.label}</span></div>
             </>
           ) : (
             <>
@@ -164,10 +164,10 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
               <div className="px-2 py-2 border-b border-border/30">
                 <ScrollArea className="w-full">
                   <div className="flex gap-1.5 flex-wrap">
-                    <button onClick={() => { setActiveCategory(null); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap', !activeCategory && !showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>Todos ({emojis.length})</button>
-                    <button onClick={() => { setShowFavorites(!showFavorites); setActiveCategory(null); }} className={cn('px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap flex items-center gap-1', showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}><Star className="w-3 h-3" /> Favoritos</button>
+                    <button onClick={() => { setActiveCategory(null); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap', !activeCategory && !showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>Todos ({emojis.length})</button>
+                    <button onClick={() => { setShowFavorites(!showFavorites); setActiveCategory(null); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap flex items-center gap-1', showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}><Star className="w-3 h-3" /> Favoritos</button>
                     {categories.map(cat => { const info = CATEGORY_LABELS[cat]; const count = emojis.filter(em => em.category === cat).length; return (
-                      <button key={cat} onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap', activeCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>{info?.emoji || '📦'} {info?.label || cat} ({count})</button>
+                      <button key={cat} onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap', activeCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>{info?.emoji || '📦'} {info?.label || cat} ({count})</button>
                     ); })}
                   </div>
                 </ScrollArea>
@@ -206,7 +206,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                 </div>
               </ScrollArea>
               <div className="px-3 py-2 border-t border-border/30 flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">{filtered.length}/{emojis.length} emojis · IA + edição manual</span>
+                <span className="text-3xs text-muted-foreground">{filtered.length}/{emojis.length} emojis · IA + edição manual</span>
               </div>
             </>
           )}

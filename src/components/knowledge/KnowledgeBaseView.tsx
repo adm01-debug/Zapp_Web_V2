@@ -83,7 +83,7 @@ export function KnowledgeBaseView() {
               <motion.div key={article.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <Card className="bg-card/50 border-border/30 hover:border-secondary/30 transition-all group h-full"><CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-[10px]">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
+                    <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-3xs">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
@@ -92,8 +92,8 @@ export function KnowledgeBaseView() {
                   <h3 className="font-semibold text-sm text-foreground mb-1">{article.title}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-3 mb-3">{article.content}</p>
                   <div className="flex items-center gap-1 flex-wrap">
-                    {article.tags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-[10px] h-4">{tag}</Badge>)}
-                    {!article.is_published && <Badge variant="outline" className="text-[10px] h-4 text-warning border-yellow-400/30">Rascunho</Badge>}
+                    {article.tags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-3xs h-4">{tag}</Badge>)}
+                    {!article.is_published && <Badge variant="outline" className="text-3xs h-4 text-warning border-yellow-400/30">Rascunho</Badge>}
                   </div>
                 </CardContent></Card>
               </motion.div>
@@ -106,7 +106,7 @@ export function KnowledgeBaseView() {
               <Card key={file.id} className="bg-card/50 border-border/30"><CardContent className="p-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center"><FileText className="w-5 h-5 text-muted-foreground" /></div>
                 <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{file.file_name}</p><p className="text-xs text-muted-foreground">{file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} • {new Date(file.created_at).toLocaleDateString('pt-BR')}</p></div>
-                <div className="flex items-center gap-2">{statusIcon(file.processing_status)}<Badge variant="outline" className="text-[10px]">{file.processing_status}</Badge></div>
+                <div className="flex items-center gap-2">{statusIcon(file.processing_status)}<Badge variant="outline" className="text-3xs">{file.processing_status}</Badge></div>
               </CardContent></Card>
             ))}
             {files.length === 0 && <div className="text-center py-12 text-muted-foreground"><Upload className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">Nenhum arquivo enviado</p></div>}

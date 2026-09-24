@@ -209,14 +209,14 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
                       {dayMessages.slice(0, 3).map((msg, i) => (
                         <div 
                           key={msg.id}
-                          className="flex items-center gap-1 text-[10px] text-secondary truncate"
+                          className="flex items-center gap-1 text-3xs text-secondary truncate"
                         >
                           <Clock className="w-2.5 h-2.5 shrink-0" />
                           <span>{format(new Date(msg.scheduled_at), 'HH:mm')}</span>
                         </div>
                       ))}
                       {dayMessages.length > 3 && (
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-3xs text-muted-foreground">
                           +{dayMessages.length - 3} mais
                         </span>
                       )}

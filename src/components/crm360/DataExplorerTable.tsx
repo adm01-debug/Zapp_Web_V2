@@ -101,8 +101,8 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
           </Button>
         )}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
-          {browser.totalRecords > 0 && <Badge variant="secondary" className="text-[10px]">{browser.totalRecords.toLocaleString('pt-BR')} reg.</Badge>}
-          {browser.duration > 0 && <Badge variant="outline" className="text-[10px]">{browser.duration}ms</Badge>}
+          {browser.totalRecords > 0 && <Badge variant="secondary" className="text-3xs">{browser.totalRecords.toLocaleString('pt-BR')} reg.</Badge>}
+          {browser.duration > 0 && <Badge variant="outline" className="text-3xs">{browser.duration}ms</Badge>}
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40px] text-[10px]">#</TableHead>
+                <TableHead className="w-[40px] text-3xs">#</TableHead>
                 {tabConfig.columns.map((col) => (
                   <TableHead key={col.key} className="cursor-pointer hover:bg-muted/50 transition-colors text-xs"
                     onClick={() => { const isAsc = browser.order?.column === col.key && browser.order?.ascending; browser.setSort(col.key, !isAsc); }}>
@@ -139,7 +139,7 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
               ) : (
                 browser.data.map((row: Record<string, unknown>, idx: number) => (
                   <TableRow key={String(row.id ?? idx)} className={`hover:bg-muted/30 ${onRowClick ? 'cursor-pointer' : ''}`} onClick={() => onRowClick?.(row)}>
-                    <TableCell className="text-muted-foreground text-[10px]">{browser.page * browser.pageSize + idx + 1}</TableCell>
+                    <TableCell className="text-muted-foreground text-3xs">{browser.page * browser.pageSize + idx + 1}</TableCell>
                     {tabConfig.columns.map((col) => (
                       <TableCell key={col.key} className="max-w-[180px] truncate text-xs">
                         {col.key === 'segment_code' ? <RFMBadge segment={row[col.key] as string} /> : <span title={String(row[col.key] ?? '')}>{formatCellValue(row[col.key], col.format)}</span>}

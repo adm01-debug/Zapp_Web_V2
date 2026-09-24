@@ -99,7 +99,7 @@ function ChatPanelHeaderBase({
             {conversation.assignedTo && (
               <button
                 onClick={onOpenTransfer}
-                className="flex items-center gap-1 h-5 px-1.5 rounded-md bg-muted text-[11px] text-muted-foreground hover:text-foreground shrink-0"
+                className="flex items-center gap-1 h-5 px-1.5 rounded-md bg-muted text-2xs text-muted-foreground hover:text-foreground shrink-0"
                 aria-label={`Atribuído a ${conversation.assignedTo.name} — clique para transferir`}
               >
                 <Avatar className="w-3.5 h-3.5">
@@ -120,8 +120,8 @@ function ChatPanelHeaderBase({
                 <span className="text-muted-foreground">{typeConfig.label}</span>
               </>
             )}
-            {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-[11px] font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
-            {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-[11px] font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
+            {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
+            {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
               firstResponseAt={conversation.firstResponseAt ?? null}

@@ -55,13 +55,13 @@ export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRat
                 {agent.avatar ? (
                   <img src={agent.avatar} alt={agent.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
                 ) : (
-                  <span className={cn('w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0', bg, text)}>
+                  <span className={cn('w-7 h-7 rounded-full flex items-center justify-center text-2xs font-semibold shrink-0', bg, text)}>
                     {getInitials(agent.name)}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-foreground truncate">{agent.name}</p>
-                  <p className="text-[11px] text-foreground-secondary truncate">{agent.conversationsResolved} resolvidas</p>
+                  <p className="text-2xs text-foreground-secondary truncate">{agent.conversationsResolved} resolvidas</p>
                 </div>
                 <div className="h-1.5 w-[120px] rounded-full bg-muted/60 overflow-hidden shrink-0">
                   <motion.div
@@ -71,7 +71,7 @@ export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRat
                     transition={reducedMotion ? { duration: 0 } : { duration: 0.5 }}
                   />
                 </div>
-                <span className="text-[11px] font-semibold text-foreground w-14 text-right shrink-0">
+                <span className="text-2xs font-semibold text-foreground w-14 text-right shrink-0">
                   {slaRate !== undefined ? `${Math.round(slaRate)}% SLA` : '—'}
                 </span>
               </div>

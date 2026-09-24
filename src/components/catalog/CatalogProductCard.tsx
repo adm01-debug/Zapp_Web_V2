@@ -69,7 +69,7 @@ function ColorChips({ product }: { product: ExternalProduct }) {
   }
   if (colors && colors.length > 0) {
     return (
-      <span className="text-[10px] text-muted-foreground">
+      <span className="text-3xs text-muted-foreground">
         {colors.length} cor{colors.length !== 1 ? 'es' : ''}
       </span>
     );
@@ -201,7 +201,7 @@ export function CatalogProductCard({
           {/* info */}
           <div className="flex-1 min-w-0" onClick={() => setShowDetails(true)}>
             <p className="text-[13px] font-semibold text-foreground truncate">{product.name}</p>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-2xs text-muted-foreground truncate">
               {[product.brand, product.suppliers?.name].filter(Boolean).join(' | ')}
             </p>
             <ColorChips product={product} />
@@ -316,7 +316,7 @@ export function CatalogProductCard({
             >
               {product.name}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+            <p className="text-3xs text-muted-foreground mt-0.5 truncate">
               {[product.brand, product.suppliers?.name].filter(Boolean).join(' · ')}
             </p>
           </div>
