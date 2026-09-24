@@ -154,6 +154,7 @@ export function CatalogFavoritesTab() {
       ))}
       {sendProduct && (
         <SendProductDialog
+          key={sendProduct.id}
           product={sendProduct}
           open={!!sendProduct}
           onOpenChange={(open) => { if (!open) setSendProduct(null); }}
