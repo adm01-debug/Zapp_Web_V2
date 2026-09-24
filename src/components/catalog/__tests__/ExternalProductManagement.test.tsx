@@ -285,7 +285,7 @@ describe('ExternalProductManagement', () => {
       expect(screen.queryByText('Caneta Vermelha')).not.toBeInTheDocument();
     });
 
-    it('com exatamente 1 cor selecionada, também envia color=<valor> pro servidor (fetchProducts)', async () => {
+    it('com exatamente 1 cor selecionada, envia color=[valor] (array) pro servidor (fetchProducts)', async () => {
       const hookReturn = baseHookReturn({
         products: [mockProduct({ id: 'p1', name: 'Caneta Azul', colors: ['Azul'] })],
       });
@@ -306,10 +306,10 @@ describe('ExternalProductManagement', () => {
       await new Promise((r) => setTimeout(r, 350));
       const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
       const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
-      expect(lastCall.color).toBe('Azul');
+      expect(lastCall.color).toEqual(['Azul']);
     });
 
-    it('com 2+ cores selecionadas, não envia "color" (escalar) — filtro final fica só no client', async () => {
+    it('com 2+ cores selecionadas, envia color=[v1,v2] (array) pro servidor — corrige contagem/paginação (E36-2)', async () => {
       const hookReturn = baseHookReturn({
         products: [
           mockProduct({ id: 'p1', name: 'Caneta Azul', colors: ['Azul'] }),
@@ -334,8 +334,8 @@ describe('ExternalProductManagement', () => {
       await new Promise((r) => setTimeout(r, 350));
       const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
       const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
-      expect(lastCall.color).toBeUndefined();
-      // mas os dois produtos continuam visíveis (cada um bate uma das cores selecionadas)
+      expect(lastCall.color).toEqual(['Azul', 'Vermelho']);
+      // filtro client-side é 2ª camada idempotente — ambos continuam visíveis
       expect(screen.getByText('Caneta Azul')).toBeInTheDocument();
       expect(screen.getByText('Caneta Vermelha')).toBeInTheDocument();
     });
@@ -371,4 +371,3 @@ describe('ExternalProductManagement', () => {
     });
   });
 });
-
