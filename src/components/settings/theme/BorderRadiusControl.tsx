@@ -1,36 +1,67 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import { Send, Search, Heart, Bell, Settings, Star } from 'lucide-react';
+import { SlidersHorizontal, Send, Search, Heart, Bell, Settings, Star } from 'lucide-react';
 
 interface BorderRadiusControlProps {
-  borderRadius: number;
-  onChange: (value: number[]) => void;
+  value: number;
+  onChange: (value: number) => void;
 }
 
-export function BorderRadiusControl({ borderRadius, onChange }: BorderRadiusControlProps) {
+const QUICK_PRESETS = [
+  { label: 'Reto', value: 0 },
+  { label: 'Sutil', value: 4 },
+  { label: 'Médio', value: 8 },
+  { label: 'Suave', value: 12 },
+  { label: 'Redondo', value: 20 },
+];
+
+export function BorderRadiusControl({ value: borderRadius, onChange }: BorderRadiusControlProps) {
   const r = `${borderRadius}px`;
 
   return (
     <Card className="border-secondary/30">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">Raio da Borda</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <SlidersHorizontal className="h-4 w-4" /> Raio da Borda
+          </CardTitle>
           <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">
             {borderRadius}px
           </span>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        {/* Presets rápidos */}
+        <div className="flex flex-wrap gap-2">
+          {QUICK_PRESETS.map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              data-testid={`radius-preset-${preset.value}`}
+              onClick={() => onChange(preset.value)}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                borderRadius === preset.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/70',
+              )}
+            >
+              {preset.label} · {preset.value}px
+            </button>
+          ))}
+        </div>
+
         {/* Slider */}
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-muted-foreground/60 font-mono w-4">0</span>
           <Slider
             value={[borderRadius]}
-            onValueChange={onChange}
+            onValueChange={(v) => onChange(v[0])}
             min={0}
             max={20}
             step={1}
+            thumbLabel="Raio da borda em pixels"
             className="flex-1"
           />
           <span className="text-[10px] text-muted-foreground/60 font-mono w-5">20</span>

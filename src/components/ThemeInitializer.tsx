@@ -1,108 +1,45 @@
 import { useEffect } from 'react';
-import {
-  PRESETS,
-  CSS_VARS_TO_APPLY,
-  STORAGE_KEY,
-  STORAGE_VERSION,
-  DEFAULT_PRESET_ID,
-  normalizeStoredPresetId,
-} from '@/components/settings/theme/presets';
-import type { ThemeModeColors } from '@/components/settings/theme/presets';
+import { applyThemePreset, applyRadius, loadThemeConfig, STORAGE_KEY, type ThemeConfig } from '@/components/settings/theme/presets';
 import { useTheme } from '@/hooks/ui/useTheme';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('ThemeInitializer');
 
-type StoredThemeConfig = {
-  v?: number;
-  borderRadius?: number;
-  cacheMode?: 'light' | 'dark';
-  cachePreset?: string;
-  cssVarsCache?: Record<string, string>;
-  preset?: string;
-};
-
 /**
  * Global theme initializer — must be mounted at the app root.
- * Restores saved skin (preset + border-radius) on every page load
- * and re-applies when light/dark mode changes.
- * Also caches computed CSS vars in localStorage for the inline
- * flash-prevention script in index.html.
+ * Restora a skin salva (preset + raio) a cada load e reaplica quando o
+ * Modo de Cor muda. O cache de CSS vars para o boot inline (index.html)
+ * é gravado exclusivamente por `applyThemePreset` — este componente nunca
+ * escreve no localStorage diretamente.
  */
 export function ThemeInitializer() {
-  const { resolvedTheme, theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    let mounted = true;
-    log.info('ThemeInitializer: applying theme configuration');
+    const cfg = loadThemeConfig();
+    applyThemePreset(cfg.preset, resolvedTheme);
+    applyRadius(cfg.borderRadius);
+    log.info('skin aplicada', { preset: cfg.preset, radius: cfg.borderRadius, mode: resolvedTheme });
+  }, [resolvedTheme]);
 
-    const applyTheme = () => {
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        let presetId = DEFAULT_PRESET_ID;
-        let radius = 14; // 0.875rem = 14px — nosso token no tokens.css
-        let storedConfig: StoredThemeConfig = {};
-
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved) as StoredThemeConfig;
-            if (parsed.v === STORAGE_VERSION) {
-              storedConfig = parsed;
-              presetId = normalizeStoredPresetId(parsed.preset);
-              if (parsed.borderRadius != null) radius = Math.max(parsed.borderRadius, 14); // min 14 = 0.875rem (design token)
-            } else {
-              localStorage.removeItem(STORAGE_KEY);
-            }
-          } catch (e) {
-            log.warn('Failed to parse saved theme config:', e);
-          }
+        const parsed = JSON.parse(e.newValue) as Partial<ThemeConfig>;
+        if (parsed.preset) {
+          applyThemePreset(parsed.preset, resolvedTheme, { persistCache: false });
         }
-
-        const preset = PRESETS.find((p) => p.id === presetId) || PRESETS.find((p) => p.id === DEFAULT_PRESET_ID);
-        if (preset) {
-          const colors: ThemeModeColors = resolvedTheme === 'dark' ? preset.dark : preset.light;
-          const root = document.documentElement;
-          const cssVarsCache: Record<string, string> = {};
-
-          for (const key of CSS_VARS_TO_APPLY) {
-            const value = colors[key];
-            if (value) {
-              root.style.setProperty(`--${key}`, value);
-              cssVarsCache[key] = value;
-            }
-          }
-
-          if (mounted) {
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                ...storedConfig,
-                v: STORAGE_VERSION,
-                borderRadius: radius,
-                cacheMode: resolvedTheme,
-                cachePreset: presetId,
-                cssVarsCache,
-                preset: presetId,
-              }));
-            } catch (err) {
-              log.error('LocalStorage write failed:', err);
-            }
-          }
+        if (typeof parsed.borderRadius === 'number') {
+          applyRadius(parsed.borderRadius);
         }
-
-        document.documentElement.style.setProperty('--radius', `${radius / 16}rem`);
-      } catch (criticalError) {
-        log.error('Critical error in ThemeInitializer:', criticalError);
+      } catch (err) {
+        log.warn('storage event com JSON invalido', err);
       }
     };
-
-    // Use requestAnimationFrame to ensure DOM is ready but avoid blocking
-    const frameId = requestAnimationFrame(applyTheme);
-
-    return () => {
-      mounted = false;
-      cancelAnimationFrame(frameId);
-    };
-  }, [resolvedTheme, theme]);
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [resolvedTheme]);
 
   return null;
 }

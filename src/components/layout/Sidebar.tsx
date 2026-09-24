@@ -60,7 +60,7 @@ export const Sidebar = React.memo(function Sidebar({
 
       {/* Logo + Toggle */}
       <div className={cn('flex items-center h-[64px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
-        <button onClick={() => onViewChange('inbox')} className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
+        <button onClick={() => onViewChange('inbox')} className="sidebar-logo-tile w-11 h-11 rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
           <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
         </button>
         {!collapsed && <span className="font-display text-xl font-bold leading-none tracking-[-0.01em] text-foreground ml-2 mr-auto">ZAPP</span>}

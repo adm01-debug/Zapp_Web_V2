@@ -20,17 +20,19 @@
           
           var skin = localStorage.getItem('theme-custom-colors');
           if (skin) {
-            var c = JSON.parse(skin);
-            if (c.v === 5) {
-              var root = document.documentElement;
-              if (c.cssVarsCache) {
+            var c = JSON.parse(skin), root = document.documentElement;
+            if (c.v === 6) {
+              var mode = isDark ? 'dark' : 'light';
+              if (c.cssVarsCache && c.cacheMode === mode) {
                 for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
               }
-              if (c.borderRadius != null) {
-                root.style.setProperty('--radius', (c.borderRadius / 16) + 'rem');
+              if (typeof c.borderRadius === 'number' && isFinite(c.borderRadius)) {
+                var r = Math.max(0, Math.min(20, c.borderRadius));
+                root.style.setProperty('--radius', (r / 16) + 'rem');
               }
-            } else {
-              localStorage.removeItem('theme-custom-colors');
+              if (c.preset) root.setAttribute('data-preset-id', c.preset);
+            } else if (c.v !== 5) {
+              localStorage.removeItem('theme-custom-colors'); /* v5 fica: ThemeInitializer migra */
             }
           }
         } catch(e) {

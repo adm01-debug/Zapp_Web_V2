@@ -1,30 +1,32 @@
+import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Palette, RotateCcw, Save, Sun, Moon, Monitor, ChevronLeft } from 'lucide-react';
+import { Palette, Save, Sun, Moon, Monitor, ChevronLeft, Sparkles, Gamepad2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/ui/useTheme';
-import { PRESETS } from './theme/presets';
+import { classicPresets, gxPresets, getPresetById } from './theme/presets';
 import { useThemePreset } from './theme/useThemePreset';
 import { PresetCard } from './theme/PresetCard';
 import { BorderRadiusControl } from './theme/BorderRadiusControl';
-import { toast } from 'sonner';
+import { ThemeResetDialog } from './theme/ThemeResetDialog';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
+};
 
 export function ThemeCustomizer() {
   const { theme, setTheme } = useTheme();
-  const {
-    activePreset,
-    borderRadius,
-    applyPreset,
-    handleBorderRadiusChange,
-    resetTheme,
-    exportTheme,
-    importTheme,
-  } = useThemePreset();
+  const reducedMotion = useReducedMotion();
+  const { config, hasUnsavedChanges, updateConfig, applyPreset, handleSave, handleReset } = useThemePreset();
+
+  const activeName = getPresetById(config.preset)?.name ?? 'Padrão';
+  const motionInitial = reducedMotion ? false : 'hidden';
 
   return (
     <div className="space-y-6 w-full min-w-0">
       {/* Back + Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -35,27 +37,28 @@ export function ThemeCustomizer() {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <div>
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Palette className="w-5 h-5 text-primary" />
-            Skins
-          </h3>
-          <p className="text-sm text-muted-foreground">Escolha sua skin favorita</p>
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              Skins
+              <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+                ✓ {activeName}
+              </span>
+            </h3>
+            <p className="text-sm text-muted-foreground">Escolha sua skin favorita</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="default" size="sm" onClick={() => {
-            const preset = PRESETS.find(p => p.id === activePreset);
-            toast.success(`Tema "${preset?.name || 'Padrão'}" salvo com sucesso!`);
-          }}>
+          <Button variant="default" size="sm" data-testid="theme-save" className="relative" onClick={handleSave}>
             <Save className="w-4 h-4 mr-1" /> Salvar
+            {hasUnsavedChanges && (
+              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+            )}
           </Button>
-          <Button variant="outline" size="sm" onClick={resetTheme}>
-            <RotateCcw className="w-4 h-4 mr-1" /> Original
-          </Button>
+          <ThemeResetDialog onConfirm={handleReset} />
         </div>
       </div>
 
-      {/* Mode Toggle */}
+      {/* Modo de Cor — inalterado */}
       <Card className="border-secondary/30">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Modo de Cor</CardTitle>
@@ -104,28 +107,51 @@ export function ThemeCustomizer() {
         </CardContent>
       </Card>
 
-      {/* Presets Grid */}
-      <div>
-        <h4 className="text-sm font-medium text-muted-foreground mb-3">
-          {PRESETS.length} skins disponíveis
+      {/* Skins clássicas */}
+      <motion.div initial={motionInitial} animate="visible" variants={fadeUp} custom={0}>
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Sparkles className="h-4 w-4" /> Skins clássicas <span>({classicPresets.length})</span>
         </h4>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {PRESETS.map((preset) => (
-            <PresetCard
-              key={preset.id}
-              preset={preset}
-              isActive={activePreset === preset.id}
-              onSelect={applyPreset}
-            />
+        <div
+          role="radiogroup"
+          aria-label="Skins clássicas"
+          data-testid="skins-classic-grid"
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5"
+        >
+          {classicPresets.map((preset, i) => (
+            <motion.div key={preset.id} initial={motionInitial} animate="visible" variants={fadeUp} custom={2.5 + i * 0.05}>
+              <PresetCard preset={preset} isActive={config.preset === preset.id} onSelect={applyPreset} />
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Border Radius */}
-      <BorderRadiusControl
-        borderRadius={borderRadius}
-        onChange={handleBorderRadiusChange}
-      />
+      {/* Skins Opera GX */}
+      <motion.div initial={motionInitial} animate="visible" variants={fadeUp} custom={1}>
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Gamepad2 className="h-4 w-4" /> Skins Opera GX <span>({gxPresets.length})</span>
+          <span className="rounded-md border border-primary/30 bg-primary/15 text-[10px] font-bold uppercase tracking-wide text-primary px-1.5 py-0.5">
+            GAMER
+          </span>
+        </h4>
+        <div
+          role="radiogroup"
+          aria-label="Skins Opera GX"
+          data-testid="skins-gx-grid"
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5"
+        >
+          {gxPresets.map((preset, i) => (
+            <motion.div key={preset.id} initial={motionInitial} animate="visible" variants={fadeUp} custom={2.5 + i * 0.05}>
+              <PresetCard preset={preset} isActive={config.preset === preset.id} onSelect={applyPreset} />
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Raio da borda */}
+      <motion.div initial={motionInitial} animate="visible" variants={fadeUp} custom={2}>
+        <BorderRadiusControl value={config.borderRadius} onChange={(v) => updateConfig({ borderRadius: v })} />
+      </motion.div>
     </div>
   );
 }
