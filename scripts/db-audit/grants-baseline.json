@@ -3,6 +3,8 @@
     "anon_execute": [
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
+        "prevent_contact_queue_hijack()",
+        "prevent_conversation_task_field_forgery()",
         "talkx_campaign_report(p_campaign uuid)",
         "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone)",
         "talkx_segment_tags(p_segment uuid)",
@@ -152,6 +154,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 124,
-    "authenticated_execute_count": 79
+    "service_role_execute_count": 127,
+    "authenticated_execute_count": 82
 }
