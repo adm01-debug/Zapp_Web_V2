@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Send, ChevronDown, Package, Copy, Download, Palette, Check,
-  Pencil, User,
+  Pencil, User, Link2,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import { toast } from '@/hooks/ui/use-toast';
@@ -38,6 +38,48 @@ const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
   formal: 'Formal',
   informal: 'Informal',
   promo: 'Promoção',
+};
+
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_IMAGES = 10;
+
+/** Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74). */
+const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label: string }[] }> = ({ message, images }) => {
+  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const firstImage = images[0];
+  return (
+    <div className="space-y-2">
+      <span className="text-sm text-muted-foreground">Pré-visualização</span>
+      <div className="rounded-lg overflow-hidden border border-border/50">
+        <div className="flex items-center gap-2 bg-[#075E54] text-white px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <User className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-medium">Cliente</span>
+        </div>
+        <div className="bg-[#e5ddd5] p-3 space-y-2">
+          {firstImage && (
+            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
+              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
+              {images.length > 1 && (
+                <span className="absolute bottom-1 right-1 text-[10px] leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
+                  1/{images.length}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
+            <p className="text-sm whitespace-pre-line text-black">{message}</p>
+            <div className="flex items-center justify-end gap-0.5 mt-1">
+              <span className="text-[10px] text-black/50 mr-1">{time}</span>
+              <Check className="w-3 h-3 text-blue-500" />
+              <Check className="w-3 h-3 text-blue-500 -ml-2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
@@ -105,15 +147,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   }
 
   const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null);
+  const messageTooLong = message.length > MAX_MESSAGE_LENGTH;
+  const selectedImagesList = useMemo(
+    () => visibleImages.filter((i) => selectedImages.has(i.url)),
+    [visibleImages, selectedImages]
+  );
 
   const toggleImage = (url: string) => {
-    setSelectedImages((prev) => { const next = new Set(prev); if (next.has(url)) next.delete(url); else next.add(url); return next; });
+    if (selectedImages.has(url)) {
+      setSelectedImages((prev) => { const next = new Set(prev); next.delete(url); return next; });
+      return;
+    }
+    if (selectedImages.size >= MAX_IMAGES) {
+      toast({ title: 'Limite de 10 fotos por envio', description: 'Desmarque alguma foto para adicionar outra.', variant: 'destructive' });
+      return;
+    }
+    setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
   };
 
   const handleEditMessage = () => { if (!isEditing) setCustomMessage(message); setIsEditing(!isEditing); };
 
   const handleCopyDescription = async () => {
     try { await navigator.clipboard.writeText(message); toast({ title: '✅ Copiado!' }); } catch { toast({ title: 'Erro ao copiar', variant: 'destructive' }); }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      const url = `${window.location.origin}${window.location.pathname}?view=catalog&product=${fullProduct.id}`;
+      await navigator.clipboard.writeText(url);
+      toast({ title: '✅ Link copiado!' });
+    } catch { toast({ title: 'Erro ao copiar link', variant: 'destructive' }); }
   };
 
   const handleDownloadImages = () => {
@@ -261,18 +324,31 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     <p className="text-sm whitespace-pre-line leading-relaxed">{message}</p>
                   )}
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className={cn('text-xs', messageTooLong ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+                    {message.length}/{MAX_MESSAGE_LENGTH}
+                  </span>
+                </div>
+                {messageTooLong && (
+                  <p className="text-xs text-destructive">Mensagem muito longa: reduza para até {MAX_MESSAGE_LENGTH} caracteres para enviar.</p>
+                )}
+
+                <Separator />
+
+                <WhatsAppPreview message={message} images={selectedImagesList} />
               </div>
             </ScrollArea>
 
             <div className="p-4 border-t flex items-center gap-2">
               <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
               <div className="flex flex-1">
-                <Button className="flex-1 rounded-r-none gap-2" onClick={handleSend}><User className="w-4 h-4" />Selecionar Contato</Button>
+                <Button className="flex-1 rounded-r-none gap-2" onClick={handleSend} disabled={messageTooLong}><User className="w-4 h-4" />Selecionar Contato</Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={handleCopyDescription}><Copy className="w-4 h-4 mr-2" />Copiar Descrição</DropdownMenuItem>
                     <DropdownMenuItem onClick={handleDownloadImages}><Download className="w-4 h-4 mr-2" />Download ({selectedImages.size} fotos)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyLink}><Link2 className="w-4 h-4 mr-2" />Copiar link do produto</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
