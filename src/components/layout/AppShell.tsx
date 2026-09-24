@@ -71,7 +71,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   }, [startTransition, setCurrentView]);
 
    const { handleVoiceAction } = useVoiceAgent(handleViewChange);
-  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: !isMobile && !isZen }), [isMobile, isZen]);
+  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: false }), []);
   useNavShortcuts(handleViewChange);
 
   // Mobile edge-swipe navigation
