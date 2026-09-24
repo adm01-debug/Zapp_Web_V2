@@ -9,9 +9,14 @@ BEGIN
   -- "Users can update their assigned contacts" tem USING (queue-membership
   -- ou ser o assigned_to atual) mas nenhum WITH CHECK simetrico -- um agente
   -- de fila compartilhada podia setar assigned_to para QUALQUER profiles.id
-  -- do sistema, nao so um colega da mesma fila. Mesmo guard de service_role
-  -- do trigger irmao: Edge Functions (ex. reassign_absent_agents) continuam
-  -- livres para rotear.
+  -- do sistema (inclusive perfil de cliente, inativo ou UUID aleatorio), nao
+  -- so um colega de verdade. Decisao de produto (2026-09-24): escopo e
+  -- "qualquer colega ativo do time", nao restrito a fila especifica -- nao
+  -- ha tabela de "time" no schema, entao o proxy e profiles.is_active +
+  -- user_roles.role IN ('agent','supervisor','admin'), mesmo universo de
+  -- roles operacionais ja usado em auto_assign_to_queue_agent/is_admin_or_supervisor.
+  -- Mesmo guard de service_role do trigger irmao: Edge Functions (ex.
+  -- reassign_absent_agents) continuam livres para rotear.
   IF (current_setting('request.jwt.claims', true)::jsonb->>'role') = 'authenticated'
      AND NEW.assigned_to IS NOT NULL
      AND NOT is_admin_or_supervisor(auth.uid())
@@ -19,10 +24,11 @@ BEGIN
     IF NEW.queue_id IS NOT NULL THEN
       IF NOT EXISTS (
         SELECT 1
-        FROM queue_members qm
-        WHERE qm.queue_id = NEW.queue_id
-          AND qm.profile_id = NEW.assigned_to
-          AND qm.is_active = true
+        FROM profiles p
+        JOIN user_roles ur ON ur.user_id = p.user_id
+        WHERE p.id = NEW.assigned_to
+          AND p.is_active = true
+          AND ur.role IN ('agent', 'supervisor', 'admin')
       ) THEN
         RAISE EXCEPTION 'Sem permissao para atribuir contato a este agente';
       END IF;
