@@ -1,15 +1,18 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth } from "../_shared/validation.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
+  const authCheck = await requireAuth(req);
+  if (authCheck instanceof Response) return authCheck;
+  const __uid = (authCheck as { userId: string }).userId;
 
   const log = new Logger("voice-copilot-action");
 
   try {
     const { action, params } = await req.json();
-    
+
     const supabaseUrl = requireEnv('SUPABASE_URL');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -101,10 +104,23 @@ Deno.serve(async (req) => {
       }
 
       case 'create_note': {
-        const { contactId, content, authorId } = params;
+        const { contactId, content } = params;
+        // authorId nunca vem do body: o client pode forjar autoria de nota
+        // interna. Resolve o profile do usuário já autenticado por requireAuth.
+        const { data: authorProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', __uid)
+          .maybeSingle();
+
+        if (!authorProfile) {
+          result = { success: false, message: 'Usuário sem perfil associado.' };
+          break;
+        }
+
         const { error } = await supabase
           .from('contact_notes')
-          .insert({ contact_id: contactId, content, author_id: authorId });
+          .insert({ contact_id: contactId, content, author_id: authorProfile.id });
         result = error
           ? { success: false, message: 'Erro ao criar nota.' }
           : { success: true, message: 'Nota criada com sucesso.' };
