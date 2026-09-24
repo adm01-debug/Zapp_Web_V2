@@ -21,7 +21,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS $$
+AS $f$
 BEGIN
   IF NEW.contact_id IS DISTINCT FROM OLD.contact_id
      AND NEW.contact_id IS NOT NULL
@@ -41,7 +41,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$f$;
 
 DROP TRIGGER IF EXISTS trg_prevent_conversation_task_field_forgery ON public.conversation_tasks;
 
