@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, memo } from 'react';
+import { useRef, useCallback, useMemo, useState, useEffect, memo } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,6 +13,36 @@ import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagra
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+import { SLAIndicator } from './SLAIndicator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
+import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+
+// Alturas calibradas para o conteudo real da linha (nome + previa + cluster
+// de badges com SLA/tags, que pode quebrar em 2 linhas por causa do
+// flex-wrap) — nao so pro avatar de 48px. Com o cluster de badges quase
+// sempre visivel (SLA aparece pra toda conversa sem 1a resposta), o
+// conteudo minimo fica em ~76-84px; valores menores cortavam a linha ou
+// faziam o virtualizador sobrepor linhas adjacentes.
+const ITEM_HEIGHT_BY_DENSITY: Record<DensityMode, number> = {
+  comfortable: 92,
+  compact: 84,
+  dense: 80,
+};
+
+const ROW_CLASSES_BY_DENSITY: Record<DensityMode, string> = {
+  comfortable: 'min-h-[76px] my-0.5 px-3 py-2.5',
+  compact: 'min-h-[68px] my-0.5 px-3 py-2',
+  dense: 'min-h-[64px] my-0.5 px-2.5 py-1.5',
+};
+
+const SNOOZE_OPTIONS: { value: string; label: string }[] = [
+  { value: '1h', label: 'Em 1 hora' },
+  { value: '3h', label: 'Em 3 horas' },
+  { value: 'tomorrow', label: 'Amanhã às 9h' },
+  { value: 'nextweek', label: 'Próxima semana' },
+];
 
 const CHANNEL_BADGE_CONFIG: Record<string, { Icon: LucideIcon; bg: string }> = {
   instagram: { Icon: Instagram, bg: 'bg-[hsl(330,80%,55%)]' },
@@ -38,10 +68,9 @@ interface VirtualizedRealtimeListProps {
   onTransfer?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
-  onSnooze?: (contactId: string) => void;
+  onSnooze?: (contactId: string, duration: string) => void;
 }
 
-const ITEM_HEIGHT = 88;
 const HEADER_HEIGHT = 32;
 const EMPTY_SET = new Set<string>();
 
@@ -72,6 +101,11 @@ export function VirtualizedRealtimeList({
   onSnooze,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
+  const agentsMap = useAgentsLite();
+  const { density } = useDensity();
+  const itemHeight = ITEM_HEIGHT_BY_DENSITY[density];
 
   const safeConversations = useMemo(() => {
     if (!Array.isArray(conversations)) return [];
@@ -111,7 +145,7 @@ export function VirtualizedRealtimeList({
   }, [safeConversations, pinnedIds]);
 
   const getScrollElement = useCallback(() => parentRef.current, []);
-  const estimateSize = useCallback((index: number) => (flatRows[index]?.kind === 'header' ? HEADER_HEIGHT : ITEM_HEIGHT), [flatRows]);
+  const estimateSize = useCallback((index: number) => (flatRows[index]?.kind === 'header' ? HEADER_HEIGHT : itemHeight), [flatRows, itemHeight]);
 
   // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma
   // limitacao ja aceita na baseline do ratchet para este mesmo hook.
@@ -122,6 +156,15 @@ export function VirtualizedRealtimeList({
     estimateSize,
     overscan: 8,
   });
+
+  // @tanstack/react-virtual nao remede automaticamente linhas ja medidas
+  // quando so o valor de retorno de estimateSize muda (density) — a mudanca
+  // de referencia da funcao nao invalida o cache interno. Forca recalculo
+  // explicito, senao as linhas ficam com a altura antiga (espacamento
+  // errado / sobreposicao) ate um evento que mexa em `count`.
+  useEffect(() => {
+    virtualizer.measure();
+  }, [density, virtualizer]);
 
   const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
     if (selectionMode && onToggleSelection) {
@@ -179,6 +222,9 @@ export function VirtualizedRealtimeList({
               onFavorite={onFavorite}
               onSnooze={onSnooze}
               onArchive={onArchive}
+              currentUserId={currentUserId}
+              agentsMap={agentsMap}
+              density={density}
             />
           );
         })}
@@ -207,8 +253,11 @@ interface ConversationRowProps {
   onTransfer?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
-  onSnooze?: (contactId: string) => void;
+  onSnooze?: (contactId: string, duration: string) => void;
   onArchive?: (contactId: string) => void;
+  currentUserId: string | null;
+  agentsMap: Map<string, AgentLite>;
+  density: DensityMode;
 }
 
 const ConversationRow = memo(({
@@ -227,6 +276,9 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
+  currentUserId,
+  agentsMap,
+  density,
 }: ConversationRowProps) => {
   const contactId = conversation.contact.id;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
@@ -234,6 +286,24 @@ const ConversationRow = memo(({
   const isHighPriority = conversation.contact.ai_priority === 'high' || conversation.contact.ai_priority === 'urgent';
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
+  const assignedToId = conversation.contact.assigned_to;
+  const assignedAgent = assignedToId && assignedToId !== currentUserId ? agentsMap.get(assignedToId) : null;
+  // conversation_sla vem do embed do select (RealtimeService.fetchContacts:
+  // '*, conversation_sla(...)'), presente em runtime mas ausente no tipo
+  // genérico ContactRow (que so cobre as colunas da tabela contacts).
+  // NAO e 1:1 com o contato — historico se acumula (ate 72 linhas por
+  // contato em producao); so 1 linha por contato tem first_response_at
+  // NULL (indice parcial ux_conversation_sla_open_per_contact = a "aberta"
+  // agora). Pegar [0] sem filtro pega uma linha historica arbitraria e
+  // pode mostrar "SLA violado" de um atendimento antigo ja resolvido.
+  const slaRows = (conversation.contact as unknown as {
+    conversation_sla?: Array<{ first_message_at: string | null; first_response_at: string | null }>;
+  }).conversation_sla;
+  const openSlaRow = slaRows?.find((r) => r.first_response_at === null);
+  const firstMessageAt = openSlaRow?.first_message_at ?? (!slaRows?.length ? conversation.contact.created_at : undefined);
+  const tags = conversation.contact.tags ?? [];
+
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
     e.stopPropagation();
@@ -256,7 +326,8 @@ const ConversationRow = memo(({
     >
       <div
         className={cn(
-          'w-full min-h-[72px] my-0.5 px-3 py-2.5 rounded-xl flex flex-col gap-1.5 transition-all text-left border group relative',
+          'w-full rounded-xl flex flex-col gap-1.5 transition-all text-left border group relative',
+          ROW_CLASSES_BY_DENSITY[density],
           selectedContactId === contactId ? 'bg-accent border-primary/40' : 'border-transparent hover:bg-muted/40',
           isSelected && 'bg-accent',
           isPinned && selectedContactId !== contactId && 'bg-muted/30'
@@ -303,9 +374,28 @@ const ConversationRow = memo(({
               </AvatarFallback>
             </Avatar>
             {channelBadge && (
-              <span className={cn('absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-card', channelBadge.bg)}>
+              <span aria-hidden="true" className={cn('absolute -bottom-0.5 -left-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-card', channelBadge.bg)}>
                 <channelBadge.Icon className="w-2.5 h-2.5 text-white" />
               </span>
+            )}
+            {assignedAgent && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 ring-2 ring-card"
+                      role="img"
+                      aria-label={`Atendido por ${assignedAgent.name}`}
+                    >
+                      <AvatarImage src={assignedAgent.avatar_url || undefined} alt="" />
+                      <AvatarFallback className="text-[7px] font-bold bg-secondary text-secondary-foreground">
+                        {assignedAgent.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-medium">Atendido por {assignedAgent.name}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {conversation.contact.ai_sentiment && (
               <span
@@ -367,7 +457,7 @@ const ConversationRow = memo(({
                 </span>
               )}
             </div>
-            {(typeConfig || isVip || isHighPriority) && (
+            {(typeConfig || isVip || isHighPriority || firstMessageAt || tags.length > 0) && (
               <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                 {typeConfig && (
                   <Badge variant="outline" className={cn('text-2xs px-1.5 py-0 h-4 border', typeConfig.badgeClass)}>
@@ -379,6 +469,20 @@ const ConversationRow = memo(({
                 )}
                 {isHighPriority && (
                   <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
+                )}
+                {firstMessageAt && (
+                  <SLAIndicator
+                    firstMessageAt={new Date(firstMessageAt)}
+                    firstResponseAt={null}
+                    firstResponseMinutes={5}
+                    compact
+                  />
+                )}
+                {tags.slice(0, 2).map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-2xs px-1.5 py-0 h-4 bg-muted/50 border-border/20">{tag}</Badge>
+                ))}
+                {tags.length > 2 && (
+                  <span className="text-2xs text-muted-foreground">+{tags.length - 2}</span>
                 )}
               </div>
             )}
@@ -425,18 +529,35 @@ const ConversationRow = memo(({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">Fixar</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Adiar conversa"
-                  onClick={(e) => handleAction(e, onSnooze, 'Adiar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
-                >
-                  <AlarmClock className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent>
-            </Tooltip>
+            <Popover open={snoozeOpen} onOpenChange={setSnoozeOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <button
+                      aria-label="Adiar conversa"
+                      onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                    >
+                      <AlarmClock className="w-3.5 h-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">Adiar</TooltipContent>
+              </Tooltip>
+              {onSnooze && (
+                <PopoverContent align="start" className="w-44 p-1" onClick={(e) => e.stopPropagation()}>
+                  {SNOOZE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { onSnooze(contactId, opt.value); setSnoozeOpen(false); }}
+                      className="w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </PopoverContent>
+              )}
+            </Popover>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

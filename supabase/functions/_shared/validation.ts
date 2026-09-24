@@ -4,14 +4,14 @@
  */
 
 // Re-export HMAC validation utilities
-export { 
+export{ 
   verifyHmacSignature, 
   extractSignatureFromHeaders, 
   WebhookSecurityService, 
   createWebhookValidator 
 } from './hmac-validation.ts';
 
-// ─── Structured Logger ───────────────────────────────────────────────────────
+// ─── Structured Logger ─────────────────────────────────────────
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -312,4 +312,21 @@ export async function requireAuth(req: Request): Promise<{ userId: string } | Re
   } catch (_err) {
     return errorResponse("Authentication failed", 401, req);
   }
+}
+
+/**
+ * Cliente Supabase autenticado como o caller (anon key + o Authorization
+ * header original da request), para que a RLS filtre por auth.uid() real
+ * em vez de service_role. Assume que requireAuth(req) ja validou o token
+ * antes desta chamada.
+ */
+export async function createAuthedClient(req: Request) {
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+  const supabaseUrl = requireEnv("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+  return createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  });
 }

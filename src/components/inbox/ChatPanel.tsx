@@ -49,6 +49,7 @@ interface ChatPanelProps {
   onDraftConsumed?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onArchiveConversation?: () => void;
   onSwitchToAiTab?: () => void;
 }
 
@@ -88,7 +89,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onSwitchToAiTab }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onSwitchToAiTab }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -244,6 +245,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             onVoiceChange={setVoiceId} onSpeedChange={setSpeed} onBack={onBack}
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}
             onCloseConversation={() => openDialog('closeDialog')}
+            onArchive={onArchiveConversation}
             isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}

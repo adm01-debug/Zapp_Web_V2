@@ -596,6 +596,14 @@
             "reason": "ledger-summary",
             "related_migration": null,
             "justification": "Nenhuma das sete revisoes conhecidas no Git produz o hash canonico do ledger. O replay preserva apenas o DDL local recuperavel; nome, bytes locais, SQL local, array historico e SQL historico ficam fixados por hashes independentes, sem reescrever o ledger."
+        },
+        {
+            "version": "20260924125400",
+            "filename": "20260924125400_fix_audit_role_changes_function_name_mismatch.sql",
+            "file_sha256": "ef95ab2630b9fc70b8649bf78421ef13e82f13a65a0820e4b6333a89d82e37e1",
+            "ledger_name": "fix_audit_role_changes_function_name_mismatch",
+            "kind": "ledger-only/name-and-file-pinned",
+            "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
         }
     ]
 }
