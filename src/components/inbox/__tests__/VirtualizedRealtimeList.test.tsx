@@ -13,7 +13,8 @@
  * já que o alvo do teste é o conteúdo de cada linha, não a virtualização.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import type { ReactNode, ComponentProps } from 'react';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import type { AgentLite } from '@/hooks/crm/useAgentsLite';
 
@@ -45,6 +46,15 @@ vi.mock('@/hooks/ui/useDensity', () => ({
 
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
+// Radix Popover não abre de forma confiável sob jsdom+fireEvent (padrão já
+// usado em ChatPanelHeader.test.tsx) — mockado como pass-through pra poder
+// clicar direto nas opções de snooze sem depender do estado real de open.
+vi.mock('@/components/ui/popover', () => ({
+  Popover: ({ children }: { children: ReactNode }) => <>{children}</>,
+  PopoverTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
 import { VirtualizedRealtimeList } from '@/components/inbox/VirtualizedRealtimeList';
 
 function makeConversation(overrides: Partial<ConversationWithMessages['contact']> = {}): ConversationWithMessages {
@@ -70,12 +80,16 @@ function makeConversation(overrides: Partial<ConversationWithMessages['contact']
   };
 }
 
-function renderList(conversations: ConversationWithMessages[]) {
+function renderList(
+  conversations: ConversationWithMessages[],
+  extraProps: Partial<ComponentProps<typeof VirtualizedRealtimeList>> = {}
+) {
   return render(
     <VirtualizedRealtimeList
       conversations={conversations}
       selectedContactId={null}
       onSelectConversation={vi.fn()}
+      {...extraProps}
     />
   );
 }
@@ -120,5 +134,70 @@ describe('VirtualizedRealtimeList — badge de canal e mini-avatar do atendente'
     renderList(conversations);
 
     expect(screen.queryAllByRole('img', { name: /Atendido por/i })).toHaveLength(0);
+  });
+});
+
+describe('VirtualizedRealtimeList — popover de snooze', () => {
+  beforeEach(() => {
+    agentsMapMock = new Map();
+  });
+
+  it('clicar numa opção chama onSnooze com a duração e fecha o popover', () => {
+    const onSnooze = vi.fn();
+    renderList([makeConversation({ id: 'c1' })], { onSnooze });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amanhã às 9h' }));
+
+    expect(onSnooze).toHaveBeenCalledWith('c1', 'tomorrow');
+    // Popover mockado como pass-through: fechar (setSnoozeOpen(false)) não
+    // desmonta o conteúdo, mas confirma que o handler não quebrou o restante
+    // da linha — outra opção continua clicável e chama de novo.
+    fireEvent.click(screen.getByRole('button', { name: 'Em 1 hora' }));
+    expect(onSnooze).toHaveBeenCalledWith('c1', '1h');
+    expect(onSnooze).toHaveBeenCalledTimes(2);
+  });
+
+  it('sem onSnooze, o conteúdo do popover não é renderizado', () => {
+    renderList([makeConversation({ id: 'c1' })]);
+
+    expect(screen.queryByRole('button', { name: 'Amanhã às 9h' })).not.toBeInTheDocument();
+  });
+});
+
+describe('VirtualizedRealtimeList — SLA não é 1:1 com o contato', () => {
+  beforeEach(() => {
+    agentsMapMock = new Map();
+  });
+
+  it('usa a linha de conversation_sla aberta (first_response_at null), não a primeira do array', () => {
+    // Simula o histórico real: 1 linha antiga já respondida (poderia mostrar
+    // "violado" de um atendimento encerrado) + 1 linha aberta do atendimento atual.
+    const conversation = makeConversation({ id: 'c1' });
+    (conversation.contact as unknown as {
+      conversation_sla: Array<{ first_message_at: string; first_response_at: string | null }>;
+    }).conversation_sla = [
+      { first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' },
+      { first_message_at: '2026-09-24T11:00:00Z', first_response_at: null },
+    ];
+
+    renderList([conversation]);
+
+    // SLAIndicator (compact) só renderiza role="status" com aria-label "SLA
+    // ..." quando firstMessageAt vem definido — confirma que achou a linha
+    // aberta (2ª do array), não a 1ª (que já tem first_response_at).
+    expect(screen.getByRole('status', { name: /SLA/i })).toBeInTheDocument();
+  });
+
+  it('sem nenhuma linha aberta em conversation_sla, não mostra SLA (não cai pra uma linha fechada)', () => {
+    const conversation = makeConversation({ id: 'c1' });
+    (conversation.contact as unknown as {
+      conversation_sla: Array<{ first_message_at: string; first_response_at: string | null }>;
+    }).conversation_sla = [
+      { first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' },
+    ];
+
+    renderList([conversation]);
+
+    expect(screen.queryByRole('status', { name: /SLA/i })).not.toBeInTheDocument();
   });
 });

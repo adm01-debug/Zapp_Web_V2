@@ -7,7 +7,7 @@
  * este teste garante que o comportamento final continua correto.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
@@ -24,12 +24,22 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.f
 
 vi.mock('@/components/inbox/VirtualizedRealtimeList', () => ({
   VirtualizedRealtimeList: (props: {
+    conversations?: Array<{ contact: { id: string } }>;
+    pinnedIds?: Set<string>;
+    favoriteIds?: Set<string>;
     onResolve?: (id: string) => void;
     onTransfer?: (id: string) => void;
+    onArchive?: (id: string) => void;
   }) => (
-    <div data-testid="vrl-stub">
+    <div
+      data-testid="vrl-stub"
+      data-conversations-count={props.conversations?.length ?? 0}
+      data-pinned-count={props.pinnedIds?.size ?? 0}
+      data-favorite-count={props.favoriteIds?.size ?? 0}
+    >
       <button onClick={() => props.onResolve?.('c1')}>abrir-resolver-c1</button>
       <button onClick={() => props.onTransfer?.('c1')}>abrir-transferir-c1</button>
+      <button onClick={() => props.onArchive?.('c1')}>arquivar-c1</button>
     </div>
   ),
 }));
@@ -139,5 +149,65 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     rerender(<ConversationListSidebar {...baseProps([{ contact: { id: 'c1' } }, { contact: { id: 'c2' } }])} />);
 
     expect(screen.getByTestId('close-dialog')).toBeInTheDocument();
+  });
+
+  it('repassa conversations/pinnedIds/favoriteIds de conversationActions para a VirtualizedRealtimeList', () => {
+    const props = baseProps([{ contact: { id: 'c1' } }, { contact: { id: 'c2' } }]);
+    props.conversationActions = {
+      pinnedIds: new Set(['c1']),
+      favoriteIds: new Set(['c1', 'c2']),
+      isPinned: vi.fn(() => false),
+      isFavorite: vi.fn(() => false),
+      pinConversation: vi.fn(),
+      unpinConversation: vi.fn(),
+      favoriteContact: vi.fn(),
+      unfavoriteContact: vi.fn(),
+      snoozeConversation: vi.fn(),
+      archiveContact: vi.fn(),
+      transferContact: vi.fn(),
+      profileId: 'me',
+    } as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    const stub = screen.getByTestId('vrl-stub');
+    expect(stub).toHaveAttribute('data-conversations-count', '2');
+    expect(stub).toHaveAttribute('data-pinned-count', '1');
+    expect(stub).toHaveAttribute('data-favorite-count', '2');
+  });
+
+  it('sem conversationActions, arquivar mostra toast de indisponível em vez de quebrar', async () => {
+    const { toast } = await import('sonner');
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('arquivar-c1'));
+
+    expect(toast.error).toHaveBeenCalledWith('Ação indisponível — tente recarregar a página');
+  });
+
+  it('com conversationActions, arquivar chama archiveContact e refetch', async () => {
+    const archiveContact = vi.fn();
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    props.conversationActions = {
+      pinnedIds: new Set(),
+      favoriteIds: new Set(),
+      isPinned: vi.fn(() => false),
+      isFavorite: vi.fn(() => false),
+      pinConversation: vi.fn(),
+      unpinConversation: vi.fn(),
+      favoriteContact: vi.fn(),
+      unfavoriteContact: vi.fn(),
+      snoozeConversation: vi.fn(),
+      archiveContact,
+      transferContact: vi.fn(),
+      profileId: 'me',
+    } as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('arquivar-c1'));
+
+    expect(archiveContact).toHaveBeenCalledWith('c1');
+    // handleArchive é async — o refetch só roda depois do await, em outra microtask.
+    await waitFor(() => expect(props.inbox.refetch).toHaveBeenCalled());
   });
 });
