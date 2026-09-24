@@ -22,7 +22,7 @@ export function RecentActivityCard({ items }: RecentActivityCardProps) {
       />
       {items.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[120px]">
-          Sem atividade hoje
+          Sem atividade nas últimas 24h
         </div>
       ) : (
         <div className="flex flex-col">

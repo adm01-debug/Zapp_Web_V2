@@ -59,38 +59,20 @@
      },
    });
  
-   const slaQuery = useQuery({
-     queryKey: ['dashboard-sla'],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from('conversation_sla')
-         .select('first_message_at, first_response_at')
-         .not('first_response_at', 'is', null)
-         .order('created_at', { ascending: false })
-         .limit(50);
-       if (error) throw error;
-       if (!data || data.length === 0) return { avgResponseTime: null };
-       const responseTimes = data.map(sla => {
-         const messageTime = new Date(sla.first_message_at).getTime();
-         const responseTime = new Date(sla.first_response_at!).getTime();
-         return (responseTime - messageTime) / 1000;
-       });
-       return { avgResponseTime: Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) };
-     },
-   });
- 
+   // slaQuery (últimos 50 all-time, sem filtro de data) foi removida (E17): era uma
+   // 2ª régua de "tempo médio" divergente da de useDashboardKpi (hoje/mediana) —
+   // achado A5. useDashboardData agora lê o tempo médio só de useDashboardKpi.
+
    return {
      agents: agentsQuery.data,
      contacts: contactsQuery.data,
      queues: queuesQuery.data,
-     sla: slaQuery.data,
-     isLoading: agentsQuery.isLoading || contactsQuery.isLoading || queuesQuery.isLoading || slaQuery.isLoading,
-     error: agentsQuery.error || contactsQuery.error || queuesQuery.error || slaQuery.error,
+     isLoading: agentsQuery.isLoading || contactsQuery.isLoading || queuesQuery.isLoading,
+     error: agentsQuery.error || contactsQuery.error || queuesQuery.error,
      refetch: () => {
        agentsQuery.refetch();
        contactsQuery.refetch();
        queuesQuery.refetch();
-       slaQuery.refetch();
      }
    };
  }
