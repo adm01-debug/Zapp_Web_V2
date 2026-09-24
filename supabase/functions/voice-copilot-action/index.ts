@@ -133,7 +133,12 @@ Deno.serve(async (req) => {
       }
 
       case 'list_agents': {
-        const { data } = await authedClient
+        // Diretorio de staff (nome/departamento), nao PII de cliente — mantem
+        // service_role de proposito. A RLS de profiles so libera o proprio
+        // registro para nao-admin (correto para o app em geral), mas aqui
+        // quebraria o handoff por voz: qualquer agente comum ficaria sem ver
+        // a lista de colegas para transferir conversa.
+        const { data } = await supabase
           .from('profiles')
           .select('id, name, role, is_active, department')
           .eq('is_active', true)
