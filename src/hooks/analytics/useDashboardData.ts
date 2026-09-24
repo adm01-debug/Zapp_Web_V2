@@ -4,6 +4,18 @@
  import { useDashboardKpi } from '../dashboard/useDashboardKpi';
  import { useAgentPresenceMap } from '../crm/useAgentPresence';
 
+ // Formato do select de filas em useDashboardStats (queue_members -> profiles).
+ interface QueueMemberRow {
+   is_active: boolean | null;
+   profiles: { user_id: string; is_active: boolean | null } | null;
+ }
+ interface QueueRow {
+   id: string;
+   name: string;
+   color: string;
+   queue_members?: QueueMemberRow[] | null;
+ }
+
  const getDefaultFilters = (): DashboardFilters => ({
    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
    queueId: null,
@@ -27,13 +39,13 @@
      const pendingConversations = contacts.filter(c => !c.assigned_to && c.queue_id).length;
      const resolvedToday = kpi?.resolvedToday ?? 0;
 
-     const queuesStats = (queues || []).map(queue => {
-       const members = (queue as any).queue_members || [];
-       const onlineMembers = members.filter((m: any) => m.is_active && m.profiles?.is_active && presence[m.profiles?.user_id] === 'online').length;
+     const queuesStats = ((queues || []) as unknown as QueueRow[]).map(queue => {
+       const members = queue.queue_members || [];
+       const onlineMembers = members.filter(m => m.is_active && m.profiles?.is_active && presence[m.profiles.user_id] === 'online').length;
        return {
          id: queue.id,
          name: queue.name,
-         color: (queue as any).color,
+         color: queue.color,
          waitingCount: 0,
          onlineAgents: onlineMembers,
          totalAgents: members.length,
