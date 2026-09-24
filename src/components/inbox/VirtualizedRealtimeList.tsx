@@ -9,10 +9,19 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive, MessageCircle } from 'lucide-react';
+import { Pin, Gift, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+
+const CHANNEL_BADGE_CONFIG: Record<string, { Icon: LucideIcon; bg: string }> = {
+  instagram: { Icon: Instagram, bg: 'bg-[hsl(330,80%,55%)]' },
+  messenger: { Icon: Facebook, bg: 'bg-[hsl(220,70%,55%)]' },
+  telegram: { Icon: Send, bg: 'bg-[hsl(200,70%,50%)]' },
+  webchat: { Icon: Globe, bg: 'bg-[hsl(215,15%,45%)]' },
+  email: { Icon: Mail, bg: 'bg-[hsl(220,70%,55%)]' },
+  linkedin: { Icon: Linkedin, bg: 'bg-[hsl(201,100%,35%)]' },
+};
 
 interface VirtualizedRealtimeListProps {
   conversations: ConversationWithMessages[];
@@ -223,7 +232,8 @@ const ConversationRow = memo(({
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.contact.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.contact.ai_priority === 'high' || conversation.contact.ai_priority === 'urgent';
-  const isWhatsapp = !conversation.contact.channel_type || conversation.contact.channel_type === 'whatsapp';
+  const channelType = conversation.contact.channel_type;
+  const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
 
   const handleAction = (e: React.MouseEvent, handler: ((id: string) => void) | undefined, label: string) => {
     e.stopPropagation();
@@ -292,9 +302,9 @@ const ConversationRow = memo(({
                 {getInitials(conversation.contact.name || '?')}
               </AvatarFallback>
             </Avatar>
-            {isWhatsapp && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center ring-2 ring-card">
-                <MessageCircle className="w-2.5 h-2.5 text-success-foreground" />
+            {channelBadge && (
+              <span className={cn('absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-card', channelBadge.bg)}>
+                <channelBadge.Icon className="w-2.5 h-2.5 text-white" />
               </span>
             )}
             {conversation.contact.ai_sentiment && (
