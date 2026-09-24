@@ -75,6 +75,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
     });
     if (!error) {
       toast.success('Registro adicionado');
+      if (!isMountedRef.current) return;
       setDialogOpen(false);
       setTitle('');
       setAmount('');

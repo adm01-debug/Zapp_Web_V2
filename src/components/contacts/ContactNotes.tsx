@@ -93,14 +93,16 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
         });
 
       if (error) throw error;
-      setNewNote('');
-      setShowInput(false);
+      if (isMountedRef.current) {
+        setNewNote('');
+        setShowInput(false);
+      }
       toast.success('Nota adicionada');
       fetchNotes();
     } catch {
       toast.error('Erro ao adicionar nota');
     } finally {
-      setAdding(false);
+      if (isMountedRef.current) setAdding(false);
     }
   };
 
@@ -114,6 +116,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       toast.error('Erro ao excluir nota');
       return;
     }
+    if (!isMountedRef.current) return;
     setNotes(prev => prev.filter(n => n.id !== noteId));
     toast.success('Nota excluída');
   };
