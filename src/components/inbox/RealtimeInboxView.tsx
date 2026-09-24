@@ -199,6 +199,10 @@ export function RealtimeInboxView() {
                         if (conversationActions.isFavorite(id)) conversationActions.unfavoriteContact(id);
                         else conversationActions.favoriteContact(id);
                       }}
+                      onArchiveConversation={() => {
+                        if (!inbox.legacyConversation) return;
+                        conversationActions.archiveContact(inbox.legacyConversation.contact.id);
+                      }}
                       onSwitchToAiTab={() => setActiveTab('ia')}
                     />
                   </SectionErrorBoundary>
