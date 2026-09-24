@@ -691,10 +691,10 @@ function normalizeTagLabel(entry: unknown): string | null {
  * strings e/ou `{nome}`) contém algum dos valores de `selected`
  * (comparação por label, case-insensitive; é OR entre os selecionados).
  * `selected` vazio sempre casa — filtro inativo não exclui produto nenhum.
- * Usada pelo filtro client-side em ExternalProductManagement (E36): o
- * edge promogifts-catalog só aceita 1 valor escalar por vez em `color`/
- * `material`, não uma lista, então a seleção múltipla é aplicada aqui,
- * sobre a página já carregada.
+ * Usada pelo filtro client-side em ExternalProductManagement (E36-2):
+ * segunda camada sobre o que o edge promogifts-catalog já filtrou
+ * (agora aceita array em color/material, OR entre valores) — mantida
+ * como salvaguarda, sem custo real.
  */
 export function matchesAnySelected(raw: unknown, selected: string[]): boolean {
   if (selected.length === 0) return true;

@@ -124,17 +124,12 @@ export const ExternalProductManagement: React.FC = () => {
   const [advFilters, setAdvFilters] = useState<AdvancedFilters>({ ...DEFAULT_ADVANCED_FILTERS });
   const advCount = countAdvancedFilters(advFilters);
 
-  // E36: cor/material são multi-seleção, mas o edge promogifts-catalog
-  // (list_products) só aceita 1 valor escalar por vez em color/material
-  // (ver supabase/functions/promogifts-catalog/index.ts) — sem suporte a
-  // array sem um redeploy da edge function, fora do escopo desta etapa.
-  // Por isso o filtro real é aplicado aqui no client, sobre a página já
-  // carregada (products), tolerando os dois formatos jsonb que a coluna
-  // tem hoje (string simples ou `{nome}}`, via matchesAnySelected).
-  // Limitação conhecida e aceita: com 2+ cores/materiais selecionados, a
-  // contagem/paginação exibida (totalProducts, TalkXPagination) continua
-  // vindo do servidor e pode não bater com o nº de cards realmente visível
-  // nesta página — só o servidor sabe o total real "OR" de vários valores.
+  // E36-2: o edge promogifts-catalog (list_products) agora aceita array
+  // em color/material (OR entre valores) — contagem/paginação (totalProducts)
+  // já vêm corretas do servidor com 2+ selecionados. Este filtro client-side
+  // fica como segunda camada (idempotente, sem custo real: já bate 100% com
+  // o que o servidor devolveu), tolerando os dois formatos jsonb que a
+  // coluna tem hoje (string simples ou `{nome}}`, via matchesAnySelected).
   const visibleProducts = useMemo(
     () => products.filter((p) => matchesAnySelected(p.colors, advFilters.colors) && matchesAnySelected(p.materials, advFilters.materials)),
     [products, advFilters.colors, advFilters.materials]
@@ -222,12 +217,10 @@ export const ExternalProductManagement: React.FC = () => {
     if (advFilters.isBestseller) params.is_bestseller = true;
     if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
     if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
-    // E36 — o edge só aceita 1 valor escalar por campo; com exatamente 1
-    // cor/material selecionado, aproveita o filtro (e a paginação) do
-    // servidor. Com 0 ou 2+, o filtro final continua vindo do client
-    // (visibleProducts) — ver comentário ali.
-    if (advFilters.colors.length === 1) params.color = advFilters.colors[0];
-    if (advFilters.materials.length === 1) params.material = advFilters.materials[0];
+    // E36-2 — o edge aceita 1 valor ou array (OR entre si); manda a
+    // seleção completa direto, servidor filtra e pagina certo com 2+.
+    if (advFilters.colors.length > 0) params.color = advFilters.colors;
+    if (advFilters.materials.length > 0) params.material = advFilters.materials;
     return params;
   }, [page, pageSize, search, categoryId, supplierId, onlyInStock, isFeatured, isNew, orderBy, ascending, advFilters]);
 
