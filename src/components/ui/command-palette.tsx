@@ -148,7 +148,7 @@ export function CommandPalette({
                         <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
                         <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
                       </div>
-                      {cmd.shortcut && <div className="flex gap-1">{cmd.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono text-muted-foreground">{k}</kbd>)}</div>}
+                      {cmd.shortcut && <div className="flex gap-1">{cmd.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono text-muted-foreground">{k}</kbd>)}</div>}
                     </button>
                   ))}
                 </div>
@@ -178,8 +178,8 @@ export function CommandPalette({
                             <div><span className="text-sm font-medium">{highlightMatch(item.title, query)}</span>{item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {item.badge && <Badge variant="secondary" className="text-[10px]">{item.badge}</Badge>}
-                            {item.shortcut && <div className="flex gap-1">{item.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono text-muted-foreground">{k}</kbd>)}</div>}
+                            {item.badge && <Badge variant="secondary" className="text-3xs">{item.badge}</Badge>}
+                            {item.shortcut && <div className="flex gap-1">{item.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono text-muted-foreground">{k}</kbd>)}</div>}
                           </div>
                         </motion.button>
                       );

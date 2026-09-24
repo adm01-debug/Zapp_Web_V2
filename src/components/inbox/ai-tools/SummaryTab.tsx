@@ -20,24 +20,24 @@ export function SummaryTab({ analysis, ttsButtonClass, isTtsLoading, isTtsPlayin
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {analysis.department && departmentConfig[analysis.department] && (
-          <Badge variant="outline" className={`${departmentConfig[analysis.department].color} text-[10px] font-semibold`}>
+          <Badge variant="outline" className={`${departmentConfig[analysis.department].color} text-3xs font-semibold`}>
             <span className="mr-1">{departmentConfig[analysis.department].emoji}</span>
             {departmentConfig[analysis.department].label}
           </Badge>
         )}
         {statusConfig[analysis.status] && (
-          <Badge variant="outline" className={`${statusConfig[analysis.status].className} text-[10px]`}>
+          <Badge variant="outline" className={`${statusConfig[analysis.status].className} text-3xs`}>
             {React.createElement(statusConfig[analysis.status].icon, { className: 'mr-1 h-3 w-3' })}
             {statusConfig[analysis.status].label}
           </Badge>
         )}
         {analysis.urgency && urgencyConfig[analysis.urgency] && (
-          <Badge variant="outline" className={`${urgencyConfig[analysis.urgency].className} text-[10px]`}>
+          <Badge variant="outline" className={`${urgencyConfig[analysis.urgency].className} text-3xs`}>
             {urgencyConfig[analysis.urgency].label}
           </Badge>
         )}
         {analysis.churnRisk && analysis.churnRisk !== 'low' && (
-          <Badge variant="outline" className={`${churnConfig[analysis.churnRisk]?.color || ''} border-current/30 text-[10px]`}>
+          <Badge variant="outline" className={`${churnConfig[analysis.churnRisk]?.color || ''} border-current/30 text-3xs`}>
             <ShieldAlert className="mr-1 h-3 w-3" />
             Churn: {churnConfig[analysis.churnRisk]?.label}
           </Badge>
@@ -47,7 +47,7 @@ export function SummaryTab({ analysis, ttsButtonClass, isTtsLoading, isTtsPlayin
       {analysis.relationshipType && (
         <div className="flex items-center gap-2 rounded-lg border border-border/30 bg-muted/20 px-3 py-1.5">
           <Users className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[11px] text-muted-foreground">{analysis.relationshipType}</span>
+          <span className="text-2xs text-muted-foreground">{analysis.relationshipType}</span>
         </div>
       )}
 
@@ -96,7 +96,7 @@ export function SummaryTab({ analysis, ttsButtonClass, isTtsLoading, isTtsPlayin
           <h4 className="mb-2 text-xs font-semibold text-muted-foreground">Tópicos</h4>
           <div className="flex flex-wrap gap-1.5">
             {analysis.topics.map((topic, index) => (
-              <Badge key={index} variant="secondary" className="rounded-lg text-[10px]">{topic}</Badge>
+              <Badge key={index} variant="secondary" className="rounded-lg text-3xs">{topic}</Badge>
             ))}
           </div>
         </div>

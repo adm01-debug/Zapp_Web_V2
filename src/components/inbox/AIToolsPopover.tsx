@@ -24,7 +24,7 @@ interface AIToolsPopoverProps {
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center py-6 gap-2">
     <Loader2 className="w-4 h-4 animate-spin text-primary" />
-    <span className="text-[11px] text-muted-foreground">Carregando...</span>
+    <span className="text-2xs text-muted-foreground">Carregando...</span>
   </div>
 );
 
@@ -37,14 +37,14 @@ export function AIToolsPopover({ contactId, contactName, lastMessages, allMessag
         <TabsList className="w-full h-9 bg-muted/50 p-0.5 rounded-lg mb-3">
           <TabsTrigger
             value="objections"
-            className="flex-1 h-8 text-[11px] gap-1.5 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="flex-1 h-8 text-2xs gap-1.5 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
             <Radar className="w-3.5 h-3.5" />
             Monitoramento de Objeções
           </TabsTrigger>
           <TabsTrigger
             value="university"
-            className="flex-1 h-8 text-[11px] gap-1.5 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="flex-1 h-8 text-2xs gap-1.5 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
             <GraduationCap className="w-3.5 h-3.5" />
             Ajuda dos Universitários

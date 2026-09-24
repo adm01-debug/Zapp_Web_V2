@@ -44,7 +44,7 @@ export function HeroBenefits() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/70 opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
         </span>
-        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+        <span className="text-2xs font-medium uppercase tracking-widest text-muted-foreground">
           ZAPP Web · v2 · Online
         </span>
       </motion.div>
@@ -94,7 +94,7 @@ export function HeroBenefits() {
         {metrics.map((m) => (
           <div key={m.label} className="px-4 py-4 text-center">
             <div className="font-display text-2xl font-bold tracking-tight text-foreground">{m.value}</div>
-            <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="mt-1 text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {m.label}
             </div>
           </div>

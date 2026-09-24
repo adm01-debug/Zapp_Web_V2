@@ -33,13 +33,13 @@ export function CrmBadges({ crmCompany, crmCustomer, crmRfm }: CrmBadgesProps) {
   return (
     <>
       {crmCompany && (
-        <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
+        <Badge variant="outline" className="text-3xs bg-primary/5 border-primary/20 text-primary">
           <Building className="w-3 h-3 mr-0.5" />
           {crmCompany.nome_fantasia || crmCompany.nome_crm}
         </Badge>
       )}
       {crmCustomer?.vendedor_nome && (
-        <Badge variant="outline" className="text-[10px] bg-muted/20 border-border/30">
+        <Badge variant="outline" className="text-3xs bg-muted/20 border-border/30">
           <User className="w-3 h-3 mr-0.5" />
           {crmCustomer.vendedor_nome.split(' ').slice(0, 2).join(' ')}
         </Badge>
@@ -47,7 +47,7 @@ export function CrmBadges({ crmCompany, crmCustomer, crmRfm }: CrmBadgesProps) {
       {crmRfm?.segment_code && (
         <Tooltip>
           <TooltipTrigger>
-            <Badge variant="outline" className={cn('text-[10px]', rfmSegmentColors[crmRfm.segment_code] || 'bg-muted/20')}>
+            <Badge variant="outline" className={cn('text-3xs', rfmSegmentColors[crmRfm.segment_code] || 'bg-muted/20')}>
               {crmRfm.segment_code}
             </Badge>
           </TooltipTrigger>
@@ -61,7 +61,7 @@ export function CrmBadges({ crmCompany, crmCustomer, crmRfm }: CrmBadgesProps) {
         </Tooltip>
       )}
       {crmCustomer && (
-        <Badge variant="outline" className={cn('text-[10px]', crmCustomer.cliente_ativado ? 'bg-success/10 text-success border-success/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
+        <Badge variant="outline" className={cn('text-3xs', crmCustomer.cliente_ativado ? 'bg-success/10 text-success border-success/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
           {crmCustomer.cliente_ativado ? 'Ativo' : 'Inativo'}
         </Badge>
       )}

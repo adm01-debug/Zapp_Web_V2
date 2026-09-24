@@ -152,7 +152,7 @@ export function ChatbotExecutionsDashboard() {
                           <span className="font-medium text-sm text-foreground truncate">
                             {exec.flow?.name || 'Fluxo removido'}
                           </span>
-                          <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>
+                          <Badge variant="outline" className={`text-3xs ${cfg.color}`}>
                             {cfg.label}
                           </Badge>
                         </div>

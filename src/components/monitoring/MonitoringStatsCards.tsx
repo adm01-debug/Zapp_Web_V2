@@ -151,9 +151,9 @@ export function MonitoringStatsCards({ connections, messageStats, uptime, sparkl
                 </div>
               </div>
               <div className="mt-auto">
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+                <p className="text-3xs text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
                 <p className="text-lg font-bold truncate mt-0.5 tabular-nums">{value}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+                <p className="text-2xs text-muted-foreground truncate">{subtitle}</p>
               </div>
             </CardContent>
           </Card>

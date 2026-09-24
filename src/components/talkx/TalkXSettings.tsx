@@ -59,7 +59,7 @@ export function TalkXSettings() {
                 <div className="flex items-center gap-2">
                   <code className="text-xs font-mono text-foreground">{row.key}</code>
                   {saved === row.key && (
-                    <span className="text-[10px] text-emerald-600 font-medium">Salvo!</span>
+                    <span className="text-3xs text-emerald-600 font-medium">Salvo!</span>
                   )}
                 </div>
                 {row.description && (

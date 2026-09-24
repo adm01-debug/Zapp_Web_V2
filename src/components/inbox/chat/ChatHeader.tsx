@@ -96,9 +96,9 @@ export function ChatHeader({
                     </div>
                     {intel?.rapport?.suggestions && intel.rapport.suggestions.length > 0 && (
                       <div className="border-t border-border/30 pt-1.5 mt-1">
-                        <p className="text-[10px] text-muted-foreground mb-0.5">Rapport:</p>
+                        <p className="text-3xs text-muted-foreground mb-0.5">Rapport:</p>
                         {intel.rapport.suggestions.slice(0, 2).map((s, i) => (
-                          <p key={i} className="text-success text-[11px]">{s}</p>
+                          <p key={i} className="text-success text-2xs">{s}</p>
                         ))}
                       </div>
                     )}
@@ -108,7 +108,7 @@ export function ChatHeader({
             ) : (
               <h3 className="text-lg font-bold text-foreground">{conversation.contact.name}</h3>
             )}
-            <Badge variant="outline" className={cn('text-[10px] capitalize border',
+            <Badge variant="outline" className={cn('text-3xs capitalize border',
               briefing?.sentiment === 'positive' && 'border-success/50 text-success bg-success/10',
               briefing?.sentiment === 'negative' && 'border-destructive/50 text-destructive bg-destructive/10',
               !briefing?.sentiment && conversation.status === 'open' && 'border-success/50 text-success bg-success/10',
@@ -128,7 +128,7 @@ export function ChatHeader({
               const cfg = ct ? contactTypeConfig[ct] : null;
               if (!cfg) return null;
               const TypeIcon = cfg.icon;
-              return <Badge variant="outline" className={cn('text-[10px] border font-medium', cfg.color)}><TypeIcon className="w-3 h-3 mr-0.5" />{cfg.label}</Badge>;
+              return <Badge variant="outline" className={cn('text-3xs border font-medium', cfg.color)}><TypeIcon className="w-3 h-3 mr-0.5" />{cfg.label}</Badge>;
             })()}
             <SLAIndicator firstMessageAt={conversation.createdAt} firstResponseAt={conversation.firstResponseAt ?? null} firstResponseMinutes={5} />
             <CrmBadges crmCompany={crmCompany} crmCustomer={crmCustomer} crmRfm={crmRfm} />

@@ -62,7 +62,7 @@ export function AIProviderCard({ provider: p, testing, onTest, onEdit, onDelete,
                   )}
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                     {p.use_for.map(u => (
-                      <Badge key={u} variant="outline" className="text-[10px] px-1.5">
+                      <Badge key={u} variant="outline" className="text-3xs px-1.5">
                         {USE_FOR_OPTIONS.find(o => o.value === u)?.label || u}
                       </Badge>
                     ))}

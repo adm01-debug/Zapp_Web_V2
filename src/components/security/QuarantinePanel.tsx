@@ -107,7 +107,7 @@ export function QuarantinePanel() {
               <CardTitle className="flex items-center gap-2">
                 Quarentena de Mídias
                 {pendingCount > 0 && (
-                  <Badge variant="destructive" className="text-[10px]">
+                  <Badge variant="destructive" className="text-3xs">
                     {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
                   </Badge>
                 )}
@@ -237,11 +237,11 @@ function QuarantineRow({ record, onAct }: QuarantineRowProps) {
               {record.threat_name || 'Ameaça não classificada'}
             </span>
             {record.threat_level && (
-              <Badge variant="outline" className={cn('text-[10px] uppercase', THREAT_COLORS[threatKey] || '')}>
+              <Badge variant="outline" className={cn('text-3xs uppercase', THREAT_COLORS[threatKey] || '')}>
                 {threatKey}
               </Badge>
             )}
-            <Badge variant="outline" className={cn('text-[10px]', DECISION_COLORS[decisionKey] || '')}>
+            <Badge variant="outline" className={cn('text-3xs', DECISION_COLORS[decisionKey] || '')}>
               {DECISION_LABEL[decisionKey] || decisionKey}
             </Badge>
           </div>
@@ -251,7 +251,7 @@ function QuarantineRow({ record, onAct }: QuarantineRowProps) {
             {record.remote_jid && <span className="font-mono truncate max-w-[200px]">{record.remote_jid}</span>}
             {record.scan_engine && <span>via {record.scan_engine}</span>}
           </div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-2xs text-muted-foreground">
             {formatDate(record.created_at)}
             {record.file_hash && (
               <span className="ml-2 font-mono opacity-60">{record.file_hash.slice(0, 12)}…</span>

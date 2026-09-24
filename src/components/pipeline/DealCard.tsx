@@ -69,11 +69,11 @@ export function DealCard({ deal, isDragging, onDragStart, onDragEnd, onEdit, onM
         </div>
       )}
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="outline" className={cn("text-[10px] h-4", priorityColors[deal.priority])}>
+        <Badge variant="outline" className={cn("text-3xs h-4", priorityColors[deal.priority])}>
           {deal.priority === 'high' ? 'Alta' : deal.priority === 'medium' ? 'Média' : 'Baixa'}
         </Badge>
-        {deal.contact && <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><User className="w-3 h-3" /><span className="truncate max-w-[80px]">{deal.contact.name}</span></div>}
-        {deal.expected_close_date && <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><Calendar className="w-3 h-3" />{new Date(deal.expected_close_date).toLocaleDateString('pt-BR')}</div>}
+        {deal.contact && <div className="flex items-center gap-1 text-3xs text-muted-foreground"><User className="w-3 h-3" /><span className="truncate max-w-[80px]">{deal.contact.name}</span></div>}
+        {deal.expected_close_date && <div className="flex items-center gap-1 text-3xs text-muted-foreground"><Calendar className="w-3 h-3" />{new Date(deal.expected_close_date).toLocaleDateString('pt-BR')}</div>}
       </div>
     </motion.div>
   );

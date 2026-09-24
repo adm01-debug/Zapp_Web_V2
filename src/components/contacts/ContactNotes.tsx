@@ -116,7 +116,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
           Notas
         </h3>
         <div className="flex items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">{notes.length}</Badge>
+          <Badge variant="secondary" className="text-3xs">{notes.length}</Badge>
           <Button
             variant="ghost" size="icon"
             className="w-6 h-6"
@@ -192,8 +192,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       {getInitials(note.author_name || '')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-[10px] font-medium text-foreground">{note.author_name}</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">
+                  <span className="text-3xs font-medium text-foreground">{note.author_name}</span>
+                  <span className="text-3xs text-muted-foreground ml-auto">
                     {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale: ptBR })}
                   </span>
                 </div>

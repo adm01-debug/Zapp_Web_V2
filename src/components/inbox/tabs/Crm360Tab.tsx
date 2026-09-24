@@ -129,7 +129,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                       {i > 0 && <span className="w-4 h-px bg-border" />}
                       <span
                         className={cn(
-                          'h-7 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap',
+                          'h-7 px-2.5 rounded-full text-2xs font-medium border whitespace-nowrap',
                           active ? 'bg-primary text-primary-foreground border-primary' : passed ? 'bg-primary/15 text-primary border-primary/30' : 'bg-muted/40 text-muted-foreground border-border'
                         )}
                       >
@@ -159,7 +159,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                 {(crm360?.stages ?? []).map((stage, i) => (
                   <li key={stage.id} className="flex items-center gap-1 shrink-0">
                     {i > 0 && <span className="w-4 h-px bg-border" />}
-                    <span className="h-7 px-2.5 rounded-full text-[11px] font-medium border bg-muted/40 text-muted-foreground border-border whitespace-nowrap">{stage.name}</span>
+                    <span className="h-7 px-2.5 rounded-full text-2xs font-medium border bg-muted/40 text-muted-foreground border-border whitespace-nowrap">{stage.name}</span>
                   </li>
                 ))}
               </ol>
@@ -186,7 +186,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {p.amount != null && <span className="text-sm font-semibold tabular-nums">{formatBRL(p.amount)}</span>}
-                      <span className={cn('h-6 px-2.5 rounded-full border text-[11px] font-semibold inline-flex items-center', pill.className)}>{pill.label}</span>
+                      <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center', pill.className)}>{pill.label}</span>
                     </div>
                   </li>
                 );
@@ -203,7 +203,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           <div className="flex items-center gap-3">
             <p className="text-2xl font-bold tabular-nums">{crm360?.ticketMedio != null ? formatBRL(crm360.ticketMedio) : '—'}</p>
             {crm360?.ticketDeltaPct != null && (
-              <span className={cn('h-6 px-2 rounded-full text-[11px] font-semibold inline-flex items-center', crm360.ticketDeltaPct >= 0 ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive')}>
+              <span className={cn('h-6 px-2 rounded-full text-2xs font-semibold inline-flex items-center', crm360.ticketDeltaPct >= 0 ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive')}>
                 {crm360.ticketDeltaPct >= 0 ? '+' : ''}{crm360.ticketDeltaPct.toFixed(0)}%
               </span>
             )}
@@ -216,7 +216,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {crm360.interesses.map((tag) => (
-                <span key={tag} className="h-6 px-2.5 rounded-full bg-primary/15 text-primary border border-primary/30 text-[11px] font-semibold inline-flex items-center">{tag}</span>
+                <span key={tag} className="h-6 px-2.5 rounded-full bg-primary/15 text-primary border border-primary/30 text-2xs font-semibold inline-flex items-center">{tag}</span>
               ))}
             </div>
           )}

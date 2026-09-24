@@ -167,7 +167,7 @@ export function BottomNavigation({
                 )}
               </div>
               <span className={cn(
-                'text-[10px] leading-none transition-all',
+                'text-3xs leading-none transition-all',
                 isActive ? 'text-primary font-bold' : 'text-muted-foreground font-medium'
               )}>
                 {item.label}

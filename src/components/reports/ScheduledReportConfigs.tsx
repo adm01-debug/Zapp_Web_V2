@@ -112,10 +112,10 @@ export function ScheduledReportConfigs() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm text-foreground truncate">{cfg.name}</span>
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-3xs">
                         {TYPE_LABELS[cfg.report_type] || cfg.report_type}
                       </Badge>
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-3xs">
                         <Clock className="w-2.5 h-2.5 mr-1" />
                         {FREQ_LABELS[cfg.frequency] || cfg.frequency}
                       </Badge>

@@ -98,7 +98,7 @@ export function TeamChatInputArea({
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border-l-2 border-primary">
               <Reply className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-medium text-primary">{replyTo.sender?.name || 'Você'}</p>
+                <p className="text-3xs font-medium text-primary">{replyTo.sender?.name || 'Você'}</p>
                 <p className="text-xs text-muted-foreground truncate">{replyTo.content || 'Mídia'}</p>
               </div>
               <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={onCancelReply}><X className="w-3 h-3" /></Button>
@@ -145,7 +145,7 @@ export function TeamChatInputArea({
               aria-label="Digite sua mensagem" aria-describedby={draft.charCount > 0 ? "team-char-counter" : undefined}
             />
             {draft.charCount > 100 && (
-              <span id="team-char-counter" className={cn("absolute bottom-1 right-2 text-[10px] select-none pointer-events-none",
+              <span id="team-char-counter" className={cn("absolute bottom-1 right-2 text-3xs select-none pointer-events-none",
                 draft.isOverLimit ? "text-destructive font-medium" : draft.isNearLimit ? "text-warning" : "text-muted-foreground/50")}>
                 {draft.charCount}/{draft.CHAR_LIMIT}
               </span>

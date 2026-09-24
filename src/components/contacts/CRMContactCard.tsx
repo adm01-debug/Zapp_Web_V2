@@ -50,7 +50,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
             </Badge>
           )}
           {contact.relationship_score > 0 && (
-            <Badge variant="outline" className={cn('text-[10px] py-0', contact.relationship_score >= 70 ? 'bg-success/10 text-success border-success/30' : contact.relationship_score >= 40 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-muted/20 text-muted-foreground border-border/30')}>
+            <Badge variant="outline" className={cn('text-3xs py-0', contact.relationship_score >= 70 ? 'bg-success/10 text-success border-success/30' : contact.relationship_score >= 40 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-muted/20 text-muted-foreground border-border/30')}>
               {contact.relationship_score}
             </Badge>
           )}
@@ -66,14 +66,14 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
         </div>
       )}
 
-      <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
+      <div className="flex items-center gap-3 text-2xs text-muted-foreground flex-wrap">
         {contact.vendedor_nome && <span className="flex items-center gap-1"><User className="w-3 h-3" />{contact.vendedor_nome.split(' ').slice(0, 2).join(' ')}</span>}
         {contact.total_pedidos != null && contact.total_pedidos > 0 && <span className="flex items-center gap-1"><ShoppingCart className="w-3 h-3" />{contact.total_pedidos} ped.</span>}
         {contact.valor_total_compras != null && contact.valor_total_compras > 0 && <span className="flex items-center gap-1 text-success">{formatCurrency(contact.valor_total_compras)}</span>}
         {contact.rfm_segment && <Badge variant="outline" className={cn('text-[9px] py-0 px-1', rfmColors[contact.rfm_segment] || '')}>{contact.rfm_segment}</Badge>}
       </div>
 
-      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-3 mt-1.5 text-2xs text-muted-foreground">
         {contact.phone_primary && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{contact.phone_primary}</span>}
         {contact.email_primary && <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{contact.email_primary}</span></span>}
       </div>

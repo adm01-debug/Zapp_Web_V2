@@ -80,7 +80,7 @@ export function NotificationsPanel({
                 <Bell className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm text-foreground">Notificações</h3>
                 {unreadCount > 0 && (
-                  <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                  <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-3xs font-bold">
                     {unreadCount}
                   </span>
                 )}
@@ -91,7 +91,7 @@ export function NotificationsPanel({
                     variant="ghost"
                     size="sm"
                     onClick={onMarkAllRead}
-                    className="h-7 text-[11px] text-primary hover:text-primary"
+                    className="h-7 text-2xs text-primary hover:text-primary"
                   >
                     Marcar todas como lidas
                   </Button>
@@ -155,10 +155,10 @@ export function NotificationsPanel({
                               <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                          <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">
                             {notification.description}
                           </p>
-                          <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          <p className="text-3xs text-muted-foreground/60 mt-1">
                             {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: ptBR })}
                           </p>
                         </div>

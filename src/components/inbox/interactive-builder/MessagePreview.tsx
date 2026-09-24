@@ -43,12 +43,12 @@ export function MessagePreview({ body, headerText, footer, messageType, buttons,
             {sections.length > 0 && (
               <div className="mt-2 space-y-1">
                 {sections.slice(0, 2).map((section, i) => (
-                  <div key={i} className="text-[10px] opacity-70">
+                  <div key={i} className="text-3xs opacity-70">
                     • {section.title || `Seção ${i + 1}`}: {section.rows.length} itens
                   </div>
                 ))}
                 {sections.length > 2 && (
-                  <div className="text-[10px] opacity-50">+{sections.length - 2} mais seções...</div>
+                  <div className="text-3xs opacity-50">+{sections.length - 2} mais seções...</div>
                 )}
               </div>
             )}

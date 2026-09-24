@@ -80,14 +80,14 @@ export default function Auth() {
                 <div className="font-display text-base font-bold tracking-tight text-foreground">
                   ZAPP Web
                 </div>
-                <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   Suite v2
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/40 px-2.5 py-1 backdrop-blur-sm">
               <ShieldCheck className="h-3 w-3 text-success" />
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <span className="text-3xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Seguro
               </span>
             </div>
@@ -182,7 +182,7 @@ export default function Auth() {
                     <div className="mt-5">
                       <div className="relative my-4 flex items-center gap-3">
                         <div className="h-px flex-1 bg-border/40" />
-                        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                           ou continue com
                         </span>
                         <div className="h-px flex-1 bg-border/40" />
@@ -267,7 +267,7 @@ export default function Auth() {
             </Card>
           </motion.div>
 
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 text-center text-[11px] text-muted-foreground">
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 text-center text-2xs text-muted-foreground">
             © {new Date().getFullYear()} ZAPP Web · Todos os direitos reservados
           </motion.p>
         </motion.div>

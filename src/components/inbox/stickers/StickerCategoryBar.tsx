@@ -34,7 +34,7 @@ export function StickerCategoryBar({
             aria-selected={!activeCategory && !showFavorites && !showRecent}
             onClick={() => onCategoryChange(null)}
             className={cn(
-              'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary',
+              'px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary',
               !activeCategory && !showFavorites && !showRecent
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -48,7 +48,7 @@ export function StickerCategoryBar({
             aria-selected={showRecent}
             onClick={onToggleRecent}
             className={cn(
-              'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary',
+              'px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary',
               showRecent
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -62,7 +62,7 @@ export function StickerCategoryBar({
             aria-selected={showFavorites}
             onClick={onToggleFavorites}
             className={cn(
-              'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary',
+              'px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary',
               showFavorites
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -81,7 +81,7 @@ export function StickerCategoryBar({
                 aria-selected={activeCategory === cat}
                 onClick={() => onCategoryChange(activeCategory === cat ? null : cat)}
                 className={cn(
-                  'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary',
+                  'px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary',
                   activeCategory === cat
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'

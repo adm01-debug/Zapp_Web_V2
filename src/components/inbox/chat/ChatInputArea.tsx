@@ -204,7 +204,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 aria-describedby={logic.charCount > 0 ? "char-counter" : undefined}
               />
               {logic.charCount > 100 && (
-                <span id="char-counter" className={cn("absolute bottom-1 right-2 text-[10px] select-none pointer-events-none",
+                <span id="char-counter" className={cn("absolute bottom-1 right-2 text-3xs select-none pointer-events-none",
                   logic.isOverLimit ? "text-destructive font-medium" : logic.isNearLimit ? "text-warning" : "text-muted-foreground/50")}>
                   {logic.charCount}/{logic.CHAR_LIMIT}
                 </span>

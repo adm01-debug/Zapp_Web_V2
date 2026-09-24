@@ -26,7 +26,7 @@ function TalkXCRMBadge({ crmInfo }: { crmInfo: CRMBatchResult | undefined }) {
   return (
     <div className="flex items-center gap-1 mt-0.5">
       <Building2 className="w-3 h-3 text-primary/60 shrink-0" />
-      <span className="text-[10px] text-muted-foreground truncate max-w-[110px]">{crmInfo.company_name}</span>
+      <span className="text-3xs text-muted-foreground truncate max-w-[110px]">{crmInfo.company_name}</span>
       {crmInfo.rfm_score != null && (
         <Badge variant="outline" className={cn('text-[9px] py-0 px-1 shrink-0', RFM_SEGMENT_COLORS[crmInfo.rfm_segment ?? ''] || 'bg-muted/20')}>
           {crmInfo.rfm_score}
@@ -83,7 +83,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
           <CardTitle className="text-sm flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
             Contatos
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge variant="secondary" className="text-3xs">
               {selectedContacts.length}/{contacts.length}
             </Badge>
           </CardTitle>
@@ -99,7 +99,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
             <div className="flex gap-1.5 flex-wrap">
               {companies.length > 0 && (
                 <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto min-w-[100px] max-w-[160px]">
+                  <SelectTrigger className="h-7 text-2xs w-auto min-w-[100px] max-w-[160px]">
                     <Building2 className="w-3 h-3 mr-1 shrink-0" /><SelectValue placeholder="Empresa" />
                   </SelectTrigger>
                   <SelectContent>
@@ -110,7 +110,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
               )}
               {tags.length > 0 && (
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto min-w-[80px] max-w-[140px]">
+                  <SelectTrigger className="h-7 text-2xs w-auto min-w-[80px] max-w-[140px]">
                     <Tag className="w-3 h-3 mr-1 shrink-0" /><SelectValue placeholder="Tag" />
                   </SelectTrigger>
                   <SelectContent>
@@ -120,12 +120,12 @@ export const TalkXContactSelector: React.FC<Props> = ({
                 </Select>
               )}
               {(companyFilter !== 'all' || tagFilter !== 'all') && (
-                <Button size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground" onClick={clearFilters}>
+                <Button size="sm" variant="ghost" className="h-7 text-2xs text-muted-foreground" onClick={clearFilters}>
                   <X className="w-3 h-3 mr-1" />Limpar
                 </Button>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground">{filteredContacts.length} contatos filtrados • {selectedContacts.length} selecionados</p>
+            <p className="text-3xs text-muted-foreground">{filteredContacts.length} contatos filtrados • {selectedContacts.length} selecionados</p>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto min-h-0">

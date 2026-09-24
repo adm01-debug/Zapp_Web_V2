@@ -106,7 +106,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
                 <div className="flex flex-wrap gap-1.5">
                   {thread.tags && thread.tags.length > 0 ? (
                     thread.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-[10px]">
+                      <Badge key={tag} variant="secondary" className="text-3xs">
                         {tag}
                       </Badge>
                     ))
@@ -116,7 +116,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
                   {thread.label_ids && thread.label_ids.length > 0 && (
                     <>
                       {thread.label_ids.filter(l => !['INBOX', 'UNREAD', 'SENT', 'IMPORTANT'].includes(l)).map(label => (
-                        <Badge key={label} variant="outline" className="text-[10px]">
+                        <Badge key={label} variant="outline" className="text-3xs">
                           {label}
                         </Badge>
                       ))}
@@ -157,7 +157,7 @@ export function EmailContactPanel({ thread, onClose }: EmailContactPanelProps) {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                     <span>Thread criada</span>
-                    <span className="ml-auto text-[10px]">
+                    <span className="ml-auto text-3xs">
                       {thread.last_message_at ? format(new Date(thread.last_message_at), 'dd/MM/yy', { locale: ptBR }) : '-'}
                     </span>
                   </div>
@@ -177,7 +177,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ cla
     <div className="flex items-start gap-2">
       <Icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-3xs text-muted-foreground">{label}</p>
         <p className="text-xs text-foreground truncate">{value}</p>
       </div>
     </div>
@@ -188,7 +188,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-muted/50 rounded-lg p-2 text-center">
       <p className="text-sm font-semibold text-foreground">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-3xs text-muted-foreground">{label}</p>
     </div>
   );
 }
