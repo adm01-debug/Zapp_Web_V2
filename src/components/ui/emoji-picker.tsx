@@ -151,7 +151,7 @@ export function EmojiPicker({
               {/* Recent section */}
               {!searchQuery && activeCategory === 'recent' && recentEmojis.length > 0 && (
                 <div className="mb-2">
-                  <h4 className="text-[10px] font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
+                  <h4 className="text-3xs font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
                     Recentes
                   </h4>
                   <div className="grid grid-cols-8 gap-0.5">
@@ -172,12 +172,12 @@ export function EmojiPicker({
               {activeCategory !== 'recent' || searchQuery ? (
                 <div>
                   {!searchQuery && (
-                    <h4 className="text-[10px] font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
+                    <h4 className="text-3xs font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
                       {emojiDatabase[activeCategory]?.label || 'Resultados'}
                     </h4>
                   )}
                   {searchQuery && (
-                    <h4 className="text-[10px] font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
+                    <h4 className="text-3xs font-medium text-muted-foreground mb-1.5 px-0.5 uppercase tracking-wider">
                       {searchResults?.length || 0} resultados para "{searchQuery}"
                     </h4>
                   )}
@@ -215,7 +215,7 @@ export function EmojiPicker({
               >
                 <div className="flex items-center gap-3 px-3 py-1.5">
                   <span className="text-2xl">{hoveredEmoji}</span>
-                  <span className="text-[10px] text-muted-foreground">Clique para adicionar</span>
+                  <span className="text-3xs text-muted-foreground">Clique para adicionar</span>
                 </div>
               </motion.div>
             )}

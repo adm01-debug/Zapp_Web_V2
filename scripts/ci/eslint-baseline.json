@@ -22,7 +22,7 @@
     },
     {
       "path": "src/components/admin/CrisisRoom.tsx",
-      "sha256": "35e4d52817f3c3636732ce9b842f943abd059bc7fd0b4ba1da52ac6a1b66600e"
+      "sha256": "8fde743be9a0e7da8cab4c1ed243c782b396ea50f498dc98b6507accaef685c7"
     },
     {
       "path": "src/components/admin/ForceLogoutButton.tsx",
@@ -30,7 +30,7 @@
     },
     {
       "path": "src/components/admin/GmailWebhookMonitor.tsx",
-      "sha256": "743385b9a394ee9f1d478ce1083d0588c5a7573901931d48e599267a33ad0318"
+      "sha256": "1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424"
     },
     {
       "path": "src/components/admin/MediaMigrationTool.tsx",
@@ -38,19 +38,19 @@
     },
     {
       "path": "src/components/admin/PlaybooksManager.tsx",
-      "sha256": "88c2181e54cff5e9f50951256d9d3231709c8724adbb20ffdd9fba7068229e21"
+      "sha256": "39be18866acc624a6c01a82a398716b537ee09cbf9a8a2b140b9819fdf9cb3c4"
     },
     {
       "path": "src/components/admin/SicoobBridgeDashboard.tsx",
-      "sha256": "b33585bc5a3019ed30e9a43fe312f3bba91ca84d43a07358367e05c5c6ababe0"
+      "sha256": "cc961fed16406c5dfbc952831f3834fc37b6ad18f6df1401d086669fb6fa1679"
     },
     {
       "path": "src/components/admin/SupervisorCopilot.tsx",
-      "sha256": "97e0a2691de71072ecd0aa3d9773a5eb489e15ef33d2c4c82d8b2a585c39bcd6"
+      "sha256": "890ccd5b9e9e792d503a2899a19f901383f21e401c3ea85b3dd0a24d9b319bd5"
     },
     {
       "path": "src/components/admin/TrainingMode.tsx",
-      "sha256": "81729a9ffeb3ba738d60a665f94f043601aafaa4d6458a496e688b7c5dc69dce"
+      "sha256": "6e7870800fac7e19845e200915da293702e6dd2bae30f1d323d19e6f891653f9"
     },
     {
       "path": "src/components/admin/useAdminData.ts",
@@ -82,7 +82,7 @@
     },
     {
       "path": "src/components/ai/ChurnPredictionDashboard.tsx",
-      "sha256": "868a761d069f70703f770f74657b3dd9d14c1db2965c7a861e5a9e5e60296fdd"
+      "sha256": "a87e8ff37b7e2cf931ad97533057d35a17301d186085cfe6accc481a15b8ba09"
     },
     {
       "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
@@ -114,7 +114,7 @@
     },
     {
       "path": "src/components/calls/VoIPPanel.tsx",
-      "sha256": "8ff95138bc6cf41663d0d9178f881ef9cc656d22aac49fd79f6a4c280b4c7527"
+      "sha256": "75e2f281ef18752d57a97de5d651e8fe391d4b1dc99fa8269c4c2ab83f855878"
     },
     {
       "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -122,7 +122,7 @@
     },
     {
       "path": "src/components/campaigns/CampaignABTesting.tsx",
-      "sha256": "8e854fbf0eec2086052eb213c06635a8e9f901d9c1e322cdab3951ade5f01f97"
+      "sha256": "768199559e32149c643f70821b16a3f1b655ee9f95bfc539097692c83a0e501d"
     },
     {
       "path": "src/components/catalog/ExternalProductCatalog.tsx",
@@ -130,7 +130,7 @@
     },
     {
       "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
-      "sha256": "36fe540c64540bb9ffc8879d93e8906cd85cb2d24dadc304b425c9313f3e3aef"
+      "sha256": "7bd0b64a3e5ccef585c09d086092257cf7e8aaaa2ae120584cc3a989ffb0b9d2"
     },
     {
       "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
@@ -158,7 +158,7 @@
     },
     {
       "path": "src/components/connections/ConnectionCard.tsx",
-      "sha256": "559c58cf25cadaa257b0a2e7ffaed29a7de6d5b6981d7abfa4cb19de23eb3e64"
+      "sha256": "f4674745872c064226f3937a1b2745bac6cfb8b0647791507fd16f2e37ced2b6"
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
@@ -174,7 +174,7 @@
     },
     {
       "path": "src/components/connections/NumberReputationMonitor.tsx",
-      "sha256": "e12b599c1acd1ca49213a141568e6bfe8d117f0aae9729e52a787c76985e15bb"
+      "sha256": "8e8818ec88f16453e2a859ff6dbcaa8947b1416422814247d5a0dd3d2823c813"
     },
     {
       "path": "src/components/contacts/BulkActionsBar.tsx",
@@ -182,11 +182,11 @@
     },
     {
       "path": "src/components/contacts/ContactActivityTimeline.tsx",
-      "sha256": "2d1cb4670b40630926c765113ceb4ba0c677662237ac6b418553b040b4dd22dd"
+      "sha256": "35446ac8b81a1c61446c367da89e3061f375b10bfe59293e7ac57ee00dc200ed"
     },
     {
       "path": "src/components/contacts/ContactBulkTagDialog.tsx",
-      "sha256": "2b93d319eb36a35ca182f599e507457b1a9a5efdd7bfb2bf93550f08d53b0354"
+      "sha256": "6e0496dd6d404ee5548667a43988a9aa4684938fab980cff7a36bcc1135114aa"
     },
     {
       "path": "src/components/contacts/ContactCRMDialog.tsx",
@@ -194,7 +194,7 @@
     },
     {
       "path": "src/components/contacts/ContactEngagementScore.tsx",
-      "sha256": "716b944ff04a84decf6e71b2449a8066212c28108e7ee15be50cfd71ff7cc3d8"
+      "sha256": "1c5b3e5b11eac4dec8d78f51a549c20f3f75838c11354770d59a818915ba7c18"
     },
     {
       "path": "src/components/contacts/ContactImportDialog.tsx",
@@ -202,27 +202,27 @@
     },
     {
       "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "5c4bd6219c95d2daea837d585746671db976cc763e05d6237c2f7b1d18888545"
+      "sha256": "474bce8242645a87566d49db806b9bdc70c764afde49d2a4e0fce500e2ced5ab"
     },
     {
       "path": "src/components/contacts/ContactMergePanel.tsx",
-      "sha256": "031ac24fe55f173a95d81a793fe7b2102659d65bf91f76c6732007bc336b919d"
+      "sha256": "c0709390bc1eb9bfbd32616dc63d106bb829a87301659947331dbbfefa9ca503"
     },
     {
       "path": "src/components/contacts/ContactNotes.tsx",
-      "sha256": "7e43e50ec3c6f5cbeb25b73f59a18da36244998dd542bbcb295ccbb5d159cbf8"
+      "sha256": "98e2ca2d39600188d0442fa5d5b4ce608d68e9bae9af22b4ac696c5cada43ba3"
     },
     {
       "path": "src/components/contacts/ContactPurchaseHistory.tsx",
-      "sha256": "6daa48b681179789aaccdc25c0f46586066a32d1f2f45b39d7462529c82bdf6e"
+      "sha256": "c712ea14048b2ffe9f54e13f5c1fdcd2f785b7b602a0751024d8f2b2c0f64b9d"
     },
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
-      "sha256": "21b132f2f812e1c42c1e81b32aba78e15cce598ac07a5e4c4c67bc2c50b67f05"
+      "sha256": "e0e9237365440262a9fdbddaf013eb0baf1a9861de0a21c1b0548966caf0fc52"
     },
     {
       "path": "src/components/contacts/ContactsTable.tsx",
-      "sha256": "5af3ad375a0939b74e8aaaec8483e417fe361eadb812dc6294e1ffc7a39e4862"
+      "sha256": "f5332bb7ba7a96b9d391f3fce3f5150a31c315b3b7d708a047475cdfaafee7c4"
     },
     {
       "path": "src/components/contacts/InlineEditCell.tsx",
@@ -246,7 +246,7 @@
     },
     {
       "path": "src/components/dashboard/ActivityHeatmap.tsx",
-      "sha256": "00fa7a908a1294a9a803452abc45f9dbc3ca0cb362b1cc0e6915dc97b3218a7a"
+      "sha256": "1bb277a2fe299843989d09d694d3af4bf857737d6686e333337ab0967ae0155a"
     },
     {
       "path": "src/components/dashboard/ConversationHeatmap.tsx",
@@ -254,7 +254,7 @@
     },
     {
       "path": "src/components/dashboard/DashboardFilters.tsx",
-      "sha256": "b9c81ecccb1dbedca611412108055cf31fd38d2d8a5a7e22a21f0377006b6ab4"
+      "sha256": "cd8fb01fd9b8b79e54459a81ff3e491b53862b59ec4886f5053f415d07058c0e"
     },
     {
       "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
@@ -298,7 +298,7 @@
     },
     {
       "path": "src/components/diagnostics/ConnectionHealthPanel.tsx",
-      "sha256": "357692fa0b27a138b47120af892cd0381c7cf00c049df9ffc4f32f6d732edc35"
+      "sha256": "0f418c91323a4f4c3486d7bb4012068de5e3c3185eed26843820e798e1ae18e7"
     },
     {
       "path": "src/components/effects/Confetti.tsx",
@@ -310,7 +310,7 @@
     },
     {
       "path": "src/components/email/EmailThreadList.tsx",
-      "sha256": "4f24bb0d0757babad15ed577b6334f63b84ccd9dfcc85bc7cf4e6b697452f67f"
+      "sha256": "03ffbdc1945dc6cf8e4f0e88e19d288e7d690e0ff4290d479418ce8ecb957cf3"
     },
     {
       "path": "src/components/ErrorBoundary.tsx",
@@ -338,7 +338,7 @@
     },
     {
       "path": "src/components/gmail/EmailThreadView.tsx",
-      "sha256": "5f6c127f993183bdfc38c7e59de007855257f7e8a1b35edf142960ab5df65dcb"
+      "sha256": "d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb"
     },
     {
       "path": "src/components/groups/__tests__/GroupsView.test.tsx",
@@ -354,15 +354,15 @@
     },
     {
       "path": "src/components/inbox/__tests__/SLAIndicator.test.tsx",
-      "sha256": "2cae6150b0a9b2abc06c61855f74f52a112ab9c777c50c662178621e1f319dd5"
+      "sha256": "05ad36f9960a3a2041769254e490bd2d15c2eae7ba285d3c0a93636ab4384a97"
     },
     {
       "path": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx",
-      "sha256": "c2b886878c9e0196377148d2330f887888db066d44c749f200786b17056b703a"
+      "sha256": "3ff84d8bbc019246ac6310a4a4ba7ffc329380f950c8001323833efb8897af30"
     },
     {
       "path": "src/components/inbox/ai-tools/ToneSelector.tsx",
-      "sha256": "5db82e0771227eabdb8e94de59beec0dc2f5253b4c2c4b4ad1f8f5626570ac53"
+      "sha256": "f06de5219584df4d1369ca1edd6196de8038c9353d13283bfb25cee1ebcd1acb"
     },
     {
       "path": "src/components/inbox/ai-tools/useAnalysisTts.ts",
@@ -370,15 +370,15 @@
     },
     {
       "path": "src/components/inbox/AIConversationAssistant.tsx",
-      "sha256": "c3b8d66199485a33518dc6c65ab423458e7e91ddf1e924ec5ecb06dbdb9ffcd7"
+      "sha256": "e2317259fe090dd540654b731658f00fbab431ba262878545946479e37300599"
     },
     {
       "path": "src/components/inbox/AISuggestions.tsx",
-      "sha256": "9b05fbb1f5eed4d787bc91b0e6e92d4676f93eef24133a552ac967a87bfaf686"
+      "sha256": "0f7d5a9a05ab4e9b65f496195b4578c9315fed96379738f2ad79d6f878554124"
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
-      "sha256": "15fe013b54e07a68479aa1558bd5a3575e0b789ddffc9bbc35150277f49d62a5"
+      "sha256": "8119d03d096325eba8cb8a89ac18a917ac0e659e76b4106e188152d9fb42c284"
     },
     {
       "path": "src/components/inbox/AudioRecorder.tsx",
@@ -394,7 +394,7 @@
     },
     {
       "path": "src/components/inbox/chat/AIRewriteButton.tsx",
-      "sha256": "6fada0f630532be82e4ff0dd09338575de6fac6237b3fca1260ab80534062a64"
+      "sha256": "e350755f36fe88aaf8f3c22c7f3ba7497f7d14c92a7577564a71e38141a7349c"
     },
     {
       "path": "src/components/inbox/chat/MarkdownPreview.tsx",
@@ -406,7 +406,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "d4cd0f4dbb4d7346ea4470558cf42704140ddab2bed08f91a82800665af29428"
+      "sha256": "7d7601c0acc21725d7925f553e17bfad47625bd93ac7d3c5bd946dc626be49c7"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -462,23 +462,23 @@
     },
     {
       "path": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "sha256": "9916ad491382ddc43b34f12d42f12eb3811c30b0d6910b8db23ab5cff6679ae6"
+      "sha256": "c7401a0d992c284d6227087543bb5ebb88ae972895968bce14632ff7354ea128"
     },
     {
       "path": "src/components/inbox/ContactPurchasesPanel.tsx",
-      "sha256": "a2967ddce15c512dc751e533807ab3775165c254467261ad75e32c8251d460ce"
+      "sha256": "35564a933d6fdfa8ac49a6e5f02dfa9522fe423f03e36b554fdd593bc32240be"
     },
     {
       "path": "src/components/inbox/ContactTypeFilter.tsx",
-      "sha256": "19fc49471ed1beaf8f0618dc81aa99b00701c3eb46b82763c622d46a8e4ac69e"
+      "sha256": "7c5c84bffd67159fd2916c370adfeaefcf4e786dd0230d4d425354f1a0e3d8aa"
     },
     {
       "path": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "sha256": "0eed6b612936b32c31745ab60f97899c05139b880ce3e91a2bee9f9c05693da8"
+      "sha256": "bd5101555c4ff214ce0bf0332db4779c5a123b8ddebe6f5e0b0986f94cf30104"
     },
     {
       "path": "src/components/inbox/ConversationHistory.tsx",
-      "sha256": "95d25333709889df0c59e0b6be0a58f395b392d2eccdbe0f6bd4e26b74ac7787"
+      "sha256": "118717ab6ebda38c41f5d71b7d95faac3879295d3c1c943f2cb22e77f39a5f9b"
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
@@ -486,19 +486,19 @@
     },
     {
       "path": "src/components/inbox/ConversationMemoryPanel.tsx",
-      "sha256": "637fde42698bdf91319d484a6cb2be18b311648ba37849d621802bcc242ca84c"
+      "sha256": "e94071bcf35806264dd3c2fa80a7a147e5dbdd7e34255eb7251f7bc43bacf420"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
-      "sha256": "95e0690e9f1b044c5eae0c3de0e7176f7fb6bd83cc28430702bf04adab2f9500"
+      "sha256": "ec74f18625c86410cf2ba411c2f6755d0735ed571edb483eb8645609091a35e6"
     },
     {
       "path": "src/components/inbox/ConversationTimeline.tsx",
-      "sha256": "accbfc6fb45e41d0e0e0fdf14e0fcfee016a32b56c32963ee132f0ceebcfaa43"
+      "sha256": "7c6a7dececc832a2a931ca9a0bb5bccdaf580aed8fa23ce1a0793ed7025f699d"
     },
     {
       "path": "src/components/inbox/FileUploader.tsx",
-      "sha256": "2c01ab3673cd3679512b6dfe2f5f26d8382b0030de995bc6d4d0df6afbbcd95f"
+      "sha256": "b3dee842e813c8c8b8c192f945dd096e6daba2de41163208fb26ff7a65acb0f9"
     },
     {
       "path": "src/components/inbox/LeadRiskScorePanel.tsx",
@@ -518,7 +518,7 @@
     },
     {
       "path": "src/components/inbox/LocationMessage.tsx",
-      "sha256": "9fff8e14b2a353a02d15250fdb6c0200ead0dfbd7ac1f7daa7fed81a2483eb22"
+      "sha256": "1d69220fffed301409626272a029b7b0eb3c5042318c7a91118307ba19b739ae"
     },
     {
       "path": "src/components/inbox/MessageContextActions.tsx",
@@ -530,11 +530,11 @@
     },
     {
       "path": "src/components/inbox/ObjectionDetector.tsx",
-      "sha256": "a282304b974e9c685a8c38cd578fb130c9a294d6a2b4cf3c1d866425e7c4a12a"
+      "sha256": "bbdf7b5234d2f7bb3832e8559f1146fadb500129c0cc39e64c114d2c65580166"
     },
     {
       "path": "src/components/inbox/QueuePositionNotifier.tsx",
-      "sha256": "6e44db86e058e9106f602dde82c253fbbaa7b118311b8db112914e135b086b8f"
+      "sha256": "17d7c0a1922090772b49bbd1503f4d13060ec08de43efc72b6dd6e175a5e9c0c"
     },
     {
       "path": "src/components/inbox/RealtimeCollaboration.tsx",
@@ -550,7 +550,7 @@
     },
     {
       "path": "src/components/inbox/RemindersPanel.tsx",
-      "sha256": "0419eb14075bb9050c87236e027653f5720dace25627c4ba17eb93c4c035a966"
+      "sha256": "4a83a56f6c0f4d49a1d220f442a0042040c18988c4f1ed5fe7bc35d12389406a"
     },
     {
       "path": "src/components/inbox/SentimentIndicator.tsx",
@@ -558,7 +558,7 @@
     },
     {
       "path": "src/components/inbox/SlashCommands.tsx",
-      "sha256": "6926f338ab6e4dc348bdd6171bf918dd9732d12add0f349e70ace7e09ad618f7"
+      "sha256": "5bbebb79a495d91240688dea653efa36ef73d8d1db7fc51f2251cfda45a3327c"
     },
     {
       "path": "src/components/inbox/stickers/StickerManager.tsx",
@@ -574,7 +574,7 @@
     },
     {
       "path": "src/components/inbox/TextToAudioButton.tsx",
-      "sha256": "a642980b079236286baaac75a830995b8736002b278fcbc81a69d9518669d8af"
+      "sha256": "7acad8c5e5a91b58eea62f6c6d59757cf47a2e9ae3ca13aadddd503d789ffc21"
     },
     {
       "path": "src/components/inbox/TransferDialog.tsx",
@@ -594,23 +594,23 @@
     },
     {
       "path": "src/components/inbox/VirtualizedConversationList.tsx",
-      "sha256": "c089155357d64868a80634753f0d05e428ad24121989204c9b78f11e40e32ee8"
+      "sha256": "9a019a9b37526a149fa583b1658c6bc73e42c274916c5fcff0463b879e43d5e2"
     },
     {
       "path": "src/components/inbox/VoiceChanger.tsx",
-      "sha256": "3302750c8b7ea6a9ba221438590f42844179e5c1c1f36a367c749c714ae6667b"
+      "sha256": "655c84153cce37a713cc48667e69d4b2ca9e236fb2b068ad3e3434f571274443"
     },
     {
       "path": "src/components/inbox/VoiceChangerPicker.tsx",
-      "sha256": "d63c9880258c96f03b4260a99677dd7675deefc430090ff9c7c51994528c07a8"
+      "sha256": "c2f6e07fb33d4b56beb59d7e78467776928d9816af897641bf1c1f26897ded68"
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
-      "sha256": "f928096df3ff393cd03ea82e6beb09b98a9a7f4c3eeff70cbee9b612a350d728"
+      "sha256": "920831cd8945868de75b660b501c3bfd524599843ee81a0ce15155c652d91f74"
     },
     {
       "path": "src/components/inbox/WhisperMode.tsx",
-      "sha256": "f0ebd505c925fd9df606993b3aa1113918864982769d54f6005c5dd27bd432c2"
+      "sha256": "921e5cf3776049fa0a6f3c354fb1643c5dba922b8e98520ce57c643424257150"
     },
     {
       "path": "src/components/integrations/BitrixIntegrationView.tsx",
@@ -622,11 +622,11 @@
     },
     {
       "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "63a072ba5656c15cfef0a13f5a0054ceb097178e96e2016ab022c49e0e9e7849"
+      "sha256": "5b25732fefc2c21c3002119ff7246492022ff87cb164231f133831b962d01fbc"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
-      "sha256": "9c94cab0cdcd40e801d552bca7c6c12fc77b76585bff7a81720ffb258fbf5349"
+      "sha256": "96ef27c5f66620d40fe44df9f376a19316cc01275814ff701fbb1d9874c31927"
     },
     {
       "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
@@ -658,7 +658,7 @@
     },
     {
       "path": "src/components/mobile/MobileNavigation.tsx",
-      "sha256": "ecf84f767903e3314cbeb756f709d9b707eba56e3d4a9f8d0eea6c460e67c31f"
+      "sha256": "3843616ff6e24f38759dcc46be7dae71c808e035af47fb9c85d4bf9c7f8b9011"
     },
     {
       "path": "src/components/mobile/SwipeGestures.tsx",
@@ -682,11 +682,11 @@
     },
     {
       "path": "src/components/monitoring/MonitoringConnectionsList.tsx",
-      "sha256": "790a66eb41644155840af0d852b0f00c28d3a8c0a44cf93d77414e21ead32f5b"
+      "sha256": "294bd92a90f02d3ad15f0777dd4c2b1187f33a2327c0d4fb47ae954e998f2cc8"
     },
     {
       "path": "src/components/monitoring/MonitoringEventTimeline.tsx",
-      "sha256": "66bb12757a4faf40413f5b0259f02df44480b033452aa5d7980007b86b48ab47"
+      "sha256": "2b6938ce243ee39281f90923418c4b06436c62fa6087a6b7d9f56ebe6aed839a"
     },
     {
       "path": "src/components/monitoring/MonitoringSkeletons.tsx",
@@ -698,11 +698,11 @@
     },
     {
       "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
-      "sha256": "8f80014bb06c0ed8428f1033cc0c57347ee0c3f7a71a77b59939cadb89140310"
+      "sha256": "5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd"
     },
     {
       "path": "src/components/omnichannel/OmnichannelInbox.tsx",
-      "sha256": "23d172471c17f8f5110988cdbeddfa70e73b5cec79853efb1993514cb8887b95"
+      "sha256": "e33d0e77a7b412ca95557563bc915c36a51e7e550bc8789f30e6df5b1ca48499"
     },
     {
       "path": "src/components/omnichannel/OmnichannelManager.tsx",
@@ -734,7 +734,7 @@
     },
     {
       "path": "src/components/performance/PerformanceMonitor.tsx",
-      "sha256": "4c450ef1f2a01114a4497e8a336629570453b5f0ab306ec33eb2fbba946ed8db"
+      "sha256": "85723121b9a58e1eed0e383bfc09c660476c5bcd2912fd97d5a3116fe3f077cb"
     },
     {
       "path": "src/components/performance/Prefetcher.tsx",
@@ -770,19 +770,19 @@
     },
     {
       "path": "src/components/reports/ConversationHeatmap.tsx",
-      "sha256": "55bacdf60eb709c64a2ee08d173ca8d2e1c572ccbfcc76ae0333e1b835c9ad66"
+      "sha256": "6235f82fbba9ce12314cfe48bfc4662c724fa502ea4ee84a658cec1a2e18f3fb"
     },
     {
       "path": "src/components/reports/DemandForecast.tsx",
-      "sha256": "0c4791ece098eacc389f721dd09497ee5e2f59eba20ca72ef7e52e87291a74f4"
+      "sha256": "d616c97c54d859101517e21cc266c6f2ff9ab82c0535f9fa1fbdf2e8ed6fd2cf"
     },
     {
       "path": "src/components/reports/PeriodComparison.tsx",
-      "sha256": "15e5865648fc0f3e25327a91b19e0576dd1ce78c85b002fdf34a56723c653e07"
+      "sha256": "f82d970b8a845241e088d3ccd4549e64112fe7fce142a2c9c939dd80ceafa6a7"
     },
     {
       "path": "src/components/reports/ScheduledReportConfigs.tsx",
-      "sha256": "398a9981230fc7d92f8ffb60938b0f46ad0548d8d82fb30fb7ba694677126036"
+      "sha256": "e646e02afb35b3107f3507038a000302823bed4d7f49fee9e865040313345d3e"
     },
     {
       "path": "src/components/reports/useReportsData.ts",
@@ -846,7 +846,7 @@
     },
     {
       "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
-      "sha256": "b0fa3027c4d404b79cc0696b0f6b407b0c2cef42db49a51aa8bd4d6e440af958"
+      "sha256": "8bee18a4ed5b1f934b7eabad59e722a2f431f0713ef8491fa47b8fe12a650176"
     },
     {
       "path": "src/components/settings/ai-providers/useAIProviders.ts",
@@ -874,7 +874,7 @@
     },
     {
       "path": "src/components/settings/FollowUpExecutionsHistory.tsx",
-      "sha256": "ecb15459268e9f0c5aab99a937e95ac7cd529243c909195696b809aa7bc2c0c6"
+      "sha256": "01a293c6b518a4616c8183e092bd64d553c768fb873921e48aad3f8f2c460649"
     },
     {
       "path": "src/components/settings/FollowUpSequences.tsx",
@@ -882,7 +882,7 @@
     },
     {
       "path": "src/components/settings/media-library/AIGenerateDialog.tsx",
-      "sha256": "b44e26cfb0139e514912fc1ef00f5e6708d87d19f8b1ff778954ee5c13e44577"
+      "sha256": "7b84fbf24d4cbd7939129d602251be63facf86a48f0b4d9f3378d5bdb4b53f3c"
     },
     {
       "path": "src/components/settings/media-library/useMediaLibrary.ts",
@@ -894,7 +894,7 @@
     },
     {
       "path": "src/components/settings/MediaLibraryAdmin.tsx",
-      "sha256": "7d04b2d22e488297e0f8a3c933d7615c1390c110a32ecf6467f5289d42c25f3e"
+      "sha256": "61f5d7f07c9ab390d714cc28f294837e3af39dedaaca87c3afd7a724f7192f95"
     },
     {
       "path": "src/components/settings/SkillBasedRoutingSettings.tsx",
@@ -906,7 +906,7 @@
     },
     {
       "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
-      "sha256": "05f9042828534a401077bbfd585725f7b03a770a9705185b972d0b76c6716d12"
+      "sha256": "6dbe35931d6aa86ff0fc80df926dd36772566f390e9d4839cbb61942cff948b0"
     },
     {
       "path": "src/components/settings/SLARulesManager.tsx",
@@ -934,11 +934,11 @@
     },
     {
       "path": "src/components/team-chat/TeamChatInputArea.tsx",
-      "sha256": "0b184764ea97fbdea1e8b4e6379bbe3a16b68a4b49a26ab1437a41e0b072f885"
+      "sha256": "4f6ad4f1ed547bc1eb66777d93d0f0497a9706534916f9e990df472027cdef21"
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "abd023a53fc0fafdd8943af815267f5c1139152dbbb5ee6cdbf2293debb8057f"
+      "sha256": "20830ab8644162bfd9f82e2d09f636b26061fe9a37c1b6f7f1e75355b51ad294"
     },
     {
       "path": "src/components/team-chat/TeamFileUploader.tsx",
@@ -946,11 +946,11 @@
     },
     {
       "path": "src/components/team-chat/TeamMemberDetails.tsx",
-      "sha256": "d8dd02d537b890004890605f781760bfb87d299bd97b5d690e89f8f6df98c65a"
+      "sha256": "e0fe00bdf6747a52a936531e46ca3cca0e81c674a07ef6872e64b3c34461c8ee"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
-      "sha256": "f46b1c9bee41014dfe4fee5e27c1ffe44b1f22d06a20fb0d603eb35bd1d086bb"
+      "sha256": "b49faa97a5c84a99d44f3034e229b1494c3a580ae50f41ff8629e1e4927761ec"
     },
     {
       "path": "src/components/team-chat/useTeamChatPanel.ts",
@@ -970,7 +970,7 @@
     },
     {
       "path": "src/components/ui/avatar.tsx",
-      "sha256": "d0730fdc2285519a38865f3cca924e7a57c8f3b124ab888308e9b4060695695a"
+      "sha256": "b4c71ba3498ebcb42ce4145e079d9fd7f2272943da1888e5d76dd2e14bbb3ecb"
     },
     {
       "path": "src/components/ui/badge.tsx",
@@ -990,7 +990,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "ebd5d84869f8feaf9f05d207e3744698fc31bb0d2858ad34861e21e5757afeef"
+      "sha256": "b9bd0d62d708a42b3285f6ce1aa5b17d5d9272210f66525f4aff74344d53c7eb"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1054,7 +1054,7 @@
     },
     {
       "path": "src/components/ui/tooltip.tsx",
-      "sha256": "1415d1a76404c29d8f08bd4fbbbaf3ba0cd53b521b5ae5721b6a863c27594f22"
+      "sha256": "830c7cf87d80fb3967195e446bc4c27d2d0abaf51d6b4e99929e9ce780f80e57"
     },
     {
       "path": "src/components/ui/visually-hidden.tsx",
@@ -1074,11 +1074,11 @@
     },
     {
       "path": "src/components/voice/VoiceSearchOverlay.tsx",
-      "sha256": "18bc9a6241180f669a0c133ff58984fc86acfffc75702528c848fcdb5aec4023"
+      "sha256": "585456e80fa67ce7182d0641b47d61b42a44bb29d39d89fd98d7acb6176a4105"
     },
     {
       "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
-      "sha256": "9f525d1dccc635e8595fdae3823b8f959b146be8272049f0385c8fda6cd4b0d5"
+      "sha256": "30fb5a81eab1d5c4752fff1168857d30dd2753f17292e44a69cb0437a30741df"
     },
     {
       "path": "src/contexts/LayoutContext.tsx",
@@ -1594,7 +1594,7 @@
     },
     {
       "path": "src/pages/Auth.tsx",
-      "sha256": "f2c31936e703b339af11525bd41536a8bb2ba30fc26477ad1076c6661101edb4"
+      "sha256": "2d0fdf8b43dbbe26b5b9af769470b336fb3fef5dadfca3c1618261e12aafb40b"
     },
     {
       "path": "src/pages/ChatPopup.tsx",
@@ -1610,7 +1610,7 @@
     },
     {
       "path": "src/pages/Install.tsx",
-      "sha256": "991e8c56b7a8d7c594bcdca9dfeb748c7dcadacf0d0941105700f178763d3aa2"
+      "sha256": "70ee6a3e062d73a752a43960e709c054c35bd208ba5fc7084331986ff87e4ef6"
     },
     {
       "path": "src/pages/QueueDetails.tsx",
@@ -1750,7 +1750,7 @@
     },
     {
       "path": "tailwind.config.ts",
-      "sha256": "fa79f9daec08618c63d342a04affa4a21fb6cc99fb1c8870734dc101b137c393"
+      "sha256": "1e6d40b7cd0b974f4fca33547d17e6a80066a05a0a12ba9533cb3aed44655bab"
     }
   ],
   "issues": [
@@ -1917,7 +1917,7 @@
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/GmailWebhookMonitor.tsx:58:21 56 | }, []); 57 | > 58 | useEffect(() => { loadData(); }, [loadData]); | ^^^^^^^^ Avoid calling setState() directly within an effect 59 | 60 | const getStatusBadge = (status: string, isActive: boolean) => { 61 | if (!isActive) return <Badge variant=\"outline\" className=\"text-[10px]\">Inativo</Badge>;",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/admin/GmailWebhookMonitor.tsx:58:21 56 | }, []); 57 | > 58 | useEffect(() => { loadData(); }, [loadData]); | ^^^^^^^^ Avoid calling setState() directly within an effect 59 | 60 | const getStatusBadge = (status: string, isActive: boolean) => { 61 | if (!isActive) return <Badge variant=\"outline\" className=\"text-3xs\">Inativo</Badge>;",
       "spanHash": "0f9867f25b6eb9800a1e9fa44347c5921b8debc8eba6aef41c9e0268f6ddb5e0",
       "lineHash": "b7f7599b9c4562eddca4509c8b6e8ede1bde599d70ccde9a4f4f4e02dbc85f54",
       "contextHash": "ede8a849f8cf56f2b8a7789cd95d3cc5eb84d69c6d4023b3c150a47f740a7f9c"
@@ -6614,9 +6614,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 124,
+      "line": 162,
       "column": 38,
-      "endLine": 124,
+      "endLine": 162,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -6628,9 +6628,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 35,
+      "line": 42,
       "column": 53,
-      "endLine": 35,
+      "endLine": 42,
       "endColumn": 56,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -6642,9 +6642,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 42,
+      "line": 49,
       "column": 63,
-      "endLine": 42,
+      "endLine": 49,
       "endColumn": 66,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -6656,9 +6656,9 @@
     },
     {
       "file": "src/components/layout/Sidebar.tsx",
-      "line": 91,
+      "line": 98,
       "column": 32,
-      "endLine": 91,
+      "endLine": 98,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -17086,9 +17086,9 @@
     },
     {
       "file": "tailwind.config.ts",
-      "line": 420,
+      "line": 426,
       "column": 13,
-      "endLine": 420,
+      "endLine": 426,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-require-imports",

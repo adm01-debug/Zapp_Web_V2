@@ -39,12 +39,12 @@ export function QueuePositionNotifier({ contactId, className }: QueuePositionNot
 
   return (
     <div className={cn("flex items-center gap-2 text-xs", className)}>
-      <Badge variant="outline" className="gap-1 text-[11px]" style={{ borderColor: position.queueColor }}>
+      <Badge variant="outline" className="gap-1 text-2xs" style={{ borderColor: position.queueColor }}>
         <Users className="w-3 h-3" />
         #{position.position} na fila
       </Badge>
       {position.estimated_wait_minutes && (
-        <Badge variant="outline" className="gap-1 text-[11px] text-muted-foreground">
+        <Badge variant="outline" className="gap-1 text-2xs text-muted-foreground">
           <Clock className="w-3 h-3" />
           ~{position.estimated_wait_minutes}min
         </Badge>

@@ -98,7 +98,7 @@ export function ContactListItem({
             href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[11px] hover:text-primary transition-colors truncate"
+            className="font-mono text-2xs hover:text-primary transition-colors truncate"
           >
             {contact.phone}
           </a>
@@ -111,7 +111,7 @@ export function ContactListItem({
           <Mail className="w-3 h-3 shrink-0" />
           <a
             href={`mailto:${contact.email}`}
-            className="truncate text-[11px] hover:text-primary transition-colors"
+            className="truncate text-2xs hover:text-primary transition-colors"
           >
             {contact.email}
           </a>
@@ -122,12 +122,12 @@ export function ContactListItem({
       {contact.tags && contact.tags.length > 0 && (
         <div className="hidden lg:flex items-center gap-1 min-w-[100px]">
           {contact.tags.slice(0, 2).map(tag => (
-            <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5">
+            <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5">
               {tag}
             </Badge>
           ))}
           {contact.tags.length > 2 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+            <Badge variant="secondary" className="text-3xs h-4 px-1.5">
               +{contact.tags.length - 2}
             </Badge>
           )}
@@ -135,7 +135,7 @@ export function ContactListItem({
       )}
 
       {/* Date */}
-      <span className="hidden md:block text-[11px] text-muted-foreground shrink-0">
+      <span className="hidden md:block text-2xs text-muted-foreground shrink-0">
         {format(new Date(contact.created_at), "dd/MM/yy", { locale: ptBR })}
       </span>
 

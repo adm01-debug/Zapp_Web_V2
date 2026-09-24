@@ -130,7 +130,7 @@ export function QuotedMessage({ replyTo, isSent, onClick }: QuotedMessageProps) 
         )} />
         <div className="flex-1 min-w-0">
           <p className={cn(
-            "text-[10px] font-medium mb-0.5",
+            "text-3xs font-medium mb-0.5",
             isSent 
               ? "text-primary-foreground/80" 
               : isQuoteFromAgent 

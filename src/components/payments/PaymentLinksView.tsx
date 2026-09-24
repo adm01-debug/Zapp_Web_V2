@@ -173,7 +173,7 @@ export function PaymentLinksView() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h3 className="font-semibold text-sm">{link.title}</h3>
-                        <Badge variant="outline" className={cn("text-[10px] h-4", config.className)}>
+                        <Badge variant="outline" className={cn("text-3xs h-4", config.className)}>
                           {config.label}
                         </Badge>
                       </div>

@@ -49,7 +49,7 @@ export function TelemetryTable({ rows, isLoading }: TelemetryTableProps) {
                       {formatTime(row.created_at)}
                     </td>
                     <td className="p-3">
-                      <Badge variant="outline" className="text-[10px] font-mono">
+                      <Badge variant="outline" className="text-3xs font-mono">
                         {row.operation}
                       </Badge>
                     </td>

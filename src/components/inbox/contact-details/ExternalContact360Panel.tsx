@@ -53,7 +53,7 @@ function ExternalContact360PanelInner({ contactId }: ExternalContact360PanelProp
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium">Visão 360° CRM</span>
         {data.contact?.relationship_score != null && data.contact.relationship_score > 0 && (
-          <Badge variant="outline" className="ml-auto text-[10px] bg-primary/10 text-primary border-primary/30">
+          <Badge variant="outline" className="ml-auto text-3xs bg-primary/10 text-primary border-primary/30">
             Score: {data.contact.relationship_score}
           </Badge>
         )}
@@ -81,8 +81,8 @@ function ExternalContact360PanelInner({ contactId }: ExternalContact360PanelProp
               <InfoRow label="Suporte" value={`${data.contact.behavior.supportLevel}/5`} />
             </div>
           </div>
-          {data.contact.behavior.currentChallenges?.length > 0 && <div className="text-[10px] text-muted-foreground">Desafios: {data.contact.behavior.currentChallenges.join(', ')}</div>}
-          {data.contact.behavior.competitorsUsed?.length > 0 && <div className="text-[10px] text-muted-foreground">Concorrentes: {data.contact.behavior.competitorsUsed.join(', ')}</div>}
+          {data.contact.behavior.currentChallenges?.length > 0 && <div className="text-3xs text-muted-foreground">Desafios: {data.contact.behavior.currentChallenges.join(', ')}</div>}
+          {data.contact.behavior.competitorsUsed?.length > 0 && <div className="text-3xs text-muted-foreground">Concorrentes: {data.contact.behavior.competitorsUsed.join(', ')}</div>}
         </div>
       )}
 

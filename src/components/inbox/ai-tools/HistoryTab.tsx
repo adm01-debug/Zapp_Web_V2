@@ -73,7 +73,7 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
         >
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-3xs text-muted-foreground">
                 {format(new Date(item.created_at), "dd 'de' MMM, HH:mm", { locale: ptBR })}
               </span>
               {item.department && departmentConfig[item.department] && (
@@ -83,15 +83,15 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
                 </Badge>
               )}
             </div>
-            <Badge variant="outline" className={`text-[10px] ${sentimentConfig[item.sentiment]?.color || ''}`}>
+            <Badge variant="outline" className={`text-3xs ${sentimentConfig[item.sentiment]?.color || ''}`}>
               {item.sentiment_score}%
             </Badge>
           </div>
           <p className="line-clamp-2 text-xs leading-relaxed">{item.summary}</p>
           <div className="mt-2 flex items-center gap-1.5">
-            <Badge variant="secondary" className="text-[10px]">{item.message_count} msgs</Badge>
+            <Badge variant="secondary" className="text-3xs">{item.message_count} msgs</Badge>
             {statusConfig[item.status] && (
-              <Badge variant="outline" className={`text-[10px] ${statusConfig[item.status].className}`}>
+              <Badge variant="outline" className={`text-3xs ${statusConfig[item.status].className}`}>
                 {statusConfig[item.status].label}
               </Badge>
             )}

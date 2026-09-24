@@ -34,7 +34,7 @@ function ScoreGauge({ score }: { score: number }) {
       <div className="flex-1 space-y-1.5">
         <div className="flex justify-between text-xs text-muted-foreground"><span>Saúde</span><span>{score}/100</span></div>
         <Progress value={score} className={cn('h-2.5 rounded-full', pc)} />
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1 text-2xs text-muted-foreground">
           <TrendingUp className="w-3 h-3" />
           <span>{score >= 80 ? 'Sistema saudável' : score >= 50 ? 'Necessita atenção' : 'Ação imediata'}</span>
         </div>
@@ -175,7 +175,7 @@ export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnos
             })}
           </div>
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="h-fit"><CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2">Checklist<Badge variant="outline" className="text-[10px] ml-auto">{okCount}/{checklist.length} OK</Badge></CardTitle><CardDescription>Verificações com ações diretas</CardDescription></CardHeader>
+            <Card className="h-fit"><CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2">Checklist<Badge variant="outline" className="text-3xs ml-auto">{okCount}/{checklist.length} OK</Badge></CardTitle><CardDescription>Verificações com ações diretas</CardDescription></CardHeader>
               <CardContent><div className="space-y-2">
                 {checklist.map((item, i) => {
                   const icons = { ok: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />, warning: <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />, error: <XCircle className="w-4 h-4 text-destructive shrink-0" /> };
@@ -183,8 +183,8 @@ export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnos
                     <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                       className={cn('flex items-center gap-3 p-2.5 rounded-lg', item.status === 'ok' ? 'bg-emerald-500/5' : item.status === 'warning' ? 'bg-amber-500/5' : 'bg-destructive/5')}>
                       {icons[item.status]}
-                      <div className="flex-1 min-w-0"><p className="text-xs font-medium">{item.label}</p><p className="text-[11px] text-muted-foreground">{item.detail}</p></div>
-                      {item.action && <Button size="sm" variant="outline" className="text-[10px] h-7 shrink-0" onClick={item.action.onClick} disabled={reconfiguring}>
+                      <div className="flex-1 min-w-0"><p className="text-xs font-medium">{item.label}</p><p className="text-2xs text-muted-foreground">{item.detail}</p></div>
+                      {item.action && <Button size="sm" variant="outline" className="text-3xs h-7 shrink-0" onClick={item.action.onClick} disabled={reconfiguring}>
                         {reconfiguring ? <Loader2 className="w-3 h-3 animate-spin" /> : <Radio className="w-3 h-3 mr-1" />}{item.action.label}
                       </Button>}
                     </motion.div>);

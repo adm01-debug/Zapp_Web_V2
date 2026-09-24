@@ -124,7 +124,7 @@ export function VoIPPanel() {
       ongoing: { variant: 'default', label: 'Em andamento' },
     };
     const s = map[status] || { variant: 'secondary' as const, label: status };
-    return <Badge variant={s.variant} className="text-[10px]">{s.label}</Badge>;
+    return <Badge variant={s.variant} className="text-3xs">{s.label}</Badge>;
   };
 
   const callStats = {
@@ -161,7 +161,7 @@ export function VoIPPanel() {
               <CardContent className="p-3 text-center">
                 <stat.icon className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
                 <p className="text-xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                <p className="text-3xs text-muted-foreground">{stat.label}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -222,11 +222,11 @@ export function VoIPPanel() {
                             {call.direction === 'inbound' ? 'Chamada recebida' : 'Chamada realizada'}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-3xs text-muted-foreground">
                               {format(new Date(call.started_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                             </span>
                             {call.duration_seconds && (
-                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              <span className="text-3xs text-muted-foreground flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {formatCallDuration(call.duration_seconds)}
                               </span>
@@ -299,7 +299,7 @@ export function VoIPPanel() {
                       placeholder="8089"
                       className="bg-muted border-border"
                     />
-                    <p className="text-[10px] text-muted-foreground">Porta WSS do servidor SIP (padrão: 8089)</p>
+                    <p className="text-3xs text-muted-foreground">Porta WSS do servidor SIP (padrão: 8089)</p>
                   </div>
                   <Button
                     size="sm"

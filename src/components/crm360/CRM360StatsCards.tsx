@@ -52,7 +52,7 @@ function StatCardItem({ stat }: { stat: StatCard }) {
               {count > 1000 ? `${(count / 1000).toFixed(1)}k` : count.toLocaleString('pt-BR')}
             </p>
           )}
-          <p className="text-[10px] text-muted-foreground mt-0.5">{stat.label}</p>
+          <p className="text-3xs text-muted-foreground mt-0.5">{stat.label}</p>
         </div>
       </CardContent>
     </Card>

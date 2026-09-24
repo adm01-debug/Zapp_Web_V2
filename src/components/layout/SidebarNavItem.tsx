@@ -121,7 +121,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
           <span>{item.label}</span>
           {shortcut && (
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">
+            <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">
               {shortcut}
             </kbd>
           )}

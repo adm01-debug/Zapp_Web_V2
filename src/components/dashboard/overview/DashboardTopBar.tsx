@@ -40,7 +40,7 @@ export function DashboardTopBar({ unreadMessages }: DashboardTopBarProps) {
         className="h-6 flex items-center gap-2 rounded-md px-1 hover:bg-muted/60 transition-colors"
         aria-label="Perfil"
       >
-        <span className={cn('relative w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0', bg, text)}>
+        <span className={cn('relative w-6 h-6 rounded-full flex items-center justify-center text-2xs font-semibold shrink-0', bg, text)}>
           {getInitials(name)}
           {profile?.is_active && (
             <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-success border border-background" />

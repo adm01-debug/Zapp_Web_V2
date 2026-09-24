@@ -87,7 +87,7 @@ const Install = () => {
                   <CardContent className="pt-4 pb-3 px-3 text-center space-y-1">
                     <f.icon className="w-6 h-6 text-primary mx-auto" />
                     <p className="text-xs font-medium text-foreground">{f.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.desc}</p>
+                    <p className="text-3xs text-muted-foreground">{f.desc}</p>
                   </CardContent>
                 </Card>
               ))}
