@@ -97,15 +97,21 @@ jobs:
           skip_list=scripts/db-audit/local-replay-skip.txt
           skip_dir=$(mktemp -d)
           if [ -f "$skip_list" ]; then
-            while IFS= read -r entry; do
+            # `|| [ -n "$entry" ]` e obrigatorio: sem ele, uma ultima linha sem
+            # newline final e lida e descartada, e a lista inteira vira no-op
+            # silencioso (foi o que aconteceu no run 36017259921).
+            skipped=0
+            while IFS= read -r entry || [ -n "$entry" ]; do
               case "$entry" in ''|'#'*) continue ;; esac
               if [ ! -f "supabase/migrations/$entry" ]; then
                 echo "::error::$skip_list lista '$entry', ausente em supabase/migrations"
                 exit 1
               fi
               mv "supabase/migrations/$entry" "$skip_dir/"
+              skipped=$((skipped + 1))
               echo "replay local: pulando $entry"
             done < "$skip_list"
+            echo "replay local: $skipped migration(s) fora do replay"
           fi
 
           set +e
