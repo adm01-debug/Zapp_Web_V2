@@ -104,6 +104,22 @@ export interface ThemeModeColors {
  * dash-*, neutral-50…950, elev-*, glow-*, gradient-success,
  * shadow-glow-success. Exceção: a skin `diversity` sobrescreve
  * `gradient-success` (verde→azul pride), como no Promo Gifts.
+ *
+ * Cobertura profunda (etapas 59-60): inventário de `var(--x)` e classes
+ * Tailwind em todo `src/` confirma que os únicos tokens de COR fora de
+ * `CSS_VARS_TO_APPLY` e ausentes desta lista são: `shadow-xs/sm/md`
+ * (dark é preto puro sem hue; o leve tingimento por hue no light — mesma
+ * fórmula do foreground — é imperceptível a 4-7% de opacidade e não
+ * compensa a manutenção extra), `foreground-secondary` e `gradient-gold`
+ * (constantes independentes do hue, nunca usaram a primária). `glow-*`
+ * (glow-primary-sm/md/lg, glow-secondary-*, glow-aura-*, etc.) já mudam
+ * sozinhos porque são declarados como `hsl(var(--primary) / X)` em
+ * `tokens.css` — não precisam entrar na lista. `neutral-50…950` só tem 1
+ * uso no código (`EmailFullViewDialog`, preview de e-mail de terceiros —
+ * precisa ficar neutro mesmo, de propósito). Tokens de raio/layout/
+ * densidade/tipografia (`--radius-*`, `--sidebar-w*`, `--text-*`,
+ * `--density-*`, `--contrast-multiplier`, `--layout-*`) não são cor e
+ * nunca fizeram parte deste sistema.
  */
 export const FIXED_TOKENS = [
   'destructive', 'destructive-foreground',
@@ -118,6 +134,7 @@ export const FIXED_TOKENS = [
   'chart-status-pending', 'chart-status-resolved', 'chart-status-waiting',
   'chart-sentiment-positive', 'chart-sentiment-neutral', 'chart-sentiment-negative',
   'gradient-success', 'shadow-glow-success',
+  'shadow-xs', 'shadow-sm', 'shadow-md', 'foreground-secondary', 'gradient-gold',
 ] as const;
 
 export interface ThemePreset {
