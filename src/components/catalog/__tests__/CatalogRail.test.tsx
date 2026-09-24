@@ -147,7 +147,9 @@ describe('CatalogRail — E56 enviados recentemente / mais enviados', () => {
 
   it('sem nome de contato a legenda nao quebra nem mostra separador solto', () => {
     render(<CatalogRail stats={mockStats()} recentSends={[ev({ contact_name: null })]} />);
-    const legenda = screen.getByText(/Enviado/);
+    // Ancorado: /Enviado/ solto casaria tambem com o titulo do card
+    // ("Enviados recentemente") e daria multiplos elementos.
+    const legenda = screen.getByText(/^Enviado ·/);
     expect(legenda).toBeInTheDocument();
     expect(legenda.textContent?.trim().endsWith('·')).toBe(false);
   });
