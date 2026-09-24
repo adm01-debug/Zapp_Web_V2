@@ -78,7 +78,12 @@ else
 
     i=0
     while [ "$i" -lt 50 ]; do
-      if pg_isready -h 127.0.0.1 -p "$PROXY_PORT" >/dev/null 2>&1; then
+      # -d/-U tem que bater com o unico banco/usuario que o pgbouncer.ini
+      # (local-pg-proxy.mjs) conhece: sem isso, pg_isready usa o dbname
+      # padrao do libpq (usuario do SO no runner), pgbouncer rejeita com
+      # "no such database" antes do handshake, e libpq classifica isso
+      # como PQPING_NO_RESPONSE — falso negativo constante, nunca timing.
+      if pg_isready -h 127.0.0.1 -p "$PROXY_PORT" -d proxydb -U proxy >/dev/null 2>&1; then
         break
       fi
       i=$((i + 1))
