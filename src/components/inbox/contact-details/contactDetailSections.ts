@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, ListTodo, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -19,7 +19,6 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'tags', label: 'Tags', icon: Tag, customIndex: 3 },
   { value: 'commercial-summary', label: 'Resumo Comercial', icon: CircleDollarSign, customIndex: 3.5 },
   { value: 'assignment', label: 'Atribuição', icon: User, customIndex: 4 },
-  { value: 'tasks', label: 'Tarefas da Conversa', icon: ListTodo, customIndex: 5.5 },
   { value: 'reminders', label: 'Lembretes', icon: Bell, customIndex: 5.7 },
   { value: 'memory', label: 'Memória Viva', icon: Brain, customIndex: 5.9 },
   { value: 'scoring', label: 'Scoring & LGPD', icon: TrendingUp, customIndex: 6 },
@@ -33,7 +32,7 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'more-details', label: 'Mais detalhes', icon: Layers, customIndex: 9 },
 ];
 
-export const DEFAULT_OPEN_SECTIONS = ['info', 'whatsapp-status', 'tags', 'commercial-summary', 'tasks'];
+export const DEFAULT_OPEN_SECTIONS = ['info', 'whatsapp-status', 'tags', 'commercial-summary'];
 
 const ACCORDION_STORAGE_KEY = 'contact-details-accordion-state';
 
