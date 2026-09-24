@@ -9,7 +9,21 @@ Deno.serve(async (req) => {
   const log = new Logger("sicoob-bridge-reply");
 
   try {
-    const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
+    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Esta function só deve ser chamada pelo trigger interno
+    // notify_sicoob_on_reply (SECURITY DEFINER), que lê o mesmo valor de
+    // vault.decrypted_secrets ('sicoob_service_role_key') e manda como
+    // Bearer no Authorization. Sem esta checagem, qualquer client com a
+    // anon key pública conseguia forjar contact_id/agent_id/content e
+    // fazer esta function repassar PII (nome do contato, nome do agente,
+    // IDs de mapeamento Sicoob) pro sistema externo Sicoob Gifts.
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader !== `Bearer ${serviceRoleKey}`) {
+      return errorResponse('Unauthorized', 401, req);
+    }
+
+    const supabase = createClient(requireEnv("SUPABASE_URL"), serviceRoleKey);
     const sicoobGiftsUrl = Deno.env.get('SICOOB_GIFTS_URL');
     const sicoobGiftsBridgeSecret = Deno.env.get('SICOOB_GIFTS_BRIDGE_SECRET');
 
