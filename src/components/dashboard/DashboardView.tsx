@@ -138,7 +138,7 @@ export function DashboardView() {
         <TabsContent value="overview" className="space-y-2.5 mt-2.5">
           {/* Shell da Visão Geral — placeholders com altura-alvo para o CP1 medir o ritmo vertical.
               Conteúdo real chega nas Fases 5-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
-              deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). *}
+              deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). */}
           <div data-testid="dash-banner">
             <GreetingBanner personal={!isStaff} />
           </div>
