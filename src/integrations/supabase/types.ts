@@ -8596,6 +8596,17 @@ export type Database = {
       }
     }
     Functions: {
+      admin_set_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: {
+          out_new_role: Database["public"]["Enums"]["app_role"]
+          out_old_role: Database["public"]["Enums"]["app_role"]
+          out_user_id: string
+        }[]
+      }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       claim_crm_sync_outbox: {
         Args: { p_limit?: number; p_worker: string }
