@@ -3442,6 +3442,7 @@
         "password_reset_requests.\"Admins can update reset requests without token access\"": "6bb769b20bce4c722cd1631653c7c25e"
     },
     "triggers": {
+        "contacts.trg_prevent_contact_assignee_hijack": "22bd05e3ff4f398d4a946160ce98ae2f",
         "messages.trg_sicoob_reply": "0f92a9e5a9d45cb3028264b322e2e754",
         "tags.update_tags_updated_at": "53abf04e30f46af3bd742d256e61d9c3",
         "user_roles.sync_profile_role": "0d5bab3bf9da9bb29ac29b54b7e73d12",
@@ -3535,6 +3536,7 @@
         "scheduled_report_configs.update_scheduled_report_configs_updated_at": "a63286685d9d8f1091201a5af5b4533f"
     },
     "functions": {
+        "f:prevent_contact_assignee_hijack()": "cfa4f7fe5ea6fa6d3db2a7698fc3b074",
         "f:handle_new_user()": "0cc13112844cee8252b4a808014a39a3",
         "f:init_agent_stats()": "23000426dbd4bed9f1037a4a2a26661d",
         "f:talkx_benchmarks()": "ff6c4dfef0fb8eb49da8e83430feb616",
@@ -4297,6 +4299,11 @@
     },
     "format_version": 2,
     "routine_grants": {
+        "f:prevent_contact_assignee_hijack()|anon|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:prevent_contact_assignee_hijack()|PUBLIC|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:prevent_contact_assignee_hijack()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:prevent_contact_assignee_hijack()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:prevent_contact_assignee_hijack()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:handle_new_user()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:init_agent_stats()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:talkx_benchmarks()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
