@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
+import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/ui/useTheme';
 import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
@@ -98,6 +98,37 @@ export const Sidebar = React.memo(function Sidebar({
            ))}
          </ul>
        </nav>
+
+      {/* Busca global */}
+      <div className={cn('px-2', collapsed && 'flex justify-center px-[11px]')}>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+                className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] transition-all duration-200"
+                aria-label="Busca global (⌘K)"
+              >
+                <Search className="w-[18px] h-[18px] text-primary" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
+              <span>Buscar</span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+            className="w-full flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-medium min-h-[44px] text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] hover:translate-x-1 transition-all duration-200"
+            aria-label="Busca global (⌘K)"
+          >
+            <Search className="w-[18px] h-[18px] shrink-0 text-primary" />
+            <span className="truncate">Buscar...</span>
+            <kbd className="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
+          </button>
+        )}
+      </div>
 
       {/* Favorites */}
       {favoriteItems.length > 0 && (
