@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { motion } from 'framer-motion';
 import {
   Dialog,
@@ -28,33 +30,39 @@ interface TransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTransfer: (type: 'agent' | 'queue' | 'connection', targetId: string, message?: string) => void | Promise<void>;
+  /** contacts.queue_id do contato sendo transferido. null/undefined = sem fila. */
+  queueId?: string | null;
 }
 
-export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialogProps) {
+export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: TransferDialogProps) {
   const [transferType, setTransferType] = useState<'agent' | 'queue' | 'connection'>('agent');
   const [selectedTarget, setSelectedTarget] = useState<string>('');
   const [message, setMessage] = useState('');
-  const [connections, setConnections] = useState<{ id: string; name: string; phone_number: string; status: string }[]>([]);
-  const [loadingConnections, setLoadingConnections] = useState(false);
 
   const { agents, isLoading: loadingAgents } = useAgents();
   const { queues, loading: loadingQueues } = useQueues();
 
-  // Fetch WhatsApp connections
-  useEffect(() => {
-    if (transferType !== 'connection' || !open) return;
-    setLoadingConnections(true);
-    supabase
-      .from('whatsapp_connections')
-      .select('id, name, phone_number, status')
-      .eq('status', 'connected')
-      .then(({ data }) => {
-        setConnections((data || []) as { id: string; name: string; phone_number: string; status: string; }[]);
-        setLoadingConnections(false);
-      });
-  }, [transferType, open]);
+  const { data: connections = [], isLoading: loadingConnections } = useQuery({
+    queryKey: ['whatsapp-connections'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_connections')
+        .select('id, name, phone_number, status')
+        .eq('status', 'connected');
+      if (error) throw error;
+      return (data || []) as { id: string; name: string; phone_number: string; status: string }[];
+    },
+    enabled: transferType === 'connection' && open,
+  });
 
   const [isTransferring, setIsTransferring] = useState(false);
+  const { user } = useAuth();
+
+  // trg_prevent_contact_assignee_hijack (20260924203300) só permite transferir
+  // um contato SEM fila para você mesmo — decisão de produto de 2026-09-24
+  // (self-claim only). Sem filtrar aqui, o picker mostrava todo mundo e a
+  // transferência para um colega falhava silenciosamente no banco.
+  const isQueueless = !queueId;
 
   const handleTransfer = async () => {
     if (!selectedTarget || isTransferring) return;
@@ -81,8 +89,10 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
     onOpenChange(nextOpen);
   };
 
-  // Filter online/away agents (active ones)
-  const availableAgents = agents.filter((a) => a.status === 'online' || a.status === 'away');
+  // Filter online/away agents (active ones); sem fila, só você mesmo (ver isQueueless acima)
+  const availableAgents = agents.filter((a) =>
+    (a.status === 'online' || a.status === 'away') && (!isQueueless || a.user_id === user?.id)
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
@@ -169,6 +179,11 @@ export function TransferDialog({ open, onOpenChange, onTransfer }: TransferDialo
           {transferType === 'agent' && (
             <div className="space-y-2">
               <Label>Selecione um atendente</Label>
+              {isQueueless && (
+                <p className="text-xs text-muted-foreground">
+                  Contato sem fila: só é possível assumir para você mesmo. Para transferir a outro atendente, mova para um departamento primeiro.
+                </p>
+              )}
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {loadingAgents ? (
                   <div className="flex items-center justify-center py-4">
