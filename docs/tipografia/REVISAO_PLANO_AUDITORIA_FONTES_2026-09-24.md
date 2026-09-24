@@ -13,16 +13,16 @@ Legenda: ✅ feito · 🟡 parcial · ❌ não feito · ⛔ avaliado e deliberad
 | F0 Linha de base | 4 | 1 | 3 | 0 | 8 |
 | F1 Famílias | 10 | 0 | 0 | 0 | 10 |
 | F2 Pesos | 6 | 0 | 6 | 0 | 12 |
-| F3 Tamanhos JSX | 5 | 3 | 6 | 0 | 14 |
+| F3 Tamanhos JSX | 4 | 3 | 7 | 0 | 14 |
 | F4 CSS puro | 3 | 0 | 8 | 1 | 12 |
 | F5 Inline/gráficos | 5 | 1 | 3 | 1 | 10 |
 | F6 Acessibilidade | 3 | 0 | 7 | 0 | 10 |
 | F7 Fora do app | 3 | 0 | 5 | 0 | 8 |
 | F8 Guard-rails | 8 | 0 | 1 | 1 | 10 |
 | F9 Fechamento | 1 | 2 | 3 | 0 | 6 |
-| **Total** | **48** | **7** | **42** | **3** | **100** |
+| **Total** | **47** | **7** | **43** | **3** | **100** |
 
-**48% feito de fato, 7% parcial, 45% aberto.** Os 15 achados (A1–A15) da tabela original
+**47% feito de fato, 7% parcial, 46% aberto.** Os 15 achados (A1–A15) da tabela original
 ficam assim: A1 A2 A3 A4 A5 A8 A9 A10 A13 A15 fechados; A6 A7 A11 A12 A14 abertos.
 
 ## Onde cada coisa está
