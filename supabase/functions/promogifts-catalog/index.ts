@@ -64,7 +64,10 @@ const ActionSchema = z.object({
 });
 
 function sanitizeSearch(input: string): string {
-  return input.replace(/[%_.\\()]/g, "").trim().slice(0, 100);
+  // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
+  // um valor com vírgula literal quebra o parsing da expressão (ver
+  // buildTagOrExpr) — precisa ser removida junto com o resto do charset.
+  return input.replace(/[%_.\\(),]/g, "").trim().slice(0, 100);
 }
 
 /** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */

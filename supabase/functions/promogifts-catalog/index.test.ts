@@ -51,9 +51,17 @@ Deno.test('buildTagOrExpr: color + material são independentes — cada chamada 
   assertEquals(combined.split(',').length, 10);
 });
 
-Deno.test('buildTagOrExpr: sanitiza cada valor (remove % _ . \\ ( )) antes de montar a cláusula', () => {
-  const expr = buildTagOrExpr('colors', ['az%ul_teste.x\\y(z)']);
-  assertEquals(expr, 'colors.cs.["azultestexyz"],colors.cs.[{"nome":"azultestexyz"}]');
+Deno.test('buildTagOrExpr: sanitiza cada valor (remove % _ . \\ ( ) ,) antes de montar a cláusula', () => {
+  const expr = buildTagOrExpr('colors', ['az%ul_teste.x\\y(z),w']);
+  assertEquals(expr, 'colors.cs.["azultestexyzw"],colors.cs.[{"nome":"azultestexyzw"}]');
+});
+
+Deno.test('buildTagOrExpr: vírgula literal no valor não quebra o OR-expr do PostgREST', () => {
+  // Vírgula é o separador de cláusulas do .or() — sem sanitizar, "azul,vermelho"
+  // geraria uma cláusula colors.cs.["azul,vermelho"] que quebra o parsing.
+  const expr = buildTagOrExpr('colors', ['azul,vermelho']);
+  assertEquals(expr, 'colors.cs.["azulvermelho"],colors.cs.[{"nome":"azulvermelho"}]');
+  assertEquals(expr?.split(',').length, 2);
 });
 
 Deno.test('buildTagOrExpr: valores vazios/só-sujeira após sanitize são descartados', () => {
