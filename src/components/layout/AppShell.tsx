@@ -114,6 +114,8 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           profile={profile}
           userEmail={userEmail}
           signOut={signOut}
+          canGoBack={canGoBack}
+          onGoBack={goBack}
         />
       )}
 
