@@ -145,7 +145,7 @@ export interface CatalogFilters {
   low_stock?: boolean;
   price_min?: number;
   price_max?: number;
-  color?: string;
+  color?: string | string[];
   material?: string;
   has_engraving?: boolean;
 }
@@ -165,7 +165,7 @@ export function useExternalCatalog() {
   const queryClient = useQueryClient();
   // null = ainda nao pedido (nenhuma query dispara). Vira {} ou os filtros
   // explicitos assim que fetchProducts/fetchCategories/fetchSuppliers e
-  // chamado pela primeira vez - substitui o antigo par filters+ready por
+  // chamada pela primeira vez - substitui o antigo par filters+ready por
   // um unico sinal, preservando o acoplamento atual: qualquer um dos 3
   // fetch* libera as 3 queries (useExternalCatalog.test.ts depende disso
   // em 'handles concurrent fetchProducts and fetchCategories').
