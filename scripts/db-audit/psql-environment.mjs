@@ -11,7 +11,7 @@ const QUERY_ENV = new Map([
   ['target_session_attrs', 'PGTARGETSESSIONATTRS'],
 ]);
 
-function parseConnection(connectionString) {
+export function parseConnection(connectionString) {
   try {
     const url = new URL(connectionString);
     const host = url.hostname.replace(/^\[|\]$/g, '');
