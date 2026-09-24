@@ -1,0 +1,25 @@
+-- Achado na validacao exaustiva pos-PR#541/#542 (2026-09-23/24): grants de
+-- EXECUTE default do schema public (ALTER DEFAULT PRIVILEGES) escaparam do
+-- REVOKE ALL ... FROM PUBLIC das migrations que criaram/redefiniram estas
+-- duas RPCs (20260911150000_add_talkx_campaign_transition_rpc.sql e
+-- 20260916210000_talkx_e91_resilience.sql): aquelas migrations revogaram so
+-- de PUBLIC, nao nomeando anon/authenticated -- diferente do padrao usado em
+-- 20260916240000_revoke_anon_conversation_status_and_message_dates.sql, que
+-- revoga PUBLIC *e* anon/authenticated explicitamente. Confirmado ao vivo via
+-- has_function_privilege: anon e authenticated tinham EXECUTE em
+-- reschedule_talkx_recipient(uuid,uuid,timestamptz,text) e no
+-- transition_talkx_campaign(uuid,text,text) atual (3 args, com
+-- p_pause_reason). O overload antigo transition_talkx_campaign(uuid,text) ja
+-- estava corretamente revogado desde a migration original.
+--
+-- Ambas as funcoes ja tem guard interno `IF COALESCE(auth.role(), '') <>
+-- 'service_role' THEN RAISE EXCEPTION 'service_role_required'` -- PostgREST
+-- nunca autentica um chamador como o role literal service_role (isso e
+-- exclusivo da service key, nunca exposta ao browser/anon key), entao
+-- nenhuma chamada via REST anon/authenticated jamais passava do guard. Sem
+-- exposicao real de dados nem de escrita nao autorizada -- e endurecimento
+-- (least privilege), nao correcao de vulnerabilidade explorada. Nenhum call
+-- site em src/ ou supabase/functions depende de anon/authenticated aqui
+-- (buscado nesta mesma auditoria); so service_role chama, via Edge Functions.
+REVOKE EXECUTE ON FUNCTION public.reschedule_talkx_recipient(uuid, uuid, timestamptz, text) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.transition_talkx_campaign(uuid, text, text) FROM PUBLIC, anon, authenticated;
