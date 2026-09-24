@@ -34,10 +34,21 @@ Deno.serve(async (req) => {
     const { contactIds } = parsed.data;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
+    // callerClient roda com RLS real (anon key + Authorization do chamador).
+    // Sem este filtro, qualquer usuário autenticado poderia mandar contactIds
+    // de contatos que não enxerga e receber nome/telefone/histórico (PII) via
+    // adminClient, que bypassa RLS — a RLS real de `contacts` é a fonte de
+    // verdade de visibilidade.
+    const { data: visibleContacts } = await callerClient
+      .from("contacts")
+      .select("id")
+      .in("id", contactIds);
+    const visibleContactIds = (visibleContacts || []).map((c: { id: string }) => c.id);
+
     const { data: contacts } = await adminClient
       .from("contacts")
       .select("id, name, phone, created_at, updated_at")
-      .in("id", contactIds);
+      .in("id", visibleContactIds);
 
     if (!contacts || contacts.length === 0) {
       return jsonResponse({ results: [], message: "Nenhum contato encontrado" }, 200, req);
