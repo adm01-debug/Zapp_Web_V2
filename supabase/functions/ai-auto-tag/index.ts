@@ -147,7 +147,36 @@ Responda APENAS em JSON:
       if (validPriorities.includes(result.priority)) updateData.ai_priority = result.priority;
 
       if (result.suggested_queue_id && isValidUUID(result.suggested_queue_id)) {
-        updateData.queue_id = result.suggested_queue_id;
+        // Este client roda com service_role (bypassa RLS e o trigger
+        // trg_prevent_contact_queue_hijack, que só restringe role=authenticated).
+        // Sem esta checagem, a sugestão da IA (prompt-injetável via mensagens do
+        // cliente) poderia rotear o contato para qualquer fila.
+        const { data: isAdmin } = await supabase
+          .rpc('is_admin_or_supervisor', { _user_id: __uid });
+
+        let canRouteToQueue = Boolean(isAdmin);
+        if (!canRouteToQueue) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', __uid)
+            .maybeSingle();
+
+          if (profile) {
+            const { data: membership } = await supabase
+              .from('queue_members')
+              .select('id')
+              .eq('queue_id', result.suggested_queue_id)
+              .eq('profile_id', profile.id)
+              .eq('is_active', true)
+              .maybeSingle();
+            canRouteToQueue = Boolean(membership);
+          }
+        }
+
+        if (canRouteToQueue) {
+          updateData.queue_id = result.suggested_queue_id;
+        }
       }
 
       if (Object.keys(updateData).length > 0) {
