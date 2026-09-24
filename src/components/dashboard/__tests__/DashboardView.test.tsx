@@ -1,4 +1,4 @@
-// @ts-nocheck
+import type React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,26 +43,26 @@ vi.mock('../SentimentTrendChart', () => ({ SentimentTrendChart: () => <div data-
 vi.mock('../ScheduledReportsManager', () => ({ ScheduledReportsManager: () => <div data-testid="stub-reports" /> }));
 vi.mock('../overview/GreetingBanner', () => ({ GreetingBanner: () => <div data-testid="stub-greeting" /> }));
 vi.mock('../overview/DashboardTopBar', () => ({ DashboardTopBar: () => <div data-testid="stub-topbar" /> }));
-vi.mock('../overview/DashboardHeader', () => ({ DashboardHeader: ({ filters }: any) => <div data-testid="stub-header">{filters}</div> }));
+vi.mock('../overview/DashboardHeader', () => ({ DashboardHeader: ({ filters }: { filters: React.ReactNode }) => <div data-testid="stub-header">{filters}</div> }));
 vi.mock('../overview/DashboardKpiRow', () => ({ DashboardKpiRow: () => <div data-testid="stub-kpi-row" /> }));
 vi.mock('../overview/VolumeChart', () => ({ VolumeChart: () => <div data-testid="stub-volume" /> }));
 vi.mock('../overview/NowPanel', () => ({ NowPanel: () => <div data-testid="stub-now-panel" /> }));
 vi.mock('../overview/DailyGoalsCard', () => ({ DailyGoalsCard: () => <div data-testid="stub-daily-goals" /> }));
 vi.mock('../overview/QueueHealthTable', () => ({
-  QueueHealthTable: ({ onSeeAll }: any) => <button onClick={onSeeAll}>ir para sla (staff)</button>,
+  QueueHealthTable: ({ onSeeAll }: { onSeeAll: () => void }) => <button onClick={onSeeAll}>ir para sla (staff)</button>,
 }));
 vi.mock('../overview/RecentActivityCard', () => ({ RecentActivityCard: () => <div data-testid="stub-recent-activity" /> }));
 vi.mock('../overview/TeamHighlightCard', () => ({ TeamHighlightCard: () => <div data-testid="stub-team-highlight" /> }));
 // AIToolsCard e o vetor do bug real: precisa expor o onSeeAll de verdade, sem
 // disfarce, pra testar se DashboardView o liga num handler com guard de papel.
 vi.mock('../overview/AIToolsCard', () => ({
-  AIToolsCard: ({ onSeeAll }: any) => <button onClick={onSeeAll}>Ver tudo (IA)</button>,
+  AIToolsCard: ({ onSeeAll }: { onSeeAll: () => void }) => <button onClick={onSeeAll}>Ver tudo (IA)</button>,
 }));
 vi.mock('../overview/CsatCard', () => ({ CsatCard: () => <div data-testid="stub-csat-card" /> }));
 vi.mock('../overview/SentimentTrendCard', () => ({ SentimentTrendCard: () => <div data-testid="stub-sentiment-card" /> }));
 vi.mock('../overview/GamificationSection', () => ({ GamificationSection: () => <div data-testid="stub-gamification" /> }));
 vi.mock('../DashboardFilters', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = await importOriginal<typeof import('../DashboardFilters')>();
   return { ...actual, DashboardFilters: () => <div data-testid="stub-filters" /> };
 });
 
