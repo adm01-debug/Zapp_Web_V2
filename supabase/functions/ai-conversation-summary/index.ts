@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
 import { AiConversationSummarySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
@@ -29,13 +29,30 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
+    // Este client roda com service_role (bypassa RLS). Sem esta checagem,
+    // qualquer usuário autenticado poderia usar contactId de um contato que
+    // não enxerga para ler notas/sentimento/histórico (PII) — a RLS real de
+    // `contacts` é a fonte de verdade de visibilidade.
+    let visibleContactId: string | null = contactId ?? null;
+    if (visibleContactId) {
+      const authedClient = await createAuthedClient(req);
+      const { data: visibleContact } = await authedClient
+        .from('contacts')
+        .select('id')
+        .eq('id', visibleContactId)
+        .maybeSingle();
+      if (!visibleContact) {
+        visibleContactId = null;
+      }
+    }
+
     // Fetch contact context for richer analysis
     let contactContext = '';
-    if (contactId) {
+    if (visibleContactId) {
       const { data: contact } = await supabase
         .from('contacts')
         .select('name, company, tags, ai_priority, ai_sentiment, notes')
-        .eq('id', contactId)
+        .eq('id', visibleContactId)
         .maybeSingle();
 
       if (contact) {
@@ -45,7 +62,7 @@ Deno.serve(async (req) => {
       const { data: prevAnalyses } = await supabase
         .from('conversation_analyses')
         .select('sentiment, summary, created_at')
-        .eq('contact_id', contactId)
+        .eq('contact_id', visibleContactId)
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -182,9 +199,9 @@ Foque em:
     };
 
     // Save analysis to database
-    if (contactId) {
+    if (visibleContactId) {
       await supabase.from('conversation_analyses').insert({
-        contact_id: contactId,
+        contact_id: visibleContactId,
         summary: analysisData.summary,
         sentiment: analysisData.sentiment,
         sentiment_score: analysisData.sentimentScore,
@@ -200,7 +217,7 @@ Foque em:
       await supabase.from('contacts').update({
         ai_sentiment: analysisData.sentiment,
         ai_priority: analysisData.urgency === 'critical' ? 'urgent' : analysisData.urgency,
-      }).eq('id', contactId);
+      }).eq('id', visibleContactId);
     }
 
     log.done(200);
