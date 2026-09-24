@@ -129,20 +129,26 @@ export function SettingsView() {
           </div>
         </div>
 
-        <TabsContent value="schedule">
-          <ScheduleSettings settings={settings} updateSettings={updateSettings} toggleWorkDay={toggleWorkDay} />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="schedule">
+            <ScheduleSettings settings={settings} updateSettings={updateSettings} toggleWorkDay={toggleWorkDay} />
+          </TabsContent>
+        )}
 
-        <TabsContent value="messages">
-          <div className="space-y-6">
-            <MessagesSettings settings={settings} updateSettings={updateSettings} />
-            <QuickRepliesManager compact={false} />
-          </div>
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="messages">
+            <div className="space-y-6">
+              <MessagesSettings settings={settings} updateSettings={updateSettings} />
+              <QuickRepliesManager compact={false} />
+            </div>
+          </TabsContent>
+        )}
 
-        <TabsContent value="automation">
-          <AutomationSettings settings={settings} updateSettings={updateSettings} />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="automation">
+            <AutomationSettings settings={settings} updateSettings={updateSettings} />
+          </TabsContent>
+        )}
 
         <TabsContent value="notifications">
           <NotificationSettingsPanel />
@@ -164,47 +170,65 @@ export function SettingsView() {
           </div>
         </TabsContent>
 
-        <TabsContent value="global">
-          <div className="space-y-6">
-            <GlobalSettingsSection />
-            <IntegrationKeysSection />
-          </div>
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="global">
+            <div className="space-y-6">
+              <GlobalSettingsSection />
+              <IntegrationKeysSection />
+            </div>
+          </TabsContent>
+        )}
 
-        <TabsContent value="followup">
-          <FollowUpSequences />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="followup">
+            <FollowUpSequences />
+          </TabsContent>
+        )}
 
-        <TabsContent value="media">
-          <div className="space-y-6">
-            <MediaLibraryAdmin />
-            <StickerManager mode="manager" />
-          </div>
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="media">
+            <div className="space-y-6">
+              <MediaLibraryAdmin />
+              <StickerManager mode="manager" />
+            </div>
+          </TabsContent>
+        )}
 
-        <TabsContent value="nps">
-          <NPSDashboard />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="nps">
+            <NPSDashboard />
+          </TabsContent>
+        )}
 
-        <TabsContent value="ai-tags">
-          <AIAutoTagsConfig />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="ai-tags">
+            <AIAutoTagsConfig />
+          </TabsContent>
+        )}
 
-        <TabsContent value="csat">
-          <CSATAutoConfig />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="csat">
+            <CSATAutoConfig />
+          </TabsContent>
+        )}
 
-        <TabsContent value="chatbot-l1">
-          <ChatbotL1Config />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="chatbot-l1">
+            <ChatbotL1Config />
+          </TabsContent>
+        )}
 
-        <TabsContent value="routing">
-          <SkillBasedRoutingSettings />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="routing">
+            <SkillBasedRoutingSettings />
+          </TabsContent>
+        )}
 
-        <TabsContent value="ai-providers">
-          <AIProvidersManager />
-        </TabsContent>
+        {isStaff && (
+          <TabsContent value="ai-providers">
+            <AIProvidersManager />
+          </TabsContent>
+        )}
       </Tabs>
       )}
     </PageTemplate>
