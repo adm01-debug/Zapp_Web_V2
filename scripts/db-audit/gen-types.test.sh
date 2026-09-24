@@ -13,7 +13,7 @@ chmod +x "$TEST_ROOT/bin/supabase"
 
 OUTPUT="$TEST_ROOT/types.ts"
 PATH="$TEST_ROOT/bin:$PATH" \
-  DESTINO_URL='postgresql://tester@fixture.invalid/postgres' \
+  DESTINO_URL='postgresql://fixture.invalid/postgres' \
   bash scripts/db-audit/gen-types.sh "$OUTPUT" >/dev/null
 
 EXPECTED="$TEST_ROOT/expected.ts"
