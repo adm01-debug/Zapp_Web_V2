@@ -30,6 +30,7 @@ import {
   endurecerDestinoTls,
   validarDestino,
 } from './database-identity.mjs';
+import { withPsqlEnvironment } from './psql-environment.mjs';
 
 const FILE_NAME_RE = /^(\d{14})_([a-z0-9][a-z0-9_-]*)\.sql$/;
 const PSQL_BIN = process.env.PSQL_BIN || 'psql';
@@ -138,13 +139,16 @@ function runPsql(url, sql) {
     // -q: sem ele o psql imprime a tag "INSERT 0 0" quando o ON CONFLICT DO NOTHING
     // descarta a linha, e o RETURNING "vazio" deixava de ser vazio (colisao dada
     // como OK). stdio explicito: o stderr do psql nao vaza direto no console.
-    return execFileSync(PSQL_BIN, [url, '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-c', sql], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    // Credencial nunca vai pro argv: withPsqlEnvironment injeta via PGPASSFILE
+    // (mesmo padrao de psql-safe.mjs).
+    return withPsqlEnvironment(url, (env) => execFileSync(
+      PSQL_BIN,
+      ['-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-c', sql],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env },
+    ));
   } catch (err) {
-    // err.message do execFileSync embute a linha de comando inteira — com a
-    // DESTINO_URL (credencial). Relanca so o stderr do psql, truncado.
+    // err.message do execFileSync embute a linha de comando inteira — mas a
+    // URL nao esta mais no argv. Relanca so o stderr do psql, truncado.
     const detalhe = (err.stderr || '').toString().slice(0, 300).trim();
     throw new Error(`psql falhou (exit ${err.status ?? '?'})${detalhe ? `: ${detalhe}` : ''}`);
   }
