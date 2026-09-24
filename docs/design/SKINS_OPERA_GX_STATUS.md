@@ -3,7 +3,7 @@ Branch: claude/feat-skins-opera-gx-260923-1229 · Base: 71befc7d → rebaseado s
 Referência: Promo_Gifts_V4 @ cff6e9f0 (sha256 pg-theme-presets.ts = d364f45db57584dc997c24a82782689be5d500fc401b5c0f132dc2b91ba0bfc5 · pg-theme-presets.test.ts = 31c2705a1a00f1352f4f7a4e6059a6f2878fbe2d21b3f041f1fb010b0cb48c88) · Playwright: instalado (chromium 1194 + headless_shell 1194 baixados nesta sessão) · QA user: **BLOQUEADO** (ver Pendências) · DEPLOY: verificar externamente (MCP Vercel indisponível no container)
 
 ## CP0 Ambiente      [x] sha=852c70da · before=BLOQUEADO (login QA falhou, ver Pendências) · gates baseline: typecheck=0 lint-ratchet=OK(1097/1097,novas=0) tc-ratchet=OK(0/0,novas=0) implicit=OK(0/0) vitest=299 passed (3 arquivos, settings) · build=OK (17.52s) · PRs abertas conflitantes: nenhuma (#548 dashboard/navigation, #537 hooks unmount — nenhuma toca presets.ts/useThemePreset.ts/ThemeCustomizer.tsx/ThemeInitializer.tsx/index.html/tokens.css)
-## CP1 Núcleo        [ ] sha= · presets.test.ts=_ asserts · 19 primárias distintas: _
+## CP1 Núcleo        [x] sha=<pendente commit> · presets.test.ts=58 testes verdes (§1,§2,§4,§12; §3/§11/§11.5 completam na Fase 7) · 19 primárias distintas: sim (verificado via tsx) · typecheck: só os 4 consumidores esperados (ThemeInitializer.tsx, ThemeCustomizer.tsx, useThemePreset.ts) quebram — normal até Fases 3-5
 ## CP2 Sincronia     [ ] sha= · tokens-sync: divergências=_ reconciliadas (tabela abaixo) · tokens.css linhas alteradas=_
 ## CP3 Boot          [ ] sha= · shot=03-boot.png · early --background=_ (esperado 265 22% 8%) · storage event: setItem=_ chamadas
 ## CP4 Página        [ ] sha= · shot=04-page.png · cards=10+9 · gx-classic: primary=_ background=_ ΔE sidebar=_
