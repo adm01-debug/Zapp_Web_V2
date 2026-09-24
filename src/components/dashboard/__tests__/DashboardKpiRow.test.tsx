@@ -19,15 +19,17 @@ function baseRealtime(overrides: Partial<RealtimeDashboardState> = {}): Realtime
 }
 
 describe('DashboardKpiRow', () => {
-  it('renderiza os 5 cards com data-testid="kpi-card"', async () => {
+  it('staff: renderiza os 5 cards com data-testid="kpi-card", "Atendentes Online" incluso', async () => {
     render(
       <DashboardKpiRow
         stats={{ openConversations: 18, pendingConversations: 6, onlineAgents: 3, totalAgents: 3 }}
         realtime={baseRealtime()}
-        kpi={{ resolvedToday: 12, resolvedYesterday: 10, deltaResolvedPct: 20, resolvedHourly8: [1, 1, 1, 1, 2, 2, 2, 2], avgResponseToday: 161, avgResponseYesterday: 180, deltaResponsePct: -10, responseHourly8: [10, 10, 10, 10, 20, 20, 20, 20], slaBreachedToday: 1 }}
+        kpi={{ resolvedToday: 12, resolvedYesterday: 10, deltaResolvedPct: 20, resolvedHourly8: [1, 1, 1, 1, 2, 2, 2, 2], avgResponseToday: 161, avgResponseYesterday: 180, p90ResponseToday: 200, deltaResponsePct: -10, responseHourly8: [10, 10, 10, 10, 20, 20, 20, 20], slaBreachedToday: 1 }}
+        isStaff
       />,
     );
     expect(screen.getAllByTestId('kpi-card')).toHaveLength(5);
+    expect(screen.getByText('Atendentes Online')).toBeInTheDocument();
     // valores numéricos passam por CountUp (animação assíncrona) — aguarda o valor final.
     await waitFor(() => expect(screen.getByText('18')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('5')).toBeInTheDocument());
@@ -42,9 +44,32 @@ describe('DashboardKpiRow', () => {
         stats={{ openConversations: 0, pendingConversations: 0, onlineAgents: 0, totalAgents: 0 }}
         realtime={baseRealtime({ unreadMessages: 0 })}
         kpi={undefined}
+        isStaff
       />,
     );
     expect(screen.getAllByTestId('kpi-card')).toHaveLength(5);
-    expect(screen.getByText('0/0')).toBeInTheDocument();
+    // totalAgents 0 → empty state honesto (E20), nunca "0/0" com badge verde fixo
+    // (o card de tempo médio também mostra "—" quando kpi é undefined).
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Sem dados')).toBeInTheDocument();
+  });
+
+  it('agente (isStaff=false): esconde "Atendentes Online", mostra "Minhas Conversas Ativas" e rótulos de escopo (E14/E15)', async () => {
+    render(
+      <DashboardKpiRow
+        stats={{ openConversations: 4, pendingConversations: 1, onlineAgents: 3, totalAgents: 3 }}
+        realtime={baseRealtime({ unreadMessages: 2 })}
+        kpi={{ resolvedToday: 3, resolvedYesterday: 2, deltaResolvedPct: null, resolvedHourly8: [0, 0, 0, 1, 1, 1, 0, 0], avgResponseToday: 90, avgResponseYesterday: 100, p90ResponseToday: 150, deltaResponsePct: null, responseHourly8: [0, 0, 0, 10, 10, 10, 0, 0], slaBreachedToday: 0 }}
+        isStaff={false}
+        myActiveConversations={7}
+      />,
+    );
+    expect(screen.queryByText('Atendentes Online')).not.toBeInTheDocument();
+    expect(screen.getByText('Minhas Conversas Ativas')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('7')).toBeInTheDocument());
+    expect(screen.getByText('Fila: Conversas Abertas')).toBeInTheDocument();
+    expect(screen.getByText('Fila: Não Lidas')).toBeInTheDocument();
+    expect(screen.getByText('Meu Tempo Médio de Resposta')).toBeInTheDocument();
+    expect(screen.getByText('Minhas Resolvidas Hoje')).toBeInTheDocument();
   });
 });

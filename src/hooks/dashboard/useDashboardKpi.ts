@@ -5,6 +5,19 @@ import { startOfDay, subDays } from 'date-fns';
 type ClosureRow = { created_at: string };
 type SlaRow = { first_message_at: string; first_response_at: string | null; first_response_breached: boolean | null };
 const H = 3_600_000;
+/** Amostra mínima por dia p/ mostrar "% vs ontem" (E19) — abaixo disso, 1 outlier
+ * já produz deltas fantasmas tipo "-100%" (achado A10). Sem delta é mais honesto que delta errado. */
+const MIN_SAMPLE_FOR_DELTA = 5;
+
+/** p50/p90 por interpolação linear (método comum, mesmo de percentile_cont do Postgres). */
+function percentile(values: number[], p: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx); const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
 
 /**
  * responseHourly8 (KPI "Tempo Médio de Resposta") é lido visualmente invertido:
@@ -26,16 +39,20 @@ export function aggregateDashboardKpi(closures: ClosureRow[], sla: SlaRow[], now
   const rt = (r: SlaRow) => (Date.parse(r.first_response_at!) - Date.parse(r.first_message_at)) / 1000;
   const aT = answered.filter((r) => isToday(r.first_message_at));
   const aY = answered.filter((r) => isYesterday(r.first_message_at));
-  const avg = (rows: SlaRow[]) => (rows.length ? Math.round(rows.reduce((a, r) => a + rt(r), 0) / rows.length) : null);
-  const avgT = avg(aT); const avgY = avg(aY);
+  // Mediana (p50), não média: 1 atendimento respondido 10h depois não pode dobrar
+  // o KPI do dia (achado A10). p90 fica só pro tooltip, não entra no card nem no delta.
+  const median = (rows: SlaRow[]) => (rows.length ? Math.round(percentile(rows.map(rt), 50)) : null);
+  const avgT = median(aT); const avgY = median(aY);
+  const p90Today = aT.length ? Math.round(percentile(aT.map(rt), 90)) : null;
   return {
     resolvedToday: cT.length,
     resolvedYesterday: cY.length,
-    deltaResolvedPct: pct(cT.length, cY.length),
+    deltaResolvedPct: cT.length >= MIN_SAMPLE_FOR_DELTA && cY.length >= MIN_SAMPLE_FOR_DELTA ? pct(cT.length, cY.length) : null,
     resolvedHourly8: bucket8(cT.map((r) => Date.parse(r.created_at))),
     avgResponseToday: avgT,
     avgResponseYesterday: avgY,
-    deltaResponsePct: avgT !== null && avgY !== null ? pct(avgT, avgY) : null,
+    p90ResponseToday: p90Today,
+    deltaResponsePct: avgT !== null && avgY !== null && aT.length >= MIN_SAMPLE_FOR_DELTA && aY.length >= MIN_SAMPLE_FOR_DELTA ? pct(avgT, avgY) : null,
     responseHourly8: bucket8(aT.map((r) => Date.parse(r.first_message_at)), aT.map(rt)),
     slaBreachedToday: sla.filter((r) => isToday(r.first_message_at) && r.first_response_breached === true).length,
   };
