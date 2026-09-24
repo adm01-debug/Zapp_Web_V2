@@ -1,4 +1,4 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 Deno.serve(async (req) => {
@@ -16,6 +16,11 @@ Deno.serve(async (req) => {
     const supabaseUrl = requireEnv('SUPABASE_URL');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
+    // Client autenticado como o caller: usado nas leituras abaixo para que a
+    // RLS real de `contacts`/`profiles` filtre por auth.uid(), em vez do
+    // client service_role (que bypassa RLS e vazaria PII/dashboard para
+    // qualquer usuário autenticado do app, não só agentes).
+    const authedClient = await createAuthedClient(req);
 
     log.info("Processing voice action", { action });
 
@@ -30,7 +35,7 @@ Deno.serve(async (req) => {
           result = [];
           break;
         }
-        const { data, error } = await supabase
+        const { data, error } = await authedClient
           .from('contacts')
           .select('id, name, phone, email, company, ai_sentiment, assigned_to')
           .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
@@ -42,7 +47,7 @@ Deno.serve(async (req) => {
 
       case 'get_conversation_summary': {
         const { contactId } = params;
-        const { data: analysis } = await supabase
+        const { data: analysis } = await authedClient
           .from('conversation_analyses')
           .select('summary, sentiment, key_points, urgency')
           .eq('contact_id', contactId)
@@ -54,16 +59,16 @@ Deno.serve(async (req) => {
       }
 
       case 'get_dashboard_metrics': {
-        const { count: totalContacts } = await supabase
+        const { count: totalContacts } = await authedClient
           .from('contacts')
           .select('*', { count: 'exact', head: true });
 
-        const { count: openConversations } = await supabase
+        const { count: openConversations } = await authedClient
           .from('contacts')
           .select('*', { count: 'exact', head: true })
           .not('ai_sentiment', 'is', null);
 
-        const { count: negativeAlerts } = await supabase
+        const { count: negativeAlerts } = await authedClient
           .from('contacts')
           .select('*', { count: 'exact', head: true })
           .in('ai_sentiment', ['negative', 'very_negative']);
@@ -128,7 +133,7 @@ Deno.serve(async (req) => {
       }
 
       case 'list_agents': {
-        const { data } = await supabase
+        const { data } = await authedClient
           .from('profiles')
           .select('id, name, role, is_active, department')
           .eq('is_active', true)
@@ -138,7 +143,7 @@ Deno.serve(async (req) => {
       }
 
       case 'get_queue_status': {
-        const { data } = await supabase
+        const { data } = await authedClient
           .from('queues')
           .select('id, name, description, is_active');
         result = data || [];
