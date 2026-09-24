@@ -182,7 +182,7 @@
     },
     {
       "path": "src/components/contacts/ContactActivityTimeline.tsx",
-      "sha256": "975f56f615e8de9d62d76b7ac40326f8f119fe53b8b2913bffeb29814b9e1edd"
+      "sha256": "2d1cb4670b40630926c765113ceb4ba0c677662237ac6b418553b040b4dd22dd"
     },
     {
       "path": "src/components/contacts/ContactBulkTagDialog.tsx",
@@ -402,7 +402,7 @@
     },
     {
       "path": "src/components/inbox/chat/MentionAutocomplete.tsx",
-      "sha256": "6d35900fea963d8852abb1b0fef025b9b37d867de2bec29fc504201027195ce4"
+      "sha256": "7b3143e8cb15eefd372ce9ef8e5bad38218a74368e5f7d5e3be559c63e6b4bcc"
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
@@ -422,11 +422,11 @@
     },
     {
       "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
-      "sha256": "7a25828ba0ee4c06e68eed654d53c75e275221a4f3b683e59a89c770e7c685b2"
+      "sha256": "db9b449e61a41dae5a66bc2bfaae387da54f35bee327b4b0fff1cd418f254fc5"
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "8bbd25fbc68306c46a15e5e85463251930ace5912396164c68debd281128b076"
+      "sha256": "de4f0bfd9d52e2007f526a89cd6d0fb4805546c96c02c575267ce866d3e254b1"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -518,7 +518,7 @@
     },
     {
       "path": "src/components/inbox/LocationMessage.tsx",
-      "sha256": "fa666984c8015cefc88b64279ade3b6c5d66c58542d0214fbae916ac98c4d6d1"
+      "sha256": "9fff8e14b2a353a02d15250fdb6c0200ead0dfbd7ac1f7daa7fed81a2483eb22"
     },
     {
       "path": "src/components/inbox/MessageContextActions.tsx",
@@ -4332,9 +4332,9 @@
     },
     {
       "file": "src/components/inbox/chat/MentionAutocomplete.tsx",
-      "line": 118,
+      "line": 125,
       "column": 17,
-      "endLine": 118,
+      "endLine": 125,
       "endColumn": 28,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -4360,14 +4360,14 @@
     },
     {
       "file": "src/components/inbox/chat/MentionAutocomplete.tsx",
-      "line": 53,
+      "line": 60,
       "column": 5,
-      "endLine": 53,
+      "endLine": 60,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/chat/MentionAutocomplete.tsx:53:5 51 | 52 | const query = textBeforeCursor.substring(atIndex + 1).toLowerCase(); > 53 | setMentionQuery(query); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 54 | setMentionStart(atIndex); 55 | 56 | const results = agents.filter(a =>",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/chat/MentionAutocomplete.tsx:60:5 58 | 59 | const query = textBeforeCursor.substring(atIndex + 1).toLowerCase(); > 60 | setMentionQuery(query); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 61 | setMentionStart(atIndex); 62 | 63 | const results = agents.filter(a =>",
       "spanHash": "671efeb45a673d293c79dfba667f489e1fb13c788181def29a3884b65dd47d84",
       "lineHash": "0810679d78c835ee3a1fdf9cf1548411b60df3fdbb5757aeb5a07785c99e7724",
       "contextHash": "ec5c5b9f1a8080d5f5db4e2615c79ff71005c2a6f1d0c983ccb707647125c3a2"

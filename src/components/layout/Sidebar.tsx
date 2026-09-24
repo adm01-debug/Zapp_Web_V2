@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star } from 'lucide-react';
+import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/ui/useTheme';
 import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
@@ -10,6 +10,7 @@ import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtect
 import { SoundMuteToggle } from '@/components/notifications/SoundMuteToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
+import { SidebarUserPill } from './SidebarUserPill';
  import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
  import { useUserRole } from '@/hooks/system/useUserRole';
  import { NavigationService } from '@/services/navigation.service';
@@ -18,12 +19,18 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   inboxBadge?: number;
+  profile?: { name?: string | null; avatar_url?: string | null } | null;
+  userEmail?: string;
+  signOut?: () => void;
 }
 
 export const Sidebar = React.memo(function Sidebar({
   currentView,
   onViewChange,
   inboxBadge,
+  profile,
+  userEmail,
+  signOut,
 }: SidebarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -99,6 +106,37 @@ export const Sidebar = React.memo(function Sidebar({
          </ul>
        </nav>
 
+      {/* Busca global */}
+      <div className={cn('px-2', collapsed && 'flex justify-center px-[11px]')}>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+                className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] transition-all duration-200"
+                aria-label="Busca global (⌘K)"
+              >
+                <Search className="w-[18px] h-[18px] text-primary" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
+              <span>Buscar</span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+            className="w-full flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-medium min-h-[44px] text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] hover:translate-x-1 transition-all duration-200"
+            aria-label="Busca global (⌘K)"
+          >
+            <Search className="w-[18px] h-[18px] shrink-0 text-primary" />
+            <span className="truncate">Buscar...</span>
+            <kbd className="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
+          </button>
+        )}
+      </div>
+
       {/* Favorites */}
       {favoriteItems.length > 0 && (
         <>
@@ -136,15 +174,23 @@ export const Sidebar = React.memo(function Sidebar({
       <div className="flex flex-col items-center gap-1.5 pt-1.5 pb-3 shrink-0">
         <div className="mx-3 h-px bg-border self-stretch" />
         {!collapsed && <div className="px-3 self-stretch flex items-center gap-1.5 pb-0.5"><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Controles rápidos</span></div>}
-        <div className={cn('flex items-center gap-1 rounded-xl border border-border bg-muted/50 px-1.5 py-1.5 shadow-sm', collapsed ? 'flex-col' : 'flex-row self-stretch mx-2')}>
-          <ScreenProtectionToggle className="w-[36px] h-[36px]" />
-          <PushNotificationToggle className="w-[36px] h-[36px]" />
-          <SoundMuteToggle className="w-[36px] h-[36px]" />
-          <Tooltip delayDuration={200}><TooltipTrigger asChild>
-            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
-              {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
-            </button>
-          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+        <div className={cn('flex flex-col gap-1 rounded-xl border border-border bg-muted/50 px-1.5 py-1.5 shadow-sm', collapsed ? 'items-center' : 'self-stretch mx-2')}>
+          {signOut && (
+            <>
+              <SidebarUserPill profile={profile ?? null} userEmail={userEmail ?? ''} signOut={signOut} onViewChange={onViewChange} collapsed={collapsed} />
+              <div className="h-px bg-border/60 self-stretch mx-1" />
+            </>
+          )}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <ScreenProtectionToggle className="w-[36px] h-[36px]" />
+            <PushNotificationToggle className="w-[36px] h-[36px]" />
+            <SoundMuteToggle className="w-[36px] h-[36px]" />
+            <Tooltip delayDuration={200}><TooltipTrigger asChild>
+              <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
+                {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
+              </button>
+            </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+          </div>
         </div>
       </div>
     </aside>
