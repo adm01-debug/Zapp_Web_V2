@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Phone, Mail, Calendar, Building, Briefcase, Pencil, Check, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,12 @@ function EditableField({ value, icon, onSave, placeholder, label }: EditableFiel
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (draft.trim() === value) { setEditing(false); return; }
@@ -38,11 +44,11 @@ function EditableField({ value, icon, onSave, placeholder, label }: EditableFiel
     try {
       await onSave(draft.trim());
       toast.success('Campo atualizado!');
-      setEditing(false);
+      if (isMountedRef.current) setEditing(false);
     } catch {
       toast.error('Erro ao salvar');
     } finally {
-      setSaving(false);
+      if (isMountedRef.current) setSaving(false);
     }
   }, [draft, value, onSave]);
 
