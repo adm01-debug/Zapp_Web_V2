@@ -12,9 +12,10 @@
 # POSIX sh (sem bashisms) — compativel com dash e bash
 #
 # NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
-# register-migration.mjs etc): `supabase gen types typescript --db-url` spawna
-# um container Docker efemero (postgres-meta) para introspeccao, que nao tem
-# acesso ao PGPASSFILE do runner. A credencial precisa ir no --db-url.
+# register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
+# `gen types typescript --db-url` in-process via driver Postgres proprio, sem
+# spawnar Docker/postgres-meta. Esse driver nao respeita PGPASSFILE (convencao
+# exclusiva de libpq/psql/pgx) — por isso a credencial precisa ir direto no --db-url.
 set -e
 
 OUTPUT="${1:-/tmp/types.generated.ts}"
