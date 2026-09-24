@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend, Line,
 } from 'recharts';
+import { CHART_TICK_FONT_SIZE_LG } from '@/lib/chart-theme';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface DailyData {
@@ -37,8 +38,8 @@ export function SLARateChart({ dailyData }: { dailyData: DailyData[] }) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} tickFormatter={(v) => `${v}%`} />
+              <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: CHART_TICK_FONT_SIZE_LG }} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: CHART_TICK_FONT_SIZE_LG }} tickLine={false} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={(value: any) => [`${value.toFixed(1)}%`, 'Taxa SLA']} />
               <Area type="monotone" dataKey="slaRate" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#slaGradient)" />
               <Line type="monotone" dataKey={() => 90} stroke="hsl(var(--destructive))" strokeDasharray="5 5" strokeWidth={1} dot={false} />
@@ -59,8 +60,8 @@ export function SLAViolationsChart({ dailyData }: { dailyData: DailyData[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={dailyData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} />
-              <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickLine={false} />
+              <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: CHART_TICK_FONT_SIZE_LG }} tickLine={false} />
+              <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: CHART_TICK_FONT_SIZE_LG }} tickLine={false} />
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
               <Legend />
               <Bar dataKey="firstResponseBreaches" name="1ª Resposta" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />

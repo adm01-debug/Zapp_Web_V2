@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { CHART_TICK_FONT_SIZE } from '@/lib/chart-theme';
 import { BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MessageStats, TimePeriod } from './hooks/useEvolutionMonitoring';
@@ -62,8 +63,8 @@ export function MonitoringMessageChart({ messageStats, period }: Props) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="hour" tick={{ fontSize: 10 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+              <XAxis dataKey="hour" tick={{ fontSize: CHART_TICK_FONT_SIZE }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: CHART_TICK_FONT_SIZE }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend iconSize={8} wrapperStyle={{ fontSize: '11px' }} />
               <Area type={chartType === 'area' ? 'monotone' : 'step'} dataKey="incoming" name="Recebidas" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorIncoming)" strokeWidth={2} dot={{ r: 2, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 2 }} />
