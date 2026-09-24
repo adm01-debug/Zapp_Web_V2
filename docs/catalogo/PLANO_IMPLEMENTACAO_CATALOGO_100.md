@@ -1092,24 +1092,14 @@
 - [ ] skeleton
 - [ ] commit
 
-### E54 · "Ações rápidas": Sincronizar catálogo
-**Objetivo:** ação real de refresh.
-**Arquivos:** `CatalogRail.tsx`
-1. `RailActionRow` "Sincronizar catálogo" → `invalidate()` de todas as chaves `external-catalog` + refetch do stats.
-2. Ícone gira durante `isFetching`; toast "Catálogo atualizado · {total} produtos".
-3. Subtexto "Último sync do PromoGifts: dd/MM HH:mm" (`last_sync_at`).
-4. Cooldown 30 s (rate limit).
-5. Teste.
-6. `tsc`.
-7. Screenshot.
-8. CHANGELOG.
-9. a11y `aria-busy`.
-10. Commit `feat(catalog): E54 sincronizar`.
-**Checklist**
-- [ ] invalida e refaz
-- [ ] mostra sync real
-- [ ] cooldown
-- [ ] commit
+### E54 · ~~"Ações rápidas": Sincronizar catálogo~~ (RISCADO)
+**Status:** descartado em 2026-09-24 (decisão do dono do produto). A edge `promogifts-catalog`
+não expõe nenhuma ação de sync — o catálogo é somente-leitura no ZAPP, os dados chegam por
+replicação/import, sem endpoint de refresh sob demanda. Confirmado por busca no código
+(`grep -rniE "sincroniz|handleSync|onSync" src/components/catalog/`): não existe botão nem
+handler de sync; o único elemento relacionado é o `SyncStatusChip` em
+`ExternalProductManagement.tsx`, que é somente leitura de `stats.last_sync_at`. Implementar a
+etapa como escrita exigiria trabalho de backend fora do escopo deste plano.
 
 ### E55 · "Ações rápidas": Exportar catálogo / Importar planilha / Gerenciar categorias
 **Objetivo:** 3 ações restantes sem funcionalidade fake.
