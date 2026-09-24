@@ -12,6 +12,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
   ReferenceLine, Tooltip as RechartsTooltip,
 } from 'recharts';
+import { CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 import { useDemandPrediction, PredictionPoint } from '@/hooks/business/useDemandPrediction';
 
 interface DemandPredictionProps {
@@ -113,7 +114,7 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
               <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
               <RechartsTooltip content={<CustomTooltip />} />
               <ReferenceLine y={currentCapacity} stroke="hsl(var(--destructive))" strokeDasharray="5 5"
-                label={{ value: 'Capacidade', position: 'right', fill: 'hsl(var(--destructive))', fontSize: 10 }} />
+                label={{ value: 'Capacidade', position: 'right', fill: 'hsl(var(--destructive))', fontSize: CHART_LABEL_FONT_SIZE }} />
               <Area type="monotone" dataKey="upper" stroke="transparent" fill="url(#confidenceGradient)" fillOpacity={1} />
               <Area type="monotone" dataKey="lower" stroke="transparent" fill="hsl(var(--background))" fillOpacity={1} />
               <Area type="monotone" dataKey="actual" stroke="hsl(var(--primary))" strokeWidth={2}

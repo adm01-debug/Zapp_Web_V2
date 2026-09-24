@@ -11,8 +11,9 @@ import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { WifiOff, RefreshCw, Loader2 } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, MessageSquarePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs';
 import { ConversationTabContent } from './chat/ConversationTabContent';
@@ -140,6 +141,24 @@ export function RealtimeInboxView() {
         </Suspense>
       )}
 
+      {!isMobile && (
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => inbox.setShowNewConversation(true)}
+              className="fixed bottom-24 right-6 z-50 flex h-[54px] w-[54px] items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-xl shadow-primary/20 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95"
+              aria-label="Nova conversa"
+            >
+              <MessageSquarePlus className="h-6 w-6" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left" sideOffset={8}>
+            Nova Conversa
+          </TooltipContent>
+        </Tooltip>
+      )}
+
       <ConversationListSidebar inbox={inbox} inboxFilters={inboxFilters} bulkActions={bulkActions} pullToRefresh={pullToRefresh} conversationActions={conversationActions} />
 
       <div className={cn('flex-1 flex min-w-0 min-h-0 relative z-10 bg-background h-full overflow-hidden', isMobile && !inbox.selectedContactId && 'hidden')}>
@@ -195,7 +214,7 @@ export function RealtimeInboxView() {
                     Sem este wrapper, cada toggle de showDetails crashava o Chat.
                   */}
                   <Suspense fallback={null}>
-                    <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} onOpenTasksTab={() => { setActiveTab('tasks'); if (isMobile) inbox.setShowDetails(false); }} />
+                    <ContactDetailsResponsive key={`details-${inbox.legacyConversation.id}`} conversation={inbox.legacyConversation} onClose={() => inbox.setShowDetails(false)} />
                   </Suspense>
                 </SectionErrorBoundary>
               )}

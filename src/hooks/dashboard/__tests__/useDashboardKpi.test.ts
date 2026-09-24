@@ -56,12 +56,34 @@ describe('aggregateDashboardKpi', () => {
     expect(r.resolvedHourly8.reduce((a, b) => a + b, 0)).toBe(15);
   });
 
-  it('tempo médio de resposta hoje/ontem e delta (invert: menor é melhor)', () => {
+  it('tempo médio de resposta hoje/ontem é MEDIANA (p50), não média (E18)', () => {
     const r = aggregateDashboardKpi([], buildSla(), NOW);
-    // "respondidas hoje" inclui a violada (tem first_response_at, só não bateu o SLA): 60+120+180+90 / 4
-    expect(r.avgResponseToday).toBe(113);
-    expect(r.avgResponseYesterday).toBe(150); // (100+200)/2
-    expect(r.deltaResponsePct).toBe(Math.round(((113 - 150) / 150) * 100)); // negativo = melhorou
+    // "respondidas hoje" inclui a violada (tem first_response_at, só não bateu o SLA):
+    // [60,90,120,180] ordenado, 4 valores -> mediana interpolada entre idx1(90) e idx2(120) = 105.
+    expect(r.avgResponseToday).toBe(105);
+    expect(r.avgResponseYesterday).toBe(150); // [100,200] -> mediana = média = 150
+  });
+
+  it('delta de resposta é null com <5 respostas em qualquer um dos dias (guarda de amostra mínima, E19)', () => {
+    const r = aggregateDashboardKpi([], buildSla(), NOW);
+    // hoje só tem 4 respostas, ontem só 2 — ambos abaixo do mínimo de 5.
+    expect(r.deltaResponsePct).toBeNull();
+  });
+
+  it('p90ResponseToday reflete o topo da distribuição de hoje, separado da mediana', () => {
+    const r = aggregateDashboardKpi([], buildSla(), NOW);
+    // [60,90,120,180], p90: idx = 0.9*3 = 2.7 -> interp entre idx2(120) e idx3(180) = 162.
+    expect(r.p90ResponseToday).toBe(162);
+  });
+
+  it('delta de resolvidas SOME quando qualquer um dos dias tem <5 (guarda de amostra mínima, E19)', () => {
+    const closures = {
+      hoje: Array.from({ length: 3 }, () => ({ created_at: dayAt(0, 10) })),
+      ontem: Array.from({ length: 8 }, () => ({ created_at: dayAt(1, 10) })),
+    };
+    const r = aggregateDashboardKpi([...closures.hoje, ...closures.ontem], [], NOW);
+    expect(r.resolvedToday).toBe(3);
+    expect(r.deltaResolvedPct).toBeNull(); // hoje tem só 3 (<5) — sem "-X% fantasma"
   });
 
   it('slaBreachedToday conta só as violadas hoje, ignora ontem/anteontem', () => {

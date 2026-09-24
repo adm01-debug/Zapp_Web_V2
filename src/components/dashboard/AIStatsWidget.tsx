@@ -4,6 +4,7 @@ import { Brain, TrendingUp, TrendingDown, Minus, Sparkles, AlertTriangle, Mic, C
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CHART_TICK_FONT_SIZE } from '@/lib/chart-theme';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Tooltip as TooltipUI, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -194,8 +195,8 @@ export function AIStatsWidget() {
                       <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.2} /><stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} /></linearGradient>
                       <linearGradient id="neutralGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.2} /><stop offset="95%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0} /></linearGradient>
                     </defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={['auto', 'auto']} tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltipContent />} />
                     {visibleSentiments.has('positive') && <Area type="monotone" dataKey="positive" name="Positivo" stroke="hsl(var(--success))" strokeWidth={2} fill="url(#positiveGradient)" />}
                     {visibleSentiments.has('negative') && <Area type="monotone" dataKey="negative" name="Negativo" stroke="hsl(var(--destructive))" strokeWidth={2} fill="url(#negativeGradient)" />}
