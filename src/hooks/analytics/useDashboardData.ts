@@ -1,28 +1,30 @@
  import { useMemo } from 'react';
  import { startOfDay, endOfDay } from 'date-fns';
  import { useDashboardStats, DashboardFilters } from '../dashboard/useDashboardStats';
- 
+ import { useDashboardKpi } from '../dashboard/useDashboardKpi';
+
  const getDefaultFilters = (): DashboardFilters => ({
    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
    queueId: null,
    agentId: null,
  });
- 
+
  export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()) => {
    const mergedFilters = { ...getDefaultFilters(), ...filters };
-   const { agents, contacts, queues, sla, isLoading, error, refetch } = useDashboardStats(mergedFilters);
- 
+   const { agents, contacts, queues, isLoading, error, refetch } = useDashboardStats(mergedFilters);
+   // Fonte única de "resolvidas hoje" e "tempo médio" (E16/E17, achados A4/A5):
+   // conversation_closures/conversation_sla via useDashboardKpi, nunca mais a
+   // heurística local (updated_at hoje && !assigned_to contava devolução à fila
+   // como resolvida) nem o slaQuery de últimos-50-all-time.
+   const { data: kpi } = useDashboardKpi();
+
    const stats = useMemo(() => {
      if (!agents || !contacts) return null;
-     
-     const today = startOfDay(new Date());
+
      const openConversations = contacts.filter(c => c.assigned_to).length;
      const pendingConversations = contacts.filter(c => !c.assigned_to && c.queue_id).length;
-     const resolvedToday = contacts.filter(c => {
-       const updatedAt = new Date(c.updated_at);
-       return updatedAt >= today && !c.assigned_to;
-     }).length;
- 
+     const resolvedToday = kpi?.resolvedToday ?? 0;
+
      const queuesStats = (queues || []).map(queue => {
        const members = (queue as any).queue_members || [];
        const onlineMembers = members.filter((m: any) => m.is_active && m.profiles?.is_active).length;
@@ -43,11 +45,11 @@
        totalConversations: contacts.length,
        onlineAgents: agents.onlineAgents,
        totalAgents: agents.totalAgents,
-       avgResponseTime: sla?.avgResponseTime || null,
+       avgResponseTime: kpi?.avgResponseToday ?? null,
        queuesStats,
        recentActivity: [],
      };
-   }, [agents, contacts, queues, sla]);
+   }, [agents, contacts, queues, kpi]);
  
    // contacts/queues crus expostos para useQueueHealth (Fase 6) — mesmos dados já
    // carregados por useDashboardStats, sem query nova.
