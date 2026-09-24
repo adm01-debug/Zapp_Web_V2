@@ -47,11 +47,9 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    let cancelled = false;
-
     loadMapbox()
       .then((mapboxgl) => {
-        if (cancelled || !mapContainer.current) return;
+        if (!isMountedRef.current || !mapContainer.current) return;
 
         mapboxgl.accessToken = mapboxToken;
 
@@ -79,16 +77,16 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
           .addTo(map.current);
 
         map.current.on('load', () => {
+          if (!isMountedRef.current) return;
           setIsMapLoaded(true);
         });
       })
       .catch((err) => {
         log.error('Error loading Mapbox:', err);
-        if (!cancelled) setMapError(true);
+        if (isMountedRef.current) setMapError(true);
       });
 
     return () => {
-      cancelled = true;
       map.current?.remove();
       map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(false);
     };
