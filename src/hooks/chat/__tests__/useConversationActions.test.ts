@@ -20,6 +20,7 @@ const contactsUpdateCalls: unknown[] = [];
 
 let pinnedInsertResult: Record<string, unknown> = { error: null };
 let pinnedDeleteResult: Record<string, unknown> = { error: null };
+const pinnedDeleteCalls: Record<string, string>[] = [];
 let favoriteInsertResult: Record<string, unknown> = { error: null };
 let favoriteDeleteResult: Record<string, unknown> = { error: null };
 let snoozeInsertResult: Record<string, unknown> = { error: null };
@@ -43,7 +44,19 @@ vi.mock('@/integrations/supabase/client', () => ({
         return {
           select: vi.fn(() => resultChain({ data: [], error: null })),
           insert: vi.fn(() => resultChain(pinnedInsertResult)),
-          delete: vi.fn(() => resultChain(pinnedDeleteResult)),
+          delete: vi.fn(() => {
+            const chain: Record<string, unknown> = {};
+            const filters: Record<string, string> = {};
+            chain.eq = vi.fn((column: string, value: string) => {
+              filters[column] = value;
+              return chain;
+            });
+            chain.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) => {
+              pinnedDeleteCalls.push({ ...filters });
+              return Promise.resolve(pinnedDeleteResult).then(resolve, reject);
+            };
+            return chain;
+          }),
         };
       }
       if (table === 'favorite_contacts') {
@@ -122,6 +135,7 @@ describe('useConversationActions', () => {
     contactsUpdateCalls.length = 0;
     pinnedInsertResult = { error: null };
     pinnedDeleteResult = { error: null };
+    pinnedDeleteCalls.length = 0;
     favoriteInsertResult = { error: null };
     favoriteDeleteResult = { error: null };
     fakeFavoriteRows = [];
@@ -315,6 +329,9 @@ describe('useConversationActions', () => {
         await result.current.unpinConversation('contact-1');
       });
       expect(result.current.isPinned('contact-1')).toBe(false);
+      // Mock antigo ignorava os args do .eq() — passaria mesmo se o código
+      // filtrasse pelo profileId errado ou esquecesse um dos dois filtros.
+      expect(pinnedDeleteCalls).toEqual([{ contact_id: 'contact-1', pinned_by: PROFILE_ID }]);
     });
 
     it('favoriteContact e unfavoriteContact alternam favoriteIds', async () => {
