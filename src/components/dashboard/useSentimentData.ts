@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay, isWithinInterval, format } from 'date-fns';
@@ -49,26 +49,25 @@ export function useSentimentData(period: string) {
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [period]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const daysAgo = parseInt(period);
     const startDate = startOfDay(subDays(new Date(), daysAgo)).toISOString();
 
     try {
-      const { data: alertData, error: alertError } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .eq('action', 'sentiment_alert')
-        .gte('created_at', startDate)
-        .order('created_at', { ascending: false });
+      // E39: RPC dedicada (SECURITY DEFINER, guard is_admin_or_supervisor
+      // interno) em vez de ler audit_logs direto — a policy de SELECT da
+      // tabela é só-admin (has_role 'admin'), então um supervisor (staff,
+      // não-admin) via .from('audit_logs') direto recebia silenciosamente 0
+      // linhas aqui mesmo tendo acesso normal a esta aba. A RPC devolve o
+      // mesmo shape (id/entity_id/created_at/details), escopada só a
+      // action='sentiment_alert'. Cast local via 'any' até o types.ts
+      // (gerado, não sincronizado no self-hosted) conhecer essa RPC.
+      const { data: alertData, error: alertError } = await (supabase as any).rpc('dashboard_sentiment_alerts', { p_since: startDate }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
 
       if (alertError) throw alertError;
 
-      const formattedAlerts = (alertData || []).map(entry => ({
+      const formattedAlerts = ((alertData ?? []) as Array<{ id: string; entity_id: string | null; created_at: string; details: Record<string, unknown> | null }>).map(entry => ({
         id: entry.id,
         contactId: entry.entity_id,
         createdAt: entry.created_at,
@@ -98,7 +97,12 @@ export function useSentimentData(period: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/period-change padrão do dashboard, sem estado derivado de props para sincronizar.
+    void fetchData();
+  }, [fetchData]);
 
   const stats = useMemo(() => {
     const totalAnalyses = analyses.length;
