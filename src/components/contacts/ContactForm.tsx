@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Mail, Building, Briefcase, AlertCircle, CheckCircle2, Loader2, Info, Smile } from 'lucide-react';
+import { User, Phone, Mail, Building, Briefcase, AlertCircle, CheckCircle2, Loader2, Info, Smile, MapPin } from 'lucide-react';
 import { useExternalCargos } from '@/hooks/crm/useExternalCargos';
 import { useExternalEmpresas } from '@/hooks/crm/useExternalEmpresas';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,6 +21,12 @@ interface ContactFormValues {
   phone: string;
   email?: string | null;
   contact_type?: string | null;
+  postal_code?: string | null;
+  address?: string | null;
+  address_number?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface ContactFormProps {
@@ -46,6 +52,12 @@ function FieldStatus({ error, isTouched, value }: { error?: string | null; isTou
     </motion.div>
   );
   return null;
+}
+
+/** CEP é guardado só com dígitos; a máscara é de exibição. */
+function formatCep(digits: string): string {
+  const d = digits.replace(/\D/g, '').slice(0, 8);
+  return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
 
 export const ContactForm = React.memo(function ContactForm({ values, onChange, onSubmit, onCancel, submitLabel, isSubmitting = false }: ContactFormProps) {
@@ -180,6 +192,55 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             <FieldStatus error={null} isTouched={v.touched.email} value={!v.errors.email ? values.email : null} />
           </div>
           <AnimatePresence>{v.touched.email && v.errors.email && <FieldStatus error={v.errors.email} isTouched />}</AnimatePresence>
+        </div>
+
+        {/* Endereço */}
+        <div className="space-y-3 pt-2 border-t border-border/30">
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground/60">(opcional)</span>
+          </p>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="postal_code">CEP</Label>
+              <Input id="postal_code" placeholder="00000-000" inputMode="numeric"
+                value={formatCep(values.postal_code || '')}
+                onChange={(e) => onChange('postal_code', e.target.value.replace(/\D/g, '').slice(0, 8))}
+                maxLength={9} />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="address">Logradouro</Label>
+              <Input id="address" placeholder="Rua, avenida..." value={values.address || ''}
+                onChange={(e) => onChange('address', e.target.value)} maxLength={200} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="address_number">Número</Label>
+              <Input id="address_number" placeholder="123 ou S/N" value={values.address_number || ''}
+                onChange={(e) => onChange('address_number', e.target.value)} maxLength={20} />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="neighborhood">Bairro</Label>
+              <Input id="neighborhood" placeholder="Bairro" value={values.neighborhood || ''}
+                onChange={(e) => onChange('neighborhood', e.target.value)} maxLength={100} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="city">Cidade</Label>
+              <Input id="city" placeholder="Cidade" value={values.city || ''}
+                onChange={(e) => onChange('city', e.target.value)} maxLength={100} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="state">UF</Label>
+              <Input id="state" placeholder="SP" value={values.state || ''}
+                onChange={(e) => onChange('state', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+                maxLength={2} />
+            </div>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground flex items-center gap-1"><span className="text-destructive">*</span> Campos obrigatórios</p>
