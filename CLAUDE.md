@@ -24,7 +24,7 @@
 
 ### Regras de migration (self-explicativas, já validadas)
 
-1. `supabase_apply_migration` **está bugado** (coluna `executed_at` inexistente). Procedimento: DDL via `db_query` + `INSERT INTO supabase_migrations.schema_migrations(version,name,statements)` manual. Para apply em produção com dry-run + confirmação de hash SHA-256 (preferível a fazer manual pelo MCP), existe `.github/workflows/db-migrate.yml` (`workflow_dispatch` na `main`, `apply=false` primeiro para o dry-run, depois `apply=true` com `confirm_runtime_sha256` do dry-run anterior).
+1. `supabase_apply_migration` **está bugado** (coluna `executed_at` inexistente). Procedimento: DDL via `db_query` + `INSERT INTO supabase_migrations.schema_migrations(version,name,statements)` manual. Para apply em produção com dry-run + confirmação de hash SHA-256 (**preferível** a fazer manual pelo MCP), existe `.github/workflows/db-migrate.yml` (`workflow_dispatch` na `main`, `apply=false` primeiro para o dry-run, depois `apply=true` com `confirm_runtime_sha256` do dry-run anterior). Desde 2026-09-25 (PR #695) ele aceita **qualquer** migration: quando a version não tem contrato runtime dedicado no workflow, cai no contrato genérico (`scripts/db-audit/generic-migration-runtime.sql`), que não afirma nada sobre a semântica do alvo mas prova que o schema `public` não mudou entre o dry-run e o apply. Antes disso o fallback rejeitava toda migration nova, e foi por isso que o DDL passou a ir por MCP — origem dos drifts de setembro/2026. O job exige aprovação humana no environment `producao-ddl` (PR #687). Se outra sessão aplicar DDL entre o dry-run e o apply, o apply falha fechado: repetir o dry-run e usar o hash novo, nunca relaxar a comparação.
 2. Antes de registrar: `SELECT max(version)` e usar versão estritamente maior; `INSERT ... ON CONFLICT DO NOTHING` com `RETURNING`/SELECT de conferência (DO NOTHING já mascarou colisão duas vezes em 2026-09-16). `scripts/db-audit/register-migration.mjs <arquivo.sql> [--apply]` automatiza esse ritual — gera o bloco SQL pronto (dry-run) ou aplica e aborta sozinho se `RETURNING` vier vazio.
 3. Toda mudança de DDL = arquivo em `supabase/migrations/` + registro no banco + `supabase/schema-catalog.json` atualizado + `scripts/db-audit/known-violations.json` se o guard mudar.
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
@@ -84,7 +84,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-09-17. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-25. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -102,7 +102,70 @@ Estado dos achados após re-auditoria de 2026-09-17:
   congelaria todos os merges. O contrato vivo roda pós-merge (push na `main`), agendado (segunda
   06:00 UTC) e via `workflow_dispatch`; os required checks de PR seguem sendo os offline.
   Complemento E43 verificado em 2026-09-17: force-push e deleção da `main` bloqueados, strict
-  mode ligado, review obrigatório.
+  mode ligado.
+
+  **Correção de 2026-09-25:** a linha original afirmava "review obrigatório". A API não retorna
+  `required_pull_request_reviews` para a `main` e `list_rulesets` volta vazio — **não há** revisão
+  obrigatória, e o `.github/CODEOWNERS` é decorativo sem a regra ligada. Isso é deliberado: com
+  vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
+  `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
+  threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
+  deleção, strict mode e os 7 required checks da seção abaixo.
+
+## Auditoria de workflows (2026-09-25) — estado dos guardas
+
+Auditoria dos 12 workflows, da branch protection, dos secrets e dos environments. O que passou a
+valer (confira antes de propor mudança de CI, para não refazer o que já existe):
+
+**Required checks da `main`** (7, strict mode): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
+`🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
+sem bloquear merge.
+
+**Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
+protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
+workflows quando a PR #687 mergear: `producao-edge-functions` (deploy-functions.yml),
+`producao-ddl` (db-migrate.yml),
+`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com
+`branch_policy`, portanto sem exigir aprovação de ninguém). Disparar qualquer um desses
+workflows agora pausa em `Waiting` até alguém aprovar na aba Actions.
+
+**`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
+(está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
+secret `LEGACY_IMPORT_UNLOCK` igual ao project-ref — secret que **não existe**, logo todo dispatch
+falha fechado. Para reativar: regerar o export a partir do banco oficial, criar o secret, removê-lo
+após o import. O export continua sendo um snapshot legado e defasado.
+
+**CodeQL analisa os próprios workflows** (job `analyze-actions`, linguagem `actions`, check
+`🔬 CodeQL (actions)`). Deliberadamente um job separado: matrixar o job `analyze` renomearia o
+check required e travaria todos os merges.
+
+**`db-live-guard` deixou de falhar em silêncio.** Como ele não roda em PR (por design), o vermelho
+na `main` só aparecia para quem abrisse a aba Actions — foi assim que os drifts de 25/09 passaram.
+Agora abre, ou comenta em, uma issue única com label `db-live-guard`.
+
+**Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
+segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
+primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
+
+**Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`) e
+`can_approve_pull_request_reviews` desligado.
+
+**`types-sync`:** o PR de sincronização nasce com `GITHUB_TOKEN` porque `TYPES_SYNC_PR_TOKEN` não
+existe, e pela política anti-loop do GitHub os checks do Actions ficam em `action_required` — o PR
+nunca fica verde sozinho (o rollup engana: parece verde contando só apps de terceiros). O workflow
+passa a tentar liberar esses runs sozinho (PR #696); se o `GITHUB_TOKEN` não tiver esse poder — o
+que só o primeiro run real revela —, o Job Summary diz quais ficaram. O PAT segue sendo a saída definitiva.
+
+**Não mexer nestes, que parecem bugs e não são:**
+- `chromium-authenticated` fora do CI: `conversation.spec.ts` e `messaging.spec.ts` estão
+  inteiramente em `test.skip` (sem dados semeados) e o único spec ativo é o do Talk X, que o
+  usuário de teste (agente) não enxerga. Habilitar hoje = zero cobertura e `main` vermelha.
+- `vars.CRM_SYNC_WORKER_ENABLED` no crm-sync-worker: o schedule está comentado e a condição é
+  preparação deliberada para a reativação, não código morto.
+- `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
+  Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
+  casa com padrão de provider) não dispara alerta neste repo público.
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
