@@ -40,7 +40,11 @@ export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()
     // resolved/archived/waiting -- "conversas abertas" mentia assim que algum
     // contato deixasse de estar 'open'.
     const openConversations = contacts.filter(c => c.assigned_to && c.conversation_status === 'open').length;
-    const pendingConversations = contacts.filter(c => !c.assigned_to && c.queue_id).length;
+    // Mesmo gap, achado no caminho da auditoria de 24/09: sem excluir
+    // resolved/archived, "pendentes" ia contar contato já resolvido mas ainda
+    // sem assigned_to (ex.: devolvido à fila e fechado por outro fluxo).
+    // Semantica confirmada em useInboxFilters.ts (subTab 'waiting').
+    const pendingConversations = contacts.filter(c => !c.assigned_to && c.queue_id && c.conversation_status !== 'resolved' && c.conversation_status !== 'archived').length;
     const resolvedToday = kpi?.resolvedToday ?? 0;
 
     const queuesStats = ((queues || []) as unknown as QueueRow[]).map(queue => {
