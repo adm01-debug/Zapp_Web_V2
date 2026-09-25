@@ -54,7 +54,7 @@
 | 4 · Grid e lista de produtos | E41–E50 | card e linha iguais ao mock, badges reais, favoritos, paginação/ordenação | A |
 | 5 · Rail direito + responsivo | E51–E58 | banner, Resumo do catálogo (gráfico real), Ações rápidas, colapso < 1280 | A |
 | 6 · Modal de detalhes | E59–E68 | **ENCERRADA (escopo reduzido)** — ver nota abaixo | B |
-| 7 · Enviar Produto | E69–E80 | 2 colunas, fotos, modelo, preview WhatsApp, variação | C |
+| 7 · Enviar Produto | E69–E80 | **ENCERRADA** — ver nota abaixo | C |
 | 8 · Selecionar contato & envio real | E81–E90 | lista, resumo do envio, envio via fila atômica, log, toasts | D |
 | 9 · Chat, favoritos, QA, a11y, e2e, release | E91–E100 | dialog do chat unificado, aba Favoritos, PARIDADE, e2e, tag v1.0.0 | A–D |
 
@@ -1606,6 +1606,21 @@ etapa como escrita exigiria trabalho de backend fora do escopo deste plano.
 - [ ] fluxo completo
 - [ ] PR mergeado
 - [ ] branch F8
+
+> **STATUS: ENCERRADA (24/09/2026).** E69–E78 mergeados em `main` via PR [#583](https://github.com/adm01-debug/Zapp_Web_V2/pull/583) e [#614](https://github.com/adm01-debug/Zapp_Web_V2/pull/614), em produção. E79 (envio multi-produto) e E80 (QA formal com `docs/catalogo/PARIDADE.md`) não chegaram a rodar como descrito abaixo — no lugar disso, a pedido do dono do produto, rodou uma **auditoria exaustiva com 5 agentes especializados** (24–25/09) sobre o que já estava em produção (E59–E78), com teste real (não só leitura de código) de `SendProductDialog`, `ExternalProductManagement`, `ProductDetailDialog`, RLS/banco e produção (Vercel/Sentry).
+>
+> A auditoria confirmou **5 achados CRÍTICOS**, todos de comportamento real (não cosmético), corrigidos e verificados no mesmo dia via PR [#666](https://github.com/adm01-debug/Zapp_Web_V2/pull/666) (mergeada, deploy em produção confirmado, `tsc`/`vitest`/lint-ratchet verdes):
+> 1. Falha total no envio (`useSendProduct.ts`) fechava o dialog e apagava o rascunho como se tivesse dado certo.
+> 2. `readDraft()` sem validação de shape quebrava o componente com rascunho corrompido no `sessionStorage`.
+> 3. Dialog de envio reaproveitado entre produtos sem desmontar, vazando rascunho de um produto pro outro (faltava `key`).
+> 4. "Copiar link do produto" não incluía `send=1` — o deep link do E78 nunca tinha gatilho real em produção.
+> 5. `deepLinkVariant` ficava preso no state quando o produto do link não existia mais, vazando cor errada num envio depois.
+>
+> Ficaram como decisão pendente do dono do produto (fora do escopo frontend puro, PRs abertas sem merge automático):
+> - RLS de `catalog_send_events.SELECT` e `catalog_favorites` sem `TO authenticated` (achado MÉDIO do agente de banco) — migration pronta, não aplicada em produção.
+> - `useCatalogQuickSearch.ts` (busca ⌘K, E38) sem `send=1` no link — mesmo padrão do item 4 acima, aplicado à parte por ser uma feature já em produção há mais tempo.
+>
+> **Não entrou nesta auditoria** (fica como observação, sem ação): a11y do dialog de zoom e gaps de cobertura de teste em `ProductDetailDialog.tsx` (MÉDIO, sem bug de comportamento); tamanho do rascunho no `sessionStorage` sem limite; rotação de hash de chunk no deploy Vercel como risco operacional de cache.
 
 ---
 
