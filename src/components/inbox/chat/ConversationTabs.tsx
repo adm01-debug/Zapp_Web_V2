@@ -44,7 +44,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts }
       role="tablist"
       aria-label="Seções da conversa"
       data-testid="conversation-tabs"
-      className="flex items-center gap-1 px-3 h-12 border-b border-border bg-card overflow-x-auto scrollbar-thin shrink-0"
+      className="flex items-center gap-1 px-3 h-12 border-b border-border bg-inbox-panel overflow-x-auto scrollbar-thin shrink-0"
     >
       <LayoutGroup id="conversation-tabs">
         {TABS.map((tab) => {
