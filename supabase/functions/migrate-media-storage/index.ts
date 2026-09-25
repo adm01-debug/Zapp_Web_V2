@@ -223,7 +223,7 @@ async function uploadToStorage(
   ext: string,
 ): Promise<string | null> {
   const safeId = messageId.replace(/[^a-zA-Z0-9]/g, '');
-  const fileName = `${messageType}/${safeId}_${Date.now()}.${ext}`;
+  const fileName = `${messageType}/${safeId}.${ext}`;
   const bucket = messageType === 'audio' ? 'audio-messages' : 'whatsapp-media';
 
   const { error: uploadErr } = await supabase.storage
