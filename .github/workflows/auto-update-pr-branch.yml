@@ -30,9 +30,14 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          prs=$(gh pr list --repo "$REPO" --state open \
+          # Mesma protecao das leituras abaixo: sem o "if !", uma falha transitoria
+          # aqui (rede/rate-limit) mata o job antes de processar qualquer PR do lote.
+          if ! prs=$(gh pr list --repo "$REPO" --state open \
             --json number,autoMergeRequest,mergeStateStatus \
-            --jq '.[] | select(.autoMergeRequest != null and .mergeStateStatus == "BEHIND") | .number')
+            --jq '.[] | select(.autoMergeRequest != null and .mergeStateStatus == "BEHIND") | .number'); then
+            echo "Falha ao listar PRs via API; encerrando esta execucao (proxima run tenta de novo)"
+            exit 1
+          fi
           if [ -z "$prs" ]; then
             echo "Nenhum PR com auto-merge esta behind."
             exit 0
