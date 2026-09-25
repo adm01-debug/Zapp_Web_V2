@@ -65,8 +65,13 @@ export async function persistMediaToStorage(
     const respContentType = resp.headers.get('content-type') || contentTypeMap[messageType] || 'application/octet-stream';
     const ext = detectExtension(respContentType, extMap[messageType] || 'bin');
 
+    // Nome deterministico por mensagem (sem carimbo de hora): a Evolution reentrega
+    // o mesmo key.id em retry/reconexao, e com o timestamp cada reentrega gravava um
+    // arquivo NOVO — a mensagem era deduplicada no banco, o arquivo nao, e o objeto
+    // antigo ficava orfao. Deu 4.248 midias duplicadas (ate 10 copias) e 3,4 GB de
+    // lixo no bucket. Com o nome fixo, o upsert abaixo sobrescreve a mesma chave.
     const safeId = messageId.replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = `${messageType}/${safeId}_${Date.now()}.${ext}`;
+    const fileName = `${messageType}/${safeId}.${ext}`;
     const bucket = messageType === 'audio' ? 'audio-messages' : 'whatsapp-media';
 
     const { error: uploadErr } = await supabase.storage.from(bucket).upload(fileName, bytes, {
@@ -120,7 +125,7 @@ export async function persistBase64Media(
     else if (mimeType.includes('pdf')) ext = 'pdf';
 
     const safeId = messageId.replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = `${messageType}/${safeId}_${Date.now()}.${ext}`;
+    const fileName = `${messageType}/${safeId}.${ext}`;
     const bucket = messageType === 'audio' ? 'audio-messages' : 'whatsapp-media';
 
     const { error: uploadErr } = await supabase.storage.from(bucket).upload(fileName, bytes, {
