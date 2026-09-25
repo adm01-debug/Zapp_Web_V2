@@ -110,12 +110,24 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Limite de 10 fotos por envio' }));
   });
 
-  it('copiar link do produto chama o clipboard com a URL esperada (E75)', async () => {
+  it('copiar link do produto inclui send=1 pra abrir o dialog direto (E75/E78)', async () => {
     renderDialog({ product: mockProduct({ id: 'prod-xyz' }) });
     fireEvent.click(screen.getByText('Copiar link do produto'));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      `${window.location.origin}${window.location.pathname}?view=catalog&product=prod-xyz`
+      `${window.location.origin}${window.location.pathname}?view=catalog&product=prod-xyz&send=1`
+    );
+  });
+
+  it('copiar link com variante selecionada inclui o parametro variant (E78)', async () => {
+    const variants = [mockVariant({ id: 'v1', color_name: 'Azul', selected_thumbnail: 'https://x/azul.jpg' })];
+    renderDialog({ product: mockProduct({ id: 'prod-xyz', variants }) });
+
+    fireEvent.click(screen.getByRole('button', { name: /Variação Específica/i }));
+    fireEvent.click(screen.getByText('Copiar link do produto'));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}${window.location.pathname}?view=catalog&product=prod-xyz&send=1&variant=Azul`
     );
   });
 
@@ -234,5 +246,33 @@ describe('SendProductDialog — Fase 7 (E77-E78)', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
 
     expect(screen.getByRole('heading', { name: /Selecionar Contato/i })).toBeInTheDocument();
+  });
+
+  it('rascunho com shape invalido no sessionStorage e ignorado, sem travar o dialog (audit 24/09)', () => {
+    sessionStorage.setItem('catalog.sendDraft.draft-p8', JSON.stringify({ foo: 'bar', nada_a_ver: 123 }));
+
+    renderDialog({ product: mockProduct({ id: 'draft-p8' }) });
+
+    expect(screen.queryByText('Você tem um rascunho não enviado para este produto.')).not.toBeInTheDocument();
+  });
+
+  it('trocar de produto via key diferente remonta o dialog e nao vaza rascunho entre produtos (audit 24/09)', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { rerender } = render(
+      <QueryClientProvider client={client}>
+        <SendProductDialog key="prod-A" product={mockProduct({ id: 'prod-A' })} open onOpenChange={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Editar/i }));
+    fireEvent.change(screen.getByPlaceholderText('Escreva sua mensagem personalizada...'), { target: { value: 'Mensagem do produto A' } });
+
+    rerender(
+      <QueryClientProvider client={client}>
+        <SendProductDialog key="prod-B" product={mockProduct({ id: 'prod-B' })} open onOpenChange={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    expect(screen.queryByDisplayValue('Mensagem do produto A')).not.toBeInTheDocument();
   });
 });
