@@ -128,7 +128,7 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
 
         <div className="flex items-center justify-center gap-6 mt-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-primary" /><span>Dados Reais</span></div>
-          <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-secondary border-dashed border-t-2 border-secondary" /><span>Previsão IA</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-secondary border-dashed border-t-2 border-secondary" /><span>Média 7 dias</span></div>
           <div className="flex items-center gap-2"><div className="w-3 h-3 bg-secondary/20 rounded" /><span>Intervalo de Confiança</span></div>
           <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-destructive border-dashed border-t-2 border-destructive" /><span>Capacidade Máxima</span></div>
         </div>
