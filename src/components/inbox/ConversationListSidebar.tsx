@@ -62,6 +62,14 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
   );
   const activeResolveTarget = resolveTarget && visibleContactIds.has(resolveTarget) ? resolveTarget : null;
   const activeTransferTarget = transferTarget && visibleContactIds.has(transferTarget) ? transferTarget : null;
+  const activeTransferContact = useMemo(
+    () => (activeTransferTarget
+      ? (inboxFilters.filteredConversations ?? []).find(
+          (c: { contact: { id: string; queue_id?: string | null } }) => c.contact.id === activeTransferTarget
+        )
+      : null),
+    [activeTransferTarget, inboxFilters.filteredConversations]
+  );
 
   // Sync local search to inboxFilters
   const handleContactSearch = useCallback((value: string) => {
@@ -252,6 +260,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
           open={!!activeTransferTarget}
           onOpenChange={(open) => !open && setTransferTarget(null)}
           onTransfer={async (type, targetId) => { await handleListTransfer(type, targetId); setTransferTarget(null); }}
+          queueId={activeTransferContact?.contact?.queue_id ?? null}
         />
       )}
     </div>

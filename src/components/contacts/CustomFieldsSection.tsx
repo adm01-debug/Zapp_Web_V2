@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,20 +17,28 @@ export function CustomFieldsSection({ contactId }: CustomFieldsSectionProps) {
   const [newName, setNewName] = useState('');
   const [newValue, setNewValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const handleAdd = async () => {
     if (!newName.trim() || !newValue.trim()) return;
     setSaving(true);
     try {
       await addField(newName.trim(), newValue.trim());
-      setNewName('');
-      setNewValue('');
-      setIsAdding(false);
+      if (isMountedRef.current) {
+        setNewName('');
+        setNewValue('');
+        setIsAdding(false);
+      }
       toast.success('Campo adicionado');
     } catch {
       toast.error('Erro ao adicionar campo');
     } finally {
-      setSaving(false);
+      if (isMountedRef.current) setSaving(false);
     }
   };
 

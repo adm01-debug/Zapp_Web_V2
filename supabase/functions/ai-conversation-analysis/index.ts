@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
 import { AiConversationAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
@@ -29,12 +29,29 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
+    // Este client roda com service_role (bypassa RLS). Sem esta checagem,
+    // qualquer usuário autenticado poderia usar contactId de um contato que
+    // não enxerga para ler notas/sentimento/histórico (PII) — a RLS real de
+    // `contacts` é a fonte de verdade de visibilidade.
+    let visibleContactId: string | null = contactId ?? null;
+    if (visibleContactId) {
+      const authedClient = await createAuthedClient(req);
+      const { data: visibleContact } = await authedClient
+        .from('contacts')
+        .select('id')
+        .eq('id', visibleContactId)
+        .maybeSingle();
+      if (!visibleContact) {
+        visibleContactId = null;
+      }
+    }
+
     let contactContext = '';
-    if (contactId) {
+    if (visibleContactId) {
       const { data: contact } = await supabase
         .from('contacts')
         .select('name, company, tags, ai_priority, ai_sentiment, notes, contact_type')
-        .eq('id', contactId)
+        .eq('id', visibleContactId)
         .maybeSingle();
 
       if (contact) {
@@ -48,7 +65,7 @@ Deno.serve(async (req) => {
       const { data: prevAnalyses } = await supabase
         .from('conversation_analyses')
         .select('sentiment, sentiment_score, summary, urgency, created_at')
-        .eq('contact_id', contactId)
+        .eq('contact_id', visibleContactId)
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -212,11 +229,11 @@ Responda em português brasileiro.`;
 
     let analysisId: string | null = null;
 
-    if (contactId) {
+    if (visibleContactId) {
       const { data: insertedAnalysis, error: insertError } = await supabase
         .from('conversation_analyses')
         .insert({
-          contact_id: contactId,
+          contact_id: visibleContactId,
           department: analysisData.department,
           relationship_type: analysisData.relationshipType,
           summary: analysisData.summary,
@@ -235,7 +252,7 @@ Responda em português brasileiro.`;
 
       if (insertError) {
         log.warn("Failed to persist conversation analysis", {
-          contactId,
+          contactId: visibleContactId,
           error: insertError.message,
         });
       } else {
@@ -248,11 +265,11 @@ Responda em português brasileiro.`;
           ai_sentiment: analysisData.sentiment,
           ai_priority: analysisData.urgency === 'critica' ? 'urgent' : analysisData.urgency,
         })
-        .eq('id', contactId);
+        .eq('id', visibleContactId);
 
       if (updateError) {
         log.warn("Failed to update contact AI fields", {
-          contactId,
+          contactId: visibleContactId,
           error: updateError.message,
         });
       }

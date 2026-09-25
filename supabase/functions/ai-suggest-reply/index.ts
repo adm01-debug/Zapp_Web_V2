@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
@@ -49,11 +49,28 @@ Deno.serve(async (req) => {
         }`;
       }
 
-      if (contactId) {
+      // Este client roda com service_role (bypassa RLS). Sem esta checagem,
+      // qualquer usuário autenticado poderia usar contactId de um contato que
+      // não enxerga para ler notas/dados customizados (PII) — a RLS real de
+      // `contacts` é a fonte de verdade de visibilidade.
+      let visibleContactId: string | null = contactId ?? null;
+      if (visibleContactId) {
+        const authedClient = await createAuthedClient(req);
+        const { data: visibleContact } = await authedClient
+          .from('contacts')
+          .select('id')
+          .eq('id', visibleContactId)
+          .maybeSingle();
+        if (!visibleContact) {
+          visibleContactId = null;
+        }
+      }
+
+      if (visibleContactId) {
         const { data: notes } = await supabase
           .from('contact_notes')
           .select('content')
-          .eq('contact_id', contactId)
+          .eq('contact_id', visibleContactId)
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -64,7 +81,7 @@ Deno.serve(async (req) => {
         const { data: customFields } = await supabase
           .from('contact_custom_fields')
           .select('field_name, field_value')
-          .eq('contact_id', contactId);
+          .eq('contact_id', visibleContactId);
 
         if (customFields && customFields.length > 0) {
           knowledgeContext += `\n\nDADOS DO CONTATO:\n${customFields.map((f: { field_name: string; field_value: string | null }) => `${f.field_name}: ${f.field_value}`).join('\n')}`;
