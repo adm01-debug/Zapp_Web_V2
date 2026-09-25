@@ -161,6 +161,14 @@ jobs:
           NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
 
+      # Guarda o contrato runtime generico do db-migrate: se ele deixar de
+      # detectar alguma forma de DDL, um apply poderia ser autorizado sobre um
+      # schema alterado entre o dry-run e a aplicacao.
+      - name: Simular contrato runtime generico de migration
+        env:
+          GENERIC_RUNTIME_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/generic-migration-runtime.test.sh
+
       - name: Simular reconciliação segura do ledger
         env:
           LEDGER_RECONCILE_TEST_POSTGRES_IMAGE: postgres:17-alpine

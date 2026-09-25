@@ -486,8 +486,16 @@ jobs:
                 -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
               ;;
             *)
-              echo "::error::Migration sem contrato runtime permitido neste workflow."
-              exit 1
+              # Antes este fallback rejeitava a migration. Como cada contrato
+              # dedicado precisa ser escrito a mao aqui, toda migration nova caia
+              # nele: o DDL acabava aplicado por MCP, sem dry-run nem confirmacao
+              # de hash — causa dos drifts de setembro/2026. O contrato generico
+              # nao prova a semantica do alvo; prova que o schema public nao mudou
+              # entre o dry-run e o apply, que e a propriedade que autoriza a
+              # aplicacao. Ver o cabecalho de generic-migration-runtime.sql.
+              echo "Sem contrato dedicado para $TARGET_VERSION; usando o contrato runtime generico."
+              RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+                -f scripts/db-audit/generic-migration-runtime.sql)
               ;;
           esac
           printf '%s\n' "$RUNTIME"
@@ -1075,6 +1083,19 @@ jobs:
             targetOk = commonNotifications && (
               process.env.NEEDS_APPLY === 'true' ? beforeAtomicity : afterAtomicity
             );
+          } else if (proof.contract === 'generic') {
+            // Sem assercoes semanticas de proposito: o contrato generico prova
+            // integridade estrutural, e a autorizacao do apply continua vindo da
+            // comparacao do runtime_sha256 com o hash do dry-run, logo abaixo.
+            // Estes testes apenas rejeitam um payload truncado ou vazio.
+            targetOk = Number.isInteger(proof.table_count) && proof.table_count > 0
+              && Number.isInteger(proof.function_count) && proof.function_count >= 0
+              && Number.isInteger(proof.policy_count) && proof.policy_count >= 0
+              && Number.isInteger(proof.ledger_count) && proof.ledger_count > 0
+              && /^[a-f0-9]{64}$/.test(proof.structure_sha256 || '');
+            console.log('Contrato generico: estrutura de public em '
+              + String(proof.structure_sha256).slice(0, 12)
+              + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.');
           }
           const ok = common && targetOk;
           if (!ok) {
