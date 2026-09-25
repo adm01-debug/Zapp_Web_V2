@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { startOfDay, endOfDay } from 'date-fns';
-import { useDashboardStats, DashboardFilters } from '../dashboard/useDashboardStats';
+import { useDashboardStats, DashboardFilters, DashboardQueueBreakdown } from '../dashboard/useDashboardStats';
 import { useDashboardKpi } from '../dashboard/useDashboardKpi';
 import { useAgentPresenceMap } from '../crm/useAgentPresence';
 
@@ -24,7 +24,7 @@ const getDefaultFilters = (): DashboardFilters => ({
 
 export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()) => {
   const mergedFilters = { ...getDefaultFilters(), ...filters };
-  const { agents, contacts, queues, isLoading, error, refetch } = useDashboardStats(mergedFilters);
+  const { agents, counts, queues, isLoading, error, refetch } = useDashboardStats(mergedFilters);
   // Fonte única de "resolvidas hoje" e "tempo médio" (E16/E17, achados A4/A5):
   // conversation_closures/conversation_sla via useDashboardKpi, nunca mais a
   // heurística local (updated_at hoje && !assigned_to contava devolução à fila
@@ -33,28 +33,27 @@ export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()
   const presence = useAgentPresenceMap();
 
   const stats = useMemo(() => {
-    if (!agents || !contacts) return null;
+    if (!agents || !counts) return null;
 
-    // conversation_status === 'open' incluído (auditoria de 24/09, achado P1):
-    // antes contava qualquer contato com assigned_to, inclusive
-    // resolved/archived/waiting -- "conversas abertas" mentia assim que algum
-    // contato deixasse de estar 'open'.
-    const openConversations = contacts.filter(c => c.assigned_to && c.conversation_status === 'open').length;
-    // Mesmo gap, achado no caminho da auditoria de 24/09: sem excluir
-    // resolved/archived, "pendentes" ia contar contato já resolvido mas ainda
-    // sem assigned_to (ex.: devolvido à fila e fechado por outro fluxo).
-    // Semantica confirmada em useInboxFilters.ts (subTab 'waiting').
-    const pendingConversations = contacts.filter(c => !c.assigned_to && c.queue_id && c.conversation_status !== 'resolved' && c.conversation_status !== 'archived').length;
+    // E24/E25: contagens vêm prontas da RPC dashboard_contact_counts, no
+    // lugar do filter().length client-side sobre o array cru de `contacts`
+    // (truncado pelo cap silencioso de 1000 linhas do PostgREST — achado
+    // A11 — com 3.095+ contatos reais). Mesma semântica de antes:
+    // conversation_status === 'open'/'não resolvido' já aplicada na RPC.
+    const openConversations = counts.open;
+    const pendingConversations = counts.pending;
     const resolvedToday = kpi?.resolvedToday ?? 0;
 
     const queuesStats = ((queues || []) as unknown as QueueRow[]).map(queue => {
       const members = queue.queue_members || [];
       const onlineMembers = members.filter(m => m.is_active && m.profiles?.is_active && presence[m.profiles.user_id] === 'online').length;
+      // waitingCount real via breakdown por fila da RPC (achado A10 — antes hardcoded 0).
+      const breakdown = counts.queues.find(q => q.queueId === queue.id);
       return {
         id: queue.id,
         name: queue.name,
         color: queue.color,
-        waitingCount: 0,
+        waitingCount: breakdown?.waiting ?? 0,
         onlineAgents: onlineMembers,
         totalAgents: members.length,
       };
@@ -64,18 +63,21 @@ export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()
       openConversations,
       pendingConversations,
       resolvedToday,
-      totalConversations: contacts.length,
+      totalConversations: counts.total,
       onlineAgents: agents.onlineAgents,
       totalAgents: agents.totalAgents,
       avgResponseTime: kpi?.avgResponseToday ?? null,
       queuesStats,
       recentActivity: [],
     };
-  }, [agents, contacts, queues, kpi, presence]);
+  }, [agents, counts, queues, kpi, presence]);
 
-  // contacts/queues crus expostos para useQueueHealth (Fase 6) — mesmos dados já
-  // carregados por useDashboardStats, sem query nova.
-  return { stats, contacts, queues, isLoading, error, refetch };
+  // breakdown por fila exposto para useQueueHealth (E24/E25) — mesma RPC já
+  // carregada por useDashboardStats, sem query nova.
+  const queueBreakdown: DashboardQueueBreakdown[] = counts?.queues ?? [];
+  const myActiveConversations = counts?.myActive ?? 0;
+
+  return { stats, queueBreakdown, myActiveConversations, queues, isLoading, error, refetch };
 };
 
 export const formatResponseTime = (seconds: number | null): string => {
