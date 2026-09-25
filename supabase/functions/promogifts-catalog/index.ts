@@ -8,7 +8,7 @@ const jsonRes = (body: unknown, status = 200, req?: Request) =>
     headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json" },
   });
 
-// ─── Input Schemas ───────────────────────────────────────────────────────
+// ─── Input Schemas ────────────────────────────────────────────
 const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
 
 /**
@@ -20,7 +20,7 @@ const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "
  * e a versão sem acento produzem lexemas diferentes.
  */
 function stripDiacritics(input: string): string {
-  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return input.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 // E36-2: color/material aceitam 1 valor (compat com chamadores antigos)
