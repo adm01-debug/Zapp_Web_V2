@@ -12,9 +12,9 @@ function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const
 }
 
 describe('ConversationTabs', () => {
-  it('renderiza as 8 abas do painel central', () => {
+  it('renderiza as 9 abas do painel central', () => {
     setup();
-    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history'].forEach((id) => {
+    ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history', 'reminders'].forEach((id) => {
       expect(screen.getByTestId(`conversation-tab-${id}`)).toBeInTheDocument();
     });
   });
@@ -56,9 +56,9 @@ describe('ConversationTabs', () => {
     expect(screen.queryByTestId('conversation-tab-count-files')).not.toBeInTheDocument();
   });
 
-  it('Chat, IA, CRM e Histórico nunca renderizam badge', () => {
+  it('Chat, IA, CRM, Histórico e Lembretes nunca renderizam badge', () => {
     setup({ tasksOpen: 9, notesTotal: 9, filesTotal: 9 });
-    ['chat', 'ia', 'crm', 'history'].forEach((id) => {
+    ['chat', 'ia', 'crm', 'history', 'reminders'].forEach((id) => {
       expect(screen.queryByTestId(`conversation-tab-count-${id}`)).not.toBeInTheDocument();
     });
   });

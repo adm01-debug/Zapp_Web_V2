@@ -1,12 +1,12 @@
 import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
 import {
-  MessageSquare, Sparkles, Compass, ShoppingBag, CheckSquare, FileText, Paperclip, History,
+  MessageSquare, Sparkles, Compass, ShoppingBag, CheckSquare, FileText, Paperclip, History, Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
-export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history';
+export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history' | 'reminders';
 
 interface TabDef {
   id: ConversationTab;
@@ -25,6 +25,7 @@ const TABS: TabDef[] = [
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },
   { id: 'files', label: 'Arquivos', icon: Paperclip, count: (c) => c.filesTotal },
   { id: 'history', label: 'Histórico', icon: History },
+  { id: 'reminders', label: 'Lembretes', icon: Bell },
 ];
 
 interface ConversationTabsProps {
