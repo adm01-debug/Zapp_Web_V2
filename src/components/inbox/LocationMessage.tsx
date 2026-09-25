@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Navigation, ExternalLink, Clock, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,13 @@ interface LocationMessageDisplayProps {
 }
 
 export function LocationMessageDisplay({ location, isSent }: LocationMessageDisplayProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
+  // Callback ref com estado, e nao useRef: se este balao um dia renderizar dentro de algo que
+  // monta os filhos num render posterior (Presence/Tabs, como o picker em #688), o useRef
+  // deixaria o effect do mapa rodar com o container ainda null e nunca mais reexecutar —
+  // mesmo bug do picker, so que aqui ainda nao se manifestou porque o container nasce no
+  // mesmo render do componente. Estado garante que a chegada do container reexecuta o effect.
+  const [mapNode, setMapNode] = useState<HTMLDivElement | null>(null);
+  const mapContainer = useCallback((node: HTMLDivElement | null) => { setMapNode(node); }, []);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
@@ -50,7 +56,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   }, [attempt]);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapNode || !mapboxToken) return;
     let cancelled = false;
     let loaded = false;
     // Sem `load` nem `error` no prazo: vira erro com retry em vez de spinner eterno.
@@ -62,12 +68,12 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
 
     loadMapbox()
       .then((mapboxgl) => {
-        if (cancelled || !isMountedRef.current || !mapContainer.current) return;
+        if (cancelled || !isMountedRef.current) return;
 
         mapboxgl.accessToken = mapboxToken;
 
         map.current = new mapboxgl.Map({
-          container: mapContainer.current,
+          container: mapNode,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: [location.longitude, location.latitude],
           zoom: 15,
@@ -118,7 +124,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
       map.current?.remove();
       map.current = null; marker.current = null; setIsMapLoaded(false); setMapError(null);
     };
-  }, [mapboxToken, location.latitude, location.longitude, location.isLive, attempt]);
+  }, [mapNode, mapboxToken, location.latitude, location.longitude, location.isLive, attempt]);
 
   // Mensagem recebida só com coordenadas (WhatsApp não manda endereço ao compartilhar a posição
   // atual): resolve o endereço pelo Mapbox. Sem token ou sem resposta, segue só com as coordenadas.
