@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
 import { suggestPlaces, retrievePlace } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
 import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
@@ -23,6 +24,14 @@ export interface UseAddressAutocompleteResult {
   retrievingId: string | null;
   /** Chama `retrievePlace()` pela sugestão no índice, devolve a coordenada e encerra a sessão. */
   select: (index: number) => Promise<GeoSearchPlace | null>;
+  /**
+   * ↓/↑/Home/End movem `highlightedIndex`; `Enter` com item destacado chama `select()`; `Esc`
+   * limpa. Sem item destacado, `Enter` não faz nada aqui — o hook não decide o fallback para a
+   * busca antiga (`/forward`); isso é decisão de quem usa (Fase 3).
+   */
+  onKeyDown: (event: KeyboardEvent) => void;
+  /** Limpa query, sugestões e destaque — usado pelo `Esc` e por quem usa o hook. */
+  clear: () => void;
 }
 
 interface State {
@@ -50,7 +59,9 @@ type Action =
   | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind }
   | { type: 'RETRIEVE_START'; id: string }
   | { type: 'RETRIEVE_END' }
-  | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind };
+  | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind }
+  | { type: 'HIGHLIGHT'; index: number }
+  | { type: 'CLEAR' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -71,6 +82,10 @@ function reducer(state: State, action: Action): State {
     case 'RETRIEVE_ERROR':
       // Falha do /retrieve nunca fecha a lista — só marca a causa; as sugestões continuam de pé.
       return { ...state, retrievingId: null, error: action.kind };
+    case 'HIGHLIGHT':
+      return { ...state, highlightedIndex: action.index };
+    case 'CLEAR':
+      return { ...initialState };
     default:
       return state;
   }
@@ -145,6 +160,49 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     return place;
   }, [state.suggestions, token]);
 
+  const clear = useCallback(() => {
+    abortRef.current?.abort();
+    dispatch({ type: 'CLEAR' });
+  }, []);
+
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    const lastIndex = state.suggestions.length - 1;
+    switch (event.key) {
+      case 'ArrowDown':
+        if (lastIndex < 0) return;
+        event.preventDefault();
+        dispatch({ type: 'HIGHLIGHT', index: Math.min(state.highlightedIndex + 1, lastIndex) });
+        return;
+      case 'ArrowUp':
+        if (lastIndex < 0) return;
+        event.preventDefault();
+        dispatch({ type: 'HIGHLIGHT', index: Math.max(state.highlightedIndex - 1, 0) });
+        return;
+      case 'Home':
+        if (lastIndex < 0) return;
+        event.preventDefault();
+        dispatch({ type: 'HIGHLIGHT', index: 0 });
+        return;
+      case 'End':
+        if (lastIndex < 0) return;
+        event.preventDefault();
+        dispatch({ type: 'HIGHLIGHT', index: lastIndex });
+        return;
+      case 'Enter':
+        // Sem item destacado o hook não decide nada — quem usa cai na busca antiga (/forward).
+        if (state.highlightedIndex < 0 || state.highlightedIndex > lastIndex) return;
+        event.preventDefault();
+        void select(state.highlightedIndex);
+        return;
+      case 'Escape':
+        event.preventDefault();
+        clear();
+        return;
+      default:
+        return;
+    }
+  }, [state.suggestions.length, state.highlightedIndex, select, clear]);
+
   return {
     query: state.query,
     setQuery,
@@ -154,5 +212,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     highlightedIndex: state.highlightedIndex,
     retrievingId: state.retrievingId,
     select,
+    onKeyDown,
+    clear,
   };
 }
