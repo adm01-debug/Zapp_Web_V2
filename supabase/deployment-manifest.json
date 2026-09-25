@@ -243,8 +243,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 5620,
-      "sha256": "c05e0a74fa30b0f75b2af33133d1c97689de0a851fc97fcf9dd9e8188bf3b957"
+      "bytes": 8115,
+      "sha256": "0ee9862691d79318e75a9f563d0c41e2edb8f763b59b282b8f275df69ed75026"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -732,11 +732,13 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bb81e5702823d16d714190d2642047225e823085ecf208f9c991169f16467ad7",
+      "source_sha256": "efb3d8671d7fb4ce50a2f45d3b4b715fb0dc187c2dbd95995d9e301a8460e9f0",
       "source_files": [
+        "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/notification-events.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/connection-health-check/index.ts"
       ]
@@ -1320,5 +1322,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2fe40d74981628d65b4c793478c1b2d15e4c20c00f1da18f27f6e23043d206d9"
+  "manifest_sha256": "8f4cbbd579ec657ecc0fe11494944a91f9614959ca8e91520d0a0ec71673c8ca"
 }
