@@ -78,7 +78,11 @@ export function DashboardView() {
   // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard();
-  const { data: kpi } = useDashboardKpi();
+  // E31: fila/agente do filtro do topo propagados para a RPC dashboard_kpi —
+  // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
+  // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
+  // filters.agentId trouxer.
+  const { data: kpi } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -157,7 +161,7 @@ export function DashboardView() {
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
           </div>
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
-            <VolumeChart />
+            <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
             <NowPanel
               realtime={realtime}
               pendingConversations={stats.pendingConversations}
