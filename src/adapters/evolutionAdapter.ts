@@ -149,6 +149,13 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     avatar_url: null,
     tags: null,
     company: null,
+    // Contato derivado do WhatsApp nao traz endereco: so existe no cadastro manual.
+    postal_code: null,
+    address: null,
+    address_number: null,
+    neighborhood: null,
+    city: null,
+    state: null,
     job_title: null,
     assigned_to: null,
     queue_id: null,

@@ -3,6 +3,9 @@ import {
   reverseGeocodeAddress,
   reverseGeocodePlace,
   searchPlaces,
+  suggestPlaces,
+  retrievePlace,
+  clearSuggestCacheForSession,
   resetReverseGeocodeCacheForTests,
   coordinateKey,
 } from '../mapboxGeocode';
@@ -262,5 +265,135 @@ describe('searchPlaces — estabelecimento por nome (caso XBZ Brindes)', () => {
     fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
     await expect(searchPlaces('XBZ BRINDES', 'pk')).resolves.toEqual({ ok: false, kind: 'network' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('suggestPlaces', () => {
+  const fetchMock = vi.fn();
+  // Shape real verificado no Apêndice A do plano (q=XBZ BRINDES): sem coordenada, só o suficiente
+  // pra lista de sugestões.
+  const suggestBody = (suggestions: unknown[]) => ({ ok: true, json: async () => ({ suggestions }) });
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('"xbz" devolve 2 sugestões, sem lat/lng no tipo', async () => {
+    fetchMock.mockResolvedValueOnce(suggestBody([
+      { name: 'XBZ Presentes', full_address: 'R. Amigo, São Paulo, Brasil', feature_type: 'poi', mapbox_id: 'id-1' },
+      { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo, 01524, Brasil', feature_type: 'poi', mapbox_id: 'id-2' },
+    ]));
+    const r = await suggestPlaces('xbz', 'pk', { session: 's1' });
+    expect(r).toEqual({
+      ok: true,
+      suggestions: [
+        { id: 'id-1', name: 'XBZ Presentes', address: 'R. Amigo, São Paulo, Brasil', kind: 'poi' },
+        { id: 'id-2', name: 'XBZ Brindes', address: 'R. da Independência, São Paulo, 01524, Brasil', kind: 'poi' },
+      ],
+    });
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('/search/searchbox/v1/suggest');
+    expect(url).toContain('q=xbz');
+    expect(url).toContain('session_token=s1');
+    expect(url).toContain('language=pt');
+    expect(url).toContain('country=br');
+    expect(url).toContain('limit=5');
+  });
+
+  it('feature_type desconhecido vira "other" e distance passa quando vier', async () => {
+    fetchMock.mockResolvedValueOnce(suggestBody([
+      { name: 'Rodonaves Guarulhos', full_address: 'Guarulhos, SP', feature_type: 'address', mapbox_id: 'id-3', distance: 1200 },
+      { name: 'Bairro X', full_address: 'X, SP', feature_type: 'neighborhood', mapbox_id: 'id-4' },
+    ]));
+    const r = await suggestPlaces('rodonaves', 'pk', { session: 's2' });
+    expect(r).toEqual({
+      ok: true,
+      suggestions: [
+        { id: 'id-3', name: 'Rodonaves Guarulhos', address: 'Guarulhos, SP', kind: 'address', distanceMeters: 1200 },
+        { id: 'id-4', name: 'Bairro X', address: 'X, SP', kind: 'other' },
+      ],
+    });
+  });
+
+  it('429 vira rate_limited (não é falha de rota, não cai em fallback aqui)', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 429 });
+    await expect(suggestPlaces('a', 'pk', { session: 's3' })).resolves.toEqual({ ok: false, kind: 'rate_limited' });
+  });
+
+  it('falha de rede devolve a causa pra quem chama decidir o fallback pro /forward', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(suggestPlaces('a', 'pk', { session: 's4' })).resolves.toEqual({ ok: false, kind: 'network' });
+  });
+
+  it('consulta vazia não vai à rede', async () => {
+    await expect(suggestPlaces('   ', 'pk', { session: 's5' })).resolves.toEqual({ ok: false, kind: 'not_found' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('cache: mesma consulta 2x na mesma sessão faz 1 request só', async () => {
+    fetchMock.mockResolvedValue(suggestBody([{ name: 'XBZ Brindes', full_address: 'SP', feature_type: 'poi', mapbox_id: 'id-1' }]));
+    await suggestPlaces('xbz brindes', 'pk', { session: 's6' });
+    await suggestPlaces('XBZ BRINDES', 'pk', { session: 's6' }); // mesmo termo, caixa diferente
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // sessão diferente não reaproveita o cache de outra.
+    await suggestPlaces('xbz brindes', 'pk', { session: 's7' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('clearSuggestCacheForSession limpa só a sessão encerrada, a próxima busca vai à rede', async () => {
+    fetchMock.mockResolvedValue(suggestBody([{ name: 'XBZ Brindes', full_address: 'SP', feature_type: 'poi', mapbox_id: 'id-1' }]));
+    await suggestPlaces('xbz', 'pk', { session: 's8' });
+    clearSuggestCacheForSession('s8');
+    await suggestPlaces('xbz', 'pk', { session: 's8' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('retrievePlace', () => {
+  const fetchMock = vi.fn();
+  // Shape real do Apêndice A: coordinates em [lng, lat].
+  const retrieveBody = (lng: number, lat: number, name: string, address: string) => ({
+    ok: true,
+    json: async () => ({ features: [{ geometry: { coordinates: [lng, lat] }, properties: { name, full_address: address } }] }),
+  });
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('devolve a coordenada correta do shape real (lng,lat → lat,lng)', async () => {
+    fetchMock.mockResolvedValueOnce(retrieveBody(-46.61563441, -23.56672978, 'XBZ Brindes', 'R. da Independência, São Paulo, 01524, Brazil'));
+    await expect(retrievePlace('dXJuOm1ieHBvaTpiZW...', 'pk', { session: 's1' })).resolves.toEqual({
+      lat: -23.56672978,
+      lng: -46.61563441,
+      name: 'XBZ Brindes',
+      address: 'R. da Independência, São Paulo, 01524, Brazil',
+    });
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('/search/searchbox/v1/retrieve/dXJuOm1ieHBvaTpiZW...');
+    expect(url).toContain('session_token=s1');
+  });
+
+  it('coordenada ausente ou inválida vira null', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ features: [{ properties: { name: 'X' } }] }) });
+    await expect(retrievePlace('id', 'pk', { session: 's1' })).resolves.toBeNull();
+
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ features: [] }) });
+    await expect(retrievePlace('id', 'pk', { session: 's1' })).resolves.toBeNull();
+  });
+
+  it('request falho vira null (quem chama decide o fallback pro /forward)', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(retrievePlace('id', 'pk', { session: 's1' })).resolves.toBeNull();
   });
 });
