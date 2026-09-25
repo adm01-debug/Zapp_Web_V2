@@ -22,7 +22,9 @@ export function useCatalogQuickSearch() {
           p.sale_price ? 'R$ ' + Number(p.sale_price).toFixed(2).replace('.', ',') : null,
         ].filter(Boolean).join(' · ') || undefined,
         category: 'search' as const,
-        href: '/?view=catalog&product=' + String(p.id),
+        // Audit 24/09 -- send=1 abre o dialog de envio direto, mesmo padrao do
+        // "Copiar link do produto" em SendProductDialog.tsx (E78).
+        href: '/?view=catalog&product=' + String(p.id) + '&send=1',
         keywords: [p.sku, p.brand].filter(Boolean) as string[],
       }));
     } catch {
