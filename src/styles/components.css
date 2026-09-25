@@ -1,1 +1,405 @@
-null
+/* ===== COMPONENT STYLES — Cards, hover effects, chat, gamification ===== */
+
+/* ===== CARD STYLES ===== */
+.card-base { @apply bg-card rounded-xl border border-border p-6 transition-all duration-200; }
+.card-elevated { @apply bg-card-elevated rounded-xl border border-border p-6 transition-all duration-200; box-shadow: var(--shadow-sm); }
+.card-elevated:hover { box-shadow: var(--shadow-md); @apply border-primary/20; transform: translateY(-1px); }
+
+.card-interactive {
+  @apply relative bg-card rounded-xl border border-border p-6 cursor-pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-interactive:hover { @apply border-primary/30 bg-accent/30; box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card-interactive:active { transform: translateY(0) scale(0.995); transition-duration: 0.1s; }
+
+.card-glow-purple { @apply relative bg-card rounded-xl border border-primary/20 p-6 transition-all duration-200; box-shadow: var(--shadow-sm); }
+.card-glow-purple:hover { box-shadow: var(--shadow-glow-primary); @apply border-primary/40; transform: translateY(-2px); }
+
+.card-glow-gradient { @apply relative bg-card rounded-xl border border-primary/15 p-6 transition-all duration-200; box-shadow: var(--shadow-sm); }
+.card-glow-gradient:hover { box-shadow: var(--shadow-glow-primary); transform: translateY(-1px); }
+
+.glass-card { @apply rounded-xl p-6 border transition-all duration-200; background: hsl(var(--glass-bg)); border-color: hsl(var(--glass-border)); }
+.glass-card:hover { border-color: hsl(var(--primary) / 0.3); box-shadow: 0 8px 32px hsl(var(--primary) / 0.1); }
+
+.glass-panel { @apply border transition-all duration-200; background: hsl(var(--glass-bg)); border-color: hsl(var(--glass-border)); box-shadow: var(--shadow-lg); }
+
+.stat-card { @apply bg-card rounded-xl border border-border p-4; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.stat-card:hover { @apply border-primary/25; box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+.card-subtle { @apply bg-muted/30 border-transparent; }
+.card-prominent { @apply bg-card-elevated border-primary/10; box-shadow: var(--shadow-md); }
+.card-featured { @apply bg-card-elevated border-primary/20 ring-1 ring-primary/10; box-shadow: var(--shadow-lg); }
+
+/* Shimmer highlight */
+.card-shimmer { @apply relative overflow-hidden; }
+.card-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, hsl(var(--primary) / 0.04) 45%, hsl(var(--primary) / 0.08) 50%, hsl(var(--primary) / 0.04) 55%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ===== HOVER EFFECTS ===== */
+.hover-lift { @apply transition-all duration-200; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.hover-lift-sm { @apply transition-all duration-200; }
+.hover-lift-sm:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.hover-lift-lg { @apply transition-all duration-200; }
+.hover-lift-lg:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+.hover-scale { @apply transition-transform duration-200; }
+.hover-scale:hover { transform: scale(1.03); }
+.hover-scale-sm { @apply transition-transform duration-200; }
+.hover-scale-sm:hover { transform: scale(1.01); }
+
+.hover-glow { @apply transition-shadow duration-200; }
+.hover-glow:hover { box-shadow: var(--shadow-glow-primary); }
+.hover-glow-primary { @apply transition-shadow duration-200; }
+.hover-glow-primary:hover { box-shadow: var(--shadow-glow-primary); }
+.hover-glow-success { @apply transition-shadow duration-200; }
+.hover-glow-success:hover { box-shadow: var(--shadow-glow-success); }
+
+.press-scale { @apply transition-transform duration-100; }
+.press-scale:active { transform: scale(0.97); }
+.press-scale-sm { @apply transition-transform duration-100; }
+.press-scale-sm:active { transform: scale(0.98); }
+
+/* ===== RANK BADGES ===== */
+.rank-gold { @apply relative; background: linear-gradient(135deg, hsl(45 93% 47%), hsl(38 92% 50%)); color: hsl(var(--rank-gold-foreground)); }
+.rank-silver { @apply relative; background: linear-gradient(135deg, hsl(220 15% 75%), hsl(220 13% 65%)); color: hsl(var(--rank-silver-foreground)); }
+.rank-bronze { @apply relative; background: linear-gradient(135deg, hsl(30 55% 55%), hsl(25 50% 45%)); color: hsl(var(--rank-bronze-foreground)); }
+
+/* ===== CONVERSATION ITEM ===== */
+.conversation-item {
+  @apply flex items-center gap-3 p-3 rounded-xl cursor-pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  @apply hover:bg-accent/60;
+}
+.conversation-item.active {
+  @apply bg-primary/10 border-l-[3px] border-primary;
+  box-shadow: inset 4px 0 8px -4px hsl(var(--primary) / 0.15);
+}
+
+/* ConversationRow (sidebar da inbox) selecionada — fundo escuro igual ao
+   card fixado (bg-muted/30) + arco luminoso girando na borda (efeito
+   inspirado no hover-border-gradient da Aceternity UI), via duas camadas
+   de background: o fill fica preso ao padding-box, o conic-gradient ao
+   border-box, entao só aparece no anel de 1px da borda. */
+.conversation-row-selected {
+  border-color: transparent;
+  background:
+    linear-gradient(hsl(var(--muted) / 0.35), hsl(var(--muted) / 0.35)) padding-box,
+    conic-gradient(
+      from var(--conv-border-angle, 0deg),
+      transparent 0deg,
+      hsl(var(--primary) / 0.15) 20deg,
+      hsl(var(--primary)) 45deg,
+      hsl(var(--primary) / 0.15) 70deg,
+      transparent 100deg,
+      transparent 360deg
+    ) border-box;
+  animation: conv-border-spin 3.5s linear infinite;
+}
+
+/* ===== MESSAGE BUBBLES ===== */
+.message-bubble { @apply max-w-[70%] px-4 py-2 rounded-2xl; }
+.message-bubble.sent { @apply bg-[hsl(var(--chat-bubble-sent))] text-[hsl(var(--chat-bubble-sent-foreground))] rounded-br-md; }
+.message-bubble.received { @apply bg-[hsl(var(--chat-bubble-received))] text-[hsl(var(--chat-bubble-received-foreground))] rounded-bl-md; }
+
+/* ===== STATUS DOT ===== */
+.status-dot { @apply w-2.5 h-2.5 rounded-full; }
+.status-dot.online { @apply bg-[hsl(var(--online))]; }
+.status-dot.away { @apply bg-[hsl(var(--away))]; }
+.status-dot.offline { @apply bg-[hsl(var(--offline))]; }
+
+/* ===== UNREAD BADGE ===== */
+.unread-badge { @apply min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full text-xs font-bold bg-destructive text-destructive-foreground; }
+
+/* ===== GLASS MORPHISM ===== */
+.glass { @apply border transition-all duration-200; background: hsl(var(--glass-bg)); border-color: hsl(var(--glass-border)); }
+.glass-strong { @apply border transition-all duration-200; background: hsl(var(--glass-bg)); border-color: hsl(var(--glass-border)); }
+
+/* ===== GAMIFICATION ANIMATIONS ===== */
+.animate-xp-shimmer {
+  background: linear-gradient(90deg, hsl(var(--xp)) 0%, hsl(var(--xp) / 0.7) 50%, hsl(var(--xp)) 100%);
+  background-size: 200% 100%;
+  animation: xp-shimmer 2s ease-in-out infinite;
+}
+.animate-streak-fire { animation: streak-fire 0.8s ease-in-out infinite; }
+.animate-coin-shine { animation: coin-shine 2s ease-in-out infinite; }
+.animate-level-up { animation: level-up 0.6s ease-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ===== EMAIL HTML RENDER (run h538172) =====
+   Contém o layout de e-mails HTML dentro do bubble do chat:
+   tabelas de 600px+, imagens e words longas não podem estourar o container. */
+.email-html-body {
+  color-scheme: light;
+  color: #111;
+  background: #fff;
+  line-height: 1.5;
+  white-space: normal;
+  display: flow-root;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.email-html-body * { max-width: 100% !important; overflow-wrap: anywhere; }
+.email-html-body img { max-width: 100% !important; height: auto; }
+.email-html-body table { max-width: 100% !important; table-layout: fixed; border-collapse: collapse; }
+.email-html-body td, .email-html-body th { overflow-wrap: anywhere; }
+/* Neutraliza tipografia global (clamp) do app para o conteúdo do e-mail.
+   Nota: all:revert-layer revertia as próprias props — por isso as props
+   explícitas vêm DEPOIS dele. */
+.email-html-body p, .email-html-body h1, .email-html-body h2, .email-html-body h3,
+.email-html-body h4, .email-html-body h5, .email-html-body h6,
+.email-html-body small, .email-html-body pre, .email-html-body code {
+  all: revert-layer;
+  font-size: revert;
+  line-height: 1.5;
+  margin: 0.5em 0;
+}
+.email-html-body a { text-decoration: underline; }
+/* Wrapper com scroll horizontal quando o conteúdo insiste em ser mais largo */
+.email-html-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Preview colapsado no bubble com fade para o botão "Ver e-mail completo" */
+.email-html-collapsed { max-height: 280px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); }
+
+/* ================================================================ */
+/* Talk X / Campanhas — Utilitários visuais (E11)                   */
+/* ================================================================ */
+
+/* ── Tiles de ícone ── */
+.talkx-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+/* Gradientes por cor (sem tokens de fundo novos — só accent/status) */
+.talkx-tile--blue   { background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow))); box-shadow: var(--glow-primary-sm); }
+.talkx-tile--green  { background: linear-gradient(135deg, hsl(var(--success)), hsl(142 75% 55%)); }
+.talkx-tile--violet { background: linear-gradient(135deg, hsl(262 83% 58%), hsl(270 80% 65%)); }
+.talkx-tile--amber  { background: linear-gradient(135deg, hsl(var(--warning)), hsl(45 95% 65%)); }
+.talkx-tile--red    { background: linear-gradient(135deg, hsl(var(--destructive)), hsl(358 95% 72%)); }
+
+/* Variante soft (linhas de tabela sem mídia) */
+.talkx-tile--soft-blue   { background: hsl(var(--primary) / 0.12); }
+.talkx-tile--soft-green  { background: hsl(var(--success) / 0.12); }
+.talkx-tile--soft-violet { background: hsl(262 83% 58% / 0.12); }
+.talkx-tile--soft-amber  { background: hsl(var(--warning) / 0.12); }
+.talkx-tile--soft-red    { background: hsl(var(--destructive) / 0.12); }
+
+/* radius menor para tamanhos pequenos (≤36) — sobrescrito por JS via prop */
+.talkx-tile--sm { border-radius: var(--radius-md); }
+
+/* ── Cards ── */
+.talkx-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: var(--radius-lg);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.talkx-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: var(--glow-primary-sm);
+}
+
+/* Card hero: radial glow no canto superior direito sobre carvão */
+.talkx-card--hero {
+  background: hsl(var(--card-elevated));
+  background-image: radial-gradient(ellipse at top right, hsl(var(--primary) / 0.12), transparent 60%);
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Mini-barras de KPI (7 colunas) ── */
+.talkx-kpi-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+}
+.talkx-kpi-bars > span {
+  width: 4px;
+  background: hsl(var(--primary) / 0.35);
+  border-radius: 2px 2px 0 0;
+  min-height: 4px;
+}
+.talkx-kpi-bars > span:last-child {
+  background: hsl(var(--primary));
+}
+
+/* Tabela densa. 12px = text-xs (era 12.5px, unica meia-medida sobrevivente
+   no repo fora de JSX; ver PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24). */
+.talkx-table { font-size: 12px; width: 100%; }
+.talkx-table thead th {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  padding: 0 12px 8px;
+  white-space: nowrap;
+}
+.talkx-table tbody tr { height: 60px; border-bottom: 1px solid hsl(var(--border) / 0.4); }
+.talkx-table tbody tr:hover { background: hsl(var(--muted) / 0.2); }
+.talkx-table td { padding: 0 12px; vertical-align: middle; }
+
+/* ── Rail direito ── */
+.talkx-rail {
+  width: 320px;
+  flex-shrink: 0;
+}
+@media (min-width: 1536px) { .talkx-rail { width: 340px; } }
+
+/* ── Dot pulsante para status 'sending' ── */
+.talkx-dot-pulse {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--info));
+  animation: talkx-pulse 1.5s ease-in-out infinite;
+  margin-right: 5px;
+}
+@keyframes talkx-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.35); opacity: 0.7; }
+}
+
+/* ── Anel de foco acessível ── */
+.talkx-glow-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4), 0 0 0 4px hsl(var(--background));
+}
+/* ── Canal "ao vivo" ── */
+.talkx-live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: hsl(var(--success)); box-shadow: 0 0 6px hsl(var(--success) / 0.6); animation: talkx-pulse 2s ease-in-out infinite; }
+
+/* ================================================================ */
+/* ===== CATÁLOGO — design system do módulo (carvão) ===== */
+/* ================================================================ */
+
+/* ── Card de produto (grade) ── */
+.catalog-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: var(--radius-lg);
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+.catalog-card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: var(--glow-primary-sm);
+  transform: translateY(-2px);
+}
+
+/* ── Área da foto: fundo branco (produto real, não é bug de tema) ── */
+.catalog-media {
+  background: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Badges de status (prioridade: esgotado > mais vendido > novidade > destaque > em estoque) ── */
+.catalog-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.catalog-badge--instock { background: hsl(var(--success) / 0.15); color: hsl(var(--success)); }
+.catalog-badge--bestseller { background: hsl(var(--primary) / 0.15); color: hsl(var(--primary)); }
+.catalog-badge--new { background: hsl(268 83% 63% / 0.15); color: hsl(268 83% 70%); }
+.catalog-badge--featured { background: hsl(var(--warning) / 0.15); color: hsl(var(--warning)); }
+.catalog-badge--out { background: hsl(var(--destructive) / 0.15); color: hsl(var(--destructive)); }
+
+/* ── Chip de cor (card) ── */
+.catalog-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 0.375rem;
+  border-radius: var(--radius-xs);
+  background: hsl(var(--muted) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.6);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground) / 0.8);
+}
+
+/* ── Chip de categoria (linha de filtro rápido) ── */
+.catalog-category-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-full);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(var(--foreground) / 0.85);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+.catalog-category-chip:hover { border-color: hsl(var(--primary) / 0.4); }
+.catalog-category-chip--active {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* ── Preço ── */
+.catalog-price { font-size: 16px; font-weight: 700; color: hsl(var(--primary)); }
+
+/* ── Rail direito (colunas fixas em xl/2xl) ── */
+.catalog-rail { width: 300px; }
+@media (min-width: 1536px) { .catalog-rail { width: 320px; } }
+
+/* ── Miniatura da galeria (modal de detalhes) ── */
+.catalog-gallery-thumb {
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+.catalog-gallery-thumb--active { border-color: hsl(var(--primary) / 0.6); }
+
+/* ── Moldura do preview de WhatsApp (Enviar Produto) ── */
+.catalog-phone {
+  background: hsl(var(--card-elevated));
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+/* Padrão de brindes no fundo do painel de chat.
+   mask-image: a cor vem de --chat-pattern-rgb, um arquivo serve claro e escuro. */
+.chat-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  background-color: rgb(var(--chat-pattern-rgb));
+  opacity: var(--chat-pattern-opacity);
+  -webkit-mask-image: var(--chat-pattern-url);
+          mask-image: var(--chat-pattern-url);
+  -webkit-mask-size: var(--chat-pattern-tile) var(--chat-pattern-tile);
+          mask-size: var(--chat-pattern-tile) var(--chat-pattern-tile);
+  -webkit-mask-repeat: repeat;
+          mask-repeat: repeat;
+}
