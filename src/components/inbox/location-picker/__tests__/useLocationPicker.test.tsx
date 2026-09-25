@@ -61,6 +61,7 @@ class FakeNavigationControl {}
 const fakeMapbox = { Map: FakeMap, Marker: FakeMarker, NavigationControl: FakeNavigationControl, accessToken: '' };
 
 type Props = { open: boolean; tab: 'map' | 'current' };
+type View = ReturnType<typeof renderPicker>;
 
 function mockGeolocation(lat: number, lng: number) {
   Object.defineProperty(globalThis.navigator, 'geolocation', {
@@ -72,18 +73,24 @@ function mockGeolocation(lat: number, lng: number) {
   });
 }
 
-// Renderiza na aba "current" (o container do mapa só existe na aba do mapa, como no Radix)
-// e devolve a view com o container já anexado para o effect do mapa poder rodar.
+// Começa na aba "current": o container do mapa ainda não existe, como no Radix.
 function renderPicker() {
-  const view = renderHook((p: Props) => useLocationPicker(p.open, p.tab), { initialProps: { open: true, tab: 'current' } as Props });
-  view.result.current.mapContainer.current = document.createElement('div');
-  return view;
+  return renderHook((p: Props) => useLocationPicker(p.open, p.tab), { initialProps: { open: true, tab: 'current' } as Props });
+}
+
+// O Radix monta os filhos da aba num render POSTERIOR ao da troca (`children: present &&
+// children`, com o `present` virando true só no layout-effect do Presence). Por isso o
+// container sempre chega depois de o effect do mapa já ter rodado — esta é a ordem real
+// do navegador, e é o que os testes precisam exercitar.
+async function attachContainer(view: View) {
+  await act(async () => { view.result.current.mapContainer(document.createElement('div')); });
 }
 
 async function renderReadyOnMapTab() {
   const view = renderPicker();
   await act(async () => {});
   await act(async () => { view.rerender({ open: true, tab: 'map' }); });
+  await attachContainer(view);
   await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
   return view;
 }
@@ -110,6 +117,26 @@ describe('useLocationPicker', () => {
     act(() => FakeMap.instances[0].emit('load'));
     expect(view.result.current.isMapLoaded).toBe(true);
     expect(view.result.current.mapError).toBeNull();
+  });
+
+  it('container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    // Troca de aba: o effect roda antes de o container existir (Presence do Radix).
+    await act(async () => { view.rerender({ open: true, tab: 'map' }); await vi.advanceTimersByTimeAsync(0); });
+    expect(FakeMap.instances).toHaveLength(0);
+
+    // Container chega no render seguinte: o effect precisa reagir a isso.
+    await act(async () => { view.result.current.mapContainer(document.createElement('div')); await vi.advanceTimersByTimeAsync(0); });
+    expect(FakeMap.instances).toHaveLength(1);
+
+    // E o watchdog tem de estar armado: sem 'load', vira erro com retry.
+    await act(async () => { await vi.advanceTimersByTimeAsync(MAPBOX_MAP_LOAD_TIMEOUT_MS); });
+    expect(view.result.current.mapError).toBe('O mapa demorou demais para carregar.');
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker');
   });
 
   it('timeout do token vira mensagem de timeout e é reportado', async () => {
@@ -139,6 +166,7 @@ describe('useLocationPicker', () => {
     const view = renderPicker();
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     await act(async () => { view.rerender({ open: true, tab: 'map' }); await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => { view.result.current.mapContainer(document.createElement('div')); await vi.advanceTimersByTimeAsync(0); });
     expect(FakeMap.instances).toHaveLength(1);
     await act(async () => { await vi.advanceTimersByTimeAsync(MAPBOX_MAP_LOAD_TIMEOUT_MS); });
     expect(view.result.current.mapError).toBe('O mapa demorou demais para carregar.');
@@ -176,9 +204,13 @@ describe('useLocationPicker', () => {
     await act(async () => { view.result.current.getCurrentLocation(); });
     await waitFor(() => expect(view.result.current.selectedLocation?.address).toBe('Rua A, São Paulo'));
 
+    // Sair da aba desmonta o container no Radix: o mapa é destruído.
     act(() => view.rerender({ open: true, tab: 'current' }));
     expect(FakeMap.instances[0].removed).toBe(true);
+    await act(async () => { view.result.current.mapContainer(null); });
+
     act(() => view.rerender({ open: true, tab: 'map' }));
+    await attachContainer(view);
     await waitFor(() => expect(FakeMap.instances).toHaveLength(2));
     expect(FakeMap.instances[1].opts.center).toEqual([-46.6, -23.5]);
     expect(FakeMap.instances[1].opts.zoom).toBe(16);
