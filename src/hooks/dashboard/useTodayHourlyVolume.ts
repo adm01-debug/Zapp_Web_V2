@@ -46,8 +46,10 @@ export function useTodayHourlyVolume() {
   return useQuery({
     queryKey: ['today-hourly-volume'],
     queryFn: async () => {
-      // cast temporário: types.ts gerado ainda não tem dashboard_hourly_volume (RPC nova, E22) — sync automático (PR #703) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_hourly_volume', { p_days: 8 }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+      // dashboard_hourly_volume (E22) ja esta em producao (DDL aplicada via MCP), mas
+      // types.ts gerado ainda nao foi sincronizado (aguarda o workflow types-sync semanal).
+      // Cast pontual so nesta chamada ate a proxima sincronizacao.
+      const { data, error } = await (supabase.rpc as any)('dashboard_hourly_volume', { p_days: 8 });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },
