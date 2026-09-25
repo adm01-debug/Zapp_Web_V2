@@ -36,7 +36,10 @@ export function useQueueHealth(contacts: QueueHealthContact[] | undefined, queue
       const { data, error } = await supabase
         .from('conversation_sla')
         .select('contact_id, first_message_at, first_response_at, first_response_breached')
-        .gte('first_message_at', since);
+        .gte('first_message_at', since)
+        // E26: cap explícito — sem limit, PostgREST trunca silenciosamente em 1000 linhas
+        // (mesma classe de bug de A6/A11). Mitigação; fix definitivo é RPC de agregação (E24/E25).
+        .limit(5000);
       if (error) throw error;
       return (data ?? []) as SlaRow[];
     },
