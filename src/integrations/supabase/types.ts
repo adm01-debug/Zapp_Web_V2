@@ -8976,6 +8976,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      expire_stale_agent_presence: { Args: never; Returns: undefined }
       fail_crm_sync_outbox: {
         Args: { p_error_code: string; p_id: string; p_lease_token: string }
         Returns: undefined

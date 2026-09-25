@@ -62,19 +62,20 @@ Deno.serve(async (req) => {
     const { action, entityType, entityId, data, filters } = parsed.data;
     log.info(`action=${action} entityType=${entityType || 'none'}`);
 
-    // Bitrix é um CRM externo sem RLS/dono por contato no nosso schema — para
-    // as ações que leem/escrevem um registro (ou lista) arbitrário do CRM por
-    // ID/filtro, restringe a admin/supervisor (mesmo padrão já usado em
-    // crm-integration para 'select'/'mutate'). Sem isso, qualquer usuário
-    // autenticado conseguia listar, ler, criar, atualizar ou apagar QUALQUER
-    // lead/contato/negócio do Bitrix passando só o entityId no corpo.
-    if (['list', 'get', 'create', 'update', 'delete'].includes(action)) {
-      const { data: isAdmin, error: adminError } = await authClient.rpc('is_admin_or_supervisor', {
-        _user_id: userData.user.id,
-      });
-      if (adminError || !isAdmin) {
-        return errorResponse('Forbidden', 403, req);
-      }
+    // Bitrix é um CRM externo sem RLS/dono por contato no nosso schema —
+    // TODA ação desta function (mesmo padrão já usado em crm-integration
+    // para 'select'/'mutate') restringe a admin/supervisor. Auditoria
+    // adversarial de 2026-09-25 achou que o gate anterior só cobria
+    // list/get/create/update/delete: finish_call/attach_record/sync_contacts
+    // aceitavam callId/filtro arbitrário sem checar dono (mesmo padrão do
+    // bug original) e sync_contacts fazia upsert em massa sobrescrevendo
+    // contacts local; register_call/push_contact/create_lead_from_conversation
+    // escreviam no CRM com dados arbitrários do body sem nenhuma checagem.
+    const { data: isAdmin, error: adminError } = await authClient.rpc('is_admin_or_supervisor', {
+      _user_id: userData.user.id,
+    });
+    if (adminError || !isAdmin) {
+      return errorResponse('Forbidden', 403, req);
     }
 
     let endpoint = '';
