@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ConversationTabs } from '../ConversationTabs';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 
-const ZERO: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0 };
+const ZERO: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0, remindersPending: 0 };
 
 function setup(counts: ConversationTabCounts = ZERO, activeTab = 'chat' as const) {
   const onTabChange = vi.fn();
@@ -43,10 +43,11 @@ describe('ConversationTabs', () => {
   });
 
   it('exibe badge só nas abas com count > 0', () => {
-    setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5 });
+    setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5, remindersPending: 4 });
     expect(screen.getByTestId('conversation-tab-count-tasks')).toHaveTextContent('2');
     expect(screen.getByTestId('conversation-tab-count-notes')).toHaveTextContent('1');
     expect(screen.getByTestId('conversation-tab-count-files')).toHaveTextContent('5');
+    expect(screen.getByTestId('conversation-tab-count-reminders')).toHaveTextContent('4');
   });
 
   it('omite o badge quando o count é zero', () => {
@@ -54,11 +55,12 @@ describe('ConversationTabs', () => {
     expect(screen.queryByTestId('conversation-tab-count-tasks')).not.toBeInTheDocument();
     expect(screen.queryByTestId('conversation-tab-count-notes')).not.toBeInTheDocument();
     expect(screen.queryByTestId('conversation-tab-count-files')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('conversation-tab-count-reminders')).not.toBeInTheDocument();
   });
 
-  it('Chat, IA, CRM, Histórico e Lembretes nunca renderizam badge', () => {
-    setup({ tasksOpen: 9, notesTotal: 9, filesTotal: 9 });
-    ['chat', 'ia', 'crm', 'history', 'reminders'].forEach((id) => {
+  it('Chat, IA, CRM e Histórico nunca renderizam badge', () => {
+    setup({ tasksOpen: 9, notesTotal: 9, filesTotal: 9, remindersPending: 0 });
+    ['chat', 'ia', 'crm', 'history'].forEach((id) => {
       expect(screen.queryByTestId(`conversation-tab-count-${id}`)).not.toBeInTheDocument();
     });
   });
