@@ -64,7 +64,7 @@ export function useDashboardKpi() {
     queryFn: async () => {
       const since = startOfDay(subDays(new Date(), 1)).toISOString();
       // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since });
+      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
     },
