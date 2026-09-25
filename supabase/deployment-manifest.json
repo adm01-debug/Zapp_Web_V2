@@ -243,8 +243,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 5620,
-      "sha256": "c05e0a74fa30b0f75b2af33133d1c97689de0a851fc97fcf9dd9e8188bf3b957"
+      "bytes": 8115,
+      "sha256": "0ee9862691d79318e75a9f563d0c41e2edb8f763b59b282b8f275df69ed75026"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -313,8 +313,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 33892,
-      "sha256": "a05e18b8700450613ffc261c2e758a1197b7a8a14e72308cfa475d4c84b5772f"
+      "bytes": 35702,
+      "sha256": "819db291d2d737a571769a212c2edf8ceab739d902e288c857841344e6dd4809"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -388,8 +388,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 18166,
-      "sha256": "4b21d7ad432d04b79544f2b6ba3da197763f6a8c4328303466a301086b9eb417"
+      "bytes": 19350,
+      "sha256": "d0bca6af663658cc3b3fc5d1253618315244f533f850a9f531af79ea4b4848b2"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -732,11 +732,13 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bb81e5702823d16d714190d2642047225e823085ecf208f9c991169f16467ad7",
+      "source_sha256": "efb3d8671d7fb4ce50a2f45d3b4b715fb0dc187c2dbd95995d9e301a8460e9f0",
       "source_files": [
+        "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/notification-events.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/connection-health-check/index.ts"
       ]
@@ -898,7 +900,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "270d677094251e03b8734efcf81aa694fa33cac0baf333c4ca39711ca703a9cc",
+      "source_sha256": "6359f0aeee9582e3317442bfbb435bff2a5bdbe219cee11e52e689b7712ad5f5",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1093,7 +1095,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b199cf5232d3dcb7b51d0c68854e178cf83c6a4b3be6430a6b86456357470a96",
+      "source_sha256": "e99e406fe1e6c19c89138b334f2300b1f3024317541b472410ab09199dd8ebe9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1320,5 +1322,5 @@
       ]
     }
   ],
-  "manifest_sha256": "2fe40d74981628d65b4c793478c1b2d15e4c20c00f1da18f27f6e23043d206d9"
+  "manifest_sha256": "f8450701b5fd5efd185dc405dcc30a4affcbfe6811fea65b7cffe0619fd6848a"
 }

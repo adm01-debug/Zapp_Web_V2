@@ -15,11 +15,18 @@ interface ContactFormData {
   phone: string;
   email: string;
   contact_type: string;
+  postal_code: string;
+  address: string;
+  address_number: string;
+  neighborhood: string;
+  city: string;
+  state: string;
 }
 
 const EMPTY_CONTACT: ContactFormData = {
   name: '', nickname: '', surname: '', job_title: '',
   company: '', phone: '', email: '', contact_type: 'cliente',
+  postal_code: '', address: '', address_number: '', neighborhood: '', city: '', state: '',
 };
 
 export interface Contact {
@@ -32,6 +39,12 @@ export interface Contact {
   phone: string;
   email: string | null;
   contact_type: string | null;
+  postal_code?: string | null;
+  address?: string | null;
+  address_number?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 export function useContactsCRUD() {
@@ -93,6 +106,12 @@ export function useContactsCRUD() {
           phone: newContact.phone.replace(/\D/g, ''),
           email: newContact.email || null,
           contact_type: newContact.contact_type,
+          postal_code: newContact.postal_code || null,
+          address: newContact.address || null,
+          address_number: newContact.address_number || null,
+          neighborhood: newContact.neighborhood || null,
+          city: newContact.city || null,
+          state: newContact.state || null,
           assigned_to: profile?.id || null,
         });
         if (error) {
@@ -136,6 +155,12 @@ export function useContactsCRUD() {
             phone: editingContact.phone.replace(/\D/g, ''),
             email: editingContact.email?.trim() || null,
             contact_type: editingContact.contact_type,
+            postal_code: editingContact.postal_code || null,
+            address: editingContact.address || null,
+            address_number: editingContact.address_number || null,
+            neighborhood: editingContact.neighborhood || null,
+            city: editingContact.city || null,
+            state: editingContact.state || null,
           })
           .eq('id', editingContact.id);
         if (error) {

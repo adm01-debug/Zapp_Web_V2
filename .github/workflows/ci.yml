@@ -13,6 +13,9 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Fila de merge: sem este gatilho os required checks nunca reportariam no
+  # merge group e a fila travaria todos os merges do repo.
+  merge_group:
 
 env:
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -70,6 +73,7 @@ jobs:
           supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts
           supabase/functions/_shared/__tests__/avatar-storage-path.test.ts
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
+          supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts

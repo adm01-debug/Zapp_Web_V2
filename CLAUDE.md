@@ -149,11 +149,81 @@ O retry vive em `withPsqlEnvironment` e é **desligado por padrão**: só cobre 
 comando não chegou ao servidor), nunca erro de SQL, de autenticação ou drift, e quem escreve
 (`register-migration --apply`) não liga.
 
+**Retry de conexão mora em UM lugar só: o transporte.** O PR #704 (sessão paralela) adicionou um
+segundo retry dentro de `queryLedger()` em `check-migration-drift.mjs`, no mesmo dia em que o #707
+adicionou o do transporte. Como `queryLedger()` chama `withPsqlEnvironment`, os dois empilhados
+viram produto, não soma: 3 × 3 = 9 execuções de psql e ~47s de espera acumulada. Por isso o job do
+`db-live-guard` passa `LEDGER_RETRY_DELAYS_MS: ""`, que desliga a camada de dentro — a de fora
+cobre todos os passos (ledger, catálogo, manifesto, paridade tripla, runtime config), não só o
+ledger. As duas regex ficam em sincronia deliberada: ao mexer numa, replique na outra. Cuidado ao
+mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, então entradas vazias
+precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
+nenhum.
+
 **Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
 segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
 primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
+
+**Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Com `strict` ligado e
+várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+`auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
+~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
+adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem
+custo, porque a fila em si **não pode ser ligada**: `POST /repos/.../rulesets` com
+`{"type":"merge_queue"}` responde `422 Invalid rule 'merge_queue'` mesmo no payload mínimo.
+Rulesets funcionam (um ruleset de teste com `deletion` foi criado e apagado com sucesso no mesmo
+minuto); o que falta é a conta: `adm01-debug` é do tipo `User`, e merge queue é recurso exclusivo
+de repositório de **organização**, independente do plano (a conta é `pro`). Só passa a existir se o
+repo for transferido para uma org — decisão de negócio, não de CI.
+
+**App "Supabase for GitHub" — DESLIGADO em 25/09, confirmado por teste real.** Apontava para o
+banco oficial (`supabase/config.toml`: `project_id = "tnnnlkbymytvtqngbbqh"`) com "Automatic
+branching" ligado e sem cobertura do Spend Cap (custo por PR que tocasse `supabase/`). Joaquim
+desligou "Automatic branching" e "Deploy to production" no dashboard do Supabase
+(Settings → Integrations → GitHub). **Confirmado pela API, não só pela tela**: o PR #703 (antes do
+desligamento) tinha o check `Supabase Preview` vermelho; o PR #717 (mesma branch de origem, depois
+do desligamento) **não tem esse check** — o app parou de reagir a PRs. Se precisar reativar o
+preview um dia, aponte para um projeto Supabase separado, nunca para `tnnnlkbymytvtqngbbqh`.
+
+Achado durante o fechamento deste item, e um erro meu no meio do caminho — registrado por
+transparência, não escondido: `20260925170000` (reminders_pending) estava aplicada em produção com
+a linha do ledger existindo mas `statements` NULL — corrigida com `UPDATE ... WHERE statements IS
+NULL`, guardada por `RETURNING` não-vazio. Já `20260925133000` (dashboard_kpi) eu registrei por
+engano: vi que a version não existia no ledger e inseri o conteúdo do arquivo, sem checar se a MESMA
+função já estava registrada sob OUTRA version. Estava — `20260925132706`, reconciliada por outra
+sessão momentos antes (PR #719) com conteúdo idêntico, e o PR #727 (mergeado durante esta mesma
+sessão) já tinha apagado o arquivo `133000` do disco por ser duplicata. Meu INSERT recriou o
+problema do lado do banco. Corrigido com `DELETE ... WHERE version = '20260925133000' AND
+array_length(statements,1) = 3` (o formato exato do que eu tinha inserido), guardado por
+`RETURNING` não-vazio — nada mais foi tocado. **Lição para quem for registrar uma migration
+"ausente" no ledger: não basta checar se a VERSION existe — checar também se a MESMA função/tabela
+já está registrada sob version diferente** (`SELECT version FROM supabase_migrations.schema_migrations,
+LATERAL unnest(statements) s WHERE s LIKE '%nome_da_funcao%'` antes de inserir).
+
+Os 7 versions com `statements` NULL encontrados na auditoria (`20260827140000`, `20260827150000`,
+`20260901000002`, `20260901200001`, `20260906000001`, `20260925153000`, `20260925153100`) foram
+corrigidos em sessão posterior de 25/09: cada arquivo já existia em `supabase/migrations/`, o
+conteúdo aplicado em produção foi confirmado ao vivo (`pg_get_functiondef`, `pg_indexes`, grants,
+existência de fila/coluna) antes de qualquer escrita, nenhum tocava função/tabela já registrada sob
+outra version, e o `UPDATE ... WHERE statements IS NULL RETURNING` confirmou as 7 linhas gravadas
+(`SELECT count(*) FILTER (WHERE statements IS NULL)` = 0 no ledger, 477 registros no total). Quem
+encontrar `statements IS NULL` de novo: `SELECT version FROM supabase_migrations.schema_migrations
+WHERE statements IS NULL` primeiro, confirmar o estado ao vivo do objeto antes de registrar, e
+`scripts/db-audit/register-migration.mjs` (via `parseMigrationFile`/`buildInsertSql`) para gerar o
+SQL exato do arquivo em vez de transcrever à mão.
+
+**Sessões paralelas colidem de verdade — a regra 3 do fluxo Git existe por isso e não está sendo
+seguida.** Em 25/09, em poucas horas: (a) duas sessões corrigiram o MESMO timeout de pooler em
+camadas diferentes (#704 em `queryLedger()`, #707 em `withPsqlEnvironment`), as duas mergearam e as
+tentativas viraram produto (3 × 3 = 9 execuções de psql) até o #716 consolidar; (b) o PR #703, de
+sincronização de types, foi **fechado sem merge** por outra sessão enquanto esta o mergeava — o
+conteúdo não entrou na `main`, o `types.ts` continuou sem `dashboard_hourly_volume` e o PR #700
+seguiu travado até o types-sync ser redisparado e abrir o #717. Antes de abrir PR: liste as PRs
+abertas e confira sobreposição de arquivos, como a regra 3 já manda. E **nunca feche PR de outra
+sessão** sem antes confirmar que o conteúdo dela chegou na `main` — fechar não é neutro, é desfazer
+trabalho alheio silenciosamente.
 
 **NÃO desligue `can_approve_pull_request_reviews`.** O nome da API engana: esse toggle é a opção
 "Allow GitHub Actions to create **and** approve pull requests" — ele governa a criação de PR por
