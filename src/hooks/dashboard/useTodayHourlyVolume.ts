@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { subDays, startOfDay, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
-type MessageRow = { created_at: string };
+// Bucket agregado pela RPC dashboard_hourly_volume (E22): 1 linha por (dia, hora)
+// com a contagem já somada no servidor — nunca mais linha por mensagem crua (achado
+// A6: o cap silencioso de 1000 linhas do PostgREST truncava a amostra de 8 dias).
+export type HourlyBucket = { day: string; hour: number; message_count: number };
 
-export function aggregateTodayHourlyVolume(rows: MessageRow[], now = new Date()) {
+export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date()) {
   const todayStart = startOfDay(now);
   const currentHour = now.getHours();
+  const todayKey = format(todayStart, 'yyyy-MM-dd');
 
   const todayByHour: (number | null)[] = Array.from({ length: 24 }, (_, h) => (h > currentHour ? null : 0));
 
@@ -19,18 +22,13 @@ export function aggregateTodayHourlyVolume(rows: MessageRow[], now = new Date())
   const priorKeys = Array.from({ length: 7 }, (_, i) => format(startOfDay(subDays(now, i + 1)), 'yyyy-MM-dd'));
   const countsAtHourByPriorDay = new Map<string, number>(priorKeys.map((k) => [k, 0]));
 
-  for (const row of rows) {
-    const t = new Date(row.created_at);
-    const dayStart = startOfDay(t);
-    const dayKey = format(dayStart, 'yyyy-MM-dd');
+  for (const b of buckets) {
+    if (countsByDay.has(b.day)) countsByDay.set(b.day, (countsByDay.get(b.day) ?? 0) + b.message_count);
 
-    if (countsByDay.has(dayKey)) countsByDay.set(dayKey, (countsByDay.get(dayKey) ?? 0) + 1);
-
-    if (dayStart.getTime() === todayStart.getTime()) {
-      const h = t.getHours();
-      if (h <= currentHour) todayByHour[h] = (todayByHour[h] ?? 0) + 1;
-    } else if (countsAtHourByPriorDay.has(dayKey) && t.getHours() === currentHour) {
-      countsAtHourByPriorDay.set(dayKey, (countsAtHourByPriorDay.get(dayKey) ?? 0) + 1);
+    if (b.day === todayKey) {
+      if (b.hour <= currentHour) todayByHour[b.hour] = (todayByHour[b.hour] ?? 0) + b.message_count;
+    } else if (countsAtHourByPriorDay.has(b.day) && b.hour === currentHour) {
+      countsAtHourByPriorDay.set(b.day, (countsAtHourByPriorDay.get(b.day) ?? 0) + b.message_count);
     }
   }
 
@@ -44,15 +42,24 @@ export function aggregateTodayHourlyVolume(rows: MessageRow[], now = new Date())
   return { todayByHour, last7ByDay, currentHour, currentHourCount, avg7dCurrentHour };
 }
 
+// dashboard_hourly_volume (E22) ja esta em producao (DDL aplicada via MCP), mas o
+// types.ts gerado ainda nao foi sincronizado com essa RPC (nao ha generate_typescript_types
+// para este projeto self-hosted; so o workflow types-sync semanal). Cast local via
+// 'unknown' (evita @typescript-eslint/no-explicit-any) ate a proxima sincronizacao.
+type DashboardHourlyVolumeRpc = (
+  fn: 'dashboard_hourly_volume',
+  args: { p_days: number },
+) => Promise<{ data: unknown; error: { message: string } | null }>;
+
 export function useTodayHourlyVolume() {
   return useQuery({
     queryKey: ['today-hourly-volume'],
     queryFn: async () => {
-      const since = startOfDay(subDays(new Date(), 7)).toISOString();
-      const { data, error } = await supabase.from('messages').select('created_at').gte('created_at', since);
+      const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
+      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8 });
       if (error) throw error;
-      return aggregateTodayHourlyVolume((data ?? []) as MessageRow[]);
+      return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },
-    staleTime: 60_000,
+    staleTime: 120_000, // E28: volume tolera 120s (gráfico por hora, não precisa de segundo a segundo)
   });
 }
