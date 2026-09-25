@@ -3,6 +3,9 @@ import { suggestPlaces } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity } from '@/lib/mapboxGeocode';
 import { getSearchSession, noteSuggestCall } from '@/lib/mapboxSession';
 
+const DEBOUNCE_MS = 300;
+const MIN_QUERY_LENGTH = 3;
+
 export interface UseAddressAutocompleteOptions {
   token: string | null;
   proximity?: GeoProximity;
@@ -67,20 +70,25 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   useEffect(() => {
     if (!enabled || !token) return;
     const term = state.query.trim();
-    if (!term) return;
+    if (term.length < MIN_QUERY_LENGTH) return;
     let cancelled = false;
-    dispatch({ type: 'SUGGEST_START' });
-    const session = getSearchSession();
-    noteSuggestCall();
-    suggestPlaces(term, token, { session, proximity }).then((result) => {
-      if (cancelled) return;
-      if (result.ok) {
-        dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
-      } else {
-        dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
-      }
-    });
-    return () => { cancelled = true; };
+    // Debounce por timer: cada tecla nova reexecuta o effect, e o cleanup abaixo cancela o
+    // timer da tecla anterior antes dele disparar — digitação contínua nunca acumula timers,
+    // só o último dispara request.
+    const timer = setTimeout(() => {
+      dispatch({ type: 'SUGGEST_START' });
+      const session = getSearchSession();
+      noteSuggestCall();
+      suggestPlaces(term, token, { session, proximity }).then((result) => {
+        if (cancelled) return;
+        if (result.ok) {
+          dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
+        } else {
+          dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
+        }
+      });
+    }, DEBOUNCE_MS);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [state.query, enabled, token, proximity]);
 
   const setQuery = useCallback((query: string) => {
