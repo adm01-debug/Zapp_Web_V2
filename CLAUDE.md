@@ -155,6 +155,43 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
+**Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Com `strict` ligado e
+várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+`auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
+~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
+adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem
+custo, porque a fila em si **não pode ser ligada**: `POST /repos/.../rulesets` com
+`{"type":"merge_queue"}` responde `422 Invalid rule 'merge_queue'` mesmo no payload mínimo.
+Rulesets funcionam (um ruleset de teste com `deletion` foi criado e apagado com sucesso no mesmo
+minuto); o que falta é a conta: `adm01-debug` é do tipo `User`, e merge queue é recurso exclusivo
+de repositório de **organização**, independente do plano (a conta é `pro`). Só passa a existir se o
+repo for transferido para uma org — decisão de negócio, não de CI.
+
+**App "Supabase for GitHub" instalado, apontando para PRODUÇÃO e quebrado.** O check
+`Supabase Preview` vem desse app; ele falha de forma persistente com
+`ERROR: Job 8 does not exist or you do not own it (SQLSTATE XX000)` ao rodar
+`INSERT INTO supabase_migrations.schema_migrations`. O `supabase/config.toml` tem
+`project_id = "tnnnlkbymytvtqngbbqh"`, o banco oficial, e a descrição do app promete
+"automatically runs your migrations when pull requests are merged" — ou seja, é uma via de DDL em
+produção que **não passa** pelo `db-migrate.yml` (dry-run, confirmação de hash, environment
+`producao-ddl`). Evidência de que hoje ele NÃO aplica nada: se aplicasse, o ledger teria entradas
+que ninguém registrou e os drifts de 25/09 não teriam existido. Ou seja: inócuo agora, bomba
+relógio se alguém "consertar" a configuração sem saber do `db-migrate.yml`. **Decidir: configurar
+o branching corretamente ou remover o app do repositório.** Nenhuma das duas dá para fazer daqui —
+`GET /repos/.../installation` devolve 401 e `GET /user/installations` devolve 403 com o token das
+sessões; é ação no dashboard do Supabase (branching) e/ou nas GitHub Apps da conta.
+
+**Sessões paralelas colidem de verdade — a regra 3 do fluxo Git existe por isso e não está sendo
+seguida.** Em 25/09, em poucas horas: (a) duas sessões corrigiram o MESMO timeout de pooler em
+camadas diferentes (#704 em `queryLedger()`, #707 em `withPsqlEnvironment`), as duas mergearam e as
+tentativas viraram produto (3 × 3 = 9 execuções de psql) até o #716 consolidar; (b) o PR #703, de
+sincronização de types, foi **fechado sem merge** por outra sessão enquanto esta o mergeava — o
+conteúdo não entrou na `main`, o `types.ts` continuou sem `dashboard_hourly_volume` e o PR #700
+seguiu travado até o types-sync ser redisparado e abrir o #717. Antes de abrir PR: liste as PRs
+abertas e confira sobreposição de arquivos, como a regra 3 já manda. E **nunca feche PR de outra
+sessão** sem antes confirmar que o conteúdo dela chegou na `main` — fechar não é neutro, é desfazer
+trabalho alheio silenciosamente.
+
 **NÃO desligue `can_approve_pull_request_reviews`.** O nome da API engana: esse toggle é a opção
 "Allow GitHub Actions to create **and** approve pull requests" — ele governa a criação de PR por
 Actions, não só a aprovação. Desliguei em 25/09 achando que fechava só o caminho de auto-aprovação;
