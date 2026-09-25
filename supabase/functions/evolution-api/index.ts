@@ -61,7 +61,7 @@ serve(async (req) => {
     // na GO). Toda outra ação usa `${instance}` no path traduzido — vazio hoje
     // casaria como path malformado (GO 404) ou, pior, caía silenciosamente na
     // PRINCIPAL em rotas GET sem sufixo.
-    if (action !== 'list-instances' && !instance) {
+    if (action !== 'list-instances' && action !== 'bootstrap-instance-token' && !instance) {
       return new Response(JSON.stringify({ error: true, message: 'instance (instanceName) é obrigatório para esta ação.' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -77,7 +77,7 @@ serve(async (req) => {
     // bloqueadas — reconectar em loop durante um bloqueio tende a estendê-lo.
     // create-instance entra na mesma trava (nasceria conectando outro número
     // durante a mesma janela de risco).
-    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance']);
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
     if (MAINTENANCE_GATED_ACTIONS.has(action)) {
       const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
       const until = maint?.value ? new Date(maint.value) : null;
@@ -89,10 +89,70 @@ serve(async (req) => {
       }
     }
 
+    // Endpoints admin do GO usam instanceId (UUID) no path; o app guarda o NOME
+    // da instância. Resolve nome→id via /instance/all antes de chamar.
+    const resolveGoInstanceId = async (name: string): Promise<string | null> => {
+      try {
+        const res = await fetch(`${evolutionApiUrl}/instance/all`, {
+          headers: { 'apikey': evolutionApiKey },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const records: Record<string, unknown>[] =
+          Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+        const found = records.find((r) =>
+          r?.name === name || r?.Name === name ||
+          r?.instanceId === name || r?.InstanceID === name || r?.id === name || r?.ID === name);
+        return (found?.instanceId ?? found?.InstanceID ?? found?.id ?? found?.ID ?? null) as string | null;
+      } catch {
+        return null;
+      }
+    };
+    const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    // ─── E10/E11 (plano multi-conexão): ambas admin-only — mesmo guard usado em
+    // evolution-sync/index.ts (JWT válido + is_admin_or_supervisor via RPC).
+    const requireAdmin = async (): Promise<Response | null> => {
+      const { data: { user }, error: userError } = await callerClient.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: true, message: 'Não autenticado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: user.id });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem executar esta ação.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return null;
+    };
+
+    // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
+    // Idempotente (set_instance_token faz update quando já existe secret_id).
+    // Nunca ecoa o token na resposta nem em log.
+    if (action === 'bootstrap-instance-token') {
+      const adminError = await requireAdmin();
+      if (adminError) return adminError;
+      const legacyToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN');
+      if (!legacyToken) {
+        return new Response(JSON.stringify({ error: true, message: 'EVOLUTION_INSTANCE_TOKEN não configurado — nada para migrar.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const principalName = Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
+      const { data: conn, error: connLookupError } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', principalName).maybeSingle();
+      if (connLookupError || !conn) {
+        return new Response(JSON.stringify({ error: true, message: `Conexão '${principalName}' não encontrada em whatsapp_connections.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { error: setError } = await supabase.rpc('set_instance_token', { p_connection_id: conn.id, p_token: legacyToken });
+      if (setError) {
+        new Logger('evolution-api').error('bootstrap-instance-token falhou', { error: setError.message });
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao gravar o token no Vault.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ ok: true, instance: principalName }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // ─── 1. Instance Management ───
     // Evolution GO exige token na criação (v2 auto-gerava) — gera um default;
     // ele volta na resposta para o operador guardar (EVOLUTION_INSTANCE_TOKEN).
     if (action === 'create-instance') {
+      new Logger('evolution-api').warn('create-instance está deprecado — front deve migrar para create-connection (E11)', { instance });
       const { data: multi } = await supabase.from('global_settings').select('value').eq('key', 'multi_connection_enabled').maybeSingle();
       if (multi?.value !== 'true') {
         return new Response(JSON.stringify({
@@ -102,6 +162,109 @@ serve(async (req) => {
       }
       return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token ?? crypto.randomUUID(), number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
     }
+
+    // ─── E11: cria a instância na GO e persiste a conexão + token do Vault na
+    // mesma operação lógica. Se falhar depois do create na GO, compensa
+    // (delete best-effort na GO) em vez de deixar instância órfã com token
+    // perdido — hoje (create-instance) é o front que insere depois, e se o
+    // insert falhar a instância já nasceu de qualquer jeito na GO.
+    if (action === 'create-connection') {
+      const adminError = await requireAdmin();
+      if (adminError) return adminError;
+      const { data: multi } = await supabase.from('global_settings').select('value').eq('key', 'multi_connection_enabled').maybeSingle();
+      if (multi?.value !== 'true') {
+        return new Response(JSON.stringify({
+          error: true,
+          message: 'Múltiplas conexões de WhatsApp ainda não estão habilitadas neste sistema (ver plano multi-conexão Evolution GO).',
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!/^[a-z0-9_]{3,40}$/.test(instance)) {
+        return new Response(JSON.stringify({ error: true, message: 'Nome de instância inválido — use letras minúsculas, números e "_" (3 a 40 caracteres).' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const connName = String(body.name || '').trim();
+      const phoneNumber = String(body.phone_number || body.number || '').trim();
+      if (!connName || !phoneNumber) {
+        return new Response(JSON.stringify({ error: true, message: 'name e phone_number são obrigatórios.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { data: existing } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+      if (existing) {
+        return new Response(JSON.stringify({ error: true, message: `Já existe uma conexão com instance_id '${instance}'.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const compensateGoCreate = async () => {
+        try {
+          if (isGoFlavor) {
+            const goId = await resolveGoInstanceId(instance);
+            if (goId) await proxy(`/instance/delete/${goId}`, 'DELETE');
+          } else {
+            await proxy(`/instance/delete/${instance}`, 'DELETE');
+          }
+        } catch (err: unknown) {
+          new Logger('evolution-api').error('create-connection: compensação (delete na GO) falhou — instância pode ter ficado órfã', {
+            instance, error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      };
+
+      const instanceToken = crypto.randomUUID();
+      const createRes = await proxy('/instance/create', 'POST', {
+        instanceName: instance, qrcode: true, integration: body.integration || 'WHATSAPP-BAILEYS',
+        token: instanceToken, number: body.number, businessId: body.businessId, wabaId: body.wabaId,
+        phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot,
+        typebot: body.typebot, proxy: body.proxy,
+      });
+      // proxyToEvolution sempre devolve status HTTP 200 (convenção do proxy —
+      // ver normalizeGoResponse/cbRecord): falha real vem no corpo (error:true),
+      // nunca em createRes.ok.
+      const createData: Record<string, unknown> = await createRes.json().catch(() => ({}));
+      if (createData?.error === true) {
+        return new Response(JSON.stringify(createData), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: row, error: insertError } = await supabase.from('whatsapp_connections').insert({
+        name: connName, phone_number: phoneNumber, instance_id: instance, status: 'disconnected',
+        is_default: body.is_default === true,
+      }).select().single();
+      if (insertError || !row) {
+        await compensateGoCreate();
+        new Logger('evolution-api').error('create-connection: insert falhou, instância compensada na GO', { instance, error: insertError?.message });
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a conexão (revertido na Evolution GO).' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error: tokenError } = await supabase.rpc('set_instance_token', { p_connection_id: row.id, p_token: instanceToken });
+      if (tokenError) {
+        await supabase.from('whatsapp_connections').delete().eq('id', row.id);
+        await compensateGoCreate();
+        new Logger('evolution-api').error('create-connection: set_instance_token falhou, revertido', { instance, error: tokenError.message });
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao guardar o token no Vault (revertido).' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Webhook na criação (best-effort): falhar aqui não desfaz a conexão já
+      // criada e com token guardado — o front sempre pode chamar 'connect'
+      // (usa o token da instância via E16, quando existir) para reparar.
+      try {
+        await fetch(`${evolutionApiUrl}/instance/connect`, {
+          method: 'POST',
+          headers: { apikey: instanceToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+        });
+      } catch (err: unknown) {
+        new Logger('evolution-api').warn('create-connection: connect inicial falhou (conexão criada; reconectar manualmente)', {
+          instance, error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      return new Response(JSON.stringify({ connection: row, evolution: createData }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
@@ -159,28 +322,6 @@ serve(async (req) => {
       const status = data.state === 'open' ? 'connected' : 'disconnected';
       return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
-    // Endpoints admin do GO usam instanceId (UUID) no path; o app guarda o NOME
-    // da instância. Resolve nome→id via /instance/all antes de chamar.
-    const resolveGoInstanceId = async (name: string): Promise<string | null> => {
-      try {
-        const res = await fetch(`${evolutionApiUrl}/instance/all`, {
-          headers: { 'apikey': evolutionApiKey },
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!res.ok) return null;
-        const json = await res.json();
-        const records: Record<string, unknown>[] =
-          Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
-        const found = records.find((r) =>
-          r?.name === name || r?.Name === name ||
-          r?.instanceId === name || r?.InstanceID === name || r?.id === name || r?.ID === name);
-        return (found?.instanceId ?? found?.InstanceID ?? found?.id ?? found?.ID ?? null) as string | null;
-      } catch {
-        return null;
-      }
-    };
-    const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
     if (action === 'instance-info') {
       if (isGoFlavor) {
