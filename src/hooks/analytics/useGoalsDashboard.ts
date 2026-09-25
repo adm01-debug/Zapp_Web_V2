@@ -34,182 +34,4 @@ function getDateRange(period: string) {
   const now = new Date();
   switch (period) {
     case 'today': return { from: startOfDay(now), to: endOfDay(now) };
-    case 'week': return { from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
-    case 'month': return { from: startOfMonth(now), to: endOfMonth(now) };
-    default: return { from: startOfDay(now), to: endOfDay(now) };
-  }
-}
-
-function getGoalTarget(
-  goalType: string, period: string,
-  customGoals?: Array<{ goal_type: string; daily_target: number; weekly_target: number; monthly_target: number; is_active: boolean | null }>
-): number {
-  const customGoal = customGoals?.find(g => g.goal_type === goalType && (g.is_active ?? false));
-  if (customGoal) {
-    switch (period) {
-      case 'today': return customGoal.daily_target;
-      case 'week': return customGoal.weekly_target;
-      case 'month': return customGoal.monthly_target;
-      default: return customGoal.daily_target;
-    }
-  }
-  const defaultGoal = DEFAULT_GOALS[goalType as keyof typeof DEFAULT_GOALS];
-  if (!defaultGoal) return 0;
-  switch (period) {
-    case 'today': return defaultGoal.daily;
-    case 'week': return defaultGoal.weekly;
-    case 'month': return defaultGoal.monthly;
-    default: return defaultGoal.daily;
-  }
-}
-
-export function getProgressColor(percentage: number): string {
-  if (percentage >= 100) return 'text-success';
-  if (percentage >= 75) return 'text-primary';
-  if (percentage >= 50) return 'text-warning';
-  return 'text-destructive';
-}
-
-export function getProgressBgColor(percentage: number): string {
-  if (percentage >= 100) return 'bg-success';
-  if (percentage >= 75) return 'bg-primary';
-  if (percentage >= 50) return 'bg-warning';
-  return 'bg-destructive';
-}
-
-export function useGoalsDashboard() {
-  const [period, setPeriod] = useState('today');
-  const [configDialogOpen, setConfigDialogOpen] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [celebrationData, setCelebrationData] = useState({ title: '', subtitle: '', emoji: 'ğŸ‰' });
-  const previousCompletedGoals = useRef<Set<string>>(new Set());
-  const previousOverallComplete = useRef(false);
-  const { user } = useAuth();
-
-  const dateRange = useMemo(() => getDateRange(period), [period]);
-
-  const { data: profile } = useQuery({
-    queryKey: ['my-profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase.from('profiles').select('id, name').eq('user_id', user.id).single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: messagesData, isLoading: loadingMessages } = useQuery({
-    queryKey: ['goals-messages', period, profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('messages').select('id, sender, created_at')
-        .eq('agent_id', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!profile?.id,
-  });
-
-  const { data: contactsData, isLoading: loadingContacts } = useQuery({
-    queryKey: ['goals-contacts', period, profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('contacts').select('id, created_at')
-        .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!profile?.id,
-  });
-
-  const { data: analysesData, isLoading: loadingAnalyses } = useQuery({
-    queryKey: ['goals-analyses', period, profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('conversation_analyses').select('id, status, created_at')
-        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!profile?.id,
-  });
-
-  const { data: customGoals } = useQuery({
-    queryKey: ['goals-config', profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('goals_configurations').select('*').eq('profile_id', profile.id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!profile?.id,
-  });
-
-  const goals = useMemo((): Goal[] => {
-    const messagesSent = messagesData?.filter(m => m.sender === 'agent').length || 0;
-    const contactsHandled = contactsData?.length || 0;
-    const totalAnalyses = analysesData?.length || 0;
-    const resolvedAnalyses = analysesData?.filter(a => a.status === 'resolvido').length || 0;
-    const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
-
-    const isMessageGoalActive = !customGoals?.find(g => g.goal_type === 'messages_sent')?.is_active === false;
-    const isContactGoalActive = !customGoals?.find(g => g.goal_type === 'contacts_handled')?.is_active === false;
-    const isResolutionGoalActive = !customGoals?.find(g => g.goal_type === 'resolution_rate')?.is_active === false;
-
-    const allGoals: Goal[] = [];
-    if (isMessageGoalActive) {
-      allGoals.push({ id: 'messages-sent', label: 'Mensagens Enviadas', description: 'Total de mensagens enviadas no perÃ­odo',
-        target: getGoalTarget('messages_sent', period, customGoals), current: messagesSent, unit: 'mensagens',
-        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high' });
-    }
-    if (isContactGoalActive) {
-      allGoals.push({ id: 'contacts-handled', label: 'Contatos Atendidos', description: 'Novos contatos atribuÃ­dos a vocÃª',
-        target: getGoalTarget('contacts_handled', period, customGoals), current: contactsHandled, unit: 'contatos',
-        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high' });
-    }
-    if (isResolutionGoalActive) {
-      allGoals.push({ id: 'resolution-rate', label: 'Taxa de ResoluÃ§Ã£o', description: 'Percentual de conversas resolvidas',
-        target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
-    }
-    return allGoals;
-  }, [messagesData, contactsData, analysesData, period, customGoals]);
-
-  const overallProgress = useMemo(() => {
-    if (goals.length === 0) return 0;
-    return Math.round(goals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / goals.length);
-  }, [goals]);
-
-  const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
-
-  useEffect(() => {
-    if (isLoading || goals.length === 0) return;
-    const allGoalsCompleted = overallProgress >= 100;
-    if (allGoalsCompleted && !previousOverallComplete.current) {
-      setCelebrationData({ title: 'Todas as Metas AlcanÃ§adas! ğŸ†', subtitle: 'ParabÃ©ns! VocÃª completou todas as metas do perÃ­odo!', emoji: 'ğŸ‰' });
-      setShowCelebration(true);
-      previousOverallComplete.current = true;
-    } else if (!allGoalsCompleted) { previousOverallComplete.current = false; }
-
-    const currentCompletedIds = new Set(goals.filter(g => g.current >= g.target).map(g => g.id));
-    currentCompletedIds.forEach(id => {
-      if (!previousCompletedGoals.current.has(id)) {
-        const goal = goals.find(g => g.id === id);
-        if (goal && !allGoalsCompleted) {
-          setCelebrationData({ title: 'Meta AlcanÃ§ada!', subtitle: `${goal.label}: ${goal.current}/${goal.target} ${goal.unit}`,
-            emoji: goal.id === 'messages-sent' ? 'ğŸ’¬' : goal.id === 'contacts-handled' ? 'ğŸ‘¥' : 'âœ…' });
-          setShowCelebration(true);
-        }
-      }
-    });
-    previousCompletedGoals.current = currentCompletedIds;
-  }, [goals, overallProgress, isLoading]);
-
-  return {
-    period, setPeriod, configDialogOpen, setConfigDialogOpen,
-    showCelebration, setShowCelebration, celebrationData,
-    goals, overallProgress, completedGoals, isLoading, dateRange,
-  };
-}
+    case 'week<œáİñ ô°€™É½´èÍÑ…ÉÑ=™]••¬ (€€€€€¹½Ü°ì±½…±”èÁÑ	Hô¤°Ñ¼è•¹‘=™]••¬¡¹½Ü°ì±½…±”èÁÑ	Hô¤ôì(€€€…Í”€µ½¹Ñ œèÉ•ÑÕÉ¸ì™É½´èÍÑ…ÉÑ=™5½¹Ñ ¡¹½Ü¤°Ñ¼è•¹‘=™5½¹Ñ ¡¹½Ü¤ôì(€€€‘•™…Õ±ĞèÉ•ÑÕÉ¸ì™É½´èÍÑ…ÉÑ=™…ä¡¹½Ü¤°Ñ¼è•¹‘=™…ä¡¹½Ü¤ôì(€ô)ô()™Õ¹Ñ¥½¸•Ñ½…±Q…É•Ğ (€½…±QåÁ”èÍÑÉ¥¹œ°Á•É¥½èÍÑÉ¥¹œ°(€ÕÍÑ½µ½…±ÌüèÉÉ…äñì½…±}ÑåÁ”èÍÑÉ¥¹œì‘…¥±å}Ñ…É•Ğè¹Õµ‰•Èìİ••­±å}Ñ…É•Ğè¹Õµ‰•Èìµ½¹Ñ¡±å}Ñ…É•Ğè¹Õµ‰•Èì¥Í}…Ñ¥Ù”è‰½½±•…¸ğ¹Õ±°ôø(¤è¹Õµ‰•Èì(€½¹ÍĞÕÍÑ½µ½…°€ôÕÍÑ½µ½…±Ìü¹™¥¹¡œ€ôøœ¹½…±}ÑåÁ”€ôôô½…±QåÁ”€˜˜€¡œ¹¥Í}…Ñ¥Ù”€üü™…±Í”¤¤ì(€¥˜€¡ÕÍÑ½µ½…°¤ì(€€€Íİ¥Ñ €¡Á•É¥½¤ì(€€€€€…Í”€Ñ½‘…äœèÉ•ÑÕÉ¸ÕÍÑ½µ½…°¹‘…¥±å}Ñ…É•Ğì(€€€€€…Í”€İ••¬œèÉ•ÑÕÉ¸ÕÍÑ½µ½…°¹İ••­±å}Ñ…É•Ğì(€€€€€…Í”€µ½¹Ñ œèÉ•ÑÕÉ¸ÕÍÑ½µ½…°¹µ½¹Ñ¡±å}Ñ…É•Ğì(€€€€€‘•™…Õ±ĞèÉ•ÑÕÉ¸ÕÍÑ½µ½…°¹‘…¥±å}Ñ…É•Ğì(€€€ô(€ô(€½¹ÍĞ‘•™…Õ±Ñ½…°€ôU1Q}=1Mm½…±QåÁ”…Ì­•å½˜ÑåÁ•½˜U1Q}=1Mtì(€¥˜€ …‘•™…Õ±Ñ½…°¤É•ÑÕÉ¸€Àì(€Íİ¥Ñ €¡Á•É¥½¤ì(€€€…Í”€Ñ½‘…äœèÉ•ÑÕÉ¸‘•™…Õ±Ñ½…°¹‘…¥±äì(€€€…Í”€İ••¬œèÉ•ÑÕÉ¸‘•™…Õ±Ñ½…°¹İ••­±äì(€€€…Í”€µ½¹Ñ œèÉ•ÑÕÉ¸‘•™…Õ±Ñ½…°¹µ½¹Ñ¡±äì(€€€‘•™…Õ±ĞèÉ•ÑÕÉ¸‘•™…Õ±Ñ½…°¹‘…¥±äì(€ô)ô()•áÁ½ÉĞ™Õ¹Ñ¥½¸•ÑAÉ½É•ÍÍ½±½È¡Á•É•¹Ñ…”è¹Õµ‰•È¤èÍÑÉ¥¹œì(€¥˜€¡Á•É•¹Ñ…”€øô€ÄÀÀ¤É•ÑÕÉ¸€Ñ•áĞµÍÕ•ÍÌœì(€¥˜€¡Á•É•¹Ñ…”€øô€ÜÔ¤É•ÑÕÉ¸€Ñ•áĞµÁÉ¥µ…Éäœì(€¥˜€¡Á•É•¹Ñ…”€øô€ÔÀ¤É•ÑÕÉ¸€Ñ•áĞµİ…É¹¥¹œœì(€É•ÑÕÉ¸€Ñ•áĞµ‘•ÍÑÉÕÑ¥Ù”œì)ô()•áÁ½ÉĞ™Õ¹Ñ¥½¸•ÑAÉ½É•ÍÍ	½±½È¡Á•É•¹Ñ…”è¹Õµ‰•È¤èÍÑÉ¥¹œì(€¥˜€¡Á•É•¹Ñ…”€øô€ÄÀÀ¤É•ÑÕÉ¸€‰œµÍÕ•ÍÌœì(€¥˜€¡Á•É•¹Ñ…”€øô€ÜÔ¤É•ÑÕÉ¸€‰œµÁÉ¥µ…Éäœì(€¥˜€¡Á•É•¹Ñ…”€øô€ÔÀ¤É•ÑÕÉ¸€‰œµİ…É¹¥¹œœì(€É•ÑÕÉ¸€‰œµ‘•ÍÑÉÕÑ¥Ù”œì)ô()•áÁ½ÉĞ™Õ¹Ñ¥½¸ÕÍ•½…±Í…Í¡‰½…É ¤ì(€½¹ÍĞmÁ•É¥½°Í•ÑA•É¥½‘t€ôÕÍ•MÑ…Ñ” Ñ½‘…äœ¤ì(€½¹ÍĞm½¹™¥¥…±½=Á•¸°Í•Ñ½¹™¥¥…±½=Á•¹t€ôÕÍ•MÑ…Ñ”¡™…±Í”¤ì(€½¹ÍĞmÍ¡½İ•±•‰É…Ñ¥½¸°Í•ÑM¡½İ•±•‰É…Ñ¥½¹t€ôÕÍ•MÑ…Ñ”¡™…±Í”¤ì(€½¹ÍĞm•±•‰É…Ñ¥½¹…Ñ„°Í•Ñ•±•‰É…Ñ¥½¹…Ñ…t€ôÕÍ•MÑ…Ñ”¡ìÑ¥Ñ±”è€œœ°ÍÕ‰Ñ¥Ñ±”è€œœ°•µ½©¤è€ŸÂ~:$œô¤ì(€½¹ÍĞÁÉ•Ù¥½ÕÍ½µÁ±•Ñ•‘½…±Ì€ôÕÍ•I•˜ñM•ĞñÍÑÉ¥¹œøø¡¹•ÜM•Ğ ¤¤ì(€½¹ÍĞÁÉ•Ù¥½ÕÍ=Ù•É…±±½µÁ±•Ñ”€ôÕÍ•I•˜¡™…±Í”¤ì(€½¹ÍĞìÕÍ•Èô€ôÕÍ•ÕÑ  ¤ì((€½¹ÍĞ‘…Ñ•I…¹”€ôÕÍ•5•µ¼  ¤€ôø•Ñ…Ñ•I…¹”¡Á•É¥½¤°mÁ•É¥½‘t¤ì((€½¹ÍĞì‘…Ñ„èÁÉ½™¥±”ô€ôÕÍ•EÕ•Éä¡ì(€€€ÅÕ•Éå-•äèlµäµÁÉ½™¥±”œ°ÕÍ•Èü¹¥‘t°(€€€ÅÕ•Éå¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÕÍ•Èü¹¥¤É•ÑÕÉ¸¹Õ±°ì(€€€€€½¹ÍĞì‘…Ñ„°•ÉÉ½Èô€ô…İ…¥ĞÍÕÁ…‰…Í”¹™É½´ ÁÉ½™¥±•Ìœ¤¹Í•±•Ğ ¥°¹…µ”œ¤¹•Ä ÕÍ•É}¥œ°ÕÍ•È¹¥¤¹Í¥¹±” ¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€É•ÑÕÉ¸‘…Ñ„ì(€€€ô°(€€€•¹…‰±•è€„…ÕÍ•Èü¹¥°(€ô¤ì((€½¹ÍĞì‘…Ñ„èµ•ÍÍ…•Í…Ñ„°¥Í1½…‘¥¹œè±½…‘¥¹5•ÍÍ…•Ìô€ôÕÍ•EÕ•Éä¡ì(€€€ÅÕ•Éå-•äèl½…±Ìµµ•ÍÍ…•Ìœ°Á•É¥½°ÁÉ½™¥±”ü¹¥‘t°(€€€ÅÕ•Éå¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±”ü¹¥¤É•ÑÕÉ¸mtì(€€€€€½¹ÍĞì‘…Ñ„°•ÉÉ½Èô€ô…İ…¥ĞÍÕÁ…‰…Í”¹™É½´ µ•ÍÍ…•Ìœ¤¹Í•±•Ğ ¥°Í•¹‘•È°É•…Ñ•‘}…Ğœ¤(€€€€€€€€¹•Ä …•¹Ñ}¥œ°ÁÉ½™¥±”¹¥¤¹Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹™É½´¹Ñ½%M=MÑÉ¥¹œ ¤¤¹±Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹Ñ¼¹Ñ½%M=MÑÉ¥¹œ ¤¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€É•ÑÕÉ¸‘…Ñ„ñğmtì(€€€ô°(€€€•¹…‰±•è€„…ÁÉ½™¥±”ü¹¥°(€ô¤ì((€½¹ÍĞì‘…Ñ„è½¹Ñ…ÑÍ…Ñ„°¥Í1½…‘¥¹œè±½…‘¥¹½¹Ñ…ÑÌô€ôÕÍ•EÕ•Éä¡ì(€€€ÅÕ•Éå-•äèl½…±Ìµ½¹Ñ…ÑÌœ°Á•É¥½°ÁÉ½™¥±”ü¹¥‘t°(€€€ÅÕ•Éå¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±”ü¹¥¤É•ÑÕÉ¸mtì(€€€€€½¹ÍĞì‘…Ñ„°•ÉÉ½Èô€ô…İ…¥ĞÍÕÁ…‰…Í”¹™É½´ ½¹Ñ…ÑÌœ¤¹Í•±•Ğ ¥°É•…Ñ•‘}…Ğœ¤(€€€€€€€€¹•Ä …ÍÍ¥¹•‘}Ñ¼œ°ÁÉ½™¥±”¹¥¤¹Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹™É½´¹Ñ½%M=MÑÉ¥¹œ ¤¤¹±Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹Ñ¼¹Ñ½%M=MÑÉ¥¹œ ¤¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€É•ÑÕÉ¸‘…Ñ„ñğmtì(€€€ô°(€€€•¹…‰±•è€„…ÁÉ½™¥±”ü¹¥°(€ô¤ì((€½¹ÍĞì‘…Ñ„è…¹…±åÍ•Í…Ñ„°¥Í1½…‘¥¹œè±½…‘¥¹¹…±åÍ•Ìô€ôÕÍ•EÕ•Éä¡ì(€€€ÅÕ•Éå-•äèl½…±Ìµ…¹…±åÍ•Ìœ°Á•É¥½°ÁÉ½™¥±”ü¹¥‘t°(€€€ÅÕ•Éå¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±”ü¹¥¤É•ÑÕÉ¸mtì(€€€€€½¹ÍĞì‘…Ñ„°•ÉÉ½Èô€ô…İ…¥ĞÍÕÁ…‰…Í”¹™É½´ ½¹Ù•ÉÍ…Ñ¥½¹}…¹…±åÍ•Ìœ¤¹Í•±•Ğ ¥°ÍÑ…ÑÕÌ°É•…Ñ•‘}…Ğœ¤(€€€€€€€€¹•Ä …¹…±åé•‘}‰äœ°ÁÉ½™¥±”¹¥¤¹Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹™É½´¹Ñ½%M=MÑÉ¥¹œ ¤¤¹±Ñ” É•…Ñ•‘}…Ğœ°‘…Ñ•I…¹”¹Ñ¼¹Ñ½%M=MÑÉ¥¹œ ¤¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€É•ÑÕÉ¸‘…Ñ„ñğmtì(€€€ô°(€€€•¹…‰±•è€„…ÁÉ½™¥±”ü¹¥°(€ô¤ì((€½¹ÍĞì‘…Ñ„èÕÍÑ½µ½…±Ìô€ôÕÍ•EÕ•Éä¡ì(€€€ÅÕ•Éå-•äèl½…±Ìµ½¹™¥œœ°ÁÉ½™¥±”ü¹¥‘t°(€€€ÅÕ•Éå¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±”ü¹¥¤É•ÑÕÉ¸mtì(€€€€€½¹ÍĞì‘…Ñ„°•ÉÉ½Èô€ô…İ…¥ĞÍÕÁ…‰…Í”¹™É½´ ½…±Í}½¹™¥ÕÉ…Ñ¥½¹Ìœ¤¹Í•±•Ğ œ¨œ¤¹•Ä ÁÉ½™¥±•}¥œ°ÁÉ½™¥±”¹¥¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€É•ÑÕÉ¸‘…Ñ„ñğmtì(€€€ô°(€€€•¹…‰±•è€„…ÁÉ½™¥±”ü¹¥°(€ô¤ì((€½¹ÍĞ½…±Ì€ôÕÍ•5•µ¼  ¤è½…±mt€ôøì(€€€½¹ÍĞµ•ÍÍ…•ÍM•¹Ğ€ôµ•ÍÍ…•Í…Ñ„ü¹™¥±Ñ•È¡´€ôø´¹Í•¹‘•È€ôôô€…•¹Ğœ¤¹±•¹Ñ ñğ€Àì(€€€½¹ÍĞ½¹Ñ…ÑÍ!…¹‘±•€ô½¹Ñ…ÑÍ…Ñ„ü¹±•¹Ñ ñğ€Àì(€€€½¹ÍĞÑ½Ñ…±¹…±åÍ•Ì€ô…¹…±åÍ•Í…Ñ„ü¹±•¹Ñ ñğ€Àì(€€€½¹ÍĞÉ•Í½±Ù•‘¹…±åÍ•Ì€ô…¹…±åÍ•Í…Ñ„ü¹™¥±Ñ•È¡„€ôø„¹ÍÑ…ÑÕÌ€ôôô€É•Í½±Ù¥‘¼œ¤¹±•¹Ñ ñğ€Àì(€€€½¹ÍĞÉ•Í½±ÕÑ¥½¹I…Ñ”€ôÑ½Ñ…±¹…±åÍ•Ì€ø€À€ü5…Ñ ¹É½Õ¹ ¡É•Í½±Ù•‘¹…±åÍ•Ì€¼Ñ½Ñ…±¹…±åÍ•Ì¤€¨€ÄÀÀ¤€è€Àì((€€€€¼¼ĞÈè‰Õœ‘”ÁÉ••“©¹¥„ƒŠP€…à€ôôô™…±Í•€…Ù…±¥„€ …à¤€ôôô™…±Í”°•¹Ó¼(€€€€¼¼€‰Í•´½¹™¥œˆ€¡àÕ¹‘•™¥¹•¤Ù¥É…Ù„M5AI¥¹…Ñ¥Ù¼•´Ù•è‘”€‰ÕÍ…È(€€€€¼¼‘•™…Õ±Ğˆ¸½´„Ñ…‰•±„Ù…é¥„¥ÍÍ¼é•É…Ù„½…±Í€Á…É„Ñ½‘¼µÕ¹‘¼”(€€€€¼¼…¥±å½…±Í…É¹ÑÍà‡µ„Í•µÁÉ”¹¼™…±±‰…¬¡…É‘½‘•¸(€€€½¹ÍĞ¥Í5•ÍÍ…•½…±Ñ¥Ù”€ôÕÍÑ½µ½…±Ìü¹™¥¹¡œ€ôøœ¹½…±}ÑåÁ”€ôôô€µ•ÍÍ…•Í}Í•¹Ğœ¤ü¹¥Í}…Ñ¥Ù”€„ôô™…±Í”ì(€€€½¹ÍĞ¥Í½¹Ñ…Ñ½…±Ñ¥Ù”€ôÕÍÑ½µ½…±Ìü¹™¥¹¡œ€ôøœ¹½…±}ÑåÁ”€ôôô€½¹Ñ…ÑÍ}¡…¹‘±•œ¤ü¹¥Í}…Ñ¥Ù”€„ôô™…±Í”ì(€€€½¹ÍĞ¥ÍI•Í½±ÕÑ¥½¹½…±Ñ¥Ù”€ôÕÍÑ½µ½…±Ìü¹™¥¹¡œ€ôøœ¹½…±}ÑåÁ”€ôôô€É•Í½±ÕÑ¥½¹}É…Ñ”œ¤ü¹¥Í}…Ñ¥Ù”€„ôô™…±Í”ì((€€€½¹ÍĞ…±±½…±Ìè½…±mt€ômtì(€€€¥˜€¡¥Í5•ÍÍ…•½…±Ñ¥Ù”¤ì(€€€€€…±±½…±Ì¹ÁÕÍ ¡ì¥è€µ•ÍÍ…•ÌµÍ•¹Ğœ°±…‰•°è€5•¹Í…•¹Ì¹Ù¥…‘…Ìœ°‘•ÍÉ¥ÁÑ¥½¸è€Q½Ñ…°‘”µ•¹Í…•¹Ì•¹Ù¥…‘…Ì¹¼Á•Ëµ½‘¼œ°(€€€€€€€Ñ…É•Ğè•Ñ½…±Q…É•Ğ µ•ÍÍ…•Í}Í•¹Ğœ°Á•É¥½°ÕÍÑ½µ½…±Ì¤°ÕÉÉ•¹Ğèµ•ÍÍ…•ÍM•¹Ğ°Õ¹¥Ğè€µ•¹Í…•¹Ìœ°(€€€€€€€¥½¸è5•ÍÍ…•MÅÕ…É”°½±½Èè€¡Í°¡Ù…È ´µÁÉ¥µ…Éä¤¤œ°ÁÉ¥½É¥Ñäè€¡¥ œô¤ì(€€€ô(€€€¥˜€¡¥Í½¹Ñ…Ñ½…±Ñ¥Ù”¤ì(€€€€€…±±½…±Ì¹ÁÕÍ ¡ì¥è€½¹Ñ…ÑÌµ¡…¹‘±•œ°±…‰•°è€½¹Ñ…Ñ½ÌÑ•¹‘¥‘½Ìœ°‘•ÍÉ¥ÁÑ¥½¸è€9½Ù½Ì½¹Ñ…Ñ½Ì…ÑÉ¥‰×µ‘½Ì„Ù½¨œ°(€€€€€€€Ñ…É•Ğè•Ñ½…±Q…É•Ğ ½¹Ñ…ÑÍ}¡…¹‘±•œ°Á•É¥½°ÕÍÑ½µ½…±Ì¤°ÕÉÉ•¹Ğè½¹Ñ…ÑÍ!…¹‘±•°Õ¹¥Ğè€½¹Ñ…Ñ½Ìœ°(€€€€€€€¥½¸èUÍ•ÉÌ°½±½Èè€¡Í°¡Ù…È ´µ¡…ÉĞ´È¤¤œ°ÁÉ¥½É¥Ñäè€¡¥ œô¤ì(€€€ô(€€€¥˜€¡¥ÍI•Í½±ÕÑ¥½¹½…±Ñ¥Ù”¤ì(€€€€€…±±½…±Ì¹ÁÕÍ ¡ì¥è€É•Í½±ÕÑ¥½¸µÉ…Ñ”œ°±…‰•°è€Q…á„‘”I•Í½±×Ÿ¼œ°‘•ÍÉ¥ÁÑ¥½¸è€A•É•¹ÑÕ…°‘”½¹Ù•ÉÍ…ÌÉ•Í½±Ù¥‘…Ìœ°(€€€€€€€Ñ…É•Ğè•Ñ½…±Q…É•Ğ É•Í½±ÕÑ¥½¹}É…Ñ”œ°Á•É¥½°ÕÍÑ½µ½…±Ì¤°ÕÉÉ•¹ĞèÉ•Í½±ÕÑ¥½¹I…Ñ”°Õ¹¥Ğè€œ”œ°(€€€€€€€¥½¸è¡•­¥É±”È°½±½Èè€¡Í°¡Ù…È ´µ¡…ÉĞ´Ì¤¤œ°ÁÉ¥½É¥Ñäè€µ•‘¥Õ´œô¤ì(€€€ô(€€€É•ÑÕÉ¸…±±½…±Ìì(€ô°mµ•ÍÍ…•Í…Ñ„°½¹Ñ…ÑÍ…Ñ„°…¹…±åÍ•Í…Ñ„°Á•É¥½°ÕÍÑ½µ½…±Ít¤ì((€½¹ÍĞ½Ù•É…±±AÉ½É•ÍÌ€ôÕÍ•5•µ¼  ¤€ôøì(€€€¥˜€¡½…±Ì¹±•¹Ñ €ôôô€À¤É•ÑÕÉ¸€Àì(€€€É•ÑÕÉ¸5…Ñ ¹É½Õ¹¡½…±Ì¹É•‘Õ” ¡…Œ°œ¤€ôø…Œ€¬5…Ñ ¹µ¥¸ ¡œ¹ÕÉÉ•¹Ğ€¼œ¹Ñ…É•Ğ¤€¨€ÄÀÀ°€ÄÀÀ¤°€À¤€¼½…±Ì¹±•¹Ñ ¤ì(€ô°m½…±Ít¤ì((€½¹ÍĞ½µÁ±•Ñ•‘½…±Ì€ôÕÍ•5•µ¼  ¤€ôø½…±Ì¹™¥±Ñ•È¡œ€ôøœ¹ÕÉÉ•¹Ğ€øôœ¹Ñ…É•Ğ¤¹±•¹Ñ °m½…±Ít¤ì(€½¹ÍĞ¥Í1½…‘¥¹œ€ô±½…‘¥¹5•ÍÍ…•Ìñğ±½…‘¥¹½¹Ñ…ÑÌñğ±½…‘¥¹¹…±åÍ•Ìì((€ÕÍ•™™•Ğ  ¤€ôøì(€€€¥˜€¡¥Í1½…‘¥¹œñğ½…±Ì¹±•¹Ñ €ôôô€À¤É•ÑÕÉ¸ì(€€€½¹ÍĞ…±±½…±Í½µÁ±•Ñ•€ô½Ù•É…±±AÉ½É•ÍÌ€øô€ÄÀÀì(€€€¥˜€¡…±±½…±Í½µÁ±•Ñ•€˜˜€…ÁÉ•Ù¥½ÕÍ=Ù•É…±±½µÁ±•Ñ”¹ÕÉÉ•¹Ğ¤ì(€€€€€Í•Ñ•±•‰É…Ñ¥½¹…Ñ„¡ìÑ¥Ñ±”è€Q½‘…Ì…Ì5•Ñ…Ì±…»…‘…Ì„ƒÂ~>œ°ÍÕ‰Ñ¥Ñ±”è€A…É…‹¥¹Ì„Y½¨½µÁ±•Ñ½ÔÑ½‘…Ì…Ìµ•Ñ…Ì‘¼Á•Ëµ½‘¼„œ°•µ½©¤è€ŸÂ~:$œô¤ì(€€€€€Í•ÑM¡½İ•±•‰É…Ñ¥½¸¡ÑÉÕ”¤ì(€€€€€ÁÉ•Ù¥½ÕÍ=Ù•É…±±½µÁ±•Ñ”¹ÕÉÉ•¹Ğ€ôÑÉÕ”ì(€€€ô•±Í”¥˜€ ……±±½…±Í½µÁ±•Ñ•¤ìÁÉ•Ù¥½ÕÍ=Ù•É…±±½µÁ±•Ñ”¹ÕÉÉ•¹Ğ€ô™…±Í”ìô((€€€½¹ÍĞÕÉÉ•¹Ñ½µÁ±•Ñ•‘%‘Ì€ô¹•ÜM•Ğ¡½…±Ì¹™¥±Ñ•È¡œ€ôøœ¹ÕÉÉ•¹Ğ€øôœ¹Ñ…É•Ğ¤¹µ…À¡œ€ôøœ¹¥¤¤ì(€€€ÕÉÉ•¹Ñ½µÁ±•Ñ•‘%‘Ì¹™½É… ¡¥€ôøì(€€€€€¥˜€ …ÁÉ•Ù¥½ÕÍ½µÁ±•Ñ•‘½…±Ì¹ÕÉÉ•¹Ğ¹¡…Ì¡¥Â°¢6öç7BvöÂÒvöÇ2æf–æB†rÓâræ–BÓÓÒ–B“°¢–b†vöÂbbÆÄvöÇ46ö×ÆWFVB’°¢6WD6VÆV'&F–öäFF‡²F—FÆS¢tÖWFÆ6ì:vFrÂ7V'F—FÆS¢G¶vöÂæÆ&VÇÓ¢G¶vöÂæ7W'&VçGÒòG¶vöÂçF&vWGÒG¶vöÂçVæ—GÖÀ¢VÖö¦“¢vöÂæ–BÓÓÒvÖW76vW2×6VçBrò	ù*Âr¢vöÂæ–BÓÓÒv6öçF7G2Ö†æFÆVBrò	ùRr¢~)ÈRrÒ“°¢6WE6†÷t6VÆV'&F–öâ‡G'VR“°¢Ğ¢Ğ¢Ò“°¢&Wf–÷W46ö×ÆWFVDvöÇ2æ7W'&VçBÒ7W'&VçD6ö×ÆWFVD–G3°¢ÒÂ¶vöÇ2Â÷fW&ÆÅ&öw&W72Â—4ÆöF–æuÒ“° ¢&WGW&â°¢W&–öBÂ6WEW&–öBÂ6öæf–tF–Æöt÷VâÂ6WD6öæf–tF–Æöt÷VâÀ¢6†÷t6VÆV'&F–öâÂ6WE6†÷t6VÆV'&F–öâÂ6VÆV'&F–öäFFÀ¢vöÇ2Â÷fW&ÆÅ&öw&W72Â6ö×ÆWFVDvöÇ2Â—4ÆöF–ærÂFFU&ævRÀ¢Ó°§Ğ
