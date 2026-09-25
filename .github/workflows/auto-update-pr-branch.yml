@@ -1,5 +1,11 @@
 name: Auto Update PR Branches
 
+# Heads criados por este workflow nascem com GITHUB_TOKEN e os checks do PR
+# caem em action_required (mesma politica anti-loop que travava o types-sync).
+# Sem o passo de liberacao abaixo, todo PR atualizado aqui fica esperando
+# alguem aprovar na aba Actions e o auto-merge nunca dispara (25/09/2026,
+# PRs #725 e #754). O passo espelha o "Destravar os checks" do types-sync.
+
 on:
   push:
     branches: [main]
@@ -8,6 +14,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: auto-update-pr-branch
@@ -32,5 +39,39 @@ jobs:
           fi
           for pr in $prs; do
             echo "Atualizando PR #$pr (behind + auto-merge ativo)"
-            gh api -X PUT "repos/$REPO/pulls/$pr/update-branch" || echo "Falha ao atualizar PR #$pr, seguindo para o proximo"
+            sha_antes=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+            if ! gh api -X PUT "repos/$REPO/pulls/$pr/update-branch" >/dev/null; then
+              echo "Falha ao atualizar PR #$pr, seguindo para o proximo"
+              continue
+            fi
+            # update-branch e assincrono: o merge commit aparece alguns segundos depois.
+            sha_depois="$sha_antes"
+            for tentativa in 1 2 3 4 5 6; do
+              sleep 10
+              sha_depois=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+              [ "$sha_depois" != "$sha_antes" ] && break
+            done
+            if [ "$sha_depois" = "$sha_antes" ]; then
+              echo "PR #$pr: head nao mudou apos o update-branch; nada a liberar"
+              continue
+            fi
+            # Checks do head novo nascem em action_required (GITHUB_TOKEN): liberar.
+            runs=""
+            for tentativa in 1 2 3 4 5 6; do
+              runs=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
+                --jq '.workflow_runs[].id')
+              [ -n "$runs" ] && break
+              sleep 10
+            done
+            if [ -z "$runs" ]; then
+              echo "PR #$pr ($sha_depois): nenhum run aguardando aprovacao"
+              continue
+            fi
+            for run in $runs; do
+              if gh api -X POST "repos/$REPO/actions/runs/$run/approve" >/dev/null; then
+                echo "PR #$pr: run $run liberado"
+              else
+                echo "PR #$pr: run $run recusado pelo GITHUB_TOKEN - aprovar na aba Actions"
+              fi
+            done
           done
