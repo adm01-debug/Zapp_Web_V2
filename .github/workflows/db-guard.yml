@@ -15,6 +15,9 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Fila de merge: sem este gatilho o check required nunca reportaria no merge
+  # group e a fila travaria todos os merges do repo.
+  merge_group:
   workflow_dispatch:
 
 permissions:
