@@ -74,7 +74,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       ) : (
         <DashboardKpiCard
           index={3}
-          label="Minhas Conversas Ativas"
+          label=" Minhas Conversas Ativas"
           value={String(myActiveConversations)}
           delta={null}
           tile="violet"
@@ -86,7 +86,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       <DashboardKpiCard
         index={4}
         label={isStaff ? 'Resolvidas Hoje' : 'Minhas Resolvidas Hoje'}
-        value={String(kpi?.resolvedToday ?? 0)}
+        value={kpi ? String(kpi.resolvedToday) : '—'}
         delta={kpi?.deltaResolvedPct != null ? { pct: kpi.deltaResolvedPct } : null}
         tile="green"
         icon={CheckCircle2}
