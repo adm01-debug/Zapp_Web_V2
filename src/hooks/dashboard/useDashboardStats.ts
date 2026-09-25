@@ -29,13 +29,13 @@ export function useDashboardStats(filters: DashboardFilters) {
         totalAgents: data?.length || 0,
       };
     },
-    // Lista de atendentes ativos muda pouco (E28) -- presenca (online/offline)
-    // ja e' tempo real via useAgentPresenceMap, fora deste cache.
+    // Lista de atendentes ativos muda pouco (E28) — presença (online/offline)
+    // já é tempo real via useAgentPresenceMap, fora deste cache.
     staleTime: 300_000,
   });
 
-  // "Online" = conta ativa E conectada agora com status Online (presenca real do Realtime).
-  // Fica fora do queryFn: presenca muda em tempo real e nao pode ficar presa no cache da query.
+  // "Online" = conta ativa E conectada agora com status Online (presença real do Realtime).
+  // Fica fora do queryFn: presença muda em tempo real e não pode ficar presa no cache da query.
   const agentsData = useMemo(() => {
     if (!agentsQuery.data) return undefined;
     const onlineAgents = agentsQuery.data.agents.filter(a => a.is_active && presence[a.user_id] === 'online').length;
@@ -47,10 +47,10 @@ export function useDashboardStats(filters: DashboardFilters) {
     queryFn: async () => {
       let query = supabase
         .from('contacts')
-        // conversation_status incluido (auditoria de 24/09, achado P1): sem ele
+        // conversation_status incluído (auditoria de 24/09, achado P1): sem ele
         // o KPI "conversas abertas" contava qualquer contato com assigned_to,
-        // inclusive resolved/archived/waiting -- mascarado hoje so porque
-        // 100% dos contatos em producao ainda estao 'open'.
+        // inclusive resolved/archived/waiting -- mascarado hoje só porque
+        // 100% dos contatos em produção ainda estão 'open'.
         .select('id, name, phone, avatar_url, queue_id, assigned_to, conversation_status, created_at, updated_at')
         .order('updated_at', { ascending: false });
       if (filters.queueId) query = query.eq('queue_id', filters.queueId);
@@ -61,7 +61,7 @@ export function useDashboardStats(filters: DashboardFilters) {
       if (error) throw error;
       return data || [];
     },
-    // Contatos mudam de status/atribuicao com frequencia -- janela curta (E28).
+    // Contatos mudam de status/atribuição com frequência — janela curta (E28).
     staleTime: 30_000,
   });
 
@@ -75,13 +75,13 @@ export function useDashboardStats(filters: DashboardFilters) {
       if (error) throw error;
       return data || [];
     },
-    // Composicao de filas (quais existem, quem e membro) muda raramente (E28).
+    // Composição de filas (quais existem, quem é membro) muda raramente (E28).
     staleTime: 300_000,
   });
 
-  // slaQuery (ultimos 50 all-time, sem filtro de data) foi removida (E17): era uma
-  // 2a regua de "tempo medio" divergente da de useDashboardKpi (hoje/mediana) --
-  // achado A5. useDashboardData agora le o tempo medio so de useDashboardKpi.
+  // slaQuery (últimos 50 all-time, sem filtro de data) foi removida (E17): era uma
+  // 2ª régua de "tempo médio" divergente da de useDashboardKpi (hoje/mediana) --
+  // achado A5. useDashboardData agora lê o tempo médio só de useDashboardKpi.
 
   return {
     agents: agentsData,
