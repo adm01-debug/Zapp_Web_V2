@@ -5,6 +5,7 @@ const h = vi.hoisted(() => ({
   invoke: vi.fn(),
   loadMapbox: vi.fn(),
   reportClientError: vi.fn(),
+  fetch: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: (...args: unknown[]) => h.invoke(...args) } } }));
@@ -14,6 +15,7 @@ vi.mock('@/lib/mapboxLoader', () => ({ loadMapbox: () => h.loadMapbox() }));
 
 import { LocationMessageDisplay } from '../LocationMessage';
 import { resetMapboxTokenForTests, MAPBOX_MAP_LOAD_TIMEOUT_MS } from '@/lib/mapboxToken';
+import { resetReverseGeocodeCacheForTests } from '@/lib/mapboxGeocode';
 
 type Handler = (event?: unknown) => void;
 
@@ -52,10 +54,16 @@ describe('LocationMessageDisplay', () => {
     h.loadMapbox.mockResolvedValue(fakeMapbox);
     FakeMap.instances = [];
     resetMapboxTokenForTests();
+    resetReverseGeocodeCacheForTests();
+    // sem endereço na mensagem o balão consulta o Mapbox: por padrão a consulta falha em silêncio
+    h.fetch.mockReset();
+    h.fetch.mockResolvedValue({ ok: false });
+    vi.stubGlobal('fetch', h.fetch);
   });
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('várias bolhas na mesma tela compartilham uma única busca do token', async () => {
@@ -137,5 +145,67 @@ describe('LocationMessageDisplay', () => {
 
     await act(async () => { resolveFirst(fakeMapbox); });
     expect(FakeMap.instances).toHaveLength(1);
+  });
+
+  it('sem endereço na mensagem, resolve o endereço pela coordenada e mostra no balão', async () => {
+    h.invoke.mockResolvedValue(tokenOk);
+    h.fetch.mockResolvedValue({ ok: true, json: async () => ({ features: [{ place_name: 'Av. Paulista, 1000, Bela Vista, São Paulo - SP, Brasil' }] }) });
+    render(<LocationMessageDisplay location={location} isSent={false} />);
+
+    expect(await screen.findByText('Av. Paulista, 1000, Bela Vista, São Paulo - SP, Brasil')).toBeInTheDocument();
+    const url = String(h.fetch.mock.calls[0][0]);
+    expect(url).toContain('/mapbox.places/-46.63,-23.55.json');
+    expect(url).toContain('access_token=pk.test');
+    expect(url).toContain('language=pt');
+    expect(h.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('com endereço na mensagem, não consulta o Mapbox', async () => {
+    h.invoke.mockResolvedValue(tokenOk);
+    render(<LocationMessageDisplay location={{ ...location, address: 'Rua A, 10 - São Paulo' }} isSent={false} />);
+
+    expect(screen.getByText('Rua A, 10 - São Paulo')).toBeInTheDocument();
+    await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
+    expect(h.fetch).not.toHaveBeenCalled();
+  });
+
+  it('falha ao resolver o endereço não quebra o balão: segue só com as coordenadas, sem erro', async () => {
+    h.invoke.mockResolvedValue(tokenOk);
+    h.fetch.mockRejectedValue(new TypeError('Failed to fetch'));
+    render(<LocationMessageDisplay location={location} isSent={false} />);
+
+    await waitFor(() => expect(h.fetch).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(screen.getByText('-23.550000, -46.630000')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+    expect(h.reportClientError).not.toHaveBeenCalled();
+  });
+
+  it('bolhas na mesma coordenada consultam o endereço uma única vez', async () => {
+    h.invoke.mockResolvedValue(tokenOk);
+    h.fetch.mockResolvedValue({ ok: true, json: async () => ({ features: [{ place_name: 'Rua Comum, 5' }] }) });
+    render(
+      <>
+        <LocationMessageDisplay location={location} isSent={false} />
+        <LocationMessageDisplay location={{ ...location, name: 'Outro nome' }} isSent />
+      </>,
+    );
+
+    await waitFor(() => expect(screen.getAllByText('Rua Comum, 5')).toHaveLength(2));
+    expect(h.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('falha não fica em cache: um balão montado depois tenta de novo', async () => {
+    h.invoke.mockResolvedValue(tokenOk);
+    h.fetch.mockResolvedValueOnce({ ok: false });
+    const first = render(<LocationMessageDisplay location={location} isSent={false} />);
+    await waitFor(() => expect(h.fetch).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    first.unmount();
+
+    h.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ features: [{ place_name: 'Rua Tardia, 9' }] }) });
+    render(<LocationMessageDisplay location={location} isSent={false} />);
+    expect(await screen.findByText('Rua Tardia, 9')).toBeInTheDocument();
+    expect(h.fetch).toHaveBeenCalledTimes(2);
   });
 });
