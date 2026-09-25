@@ -252,6 +252,18 @@ pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar c
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
 
+## Lição de UI (2026-09-25) — fundo de painel preto sem escopo de tema
+
+PRs #755 → #771 → #774: pedido de fundo preto nos painéis do inbox (sidebar de conversas,
+detalhes do contato, barra de chat) foi implementado com `bg-black` **fixo**, sem variante
+`dark:`. Quebrou o light mode: contraste do texto principal caiu para 1.24:1 (mínimo WCAG AA é
+4.5:1) e o modo alto-contraste claro chegou a 1:1 (texto preto sobre fundo preto, invisível).
+Corrigido em #771 (`dark:bg-black`) e consolidado em #774 no token `--inbox-panel-bg` (definido
+por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-lo em vez de
+`bg-black`/`dark:bg-black` literal sempre que escurecer um painel novo do inbox, para não repetir
+o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
+cálculo de contraste WCAG) ficou só na sessão que corrigiu.
+
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 - For codebase questions: `graphify query "<question>"` when graph.json exists.
