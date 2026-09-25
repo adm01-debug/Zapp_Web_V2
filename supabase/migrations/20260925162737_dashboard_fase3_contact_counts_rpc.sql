@@ -14,7 +14,7 @@ CREATE OR REPLACE FUNCTION public.dashboard_contact_counts(
 RETURNS jsonb
 LANGUAGE sql
 STABLE
-AS $$
+AS $body$
   WITH filtered AS (
     SELECT c.id, c.queue_id, c.assigned_to, c.conversation_status
     FROM contacts c
@@ -58,6 +58,6 @@ AS $$
       FROM per_queue
     ), '[]'::jsonb)
   );
-$$;
+$body$;
 
 GRANT EXECUTE ON FUNCTION public.dashboard_contact_counts(timestamptz, timestamptz, uuid, uuid) TO authenticated;
