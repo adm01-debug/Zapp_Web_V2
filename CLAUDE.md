@@ -142,7 +142,12 @@ check required e travaria todos os merges.
 
 **`db-live-guard` deixou de falhar em silêncio.** Como ele não roda em PR (por design), o vermelho
 na `main` só aparecia para quem abrisse a aba Actions — foi assim que os drifts de 25/09 passaram.
-Agora abre, ou comenta em, uma issue única com label `db-live-guard`.
+Agora abre, ou comenta em, uma issue única com label `db-live-guard`. **Complemento de 25/09:** o job
+liga `PSQL_CONNECT_RETRIES=2` — sem isso um timeout do pooler abria alerta de "contrato quebrado"
+que não era verdade (run 36135041890 morreu em `timeout expired` antes de consultar qualquer coisa).
+O retry vive em `withPsqlEnvironment` e é **desligado por padrão**: só cobre falha de transporte (o
+comando não chegou ao servidor), nunca erro de SQL, de autenticação ou drift, e quem escreve
+(`register-migration --apply`) não liga.
 
 **Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
 segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
