@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, endOfDay } from 'date-fns';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
 
 export interface DashboardFilters {
@@ -10,8 +9,27 @@ export interface DashboardFilters {
   agentId?: string | null;
 }
 
+export interface DashboardQueueBreakdown {
+  queueId: string;
+  waiting: number;
+  inService: number;
+  avgResponse: number | null;
+  slaRate: number | null;
+}
+
+/** Shape devolvido pela RPC dashboard_contact_counts (E24/E25): contagens
+ * globais + breakdown por fila calculados no servidor — substitui o fetch
+ * de até 1000 linhas cruas de `contacts` (cap silencioso do PostgREST,
+ * achado A11) e o waitingCount hardcoded 0 (achado A10). */
+export interface DashboardContactCounts {
+  total: number;
+  open: number;
+  pending: number;
+  myActive: number;
+  queues: DashboardQueueBreakdown[];
+}
+
 export function useDashboardStats(filters: DashboardFilters) {
-  const todayStart = startOfDay(new Date()).toISOString();
   const presence = useAgentPresenceMap();
 
   const agentsQuery = useQuery({
@@ -29,40 +47,31 @@ export function useDashboardStats(filters: DashboardFilters) {
         totalAgents: data?.length || 0,
       };
     },
-    // Lista de atendentes ativos muda pouco (E28) — presença (online/offline)
-    // já é tempo real via useAgentPresenceMap, fora deste cache.
-    staleTime: 300_000,
+    staleTime: 300_000, // E28
   });
 
-  // "Online" = conta ativa E conectada agora com status Online (presença real do Realtime).
-  // Fica fora do queryFn: presença muda em tempo real e não pode ficar presa no cache da query.
   const agentsData = useMemo(() => {
     if (!agentsQuery.data) return undefined;
     const onlineAgents = agentsQuery.data.agents.filter(a => a.is_active && presence[a.user_id] === 'online').length;
     return { ...agentsQuery.data, onlineAgents };
   }, [agentsQuery.data, presence]);
 
-  const contactsQuery = useQuery({
-    queryKey: ['dashboard-contacts', filters],
+  const contactCountsQuery = useQuery({
+    queryKey: ['dashboard-contact-counts', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('contacts')
-        // conversation_status incluído (auditoria de 24/09, achado P1): sem ele
-        // o KPI "conversas abertas" contava qualquer contato com assigned_to,
-        // inclusive resolved/archived/waiting -- mascarado hoje só porque
-        // 100% dos contatos em produção ainda estão 'open'.
-        .select('id, name, phone, avatar_url, queue_id, assigned_to, conversation_status, created_at, updated_at')
-        .order('updated_at', { ascending: false });
-      if (filters.queueId) query = query.eq('queue_id', filters.queueId);
-      if (filters.agentId) query = query.eq('assigned_to', filters.agentId);
-      if (filters.dateRange?.from) query = query.gte('updated_at', filters.dateRange.from.toISOString());
-      if (filters.dateRange?.to) query = query.lte('updated_at', filters.dateRange.to.toISOString());
-      const { data, error } = await query;
+      // cast temporário: types.ts gerado ainda não tem dashboard_contact_counts
+      // (RPC nova, E24/E25) — sync automático traz o tipo real em breve (mesmo
+      // padrão do dashboard_kpi, E23).
+      const { data, error } = await (supabase as any).rpc('dashboard_contact_counts', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types
+        p_since: filters.dateRange?.from ? filters.dateRange.from.toISOString() : null,
+        p_until: filters.dateRange?.to ? filters.dateRange.to.toISOString() : null,
+        p_queue: filters.queueId || null,
+        p_agent: filters.agentId || null,
+      });
       if (error) throw error;
-      return data || [];
+      return data as unknown as DashboardContactCounts;
     },
-    // Contatos mudam de status/atribuição com frequência — janela curta (E28).
-    staleTime: 30_000,
+    staleTime: 30_000, // E28
   });
 
   const queuesQuery = useQuery({
@@ -75,23 +84,18 @@ export function useDashboardStats(filters: DashboardFilters) {
       if (error) throw error;
       return data || [];
     },
-    // Composição de filas (quais existem, quem é membro) muda raramente (E28).
-    staleTime: 300_000,
+    staleTime: 300_000, // E28
   });
-
-  // slaQuery (últimos 50 all-time, sem filtro de data) foi removida (E17): era uma
-  // 2ª régua de "tempo médio" divergente da de useDashboardKpi (hoje/mediana) --
-  // achado A5. useDashboardData agora lê o tempo médio só de useDashboardKpi.
 
   return {
     agents: agentsData,
-    contacts: contactsQuery.data,
+    counts: contactCountsQuery.data,
     queues: queuesQuery.data,
-    isLoading: agentsQuery.isLoading || contactsQuery.isLoading || queuesQuery.isLoading,
-    error: agentsQuery.error || contactsQuery.error || queuesQuery.error,
+    isLoading: agentsQuery.isLoading || contactCountsQuery.isLoading || queuesQuery.isLoading,
+    error: agentsQuery.error || contactCountsQuery.error || queuesQuery.error,
     refetch: () => {
       agentsQuery.refetch();
-      contactsQuery.refetch();
+      contactCountsQuery.refetch();
       queuesQuery.refetch();
     }
   };
