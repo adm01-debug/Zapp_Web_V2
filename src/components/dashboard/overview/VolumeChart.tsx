@@ -108,7 +108,7 @@ export function VolumeChart() {
       )}
       <div className="flex items-center gap-4 h-4 mt-1 text-2xs text-foreground-secondary">
         <span>— Conversas reais</span>
-        {hasPrediction && <span>╌ Previsão IA</span>}
+        {hasPrediction && <span>╌ Média 7 dias</span>}
       </div>
     </DashboardCard>
   );
