@@ -167,19 +167,26 @@ minuto); o que falta é a conta: `adm01-debug` é do tipo `User`, e merge queue 
 de repositório de **organização**, independente do plano (a conta é `pro`). Só passa a existir se o
 repo for transferido para uma org — decisão de negócio, não de CI.
 
-**App "Supabase for GitHub" instalado, apontando para PRODUÇÃO e quebrado.** O check
-`Supabase Preview` vem desse app; ele falha de forma persistente com
-`ERROR: Job 8 does not exist or you do not own it (SQLSTATE XX000)` ao rodar
-`INSERT INTO supabase_migrations.schema_migrations`. O `supabase/config.toml` tem
-`project_id = "tnnnlkbymytvtqngbbqh"`, o banco oficial, e a descrição do app promete
-"automatically runs your migrations when pull requests are merged" — ou seja, é uma via de DDL em
-produção que **não passa** pelo `db-migrate.yml` (dry-run, confirmação de hash, environment
-`producao-ddl`). Evidência de que hoje ele NÃO aplica nada: se aplicasse, o ledger teria entradas
-que ninguém registrou e os drifts de 25/09 não teriam existido. Ou seja: inócuo agora, bomba
-relógio se alguém "consertar" a configuração sem saber do `db-migrate.yml`. **Decidir: configurar
-o branching corretamente ou remover o app do repositório.** Nenhuma das duas dá para fazer daqui —
-`GET /repos/.../installation` devolve 401 e `GET /user/installations` devolve 403 com o token das
-sessões; é ação no dashboard do Supabase (branching) e/ou nas GitHub Apps da conta.
+**App "Supabase for GitHub" — DESLIGADO em 25/09, confirmado por teste real.** Apontava para o
+banco oficial (`supabase/config.toml`: `project_id = "tnnnlkbymytvtqngbbqh"`) com "Automatic
+branching" ligado e sem cobertura do Spend Cap (custo por PR que tocasse `supabase/`). Joaquim
+desligou "Automatic branching" e "Deploy to production" no dashboard do Supabase
+(Settings → Integrations → GitHub). **Confirmado pela API, não só pela tela**: o PR #703 (antes do
+desligamento) tinha o check `Supabase Preview` vermelho; o PR #717 (mesma branch de origem, depois
+do desligamento) **não tem esse check** — o app parou de reagir a PRs. Se precisar reativar o
+preview um dia, aponte para um projeto Supabase separado, nunca para `tnnnlkbymytvtqngbbqh`.
+
+Achado durante o fechamento deste item: duas migrations de 25/09 estavam aplicadas em produção com
+o registro no ledger incompleto — `20260925133000` (dashboard_kpi) sem nenhuma linha, e
+`20260925170000` (reminders_pending) com `statements` NULL. As duas foram corrigidas (INSERT e
+UPDATE guardados por `RETURNING` não-vazio, sem sobrescrever se outra sessão já tivesse corrigido).
+Não há evidência de que o app do Supabase tenha causado isso — é mais provável que alguma sessão
+tenha aplicado o DDL manualmente (regra 1) e pulado ou errado o passo de registro (regra 2). **Ao
+investigar, apareceram mais 7 versions com `statements` NULL no ledger** (`20260827140000`,
+`20260827150000`, `20260901000002`, `20260901200001`, `20260906000001`, `20260925153000`,
+`20260925153100`) — não fixadas nesta sessão, fora do escopo do que foi pedido; próxima sessão que
+mexer em migrations deve verificar `SELECT version FROM supabase_migrations.schema_migrations WHERE
+statements IS NULL` antes de mais nada.
 
 **Sessões paralelas colidem de verdade — a regra 3 do fluxo Git existe por isso e não está sendo
 seguida.** Em 25/09, em poucas horas: (a) duas sessões corrigiram o MESMO timeout de pooler em
