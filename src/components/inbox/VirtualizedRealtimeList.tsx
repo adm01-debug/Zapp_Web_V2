@@ -328,7 +328,7 @@ const ConversationRow = memo(({
           ROW_CLASSES_BY_DENSITY[density],
           selectedContactId === contactId ? 'conversation-row-selected' : 'border-transparent hover:bg-muted/40',
           isSelected && selectedContactId !== contactId && 'bg-accent',
-          isPinned && selectedContactId !== contactId && 'bg-muted/30'
+          isPinned && selectedContactId !== contactId && !isSelected && 'bg-muted/30'
         )}
       >
         <div className="flex items-center gap-3">
