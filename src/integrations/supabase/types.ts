@@ -9098,6 +9098,7 @@ export type Database = {
         Returns: {
           files_total: number
           notes_total: number
+          reminders_pending: number
           tasks_open: number
         }[]
       }
