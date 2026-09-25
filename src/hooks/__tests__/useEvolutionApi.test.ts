@@ -43,7 +43,7 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
     it('exposes all 60+ functions', () => {
       const { result } = renderHook(() => useEvolutionApi());
       const expectedFunctions = [
-        'createInstance', 'listInstances', 'connectInstance', 'getInstanceStatus',
+        'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
         'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance', 'setPresence',
         'setSettings', 'getSettings', 'setWebhook', 'getWebhook',
         'sendTextMessage', 'sendMediaMessage', 'sendAudioMessage', 'sendStickerMessage',
@@ -214,6 +214,23 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         method: 'POST',
         body: { instanceName: 'wpp2' },
       });
+    });
+
+    it('createConnection calls create-connection without a toast (own toast in useConnectionsManager)', async () => {
+      mockInvoke.mockResolvedValue({ data: { connection: { id: 'c1' }, evolution: {} }, error: null });
+      const { result } = renderHook(() => useEvolutionApi());
+      let response: unknown;
+      await act(async () => {
+        response = await result.current.createConnection({
+          instanceName: 'wpp2', name: 'Vendas', phone_number: '5511999999999',
+        });
+      });
+      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/create-connection', {
+        method: 'POST',
+        body: { instanceName: 'wpp2', name: 'Vendas', phone_number: '5511999999999' },
+      });
+      expect(response).toEqual({ connection: { id: 'c1' }, evolution: {} });
+      expect(mockToast.success).not.toHaveBeenCalled();
     });
 
     it('setPresence sends presence type', async () => {

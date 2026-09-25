@@ -1,13 +1,18 @@
 import { useCallback } from 'react';
 import type { HttpMethod } from './useEvolutionApiCore';
-import type { CreateInstanceParams, SettingsConfig, WebhookConfig } from '../integrations/evolutionApi.types';
+import type { CreateInstanceParams, CreateConnectionParams, CreateConnectionResult, SettingsConfig, WebhookConfig } from '../integrations/evolutionApi.types';
 
 export function useEvolutionInstance(
   callApi: (action: string, body?: object, method?: HttpMethod) => Promise<any>,
   withToast: (action: string, body: object | undefined, successMsg: string, errorMsg: string, method?: HttpMethod) => Promise<any>
 ) {
+  // create-instance está deprecado no backend (E10/E11) — mantido só por
+  // compat de 1 release. Novas conexões devem usar createConnection.
   const createInstance = useCallback((params: CreateInstanceParams) =>
     withToast('create-instance', params, 'Instância criada com sucesso', 'Erro ao criar instância'), [withToast]);
+
+  const createConnection = useCallback((params: CreateConnectionParams): Promise<CreateConnectionResult> =>
+    callApi('create-connection', params), [callApi]);
 
   const listInstances = useCallback((instanceName?: string) =>
     callApi('list-instances', instanceName ? { instanceName } : undefined, 'GET'), [callApi]);
@@ -46,7 +51,7 @@ export function useEvolutionInstance(
     callApi('get-webhook', { instanceName }, 'GET'), [callApi]);
 
   return {
-    createInstance, listInstances, connectInstance, getInstanceStatus, getInstanceInfo,
+    createInstance, createConnection, listInstances, connectInstance, getInstanceStatus, getInstanceInfo,
     restartInstance, disconnectInstance, deleteInstance, setPresence,
     setSettings, getSettings, setWebhook, getWebhook,
   };
