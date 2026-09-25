@@ -7850,6 +7850,7 @@ export type Database = {
           health_status: string | null
           id: string
           instance_id: string | null
+          instance_token_secret_id: string | null
           is_default: boolean | null
           is_plugged: boolean | null
           last_health_check: string | null
@@ -7871,6 +7872,7 @@ export type Database = {
           health_status?: string | null
           id?: string
           instance_id?: string | null
+          instance_token_secret_id?: string | null
           is_default?: boolean | null
           is_plugged?: boolean | null
           last_health_check?: string | null
@@ -7892,6 +7894,7 @@ export type Database = {
           health_status?: string | null
           id?: string
           instance_id?: string | null
+          instance_token_secret_id?: string | null
           is_default?: boolean | null
           is_plugged?: boolean | null
           last_health_check?: string | null
@@ -8878,8 +8881,17 @@ export type Database = {
           count: number
         }[]
       }
+      dashboard_contact_counts: {
+        Args: {
+          p_agent?: string
+          p_queue?: string
+          p_since?: string
+          p_until?: string
+        }
+        Returns: Json
+      }
       dashboard_hourly_volume: {
-        Args: { p_days?: number }
+        Args: { p_agent?: string; p_days?: number; p_queue?: string }
         Returns: {
           day: string
           hour: number
@@ -9131,6 +9143,7 @@ export type Database = {
         Returns: {
           files_total: number
           notes_total: number
+          reminders_pending: number
           tasks_open: number
         }[]
       }
@@ -9166,6 +9179,7 @@ export type Database = {
           user_roles_list: string
         }[]
       }
+      get_instance_token: { Args: { p_instance_id: string }; Returns: string }
       get_last_message_dates: {
         Args: { contact_ids: string[] }
         Returns: {
@@ -9222,6 +9236,16 @@ export type Database = {
         }[]
       }
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
+      grant_agent_achievement: {
+        Args: {
+          p_description: string
+          p_name: string
+          p_profile_id: string
+          p_type: string
+          p_xp_reward: number
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9487,6 +9511,10 @@ export type Database = {
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
+      }
+      set_instance_token: {
+        Args: { p_connection_id: string; p_token: string }
+        Returns: string
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       store_gmail_tokens: {
