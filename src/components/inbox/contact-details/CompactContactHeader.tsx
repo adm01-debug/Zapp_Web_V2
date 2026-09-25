@@ -16,7 +16,7 @@ interface CompactContactHeaderProps {
 export function CompactContactHeader({ contact, isVip, companyName, firstName }: CompactContactHeaderProps) {
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-card">
+      className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-card dark:bg-black">
       <div className="relative">
         <Avatar className="w-9 h-9 ring-1 ring-border/20">
           <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
