@@ -22,7 +22,10 @@ on:
       - 'scripts/db-audit/**'
       - '.github/workflows/types-sync.yml'
   schedule:
-    - cron: '0 6 * * 1'
+    # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
+    # GitHub, e este job precisa terminar antes do db-live-guard (06:13) para
+    # nao ser lido no meio da geracao dos artefatos.
+    - cron: '49 5 * * 1'
   workflow_dispatch:
 
 permissions:
