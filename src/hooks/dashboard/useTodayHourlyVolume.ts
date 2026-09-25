@@ -7,6 +7,14 @@ import { supabase } from '@/integrations/supabase/client';
 // A6: o cap silencioso de 1000 linhas do PostgREST truncava a amostra de 8 dias).
 export type HourlyBucket = { day: string; hour: number; message_count: number };
 
+/** Fila/agente do filtro do topo (E32) — propagados como p_queue/p_agent para
+ * a RPC. Para não-staff, dashboard_hourly_volume trava p_agent = auth.uid() no
+ * servidor (E33), igual dashboard_kpi/dashboard_contact_counts. */
+export interface HourlyVolumeFilters {
+  queueId?: string | null;
+  agentId?: string | null;
+}
+
 export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date()) {
   const todayStart = startOfDay(now);
   const currentHour = now.getHours();
@@ -42,21 +50,25 @@ export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date())
   return { todayByHour, last7ByDay, currentHour, currentHourCount, avg7dCurrentHour };
 }
 
-// dashboard_hourly_volume (E22) ja esta em producao (DDL aplicada via MCP), mas o
-// types.ts gerado ainda nao foi sincronizado com essa RPC (nao ha generate_typescript_types
-// para este projeto self-hosted; so o workflow types-sync semanal). Cast local via
-// 'unknown' (evita @typescript-eslint/no-explicit-any) ate a proxima sincronizacao.
+// dashboard_hourly_volume (E22, com p_queue/p_agent desde E32) ja esta em producao
+// (DDL aplicada via MCP), mas o types.ts gerado ainda nao foi sincronizado com essa
+// RPC (nao ha generate_typescript_types para este projeto self-hosted; so o workflow
+// types-sync semanal). Cast local via 'unknown' (evita @typescript-eslint/no-explicit-any)
+// ate a proxima sincronizacao.
 type DashboardHourlyVolumeRpc = (
   fn: 'dashboard_hourly_volume',
-  args: { p_days: number },
+  args: { p_days: number; p_queue: string | null; p_agent: string | null },
 ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-export function useTodayHourlyVolume() {
+export function useTodayHourlyVolume(filters: HourlyVolumeFilters = {}) {
+  const { queueId = null, agentId = null } = filters;
   return useQuery({
-    queryKey: ['today-hourly-volume'],
+    // E32: fila/agente entram na queryKey — trocar o filtro do topo tem que
+    // invalidar o cache do gráfico (antes o VolumeChart era cego a eles, A9).
+    queryKey: ['today-hourly-volume', queueId, agentId],
     queryFn: async () => {
       const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
-      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8 });
+      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8, p_queue: queueId, p_agent: agentId });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },

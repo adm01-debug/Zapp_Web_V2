@@ -14,6 +14,12 @@ const HOUR_TICKS = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
 
 type Mode = 'hoje' | '7dias';
 
+interface VolumeChartProps {
+  /** Filtros do topo (E32) — repassados para dashboard_hourly_volume. */
+  queueId?: string | null;
+  agentId?: string | null;
+}
+
 function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?: boolean; currentHourCount: number; avg7dCurrentHour: number | null }) {
   if (!active) return null;
   const pct = avg7dCurrentHour && avg7dCurrentHour > 0 ? Math.round(((currentHourCount - avg7dCurrentHour) / avg7dCurrentHour) * 100) : null;
@@ -28,9 +34,9 @@ function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?
   );
 }
 
-export function VolumeChart() {
+export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
   const [mode, setMode] = useState<Mode>('hoje');
-  const volumeQuery = useTodayHourlyVolume();
+  const volumeQuery = useTodayHourlyVolume({ queueId, agentId });
   const demand = useDemandPrediction();
 
   const hasPrediction = mode === 'hoje' && (demand.data ?? []).some((p) => p.isPrediction);
