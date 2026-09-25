@@ -186,10 +186,22 @@ export function resetReverseGeocodeCacheForTests(): void {
   cache.clear();
 }
 
-// --- Search Box /suggest (autocomplete estilo playground) ---------------------------------------
+// --- Search Box /suggest + /retrieve (autocomplete estilo playground) ---------------------------
 // `/suggest` não devolve coordenada (só mapbox_id/name/full_address/feature_type/distance) — a
-// coordenada só sai do `/retrieve` (E07), ao escolher. As duas exigem `session_token` (ver
+// coordenada só sai do `/retrieve`, ao escolher. As duas exigem `session_token` (ver
 // `mapboxSession.ts`): é o que agrupa N `/suggest` + 1 `/retrieve` como 1 sessão faturável.
+//
+// Cascata de fallback (Apêndice C do plano — a orquestração abaixo é do hook da Fase 2, que ainda
+// não existe; aqui só a camada de API precisa devolver a causa certa pra essa decisão ser possível):
+//   /suggest falhou (network/timeout/http) → quem consome cai em `searchPlaces()` (o `/forward`
+//     da #737). `rate_limited` NÃO cai no fallback — é limite de uso, não rota quebrada; o hook da
+//     Fase 2 trata isso com backoff (E38), não com troca de endpoint.
+//   /retrieve devolveu `null` → o padrão é repetir com `searchPlaces(nome da sugestão)`.
+//   Telemetria (`reportMapboxFailure`, mesmo padrão de `mapboxToken.ts`) só quando as DUAS etapas
+//     falham em sequência nessa mesma busca — nunca a cada `/suggest` isolado, senão vira ruído.
+//     Essa contagem dupla só faz sentido dentro do hook que orquestra suggest→retrieve (Fase 2);
+//     não há chamada de `audit_logs` aqui porque inventar uma sem esse contexto real de "as duas
+//     falharam" registraria falso positivo.
 
 export interface GeoSuggestion {
   id: string;
