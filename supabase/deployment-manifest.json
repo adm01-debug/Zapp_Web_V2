@@ -68,8 +68,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
-      "bytes": 11744,
-      "sha256": "ce7ffaa560c3f1794c7cb289f0a7ebd376c5928b3e49d3102d838222651be12c"
+      "bytes": 12141,
+      "sha256": "c4455a9b4e255cb0b9dd4865ac8b5b7344358abab1866ac2573c30a5604af73c"
     },
     {
       "path": "supabase/functions/_shared/evolution-send.ts",
@@ -89,7 +89,7 @@
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
       "bytes": 21952,
-      "sha256": "b65f6de748ef4638c2359f9cec0466f53d446d9139c5af62095e8d3a73103e1b"
+      "sha256": "f747189b5538287bf26770989f331a8812786d970b05049b002ed7878af8915d"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -383,8 +383,8 @@
     },
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
-      "bytes": 10303,
-      "sha256": "044e36d98556084095befd51f35fa1ce948f8da7e58216173bafbf1138ae787f"
+      "bytes": 10289,
+      "sha256": "cfbb3b827ae7e05687f2dfc5b7fe3082cde0631769dcf6044a98d7caa2af65ec"
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
@@ -927,7 +927,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "ef7c8fd408ba8fedb7c487657dc6dfbc2ae53025acb1955e3abfc753e4dbf038",
+      "source_sha256": "9cfa3f1d980576ac54f203ac361adfd86922312ec4051e323d67e66674800c0c",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1080,7 +1080,7 @@
       "name": "migrate-media-storage",
       "entrypoint": "supabase/functions/migrate-media-storage/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4bc123337639ecc9ff961e79f1a6ada49f53e5103570e8a18d8b5e6e856c172a",
+      "source_sha256": "fd76797d4d5772bd976982d499ab2b4cdb7a15f6b5000d618448273b931b5a92",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ed6e69e6d964a4a83594da727a4406ac76727055f4fc0a67f3e71f2e6e05288f"
+  "manifest_sha256": "2fe40d74981628d65b4c793478c1b2d15e4c20c00f1da18f27f6e23043d206d9"
 }
