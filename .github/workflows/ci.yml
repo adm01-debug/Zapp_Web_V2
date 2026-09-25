@@ -326,8 +326,9 @@ jobs:
 
       # Projeto "chromium" (e2e/auth.spec.ts) roda deslogado e nunca depende do
       # projeto "setup". Os projetos "setup"/"chromium-authenticated" exigem
-      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD, que ainda não existem como secret
-      # (ver playwright.config.ts) — ficam de fora deste gate por enquanto.
+      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD; workflows de PR não podem referenciar
+      # esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então o login
+      # real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
       - name: 🧪 Run Playwright E2E (chromium, sem autenticação)
         run: bun run test:e2e -- --project=chromium
         env:

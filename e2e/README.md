@@ -29,9 +29,10 @@ Sem as duas, `e2e/auth.setup.ts` lança um erro explicativo e só o project
 nem bypass de auth); `chromium` (`auth.spec.ts`) continua passando
 normalmente porque não depende de `setup`.
 
-**Este repo ainda não tem usuário de teste nem essas variáveis configuradas.**
-Criar o usuário e decidir onde guardar a senha (gestor de segredos, Bitrix, etc.)
-é uma decisão do dono do projeto, fora do escopo desta fixture.
+Existe um usuário de teste dedicado, com perfil de agente (não enxerga
+"Campanhas"/Talk X), e as credenciais estão nos secrets do repositório
+(`E2E_TEST_EMAIL` e `E2E_TEST_PASSWORD`). Para rodar localmente, peça as
+credenciais ao dono do projeto.
 
 ### Configuração local
 
@@ -46,18 +47,18 @@ npm run test:e2e
 
 ### Configuração no GitHub Actions
 
-Cadastrar `E2E_TEST_EMAIL` e `E2E_TEST_PASSWORD` como **secrets** do repositório
-(Settings → Secrets and variables → Actions) e repassá-los ao job que roda
-Playwright:
+- `.github/workflows/ci.yml` (job `E2E Tests (Playwright)`, roda em PR): só o
+  project `chromium` (`auth.spec.ts`, deslogado).
+- `.github/workflows/e2e-logado.yml`: project `setup` (login real com o usuário
+  de teste), depois de cada merge na `main` e sob demanda (Actions → E2E logado →
+  Run workflow). Fica separado do `ci.yml` de propósito: workflows de PR não
+  podem referenciar secrets (regra em `scripts/ci/check-pr-workflow-secrets.mjs`),
+  então esse teste não bloqueia PR.
 
-```yaml
-env:
-  E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-  E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-```
-
-Nenhum workflow em `.github/workflows/` roda Playwright automaticamente hoje —
-ligar isso ao CI é uma decisão separada, que fica para depois.
+`chromium-authenticated` **não roda no CI**: hoje só tem specs do Talk X, e o
+usuário de teste (agente) não enxerga "Campanhas". Para incluí-lo é preciso
+decidir o perfil do usuário de teste ou trazer specs que um agente consiga
+executar.
 
 ## Specs que dependem de dados seedados
 
