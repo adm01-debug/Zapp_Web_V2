@@ -57,7 +57,7 @@ export function useConnectionsManager() {
 
   const {
     isLoading: evolutionLoading,
-    createInstance,
+    createConnection,
     connectInstance,
     getInstanceStatus,
     disconnectInstance,
@@ -135,19 +135,20 @@ export function useConnectionsManager() {
     setIsCreating(true);
     const instanceName = generateInstanceName(newConnection.name);
     try {
-      await createInstance({ instanceName });
-      const { data, error } = await supabase.from('whatsapp_connections').insert({
+      // create-connection cria a instância na GO, a linha em
+      // whatsapp_connections e o token no Vault numa operação só — o front
+      // não insere a linha manualmente (evita a instância órfã que sobrava
+      // se esse insert falhasse depois de criar na GO via create-instance).
+      const result = await createConnection({
+        instanceName,
         name: newConnection.name,
         phone_number: newConnection.phone_number,
-        instance_id: instanceName,
-        status: 'disconnected',
         is_default: connections.length === 0,
-      }).select().single();
-      if (error) throw error;
+      });
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
-      if (data) handleShowQrCode(data as WhatsAppConnection);
+      if (result?.connection) handleShowQrCode(result.connection as unknown as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);
