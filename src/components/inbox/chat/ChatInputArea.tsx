@@ -162,7 +162,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         />
       )}
 
-      <div className={cn("px-4 py-3 border-t border-border bg-card", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
+      <div className={cn("px-4 py-3 border-t border-border bg-black", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
         <AnimatePresence>
           {isRecordingAudio && (
             <div className="mb-3"><AudioRecorder onSend={onAudioSend} onCancel={onAudioCancel} /></div>
