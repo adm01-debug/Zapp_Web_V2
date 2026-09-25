@@ -13,8 +13,10 @@ on:
   push:
     branches: [main]
   schedule:
-    # segunda-feira 06:00 UTC (03:00 em Curitiba)
-    - cron: '0 6 * * 1'
+    # segunda-feira 06:13 UTC (03:13 em Curitiba). Fora do minuto 0 (fila do
+    # GitHub) e depois do types-sync (05:49), que gera os artefatos que este
+    # guarda compara — antes, os dois disputavam o banco no mesmo minuto.
+    - cron: '13 6 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -33,6 +35,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # issues: write apenas para o alerta do passo final; nenhum passo de
+    # auditoria usa o GITHUB_TOKEN.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -137,6 +144,58 @@ jobs:
 
       - name: Auditar configuracao runtime sem dados de clientes
         run: node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json
+
+      # Sem isto a quebra do contrato vivo e silenciosa: o workflow nao roda em
+      # PR (por design), logo ninguem ve o vermelho a nao ser abrindo Actions.
+      - name: Abrir ou atualizar alerta de contrato vivo
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const body = [
+              '**Commit da main:** `' + context.sha + '`',
+              '**Run:** ' + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                + '/actions/runs/' + context.runId,
+              '',
+              'O guarda vivo falhou: migrations, catalogo, manifesto, types.ts,'
+                + ' ACLs ou paridade tripla divergem do banco oficial.',
+              'Ver o log do run para o passo exato. Procedimento em docs/MIGRATIONS.md.',
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            const existing = issues.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              return;
+            }
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'db-live-guard',
+                color: 'b60205',
+                description: 'Contrato vivo do banco oficial quebrado',
+              });
+            } catch (error) {
+              if (error.status !== 422) throw error;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['db-live-guard'],
+              body,
+            });
 
       - name: Publicar evidencias estruturais
         if: always()

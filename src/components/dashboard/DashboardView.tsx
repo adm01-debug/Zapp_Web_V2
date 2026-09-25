@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import {
-  TrendingUp, BarChart3, Target, Clock, Brain, Award, Heart, Smile, FileText,
+  TrendingUp, BarChart3, Target, Clock, Brain, Award, Heart, Smile, FileText, AlertTriangle,
 } from 'lucide-react';
 import { DashboardTabs, DashboardTabDef } from './overview/DashboardTabs';
 import { SLAMetricsDashboard } from './SLAMetricsDashboard';
@@ -70,7 +71,7 @@ export function DashboardView() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [csatPeriod, setCsatPeriod] = useState<'today' | 'week' | 'month'>('month');
 
-  const { stats, contacts, queues, isLoading, refetch } = useDashboardData({
+  const { stats, contacts, queues, isLoading, error, refetch } = useDashboardData({
     dateRange: filters.dateRange,
     queueId: filters.queueId,
     agentId: filters.agentId,
@@ -114,6 +115,22 @@ export function DashboardView() {
   };
 
   if (isLoading || !stats) {
+    // Antes: uma query falhando (rede/RLS) deixava `stats` sempre null e o
+    // dashboard preso no skeleton para sempre, sem qualquer aviso (auditoria
+    // de 24/09, achado P1 — "KPIs honestos" não podia esconder a própria falha).
+    if (error && !isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center" data-testid="dash-error">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Não foi possível carregar os dados do dashboard agora.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Tentar de novo
+          </Button>
+        </div>
+      );
+    }
     return <OverviewSkeleton />;
   }
 
