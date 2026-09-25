@@ -12,24 +12,24 @@ const proxySrc = readFileSync(join(root, "supabase/functions/_shared/evolution-a
 const apiSrc = readFileSync(join(root, "supabase/functions/evolution-api/index.ts"), "utf8");
 
 test("circuit breaker: 4xx nao conta como falha e 5xx nao zera o contador", () => {
-  // cbRecord(success): inverter esse argumento fazia 5 respostas 404 abrirem o
+  // cbRecord(key, success): inverter esse argumento fazia 5 respostas 404 abrirem o
   // breaker por 60s (derrubando ate o envio de mensagem), enquanto um 500 real
   // zerava o contador e o breaker nunca abria quando deveria.
   assert.equal(
-    proxySrc.includes("cbRecord(response.status >= 500)"), false,
-    "cbRecord(status >= 500) esta invertido: passa sucesso=true em erro 5xx",
+    proxySrc.includes("cbRecord(breakerKey, response.status >= 500)"), false,
+    "cbRecord(breakerKey, status >= 500) esta invertido: passa sucesso=true em erro 5xx",
   );
   assert.equal(
-    proxySrc.includes("cbRecord(response.status < 500"), true,
+    proxySrc.includes("cbRecord(breakerKey, response.status < 500"), true,
     "o ramo de !response.ok precisa registrar 4xx como sucesso do breaker",
   );
   // 408 e timeout reportado pelo servidor: esta em RETRYABLE_STATUSES e tem que
   // continuar abrindo o breaker, senao a Evolution pode pendurar sem protecao.
-  assert.match(proxySrc, /cbRecord\(response\.status < 500 && response\.status !== 408\)/);
+  assert.match(proxySrc, /cbRecord\(breakerKey, response\.status < 500 && response\.status !== 408\)/);
   assert.match(proxySrc, /RETRYABLE_STATUSES = new Set\(\[408,/);
-  // A assinatura que da sentido ao teste acima.
-  assert.match(proxySrc, /function cbRecord\(success: boolean\)/);
-  assert.match(proxySrc, /if \(success\) \{ cbFailures = 0; return; \}/);
+  // A assinatura que da sentido ao teste acima (E22: chave do breaker por instancia).
+  assert.match(proxySrc, /function cbRecord\(key: string, success: boolean\): void/);
+  assert.match(proxySrc, /if \(success\) \{ state\.failures = 0; cbState\.set\(key, state\); return; \}/);
 });
 
 test("action status nao apaga o qr_code de um pareamento em curso", () => {
