@@ -84,24 +84,48 @@
 }
 
 /* ConversationRow (sidebar da inbox) selecionada — fundo escuro igual ao
-   card fixado (bg-muted/30) + arco luminoso girando na borda (efeito
-   inspirado no hover-border-gradient da Aceternity UI), via duas camadas
-   de background: o fill fica preso ao padding-box, o conic-gradient ao
-   border-box, entao só aparece no anel de 1px da borda. */
+   card fixado (bg-muted/30) + arco luminoso girando SÓ na borda (efeito
+   hover-border-gradient da Aceternity UI). O fundo fica no próprio card;
+   o anel luminoso é um ::before que usa a máscara border-only (duas
+   camadas de mask com mask-composite: exclude) pra recortar o conic-gradient
+   apenas na faixa de 2px da borda, sem vazar pro interior — o fundo do card
+   ser translúcido não deixa mais o gradiente aparecer por dentro. */
 .conversation-row-selected {
+  position: relative;
   border-color: transparent;
-  background:
-    linear-gradient(hsl(var(--muted) / 0.35), hsl(var(--muted) / 0.35)) padding-box,
-    conic-gradient(
-      from var(--conv-border-angle, 0deg),
-      transparent 0deg,
-      hsl(var(--primary) / 0.15) 20deg,
-      hsl(var(--primary)) 45deg,
-      hsl(var(--primary) / 0.15) 70deg,
-      transparent 100deg,
-      transparent 360deg
-    ) border-box;
+  background: hsl(var(--muted) / 0.3);
+}
+.conversation-row-selected::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--conv-border-angle, 0deg),
+    transparent 0deg,
+    hsl(var(--primary) / 0.12) 25deg,
+    hsl(var(--primary)) 55deg,
+    hsl(var(--primary) / 0.12) 85deg,
+    transparent 120deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+          mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
   animation: conv-border-spin 3.5s linear infinite;
+  pointer-events: none;
+}
+/* Conteúdo do card acima do anel */
+.conversation-row-selected > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== MESSAGE BUBBLES ===== */

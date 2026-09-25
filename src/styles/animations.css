@@ -191,7 +191,7 @@
     animation-duration: 0.001ms;
   }
 
-  .conversation-row-selected {
+  .conversation-row-selected::before {
     animation: none;
   }
 }
