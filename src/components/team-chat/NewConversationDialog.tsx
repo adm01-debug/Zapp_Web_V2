@@ -7,9 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, User, Users, Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useCreateTeamConversation } from '@/hooks/chat/useTeamChat';
 import { cn } from '@/lib/utils';
 
@@ -30,20 +29,13 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
   const [groupName, setGroupName] = useState('');
   const createMutation = useCreateTeamConversation();
 
-  const { data: teammates = [], isLoading } = useQuery({
-    queryKey: ['team-profiles-for-chat'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, email, avatar_url, is_active')
-        .neq('id', profile?.id || '')
-        .eq('is_active', true)
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: open && !!profile,
-  });
+  const { data: teamProfiles = [], isLoading } = useTeamProfiles(open && !!profile);
+  const teammates = useMemo(
+    () => teamProfiles
+      .filter(t => t.id !== profile?.id)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [teamProfiles, profile?.id]
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return teammates;
