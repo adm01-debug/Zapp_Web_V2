@@ -58,13 +58,19 @@ export function aggregateDashboardKpi(r: DashboardKpiRpcResult) {
   };
 }
 
-export function useDashboardKpi() {
+// E31: fila/agente do DashboardFilters propagados como p_queue/p_agent (RPC já
+// aceita os 2 desde o E23). Trava server-side de p_agent para não-staff já
+// existe DENTRO da função (is_admin_or_supervisor → força auth.uid()) — E33
+// confirmado feito, nada a mudar aqui além de deixar de mandar sempre null.
+export function useDashboardKpi(filters?: { queueId?: string | null; agentId?: string | null }) {
+  const queueId = filters?.queueId ?? null;
+  const agentId = filters?.agentId ?? null;
   return useQuery({
-    queryKey: ['dashboard-kpi'],
+    queryKey: ['dashboard-kpi', queueId, agentId],
     queryFn: async () => {
       const since = startOfDay(subDays(new Date(), 1)).toISOString();
       // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since, p_queue: queueId, p_agent: agentId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
     },

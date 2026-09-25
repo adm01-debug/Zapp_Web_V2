@@ -41,6 +41,7 @@ import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const OVERVIEW_TAB = 'overview';
 
@@ -62,6 +63,7 @@ const AGENT_TAB_VALUES = new Set(['overview', 'goals', 'satisfaction']);
 
 export function DashboardView() {
   const { isAdmin, isSupervisor } = useUserRole();
+  const { user } = useAuth();
   const isStaff = isAdmin || isSupervisor;
   const visibleTabs = isStaff ? DASHBOARD_TABS : DASHBOARD_TABS.filter(t => AGENT_TAB_VALUES.has(t.value));
   const [tab, setTab] = useState(OVERVIEW_TAB);
@@ -69,7 +71,7 @@ export function DashboardView() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [csatPeriod, setCsatPeriod] = useState<'today' | 'week' | 'month'>('month');
 
-  const { stats, queueBreakdown, myActiveConversations, queues, isLoading, error, refetch } = useDashboardData({
+  const { stats, contacts, queues, isLoading, error, refetch } = useDashboardData({
     dateRange: filters.dateRange,
     queueId: filters.queueId,
     agentId: filters.agentId,
@@ -78,8 +80,8 @@ export function DashboardView() {
   // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard();
-  const { data: kpi } = useDashboardKpi();
-  const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
+  const { data: kpi } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId }); // E31
+  const { rows: queueHealthRows, busiestQueue } = useQueueHealth(contacts, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
   // Instância única de useSLAMetrics('today') — só Equipe em Destaque consome
@@ -88,6 +90,9 @@ export function DashboardView() {
   const { data: slaMetrics } = useSLAMetrics('today');
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
+  // "Minhas conversas ativas" (E14, card pessoal que substitui "Atendentes
+  // Online" p/ não-staff) — mesmos `contacts` já carregados, sem query nova.
+  const myActiveConversations = (contacts ?? []).filter((c) => c.assigned_to === user?.id).length;
 
   // Agente só pode navegar para as próprias abas — bloqueia o vazamento por
   // clique nos cards (Ferramentas de IA → Sentimento → Relatórios etc.), já
@@ -103,6 +108,7 @@ export function DashboardView() {
     // Chaves das hooks da Fase 5-7 (ainda não existem antes delas — invalidateQueries
     // é um no-op seguro para queryKey sem cache correspondente).
     queryClient.invalidateQueries({ queryKey: ['dashboard-kpi'] });
+    queryClient.invalidateQueries({ queryKey: ['queue-health'] });
     queryClient.invalidateQueries({ queryKey: ['recent-conversation-events'] });
     queryClient.invalidateQueries({ queryKey: ['today-hourly-volume'] });
     setTimeout(() => setIsRefreshing(false), 500);
@@ -157,7 +163,7 @@ export function DashboardView() {
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
           </div>
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
-            <VolumeChart />
+            <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
             <NowPanel
               realtime={realtime}
               pendingConversations={stats.pendingConversations}

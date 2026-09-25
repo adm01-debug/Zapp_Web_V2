@@ -48,15 +48,20 @@ export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date())
 // 'unknown' (evita @typescript-eslint/no-explicit-any) ate a proxima sincronizacao.
 type DashboardHourlyVolumeRpc = (
   fn: 'dashboard_hourly_volume',
-  args: { p_days: number },
+  args: { p_days: number; p_queue: string | null; p_agent: string | null },
 ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-export function useTodayHourlyVolume() {
+// E32: fila/agente do DashboardFilters propagados como p_queue/p_agent (RPC já
+// aceita os 2 desde o E22). Trava server-side de p_agent para não-staff já
+// existe DENTRO da função (is_admin_or_supervisor → força auth.uid()).
+export function useTodayHourlyVolume(filters?: { queueId?: string | null; agentId?: string | null }) {
+  const queueId = filters?.queueId ?? null;
+  const agentId = filters?.agentId ?? null;
   return useQuery({
-    queryKey: ['today-hourly-volume'],
+    queryKey: ['today-hourly-volume', queueId, agentId],
     queryFn: async () => {
       const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
-      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8 });
+      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8, p_queue: queueId, p_agent: agentId });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },

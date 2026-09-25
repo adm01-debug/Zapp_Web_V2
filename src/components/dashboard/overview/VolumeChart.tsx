@@ -28,9 +28,9 @@ function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?
   );
 }
 
-export function VolumeChart() {
+export function VolumeChart({ queueId, agentId }: { queueId?: string | null; agentId?: string | null } = {}) {
   const [mode, setMode] = useState<Mode>('hoje');
-  const volumeQuery = useTodayHourlyVolume();
+  const volumeQuery = useTodayHourlyVolume({ queueId, agentId }); // E32
   const demand = useDemandPrediction();
 
   const hasPrediction = mode === 'hoje' && (demand.data ?? []).some((p) => p.isPrediction);
