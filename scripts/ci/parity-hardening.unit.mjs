@@ -55,7 +55,11 @@ test('db-migrate (production) runs psql without the connection string in argv (s
   // fechado separadamente, com o mesmo transporte, sem tocar a logica de
   // captura de saida (RUNTIME/RESULT/LEGACY_COUNT/BUNDLE_COUNT/LEDGER_COUNT).
   assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
-  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 32);
+  // 33 desde o contrato runtime generico (2026-09-25): o fallback do case
+  // passou a ler o estado do banco por psql-safe.mjs em vez de rejeitar a
+  // migration. A contagem e exata de proposito -- uma invocacao nova de psql
+  // que nao passe pelo wrapper quebra este teste em vez de vazar a senha.
+  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 33);
 });
 test('deployment brackets mutation with snapshots and stable post-collection', () => {
   const workflow = read('../../.github/workflows/deploy-functions.yml');
