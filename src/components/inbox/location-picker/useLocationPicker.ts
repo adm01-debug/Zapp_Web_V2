@@ -22,7 +22,14 @@ interface SelectedLocation {
 const DEFAULT_CENTER: [number, number] = [-46.6333, -23.5505];
 
 export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
-  const mapContainer = useRef<HTMLDivElement>(null);
+  // Callback ref com estado, e nao useRef: o Radix Tabs monta os filhos da aba num
+  // render posterior ao da troca (`children: present && children`, com o `present`
+  // virando true so no layout-effect do Presence). Com useRef o effect do mapa rodava
+  // com `.current` ainda null, saia no early-return e nunca mais era reexecutado —
+  // spinner eterno, sem mapa, sem watchdog e sem erro. Com estado, a chegada do
+  // container reexecuta o effect.
+  const [mapNode, setMapNode] = useState<HTMLDivElement | null>(null);
+  const mapContainer = useCallback((node: HTMLDivElement | null) => { setMapNode(node); }, []);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const mapboxRef = useRef<MapboxModule | null>(null);
@@ -104,7 +111,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, [mapboxToken, nextGeoSignal, select]);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || !open || activeTab !== 'map') return;
+    if (!mapNode || !mapboxToken || !open || activeTab !== 'map') return;
     let cancelled = false;
     let loaded = false;
     setMapError(null);
@@ -115,13 +122,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       setMapError(mapboxFailureMessage('timeout'));
     }, MAPBOX_MAP_LOAD_TIMEOUT_MS);
     loadMapbox().then((mapboxgl) => {
-      if (cancelled || !mapContainer.current) return;
+      if (cancelled) return;
       mapboxRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
       // Voltar para a aba do mapa recria o mapa: centraliza direto na seleção existente.
       const restored = selectedRef.current;
       map.current = new mapboxgl.Map({
-        container: mapContainer.current,
+        container: mapNode,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: restored ? [restored.lng, restored.lat] : DEFAULT_CENTER,
         zoom: restored ? 16 : 12,
@@ -152,7 +159,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       setMapError(mapboxFailureMessage(kind));
     });
     return () => { cancelled = true; clearTimeout(watchdog); map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
-  }, [mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
+  }, [mapNode, mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
 
   // Fechar o picker descarta a coordenada pendente; um retry do mapa a preserva.
   useEffect(() => { if (!open) pendingMarker.current = null; }, [open]);
