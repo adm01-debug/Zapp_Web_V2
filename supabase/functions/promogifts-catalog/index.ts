@@ -222,56 +222,81 @@ async function promogiftsCatalogHandler(req: Request): Promise<Response> {
         price_min, price_max, color, material, has_engraving,
       } = paramsParse.data;
 
-      let query = extClient.from("products").select((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string, { count: "exact" });
-      if (only_active) query = query.eq("is_active", true);
-      if (only_in_stock) query = query.eq("is_stockout", false);
-      if (supplier_id) query = query.eq("supplier_id", supplier_id);
+      // Categoria + descendentes: path e um caminho materializado por
+      // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
+      // Resolvido uma unica vez antes de montar a query, pra reusar o mesmo
+      // filtro na consulta paginada e na contagem de fallback do PGRST103
+      // abaixo, sem repetir a subconsulta de categorias.
+      let categoryIds: string[] | null = null;
       if (category_id) {
-        // Categoria + descendentes: path e um caminho materializado por
-        // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
         const { data: cat } = await extClient.from("categories").select("path").eq("id", category_id).maybeSingle();
         if (cat?.path) {
           const { data: descendants } = await extClient.from("categories").select("id").like("path", `${cat.path}%`);
-          const ids = (descendants || []).map((d: { id: string }) => d.id);
-          query = ids.length > 0 ? query.in("category_id", ids) : query.eq("category_id", category_id);
-        } else {
-          query = query.eq("category_id", category_id);
+          categoryIds = (descendants || []).map((d: { id: string }) => d.id);
         }
       }
-      if (is_featured) query = query.eq("is_featured", true);
-      if (is_new) query = query.eq("is_new", true);
-      if (is_bestseller) query = query.eq("is_bestseller", true);
-      if (is_kit) query = query.eq("is_kit", true);
-      if (allows_personalization) query = query.eq("allows_personalization", true);
-      if (low_stock) query = query.gte("stock_quantity", 1).lte("stock_quantity", 10);
-      if (price_min != null) query = query.gte("sale_price", price_min);
-      if (price_max != null) query = query.lte("sale_price", price_max);
-      if (has_engraving) query = query.not("engraving_type", "is", null);
-      if (color) {
-        const orExpr = buildTagOrExpr("colors", Array.isArray(color) ? color : [color]);
-        if (orExpr) query = query.or(orExpr);
-      }
-      if (material) {
-        const orExpr = buildTagOrExpr("materials", Array.isArray(material) ? material : [material]);
-        if (orExpr) query = query.or(orExpr);
-      }
-      if (search) {
-        // FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT
-        // OR UPDATE garante isso sempre; sem fallback ilike necessário).
-        // unaccent() aplicado ao termo pra casar com o vetor (o gatilho
-        // tambem aplica unaccent() antes do to_tsvector).
-        const safe = sanitizeFtsQuery(search);
-        if (safe.length > 0) {
-          query = query.textSearch("search_vector", stripDiacritics(safe), { type: "websearch", config: "portuguese" });
+
+      const buildProductsQuery = (selectExpr: string, headOnly = false) => {
+        let q = extClient.from("products").select(selectExpr, { count: "exact", head: headOnly });
+        if (only_active) q = q.eq("is_active", true);
+        if (only_in_stock) q = q.eq("is_stockout", false);
+        if (supplier_id) q = q.eq("supplier_id", supplier_id);
+        if (category_id) {
+          q = categoryIds && categoryIds.length > 0 ? q.in("category_id", categoryIds) : q.eq("category_id", category_id);
         }
-      }
+        if (is_featured) q = q.eq("is_featured", true);
+        if (is_new) q = q.eq("is_new", true);
+        if (is_bestseller) q = q.eq("is_bestseller", true);
+        if (is_kit) q = q.eq("is_kit", true);
+        if (allows_personalization) q = q.eq("allows_personalization", true);
+        if (low_stock) q = q.gte("stock_quantity", 1).lte("stock_quantity", 10);
+        if (price_min != null) q = q.gte("sale_price", price_min);
+        if (price_max != null) q = q.lte("sale_price", price_max);
+        if (has_engraving) q = q.not("engraving_type", "is", null);
+        if (color) {
+          const orExpr = buildTagOrExpr("colors", Array.isArray(color) ? color : [color]);
+          if (orExpr) q = q.or(orExpr);
+        }
+        if (material) {
+          const orExpr = buildTagOrExpr("materials", Array.isArray(material) ? material : [material]);
+          if (orExpr) q = q.or(orExpr);
+        }
+        if (search) {
+          // FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT
+          // OR UPDATE garante isso sempre; sem fallback ilike necessário).
+          // unaccent() aplicado ao termo pra casar com o vetor (o gatilho
+          // tambem aplica unaccent() antes do to_tsvector).
+          const safe = sanitizeFtsQuery(search);
+          if (safe.length > 0) {
+            q = q.textSearch("search_vector", stripDiacritics(safe), { type: "websearch", config: "portuguese" });
+          }
+        }
+        return q;
+      };
+
       // NOTA: "relevance" (ordenar por ts_rank_cd) exigiria uma RPC dedicada
       // no banco externo — o PostgREST não ordena por rank num select comum.
       // Fora do escopo desta etapa; order_by continua nas colunas reais.
-      query = query.order(order_by, { ascending }).range(offset, offset + limit - 1);
+      const query = buildProductsQuery((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string)
+        .order(order_by, { ascending })
+        .range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
-      if (error) return externalDatabaseErrorResponse(error, req, log);
+      if (error) {
+        if (error.code === "PGRST103") {
+          // offset alem do total de linhas que o filtro atual retorna (pagina
+          // que ja nao existe, ou o filtro reduziu o resultado pra menos que
+          // offset+limit). O PostgREST responde com erro de range em vez de
+          // uma pagina vazia -- sem este tratamento cai no 503 generico de
+          // externalDatabaseErrorResponse logo abaixo, mesmo o catalogo
+          // estando saudavel. Refaz como contagem-only (head, sem range) pra
+          // devolver o total real numa pagina vazia com 200.
+          const { count: total } = await buildProductsQuery("id", true);
+          const duration = Math.round(performance.now() - startTime);
+          return jsonRes({ data: [], meta: { total: total ?? 0, duration_ms: duration } }, 200, req);
+        }
+        return externalDatabaseErrorResponse(error, req, log);
+      }
       const duration = Math.round(performance.now() - startTime);
       return jsonRes({ data, meta: { total: count, duration_ms: duration } }, 200, req);
     }
