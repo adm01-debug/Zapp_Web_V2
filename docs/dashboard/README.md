@@ -53,8 +53,8 @@ local, sem `searchParams` (auditado no E37).
   inexistente). Workaround: DDL via `db_query` direto + `INSERT` manual em
   `supabase_migrations.schema_migrations (version, name, statements) ... ON CONFLICT DO NOTHING`.
 - Migration que mexe em produção (DDL) fica com a PR **aberta**, sem merge automático, até Joaquim aprovar
-  — mesmo que a migration já tenha sido aplicada ao vivo (regra 8 do fluxo). PRs #750, #764 seguem esse
-  padrão nesta fase.
+  — mesmo que a migration já tenha sido aplicada ao vivo (regra 8 do fluxo). PR #764 segue esse padrão
+  nesta fase (#750 já foi mergeada em 25/09/2026 19:11:51 UTC).
 - `db_query` deste MCP: multi-statement roda numa transação só, mas só devolve linhas do formato
   "ok/rows_affected" quando várias queries vão no mesmo call — para ler resultado de `SELECT`, rodar uma
   query por chamada.
@@ -69,7 +69,9 @@ local, sem `searchParams` (auditado no E37).
   o seletor de período do card Equipe é cosmético hoje (achado do E38, não corrigido).
 - `DemandPrediction.tsx` ainda usa o texto "Previsão IA" (mesmo problema do E41, mas em componente
   diferente — fora do escopo daquela etapa).
-- E34 (dateRange não reflete nos cards), E35 (filtros não persistem na URL), E36 (testes de propagação de
-  filtro) — Fase 4, não iniciados.
+- ~~E34/E35/E36~~ — corrigido 25/09/2026: PR #750 (branch ainda nomeada `e31-e33`) teve o escopo
+  expandido por outra sessão concorrente e passou a cobrir E34 (aviso `dash-kpis-period-notice` em
+  `DashboardView.tsx` quando `period !== 'today'`), E35 (`useDashboardUrlFilters.ts`, filtros na URL) e
+  E36 (`supabase/tests/dashboard_rpc_filters.sql`) também. Ver plano — não é mais débito.
 - E46 (smoke E2E Playwright) bloqueado por falha de conexão do MCP nesta sessão; E47 (Web Vitals real)
   sem ferramenta disponível (Speed Insights não habilitado no projeto Vercel).
