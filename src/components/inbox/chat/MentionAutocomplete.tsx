@@ -35,7 +35,7 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
   useEffect(() => {
     const fetchAgents = async () => {
       const { data } = await supabase
-        .from('profiles')
+        .rpc('get_team_profiles')
         .select('id, name, email, avatar_url')
         .limit(50);
       if (!isMountedRef.current) return;
