@@ -173,7 +173,9 @@ function runGuard({
     FAKE_PSQL_FAIL_COUNT: String(psqlFailCount),
     FAKE_PSQL_FAIL_MESSAGE: psqlFailMessage,
   };
-  if (retryDelaysMs) env.LEDGER_RETRY_DELAYS_MS = retryDelaysMs;
+  // !== undefined e nao truthy: string vazia e um valor valido (desliga o
+  // retry) e precisa chegar ao processo filho.
+  if (retryDelaysMs !== undefined) env.LEDGER_RETRY_DELAYS_MS = retryDelaysMs;
   if (destino) env.DESTINO_URL = 'postgres://tester@fixture.invalid/test';
   else delete env.DESTINO_URL;
 
@@ -1049,4 +1051,18 @@ test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
   assert.equal(result.status, 2);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
+});
+
+// O db-live-guard desliga este retry porque o transporte (withPsqlEnvironment)
+// ja repete; com os dois ligados as tentativas viram produto (3 x 3 = 9
+// execucoes de psql) em vez de soma.
+test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
+  const result = runGuard({
+    psqlFailCount: 1,
+    psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired',
+    retryDelaysMs: '',
+  });
+  assert.equal(result.status, 2);
+  assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
+  assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
