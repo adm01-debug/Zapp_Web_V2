@@ -110,23 +110,6 @@ export function useRealtimeDashboard() {
   useEffect(() => {
     fetchInitialData();
 
-    // E27: deltas de eventos realtime acumulados aqui e aplicados em lote pelo flushInterval
-    // abaixo, em vez de 1 setState sincrono por INSERT/UPDATE (evita cascading renders em pico).
-    const FLUSH_MS = 4000;
-    type PendingDelta = {
-      hasUpdate: boolean;
-      unreadMessagesDelta: number;
-      newContactsTodayDelta: number;
-      lastMessageAt: Date | null;
-    };
-    const emptyPending = (): PendingDelta => ({
-      hasUpdate: false,
-      unreadMessagesDelta: 0,
-      newContactsTodayDelta: 0,
-      lastMessageAt: null,
-    });
-    let pending: PendingDelta = emptyPending();
-
     const channel = supabase
       .channel('dashboard-realtime')
       .on(
@@ -166,7 +149,22 @@ export function useRealtimeDashboard() {
         setState(prev => ({ ...prev, isConnected: status === 'SUBSCRIBED' }));
       });
 
-    // E27: aplica os deltas acumulados em lote, no maximo 1 setState a cada FLUSH_MS
+    // E27: deltas de eventos realtime acumulados aqui (ver callbacks acima) e aplicados em lote
+    // pelo flushInterval abaixo, em vez de 1 setState sincrono por INSERT/UPDATE.
+    const FLUSH_MS = 4000;
+    type PendingDelta = {
+      hasUpdate: boolean;
+      unreadMessagesDelta: number;
+      newContactsTodayDelta: number;
+      lastMessageAt: Date | null;
+    };
+    let pending: PendingDelta = {
+      hasUpdate: false,
+      unreadMessagesDelta: 0,
+      newContactsTodayDelta: 0,
+      lastMessageAt: null,
+    };
+
     const flushInterval = setInterval(() => {
       if (!pending.hasUpdate) return;
 
@@ -178,7 +176,7 @@ export function useRealtimeDashboard() {
         newContactsToday: prev.newContactsToday + pending.newContactsTodayDelta,
       }));
 
-      pending = emptyPending();
+      pending = { hasUpdate: false, unreadMessagesDelta: 0, newContactsTodayDelta: 0, lastMessageAt: null };
     }, FLUSH_MS);
 
     // Collect metrics every minute
