@@ -9,7 +9,7 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'sla' | 'sentiment' | 'sentiment_alert' | 'goal' | 'incoming_call';
+  type: 'info' | 'success' | 'warning' | 'error' | 'sla' | 'sentiment' | 'sentiment_alert' | 'goal' | 'incoming_call' | 'reminder_due';
   is_read: boolean;
   metadata: Record<string, unknown>;
   created_at: string;

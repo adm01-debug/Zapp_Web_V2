@@ -13,6 +13,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Fila de merge: sem este gatilho o check required nunca reportaria no merge
+  # group e a fila travaria todos os merges do repo.
+  merge_group:
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 
