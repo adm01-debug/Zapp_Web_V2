@@ -1,0 +1,61 @@
+-- 20260924225551_add_messages_perf_indexes
+-- Achado de auditoria (pg_stat_statements, Supabase "ZAPP WEB V2", 2026-09-24):
+--
+--   1) UPDATE messages SET is_read = $1
+--        WHERE contact_id = $2 AND sender = $3 AND is_read = $4
+--      (endpoint PostgREST de "marcar conversa como lida")
+--      378 chamadas, media 800.61ms, total ~302.6s -- maior consumidor
+--      cumulativo de tempo de query do banco hoje.
+--
+--   2) SELECT id FROM messages WHERE is_read = $1 AND sender = $2 LIMIT/OFFSET
+--      64 chamadas, media 1393.19ms, total ~89.2s.
+--
+-- Hoje so existe UM indice relevante nessas colunas:
+--   idx_messages_unread_contact (is_read, sender, contact_id)
+--     WHERE is_read = false AND sender = 'contact'   -- PARCIAL
+--
+-- EXPLAIN com valores literais confirma que esse indice parcial E' usado
+-- e e' barato (custo ~2 a ~524) quando o planner conhece os valores no
+-- momento do plano (custom plan). Porem o PostgREST reutiliza prepared
+-- statements por conexao (hasql) e, apos poucas execucoes, o Postgres
+-- troca para um "generic plan" que nao pode provar is_read=false e
+-- sender='contact' (parametros desconhecidos nesse ponto) -- logo nao
+-- pode usar um indice cujo predicado parcial depende exatamente desses
+-- valores. Isso explica os tempos reais (800ms/1.39s medios) serem
+-- ordens de grandeza piores que o custo do plano "ideal":
+--   - UPDATE: cai para o indice nao-parcial idx_messages_contact_id
+--     (contact_id) e reavalia sender/is_read linha a linha no heap --
+--     caro para contatos com centenas de mensagens (ex.: ate 832 msgs
+--     no contato mais movimentado).
+--   - SELECT: nao existe NENHUM indice nao-parcial em (is_read, sender);
+--     o generic plan cai para SEQ SCAN completo em 47.527 linhas
+--     (is_read=false AND sender='contact' = ~30,6% da tabela, 14.567
+--     linhas -- nao seletivo o bastante pra um filtro so no heap).
+--
+-- Correcao: dois indices NAO-PARCIAIS minimos, que cobrem exatamente os
+-- predicados das duas queries e funcionam tanto em custom quanto em
+-- generic plan (nao dependem do planner "adivinhar" os parametros de
+-- bind). Nao duplicam idx_messages_unread_contact (esse e' parcial, com
+-- ordem de colunas diferente); ele e' mantido por ora -- pode virar
+-- candidato a DROP (redundante) em uma migration futura, fora do escopo
+-- deste PR.
+--
+-- messages tem hoje ~47,5k linhas (tabela pequena para os padroes do
+-- projeto) -- lock breve do CREATE INDEX e' aceitavel. Seguindo o padrao
+-- do repo para migrations de indice recentes (ex.:
+-- 20260920120000_talkx_e90_fk_indexes.sql,
+-- 20260830040000_idx_audit_logs_action_created_composite.sql):
+-- CONCURRENTLY nao e' usado porque o pipeline de migration roda tudo
+-- dentro de uma transacao.
+--
+-- NAO aplicada em producao por esta migration -- aguardando aprovacao
+-- humana e execucao manual/CI.
+
+-- 1) Cobre o UPDATE (contact_id, is_read, sender) -- marcar conversa como lida
+CREATE INDEX IF NOT EXISTS idx_messages_contact_read_sender
+  ON public.messages (contact_id, is_read, sender);
+
+-- 2) Cobre o SELECT global de nao-lidas (is_read, sender), sem depender
+--    de predicado parcial nem de plano custom
+CREATE INDEX IF NOT EXISTS idx_messages_read_sender
+  ON public.messages (is_read, sender);
