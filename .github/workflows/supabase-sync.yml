@@ -6,6 +6,16 @@ name: Supabase Sync & Validate
 # banco oficial tnnnlkbymytvtqngbbqh e defasado do schema real (ver
 # supabase-export/README.md e docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md).
 # Regerar o export a partir do banco oficial antes de reativar qualquer gatilho.
+#
+# [2026-09-25] DESARMADO. A unica barreira anterior era digitar o project-ref em
+# confirm_project_ref — valor publico (esta no CLAUDE.md de um repo publico), logo
+# um unico dispatch restaurava o snapshot legado por cima do banco de producao.
+# Agora o import exige, cumulativamente:
+#   1. aprovacao humana no environment protegido `legacy-import-destrutivo`;
+#   2. o secret LEGACY_IMPORT_UNLOCK igual ao project-ref oficial.
+# O secret NAO existe: enquanto nao for criado, todo dispatch falha fechado.
+# Para reativar: regerar o export a partir do banco oficial, criar o secret e
+# remove-lo logo apos o import.
 on:
   workflow_dispatch:
     inputs:
@@ -25,7 +35,18 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # Aprovacao humana obrigatoria antes de qualquer passo tocar o banco.
+    environment: legacy-import-destrutivo
     steps:
+      - name: Exigir destravamento explicito do import legado
+        env:
+          LEGACY_IMPORT_UNLOCK: ${{ secrets.LEGACY_IMPORT_UNLOCK }}
+        run: |
+          if [ "$LEGACY_IMPORT_UNLOCK" != "tnnnlkbymytvtqngbbqh" ]; then
+            echo "::error::Import legado desarmado: crie o secret LEGACY_IMPORT_UNLOCK com o project-ref oficial para destravar (ver cabecalho deste workflow)."
+            exit 1
+          fi
+
       - name: Exigir ref confiavel da main
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
