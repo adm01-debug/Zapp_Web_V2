@@ -148,8 +148,15 @@ Agora abre, ou comenta em, uma issue única com label `db-live-guard`.
 segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
 primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
-**Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`) e
-`can_approve_pull_request_reviews` desligado.
+**Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
+
+**NÃO desligue `can_approve_pull_request_reviews`.** O nome da API engana: esse toggle é a opção
+"Allow GitHub Actions to create **and** approve pull requests" — ele governa a criação de PR por
+Actions, não só a aprovação. Desliguei em 25/09 achando que fechava só o caminho de auto-aprovação;
+o types-sync quebrou na hora, com `GitHub Actions is not permitted to create or approve pull
+requests` no passo "Abrir ou atualizar PR de sincronizacao` (run 36133450406). Revertido para
+ligado no mesmo dia. O ganho de segurança seria nulo de qualquer forma: sem
+`required_pull_request_reviews` na `main`, não há aprovação para um workflow contornar.
 
 **`types-sync`:** o PR de sincronização nasce com `GITHUB_TOKEN` porque `TYPES_SYNC_PR_TOKEN` não
 existe, e pela política anti-loop do GitHub os checks do Actions ficam em `action_required` — o PR
