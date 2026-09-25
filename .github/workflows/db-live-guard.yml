@@ -1,1 +1,242 @@
-PLACEHOLDER
+# ==================================================================
+# ZAPP-WEB · Guardas VIVOs do banco oficial
+# ==================================================================
+# SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele
+# executa scripts do repositorio com DESTINO_URL apenas depois de chegarem a
+# main, no agendamento da default branch ou em dispatch feito sobre main.
+# A protecao da branch main continua sendo parte obrigatoria do perimetro.
+# ==================================================================
+
+name: DB Live Guard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # segunda-feira 06:13 UTC (03:13 em Curitiba). Fora do minuto 0 (fila do
+    # GitHub) e depois do types-sync (05:49), que gera os artefatos que este
+    # guarda compara — antes, os dois disputavam o banco no mesmo minuto.
+    - cron: '13 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-live-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+
+jobs:
+  live-contract:
+    name: Contrato DB vivo
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # issues: write para abrir/comentar o alerta em falha e fechar apos
+    # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Instalar pgbouncer (proxy local para credencial do gen types)
+        continue-on-error: true
+        run: bash scripts/ci/install-pgbouncer.sh
+
+      - name: Exigir credencial do banco oficial
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente; os guardas vivos nao podem ser executados."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
+          NODE
+
+      - name: Comparar migrations com schema_migrations
+        run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Verificar ACL e contrato de mcp_exec
+        run: >-
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-mcp-exec-acl.sql
+
+      - name: Verificar ACL da dead-letter queue de webhooks
+        run: >-
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
+          -f scripts/db-audit/check-webhook-failures-acl.sql
+
+      - name: Regenerar catalogo e comparar com o commitado
+        run: |
+          umask 077
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/catalog.sql > /tmp/fresh-catalog.json
+          test -s /tmp/fresh-catalog.json
+          node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
+
+      - name: Regenerar manifesto e comparar com o commitado
+        run: |
+          umask 077
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+            -f scripts/db-audit/manifest.sql > /tmp/fresh-manifest.json
+          test -s /tmp/fresh-manifest.json
+          node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
+
+      - name: Verificar frescor do types.ts
+        run: |
+          umask 077
+          bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts
+          test -s /tmp/types.fresh.ts
+          grep -v '^// ' /tmp/types.fresh.ts > /tmp/types.fresh.stripped
+          grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.repo.stripped
+          if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
+            echo "::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao."
+            diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true
+            exit 1
+          fi
+          echo "OK: types.ts em sincronia com o banco."
+
+      # E10 (plano 2026-09-20): consolida count+md5 arquivos↔ledger, manifesto
+      # de edges × diretorios e frescor do grants-baseline num unico gate.
+      # Complementa (nao substitui) os passos acima — ver §1.9 do CLAUDE.md.
+      - name: Paridade tripla (migrations · edges · grants)
+        run: node scripts/db-audit/check-triple-parity.mjs --require-live
+
+      - name: Auditar configuracao runtime sem dados de clientes
+        run: node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json
+
+      # Sem isto a quebra do contrato vivo e silenciosa: o workflow nao roda em
+      # PR (por design), logo ninguem ve o vermelho a nao ser abrindo Actions.
+      - name: Abrir ou atualizar alerta de contrato vivo
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const body = [
+              '**Commit da main:** `' + context.sha + '`',
+              '**Run:** ' + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                + '/actions/runs/' + context.runId,
+              '',
+              'O guarda vivo falhou: migrations, catalogo, manifesto, types.ts,'
+                + ' ACLs ou paridade tripla divergem do banco oficial.',
+              'Ver o log do run para o passo exato. Procedimento em docs/MIGRATIONS.md.',
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            const existing = issues.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              return;
+            }
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'db-live-guard',
+                color: 'b60205',
+                description: 'Contrato vivo do banco oficial quebrado',
+              });
+            } catch (error) {
+              if (error.status !== 422) throw error;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['db-live-guard'],
+              body,
+            });
+
+      # Fecha o alerta quando o guarda volta a ficar verde: sem isto, um
+      # alerta gerado por falha transitoria (ou ja corrigida) fica aberto pra
+      # sempre porque ninguem fecha manualmente um issue automatico.
+      - name: Fechar alerta de contrato vivo apos recuperacao
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            for (const issue of issues.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Guarda vivo passou de novo em `' + context.sha + '` ('
+                  + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                  + '/actions/runs/' + context.runId + '). Fechando automaticamente.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
+
+      - name: Publicar evidencias estruturais
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: db-live-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            /tmp/fresh-catalog.json
+            /tmp/fresh-manifest.json
+            /tmp/runtime-config.json
+          if-no-files-found: ignore
+          retention-days: 3
