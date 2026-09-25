@@ -49,11 +49,7 @@ export function useSentimentData(period: string) {
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [period]);
-
-  async function fetchData() {
+  const fetchData = async () => {
     setLoading(true);
     const daysAgo = parseInt(period);
     const startDate = startOfDay(subDays(new Date(), daysAgo)).toISOString();
@@ -101,7 +97,11 @@ export function useSentimentData(period: string) {
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [period]);
 
   const stats = useMemo(() => {
     const totalAnalyses = analyses.length;
