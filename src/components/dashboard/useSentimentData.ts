@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay, isWithinInterval, format } from 'date-fns';
@@ -49,7 +49,7 @@ export function useSentimentData(period: string) {
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const daysAgo = parseInt(period);
     const startDate = startOfDay(subDays(new Date(), daysAgo)).toISOString();
@@ -97,11 +97,12 @@ export function useSentimentData(period: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
 
   useEffect(() => {
-    fetchData();
-  }, [period]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/period-change padrão do dashboard, sem estado derivado de props para sincronizar.
+    void fetchData();
+  }, [fetchData]);
 
   const stats = useMemo(() => {
     const totalAnalyses = analyses.length;
