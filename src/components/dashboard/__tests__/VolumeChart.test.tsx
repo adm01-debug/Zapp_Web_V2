@@ -28,7 +28,7 @@ describe('VolumeChart', () => {
     render(<VolumeChart />);
     expect(screen.getByTestId('volume-plot')).toBeInTheDocument();
     expect(screen.getByText('— Conversas reais')).toBeInTheDocument();
-    expect(screen.queryByText('╌ Previsão IA')).not.toBeInTheDocument();
+    expect(screen.queryByText('╌ Média 7 dias')).not.toBeInTheDocument();
   });
 
   it('com previsão IA disponível, mostra o item de legenda correspondente', () => {
@@ -37,7 +37,7 @@ describe('VolumeChart', () => {
     mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 3, avg7dCurrentHour: 2 } });
     mockUseDemandPrediction.mockReturnValue({ data: [{ time: '11:00', predicted: 4, lower: 2, upper: 6, isPrediction: true }] });
     render(<VolumeChart />);
-    expect(screen.getByText('╌ Previsão IA')).toBeInTheDocument();
+    expect(screen.getByText('╌ Média 7 dias')).toBeInTheDocument();
   });
 
   it('não renderiza "Capacidade máxima" (sem fonte real)', () => {
