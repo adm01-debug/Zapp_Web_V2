@@ -325,9 +325,9 @@
 
     /* Fundo decorativo do painel de chat (padrão de brindes) */
     --chat-pattern-url: url("/patterns/chat-brindes-640.webp");
-    --chat-pattern-tile: 840px;
+    --chat-pattern-tile: 588px;
     --chat-pattern-rgb: 15 23 42;
-    --chat-pattern-opacity: 0.065;
+    --chat-pattern-opacity: 0.078;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */
@@ -471,5 +471,5 @@
     --chart-sentiment-negative: 0 85% 62%;
 
     --chat-pattern-rgb: 148 163 184;
-    --chat-pattern-opacity: 0.17;
+    --chat-pattern-opacity: 0.204;
 }
