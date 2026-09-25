@@ -114,7 +114,6 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     if (!mapNode || !mapboxToken || !open || activeTab !== 'map') return;
     let cancelled = false;
     let loaded = false;
-    setMapError(null);
     // Sem `load` nem `error` no prazo (chunk, estilo ou tiles pendurados): vira erro com retry.
     const watchdog = setTimeout(() => {
       if (loaded || cancelled) return;
@@ -123,6 +122,9 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     }, MAPBOX_MAP_LOAD_TIMEOUT_MS);
     loadMapbox().then((mapboxgl) => {
       if (cancelled) return;
+      // Limpa erro anterior aqui, e nao no corpo do effect: setState sincrono dentro do
+      // effect dispara render em cascata (react-hooks/set-state-in-effect).
+      setMapError(null);
       mapboxRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
       // Voltar para a aba do mapa recria o mapa: centraliza direto na seleção existente.
