@@ -9,7 +9,7 @@ vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.
 vi.mock('@/lib/mapboxLoader', () => ({ loadMapbox: () => h.loadMapbox() }));
 
 import { ContactRegionMap } from '../ContactRegionMap';
-import { getRegionFromPhone } from '../ContactMapView';
+import { getRegionFromPhone } from '../getRegionFromPhone';
 import { regionCoordinates, REGION_COORDINATES } from '../contactRegionGeo';
 import { resetMapboxTokenForTests } from '@/lib/mapboxToken';
 
