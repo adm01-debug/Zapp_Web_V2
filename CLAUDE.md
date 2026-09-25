@@ -202,12 +202,17 @@ array_length(statements,1) = 3` (o formato exato do que eu tinha inserido), guar
 já está registrada sob version diferente** (`SELECT version FROM supabase_migrations.schema_migrations,
 LATERAL unnest(statements) s WHERE s LIKE '%nome_da_funcao%'` antes de inserir).
 
-Ao investigar, apareceram mais 7 versions com `statements` NULL no ledger (`20260827140000`,
-`20260827150000`, `20260901000002`, `20260901200001`, `20260906000001`, `20260925153000`,
-`20260925153100`) — não fixadas nesta sessão, fora do escopo do que foi pedido; próxima sessão que
-mexer em migrations deve verificar `SELECT version FROM supabase_migrations.schema_migrations WHERE
-statements IS NULL` antes de mais nada, e também comparar conteúdo entre versions próximas antes de
-registrar qualquer uma delas.
+Os 7 versions com `statements` NULL encontrados na auditoria (`20260827140000`, `20260827150000`,
+`20260901000002`, `20260901200001`, `20260906000001`, `20260925153000`, `20260925153100`) foram
+corrigidos em sessão posterior de 25/09: cada arquivo já existia em `supabase/migrations/`, o
+conteúdo aplicado em produção foi confirmado ao vivo (`pg_get_functiondef`, `pg_indexes`, grants,
+existência de fila/coluna) antes de qualquer escrita, nenhum tocava função/tabela já registrada sob
+outra version, e o `UPDATE ... WHERE statements IS NULL RETURNING` confirmou as 7 linhas gravadas
+(`SELECT count(*) FILTER (WHERE statements IS NULL)` = 0 no ledger, 477 registros no total). Quem
+encontrar `statements IS NULL` de novo: `SELECT version FROM supabase_migrations.schema_migrations
+WHERE statements IS NULL` primeiro, confirmar o estado ao vivo do objeto antes de registrar, e
+`scripts/db-audit/register-migration.mjs` (via `parseMigrationFile`/`buildInsertSql`) para gerar o
+SQL exato do arquivo em vez de transcrever à mão.
 
 **Sessões paralelas colidem de verdade — a regra 3 do fluxo Git existe por isso e não está sendo
 seguida.** Em 25/09, em poucas horas: (a) duas sessões corrigiram o MESMO timeout de pooler em
