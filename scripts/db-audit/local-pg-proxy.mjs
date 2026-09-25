@@ -45,12 +45,25 @@ if (tls.erros.length) {
 const { fields, password } = parseConnection(tls.connectionString);
 
 function escapeIniValue(value) {
-  // Formato "connstring" do pgbouncer.ini: sem aspas, espaco/backslash
-  // escapados. Falha alto a valores que exigiriam isso em vez de tentar
-  // escapar — nenhum campo de producao esperado (host/db/user Supabase)
-  // deveria conter espaco ou backslash.
-  if (/[\s\\]/.test(value)) {
-    throw new Error('valor de conexao com espaco ou backslash nao suportado no proxy local: campo rejeitado');
+  // Formato "connstring" da secao [databases] do pgbouncer.ini: NAO e
+  // libpq-style apesar do que a doc do pgbouncer sugere ("similar to
+  // libpq, but... different"). Verificado contra o parser real
+  // (pgbouncer 1.22.0, src/loader.c: cstr_get_value/cstr_unquote_value)
+  // por leitura de codigo-fonte E teste empirico ponta a ponta (pgbouncer
+  // real autenticando num Postgres real com senha contendo espaco, aspa
+  // simples e barra invertida juntos):
+  //   - barra invertida (\) NAO tem nenhum significado especial — nunca
+  //     precisa (nem deve) ser escapada, com ou sem aspas.
+  //   - espaco fora de aspas termina o valor (delimitador); dentro de
+  //     aspas simples, passa liso.
+  //   - aspa simples (') e o UNICO caractere que precisa de tratamento:
+  //     dentro de um valor entre aspas simples, uma aspa simples literal
+  //     e representada dobrando-a ('' -> '), estilo string SQL — nao com
+  //     barra invertida (\' NAO funciona: quebra o parser).
+  // Logo: so precisamos abrir aspas quando ha espaco OU aspa simples no
+  // valor; dentro delas, so a aspa simples e dobrada.
+  if (/[\s']/.test(value)) {
+    return `'${value.replace(/'/g, "''")}'`;
   }
   return value;
 }
