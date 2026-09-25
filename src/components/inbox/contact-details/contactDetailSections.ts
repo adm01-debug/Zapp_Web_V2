@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, Bell, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -19,7 +19,6 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'tags', label: 'Tags', icon: Tag, customIndex: 3 },
   { value: 'commercial-summary', label: 'Resumo Comercial', icon: CircleDollarSign, customIndex: 3.5 },
   { value: 'assignment', label: 'Atribuição', icon: User, customIndex: 4 },
-  { value: 'reminders', label: 'Lembretes', icon: Bell, customIndex: 5.7 },
   { value: 'memory', label: 'Memória Viva', icon: Brain, customIndex: 5.9 },
   { value: 'scoring', label: 'Scoring & LGPD', icon: TrendingUp, customIndex: 6 },
   { value: 'purchases', label: 'Compras & Propostas', icon: ShoppingBag, customIndex: 6.2 },
