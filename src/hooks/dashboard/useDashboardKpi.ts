@@ -63,7 +63,8 @@ export function useDashboardKpi() {
     queryKey: ['dashboard-kpi'],
     queryFn: async () => {
       const since = startOfDay(subDays(new Date(), 1)).toISOString();
-      const { data, error } = await supabase.rpc('dashboard_kpi', { p_since: since });
+      // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
+      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
     },
