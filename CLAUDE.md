@@ -159,10 +159,13 @@ ligado no mesmo dia. O ganho de segurança seria nulo de qualquer forma: sem
 `required_pull_request_reviews` na `main`, não há aprovação para um workflow contornar.
 
 **`types-sync`:** o PR de sincronização nasce com `GITHUB_TOKEN` porque `TYPES_SYNC_PR_TOKEN` não
-existe, e pela política anti-loop do GitHub os checks do Actions ficam em `action_required` — o PR
-nunca fica verde sozinho (o rollup engana: parece verde contando só apps de terceiros). O workflow
-passa a tentar liberar esses runs sozinho (PR #696); se o `GITHUB_TOKEN` não tiver esse poder — o
-que só o primeiro run real revela —, o Job Summary diz quais ficaram. O PAT segue sendo a saída definitiva.
+existe, e pela política anti-loop do GitHub os checks do Actions nascem em `action_required` — o PR
+não ficava verde sozinho (o rollup engana: parece verde contando só apps de terceiros). **Resolvido
+em 2026-09-25 (PR #696):** o passo "Destravar os checks do PR de sincronizacao" aprova esses runs
+com `actions:write`. Provado no run 36134562996 — CI, DB Guard e CodeQL do PR #668 passaram de
+`action_required` para `run_attempt` 2 sem ninguém tocar e fecharam verdes. **O `TYPES_SYNC_PR_TOKEN`
+deixou de ser necessário: não crie o secret.** Se o Job Summary algum dia listar runs "recusados
+pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar com PAT.
 
 **Não mexer nestes, que parecem bugs e não são:**
 - `chromium-authenticated` fora do CI: `conversation.spec.ts` e `messaging.spec.ts` estão
