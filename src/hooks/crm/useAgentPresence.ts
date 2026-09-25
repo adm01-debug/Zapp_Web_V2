@@ -60,9 +60,13 @@ function recompute() {
 
 async function upsertSelf(status: PresenceStatus) {
   if (!activeUserId) return;
-  await supabase
+  const { error } = await supabase
     .from(TABLE)
     .upsert({ user_id: activeUserId, status, updated_at: new Date().toISOString() });
+  // Falha aqui não pode travar o heartbeat nem quebrar a UI -- só logamos para
+  // não mascarar de novo o que motivou este fix (erro de presença virando
+  // silêncio, ex.: "0 atendentes online" quando na verdade a escrita falhou).
+  if (error) console.error('[agent-presence] upsert falhou', error);
 }
 
 function join(userId: string) {
@@ -74,8 +78,13 @@ function join(userId: string) {
 
   void (async () => {
     // Estado inicial via SELECT direto -- não espera o primeiro evento do canal.
-    const { data } = await supabase.from(TABLE).select('user_id, status, updated_at');
+    const { data, error } = await supabase.from(TABLE).select('user_id, status, updated_at');
     if (seq !== joinSeq) return;
+    if (error) {
+      // Antes: erro engolido e `data` undefined virava lista vazia sem aviso
+      // -- "0 atendentes online" ficava indistinguível de falha real de rede/RLS.
+      console.error('[agent-presence] leitura inicial falhou', error);
+    }
     rows = Object.fromEntries((data ?? []).map((r) => [r.user_id, r as PresenceRow]));
     recompute();
 
@@ -113,6 +122,12 @@ function join(userId: string) {
 }
 
 function leave() {
+  // Publica 'offline' antes de soltar o usuário ativo -- antes o logout só
+  // limpava timers/canal no cliente e deixava a linha do banco em 'online'
+  // até o heartbeat expirar (até 75s depois de quem já saiu do app).
+  if (activeUserId) {
+    void upsertSelf('offline');
+  }
   joinSeq++;
   activeUserId = null;
   rows = {};
