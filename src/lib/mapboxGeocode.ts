@@ -224,6 +224,22 @@ interface SuggestFeature {
 
 const SUGGESTION_KINDS = new Set(['poi', 'street', 'address', 'place']);
 
+const MAX_SUGGEST_CACHE = 50;
+/** Chave `sessionToken:termo normalizado` — o cache é por sessão, nunca cacheia falha. */
+const suggestCache = new Map<string, GeoSuggestion[]>();
+
+function suggestCacheKey(session: string, term: string): string {
+  return `${session}:${term.toLowerCase()}`;
+}
+
+/** Limpa as sugestões cacheadas de uma sessão encerrada (chamado por `endSearchSession`). */
+export function clearSuggestCacheForSession(sessionToken: string): void {
+  const prefix = `${sessionToken}:`;
+  for (const key of suggestCache.keys()) {
+    if (key.startsWith(prefix)) suggestCache.delete(key);
+  }
+}
+
 function toSuggestion(feature: SuggestFeature): GeoSuggestion | null {
   const id = feature.mapbox_id;
   const name = feature.name;
@@ -253,6 +269,10 @@ export async function suggestPlaces(
   const term = query.trim();
   if (!term) return { ok: false, kind: 'not_found' };
 
+  const cacheKey = suggestCacheKey(opts.session, term);
+  const cached = suggestCache.get(cacheKey);
+  if (cached) return { ok: true, suggestions: cached };
+
   const prox = opts.proximity ? `&proximity=${opts.proximity.lng},${opts.proximity.lat}` : '';
   const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(term)}&session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=${SEARCH_RESULT_LIMIT}${prox}`;
   const result = await requestJson(url, opts.signal);
@@ -262,6 +282,13 @@ export async function suggestPlaces(
     const suggestion = toSuggestion(feature);
     return suggestion ? [suggestion] : [];
   });
+
+  if (suggestCache.size >= MAX_SUGGEST_CACHE) {
+    const oldest = suggestCache.keys().next().value;
+    if (oldest !== undefined) suggestCache.delete(oldest);
+  }
+  suggestCache.set(cacheKey, suggestions);
+
   return { ok: true, suggestions };
 }
 

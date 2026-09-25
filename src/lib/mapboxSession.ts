@@ -3,6 +3,7 @@
 // que expira após 2 min de inatividade. Este módulo só controla QUANDO trocar de token — quem
 // dispara as chamadas HTTP é `mapboxGeocode.ts` (E06/E07). Estado em closure de módulo (não React):
 // o picker some/volta e a sessão de busca precisa sobreviver a isso, na Fase 2.
+import { clearSuggestCacheForSession } from '@/lib/mapboxGeocode';
 
 const SESSION_IDLE_MS = 120_000;
 const MAX_SUGGESTS_PER_SESSION = 50;
@@ -58,6 +59,7 @@ export function noteRetrieveCall(): void {
 
 /** Encerra a sessão explicitamente (após `/retrieve` bem-sucedido, ou ao fechar o picker). */
 export function endSearchSession(): void {
+  if (session) clearSuggestCacheForSession(session.token);
   session = null;
 }
 
