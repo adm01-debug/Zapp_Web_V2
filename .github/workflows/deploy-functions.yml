@@ -43,6 +43,9 @@ env:
 jobs:
   deploy:
     name: Deploy Edge Functions
+    # Aprovacao humana obrigatoria: sem isto um workflow_dispatch promovia edge
+    # functions para producao sem nenhum gate alem de estar na main.
+    environment: producao-edge-functions
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
