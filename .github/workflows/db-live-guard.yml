@@ -50,6 +50,12 @@ jobs:
     env:
       PSQL_CONNECT_RETRIES: "2"
       PSQL_CONNECT_RETRY_DELAY_MS: "3000"
+      # O retry mora SO no transporte (withPsqlEnvironment), que cobre todos os
+      # passos deste job -- ledger, catalogo, manifesto, paridade tripla e
+      # runtime config. check-migration-drift.mjs tem um retry proprio (#704)
+      # que cobre so o ledger; deixar os dois ligados multiplica as tentativas
+      # (3 x 3 = 9 execucoes de psql, ~47s de espera acumulada) em vez de somar.
+      LEDGER_RETRY_DELAYS_MS: ""
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
