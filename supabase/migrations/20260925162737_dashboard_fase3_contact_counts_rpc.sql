@@ -1,10 +1,9 @@
--- E24/E25 (Fase 3 do dashboard): RPC de agregação de contatos, substitui o
--- fetch cru de `contacts` em useDashboardStats.ts (cap silencioso do
--- PostgREST em 1000 linhas — achado A11, 3.095+ contatos reais em produção)
--- e dá a useQueueHealth.ts um breakdown por fila calculado no servidor
--- (waiting/inService/avgResponse/slaRate), fechando o achado A10
--- (waitingCount hardcoded 0). SECURITY INVOKER (default) para respeitar
--- contacts_select_policy / conversation_sla_select_policy normalmente.
+-- Reconciliacao (2026-09-25): DDL ja aplicado ao vivo em producao (registro
+-- 20260925162737 em supabase_migrations.schema_migrations) antes de existir
+-- arquivo de migration versionado. Corpo SQL abaixo e copia exata da
+-- statement do ledger (nao alterado) — canonicamente identico ao que ja
+-- roda no banco oficial.
+
 CREATE OR REPLACE FUNCTION public.dashboard_contact_counts(
   p_since timestamptz DEFAULT NULL,
   p_until timestamptz DEFAULT NULL,
@@ -14,7 +13,7 @@ CREATE OR REPLACE FUNCTION public.dashboard_contact_counts(
 RETURNS jsonb
 LANGUAGE sql
 STABLE
-AS $$
+AS $body$
   WITH filtered AS (
     SELECT c.id, c.queue_id, c.assigned_to, c.conversation_status
     FROM contacts c
@@ -58,6 +57,6 @@ AS $$
       FROM per_queue
     ), '[]'::jsonb)
   );
-$$;
+$body$;
 
 GRANT EXECUTE ON FUNCTION public.dashboard_contact_counts(timestamptz, timestamptz, uuid, uuid) TO authenticated;
