@@ -13,8 +13,10 @@ on:
   push:
     branches: [main]
   schedule:
-    # segunda-feira 06:00 UTC (03:00 em Curitiba)
-    - cron: '0 6 * * 1'
+    # segunda-feira 06:13 UTC (03:13 em Curitiba). Fora do minuto 0 (fila do
+    # GitHub) e depois do types-sync (05:49), que gera os artefatos que este
+    # guarda compara — antes, os dois disputavam o banco no mesmo minuto.
+    - cron: '13 6 * * 1'
   workflow_dispatch:
 
 permissions:
