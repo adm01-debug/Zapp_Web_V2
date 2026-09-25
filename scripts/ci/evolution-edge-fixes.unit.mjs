@@ -84,12 +84,23 @@ test("bootstrap-instance-token e create-connection nunca logam ou ecoam o token"
   }
   // A GO ecoa o token gerado no corpo de /instance/create (docs/migration/GO_GAPS.md) —
   // devolver createData sem redigir reabre o vazamento que o Vault existe para fechar.
+  // Isso vale tanto pro branch de sucesso quanto pro de erro (createData?.error) —
+  // a GO pode ecoar o token submetido mesmo numa resposta de erro (ex.: nome duplicado).
   assert.doesNotMatch(
     createConnBlock, /evolution:\s*createData\b/,
     "create-connection nao pode devolver createData crua (contem o token ecoado pela GO) — usar stripInstanceToken(createData)",
   );
-  assert.match(createConnBlock, /stripInstanceToken\(createData\)/);
-  assert.match(createConnBlock, /delete clone\.token; delete clone\.Token;/);
+  assert.doesNotMatch(
+    createConnBlock, /JSON\.stringify\(createData\)/,
+    "o branch de erro (createData?.error) tambem precisa passar por stripInstanceToken antes de responder",
+  );
+  const stripCalls = createConnBlock.match(/stripInstanceToken\(createData\)/g) ?? [];
+  assert.equal(stripCalls.length, 2, "stripInstanceToken(createData) precisa ser chamado nos dois branches (erro e sucesso)");
+  // stripInstanceToken precisa continuar cobrindo token/Token/apikey/apiKey em
+  // mais de um nome de contêiner (nao só "data" — forks do Evolution API
+  // costumam aninhar sob "hash"/"instance", padrão do Node.js v1/v2 original).
+  assert.match(createConnBlock, /TOKEN_KEYS = \[.*'token'.*'Token'.*'apikey'.*'apiKey'.*\]/);
+  assert.match(createConnBlock, /TOKEN_CONTAINER_KEYS = \[.*'data'.*'hash'.*'instance'.*\]/);
 });
 
 test("create-connection: compensacao e rollback nunca afirmam sucesso sem confirmar", () => {

@@ -220,6 +220,29 @@ serve(async (req) => {
         }
       };
 
+      // A GO ecoa o token da instância no corpo de /instance/create (mesmo
+      // motivo por que create-instance legado o devolvia ao operador) — aqui
+      // o token já está no Vault, então devolvê-lo de novo só reabriria o
+      // vazamento que E08-E11 existem para fechar. Nunca confiar num shape
+      // único: além de achatado no topo, forks do Evolution API costumam
+      // aninhar sob "data", "hash" (padrão do Node.js v1/v2 original, de onde
+      // este projeto migrou — docs/migration/GO_GAPS.md) ou "instance" —
+      // remove recursivamente em qualquer um desses contêineres, nos dois
+      // branches (sucesso e erro).
+      const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
+      const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
+      const stripInstanceToken = (value: unknown): unknown => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+        for (const key of TOKEN_KEYS) delete clone[key];
+        for (const key of TOKEN_CONTAINER_KEYS) {
+          if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+            clone[key] = stripInstanceToken(clone[key]);
+          }
+        }
+        return clone;
+      };
+
       const instanceToken = crypto.randomUUID();
       const createRes = await proxy('/instance/create', 'POST', {
         instanceName: instance, qrcode: true, integration: body.integration || 'WHATSAPP-BAILEYS',
@@ -232,7 +255,7 @@ serve(async (req) => {
       // nunca em createRes.ok.
       const createData: Record<string, unknown> = await createRes.json().catch(() => ({}));
       if (createData?.error) {
-        return new Response(JSON.stringify(createData), {
+        return new Response(JSON.stringify(stripInstanceToken(createData)), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -278,21 +301,6 @@ serve(async (req) => {
           instance, error: err instanceof Error ? err.message : String(err),
         });
       }
-
-      // A GO ecoa o token da instância no corpo de /instance/create (mesmo
-      // motivo por que create-instance legado o devolvia ao operador) — aqui
-      // o token já está no Vault, então devolvê-lo de novo só reabriria o
-      // vazamento que E08-E11 existem para fechar. Nunca confiar no shape
-      // exato (a GO pode aninhar em .data): remove nos dois níveis.
-      const stripInstanceToken = (value: unknown): unknown => {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
-        delete clone.token; delete clone.Token; delete clone.apikey; delete clone.apiKey;
-        if (clone.data && typeof clone.data === 'object' && !Array.isArray(clone.data)) {
-          clone.data = stripInstanceToken(clone.data);
-        }
-        return clone;
-      };
 
       return new Response(JSON.stringify({ connection: row, evolution: stripInstanceToken(createData) }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
