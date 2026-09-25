@@ -5,11 +5,15 @@
 # drift, valida os artefatos e abre/atualiza um PR; nunca faz push direto na
 # main. Isso continua funcionando quando a branch protection for ativada.
 #
-# TYPES_SYNC_PR_TOKEN (recomendado): token fine-grained/GitHub App com
-# contents:write e pull_requests:write. Ele permite que o PR criado dispare
-# os checks normais. Sem ele, o workflow usa GITHUB_TOKEN; nesse caso o repo
-# precisa permitir criacao de PR por Actions e os checks podem exigir aprovacao
-# manual, conforme as politicas anti-loop do GitHub.
+# TYPES_SYNC_PR_TOKEN e OPCIONAL e nao esta configurado -- o workflow roda com
+# GITHUB_TOKEN. Pela politica anti-loop do GitHub, um PR aberto com
+# GITHUB_TOKEN nasce com os checks do Actions em "action_required"; o passo
+# "Destravar os checks do PR de sincronizacao" os aprova sozinho com
+# actions:write. Provado em 2026-09-25 (run 36134562996): CI, DB Guard e CodeQL
+# do PR #668 saltaram de action_required para run_attempt 2 sem intervencao e
+# fecharam verdes. Um PAT fine-grained com contents:write e pull_requests:write
+# ainda funciona (os checks disparam direto e o passo vira no-op), mas e uma
+# credencial a mais para guardar sem ganho pratico -- nao crie sem motivo novo.
 # ==================================================================
 
 name: types-sync
@@ -73,14 +77,10 @@ jobs:
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
-          TYPES_SYNC_PR_TOKEN: ${{ secrets.TYPES_SYNC_PR_TOKEN }}
         run: |
           if [ -z "$DESTINO_URL" ]; then
             echo "::error::DESTINO_URL nao configurado."
             exit 1
-          fi
-          if [ -z "$TYPES_SYNC_PR_TOKEN" ]; then
-            echo "::warning::TYPES_SYNC_PR_TOKEN ausente; usando GITHUB_TOKEN. O PR pode exigir aprovacao manual dos checks."
           fi
           node --input-type=module <<'NODE'
           import {
@@ -401,8 +401,8 @@ jobs:
       # O PR aberto com GITHUB_TOKEN nao dispara workflows (politica anti-loop
       # do GitHub): CI, CodeQL e DB Guard nascem em "action_required" e o PR
       # nunca fica verde sozinho — foi o que manteve o PR de sincronizacao
-      # travado desde 24/09. Com TYPES_SYNC_PR_TOKEN configurado isso nao
-      # acontece; sem ele, tentamos liberar os runs aqui.
+      # travado desde 24/09. Este passo libera esses runs, e o GITHUB_TOKEN tem
+      # poder para isso (provado no run 36134562996).
       #
       # continue-on-error de proposito: se o GITHUB_TOKEN nao tiver poder para
       # aprovar os proprios runs, o passo registra o motivo no resumo e o PR
@@ -440,7 +440,7 @@ jobs:
               await new Promise((resolve) => setTimeout(resolve, 10000));
             }
             if (pendentes.length === 0) {
-              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam (TYPES_SYNC_PR_TOKEN presente), ou nao ha nada a liberar.');
+              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam, ou nao ha nada a liberar.');
               return;
             }
             const liberados = [];
@@ -460,7 +460,7 @@ jobs:
             ];
             if (recusados.length > 0) {
               linhas.push(`- recusados pelo GITHUB_TOKEN: ${recusados.join(', ')}`);
-              linhas.push('- acao: aprovar os runs na aba Actions, ou configurar TYPES_SYNC_PR_TOKEN para que os checks disparem sozinhos.');
+              linhas.push('- acao: aprovar os runs na aba Actions. Isto nao deveria acontecer: o GITHUB_TOKEN tem actions:write e ja liberou os runs antes (36134562996); investigar antes de tratar como rotina.');
             }
             await core.summary.addRaw(linhas.join('\n')).write();
             if (recusados.length > 0) {
