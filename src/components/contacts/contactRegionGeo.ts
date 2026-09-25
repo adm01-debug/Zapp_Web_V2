@@ -1,0 +1,87 @@
+// Coordenada aproximada de cada região atendida por um DDD (cidade-sede) e dos países que a
+// lista de contatos reconhece. É o único dado geográfico que existe: `contacts` não tem
+// endereço, cidade nem estado — só telefone. Por isso o mapa marca a REGIÃO do DDD, não onde
+// o cliente está, e a tela diz isso.
+
+/** [longitude, latitude] da cidade-sede — o rótulo é o mesmo devolvido por getRegionFromPhone. */
+export const REGION_COORDINATES: Record<string, [number, number]> = {
+  'São Paulo - SP': [-46.633, -23.55],
+  'Vale do Paraíba - SP': [-45.887, -23.179],
+  'Santos - SP': [-46.333, -23.96],
+  'Bauru - SP': [-49.06, -22.315],
+  'Sorocaba - SP': [-47.458, -23.501],
+  'Ribeirão Preto - SP': [-47.81, -21.177],
+  'São José do Rio Preto - SP': [-49.379, -20.812],
+  'Presidente Prudente - SP': [-51.388, -22.125],
+  'Campinas - SP': [-47.063, -22.907],
+  'Rio de Janeiro - RJ': [-43.196, -22.906],
+  'Norte Fluminense - RJ': [-41.318, -21.754],
+  'Sul Fluminense - RJ': [-44.104, -22.523],
+  'Vitória - ES': [-40.338, -20.319],
+  'Sul do ES': [-41.113, -20.849],
+  'Belo Horizonte - MG': [-43.938, -19.921],
+  'Juiz de Fora - MG': [-43.35, -21.764],
+  'Governador Valadares - MG': [-41.949, -18.851],
+  'Uberlândia - MG': [-48.277, -18.919],
+  'Poços de Caldas - MG': [-46.561, -21.788],
+  'Divinópolis - MG': [-44.884, -20.139],
+  'Montes Claros - MG': [-43.866, -16.735],
+  'Curitiba - PR': [-49.273, -25.428],
+  'Ponta Grossa - PR': [-50.162, -25.095],
+  'Londrina - PR': [-51.163, -23.31],
+  'Maringá - PR': [-51.938, -23.425],
+  'Foz do Iguaçu - PR': [-54.588, -25.516],
+  'Pato Branco - PR': [-52.671, -26.229],
+  'Joinville - SC': [-48.846, -26.304],
+  'Florianópolis - SC': [-48.548, -27.595],
+  'Chapecó - SC': [-52.618, -27.096],
+  'Porto Alegre - RS': [-51.23, -30.033],
+  'Pelotas - RS': [-52.342, -31.769],
+  'Caxias do Sul - RS': [-51.179, -29.168],
+  'Santa Maria - RS': [-53.807, -29.684],
+  'Brasília - DF': [-47.883, -15.794],
+  'Goiânia - GO': [-49.255, -16.686],
+  'Palmas - TO': [-48.334, -10.249],
+  'Rio Verde - GO': [-50.919, -17.792],
+  'Cuiabá - MT': [-56.097, -15.601],
+  'Rondonópolis - MT': [-54.635, -16.471],
+  'Campo Grande - MS': [-54.646, -20.469],
+  'Rio Branco - AC': [-67.81, -9.975],
+  'Porto Velho - RO': [-63.904, -8.762],
+  'Salvador - BA': [-38.501, -12.971],
+  'Ilhéus - BA': [-39.035, -14.796],
+  'Juazeiro - BA': [-40.503, -9.416],
+  'Feira de Santana - BA': [-38.967, -12.267],
+  'Vitória da Conquista - BA': [-40.839, -14.866],
+  'Aracaju - SE': [-37.073, -10.947],
+  'Recife - PE': [-34.877, -8.048],
+  'Maceió - AL': [-35.735, -9.666],
+  'João Pessoa - PB': [-34.863, -7.115],
+  'Natal - RN': [-35.209, -5.795],
+  'Fortaleza - CE': [-38.527, -3.732],
+  'Teresina - PI': [-42.804, -5.092],
+  'Petrolina - PE': [-40.501, -9.389],
+  'Juazeiro do Norte - CE': [-39.315, -7.213],
+  'Picos - PI': [-41.467, -7.077],
+  'Belém - PA': [-48.504, -1.455],
+  'Manaus - AM': [-60.025, -3.119],
+  'Santarém - PA': [-54.708, -2.443],
+  'Marabá - PA': [-49.128, -5.368],
+  'Boa Vista - RR': [-60.673, 2.82],
+  'Macapá - AP': [-51.07, 0.035],
+  'Coari - AM': [-63.141, -4.085],
+  'São Luís - MA': [-44.302, -2.53],
+  'Imperatriz - MA': [-47.492, -5.526],
+  'Estados Unidos': [-98.583, 39.833],
+  'Reino Unido': [-1.548, 52.561],
+  Portugal: [-8.224, 39.399],
+  Argentina: [-63.617, -38.416],
+};
+
+/** Centro do Brasil: enquadramento inicial quando não dá para ajustar aos marcadores. */
+export const BRAZIL_CENTER: [number, number] = [-51.9, -14.2];
+
+/** Coordenada da região, ou null quando ela não tem ponto conhecido ("DDD 32x", "Internacional"). */
+export function regionCoordinates(region: string): [number, number] | null {
+  return REGION_COORDINATES[region] ?? null;
+}
