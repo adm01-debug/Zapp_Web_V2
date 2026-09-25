@@ -13,8 +13,8 @@
       "description": "Ratchet baseline: largest JavaScript chunk (including lazy chunks), gzip-compressed; reduce after splitting vendor-heavy route chunks"
     },
     "total-assets": {
-      "maxKB": 4000,
-      "description": "Ratchet baseline: all deployable assets gzip-compressed, excluding source maps; reduce after removing unused lazy features"
+      "maxKB": 4100,
+      "description": "Ratchet baseline: all deployable assets gzip-compressed, excluding source maps; reduce after removing unused lazy features. +100KB em 2026-09-25 para o tile lossless do padrão de brindes do chat (public/patterns, ~76KB gzip, estático e cacheável — não afeta o bundle inicial de JS)"
     }
   },
   "web-vitals": {
