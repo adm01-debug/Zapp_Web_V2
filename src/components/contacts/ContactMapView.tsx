@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MapPin, Building, Users, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { ContactRegionMap } from './ContactRegionMap';
 
 interface Contact {
   id: string;
@@ -23,7 +24,7 @@ interface ContactMapViewProps {
 }
 
 // Group contacts by lead_origin or phone prefix for geographic distribution
-function getRegionFromPhone(phone: string): string {
+export function getRegionFromPhone(phone: string): string {
   const clean = phone.replace(/\D/g, '');
   // Brazil DDD mapping (simplified)
   if (clean.startsWith('55')) {
@@ -101,6 +102,13 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
           <span className="font-medium text-foreground">{contacts.length}</span> contatos mapeados
         </div>
       </div>
+
+      {/* Mapa por regiao do DDD */}
+      <ContactRegionMap
+        regions={regions.map(([region, members]) => ({ region, count: members.length }))}
+        selectedRegion={expandedRegion}
+        onSelectRegion={(region) => setExpandedRegion((current) => (current === region ? null : region))}
+      />
 
       {/* Region Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
