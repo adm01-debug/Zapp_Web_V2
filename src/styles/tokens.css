@@ -110,6 +110,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 221 20% 12%;
 
+    /* Fundo dos painéis do inbox (sidebar, contato, chat input): card no
+       light, preto sólido no dark — ver PR #755/#771 (bug de contraste
+       quando preto era fixo sem escopo de tema). */
+    --inbox-panel-bg: 0 0% 100%;
+
     /* ===== PRIMARY — Corporate Blue ===== */
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
@@ -369,6 +374,7 @@
     --card-elevated: 240 5% 13%;
     --popover: 240 5% 10%;
     --popover-foreground: 210 40% 98%;
+    --inbox-panel-bg: 0 0% 0%;
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 230 83% 63%;
