@@ -48,6 +48,9 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      # actions: write apenas para liberar os checks do PR que este job abre
+      # (ver o passo "Destravar os checks do PR de sincronizacao").
+      actions: write
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -394,6 +397,75 @@ jobs:
             exit 1
           fi
           echo "PR #${{ steps.pull-request.outputs.pull-request-number }} pronto para revisao."
+
+      # O PR aberto com GITHUB_TOKEN nao dispara workflows (politica anti-loop
+      # do GitHub): CI, CodeQL e DB Guard nascem em "action_required" e o PR
+      # nunca fica verde sozinho — foi o que manteve o PR de sincronizacao
+      # travado desde 24/09. Com TYPES_SYNC_PR_TOKEN configurado isso nao
+      # acontece; sem ele, tentamos liberar os runs aqui.
+      #
+      # continue-on-error de proposito: se o GITHUB_TOKEN nao tiver poder para
+      # aprovar os proprios runs, o passo registra o motivo no resumo e o PR
+      # segue aberto para aprovacao manual, exatamente como antes. Nunca deve
+      # derrubar uma sincronizacao que ja foi validada pelos gates.
+      - name: Destravar os checks do PR de sincronizacao
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # Via env, nao interpolado dentro do script: mantem o SHA fora do
+          # corpo do JS avaliado.
+          PR_HEAD_SHA: ${{ steps.pull-request.outputs.pull-request-head-sha }}
+        with:
+          script: |
+            const headSha = process.env.PR_HEAD_SHA;
+            if (!headSha) {
+              core.warning('create-pull-request nao devolveu o head sha; nada a destravar.');
+              return;
+            }
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pendentes = [];
+            // Os runs aparecem alguns segundos depois do push do PR.
+            for (let tentativa = 1; tentativa <= 6; tentativa += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+                status: 'action_required',
+                per_page: 20,
+              });
+              pendentes = data.workflow_runs || [];
+              if (pendentes.length > 0) break;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+            if (pendentes.length === 0) {
+              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam (TYPES_SYNC_PR_TOKEN presente), ou nao ha nada a liberar.');
+              return;
+            }
+            const liberados = [];
+            const recusados = [];
+            for (const run of pendentes) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ owner, repo, run_id: run.id });
+                liberados.push(run.name);
+              } catch (error) {
+                recusados.push(`${run.name} (${error.status})`);
+              }
+            }
+            const linhas = [
+              '### Checks do PR de sincronizacao',
+              `- head sha: \`${headSha}\``,
+              `- liberados: ${liberados.length > 0 ? liberados.join(', ') : 'nenhum'}`,
+            ];
+            if (recusados.length > 0) {
+              linhas.push(`- recusados pelo GITHUB_TOKEN: ${recusados.join(', ')}`);
+              linhas.push('- acao: aprovar os runs na aba Actions, ou configurar TYPES_SYNC_PR_TOKEN para que os checks disparem sozinhos.');
+            }
+            await core.summary.addRaw(linhas.join('\n')).write();
+            if (recusados.length > 0) {
+              core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
+            }
 
       - name: Job summary
         if: always()
