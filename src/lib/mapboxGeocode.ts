@@ -22,7 +22,17 @@ export interface GeoSearchPlace extends GeoPlace {
 
 export type GeoFailureKind = 'aborted' | 'timeout' | 'rate_limited' | 'http' | 'network' | 'not_found';
 
-export type GeoSearchResult = { ok: true; place: GeoSearchPlace } | { ok: false; kind: GeoFailureKind };
+export type GeoSearchResult = { ok: true; places: GeoSearchPlace[] } | { ok: false; kind: GeoFailureKind };
+
+/** Quantos candidatos a busca devolve para o operador escolher. */
+export const SEARCH_RESULT_LIMIT = 5;
+
+export interface GeoProximity { lat: number; lng: number }
+
+// O geocoding v5 é índice de ENDEREÇOS: não conhece estabelecimento por nome e faz fuzzy match
+// agressivo — "XBZ BRINDES" casou com "Rua Brendes Pereira da Silva", em Vila Velha/ES (outro
+// estado), com relevance 0,46. Abaixo deste corte o resultado é ruído, não resposta.
+const MIN_V5_RELEVANCE = 0.8;
 
 const cache = new Map<string, Promise<GeoPlace | null>>();
 
@@ -104,23 +114,72 @@ export function reverseGeocodeAddress(lat: number, lng: number, token: string): 
   return reverseGeocodePlace(lat, lng, token).then((place) => place?.address ?? null);
 }
 
+/** Search Box API: é a única que indexa estabelecimento por nome ("XBZ Brindes"). */
+async function searchViaSearchBox(
+  term: string,
+  token: string,
+  proximity?: GeoProximity,
+  signal?: AbortSignal,
+): Promise<GeoSearchResult | null> {
+  const prox = proximity ? `&proximity=${proximity.lng},${proximity.lat}` : '';
+  const url = `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(term)}&access_token=${encodeURIComponent(token)}&language=pt&country=BR&limit=${SEARCH_RESULT_LIMIT}${prox}`;
+  const result = await requestJson(url, signal);
+  if (!result.ok) return result.kind === 'not_found' ? null : { ok: false, kind: result.kind };
+  const features = (result.data as { features?: SearchBoxFeature[] } | null)?.features ?? [];
+  const places = features.flatMap((feature) => {
+    const coords = feature?.geometry?.coordinates;
+    if (!Array.isArray(coords) || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') return [];
+    const name = feature?.properties?.name;
+    const address = feature?.properties?.full_address ?? feature?.properties?.place_formatted ?? '';
+    return [{
+      lat: coords[1],
+      lng: coords[0],
+      name: typeof name === 'string' && name ? name : undefined,
+      address: typeof address === 'string' ? address : '',
+    }];
+  });
+  if (places.length === 0) return null;
+  return { ok: true, places };
+}
+
+interface SearchBoxFeature {
+  geometry?: { coordinates?: unknown };
+  properties?: { name?: unknown; full_address?: unknown; place_formatted?: unknown };
+}
+
 /**
- * Busca de endereço por texto (forward geocoding), sem cache: a mesma consulta pode legitimamente
- * ser repetida pelo operador. Devolve a causa da falha para a mensagem certa na tela.
+ * Busca de endereço por texto, sem cache: a mesma consulta pode legitimamente ser repetida pelo
+ * operador. Tenta a Search Box (entende estabelecimento) e só então o geocoding v5 (endereços),
+ * descartando match fraco. Devolve a causa da falha para a mensagem certa na tela.
  */
-export async function searchPlace(query: string, token: string, signal?: AbortSignal): Promise<GeoSearchResult> {
+export async function searchPlaces(
+  query: string,
+  token: string,
+  signal?: AbortSignal,
+  proximity?: GeoProximity,
+): Promise<GeoSearchResult> {
   const term = query.trim();
   if (!term) return { ok: false, kind: 'not_found' };
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(term)}.json?access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=1`;
+
+  const viaBox = await searchViaSearchBox(term, token, proximity, signal);
+  if (viaBox) return viaBox;
+
+  const prox = proximity ? `&proximity=${proximity.lng},${proximity.lat}` : '';
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(term)}.json?access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=${SEARCH_RESULT_LIMIT}${prox}`;
   const result = await requestJson(url, signal);
   if (!result.ok) return { ok: false, kind: result.kind };
-  const feature = (result.data as { features?: Feature[] } | null)?.features?.[0];
-  const center = feature?.center;
-  const place = toPlace(feature);
-  if (!Array.isArray(center) || typeof center[0] !== 'number' || typeof center[1] !== 'number') {
-    return { ok: false, kind: 'not_found' };
-  }
-  return { ok: true, place: { lat: center[1], lng: center[0], name: place?.name, address: place?.address ?? '' } };
+  const features = (result.data as { features?: Feature[] } | null)?.features ?? [];
+  const places = features.flatMap((feature) => {
+    // Match fraco do v5 é ruído de outro estado, não resposta.
+    const relevance = (feature as { relevance?: unknown }).relevance;
+    if (typeof relevance === 'number' && relevance < MIN_V5_RELEVANCE) return [];
+    const center = feature?.center;
+    if (!Array.isArray(center) || typeof center[0] !== 'number' || typeof center[1] !== 'number') return [];
+    const place = toPlace(feature);
+    return [{ lat: center[1], lng: center[0], name: place?.name, address: place?.address ?? '' }];
+  });
+  if (places.length === 0) return { ok: false, kind: 'not_found' };
+  return { ok: true, places };
 }
 
 export function resetReverseGeocodeCacheForTests(): void {

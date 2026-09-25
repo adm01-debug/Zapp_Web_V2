@@ -3,7 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
-import { reverseGeocodePlace, searchPlace } from '@/lib/mapboxGeocode';
+import { reverseGeocodePlace, searchPlaces, type GeoSearchPlace } from '@/lib/mapboxGeocode';
 import {
   getMapboxToken,
   mapboxFailureKindFromMapError,
@@ -50,6 +50,9 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  // Candidatos da busca. A API sempre devolve algo (ate para texto sem sentido), entao com mais
+  // de um resultado quem decide e o operador — nao mandamos o marcador para o primeiro sozinho.
+  const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
 
   const select = useCallback((location: SelectedLocation | null) => {
     selectedRef.current = location;
@@ -184,14 +187,28 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       return;
     }
     const signal = nextGeoSignal();
+    setSearchResults([]);
     setIsSearching(true);
     try {
-      const result = await searchPlace(query, mapboxToken, signal);
+      // Vies geografico: o centro do mapa (ou Sao Paulo, o centro padrao) desempata resultados
+      // homonimos e evita que uma busca de SP caia em outro estado.
+      const center = map.current?.getCenter();
+      const result = await searchPlaces(query, mapboxToken, signal, {
+        lng: center?.lng ?? DEFAULT_CENTER[0],
+        lat: center?.lat ?? DEFAULT_CENTER[1],
+      });
       if (result.ok) {
-        updateMarker(result.place.lng, result.place.lat);
-        select({ lat: result.place.lat, lng: result.place.lng, name: result.place.name, address: result.place.address });
+        if (result.places.length === 1) {
+          const only = result.places[0];
+          setSearchResults([]);
+          updateMarker(only.lng, only.lat);
+          select({ lat: only.lat, lng: only.lng, name: only.name, address: only.address });
+        } else {
+          setSearchResults(result.places);
+        }
         return;
       }
+      setSearchResults([]);
       // Busca substituída por outra mais nova: nada na tela.
       if (result.kind === 'aborted') return;
       if (result.kind === 'not_found') {
@@ -220,16 +237,24 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     }
   }, [searchQuery, mapboxToken, updateMarker, nextGeoSignal, select]);
 
+  /** O operador escolheu um dos candidatos: marca no mapa e fecha a lista. */
+  const chooseSearchResult = useCallback((place: GeoSearchPlace) => {
+    setSearchResults([]);
+    updateMarker(place.lng, place.lat);
+    select({ lat: place.lat, lng: place.lng, name: place.name, address: place.address });
+  }, [select, updateMarker]);
+
   const reset = useCallback(() => {
     geoAbort.current?.abort();
     pendingMarker.current = null;
     select(null);
+    setSearchResults([]);
     setSearchQuery('');
     setIsSearching(false);
   }, [select]);
 
   return {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching,
-    selectedLocation, getCurrentLocation, searchLocation, reset,
+    selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset,
   };
 }
