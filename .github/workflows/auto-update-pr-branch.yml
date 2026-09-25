@@ -39,7 +39,12 @@ jobs:
           fi
           for pr in $prs; do
             echo "Atualizando PR #$pr (behind + auto-merge ativo)"
-            sha_antes=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+            # Leituras da API sao protegidas contra falha transitoria (rede/rate-limit):
+            # sem o "if !", set -e mataria o job inteiro e abandonaria os demais PRs do lote.
+            if ! sha_antes=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha'); then
+              echo "PR #$pr: falha ao ler head atual via API, seguindo para o proximo"
+              continue
+            fi
             if ! gh api -X PUT "repos/$REPO/pulls/$pr/update-branch" >/dev/null; then
               echo "Falha ao atualizar PR #$pr, seguindo para o proximo"
               continue
@@ -48,7 +53,11 @@ jobs:
             sha_depois="$sha_antes"
             for tentativa in 1 2 3 4 5 6; do
               sleep 10
-              sha_depois=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+              if ! sha_depois=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha'); then
+                echo "PR #$pr: falha temporaria ao consultar head (tentativa $tentativa)"
+                sha_depois="$sha_antes"
+                continue
+              fi
               [ "$sha_depois" != "$sha_antes" ] && break
             done
             if [ "$sha_depois" = "$sha_antes" ]; then
@@ -58,8 +67,11 @@ jobs:
             # Checks do head novo nascem em action_required (GITHUB_TOKEN): liberar.
             runs=""
             for tentativa in 1 2 3 4 5 6; do
-              runs=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
-                --jq '.workflow_runs[].id')
+              if ! runs=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
+                --jq '.workflow_runs[].id'); then
+                echo "PR #$pr ($sha_depois): falha temporaria ao listar runs (tentativa $tentativa)"
+                runs=""
+              fi
               [ -n "$runs" ] && break
               sleep 10
             done
