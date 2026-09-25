@@ -29,7 +29,11 @@ export const useDashboardData = (filters: DashboardFilters = getDefaultFilters()
   // conversation_closures/conversation_sla via useDashboardKpi, nunca mais a
   // heurística local (updated_at hoje && !assigned_to contava devolução à fila
   // como resolvida) nem o slaQuery de últimos-50-all-time.
-  const { data: kpi } = useDashboardKpi();
+  // Propaga queueId/agentId (bug de auditoria 25/09/2026: esta chamada não
+  // recebia os filtros, então DailyGoalsCard/GamificationSection mostravam
+  // "resolvidas hoje"/"tempo médio" diferentes do DashboardKpiRow quando
+  // staff filtrava por fila/agente — números divergentes na mesma tela).
+  const { data: kpi } = useDashboardKpi({ queueId: mergedFilters.queueId, agentId: mergedFilters.agentId });
   const presence = useAgentPresenceMap();
 
   const stats = useMemo(() => {
