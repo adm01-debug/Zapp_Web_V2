@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AgentMention {
   id: string;
@@ -19,8 +19,7 @@ interface MentionAutocompleteProps {
 }
 
 export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onClose, isOpen }: MentionAutocompleteProps) {
-  const { data: teamProfiles = [] } = useTeamProfiles();
-  const agents = useMemo(() => teamProfiles.slice(0, 50) as AgentMention[], [teamProfiles]);
+  const [agents, setAgents] = useState<AgentMention[]>([]);
   const [filtered, setFiltered] = useState<AgentMention[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -30,6 +29,19 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
   useEffect(() => {
     isMountedRef.current = true;
     return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Fetch agents once
+  useEffect(() => {
+    const fetchAgents = async () => {
+      const { data } = await supabase
+        .rpc('get_team_profiles')
+        .select('id, name, email, avatar_url')
+        .limit(50);
+      if (!isMountedRef.current) return;
+      if (data) setAgents(data as AgentMention[]);
+    };
+    fetchAgents();
   }, []);
 
   // Detect @ mention
