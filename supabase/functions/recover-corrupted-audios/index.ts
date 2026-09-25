@@ -72,7 +72,13 @@ Deno.serve(async (req) => {
       .select("instance_id")
       .eq("id", connId)
       .single();
-    const instanceName = conn?.instance_id || Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
+    // E20 (plano multi-conexão): sem instance_id não é seguro adivinhar a
+    // PRINCIPAL — buscaria a mídia na instância errada em vez de simplesmente
+    // falhar o lote (capturado pelo catch de baixo, mesmo padrão do resto do arquivo).
+    if (!conn?.instance_id) {
+      throw new Error(`Conexão ${connId} sem instance_id — não é seguro recuperar áudio sem saber a instância de origem.`);
+    }
+    const instanceName = conn.instance_id;
 
     if (dry_run) {
       return new Response(JSON.stringify({

@@ -53,7 +53,15 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'sync-contacts';
-    const instanceName = body.instanceName || Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'PRINCIPAL';
+    const instanceName = body.instanceName;
+    // E20 (plano multi-conexão): cleanup-mock não opera em instância nenhuma;
+    // toda outra ação sincroniza uma instância específica — nunca mais assumir
+    // a PRINCIPAL quando o chamador esquece de informar.
+    if (action !== 'cleanup-mock' && !instanceName) {
+      return new Response(JSON.stringify({ error: 'instanceName is required for this action' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const page = body.page || 1;
     const offset = body.offset || 100;
 

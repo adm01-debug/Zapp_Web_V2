@@ -2,7 +2,7 @@
 import { translateV2ToGo } from "./evolution-go-routes.ts";
 
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
-// O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
+// O frontend (messageSender, useChatMediaSending, useSendProduct) le key.id/messageId (shape v2).
 // Injeta os campos v2 no topo sem remover o payload GO — normalização única para todos os consumidores.
 // deno-lint-ignore no-explicit-any
 export function normalizeGoSendResponse(data: any): unknown {
@@ -60,16 +60,22 @@ const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
 const CB_FAILURE_THRESHOLD = 5;
 const CB_OPEN_DURATION_MS = 60_000;
-let cbFailures = 0;
-let cbOpenUntil = 0;
-function cbRecord(success: boolean): void {
-  if (success) { cbFailures = 0; return; }
-  cbFailures++;
-  if (cbFailures >= CB_FAILURE_THRESHOLD) cbOpenUntil = Date.now() + CB_OPEN_DURATION_MS;
+// E22 (plano multi-conexão): breaker por instância — 5 falhas na instância A
+// não podem abrir o breaker para a instância B. Rotas admin (sem instância no
+// path) usam a chave '__admin'.
+const cbState = new Map<string, { failures: number; openUntil: number }>();
+function cbRecord(key: string, success: boolean): void {
+  const state = cbState.get(key) ?? { failures: 0, openUntil: 0 };
+  if (success) { state.failures = 0; cbState.set(key, state); return; }
+  state.failures++;
+  if (state.failures >= CB_FAILURE_THRESHOLD) state.openUntil = Date.now() + CB_OPEN_DURATION_MS;
+  cbState.set(key, state);
 }
-function cbIsOpen(): boolean {
-  if (Date.now() < cbOpenUntil) return true;
-  if (cbOpenUntil > 0) { cbOpenUntil = 0; cbFailures = 0; }
+function cbIsOpen(key: string): boolean {
+  const state = cbState.get(key);
+  if (!state) return false;
+  if (Date.now() < state.openUntil) return true;
+  if (state.openUntil > 0) { state.openUntil = 0; state.failures = 0; }
   return false;
 }
 
@@ -82,9 +88,13 @@ export async function proxyToEvolution(
   path: string,
   method: string = 'POST',
   body?: unknown,
-  instanceInPath?: string
+  instanceInPath?: string,
+  // E22: chave do circuit breaker (normalmente o nome da instância). Cai em
+  // instanceInPath ou '__admin' quando o chamador não informa.
+  cbKey?: string,
 ): Promise<Response> {
-  if (cbIsOpen()) {
+  const breakerKey = cbKey || instanceInPath || '__admin';
+  if (cbIsOpen(breakerKey)) {
     console.warn('[Evolution CB] circuit breaker aberto — rejeitando requisição');
     return new Response(JSON.stringify({ error: true, status: 503, message: 'Evolution API temporariamente indisponível (circuit breaker aberto). Tente novamente em instantes.' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -191,13 +201,13 @@ export async function proxyToEvolution(
         // estava invertido — 404 abria o breaker e 500 zerava o contador.
         // 408 e a excecao: e timeout reportado pelo servidor, ja listado em
         // RETRYABLE_STATUSES, entao continua contando como falha.
-        cbRecord(response.status < 500 && response.status !== 408);
+        cbRecord(breakerKey, response.status < 500 && response.status !== 408);
         return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage, details: data }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      cbRecord(true);
+      cbRecord(breakerKey, true);
       return new Response(JSON.stringify(normalizeGoResponse(goPath, data)), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -210,7 +220,7 @@ export async function proxyToEvolution(
     }
   }
 
-  cbRecord(false);
+  cbRecord(breakerKey, false);
   return new Response(JSON.stringify({
     error: true, status: 504,
     message: `Falha ao conectar com a API Evolution: ${lastError?.message || 'Erro desconhecido'}`,
