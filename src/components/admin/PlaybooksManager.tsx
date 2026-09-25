@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,9 +63,7 @@ export function PlaybooksManager() {
   const [category, setCategory] = useState('general');
   const [steps, setSteps] = useState<PlaybookStep[]>([]);
 
-  useEffect(() => { loadPlaybooks(); }, []);
-
-  const loadPlaybooks = async () => {
+  const loadPlaybooks = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from('playbooks')
@@ -78,7 +76,12 @@ export function PlaybooksManager() {
       })));
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    loadPlaybooks();
+  }, [loadPlaybooks]);
 
   const openCreate = () => {
     setSelectedPlaybook(null);

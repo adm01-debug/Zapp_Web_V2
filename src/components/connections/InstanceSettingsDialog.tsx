@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,19 +45,25 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
   const [labels, setLabels] = useState<{ id: string; name: string; color: string }[]>([]);
   const [loadingTab, setLoadingTab] = useState('');
 
-  useEffect(() => { if (open && instanceName) { loadSettings(); loadProfile(); } }, [open, instanceName]);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoadingTab('settings');
     try { const data = await getSettings(instanceName); if (data) setSettingsData({ rejectCall: data.rejectCall ?? false, msgCall: data.msgCall ?? '', groupsIgnore: data.groupsIgnore ?? false, alwaysOnline: data.alwaysOnline ?? false, readMessages: data.readMessages ?? false, readStatus: data.readStatus ?? false, syncFullHistory: data.syncFullHistory ?? false }); }
     catch (err) { log.error('Error loading settings:', err); }
     setLoadingTab('');
-  };
+  }, [getSettings, instanceName]);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try { const data = await fetchProfile(instanceName); if (data) setProfile({ name: data.name ?? '', status: data.status ?? '', pictureUrl: data.profilePictureUrl ?? '' }); }
     catch (err) { log.error('Error loading profile:', err); }
-  };
+  }, [fetchProfile, instanceName]);
+
+  useEffect(() => {
+    if (open && instanceName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-open padrão, sem estado derivado de props para sincronizar.
+      loadSettings();
+      loadProfile();
+    }
+  }, [open, instanceName, loadSettings, loadProfile]);
 
   const loadLabels = async () => {
     setLoadingTab('labels');
