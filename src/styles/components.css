@@ -364,3 +364,21 @@
   border-radius: 28px;
   overflow: hidden;
 }
+
+/* Padrão de brindes no fundo do painel de chat.
+   mask-image: a cor vem de --chat-pattern-rgb, um arquivo serve claro e escuro. */
+.chat-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  background-color: rgb(var(--chat-pattern-rgb));
+  opacity: var(--chat-pattern-opacity);
+  -webkit-mask-image: var(--chat-pattern-url);
+          mask-image: var(--chat-pattern-url);
+  -webkit-mask-size: var(--chat-pattern-tile) var(--chat-pattern-tile);
+          mask-size: var(--chat-pattern-tile) var(--chat-pattern-tile);
+  -webkit-mask-repeat: repeat;
+          mask-repeat: repeat;
+}
