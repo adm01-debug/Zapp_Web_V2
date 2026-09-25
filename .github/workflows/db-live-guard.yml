@@ -1,5 +1,5 @@
 # ==================================================================
-# ZAPP-WEB · Guardas VIVOS do banco oficial
+# ZAPP-WEB · Guardas VIVOs do banco oficial
 # ==================================================================
 # SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele
 # executa scripts do repositorio com DESTINO_URL apenas depois de chegarem a
@@ -35,8 +35,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    # issues: write apenas para o alerta do passo final; nenhum passo de
-    # auditoria usa o GITHUB_TOKEN.
+    # issues: write para abrir/comentar o alerta em falha e fechar apos
+    # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
     permissions:
       contents: read
       issues: write
@@ -206,6 +206,38 @@ jobs:
               labels: ['db-live-guard'],
               body,
             });
+
+      # Fecha o alerta quando o guarda volta a ficar verde: sem isto, um
+      # alerta gerado por falha transitoria (ou ja corrigida) fica aberto pra
+      # sempre porque ninguem fecha manualmente um issue automatico.
+      - name: Fechar alerta de contrato vivo apos recuperacao
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            for (const issue of issues.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Guarda vivo passou de novo em `' + context.sha + '` ('
+                  + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                  + '/actions/runs/' + context.runId + '). Fechando automaticamente.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
 
       - name: Publicar evidencias estruturais
         if: always()
