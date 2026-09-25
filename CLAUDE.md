@@ -176,17 +176,27 @@ desligamento) tinha o check `Supabase Preview` vermelho; o PR #717 (mesma branch
 do desligamento) **não tem esse check** — o app parou de reagir a PRs. Se precisar reativar o
 preview um dia, aponte para um projeto Supabase separado, nunca para `tnnnlkbymytvtqngbbqh`.
 
-Achado durante o fechamento deste item: duas migrations de 25/09 estavam aplicadas em produção com
-o registro no ledger incompleto — `20260925133000` (dashboard_kpi) sem nenhuma linha, e
-`20260925170000` (reminders_pending) com `statements` NULL. As duas foram corrigidas (INSERT e
-UPDATE guardados por `RETURNING` não-vazio, sem sobrescrever se outra sessão já tivesse corrigido).
-Não há evidência de que o app do Supabase tenha causado isso — é mais provável que alguma sessão
-tenha aplicado o DDL manualmente (regra 1) e pulado ou errado o passo de registro (regra 2). **Ao
-investigar, apareceram mais 7 versions com `statements` NULL no ledger** (`20260827140000`,
+Achado durante o fechamento deste item, e um erro meu no meio do caminho — registrado por
+transparência, não escondido: `20260925170000` (reminders_pending) estava aplicada em produção com
+a linha do ledger existindo mas `statements` NULL — corrigida com `UPDATE ... WHERE statements IS
+NULL`, guardada por `RETURNING` não-vazio. Já `20260925133000` (dashboard_kpi) eu registrei por
+engano: vi que a version não existia no ledger e inseri o conteúdo do arquivo, sem checar se a MESMA
+função já estava registrada sob OUTRA version. Estava — `20260925132706`, reconciliada por outra
+sessão momentos antes (PR #719) com conteúdo idêntico, e o PR #727 (mergeado durante esta mesma
+sessão) já tinha apagado o arquivo `133000` do disco por ser duplicata. Meu INSERT recriou o
+problema do lado do banco. Corrigido com `DELETE ... WHERE version = '20260925133000' AND
+array_length(statements,1) = 3` (o formato exato do que eu tinha inserido), guardado por
+`RETURNING` não-vazio — nada mais foi tocado. **Lição para quem for registrar uma migration
+"ausente" no ledger: não basta checar se a VERSION existe — checar também se a MESMA função/tabela
+já está registrada sob version diferente** (`SELECT version FROM supabase_migrations.schema_migrations,
+LATERAL unnest(statements) s WHERE s LIKE '%nome_da_funcao%'` antes de inserir).
+
+Ao investigar, apareceram mais 7 versions com `statements` NULL no ledger (`20260827140000`,
 `20260827150000`, `20260901000002`, `20260901200001`, `20260906000001`, `20260925153000`,
 `20260925153100`) — não fixadas nesta sessão, fora do escopo do que foi pedido; próxima sessão que
 mexer em migrations deve verificar `SELECT version FROM supabase_migrations.schema_migrations WHERE
-statements IS NULL` antes de mais nada.
+statements IS NULL` antes de mais nada, e também comparar conteúdo entre versions próximas antes de
+registrar qualquer uma delas.
 
 **Sessões paralelas colidem de verdade — a regra 3 do fluxo Git existe por isso e não está sendo
 seguida.** Em 25/09, em poucas horas: (a) duas sessões corrigiram o MESMO timeout de pooler em
