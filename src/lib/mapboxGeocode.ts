@@ -252,3 +252,30 @@ export async function suggestPlaces(
   });
   return { ok: true, suggestions };
 }
+
+/**
+ * Coordenada do `mapbox_id` escolhido na lista de sugestões. `null` quando o request falhou ou a
+ * resposta não trouxe coordenada válida — quem chama decide o fallback (Fase 2: `searchPlaces`
+ * com o nome da sugestão).
+ */
+export async function retrievePlace(
+  mapboxId: string,
+  token: string,
+  opts: { session: string; signal?: AbortSignal },
+): Promise<GeoSearchPlace | null> {
+  const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}?session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}`;
+  const result = await requestJson(url, opts.signal);
+  if (!result.ok) return null;
+  const features = (result.data as { features?: SearchBoxFeature[] } | null)?.features;
+  const coords = features?.[0]?.geometry?.coordinates;
+  if (!Array.isArray(coords) || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') return null;
+  const properties = features?.[0]?.properties;
+  const name = properties?.name;
+  const address = properties?.full_address ?? properties?.place_formatted;
+  return {
+    lat: coords[1],
+    lng: coords[0],
+    name: typeof name === 'string' && name ? name : undefined,
+    address: typeof address === 'string' ? address : '',
+  };
+}
