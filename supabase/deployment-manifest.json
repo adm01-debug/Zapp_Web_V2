@@ -48,8 +48,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 12404,
-      "sha256": "ec07344b520ec2481346622443fbfbcce00481ddff42f55beb3492d1bcb84cfb"
+      "bytes": 13141,
+      "sha256": "f5e40e9582a904c19d3d539a6d8a18f4064d95e1272f56ce0dab9b5d159ced18"
     },
     {
       "path": "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -73,8 +73,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-send.ts",
-      "bytes": 3841,
-      "sha256": "ce57c9b4e63ef5e50220ab421398007ab0d6dbf3ce5489edd5a68b6579c67856"
+      "bytes": 4669,
+      "sha256": "8416e0ce196b12024ca5bf53c6ce67ad2f47ae8945c356fc2f5928744c60d906"
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
@@ -313,13 +313,13 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 35702,
-      "sha256": "819db291d2d737a571769a212c2edf8ceab739d902e288c857841344e6dd4809"
+      "bytes": 36508,
+      "sha256": "ef7ee5471897db70b123a76ef337994657409de84a3601c0c5302188ffbcb60e"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
-      "bytes": 4098,
-      "sha256": "09a5caa047da0d9e65952d36edb73e2d8135f081969869e9a6f6e5e971d1efb1"
+      "bytes": 4521,
+      "sha256": "740750a32937a579909173e77980ac2cfb3dec800a8a06ca50cbff0cd979025b"
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
@@ -388,8 +388,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 19350,
-      "sha256": "d0bca6af663658cc3b3fc5d1253618315244f533f850a9f531af79ea4b4848b2"
+      "bytes": 18166,
+      "sha256": "4b21d7ad432d04b79544f2b6ba3da197763f6a8c4328303466a301086b9eb417"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -398,8 +398,8 @@
     },
     {
       "path": "supabase/functions/recover-corrupted-audios/index.ts",
-      "bytes": 6289,
-      "sha256": "6b209979632259f30ae8db9cc85f364af390545c74a780bf5e88412541aadbf3"
+      "bytes": 6647,
+      "sha256": "e1b8c2e6dec65a3b4a4873e3b55882c52479a5fba6e7d72dfcb6926df2a35023"
     },
     {
       "path": "supabase/functions/send-email/index.ts",
@@ -646,7 +646,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4e9fe0a5de3e931f12726d1575a36bc28bc2aca4d7aaf01dd334bbb1d2261832",
+      "source_sha256": "85375c9a47b7fc7666bb96c4ea0b10a78d9b3e069434a8b48fd4c3d628b8779b",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -732,7 +732,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bb81e5702823d16d714190d2642047225e823085ecf208f9c991169f16467ad7",
+      "source_sha256": "ccaeec1261a6d5c1fb2c501d704c6e51b766f44e4dbf54039b64372c952f1625",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -898,7 +898,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6359f0aeee9582e3317442bfbb435bff2a5bdbe219cee11e52e689b7712ad5f5",
+      "source_sha256": "06465cc24b319e8cdad0ee44813eeaf464bc0c074a161a1898febb27dad88a27",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -913,7 +913,7 @@
       "name": "evolution-sync",
       "entrypoint": "supabase/functions/evolution-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f1f41b4f7cdd4aa860034f3583b826ca1102f8ad7f1bcdace6796ee1470373b4",
+      "source_sha256": "e3e3f43ccf5d0a382d915851758c5904b156d9966b1d8caeb5e4b190533e2f6a",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -927,7 +927,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "9cfa3f1d980576ac54f203ac361adfd86922312ec4051e323d67e66674800c0c",
+      "source_sha256": "9c897cb48637b6f4dc9dff5c1f4b3745ae059a36ce9fb33187a7a0e3094a1a27",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1066,7 +1066,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "98f502b5bd8b685c89dc980ca8cb813d4d679543aaabb0616fc11efd10c14532",
+      "source_sha256": "633b4b73b603859b8dc7b3f220c9aea8fbb200e708232c698980566b42f47f08",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1080,7 +1080,7 @@
       "name": "migrate-media-storage",
       "entrypoint": "supabase/functions/migrate-media-storage/index.ts",
       "verify_jwt": true,
-      "source_sha256": "fd76797d4d5772bd976982d499ab2b4cdb7a15f6b5000d618448273b931b5a92",
+      "source_sha256": "b62d7598551451f03fdab37036b716993c565219b45b215f99315dcb79ef36a8",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1093,7 +1093,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e99e406fe1e6c19c89138b334f2300b1f3024317541b472410ab09199dd8ebe9",
+      "source_sha256": "b199cf5232d3dcb7b51d0c68854e178cf83c6a4b3be6430a6b86456357470a96",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1115,7 +1115,7 @@
       "name": "recover-corrupted-audios",
       "entrypoint": "supabase/functions/recover-corrupted-audios/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e37e6cb6c5c29cc99725fa9d181feae27394b7a1e0c8ab0c2a79e99c0c296fd9",
+      "source_sha256": "fb021fffc2e6a5a4b2ff291b4a60aa22ac033993c3c9f8b6159ebb7553de3776",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1238,7 +1238,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cba6395039fc8ba493ccc45c9c27cce8ee0dea066f2c409f270ebf68e61a7f32",
+      "source_sha256": "bebf27c04e33be1a5b2c59a43b162189b94c2bcf5e874cb6effccc8e66988a3d",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1299,7 +1299,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "71287ab6877aca8593151ac18bf4d404e04021cacf68739c99c3eac86ad20e43",
+      "source_sha256": "6abbbf50bc15b6a5e9b4f2e4dca048e595c74ce5075cc6b6183f1232a57c15ba",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "58600a707facd5a948e15c5debb7c5735ae3d973589c1a3da29ab64d96c2f2a8"
+  "manifest_sha256": "8cb9b36f4e9affbc018fcd39fa9ff644aa6470e5d4cbfe069bb006a9267b6b4c"
 }
