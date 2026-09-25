@@ -42,14 +42,21 @@ export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date())
   return { todayByHour, last7ByDay, currentHour, currentHourCount, avg7dCurrentHour };
 }
 
+// dashboard_hourly_volume (E22) ja esta em producao (DDL aplicada via MCP), mas o
+// types.ts gerado ainda nao foi sincronizado com essa RPC (nao ha generate_typescript_types
+// para este projeto self-hosted; so o workflow types-sync semanal). Cast local via
+// 'unknown' (evita @typescript-eslint/no-explicit-any) ate a proxima sincronizacao.
+type DashboardHourlyVolumeRpc = (
+  fn: 'dashboard_hourly_volume',
+  args: { p_days: number },
+) => Promise<{ data: unknown; error: { message: string } | null }>;
+
 export function useTodayHourlyVolume() {
   return useQuery({
     queryKey: ['today-hourly-volume'],
     queryFn: async () => {
-      // dashboard_hourly_volume (E22) ja esta em producao (DDL aplicada via MCP), mas
-      // types.ts gerado ainda nao foi sincronizado (aguarda o workflow types-sync semanal).
-      // Cast pontual so nesta chamada ate a proxima sincronizacao.
-      const { data, error } = await (supabase.rpc as any)('dashboard_hourly_volume', { p_days: 8 });
+      const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
+      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8 });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },
