@@ -130,12 +130,18 @@ export function useSendToContact(onSuccess: () => void) {
         });
       }
 
-      if (totalFailed > 0) {
+      if (status === 'failed') {
+        toast({ title: 'Falha no envio', description: `Não foi possível enviar para ${contact.name}. Tente novamente.`, variant: 'destructive' });
+      } else if (status === 'partial') {
         toast({ title: 'Envio parcial', description: `${totalFailed} mensagem(ns) falharam para ${contact.name}`, variant: 'destructive' });
       } else {
         toast({ title: '✅ Produto enviado!', description: `Enviado para ${contact.name}` });
       }
-      onSuccess();
+      // Audit 24/09 — falha total (todas as mensagens/fotos falharam) não
+      // pode fechar o dialog nem apagar o rascunho: sem isso, onSuccess()
+      // disparava incondicionalmente e o usuário perdia a mensagem digitada
+      // mesmo quando NADA foi enviado (achado CRÍTICO 1 da auditoria).
+      if (status !== 'failed') onSuccess();
     } catch (err) {
       log.error('Error sending product:', err);
       toast({ title: 'Erro ao enviar produto', variant: 'destructive' });
