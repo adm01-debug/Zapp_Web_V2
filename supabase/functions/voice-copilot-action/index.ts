@@ -83,6 +83,21 @@ Deno.serve(async (req) => {
 
       case 'assign_conversation': {
         const { contactId, agentName } = params;
+
+        // Este client roda com service_role (bypassa RLS). Sem esta checagem,
+        // qualquer usuário autenticado poderia reatribuir um contato que não
+        // enxerga — a RLS real de `contacts` é a fonte de verdade de
+        // visibilidade (mesmo padrão dos casos de leitura acima).
+        const { data: visibleContact } = await authedClient
+          .from('contacts')
+          .select('id')
+          .eq('id', contactId)
+          .maybeSingle();
+        if (!visibleContact) {
+          result = { success: false, message: 'Contato não encontrado.' };
+          break;
+        }
+
         // Find agent by name
         const { data: agent } = await supabase
           .from('profiles')
@@ -110,6 +125,19 @@ Deno.serve(async (req) => {
 
       case 'create_note': {
         const { contactId, content } = params;
+
+        // Mesma checagem de visibilidade do caso acima: sem ela, qualquer
+        // usuário autenticado poderia anotar um contato que não enxerga.
+        const { data: visibleContact } = await authedClient
+          .from('contacts')
+          .select('id')
+          .eq('id', contactId)
+          .maybeSingle();
+        if (!visibleContact) {
+          result = { success: false, message: 'Contato não encontrado.' };
+          break;
+        }
+
         // authorId nunca vem do body: o client pode forjar autoria de nota
         // interna. Resolve o profile do usuário já autenticado por requireAuth.
         const { data: authorProfile } = await supabase

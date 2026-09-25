@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature, createAuthedClient } from "../_shared/validation.ts";
 import { ChatbotL1Schema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
@@ -43,6 +43,24 @@ Deno.serve(async (req) => {
     const { contactId, message, connectionId } = parsed.data;
     const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
+
+    // Chamada autenticada por JWT (não-webhook): sem esta checagem, um agente
+    // logado poderia mandar contactId de qualquer contato e fazer o bot L1
+    // colocar nome/empresa/sentimento no prompt da IA, vazando PII de forma
+    // indireta via resposta gerada. Chamadas via webhook HMAC já são
+    // confiáveis (contactId vem do fluxo real da mensagem inbound), então
+    // pulam esta checagem.
+    if (!isWebhook) {
+      const authedClient = await createAuthedClient(req);
+      const { data: visibleContact } = await authedClient
+        .from('contacts')
+        .select('id')
+        .eq('id', contactId)
+        .maybeSingle();
+      if (!visibleContact) {
+        return jsonResponse({ handled: false, reason: 'contact_not_visible' }, 200, req);
+      }
+    }
 
     // Check if chatbot is active for this connection
     const { data: flow } = await supabase
