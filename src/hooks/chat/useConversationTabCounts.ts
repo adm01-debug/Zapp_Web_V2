@@ -10,6 +10,15 @@ export interface ConversationTabCounts {
 
 const EMPTY: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0, remindersPending: 0 };
 
+/** Shape real do RPC — types.ts gerado ainda não reflete reminders_pending
+ *  (fica desatualizado até o types-sync rodar pós-merge da migration). */
+type TabCountsRpcRow = {
+  tasks_open: number;
+  notes_total: number;
+  files_total: number;
+  reminders_pending: number;
+};
+
 /**
  * Badges das abas da conversa (Tarefas / Notas / Arquivos / Lembretes).
  *
@@ -27,7 +36,7 @@ export function useConversationTabCounts(contactId: string | null | undefined) {
       });
       if (error) throw error;
 
-      const row = Array.isArray(data) ? data[0] : data;
+      const row = (Array.isArray(data) ? data[0] : data) as TabCountsRpcRow | null;
       if (!row) return EMPTY;
 
       return {
