@@ -1,6 +1,8 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
+        "dashboard_hourly_volume(p_days integer)",
+        "dashboard_kpi(p_since timestamp with time zone, p_queue uuid, p_agent uuid)",
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
         "expire_stale_agent_presence()",
@@ -157,6 +159,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 129,
-    "authenticated_execute_count": 82
+    "service_role_execute_count": 131,
+    "authenticated_execute_count": 84
 }

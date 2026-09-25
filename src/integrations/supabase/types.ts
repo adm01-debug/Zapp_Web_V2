@@ -8857,6 +8857,18 @@ export type Database = {
           count: number
         }[]
       }
+      dashboard_hourly_volume: {
+        Args: { p_days?: number }
+        Returns: {
+          day: string
+          hour: number
+          message_count: number
+        }[]
+      }
+      dashboard_kpi: {
+        Args: { p_agent?: string; p_queue?: string; p_since: string }
+        Returns: Json
+      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       effective_role: {
         Args: { _user_id: string }
