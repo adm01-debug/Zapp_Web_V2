@@ -52,13 +52,13 @@
 
 # FASE 0 — Base, custo e decisão (E01–E05)
 
-### E01 · Medir a busca real de hoje antes de mexer
+### E01 · Medir a busca real de hoje antes de mexer — MEDIDO (2026-09-25)
 **Arquivos:** nenhum (consulta)
-1. Contar, em `audit_logs`, os eventos `mapbox_*` por `source` nos últimos 30 dias.
-2. Contar quantas mensagens de localização foram **enviadas** por agente (`messages.type='location' and sender='agent'`) — hoje o número é 0, confirmar se mudou.
-3. Estimar buscas/mês a partir de (1) e (2); registrar o número medido no apêndice B.
-4. Se o volume for < 500 buscas/mês, registrar no doc que o uso cabe no teto gratuito da Search Box.
-**Checklist:** [ ] números de `audit_logs` no doc · [ ] estimativa registrada · [ ] teto gratuito avaliado
+1. `select action, count(*) from audit_logs where action like 'mapbox%' and created_at > now() - interval '30 days' group by action` → **0 linhas**. A telemetria de hoje (`reportMapboxFailure`, ver A13) só grava **falha**, nunca sucesso/volume — zero linhas não quer dizer zero buscas, quer dizer que não existe contador de uso ainda.
+2. `select count(*) from messages where message_type='location' and sender='agent'` → **0**. Confirmado: nenhuma localização foi enviada por agente até hoje.
+3. Sem contador de volume, a estimativa de buscas/mês de hoje é **indeterminada por medição direta** — é operador digitando manualmente no picker, uso ainda baixo (produto novo). A Fase 5 (E35) fecha essa lacuna com um evento de sessão de verdade; até lá, o número real só aparece em E36.
+4. Dado o padrão de uso atual (manual, esporádico, 0 mensagens automáticas), o volume está com folga dentro do teto gratuito de 500 sessões/mês — mas isso é inferência, não medição, e fica registrado como tal no apêndice B.
+**Checklist:** [x] números de `audit_logs` no doc (0, e por quê) · [x] limitação da telemetria atual documentada · [x] teto gratuito avaliado (por inferência, não medição)
 
 ### E02 · Fixar a decisão de endpoint por cenário
 **Arquivos:** `docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md`
@@ -68,12 +68,15 @@
 4. Escrever a tabela de decisão no doc.
 **Checklist:** [ ] 3 caminhos definidos · [ ] tabela no doc
 
-### E03 · Feature flag de rollout
-**Arquivos:** `src/lib/featureFlags.ts` (ou equivalente existente), `.env`
-1. Flag `VITE_SEARCHBOX_AUTOCOMPLETE` (default: ligada em dev, desligada em prod até E48).
-2. Com a flag desligada, o picker usa exatamente o fluxo da #737.
-3. Teste que cobre os dois caminhos.
-**Checklist:** [ ] flag lida em runtime · [ ] fluxo antigo intacto com flag off · [ ] teste dos dois caminhos
+### E03 · Feature flag de rollout — CORRIGIDO no gap-check (2026-09-25)
+**Arquivos:** `feature_flags` (tabela, via migration), `src/hooks/system/useFeatureFlag.ts` (já existe, reusar)
+> **Gap achado antes de codificar:** o plano original propunha `VITE_SEARCHBOX_AUTOCOMPLETE` via `.env`. Isso é flag de **build-time** (Vite embute no bundle) — não dá pra desligar sem novo deploy, o que contradiz direto o E48 ("reversão sem deploy"). O repo já tem o mecanismo certo: tabela `feature_flags` (hoje com `crm.integration` e `inbox.status-fsm`) + hook `useFeatureFlag(key, fallback)`, runtime, sem rebuild. Reusar, não reinventar.
+1. Migration aditiva: `insert into feature_flags (key, enabled, description) values ('mapa.searchbox-autocomplete', false, 'Autocomplete estilo playground (suggest/retrieve) no picker de localizacao')`.
+2. Consumir com `useFeatureFlag('mapa.searchbox-autocomplete', false)` — fallback `false` = comportamento de hoje (#737) enquanto a query carrega ou falha.
+3. Com a flag desligada, o picker usa exatamente o fluxo da #737 (sem import do hook novo — ver E32).
+4. Teste que cobre os dois caminhos (flag on/off) mockando `useFeatureFlag`.
+5. Ligar/desligar em produção = 1 `update feature_flags set enabled=... where key=...`, sem deploy — é isso que o E48 pede.
+**Checklist:** [x] gap de build-time vs runtime corrigido · [ ] flag lida em runtime via tabela existente · [ ] fluxo antigo intacto com flag off · [ ] teste dos dois caminhos
 
 ### E04 · Esqueleto do módulo de sessão
 **Arquivos:** `src/lib/mapboxSession.ts` (novo)
@@ -443,7 +446,7 @@ features[0].properties.full_address= "R. da Independência, São Paulo, 01524, B
 | Preço após o teto | US$ 3,00 / 1.000 sessões |
 | O que é 1 sessão | até 50 `/suggest` + 1 `/retrieve`, expira em 2 min de inatividade |
 | Geocoding v5 (fallback) | 100.000 req/mês grátis, depois US$ 0,75 / 1.000 |
-| Buscas/mês medidas hoje | _a medir em E01_ |
+| Buscas/mês medidas hoje | **sem contador de volume ainda** — 0 eventos `mapbox_*` em 30 dias (telemetria só de falha, ver A13/E01); 0 mensagens de localização enviadas por agente |
 | Sessões/mês após o rollout | _a medir em E36_ |
 | Custo real do 1º mês | _a medir em E50_ |
 
