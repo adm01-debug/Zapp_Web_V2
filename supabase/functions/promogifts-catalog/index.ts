@@ -67,7 +67,12 @@ function sanitizeSearch(input: string): string {
   // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
   // um valor com vírgula literal quebra o parsing da expressão (ver
   // buildTagOrExpr) — precisa ser removida junto com o resto do charset.
-  return input.replace(/[%_.\\(),]/g, "").trim().slice(0, 100);
+  // Aspa dupla removida por auditoria adversarial (2026-09-25): o valor
+  // sanitizado só é seguro dentro de JSON.stringify([v]) por acidente de
+  // ordem de chamada (o stringify escapa a aspa depois) — sem isso aqui,
+  // qualquer reuso futuro de sanitizeSearch fora desse padrão específico
+  // vira vetor de quebra de estrutura.
+  return input.replace(/[%_."\\(),]/g, "").trim().slice(0, 100);
 }
 
 /** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */

@@ -51,9 +51,17 @@ Deno.test('buildTagOrExpr: color + material são independentes — cada chamada 
   assertEquals(combined.split(',').length, 10);
 });
 
-Deno.test('buildTagOrExpr: sanitiza cada valor (remove % _ . \\ ( ) ,) antes de montar a cláusula', () => {
-  const expr = buildTagOrExpr('colors', ['az%ul_teste.x\\y(z),w']);
+Deno.test('buildTagOrExpr: sanitiza cada valor (remove % _ . \\ ( ) , ") antes de montar a cláusula', () => {
+  const expr = buildTagOrExpr('colors', ['az%ul_teste.x\\y(z),w"']);
   assertEquals(expr, 'colors.cs.["azultestexyzw"],colors.cs.[{"nome":"azultestexyzw"}]');
+});
+
+Deno.test('buildTagOrExpr: aspa dupla literal no valor não quebra o JSON embutido na cláusula', () => {
+  // Aspa não sanitizada + JSON.stringify (que escapa aspas) ainda produziria
+  // JSON válido por acidente de ordem — este teste trava esse comportamento
+  // mesmo com a aspa agora removida na sanitização.
+  const expr = buildTagOrExpr('colors', ['az"ul']);
+  assertEquals(expr, 'colors.cs.["azul"],colors.cs.[{"nome":"azul"}]');
 });
 
 Deno.test('buildTagOrExpr: vírgula literal no valor não quebra o OR-expr do PostgREST', () => {
