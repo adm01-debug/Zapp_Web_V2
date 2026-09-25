@@ -159,14 +159,17 @@ export function DashboardView() {
             <GreetingBanner personal={!isStaff} />
           </div>
           <div data-testid="dash-kpis">
-            {/* E34: KPIs (Resolvidas Hoje, Tempo de Resposta etc.) são sempre do dia
-                atual por design da RPC dashboard_kpi (v_today/v_yesterday fixos no
-                servidor) — mudar o período no filtro do topo não os afeta, só a lista
-                de contatos e o gráfico de volume. Antes isso acontecia em silêncio
-                (achado E34); agora avisa. */}
+            {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
+                Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
+                fixos no servidor) — o período do filtro acima não afeta esses cards.
+                Isso NÃO se estende ao gráfico de volume (só recebe fila/agente, nunca
+                recebeu período) nem ao card "Conversas Abertas" (vem de
+                dashboard_contact_counts, que respeita p_since/p_until) — o texto antigo
+                afirmava os dois incorretamente. Antes isso acontecia em silêncio
+                (achado E34); agora avisa, só sobre o que de fato é fixo. */}
             {filters.period !== 'today' && (
               <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
-                Estes indicadores são sempre do dia atual — o período selecionado no filtro acima afeta a lista de contatos e o gráfico de volume, não estes cards.
+                Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
               </p>
             )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
