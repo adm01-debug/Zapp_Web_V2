@@ -18,6 +18,7 @@ import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
+import { ChatWatermark } from './chat/ChatWatermark';
 import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
@@ -235,7 +236,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       <ChatDragOverlay isDraggingOver={isDraggingOver} />
       <CRMAutoSync conversation={conversation} messageCount={messages.length} messages={messages} />
 
-      <div className="flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden">
+      <div className="relative isolate flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden bg-background/50">
+        <ChatWatermark />
         {!hideHeader && (
           <ChatPanelHeader conversation={conversation} isContactTyping={isContactTyping} showAIAssistant={activeTool === 'aiAssistant'} showDetails={showDetails}
             showSummaryPanel={activeTool === 'summary'} activeTool={activeTool} onSetActiveTool={handleSetActiveTool}

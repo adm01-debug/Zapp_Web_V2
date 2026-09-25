@@ -2,6 +2,7 @@ import type React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 const roleState = { isAdmin: false, isSupervisor: false };
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
@@ -71,7 +72,13 @@ import { DashboardView } from '../DashboardView';
 
 function renderWithProviders() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><DashboardView /></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>
+        <DashboardView />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe('DashboardView — guard de navegacao de abas (RBAC)', () => {

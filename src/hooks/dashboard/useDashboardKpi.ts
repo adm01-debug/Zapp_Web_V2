@@ -24,6 +24,15 @@ export type DashboardKpiRpcResult = {
   answeredYesterdayCount: number;
 };
 
+/** Fila/agente do filtro do topo (E31) — propagados como p_queue/p_agent para
+ * a RPC. Para não-staff, dashboard_kpi trava p_agent = auth.uid() no servidor
+ * (E33), então passar outro agentId aqui não vaza dado de terceiro mesmo se o
+ * front tiver algum bug de visibilidade do filtro. */
+export interface DashboardKpiFilters {
+  queueId?: string | null;
+  agentId?: string | null;
+}
+
 function pct(cur: number, prev: number): number | null {
   return prev === 0 ? null : Math.round(((cur - prev) / prev) * 100);
 }
@@ -58,13 +67,20 @@ export function aggregateDashboardKpi(r: DashboardKpiRpcResult) {
   };
 }
 
-export function useDashboardKpi() {
+export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
+  const { queueId = null, agentId = null } = filters;
   return useQuery({
-    queryKey: ['dashboard-kpi'],
+    // E31: fila/agente entram na queryKey — trocar o filtro do topo tem que
+    // invalidar o cache do KPI (antes o dropdown era cosmético p/ este card, A9).
+    queryKey: ['dashboard-kpi', queueId, agentId],
     queryFn: async () => {
       const since = startOfDay(subDays(new Date(), 1)).toISOString();
       // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+        p_since: since,
+        p_queue: queueId,
+        p_agent: agentId,
+      });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
     },

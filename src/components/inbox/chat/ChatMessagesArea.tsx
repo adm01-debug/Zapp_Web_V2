@@ -6,7 +6,6 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('ChatMessagesArea');
 import { ChatService } from '@/services/chat.service';
 import { RealtimeService } from '@/services/realtime.service';
-import { ChatWatermark } from './ChatWatermark';
 import { cn } from '@/lib/utils';
 import { Message, InteractiveButton } from '@/types/chat';
 import { motion } from '@/components/ui/motion';
@@ -126,9 +125,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   }, [subscriptionKey, queryClient]);
 
   return (
-    <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-background/50 relative">
-      <ChatWatermark />
-
+    <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
