@@ -40,6 +40,16 @@ jobs:
     permissions:
       contents: read
       issues: write
+    # Este guarda roda sozinho (push na main, agendado) e abre issue quando falha.
+    # Um timeout de conexao do pooler do Supabase virava alerta de "contrato
+    # quebrado" que nao era verdade (run 36135041890 morreu em "timeout expired"
+    # antes de qualquer consulta). O retry so cobre falha de transporte, isto e,
+    # o comando nem chegou ao servidor: erro de SQL, de autenticacao e drift
+    # continuam falhando de primeira. Desligado por padrao no helper, ligado aqui
+    # porque nenhum passo deste job escreve no banco.
+    env:
+      PSQL_CONNECT_RETRIES: "2"
+      PSQL_CONNECT_RETRY_DELAY_MS: "3000"
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
