@@ -11,6 +11,53 @@ const QUERY_ENV = new Map([
   ['target_session_attrs', 'PGTARGETSESSIONATTRS'],
 ]);
 
+// Falhas que acontecem ANTES de qualquer statement chegar ao servidor: o
+// comando nao teve efeito, logo repetir e' seguro mesmo para um callback que
+// escreveria. Deliberadamente nao inclui erro de autenticacao/autorizacao
+// (pg_hba, senha, role) nem erro de SQL: esses sao deterministicos e repetir
+// so' atrasaria a falha. Um drift detectado tampouco passa por aqui — ele e'
+// resultado de uma consulta que teve sucesso.
+const TRANSPORT_FAILURE = new RegExp([
+  'timeout expired',
+  'could not connect to server',
+  'could not translate host name',
+  'server closed the connection unexpectedly',
+  'connection refused',
+  'connection timed out',
+  'no route to host',
+  'network is unreachable',
+  'temporary failure in name resolution',
+  'SSL SYSCALL error',
+].join('|'), 'i');
+
+function isTransportFailure(error) {
+  const partes = [error?.stderr, error?.stdout, error?.message]
+    .map(value => (typeof value === 'string' ? value : ''))
+    .join('\n');
+  return TRANSPORT_FAILURE.test(partes);
+}
+
+/**
+ * Politica de retry, desligada por padrao: sem PSQL_CONNECT_RETRIES nada muda
+ * para nenhum chamador existente. O db-live-guard liga porque roda sozinho e um
+ * timeout de 10s do pooler abria uma issue de "contrato quebrado" que nao era
+ * verdade (run 36135041890). Quem escreve (register-migration --apply) nao liga
+ * e continua falhando de primeira.
+ */
+function retryPolicy(env) {
+  const bruto = Number.parseInt(env.PSQL_CONNECT_RETRIES ?? '', 10);
+  const atrasoBruto = Number.parseInt(env.PSQL_CONNECT_RETRY_DELAY_MS ?? '', 10);
+  return {
+    tentativas: Number.isInteger(bruto) && bruto > 0 ? Math.min(bruto, 5) : 0,
+    atrasoMs: Number.isInteger(atrasoBruto) && atrasoBruto >= 0 ? Math.min(atrasoBruto, 30000) : 2000,
+  };
+}
+
+function esperaSincrona(ms) {
+  if (ms <= 0) return;
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
 export function parseConnection(connectionString) {
   try {
     const url = new URL(connectionString);
@@ -50,7 +97,20 @@ export function withPsqlEnvironment(connectionString, callback, { baseEnv = proc
     const line = [fields.PGHOST, fields.PGPORT, fields.PGDATABASE, fields.PGUSER, password]
       .map(escape).join(':');
     fs.writeFileSync(passwordFile, `${line}\n`, { flag: 'wx', mode: 0o600 });
-    return callback({ ...env, ...fields, PGPASSFILE: passwordFile });
+    const childEnv = { ...env, ...fields, PGPASSFILE: passwordFile };
+    const { tentativas, atrasoMs } = retryPolicy(baseEnv);
+    for (let tentativa = 0; ; tentativa += 1) {
+      try {
+        return callback(childEnv);
+      } catch (error) {
+        if (tentativa >= tentativas || !isTransportFailure(error)) throw error;
+        // stderr pode conter a URI; nunca ecoar o erro, so' a contagem.
+        process.stderr.write(
+          `aviso: falha de transporte ao falar com o banco; nova tentativa ${tentativa + 1}/${tentativas}\n`,
+        );
+        esperaSincrona(atrasoMs * (tentativa + 1));
+      }
+    }
   } finally {
     // Only the exact file/directory created above; never recursive cleanup.
     fs.rmSync(passwordFile, { force: true });
