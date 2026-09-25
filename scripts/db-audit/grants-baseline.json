@@ -3,6 +3,7 @@
     "anon_execute": [
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
+        "expire_stale_agent_presence()",
         "prevent_contact_assignee_hijack()",
         "prevent_contact_queue_hijack()",
         "prevent_conversation_task_field_forgery()",
@@ -156,6 +157,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 128,
-    "authenticated_execute_count": 81
+    "service_role_execute_count": 129,
+    "authenticated_execute_count": 82
 }
