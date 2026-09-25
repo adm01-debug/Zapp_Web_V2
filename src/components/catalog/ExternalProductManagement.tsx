@@ -334,8 +334,25 @@ export const ExternalProductManagement: React.FC = () => {
     if (send === '1' && productId) {
       // setTimeout(0) move o fetch inicial pra fora do corpo síncrono do
       // efeito, mesmo padrão já usado em RateLimitRealtimeAlerts.tsx (E62)
-      // pra satisfazer react-hooks/set-state-in-effect.
-      setTimeout(() => void handleOpenProductFromRail(productId), 0);
+      // pra satisfazer react-hooks/set-state-in-effect. Não reusa
+      // handleOpenProductFromRail (compartilhado com o rail) porque o
+      // caminho de falha aqui precisa limpar deepLinkVariant — algo que o
+      // rail não tem motivo pra saber (Audit 24/09, CRÍTICO 2).
+      setTimeout(() => {
+        void (async () => {
+          lastRequestedProductIdRef.current = productId;
+          const product = await fetchProduct(productId);
+          if (lastRequestedProductIdRef.current !== productId) return;
+          if (product) {
+            setSendProduct(product);
+          } else {
+            // Produto do deep link não existe mais (removido/id errado):
+            // sem isso, deepLinkVariant ficava preso no state e vazava pra
+            // um envio totalmente não relacionado depois.
+            setDeepLinkVariant(undefined);
+          }
+        })();
+      }, 0);
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete('product');
@@ -646,6 +663,7 @@ export const ExternalProductManagement: React.FC = () => {
 
       {sendProduct && (
         <SendProductDialog
+          key={sendProduct.id}
           product={sendProduct}
           open={!!sendProduct}
           onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); } }}

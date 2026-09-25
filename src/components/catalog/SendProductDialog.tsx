@@ -64,7 +64,21 @@ const readDraft = (productId: string): SendDraft | null => {
   try {
     const raw = sessionStorage.getItem(draftKey(productId));
     if (!raw) return null;
-    return JSON.parse(raw) as SendDraft;
+    const parsed = JSON.parse(raw);
+    // Audit 24/09 — JSON.parse só protege contra sintaxe inválida; um
+    // objeto sintaticamente válido mas com shape errado (campo adulterado
+    // ou de uma versão antiga do SendDraft) passava direto como
+    // `as SendDraft` e quebrava o componente ao restaurar (CRÍTICO 2).
+    if (
+      !parsed || typeof parsed !== 'object' ||
+      typeof parsed.template !== 'string' ||
+      typeof parsed.customMessage !== 'string' ||
+      typeof parsed.sendMode !== 'string' ||
+      (parsed.selectedColorGroup !== null && typeof parsed.selectedColorGroup !== 'string')
+    ) {
+      return null;
+    }
+    return parsed as SendDraft;
   } catch { return null; }
 };
 
@@ -244,7 +258,11 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const handleCopyLink = async () => {
     try {
-      const url = `${window.location.origin}${window.location.pathname}?view=catalog&product=${fullProduct.id}`;
+      // Audit 24/09 (E78) — sem &send=1 este link nunca abria o dialog de
+      // envio sozinho, era só um link de listagem inerte (CRÍTICO 1 do
+      // audit de ExternalProductManagement.tsx: E78 sem gatilho real).
+      const variantParam = sendMode === 'variant' && activeGroup ? `&variant=${encodeURIComponent(activeGroup.colorName)}` : '';
+      const url = `${window.location.origin}${window.location.pathname}?view=catalog&product=${fullProduct.id}&send=1${variantParam}`;
       await navigator.clipboard.writeText(url);
       toast({ title: '✅ Link copiado!' });
     } catch { toast({ title: 'Erro ao copiar link', variant: 'destructive' }); }
