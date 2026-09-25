@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { suggestPlaces } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity } from '@/lib/mapboxGeocode';
 import { getSearchSession, noteSuggestCall } from '@/lib/mapboxSession';
@@ -66,30 +66,42 @@ function reducer(state: State, action: Action): State {
 export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): UseAddressAutocompleteResult {
   const { token, proximity, enabled } = options;
   const [state, dispatch] = useReducer(reducer, initialState);
+  // Consulta corrente do /suggest: aborta a anterior antes de abrir uma nova, pra resposta
+  // lenta da 1ª nunca sobrescrever a 2ª.
+  const abortRef = useRef<AbortController | null>(null);
+
+  const runSuggest = useCallback((term: string) => {
+    if (!token) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    dispatch({ type: 'SUGGEST_START' });
+    const session = getSearchSession();
+    noteSuggestCall();
+    suggestPlaces(term, token, { session, proximity, signal: controller.signal }).then((result) => {
+      // Resposta de uma consulta abortada nunca vira estado — nem sucesso, nem erro.
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
+      } else if (result.kind !== 'aborted') {
+        dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
+      }
+    });
+  }, [token, proximity]);
 
   useEffect(() => {
     if (!enabled || !token) return;
     const term = state.query.trim();
     if (term.length < MIN_QUERY_LENGTH) return;
-    let cancelled = false;
     // Debounce por timer: cada tecla nova reexecuta o effect, e o cleanup abaixo cancela o
     // timer da tecla anterior antes dele disparar — digitação contínua nunca acumula timers,
     // só o último dispara request.
-    const timer = setTimeout(() => {
-      dispatch({ type: 'SUGGEST_START' });
-      const session = getSearchSession();
-      noteSuggestCall();
-      suggestPlaces(term, token, { session, proximity }).then((result) => {
-        if (cancelled) return;
-        if (result.ok) {
-          dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
-        } else {
-          dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
-        }
-      });
-    }, DEBOUNCE_MS);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [state.query, enabled, token, proximity]);
+    const timer = setTimeout(() => { runSuggest(term); }, DEBOUNCE_MS);
+    return () => { clearTimeout(timer); };
+  }, [state.query, enabled, token, proximity, runSuggest]);
+
+  // Aborta a consulta em voo se o componente desmontar.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const setQuery = useCallback((query: string) => {
     dispatch({ type: 'SET_QUERY', query });
