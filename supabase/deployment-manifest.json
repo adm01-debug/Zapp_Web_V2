@@ -213,8 +213,8 @@
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
-      "bytes": 9674,
-      "sha256": "317ae6bccecf56799135d5f533a89126fe87d35757e6964c79f34f4ae8d026f1"
+      "bytes": 9798,
+      "sha256": "0529fc14f6ab29d5aaf0ba1ac1c08d2727bff8d69d6fe799f8fcafb718f51696"
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
@@ -388,8 +388,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 17824,
-      "sha256": "24c05799418d77ccaff28e66399c245ae63fb88417943e91cf96994979970e61"
+      "bytes": 18166,
+      "sha256": "4b21d7ad432d04b79544f2b6ba3da197763f6a8c4328303466a301086b9eb417"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -660,7 +660,7 @@
       "name": "bitrix-api",
       "entrypoint": "supabase/functions/bitrix-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "37af07bad4777ddde1315afc8ec2d985f8c556f282a5cd6f2e419607977173d7",
+      "source_sha256": "d0632b012341a4ecfee199140bf3fa9e6b04952582cb0c58db99dea9d8153d52",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1093,7 +1093,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ce28990821003949ee8d6864bde8e5c6a4b75aee689a77501f5163e14a300dbc",
+      "source_sha256": "b199cf5232d3dcb7b51d0c68854e178cf83c6a4b3be6430a6b86456357470a96",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1320,5 +1320,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d051a9bbb7605b4db1a2e22b62ecc661bf60d89ce99f9252c269e6a3c698e776"
+  "manifest_sha256": "ed6e69e6d964a4a83594da727a4406ac76727055f4fc0a67f3e71f2e6e05288f"
 }
