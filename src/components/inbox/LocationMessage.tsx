@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { LocationMessage as LocationMessageType } from '@/types/chat';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox } from '@/lib/mapboxLoader';
+import { coordinateKey, reverseGeocodeAddress } from '@/lib/mapboxGeocode';
 import {
   getMapboxToken,
   mapboxFailureKindFromMapError,
@@ -27,6 +28,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [resolved, setResolved] = useState<{ key: string; address: string } | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isMountedRef = useRef(true);
 
@@ -118,6 +120,19 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
     };
   }, [mapboxToken, location.latitude, location.longitude, location.isLive, attempt]);
 
+  // Mensagem recebida só com coordenadas (WhatsApp não manda endereço ao compartilhar a posição
+  // atual): resolve o endereço pelo Mapbox. Sem token ou sem resposta, segue só com as coordenadas.
+  const coordinate = coordinateKey(location.latitude, location.longitude);
+  useEffect(() => {
+    if (location.address || !mapboxToken) return;
+    let cancelled = false;
+    reverseGeocodeAddress(location.latitude, location.longitude, mapboxToken).then((address) => {
+      if (!cancelled && isMountedRef.current && address) setResolved({ key: coordinate, address });
+    });
+    return () => { cancelled = true; };
+  }, [location.address, location.latitude, location.longitude, mapboxToken, coordinate]);
+  const displayAddress = location.address ?? (resolved?.key === coordinate ? resolved.address : null);
+
   const retry = () => { setMapError(null); setAttempt((n) => n + 1); };
 
   const openInMaps = () => {
@@ -185,12 +200,12 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
             {location.name}
           </p>
         )}
-        {location.address && (
+        {displayAddress && (
           <p className={cn(
             "text-xs",
             isSent ? "text-primary-foreground/70" : "text-muted-foreground"
           )}>
-            {location.address}
+            {displayAddress}
           </p>
         )}
         <p className={cn(
