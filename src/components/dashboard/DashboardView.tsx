@@ -24,7 +24,8 @@ import { useQueueHealth } from '@/hooks/dashboard/useQueueHealth';
 import { useRecentConversationEvents } from '@/hooks/dashboard/useRecentConversationEvents';
 import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
 import { useSLAMetrics } from '@/hooks/sla/useSLAMetrics';
-import { DashboardFilters, DashboardFiltersState, getDefaultFilters } from './DashboardFilters';
+import { DashboardFilters } from './DashboardFilters';
+import { useDashboardUrlFilters } from '@/hooks/dashboard/useDashboardUrlFilters';
 import { OverviewSkeleton } from './overview/OverviewSkeleton';
 import { GreetingBanner } from './overview/GreetingBanner';
 import { DashboardTopBar } from './overview/DashboardTopBar';
@@ -65,7 +66,7 @@ export function DashboardView() {
   const isStaff = isAdmin || isSupervisor;
   const visibleTabs = isStaff ? DASHBOARD_TABS : DASHBOARD_TABS.filter(t => AGENT_TAB_VALUES.has(t.value));
   const [tab, setTab] = useState(OVERVIEW_TAB);
-  const [filters, setFilters] = useState<DashboardFiltersState>(getDefaultFilters());
+  const [filters, setFilters] = useDashboardUrlFilters();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [csatPeriod, setCsatPeriod] = useState<'today' | 'week' | 'month'>('month');
 
@@ -158,6 +159,16 @@ export function DashboardView() {
             <GreetingBanner personal={!isStaff} />
           </div>
           <div data-testid="dash-kpis">
+            {/* E34: KPIs (Resolvidas Hoje, Tempo de Resposta etc.) são sempre do dia
+                atual por design da RPC dashboard_kpi (v_today/v_yesterday fixos no
+                servidor) — mudar o período no filtro do topo não os afeta, só a lista
+                de contatos e o gráfico de volume. Antes isso acontecia em silêncio
+                (achado E34); agora avisa. */}
+            {filters.period !== 'today' && (
+              <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
+                Estes indicadores são sempre do dia atual — o período selecionado no filtro acima afeta a lista de contatos e o gráfico de volume, não estes cards.
+              </p>
+            )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
           </div>
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
