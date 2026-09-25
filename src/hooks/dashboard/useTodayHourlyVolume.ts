@@ -46,7 +46,8 @@ export function useTodayHourlyVolume() {
   return useQuery({
     queryKey: ['today-hourly-volume'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('dashboard_hourly_volume', { p_days: 8 });
+      // cast temporário: types.ts gerado ainda não tem dashboard_hourly_volume (RPC nova, E22) — sync automático (PR #703) traz o tipo real em breve.
+      const { data, error } = await (supabase as any).rpc('dashboard_hourly_volume', { p_days: 8 });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
     },
