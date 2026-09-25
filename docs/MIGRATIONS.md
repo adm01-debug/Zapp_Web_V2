@@ -52,7 +52,30 @@ VALUES ('20260827120100', 'nome_da_migration', ARRAY[
 ]) ON CONFLICT DO NOTHING;
 ```
 
-3. Commite o arquivo `.sql` com o **mesmo** prefixo de 14 digitos.
+3. Commite o arquivo `.sql` com o **mesmo** prefixo de 14 digitos, **na mesma sessao/PR
+   que aplicou o DDL** — nunca "depois". Se a sessao terminar entre o passo 2 e o
+   commit, o registro fica orfao (existe no banco, nao existe no Git) e so aparece
+   quando outra sessao rodar `check-migration-drift.mjs` dias ou semanas depois.
+
+**Padrao observado, nao excecao rara:** em 25/09/2026 uma unica auditoria achou
+tres casos deste exato hiato — nao um caso isolado:
+- `20260925095149` (`harden_security_definer_rpcs_pii_gaps`): a mesma migration
+  aplicada duas vezes — a primeira (`20260924221209`) ja tinha passo 3 feito, a
+  segunda nunca virou arquivo. Corrigido nesta sessao com `DELETE` direto em
+  `schema_migrations` (sem PR: statements idempotentes, sem efeito real de schema,
+  confirmado antes de apagar).
+- `20260904330000` (`revoke_unnecessary_anon_grants`): aplicada via MCP em
+  04/09/2026, nunca commitada — ficou 3 semanas invisivel ate a varredura por
+  `name` duplicado sem excecao em `migration-evidence.json` achar. Reconstituida
+  em `20260904330000_revoke_unnecessary_anon_grants.sql` (PR #677).
+- `agent_presence_server_ttl` e `admin_set_role_last_admin_floor`: aplicadas as
+  10:05-10:07 do mesmo dia por sessao paralela, pegas pelo `db-live-guard.yml`
+  minutos depois, ainda no meio do fluxo daquela sessao.
+
+Se voce aplicou DDL via `db_query`/MCP e a sessao vai encerrar antes do passo 3,
+rode `node scripts/db-audit/check-migration-drift.mjs` antes de encerrar para
+confirmar que o par version+arquivo ja fechou — nao confie em "vou commitar
+depois".
 
 **O arquivo no Git e a fonte de verdade.** A coluna `statements` e metadado. Nao gere
 `statements` a partir do catalogo do banco sem filtrar: na primeira tentativa desta
