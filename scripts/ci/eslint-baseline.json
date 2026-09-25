@@ -202,7 +202,7 @@
     },
     {
       "path": "src/components/contacts/ContactKanbanView.tsx",
-      "sha256": "474bce8242645a87566d49db806b9bdc70c764afde49d2a4e0fce500e2ced5ab"
+      "sha256": "7a39dca38e7ced310724d5253e1593d93c81307b8084abbc43fb79b7f6bd3d4d"
     },
     {
       "path": "src/components/contacts/ContactMergePanel.tsx",
@@ -210,11 +210,11 @@
     },
     {
       "path": "src/components/contacts/ContactNotes.tsx",
-      "sha256": "98e2ca2d39600188d0442fa5d5b4ce608d68e9bae9af22b4ac696c5cada43ba3"
+      "sha256": "4076666f53b76eb7af06133cc54f1e0de81454803b733c295e4113659cbbdffc"
     },
     {
       "path": "src/components/contacts/ContactPurchaseHistory.tsx",
-      "sha256": "c712ea14048b2ffe9f54e13f5c1fdcd2f785b7b602a0751024d8f2b2c0f64b9d"
+      "sha256": "404dde5bbd14a53a41bd0051b05a221439a268d81ecff75182bd841c5b4a7244"
     },
     {
       "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
@@ -226,7 +226,7 @@
     },
     {
       "path": "src/components/contacts/InlineEditCell.tsx",
-      "sha256": "212f195f090a8756818c7dac5f1920d6ff823d26316383ffda0972c5ba131985"
+      "sha256": "6789270a6e76b53a1a997edf88089032cf68dd91d3aa27085d64bcfcbbb96eb6"
     },
     {
       "path": "src/components/contacts/useContactFormValidation.ts",
@@ -370,7 +370,7 @@
     },
     {
       "path": "src/components/inbox/AIConversationAssistant.tsx",
-      "sha256": "e2317259fe090dd540654b731658f00fbab431ba262878545946479e37300599"
+      "sha256": "f71fb7e7489b04e0dddd36e2d795a455389bdfbd3d576a3033d36c924ed802e4"
     },
     {
       "path": "src/components/inbox/AISuggestions.tsx",
@@ -378,7 +378,7 @@
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
-      "sha256": "8119d03d096325eba8cb8a89ac18a917ac0e659e76b4106e188152d9fb42c284"
+      "sha256": "ab83c1470c4574c480785150a8453bbf9d60e9ab8911236cb51521e58e466c2c"
     },
     {
       "path": "src/components/inbox/AudioRecorder.tsx",
@@ -422,15 +422,15 @@
     },
     {
       "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
-      "sha256": "db9b449e61a41dae5a66bc2bfaae387da54f35bee327b4b0fff1cd418f254fc5"
+      "sha256": "db17af7d4c8e4bf728bc1a99d2518af37090017b1067ff79638fc771365e4c61"
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "de4f0bfd9d52e2007f526a89cd6d0fb4805546c96c02c575267ce866d3e254b1"
+      "sha256": "00344237b046a9e821ef7c235c4977736765ed3b0396da438e925dda2bd537cb"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
-      "sha256": "5f7f7948cf04fd8dcbbc9af695ec5e6da8d4bcc5fe057bba64470e423c0d94cd"
+      "sha256": "83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7"
     },
     {
       "path": "src/components/inbox/collaboration/HandoffDialog.tsx",
@@ -466,31 +466,23 @@
     },
     {
       "path": "src/components/inbox/ContactPurchasesPanel.tsx",
-      "sha256": "35564a933d6fdfa8ac49a6e5f02dfa9522fe423f03e36b554fdd593bc32240be"
+      "sha256": "be77642e1eed75f2e5f78a12b33c054616750e9541a347d2f62dfe5528703026"
     },
     {
       "path": "src/components/inbox/ContactTypeFilter.tsx",
       "sha256": "7c5c84bffd67159fd2916c370adfeaefcf4e786dd0230d4d425354f1a0e3d8aa"
     },
     {
-      "path": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "sha256": "bd5101555c4ff214ce0bf0332db4779c5a123b8ddebe6f5e0b0986f94cf30104"
-    },
-    {
-      "path": "src/components/inbox/ConversationHistory.tsx",
-      "sha256": "118717ab6ebda38c41f5d71b7d95faac3879295d3c1c943f2cb22e77f39a5f9b"
-    },
-    {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "873171b58941715b514be9cb860bace07fc7e0f1e15d35672401afeec1fb367f"
+      "sha256": "acb0adcad76c75a903154cb1f47aba4fbc89f7eef4b08b40840fba9dfdc94c11"
     },
     {
       "path": "src/components/inbox/ConversationMemoryPanel.tsx",
-      "sha256": "e94071bcf35806264dd3c2fa80a7a147e5dbdd7e34255eb7251f7bc43bacf420"
+      "sha256": "70679da0de8bd6b97210156f7ada1b3db9616ff854f664a9861453cb54c46326"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
-      "sha256": "ec74f18625c86410cf2ba411c2f6755d0735ed571edb483eb8645609091a35e6"
+      "sha256": "e89716b4aaa430f007b2494293c61d6b5d6ad3ec4c98e06f59eb347a67a31b5c"
     },
     {
       "path": "src/components/inbox/ConversationTimeline.tsx",
@@ -502,7 +494,7 @@
     },
     {
       "path": "src/components/inbox/LeadRiskScorePanel.tsx",
-      "sha256": "1a5043fc17cd8246e451f0b5de73c81f2ccb859b381b65b6ac4720b99facb154"
+      "sha256": "4bd58221549ee8e3ce3a0dd65eb771a6236ba0fd8f584b9776324e2311df897a"
     },
     {
       "path": "src/components/inbox/LinkPreview.tsx",
@@ -511,14 +503,6 @@
     {
       "path": "src/components/inbox/linkPreviewUtils.ts",
       "sha256": "f6287ad6433b4e946cac2750c49d2d2a0e68c933ccbab81edd6a7a2731629d24"
-    },
-    {
-      "path": "src/components/inbox/location-picker/useLocationPicker.ts",
-      "sha256": "88896cf3c8eea8b9dca8ef3bff3388310dbd79be3e43aab19eb274a9408be439"
-    },
-    {
-      "path": "src/components/inbox/LocationMessage.tsx",
-      "sha256": "1d69220fffed301409626272a029b7b0eb3c5042318c7a91118307ba19b739ae"
     },
     {
       "path": "src/components/inbox/MessageContextActions.tsx",
@@ -542,15 +526,11 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "732a9a7c3a9451d456ec80458f350c2a2e0724c9f49187bf8fee19fa37781df5"
+      "sha256": "7696a18bd9310a5b30236bdbf5644eb5aba30b5822a6bead26a68907f72a0341"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
-      "sha256": "660475c6e9ac0dba6ab62d38a88a902811bfa9b586de0a0b880483ab7463d183"
-    },
-    {
-      "path": "src/components/inbox/RemindersPanel.tsx",
-      "sha256": "4a83a56f6c0f4d49a1d220f442a0042040c18988c4f1ed5fe7bc35d12389406a"
+      "sha256": "73e7ee6dde064f09c6ef6142265f94d3be8b43ebb46357bb20004f83fb43e665"
     },
     {
       "path": "src/components/inbox/SentimentIndicator.tsx",
@@ -593,10 +573,6 @@
       "sha256": "0d7e406af5a0a15aa5824811a51f3200079f6c71583737faa1315f8f8f5e3cdd"
     },
     {
-      "path": "src/components/inbox/VirtualizedConversationList.tsx",
-      "sha256": "9a019a9b37526a149fa583b1658c6bc73e42c274916c5fcff0463b879e43d5e2"
-    },
-    {
       "path": "src/components/inbox/VoiceChanger.tsx",
       "sha256": "655c84153cce37a713cc48667e69d4b2ca9e236fb2b068ad3e3434f571274443"
     },
@@ -610,7 +586,7 @@
     },
     {
       "path": "src/components/inbox/WhisperMode.tsx",
-      "sha256": "921e5cf3776049fa0a6f3c354fb1643c5dba922b8e98520ce57c643424257150"
+      "sha256": "d0381e3150ce99d91028f5d32a27142286ae5b0a2d176aafeb01265ff8e64cca"
     },
     {
       "path": "src/components/integrations/BitrixIntegrationView.tsx",
@@ -619,10 +595,6 @@
     {
       "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
       "sha256": "f6fcd5eb640b7aebd5c5c5ef59cf4abd4329b3d464f765e6512f8829ee99b82e"
-    },
-    {
-      "path": "src/components/layout/Sidebar.tsx",
-      "sha256": "6a2fd2e39b6608cad7314b0e474efc0c2f9fd0a078506b2ee493dcb6b0dee9b8"
     },
     {
       "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -1082,7 +1054,7 @@
     },
     {
       "path": "src/contexts/LayoutContext.tsx",
-      "sha256": "551712fa8f10a652af30ef6b3e8b06a144aced3ad8b90db0967cb4b1d8998a7a"
+      "sha256": "7c3b6477a70bf150bcc32a8ce1f275a3d197694cccefad2cadbfab4508c703cc"
     },
     {
       "path": "src/contexts/LayoutScrollContext.tsx",
@@ -1710,7 +1682,7 @@
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "sha256": "03aa3a33cf64f9eced980b45b1ca2d77add9dbd895af9273e48cd450ab03b7f9"
+      "sha256": "01b0fbabed88caa0964116ff2197518605a5263d5b59351f61547d9fe358168a"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -1718,7 +1690,7 @@
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "sha256": "758b1a54783200715b1a4e77191f7e62b994b13fcb4067e2adbc64e3c5f86e02"
+      "sha256": "589fa4167dd0e644fa375c407a29104ed5c9ede2f493d4ed2107d49de01b47c4"
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
@@ -3051,20 +3023,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "385c7c002250d0c66b2970744dc98f5f4f838320a9339ea09aaddba271a066f7"
-    },
-    {
-      "file": "src/components/contacts/ContactNotes.tsx",
-      "line": 63,
-      "column": 21,
-      "endLine": 63,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/contacts/ContactNotes.tsx:63:21 61 | }, [contactId]); 62 | > 63 | useEffect(() => { fetchNotes(); }, [fetchNotes]); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 64 | 65 | const handleAdd = async () => { 66 | if (!newNote.trim()) return;",
-      "spanHash": "5f2fc469c2e877cf5e6572cc1da2e414f0fddb8415294ceadc779c0b9b67f565",
-      "lineHash": "6cdac0f30d080470fadd4900a2c5047785ac5aab5a320ecc45ec7269c0221921",
-      "contextHash": "7d806714f4f15606da428d0622569baf8c375ab5a2fb5b0a2e2967f3d222ce41"
     },
     {
       "file": "src/components/contacts/ContactPurchaseHistory.tsx",
@@ -4468,9 +4426,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 130,
+      "line": 131,
       "column": 101,
-      "endLine": 130,
+      "endLine": 131,
       "endColumn": 104,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4482,9 +4440,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 130,
+      "line": 131,
       "column": 68,
-      "endLine": 130,
+      "endLine": 131,
       "endColumn": 71,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4496,9 +4454,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 133,
+      "line": 134,
       "column": 39,
-      "endLine": 133,
+      "endLine": 134,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -4716,7 +4674,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d2d1f63309fccf98bc88ad87ef8f05c8e9dd864e4049002d084db3d50b7b7132"
+      "contextHash": "2f982defdfe1b5e16645ae786b298d99b64a282c3a09851ba7b1ac9b72c85ecd"
     },
     {
       "file": "src/components/inbox/ContactTypeFilter.tsx",
@@ -4747,80 +4705,10 @@
       "contextHash": "f6a6b6e9441186412b6d1aa259d72ac1532ca79a59fa42ec41716dfe91278b3b"
     },
     {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 34,
-      "column": 14,
-      "endLine": 34,
-      "endColumn": 25,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "be4293fabf59a6c5d8677ef58938d66f7e3332f4a6eb43d73f63e2c1bcde6f8b",
-      "lineHash": "6340789816cf268704c565c77c1c9e7b5b62555ea3fb9a90023a9bbf92cecfc3",
-      "contextHash": "5e7fe9f7f25bbea8dd154f76f69f00f97a48f4f1824ae605e1e49184e3e4b4d1"
-    },
-    {
-      "file": "src/components/inbox/conversation-list/ConversationItem.tsx",
-      "line": 42,
-      "column": 14,
-      "endLine": 42,
-      "endColumn": 26,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "d9c316304e430ffe628e97e84f7ea86886bdb035e4372df096f4e5fd2efa28c2",
-      "lineHash": "f8c4b3d0ec2b8a1d1e01d83254cf9f59c33e645b9d84bad405f02deda17c719a",
-      "contextHash": "e08e818705fcddd698dfa437003d54aaca774ac8b4e4c8037c66b6ad77606293"
-    },
-    {
-      "file": "src/components/inbox/ConversationHistory.tsx",
-      "line": 25,
-      "column": 1,
-      "endLine": 25,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "80911e8bd74cc1279ee86a67d8884e66edf25daf58537277dbdbdac6ff0e1212"
-    },
-    {
-      "file": "src/components/inbox/ConversationHistory.tsx",
-      "line": 78,
-      "column": 5,
-      "endLine": 78,
-      "endColumn": 29,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `fetchConversationHistory` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/inbox/ConversationHistory.tsx:78:5 76 | 77 | useEffect(() => { > 78 | fetchConversationHistory(); | ^^^^^^^^^^^^^^^^^^^^^^^^ `fetchConversationHistory` accessed before it is declared 79 | }, [contactId, contactPhone, periodFilter]); 80 | 81 | const fetchConversationHistory = async () => { <ROOT>/src/components/inbox/ConversationHistory.tsx:81:3 79 | }, [contactId, contactPhone, periodFilter]); 80 | > 81 | const fetchConversationHistory = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 82 | setIsLoading(true); | ^^^^^^^^^^^^^^^^^^^^^^^ > 83 | try { … | ^^^^^^^^^^^^^^^^^^^^^^^ > 164 | } | ^^^^^^^^^^^^^^^^^^^^^^^ > 165 | }; | ^^^^^ `fetchConversationHistory` is declared here 166 | 167 | const displayedConversations = isExpanded ? conversations : conversations.slice(0, 3); 168 | const selectedPeriodLabel = periodOptions.find(p => p.value === periodFilter)?.label || '';",
-      "spanHash": "274b58cc6bb677cb05c005cd53000d3832f0864fbffc267a2c8b2cc913008228",
-      "lineHash": "17e6c2ee81611f72afb2766e39e7416c8940b98848e6002b94030764c0ee8e69",
-      "contextHash": "9a0f8968bb5f71f2ee1fd1aa695f4a44600d7d2e02398c8154edfeca62dbc519"
-    },
-    {
-      "file": "src/components/inbox/ConversationHistory.tsx",
-      "line": 79,
-      "column": 6,
-      "endLine": 79,
-      "endColumn": 45,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'fetchConversationHistory'. Either include it or remove the dependency array.",
-      "spanHash": "0f13f378efbb32d4a83572b9e0921a64982e251f7e3ccb3a3aa7dbfb86d032ce",
-      "lineHash": "b0235e4fc4d0e0b418e67cf5f25e88cd7b6cf5aec469fb6bf83c567d433a1726",
-      "contextHash": "bfa95d34999f5a7e9e942bb777527fd5de03f77cefadd7f80235fda946b76f3d"
-    },
-    {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 25,
+      "line": 28,
       "column": 10,
-      "endLine": 25,
+      "endLine": 28,
       "endColumn": 13,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4832,9 +4720,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 26,
+      "line": 29,
       "column": 17,
-      "endLine": 26,
+      "endLine": 29,
       "endColumn": 20,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4846,9 +4734,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 27,
+      "line": 30,
       "column": 16,
-      "endLine": 27,
+      "endLine": 30,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4860,9 +4748,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 28,
+      "line": 31,
       "column": 18,
-      "endLine": 28,
+      "endLine": 31,
       "endColumn": 21,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4884,7 +4772,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d2d1f63309fccf98bc88ad87ef8f05c8e9dd864e4049002d084db3d50b7b7132"
+      "contextHash": "2f982defdfe1b5e16645ae786b298d99b64a282c3a09851ba7b1ac9b72c85ecd"
     },
     {
       "file": "src/components/inbox/ConversationMemoryPanel.tsx",
@@ -6060,7 +5948,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "e5081f7ec00c045f743d5524067af5748f226beedcd3f5989a3ff43ee9863bb7"
+      "contextHash": "2fc49d96ed544a8e456365b17170a024cc03f02d38cfc4f6928155c55af787db"
     },
     {
       "file": "src/components/inbox/LeadRiskScorePanel.tsx",
@@ -6131,34 +6019,6 @@
       "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
       "lineHash": "b525fb5fc768d5234536abdd7092d897ba86252ea8442c91bb03914cf6e8d987",
       "contextHash": "7b9255bd928d182a0d36b796738c3caf1c86bcf468b79a7173ec81f23dad0302"
-    },
-    {
-      "file": "src/components/inbox/location-picker/useLocationPicker.ts",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "50cebdeb11525319e2a0b812d5b7ab59347af06b97dd1ea29a31724e35b34748"
-    },
-    {
-      "file": "src/components/inbox/LocationMessage.tsx",
-      "line": 8,
-      "column": 1,
-      "endLine": 8,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "5431438c78d404679cdaf03e6361e146941bcff6e1cfeaf19f0068e20372e3a6"
     },
     {
       "file": "src/components/inbox/MessageContextActions.tsx",
@@ -6285,48 +6145,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "554e1c3f7d590974a5bfc7c2e0cf741f3bd2166620360b6ef3afbcd948a8bdbe"
-    },
-    {
-      "file": "src/components/inbox/RemindersPanel.tsx",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d2d1f63309fccf98bc88ad87ef8f05c8e9dd864e4049002d084db3d50b7b7132"
-    },
-    {
-      "file": "src/components/inbox/RemindersPanel.tsx",
-      "line": 39,
-      "column": 5,
-      "endLine": 39,
-      "endColumn": 18,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `loadReminders` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/components/inbox/RemindersPanel.tsx:39:5 37 | 38 | useEffect(() => { > 39 | loadReminders(); | ^^^^^^^^^^^^^ `loadReminders` accessed before it is declared 40 | }, [contactId, profileId]); 41 | 42 | const loadReminders = async () => { <ROOT>/src/components/inbox/RemindersPanel.tsx:42:3 40 | }, [contactId, profileId]); 41 | > 42 | const loadReminders = async () => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 43 | if (!profileId) return; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 44 | setLoading(true); … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 53 | setLoading(false); | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 54 | }; | ^^^^^ `loadReminders` is declared here 55 | 56 | const addReminder = async () => { 57 | if (!newTitle.trim() || !profileId) return;",
-      "spanHash": "e3d3d4bc526e45964a6c7a6f406f6ba166081956b6bb810eb5cf50aaa2a01d44",
-      "lineHash": "79c876b5563a99f8ee7bfc1abd35b37d33459c9a46e8ef1cd5d31857a8b367b0",
-      "contextHash": "9229eeaf16d4aed06b87f80dceeb16c265978bc2c48562babeb6f5840ca17605"
-    },
-    {
-      "file": "src/components/inbox/RemindersPanel.tsx",
-      "line": 40,
-      "column": 6,
-      "endLine": 40,
-      "endColumn": 28,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'loadReminders'. Either include it or remove the dependency array.",
-      "spanHash": "ba480d6ecb4cf96fa87a2bab382c68ef2fc3195508c2bbc5dd3e6b83e1e04366",
-      "lineHash": "93f9ebeac2f1468c6f8f4139ddb153733a07fc33b411381b5d56f47f5778a1c9",
-      "contextHash": "5db6c03617def873219ef334ab4589ce192bfbf892219671dc7518bfa93524f0"
     },
     {
       "file": "src/components/inbox/SentimentIndicator.tsx",
@@ -6497,20 +6315,6 @@
       "contextHash": "213dba7a347b298e1efed5fe4010ab874b22fd3c1676128c4e60c93e88015ac2"
     },
     {
-      "file": "src/components/inbox/VirtualizedConversationList.tsx",
-      "line": 46,
-      "column": 23,
-      "endLine": 46,
-      "endColumn": 37,
-      "severity": 1,
-      "ruleId": "react-hooks/incompatible-library",
-      "messageId": null,
-      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedConversationList.tsx:46:23 44 | }), [conversations]); 45 | > 46 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 47 | count: filteredConversations.length, 48 | getScrollElement: () => parentRef.current, 49 | estimateSize: () => itemHeight,",
-      "spanHash": "f4e0eaa448a4a05be7d6db80323e491f2377e2c17a034e8f2ee6e2bd44a923b0",
-      "lineHash": "c198de567abd89b5e249ef2ea843524d4f27a54f243ab646c25ccaf2785a33ac",
-      "contextHash": "78fb5ed2b2f7de2d90c668516a87fd786702e434504e2430a544e03b7c27512e"
-    },
-    {
       "file": "src/components/inbox/VoiceChanger.tsx",
       "line": 1,
       "column": 1,
@@ -6578,7 +6382,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "6fccc6c271c92ebbf6168b31686f71146030c54c7c677fd03cd0d0c8cd28ab42"
+      "contextHash": "9e46d81f29c16ed6750492a4e8173eb92e73dfcb6a262634dd24d4f1d6e52ee3"
     },
     {
       "file": "src/components/integrations/BitrixIntegrationView.tsx",
@@ -6607,62 +6411,6 @@
       "spanHash": "09099603c0ca4dd555bebf1550d221e65a95c28d6505d0078a5c3ea5218ef6d9",
       "lineHash": "219e6d6bafd1a1992af9b1e58c59ab8a0b8633b5c37aff2f7381bc6bf7b5ce49",
       "contextHash": "cbf474b530c982f6e286d3c116ba8a9d9bcad330a7001cdab91fca232d38d364"
-    },
-    {
-      "file": "src/components/layout/Sidebar.tsx",
-      "line": 106,
-      "column": 32,
-      "endLine": 106,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "185b3d9f9274534b8d5b57b129995f217b3afe9fb9fcef961aeb15eab8121313",
-      "contextHash": "98d03fe7a27e370fad7057a21f8be3fadb4e6b121f36baabb9e0fa7d5e128f72"
-    },
-    {
-      "file": "src/components/layout/Sidebar.tsx",
-      "line": 170,
-      "column": 38,
-      "endLine": 170,
-      "endColumn": 41,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "45892b1b844c3b9e2fcd7a621d07ee8e27728ae73cfbfa4b2abdf01b4e8fa80b",
-      "contextHash": "66758e02350f94540441fad9b28df1d98802d02cea6fa6d38fa39a318b9aab4e"
-    },
-    {
-      "file": "src/components/layout/Sidebar.tsx",
-      "line": 47,
-      "column": 53,
-      "endLine": 47,
-      "endColumn": 56,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "eba308414980a4b0dd6bcd6981cb822d2b46eb0c7e86235c043e5cf537dcfc72",
-      "contextHash": "97f16c574307052634d0842782b560e82a29778629a2bd60159ee40ddc11584d"
-    },
-    {
-      "file": "src/components/layout/Sidebar.tsx",
-      "line": 54,
-      "column": 63,
-      "endLine": 54,
-      "endColumn": 66,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "10736cbcf8b9962f480e74ea49ed15779933fd8383b0ad43517f78d56866c605",
-      "contextHash": "1c9f81028d14647968d5b3d51131ff95607d7815d8a4c92fe2b231e8e4a27871"
     },
     {
       "file": "src/components/leaderboard/LeaderboardHelpers.tsx",
@@ -10530,9 +10278,9 @@
     },
     {
       "file": "src/contexts/LayoutContext.tsx",
-      "line": 11,
+      "line": 12,
       "column": 17,
-      "endLine": 11,
+      "endLine": 12,
       "endColumn": 33,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -16634,9 +16382,9 @@
     },
     {
       "file": "supabase/functions/ai-suggest-reply/index.ts",
-      "line": 144,
+      "line": 161,
       "column": 30,
-      "endLine": 144,
+      "endLine": 161,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
