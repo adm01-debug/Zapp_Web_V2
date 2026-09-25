@@ -20,7 +20,7 @@ interface LocationPickerProps {
 export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'current'>('current');
 
-  const { mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
+  const { mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching, selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset } = useLocationPicker(open, activeTab);
 
   const handleSend = async () => {
     if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
@@ -81,6 +81,22 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                 </div>
                 <Button variant="outline" onClick={searchLocation} disabled={isSearching}>{isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}</Button>
               </div>
+              {searchResults.length > 0 && (
+                <div className="mt-2 rounded-lg border border-border divide-y divide-border overflow-hidden">
+                  <p className="px-3 py-2 text-xs text-muted-foreground bg-muted/50">Escolha o endereço certo:</p>
+                  {searchResults.map((place) => (
+                    <button
+                      key={`${place.lat},${place.lng},${place.address}`}
+                      type="button"
+                      onClick={() => chooseSearchResult(place)}
+                      className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors"
+                    >
+                      {place.name && <p className="text-sm font-medium truncate">{place.name}</p>}
+                      {place.address && <p className="text-xs text-muted-foreground truncate">{place.address}</p>}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="relative">
               <div ref={mapContainer} className="w-full h-64 bg-muted" />
