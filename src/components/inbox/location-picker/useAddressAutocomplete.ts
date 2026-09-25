@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { suggestPlaces } from '@/lib/mapboxGeocode';
-import type { GeoSuggestion, GeoFailureKind, GeoProximity } from '@/lib/mapboxGeocode';
-import { getSearchSession, noteSuggestCall } from '@/lib/mapboxSession';
+import { suggestPlaces, retrievePlace } from '@/lib/mapboxGeocode';
+import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
+import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 3;
@@ -19,6 +19,10 @@ export interface UseAddressAutocompleteResult {
   isLoading: boolean;
   error: GeoFailureKind | null;
   highlightedIndex: number;
+  /** `id` da sugestão com um `/retrieve` em voo, ou `null` — para o item individual, não a lista. */
+  retrievingId: string | null;
+  /** Chama `retrievePlace()` pela sugestão no índice, devolve a coordenada e encerra a sessão. */
+  select: (index: number) => Promise<GeoSearchPlace | null>;
 }
 
 interface State {
@@ -27,6 +31,7 @@ interface State {
   isLoading: boolean;
   error: GeoFailureKind | null;
   highlightedIndex: number;
+  retrievingId: string | null;
 }
 
 const initialState: State = {
@@ -35,13 +40,17 @@ const initialState: State = {
   isLoading: false,
   error: null,
   highlightedIndex: -1,
+  retrievingId: null,
 };
 
 type Action =
   | { type: 'SET_QUERY'; query: string }
   | { type: 'SUGGEST_START' }
   | { type: 'SUGGEST_SUCCESS'; suggestions: GeoSuggestion[] }
-  | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind };
+  | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind }
+  | { type: 'RETRIEVE_START'; id: string }
+  | { type: 'RETRIEVE_END' }
+  | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -53,6 +62,15 @@ function reducer(state: State, action: Action): State {
       return { ...state, isLoading: false, error: null, suggestions: action.suggestions, highlightedIndex: -1 };
     case 'SUGGEST_ERROR':
       return { ...state, isLoading: false, error: action.kind, suggestions: [] };
+    case 'RETRIEVE_START':
+      // Falha de retrieve não fecha a lista: só o item some do estado de carregamento
+      // (RETRIEVE_END), as sugestões continuam de pé.
+      return { ...state, retrievingId: action.id, error: null };
+    case 'RETRIEVE_END':
+      return { ...state, retrievingId: null };
+    case 'RETRIEVE_ERROR':
+      // Falha do /retrieve nunca fecha a lista — só marca a causa; as sugestões continuam de pé.
+      return { ...state, retrievingId: null, error: action.kind };
     default:
       return state;
   }
@@ -107,6 +125,26 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     dispatch({ type: 'SET_QUERY', query });
   }, []);
 
+  const select = useCallback(async (index: number): Promise<GeoSearchPlace | null> => {
+    const suggestion = state.suggestions[index];
+    if (!suggestion || !token) return null;
+    dispatch({ type: 'RETRIEVE_START', id: suggestion.id });
+    const session = getSearchSession();
+    noteRetrieveCall();
+    const place = await retrievePlace(suggestion.id, token, { session });
+    if (place) {
+      dispatch({ type: 'RETRIEVE_END' });
+    } else {
+      // retrievePlace() só devolve null, sem causa — 'not_found' é o kind mais próximo de "sem
+      // coordenada válida", que é a própria doc do mapboxGeocode.ts pra esse retorno.
+      dispatch({ type: 'RETRIEVE_ERROR', kind: 'not_found' });
+    }
+    // O /retrieve em si já fecha a sessão pro billing da Mapbox, sucesso ou falha — não é o
+    // resultado que decide isso.
+    endSearchSession();
+    return place;
+  }, [state.suggestions, token]);
+
   return {
     query: state.query,
     setQuery,
@@ -114,5 +152,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     isLoading: state.isLoading,
     error: state.error,
     highlightedIndex: state.highlightedIndex,
+    retrievingId: state.retrievingId,
+    select,
   };
 }
