@@ -191,16 +191,30 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: true, message: `Já existe uma conexão com instance_id '${instance}'.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
+      // proxyToEvolution nunca lança (timeout/erro de rede/GO viram Response
+      // com error:true) — o catch abaixo não cobre o caso real de falha, por
+      // isso a compensação precisa inspecionar o corpo da resposta e logar
+      // explicitamente quando NÃO conseguir confirmar que a GO foi limpa.
+      // Nunca afirmar "compensado"/"revertido" sem essa confirmação.
       const compensateGoCreate = async () => {
+        const log = new Logger('evolution-api');
         try {
           if (isGoFlavor) {
             const goId = await resolveGoInstanceId(instance);
-            if (goId) await proxy(`/instance/delete/${goId}`, 'DELETE');
+            if (!goId) {
+              log.error('create-connection: compensação pulada — instância não encontrada na GO (pode ter ficado órfã com token válido)', { instance });
+              return;
+            }
+            const deleteRes = await proxy(`/instance/delete/${goId}`, 'DELETE');
+            const deleteData: Record<string, unknown> = await deleteRes.json().catch(() => ({}));
+            if (deleteData?.error) {
+              log.error('create-connection: delete de compensação respondeu erro — instância pode ter ficado órfã na GO', { instance, detalhe: deleteData?.message });
+            }
           } else {
             await proxy(`/instance/delete/${instance}`, 'DELETE');
           }
         } catch (err: unknown) {
-          new Logger('evolution-api').error('create-connection: compensação (delete na GO) falhou — instância pode ter ficado órfã', {
+          log.error('create-connection: compensação (delete na GO) lançou exceção — instância pode ter ficado órfã', {
             instance, error: err instanceof Error ? err.message : String(err),
           });
         }
@@ -217,7 +231,7 @@ serve(async (req) => {
       // ver normalizeGoResponse/cbRecord): falha real vem no corpo (error:true),
       // nunca em createRes.ok.
       const createData: Record<string, unknown> = await createRes.json().catch(() => ({}));
-      if (createData?.error === true) {
+      if (createData?.error) {
         return new Response(JSON.stringify(createData), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -228,19 +242,23 @@ serve(async (req) => {
         is_default: body.is_default === true,
       }).select().single();
       if (insertError || !row) {
+        new Logger('evolution-api').error('create-connection: insert falhou — tentando compensar na GO', { instance, error: insertError?.message });
         await compensateGoCreate();
-        new Logger('evolution-api').error('create-connection: insert falhou, instância compensada na GO', { instance, error: insertError?.message });
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a conexão (revertido na Evolution GO).' }), {
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a conexão (tentativa de reverter na Evolution GO — confira os logs).' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
       const { error: tokenError } = await supabase.rpc('set_instance_token', { p_connection_id: row.id, p_token: instanceToken });
       if (tokenError) {
-        await supabase.from('whatsapp_connections').delete().eq('id', row.id);
+        const log = new Logger('evolution-api');
+        log.error('create-connection: set_instance_token falhou — tentando reverter linha e GO', { instance, error: tokenError.message });
+        const { error: deleteRowError } = await supabase.from('whatsapp_connections').delete().eq('id', row.id);
+        if (deleteRowError) {
+          log.error('create-connection: falha ao remover a linha após set_instance_token falhar — pode ter sobrado linha fantasma sem token', { instance, connectionId: row.id, error: deleteRowError.message });
+        }
         await compensateGoCreate();
-        new Logger('evolution-api').error('create-connection: set_instance_token falhou, revertido', { instance, error: tokenError.message });
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao guardar o token no Vault (revertido).' }), {
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao guardar o token no Vault (tentativa de reverter — confira os logs).' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -253,6 +271,7 @@ serve(async (req) => {
           method: 'POST',
           headers: { apikey: instanceToken, 'Content-Type': 'application/json' },
           body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+          signal: AbortSignal.timeout(8000),
         });
       } catch (err: unknown) {
         new Logger('evolution-api').warn('create-connection: connect inicial falhou (conexão criada; reconectar manualmente)', {
@@ -260,7 +279,22 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ connection: row, evolution: createData }), {
+      // A GO ecoa o token da instância no corpo de /instance/create (mesmo
+      // motivo por que create-instance legado o devolvia ao operador) — aqui
+      // o token já está no Vault, então devolvê-lo de novo só reabriria o
+      // vazamento que E08-E11 existem para fechar. Nunca confiar no shape
+      // exato (a GO pode aninhar em .data): remove nos dois níveis.
+      const stripInstanceToken = (value: unknown): unknown => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+        delete clone.token; delete clone.Token; delete clone.apikey; delete clone.apiKey;
+        if (clone.data && typeof clone.data === 'object' && !Array.isArray(clone.data)) {
+          clone.data = stripInstanceToken(clone.data);
+        }
+        return clone;
+      };
+
+      return new Response(JSON.stringify({ connection: row, evolution: stripInstanceToken(createData) }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

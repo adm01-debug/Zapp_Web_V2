@@ -51,6 +51,65 @@ test("action status nao apaga o qr_code de um pareamento em curso", () => {
   assert.match(body, /\.neq\('status', 'qr_pending'\)/);
 });
 
+test("create-connection: resolveGoInstanceId/requireAdmin declarados antes do uso (TDZ)", () => {
+  // create-connection usa resolveGoInstanceId dentro de compensateGoCreate();
+  // como e' const, declarar depois do primeiro uso e' ReferenceError em runtime,
+  // nao em build — so aparece quando o caminho de compensacao roda de verdade.
+  const declResolve = apiSrc.indexOf("const resolveGoInstanceId = async");
+  const declAdmin = apiSrc.indexOf("const requireAdmin = async");
+  const useResolve = apiSrc.indexOf("resolveGoInstanceId(instance)");
+  const createConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  assert.notEqual(declResolve, -1);
+  assert.notEqual(declAdmin, -1);
+  assert.notEqual(useResolve, -1);
+  assert.notEqual(createConnAt, -1);
+  assert.ok(declResolve < createConnAt, "resolveGoInstanceId precisa ser declarado antes de create-connection");
+  assert.ok(declAdmin < createConnAt, "requireAdmin precisa ser declarado antes de create-connection");
+  assert.ok(declResolve < useResolve, "resolveGoInstanceId precisa ser declarado antes do uso em compensateGoCreate");
+});
+
+test("bootstrap-instance-token e create-connection nunca logam ou ecoam o token", () => {
+  const bAt = apiSrc.indexOf("if (action === 'bootstrap-instance-token')");
+  const cAt = apiSrc.indexOf("if (action === 'create-instance')");
+  const cConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  const listAt = apiSrc.indexOf("if (action === 'list-instances')");
+  assert.ok(bAt !== -1 && cAt !== -1 && cConnAt !== -1 && listAt !== -1);
+  const bootstrapBlock = apiSrc.slice(bAt, cAt);
+  const createConnBlock = apiSrc.slice(cConnAt, listAt);
+  for (const [name, block] of [["bootstrap-instance-token", bootstrapBlock], ["create-connection", createConnBlock]]) {
+    assert.doesNotMatch(
+      block, /\.(error|warn|info|debug)\([^)]*(legacyToken|instanceToken)\b/,
+      `${name}: token nao pode ir para log`,
+    );
+  }
+  // A GO ecoa o token gerado no corpo de /instance/create (docs/migration/GO_GAPS.md) —
+  // devolver createData sem redigir reabre o vazamento que o Vault existe para fechar.
+  assert.doesNotMatch(
+    createConnBlock, /evolution:\s*createData\b/,
+    "create-connection nao pode devolver createData crua (contem o token ecoado pela GO) — usar stripInstanceToken(createData)",
+  );
+  assert.match(createConnBlock, /stripInstanceToken\(createData\)/);
+  assert.match(createConnBlock, /delete clone\.token; delete clone\.Token;/);
+});
+
+test("create-connection: compensacao e rollback nunca afirmam sucesso sem confirmar", () => {
+  const cConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  const listAt = apiSrc.indexOf("if (action === 'list-instances')");
+  const block = apiSrc.slice(cConnAt, listAt);
+  // proxyToEvolution nunca lanca — o antigo catch-only tratava exceção como
+  // o único jeito de falhar, mas o caminho real de falha (goId nao resolvido,
+  // ou delete respondendo error:true no corpo) passava batido e o log dizia
+  // "compensado"/"revertido" mesmo sem ter confirmado nada.
+  assert.match(block, /if \(!goId\) \{/, "compensacao precisa tratar explicitamente o caso goId nao resolvido");
+  assert.match(block, /deleteData\?\.error/, "compensacao precisa inspecionar o corpo da resposta do delete, nao só a exceção");
+  assert.doesNotMatch(
+    block, /'create-connection: insert falhou, inst[aâ]ncia compensada na GO'/,
+    "nao pode afirmar que a GO foi compensada antes de confirmar",
+  );
+  // Rollback da linha após set_instance_token falhar precisa checar o proprio erro do delete.
+  assert.match(block, /if \(deleteRowError\)/, "delete da linha apos tokenError precisa checar o proprio erro");
+});
+
 test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
   for (const action of ["find-messages", "find-status-messages"]) {
     const at = apiSrc.indexOf(`if (action === '${action}')`);

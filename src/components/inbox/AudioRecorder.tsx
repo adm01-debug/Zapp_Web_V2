@@ -120,7 +120,7 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="flex items-center gap-3 p-3 bg-card dark:bg-black border border-border rounded-xl relative overflow-hidden"
+      className="flex items-center gap-3 p-3 bg-inbox-panel border border-border rounded-xl relative overflow-hidden"
       onTouchStart={isRecording && isMobile ? handleTouchStart : undefined}
       onTouchMove={isRecording && isMobile ? handleTouchMove : undefined}
       onTouchEnd={isRecording && isMobile ? handleTouchEnd : undefined}

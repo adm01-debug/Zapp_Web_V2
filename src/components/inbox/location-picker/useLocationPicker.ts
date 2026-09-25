@@ -254,7 +254,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, [select]);
 
   return {
-    mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching,
+    mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken, searchQuery, setSearchQuery, isSearching,
     selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset,
   };
 }
