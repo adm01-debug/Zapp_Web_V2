@@ -2,59 +2,59 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, subDays } from 'date-fns';
 
-type ClosureRow = { created_at: string };
-type SlaRow = { first_message_at: string; first_response_at: string | null; first_response_breached: boolean | null };
-const H = 3_600_000;
 /** Amostra mínima por dia p/ mostrar "% vs ontem" (E19) — abaixo disso, 1 outlier
- * já produz deltas fantasmas tipo "-100%" (achado A10). Sem delta é mais honesto que delta errado. */
+ * já produz deltas fantasmas tipo "-100%" (achado A10). Sem delta é mais honesto
+ * que delta errado. */
 const MIN_SAMPLE_FOR_DELTA = 5;
 
-/** p50/p90 por interpolação linear (método comum, mesmo de percentile_cont do Postgres). */
-function percentile(values: number[], p: number): number {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const idx = (p / 100) * (sorted.length - 1);
-  const lo = Math.floor(idx); const hi = Math.ceil(idx);
-  if (lo === hi) return sorted[lo];
-  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+/** Shape devolvido pela RPC dashboard_kpi (E23): contagens, mediana/p90 (via
+ * percentile_cont) e buckets de 3h já agregados no servidor — substitui os 2
+ * fetches crus (conversation_closures/conversation_sla) + agregação client-side
+ * que existiam antes do E23. */
+export type DashboardKpiRpcResult = {
+  resolvedToday: number;
+  resolvedYesterday: number;
+  resolvedHourly8: number[];
+  avgResponseToday: number | null;
+  avgResponseYesterday: number | null;
+  p90ResponseToday: number | null;
+  responseHourly8: number[];
+  slaBreachedToday: number;
+  answeredTodayCount: number;
+  answeredYesterdayCount: number;
+};
+
+function pct(cur: number, prev: number): number | null {
+  return prev === 0 ? null : Math.round(((cur - prev) / prev) * 100);
 }
 
-/**
- * responseHourly8 (KPI "Tempo Médio de Resposta") é lido visualmente invertido:
- * barras menores = melhor desempenho (resposta mais rápida).
- */
-export function aggregateDashboardKpi(closures: ClosureRow[], sla: SlaRow[], now = new Date()) {
-  const t0 = startOfDay(now).getTime(); const y0 = startOfDay(subDays(now, 1)).getTime();
-  const isToday = (iso: string) => Date.parse(iso) >= t0;
-  const isYesterday = (iso: string) => { const t = Date.parse(iso); return t >= y0 && t < t0; };
-  const pct = (cur: number, prev: number) => (prev === 0 ? null : Math.round(((cur - prev) / prev) * 100));
-  const bucket8 = (times: number[], weight?: number[]) => {
-    const sum = Array(8).fill(0); const cnt = Array(8).fill(0);
-    times.forEach((t, i) => { const b = Math.min(7, Math.floor((t - t0) / (3 * H))); sum[b] += weight ? weight[i] : 1; cnt[b] += 1; });
-    return weight ? sum.map((s, i) => (cnt[i] ? s / cnt[i] : 0)) : sum;
-  };
-  const cT = closures.filter((r) => isToday(r.created_at));
-  const cY = closures.filter((r) => isYesterday(r.created_at));
-  const answered = sla.filter((r) => r.first_response_at);
-  const rt = (r: SlaRow) => (Date.parse(r.first_response_at!) - Date.parse(r.first_message_at)) / 1000;
-  const aT = answered.filter((r) => isToday(r.first_message_at));
-  const aY = answered.filter((r) => isYesterday(r.first_message_at));
-  // Mediana (p50), não média: 1 atendimento respondido 10h depois não pode dobrar
-  // o KPI do dia (achado A10). p90 fica só pro tooltip, não entra no card nem no delta.
-  const median = (rows: SlaRow[]) => (rows.length ? Math.round(percentile(rows.map(rt), 50)) : null);
-  const avgT = median(aT); const avgY = median(aY);
-  const p90Today = aT.length ? Math.round(percentile(aT.map(rt), 90)) : null;
+/** Só aplica o guard de amostra mínima (E19) sobre o que a RPC já agregou — dia/hora,
+ * mediana e p90 são calculados no banco (dashboard_kpi, SECURITY INVOKER). Mantém o
+ * mesmo shape de saída de antes do E23 — DashboardKpiRow.tsx não precisa mudar. */
+export function aggregateDashboardKpi(r: DashboardKpiRpcResult) {
+  const deltaResolvedPct =
+    r.resolvedToday >= MIN_SAMPLE_FOR_DELTA && r.resolvedYesterday >= MIN_SAMPLE_FOR_DELTA
+      ? pct(r.resolvedToday, r.resolvedYesterday)
+      : null;
+  const deltaResponsePct =
+    r.avgResponseToday !== null &&
+    r.avgResponseYesterday !== null &&
+    r.answeredTodayCount >= MIN_SAMPLE_FOR_DELTA &&
+    r.answeredYesterdayCount >= MIN_SAMPLE_FOR_DELTA
+      ? pct(r.avgResponseToday, r.avgResponseYesterday)
+      : null;
+
   return {
-    resolvedToday: cT.length,
-    resolvedYesterday: cY.length,
-    deltaResolvedPct: cT.length >= MIN_SAMPLE_FOR_DELTA && cY.length >= MIN_SAMPLE_FOR_DELTA ? pct(cT.length, cY.length) : null,
-    resolvedHourly8: bucket8(cT.map((r) => Date.parse(r.created_at))),
-    avgResponseToday: avgT,
-    avgResponseYesterday: avgY,
-    p90ResponseToday: p90Today,
-    deltaResponsePct: avgT !== null && avgY !== null && aT.length >= MIN_SAMPLE_FOR_DELTA && aY.length >= MIN_SAMPLE_FOR_DELTA ? pct(avgT, avgY) : null,
-    responseHourly8: bucket8(aT.map((r) => Date.parse(r.first_message_at)), aT.map(rt)),
-    slaBreachedToday: sla.filter((r) => isToday(r.first_message_at) && r.first_response_breached === true).length,
+    resolvedToday: r.resolvedToday,
+    resolvedYesterday: r.resolvedYesterday,
+    deltaResolvedPct,
+    resolvedHourly8: r.resolvedHourly8,
+    avgResponseToday: r.avgResponseToday,
+    avgResponseYesterday: r.avgResponseYesterday,
+    p90ResponseToday: r.p90ResponseToday,
+    deltaResponsePct,
+    responseHourly8: r.responseHourly8,
+    slaBreachedToday: r.slaBreachedToday,
   };
 }
 
@@ -63,13 +63,10 @@ export function useDashboardKpi() {
     queryKey: ['dashboard-kpi'],
     queryFn: async () => {
       const since = startOfDay(subDays(new Date(), 1)).toISOString();
-      const [c, s] = await Promise.all([
-        supabase.from('conversation_closures').select('created_at').gte('created_at', since),
-        supabase.from('conversation_sla').select('first_message_at, first_response_at, first_response_breached').gte('first_message_at', since),
-      ]);
-      if (c.error) throw c.error;
-      if (s.error) throw s.error;
-      return aggregateDashboardKpi((c.data ?? []) as ClosureRow[], (s.data ?? []) as SlaRow[]);
+      // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
+      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { p_since: since }); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+      if (error) throw error;
+      return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
     },
     staleTime: 60_000,
   });
