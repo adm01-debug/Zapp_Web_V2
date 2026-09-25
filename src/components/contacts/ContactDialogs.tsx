@@ -21,6 +21,12 @@ interface ContactFormValues {
   phone: string;
   email?: string | null;
   contact_type?: string | null;
+  postal_code?: string | null;
+  address?: string | null;
+  address_number?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface ContactDialogsProps {

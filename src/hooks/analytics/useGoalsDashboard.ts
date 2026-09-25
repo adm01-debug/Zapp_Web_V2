@@ -153,9 +153,13 @@ export function useGoalsDashboard() {
     const resolvedAnalyses = analysesData?.filter(a => a.status === 'resolvido').length || 0;
     const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
 
-    const isMessageGoalActive = !customGoals?.find(g => g.goal_type === 'messages_sent')?.is_active === false;
-    const isContactGoalActive = !customGoals?.find(g => g.goal_type === 'contacts_handled')?.is_active === false;
-    const isResolutionGoalActive = !customGoals?.find(g => g.goal_type === 'resolution_rate')?.is_active === false;
+    // E42: bug de precedência — `!x === false` avalia (!x) === false, então
+    // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
+    // default". Com a tabela vazia isso zerava `goals` para todo mundo e
+    // DailyGoalsCard.tsx caía sempre no fallback hardcoded.
+    const isMessageGoalActive = customGoals?.find(g => g.goal_type === 'messages_sent')?.is_active !== false;
+    const isContactGoalActive = customGoals?.find(g => g.goal_type === 'contacts_handled')?.is_active !== false;
+    const isResolutionGoalActive = customGoals?.find(g => g.goal_type === 'resolution_rate')?.is_active !== false;
 
     const allGoals: Goal[] = [];
     if (isMessageGoalActive) {

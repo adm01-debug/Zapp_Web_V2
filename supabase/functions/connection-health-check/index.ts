@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { escapeHtml } from '../_shared/notification-events.ts';
+import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -94,6 +96,44 @@ Deno.serve(async (req) => {
         message: `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexão com o WhatsApp. Reconecte para evitar perda de mensagens.`,
         source: 'connection-health-check',
       }).then(({ error }) => { if (error) log.warn("Failed to create warroom alert", { error: error.message }); });
+    }
+
+    // warroom_alerts so aparece pra quem esta com o painel aberto. Conexao caida
+    // significa que nao entra nem sai mensagem, entao o alerta tem que sair do app.
+    if (alertsToCreate.length > 0) {
+      const resendKey = Deno.env.get('RESEND_API_KEY');
+      const { data: admins } = await supabase
+        .from('profiles').select('email').eq('role', 'admin').not('email', 'is', null);
+      const to = (admins ?? []).map((a) => a.email as string).filter(Boolean);
+      if (!resendKey || to.length === 0) {
+        log.warn("Queda detectada sem canal de e-mail", { hasKey: Boolean(resendKey), recipients: to.length });
+      } else {
+        for (const alert of alertsToCreate) {
+          const label = escapeHtml(alert.instance_id) + (alert.phone ? ` (${escapeHtml(alert.phone)})` : '');
+          try {
+            const resp = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                from: 'ZAPP Alertas <alertas@promobrindes.com.br>',
+                to,
+                subject: `🔴 WhatsApp ${alert.instance_id} desconectado — ZAPP`,
+                html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">
+                  <h2 style="color:#dc2626">🔴 A conexão do WhatsApp caiu</h2>
+                  <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:16px 0">
+                    <p style="margin:0;font-size:16px">A instância <strong>${label}</strong> perdeu a conexão. Enquanto ela estiver fora, nenhuma mensagem entra nem sai.</p>
+                  </div>
+                  <p style="font-size:15px">Abra <strong>Conexões</strong> no ZAPP e escaneie o QR Code para reconectar.</p>
+                  <p style="color:#9ca3af;font-size:12px;margin-top:24px">Detectado em ${new Date().toISOString()} pelo monitor automático (connection-health-check).</p>
+                </div>`,
+              }),
+            });
+            if (!resp.ok) log.warn("Resend recusou o alerta de queda", { status: resp.status });
+          } catch (err) {
+            log.error("Falha ao enviar alerta de queda por e-mail", { error: err instanceof Error ? err.message : String(err) });
+          }
+        }
+      }
     }
 
     // Cleanup old health logs

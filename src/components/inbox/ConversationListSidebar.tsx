@@ -85,7 +85,7 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
 
   return (
     <div className={cn(
-      'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-card flex flex-col overflow-hidden',
+      'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-black flex flex-col overflow-hidden',
       isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[350px] min-w-[350px] max-w-[350px]'
     )}>
       <BulkActionsToolbar
