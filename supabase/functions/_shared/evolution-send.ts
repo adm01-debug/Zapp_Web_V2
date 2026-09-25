@@ -12,6 +12,12 @@ export async function evoFetch(
   fetcher: Fetcher = (u, o) => fetch(u, o),
   v2Method = "POST",
   signal?: AbortSignal,
+  // E15 (plano multi-conexão): token da instância, resolvido pelo chamador
+  // (hoje ninguém resolve por instância ainda — isso chega com E16/E18/E19,
+  // depois que E09/E10 existirem no banco). Enquanto nenhum chamador passar
+  // isto, cai no fallback EVOLUTION_INSTANCE_TOKEN abaixo — comportamento
+  // idêntico ao de antes desta etapa.
+  instanceToken?: string,
 ): Promise<Response> {
   let path = v2Path;
   let method = v2Method;
@@ -32,9 +38,19 @@ export async function evoFetch(
       finalBody = go.body;
       if (go.contentType) contentType = go.contentType;
       if (go.auth === "instance") {
-        const instToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
-        if (!instToken) console.error(`[Evolution GO] EVOLUTION_INSTANCE_TOKEN ausente — usando a key global em rota de instância (${go.path}); o GO responderá 401.`);
-        apikey = instToken ?? evolutionKey;
+        const fallbackToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+        if (instanceToken) {
+          apikey = instanceToken;
+        } else if (fallbackToken) {
+          console.error(`[Evolution GO] instanceToken não informado para rota de instância (${go.path}) — usando fallback EVOLUTION_INSTANCE_TOKEN (remover após E10/E21).`);
+          apikey = fallbackToken;
+        } else {
+          // Nunca cair silenciosamente na key global (admin): ela não é a
+          // credencial da instância e a GO devolveria um 401 confuso.
+          return new Response(JSON.stringify({ error: "instance token ausente" }), {
+            status: 400, headers: { "Content-Type": "application/json" },
+          });
+        }
       }
     }
   }
