@@ -46,6 +46,12 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: vi.fn().mockImplementation((table: string) => makeChainable(table)),
+      // E24/E25: useDashboardStats agora chama a RPC dashboard_contact_counts
+      // em vez de select() cru em `contacts`.
+      rpc: vi.fn().mockResolvedValue({
+        data: { total: 1, open: 1, pending: 0, myActive: 0, queues: [{ queueId: 'q1', waiting: 0, inService: 1, avgResponse: null, slaRate: null }] },
+        error: null,
+      }),
     },
   };
 });

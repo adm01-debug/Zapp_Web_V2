@@ -16,7 +16,9 @@ const queues = [
 ];
 const statsResult = {
   agents: { agents: [], onlineAgents: 2, totalAgents: 3 },
-  contacts: [],
+  // E24/E25: useDashboardStats agora devolve `counts` (RPC dashboard_contact_counts),
+  // não mais `contacts` cru.
+  counts: { total: 0, open: 0, pending: 0, myActive: 0, queues: [] },
   queues,
   isLoading: false,
   error: null,
