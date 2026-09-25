@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Loader2, UserPlus } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -29,19 +30,13 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
     [conversation.members]
   );
 
-  const { data: teammates = [], isLoading } = useQuery({
-    queryKey: ['team-profiles-for-add-members', conversation.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, email, avatar_url, is_active')
-        .eq('is_active', true)
-        .order('name');
-      if (error) throw error;
-      return (data || []).filter(t => !existingMemberIds.has(t.id));
-    },
-    enabled: open && !!profile,
-  });
+  const { data: teamProfiles = [], isLoading } = useTeamProfiles(open && !!profile);
+  const teammates = useMemo(
+    () => teamProfiles
+      .filter(t => !existingMemberIds.has(t.id))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [teamProfiles, existingMemberIds]
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return teammates;
