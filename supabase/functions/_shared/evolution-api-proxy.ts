@@ -2,7 +2,7 @@
 import { translateV2ToGo } from "./evolution-go-routes.ts";
 
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
-// O frontend (messageSender, useChatMediaSending, useSendProduct) le key.id/messageId (shape v2).
+// O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
 // Injeta os campos v2 no topo sem remover o payload GO — normalização única para todos os consumidores.
 // deno-lint-ignore no-explicit-any
 export function normalizeGoSendResponse(data: any): unknown {
