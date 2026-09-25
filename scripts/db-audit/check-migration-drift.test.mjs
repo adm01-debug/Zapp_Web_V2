@@ -126,11 +126,18 @@ function runGuard({
   evidence = [],
   destino = true,
   schemaVersion = 2,
+  // psqlFailCount/psqlFailMessage/retryDelaysMs existem so para exercitar o
+  // retry de queryLedger() contra falhas transitorias de conexao (pooler).
+  // Com psqlFailCount 0 (padrao) o fake psql se comporta exatamente como antes.
+  psqlFailCount = 0,
+  psqlFailMessage = 'connection refused (fake)',
+  retryDelaysMs = null,
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
   const fakePsql = path.join(tmp, 'fake-psql.mjs');
   const evidencePath = path.join(tmp, 'migration-evidence.json');
+  const counterFile = path.join(tmp, 'fake-psql-attempts');
   fs.mkdirSync(migrationsDir);
 
   for (const [name, content] of Object.entries(files)) {
@@ -138,7 +145,20 @@ function runGuard({
   }
   fs.writeFileSync(
     fakePsql,
-    '#!/usr/bin/env node\nprocess.stdout.write(process.env.FAKE_PSQL_OUTPUT || "");\n',
+    '#!/usr/bin/env node\n'
+    + 'import fs from "node:fs";\n'
+    + 'const counterFile = process.env.FAKE_PSQL_COUNTER_FILE;\n'
+    + 'const failCount = Number(process.env.FAKE_PSQL_FAIL_COUNT || 0);\n'
+    + 'let attempt = 0;\n'
+    + 'if (counterFile) {\n'
+    + '  attempt = fs.existsSync(counterFile) ? Number(fs.readFileSync(counterFile, "utf8")) : 0;\n'
+    + '  fs.writeFileSync(counterFile, String(attempt + 1));\n'
+    + '}\n'
+    + 'if (attempt < failCount) {\n'
+    + '  process.stderr.write(process.env.FAKE_PSQL_FAIL_MESSAGE || "connection refused (fake)");\n'
+    + '  process.exit(1);\n'
+    + '}\n'
+    + 'process.stdout.write(process.env.FAKE_PSQL_OUTPUT || "");\n',
     { mode: 0o700 },
   );
   fs.writeFileSync(evidencePath, JSON.stringify({ schema_version: schemaVersion, exceptions: evidence }));
@@ -149,7 +169,11 @@ function runGuard({
     MIGRATION_EVIDENCE_PATH: evidencePath,
     PSQL_BIN: fakePsql,
     FAKE_PSQL_OUTPUT: ledger.map((record) => JSON.stringify(record)).join('\n') + '\n',
+    FAKE_PSQL_COUNTER_FILE: counterFile,
+    FAKE_PSQL_FAIL_COUNT: String(psqlFailCount),
+    FAKE_PSQL_FAIL_MESSAGE: psqlFailMessage,
   };
+  if (retryDelaysMs) env.LEDGER_RETRY_DELAYS_MS = retryDelaysMs;
   if (destino) env.DESTINO_URL = 'postgres://tester@fixture.invalid/test';
   else delete env.DESTINO_URL;
 
@@ -990,4 +1014,39 @@ test('version-collision rejeita reuso e cadeias do related_migration', () => {
   });
   assert.equal(chained.status, 1);
   assert.match(chained.stderr, /ciclo\/cadeia de version-collision/);
+});
+
+test('queryLedger tenta novamente apos falha transitoria de conexao e depois sucede', () => {
+  const result = runGuard({
+    psqlFailCount: 1,
+    psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired\n'
+      + 'FATAL: (ECHECKOUTRETRIES) failed to check out a connection after multiple retries',
+    retryDelaysMs: '10,10',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
+  assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
+});
+
+test('queryLedger desiste apos esgotar tentativas de falha transitoria', () => {
+  const result = runGuard({
+    psqlFailCount: 5,
+    psqlFailMessage: 'timeout expired',
+    retryDelaysMs: '10,10',
+  });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
+  assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 2\/3/);
+  assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: timeout expired/);
+});
+
+test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
+  const result = runGuard({
+    psqlFailCount: 1,
+    psqlFailMessage: 'ERROR:  syntax error at or near "SELEC"',
+    retryDelaysMs: '10,10',
+  });
+  assert.equal(result.status, 2);
+  assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
+  assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
 });

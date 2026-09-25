@@ -67,3 +67,60 @@ for (const invalid of ['invalid-synthetic-secret', 'https://u:p@fixture.invalid/
     });
   });
 }
+
+// --- Retry de falha de transporte (db-live-guard). Desligado por padrao: um
+// timeout do pooler abria issue de "contrato quebrado" que nao era verdade,
+// mas ligar isso para todo mundo daria retry em escrita (register-migration).
+const semRetry = { PATH: '/fixture/bin' };
+const comRetry = { PATH: '/fixture/bin', PSQL_CONNECT_RETRIES: '2', PSQL_CONNECT_RETRY_DELAY_MS: '0' };
+const transporte = () => Object.assign(new Error('psql falhou'), {
+  stderr: 'psql: error: connection to server at "pooler.invalid" (10.0.0.1), port 5432 failed: timeout expired',
+});
+
+test('sem PSQL_CONNECT_RETRIES uma falha de transporte nao e repetida', () => {
+  let chamadas = 0;
+  assert.throws(() => withPsqlEnvironment(uri, () => { chamadas += 1; throw transporte(); },
+    { baseEnv: semRetry }), /psql falhou/);
+  assert.equal(chamadas, 1);
+});
+
+test('com retry, falha de transporte tenta ate o limite e propaga o erro original', () => {
+  let chamadas = 0;
+  assert.throws(() => withPsqlEnvironment(uri, () => { chamadas += 1; throw transporte(); },
+    { baseEnv: comRetry }), /psql falhou/);
+  assert.equal(chamadas, 3);
+});
+
+test('com retry, sucesso numa tentativa seguinte devolve o valor', () => {
+  let chamadas = 0;
+  const valor = withPsqlEnvironment(uri, () => {
+    chamadas += 1;
+    if (chamadas < 2) throw transporte();
+    return 'ok';
+  }, { baseEnv: comRetry });
+  assert.equal(valor, 'ok');
+  assert.equal(chamadas, 2);
+});
+
+test('retry nunca cobre erro deterministico: SQL, autenticacao e drift falham de primeira', () => {
+  for (const stderr of [
+    'ERROR:  relation "public.inexistente" does not exist',
+    'psql: error: connection to server failed: FATAL:  password authentication failed for user "postgres"',
+    'psql: error: connection to server failed: FATAL:  no pg_hba.conf entry for host',
+  ]) {
+    let chamadas = 0;
+    assert.throws(() => withPsqlEnvironment(uri, () => {
+      chamadas += 1;
+      throw Object.assign(new Error('psql falhou'), { stderr });
+    }, { baseEnv: comRetry }), /psql falhou/);
+    assert.equal(chamadas, 1, `nao devia repetir: ${stderr.slice(0, 40)}`);
+  }
+});
+
+test('o passfile temporario e removido mesmo depois de esgotar os retries', () => {
+  let file;
+  assert.throws(() => withPsqlEnvironment(uri, env => { file = env.PGPASSFILE; throw transporte(); },
+    { baseEnv: comRetry }), /psql falhou/);
+  assert.equal(fs.existsSync(file), false);
+  assert.equal(fs.existsSync(path.dirname(file)), false);
+});

@@ -1,5 +1,5 @@
 # ==================================================================
-# ZAPP-WEB · Guardas VIVOS do banco oficial
+# ZAPP-WEB · Guardas VIVOs do banco oficial
 # ==================================================================
 # SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele
 # executa scripts do repositorio com DESTINO_URL apenas depois de chegarem a
@@ -35,11 +35,21 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    # issues: write apenas para o alerta do passo final; nenhum passo de
-    # auditoria usa o GITHUB_TOKEN.
+    # issues: write para abrir/comentar o alerta em falha e fechar apos
+    # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
     permissions:
       contents: read
       issues: write
+    # Este guarda roda sozinho (push na main, agendado) e abre issue quando falha.
+    # Um timeout de conexao do pooler do Supabase virava alerta de "contrato
+    # quebrado" que nao era verdade (run 36135041890 morreu em "timeout expired"
+    # antes de qualquer consulta). O retry so cobre falha de transporte, isto e,
+    # o comando nem chegou ao servidor: erro de SQL, de autenticacao e drift
+    # continuam falhando de primeira. Desligado por padrao no helper, ligado aqui
+    # porque nenhum passo deste job escreve no banco.
+    env:
+      PSQL_CONNECT_RETRIES: "2"
+      PSQL_CONNECT_RETRY_DELAY_MS: "3000"
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -196,6 +206,38 @@ jobs:
               labels: ['db-live-guard'],
               body,
             });
+
+      # Fecha o alerta quando o guarda volta a ficar verde: sem isto, um
+      # alerta gerado por falha transitoria (ou ja corrigida) fica aberto pra
+      # sempre porque ninguem fecha manualmente um issue automatico.
+      - name: Fechar alerta de contrato vivo apos recuperacao
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            for (const issue of issues.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Guarda vivo passou de novo em `' + context.sha + '` ('
+                  + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                  + '/actions/runs/' + context.runId + '). Fechando automaticamente.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
 
       - name: Publicar evidencias estruturais
         if: always()

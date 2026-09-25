@@ -11,6 +11,9 @@
  *   MIGRATIONS_DIR  diretorio de fixtures (padrao: supabase/migrations)
  *   MIGRATION_EVIDENCE_PATH manifesto de excecoes (padrao abaixo)
  *   PSQL_BIN        executavel psql/fake (padrao: psql; nunca passa por shell)
+ *   LEDGER_RETRY_DELAYS_MS  atrasos (ms, separados por virgula) entre novas
+ *                   tentativas de consulta ao ledger apos falha transitoria
+ *                   de conexao com o pooler (padrao: 5000,15000)
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -512,21 +515,55 @@ function loadMigrations(dir, evidence) {
   };
 }
 
+const TRANSIENT_CONNECTION_RE = /timeout expired|ECHECKOUTRETRIES|could not connect|connection refused|server closed the connection|terminating connection|too many clients|connection reset|connection terminated|could not translate host/iu;
+const LEDGER_RETRY_DELAYS_MS = (process.env.LEDGER_RETRY_DELAYS_MS || '5000,15000')
+  .split(',')
+  .map((value) => Number(value.trim()))
+  .filter((value) => Number.isFinite(value) && value >= 0);
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function queryLedgerOnce() {
+  return withPsqlEnvironment(url, (env) => execFileSync(
+    PSQL_BIN,
+    [
+      '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align',
+      '--quiet', '--command', LEDGER_QUERY,
+    ],
+    { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env },
+  ));
+}
+
+// O pooler do Supabase esgota conexoes momentaneamente sob push/carga concorrente
+// alta (varias sessoes simultaneas). Isso e falha de infraestrutura transitoria,
+// nao drift real de schema — sem retry, cada esgotamento abria/comentava o alerta
+// de contrato quebrado (issue #691 teve 9 comentarios em 80min no incidente de
+// 2026-09-25). Erros nao reconhecidos como transitorios continuam fail-fast.
 function queryLedger() {
-  try {
-    return withPsqlEnvironment(url, (env) => execFileSync(
-      PSQL_BIN,
-      [
-        '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align',
-        '--quiet', '--command', LEDGER_QUERY,
-      ],
-      { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env },
-    ));
-  } catch (error) {
-    const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
-    const safe = stderr ? stderr.replaceAll(url, '<DESTINO_URL>').slice(0, 2000) : 'sem detalhe';
-    throw new Error(`falha ao consultar schema_migrations via psql: ${safe}`);
+  const attempts = LEDGER_RETRY_DELAYS_MS.length + 1;
+  let lastStderr = '';
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return queryLedgerOnce();
+    } catch (error) {
+      const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
+      lastStderr = stderr;
+      const delay = LEDGER_RETRY_DELAYS_MS[attempt - 1];
+      const transient = TRANSIENT_CONNECTION_RE.test(stderr);
+      if (!transient || delay === undefined) {
+        const safe = stderr ? stderr.replaceAll(url, '<DESTINO_URL>').slice(0, 2000) : 'sem detalhe';
+        throw new Error(`falha ao consultar schema_migrations via psql: ${safe}`);
+      }
+      console.error(
+        `AVISO: falha transitoria de conexao ao consultar o ledger (tentativa ${attempt}/${attempts}); `
+        + `nova tentativa em ${delay / 1000}s.`,
+      );
+      sleepSync(delay);
+    }
   }
+  throw new Error(`falha ao consultar schema_migrations via psql: ${lastStderr || 'sem detalhe'}`);
 }
 
 function parseLedger(raw) {
