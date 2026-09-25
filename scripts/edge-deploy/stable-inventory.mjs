@@ -49,6 +49,15 @@ export async function collectStableAttestation({
   manifest, before, gitSha, runId, deploymentScope,
   fetchInventory, sleep = delay, now = Date.now,
   intervalMs = 10_000, minimumObservationMs = 60_000, consecutiveSamples = 3, maxAttempts = 18,
+  // Slugs que o proprio passo de deploy reportou como "No change found" (o
+  // Supabase CLI pula, sem bump de versao, uma funcao cujo bundle local bate
+  // byte a byte com o ja publicado). Vazio por padrao: sem isso, o
+  // comportamento e identico ao anterior (toda funcao do escopo precisa de
+  // bump de versao). So dispensamos o bump para uma funcao que: (a) esta
+  // nesta lista, E (b) o digest remoto observado continua identico ao
+  // baseline pre-deploy -- nunca aceitamos "sem mudanca" por inferencia pura
+  // de digest, so quando o CLI mesmo disse que pulou essa funcao.
+  knownUnchanged = [],
 }) {
   verifyManifestDigest(manifest);
   if (manifest.project_ref !== CANONICAL_PROJECT || before?.project_ref !== manifest.project_ref) {
@@ -56,11 +65,16 @@ export async function collectStableAttestation({
   }
   if (!Number.isInteger(maxAttempts) || maxAttempts < 2 || !Number.isInteger(consecutiveSamples)
     || consecutiveSamples < 2 || intervalMs < 0 || minimumObservationMs < 0
-    || !Number.isFinite(intervalMs) || !Number.isFinite(minimumObservationMs)) throw new Error('Invalid stabilization policy');
+    || !Number.isFinite(intervalMs) || !Number.isFinite(minimumObservationMs)
+    || !Array.isArray(knownUnchanged) || !knownUnchanged.every((name) => typeof name === 'string'))
+  {
+    throw new Error('Invalid stabilization policy');
+  }
   const selected = deploymentScope === 'all' ? manifest.functions.map(fn => fn.name) : [deploymentScope];
   if (!selected.every(name => manifest.functions.some(fn => fn.name === name))) throw new Error('Unknown deployment scope');
   const baseline = inventorySnapshot(before.functions, manifest.project_ref).functions;
   const pre = new Map(baseline.map(fn => [fn.slug, fn]));
+  const unchangedSet = new Set(knownUnchanged);
   const samples = [];
   const started = now();
   let previousDigest = null;
@@ -76,8 +90,15 @@ export async function collectStableAttestation({
       }
       for (const name of selected) {
         const old = pre.get(name);
+        if (!old) continue;
         const current = byName.get(name);
-        if (old && (old.version === null || current.version <= old.version || old.id !== current.id)) {
+        if (old.version === null || old.id !== current.id) {
+          throw new Error('Selected deployment not yet observed');
+        }
+        const versionBumped = current.version !== null && current.version > old.version;
+        const legitimatelyUnchanged = unchangedSet.has(name) && current.version === old.version
+          && old.ezbr_sha256 !== null && current.ezbr_sha256 === old.ezbr_sha256;
+        if (!versionBumped && !legitimatelyUnchanged) {
           throw new Error('Selected deployment not yet observed');
         }
       }

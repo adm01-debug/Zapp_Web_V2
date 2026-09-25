@@ -236,13 +236,29 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           FN: ${{ inputs.function_name }}
         run: |
+          EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+          DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
           if [ -n "$FN" ]; then
             echo "Deploy da funcao: $FN"
-            supabase functions deploy "$FN" --project-ref "$PROJECT_REF"
+            supabase functions deploy "$FN" --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
           else
             echo "Deploy de TODAS as funcoes"
-            supabase functions deploy --project-ref "$PROJECT_REF"
+            supabase functions deploy --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
           fi
+          # O CLI pula (sem bump de versao) uma funcao cujo bundle local bate
+          # byte a byte com o ja publicado, sinalizando "No change found in
+          # Function: X". Sem capturar isso, a verificacao pos-deploy esgota
+          # as tentativas esperando um bump que nunca vai acontecer para essa
+          # funcao (achado da auditoria de 25/09/2026, run 36183348853).
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
+          const log = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
+          const unchanged = [...log.matchAll(/^No change found in Function: (\S+)$/gm)].map((m) => m[1]);
+          writeFileSync(`${evidenceDir}/unchanged-functions.json`, JSON.stringify(unchanged));
+          console.log(`Funcoes sem mudanca de bundle: ${unchanged.length ? unchanged.join(', ') : 'nenhuma'}`);
+          NODE
 
       - name: Capturar e validar manifesto remoto pos-deploy
         env:
@@ -261,7 +277,8 @@ jobs:
             --output "$EVIDENCE_DIR/edge-deployment-attestation.json" \
             --git-sha "$DEPLOYED_GIT_SHA" \
             --run-id "$GITHUB_RUN_ID" \
-            --scope "$SCOPE"
+            --scope "$SCOPE" \
+            --unchanged "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Executar smoke positivo e negativo por funcao
         env:

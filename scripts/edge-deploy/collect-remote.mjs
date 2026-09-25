@@ -5,7 +5,7 @@ import { verifyManifestDigest } from './manifest-lib.mjs';
 
 async function main() {
   const argv = process.argv.slice(2);
-  const allowed = new Set(['--manifest', '--output', '--before', '--git-sha', '--run-id', '--scope']);
+  const allowed = new Set(['--manifest', '--output', '--before', '--git-sha', '--run-id', '--scope', '--unchanged']);
   const args = {};
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--snapshot') { args.snapshot = true; continue; }
@@ -21,8 +21,12 @@ async function main() {
   if (args.snapshot) evidence = inventorySnapshot(await fetchInventory(), manifest.project_ref);
   else {
     if (!args.before || !/^[a-f0-9]{40}$/.test(args['git-sha'] ?? '') || !/^\d+$/.test(args['run-id'] ?? '') || !args.scope) throw new Error('Before snapshot, immutable SHA, run and scope required');
+    // --unchanged (opcional): lista JSON de slugs que o proprio passo de deploy
+    // reportou como "No change found" (bundle identico ao ja publicado, o CLI
+    // nao bumpa versao). Sem o arquivo, comportamento identico ao anterior.
+    const knownUnchanged = args.unchanged ? JSON.parse(await readFile(args.unchanged, 'utf8')) : [];
     evidence = await collectStableAttestation({ manifest, before: JSON.parse(await readFile(args.before, 'utf8')),
-      gitSha: args['git-sha'], runId: args['run-id'], deploymentScope: args.scope, fetchInventory });
+      gitSha: args['git-sha'], runId: args['run-id'], deploymentScope: args.scope, fetchInventory, knownUnchanged });
   }
   await writeFile(args.output, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
   console.log(args.snapshot ? 'Pre-deploy structural snapshot captured.' : `Stable deployment observed: ${evidence.function_count} functions; not a binary source/bundle equivalence proof.`);

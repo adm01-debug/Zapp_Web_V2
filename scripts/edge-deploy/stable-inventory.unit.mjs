@@ -30,6 +30,27 @@ test('late bundle changes reset stable streak even without changed source', asyn
 test('unchanged pre-deploy inventory never attests success', async () => {
   await assert.rejects(simulate([before.functions]), /NOT attested/);
 });
+test('funcao sinalizada pelo deploy como "No change found" nao exige bump de versao', async () => {
+  // rows[0] fica na MESMA versao/digest do baseline (o CLI pulou por bundle
+  // identico); as demais seguem bumpadas como em "rows". So aceita porque o
+  // slug foi passado em knownUnchanged -- nunca por inferencia de digest.
+  const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
+  const result = await simulate([skipped], { knownUnchanged: [rows[0].slug] });
+  assert.equal(result.functions.find((fn) => fn.name === rows[0].slug).remote_version, 1);
+  assert.equal(result.function_count, manifest.functions.length);
+});
+test('sem sinalizacao explicita do deploy, funcao sem bump continua rejeitada', async () => {
+  const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
+  await assert.rejects(simulate([skipped]), /NOT attested/);
+});
+test('funcao sinalizada como sem mudanca mas com digest divergente do baseline ainda e rejeitada', async () => {
+  const drifted = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1, ezbr_sha256: 'c'.repeat(64) } : fn));
+  await assert.rejects(simulate([drifted], { knownUnchanged: [rows[0].slug] }), /NOT attested/);
+});
+test('knownUnchanged invalido e rejeitado antes de qualquer chamada de rede', async () => {
+  await assert.rejects(simulate([rows], { knownUnchanged: 'not-an-array' }), /policy/);
+  await assert.rejects(simulate([rows], { knownUnchanged: [123] }), /policy/);
+});
 for (const [name, patch] of Object.entries({ failed: { status: 'FAILED' }, version: { version: null }, digest: { ezbr_sha256: 'invalid-hash-16-chars' }, timestamp: { updated_at: 'invalid' }, identity: { id: null }, jwt: { verify_jwt: !rows[0].verify_jwt } })) {
   test(`rejects ${name} drift`, async () => {
     await assert.rejects(simulate([rows.map((fn, i) => i === 0 ? { ...fn, ...patch } : fn)]), /NOT attested/);
