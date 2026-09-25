@@ -52,12 +52,24 @@ serve(async (req) => {
   const action = (pathAction === 'evolution-api' && bodyForAction.action)
     ? String(bodyForAction.action) : pathAction;
 
-  const proxy = (path: string, method = 'POST', body?: unknown) =>
-    proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body);
-
   try {
     const body = await json();
     const instance = String(body.instanceName || body.instance || '');
+
+    // ─── E17 (plano multi-conexão): instância obrigatória em ação de instância ───
+    // list-instances é a única ação realmente global (lista todas as instâncias
+    // na GO). Toda outra ação usa `${instance}` no path traduzido — vazio hoje
+    // casaria como path malformado (GO 404) ou, pior, caía silenciosamente na
+    // PRINCIPAL em rotas GET sem sufixo.
+    if (action !== 'list-instances' && !instance) {
+      return new Response(JSON.stringify({ error: true, message: 'instance (instanceName) é obrigatório para esta ação.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // E22: chave do circuit breaker por instância — '__admin' para list-instances.
+    const proxy = (path: string, method = 'POST', body?: unknown) =>
+      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin');
 
     // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
     // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a
