@@ -1832,7 +1832,7 @@
         "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-24",
+    "generated_at": "2026-09-25",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
