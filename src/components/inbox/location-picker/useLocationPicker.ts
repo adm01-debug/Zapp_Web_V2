@@ -3,6 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
+import { reverseGeocodePlace, searchPlace } from '@/lib/mapboxGeocode';
 import {
   getMapboxToken,
   mapboxFailureKindFromMapError,
@@ -94,20 +95,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
 
   const reverseGeocode = useCallback(async (lng: number, lat: number) => {
     // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
-    // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita.
+    // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
+    // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
     if (!mapboxToken) { select({ lat, lng }); return; }
     const signal = nextGeoSignal();
-    try {
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&language=pt`, { signal });
-      const data = response.ok ? await response.json() : null;
-      if (signal.aborted) return;
-      const feature = data?.features?.[0];
-      select(feature ? { lat, lng, name: feature.text, address: feature.place_name } : { lat, lng });
-    } catch (error) {
-      if (signal.aborted) return;
-      log.error('Error reverse geocoding:', error);
-      select({ lat, lng });
-    }
+    const place = await reverseGeocodePlace(lat, lng, mapboxToken);
+    if (signal.aborted) return;
+    select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng });
   }, [mapboxToken, nextGeoSignal, select]);
 
   useEffect(() => {
@@ -192,27 +186,38 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     const signal = nextGeoSignal();
     setIsSearching(true);
     try {
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&language=pt&country=br`, { signal });
-      if (!response.ok) {
-        const limited = response.status === 429;
-        toast({ title: limited ? 'Muitas buscas seguidas' : 'Falha na busca', description: limited ? 'Aguarde um instante e tente de novo.' : 'Não foi possível consultar o endereço. Tente novamente.', variant: 'destructive' });
+      const result = await searchPlace(query, mapboxToken, signal);
+      if (result.ok) {
+        updateMarker(result.place.lng, result.place.lat);
+        select({ lat: result.place.lat, lng: result.place.lng, name: result.place.name, address: result.place.address });
         return;
       }
-      const data = await response.json();
-      if (signal.aborted) return;
-      const feature = data.features?.[0];
-      if (feature) {
-        const [lng, lat] = feature.center;
-        updateMarker(lng, lat);
-        select({ lat, lng, name: feature.text, address: feature.place_name });
-      } else {
+      // Busca substituída por outra mais nova: nada na tela.
+      if (result.kind === 'aborted') return;
+      if (result.kind === 'not_found') {
         toast({ title: 'Local não encontrado', description: 'Tente buscar por outro endereço.', variant: 'destructive' });
+        return;
       }
-    } catch (error) {
-      if (signal.aborted) return;
-      log.error('Error searching location:', error);
-      toast({ title: 'Falha na busca', description: 'Verifique sua conexão e tente novamente.', variant: 'destructive' });
-    } finally { setIsSearching(false); }
+      if (result.kind === 'rate_limited') {
+        toast({ title: 'Muitas buscas seguidas', description: 'Aguarde um instante e tente de novo.', variant: 'destructive' });
+        return;
+      }
+      if (result.kind === 'timeout') {
+        reportMapboxFailure('timeout', 'picker', { stage: 'search' });
+        toast({ title: 'Falha na busca', description: 'A busca demorou demais. Tente novamente.', variant: 'destructive' });
+        return;
+      }
+      toast({
+        title: 'Falha na busca',
+        description: result.kind === 'network'
+          ? 'Verifique sua conexão e tente novamente.'
+          : 'Não foi possível consultar o endereço. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      // A busca antiga não desliga o spinner da nova.
+      if (!signal.aborted) setIsSearching(false);
+    }
   }, [searchQuery, mapboxToken, updateMarker, nextGeoSignal, select]);
 
   const reset = useCallback(() => {
