@@ -29,6 +29,9 @@ export function useDashboardStats(filters: DashboardFilters) {
         totalAgents: data?.length || 0,
       };
     },
+    // Lista de atendentes ativos muda pouco (E28) — presença (online/offline)
+    // já é tempo real via useAgentPresenceMap, fora deste cache.
+    staleTime: 300_000,
   });
 
   // "Online" = conta ativa E conectada agora com status Online (presença real do Realtime).
@@ -58,6 +61,8 @@ export function useDashboardStats(filters: DashboardFilters) {
       if (error) throw error;
       return data || [];
     },
+    // Contatos mudam de status/atribuição com frequência — janela curta (E28).
+    staleTime: 30_000,
   });
 
   const queuesQuery = useQuery({
@@ -70,10 +75,12 @@ export function useDashboardStats(filters: DashboardFilters) {
       if (error) throw error;
       return data || [];
     },
+    // Composição de filas (quais existem, quem é membro) muda raramente (E28).
+    staleTime: 300_000,
   });
 
   // slaQuery (últimos 50 all-time, sem filtro de data) foi removida (E17): era uma
-  // 2ª régua de "tempo médio" divergente da de useDashboardKpi (hoje/mediana) —
+  // 2ª régua de "tempo médio" divergente da de useDashboardKpi (hoje/mediana) --
   // achado A5. useDashboardData agora lê o tempo médio só de useDashboardKpi.
 
   return {
