@@ -185,3 +185,70 @@ export async function searchPlaces(
 export function resetReverseGeocodeCacheForTests(): void {
   cache.clear();
 }
+
+// --- Search Box /suggest (autocomplete estilo playground) ---------------------------------------
+// `/suggest` não devolve coordenada (só mapbox_id/name/full_address/feature_type/distance) — a
+// coordenada só sai do `/retrieve` (E07), ao escolher. As duas exigem `session_token` (ver
+// `mapboxSession.ts`): é o que agrupa N `/suggest` + 1 `/retrieve` como 1 sessão faturável.
+
+export interface GeoSuggestion {
+  id: string;
+  name: string;
+  address: string;
+  kind: 'poi' | 'street' | 'address' | 'place' | 'other';
+  distanceMeters?: number;
+}
+
+export type GeoSuggestResult = { ok: true; suggestions: GeoSuggestion[] } | { ok: false; kind: GeoFailureKind };
+
+interface SuggestFeature {
+  name?: unknown;
+  full_address?: unknown;
+  place_formatted?: unknown;
+  feature_type?: unknown;
+  mapbox_id?: unknown;
+  distance?: unknown;
+}
+
+const SUGGESTION_KINDS = new Set(['poi', 'street', 'address', 'place']);
+
+function toSuggestion(feature: SuggestFeature): GeoSuggestion | null {
+  const id = feature.mapbox_id;
+  const name = feature.name;
+  if (typeof id !== 'string' || !id || typeof name !== 'string' || !name) return null;
+  const address = feature.full_address ?? feature.place_formatted;
+  const kindRaw = feature.feature_type;
+  const kind = typeof kindRaw === 'string' && SUGGESTION_KINDS.has(kindRaw) ? kindRaw as GeoSuggestion['kind'] : 'other';
+  const suggestion: GeoSuggestion = {
+    id,
+    name,
+    address: typeof address === 'string' ? address : '',
+    kind,
+  };
+  if (typeof feature.distance === 'number') suggestion.distanceMeters = feature.distance;
+  return suggestion;
+}
+
+/**
+ * Autocomplete enquanto o operador digita. Nunca lança; string vazia/só espaço não vai à rede.
+ * `opts.session` é obrigatório (billing por sessão) — quem chama pega de `getSearchSession()`.
+ */
+export async function suggestPlaces(
+  query: string,
+  token: string,
+  opts: { session: string; proximity?: GeoProximity; signal?: AbortSignal },
+): Promise<GeoSuggestResult> {
+  const term = query.trim();
+  if (!term) return { ok: false, kind: 'not_found' };
+
+  const prox = opts.proximity ? `&proximity=${opts.proximity.lng},${opts.proximity.lat}` : '';
+  const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(term)}&session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=${SEARCH_RESULT_LIMIT}${prox}`;
+  const result = await requestJson(url, opts.signal);
+  if (!result.ok) return { ok: false, kind: result.kind };
+  const features = (result.data as { suggestions?: SuggestFeature[] } | null)?.suggestions ?? [];
+  const suggestions = features.flatMap((feature) => {
+    const suggestion = toSuggestion(feature);
+    return suggestion ? [suggestion] : [];
+  });
+  return { ok: true, suggestions };
+}
