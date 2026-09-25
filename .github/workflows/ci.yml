@@ -24,7 +24,10 @@ permissions:
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Só cancela runs em andamento pra PR (push novo na mesma PR); em push na
+  # main cada commit mantém seu próprio veredito de CI (antes cancelava um
+  # merge no meio do outro, e a main ficava sem check verde nenhum).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ===========================================
