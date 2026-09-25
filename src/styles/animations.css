@@ -157,6 +157,19 @@
   50% { opacity: 0.5; }
 }
 
+/* Angulo do arco luminoso que gira na borda da conversa selecionada
+   (ConversationRow) — registrado como <angle> pra o conic-gradient
+   interpolar suavemente em vez de saltar entre os keyframes. */
+@property --conv-border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes conv-border-spin {
+  to { --conv-border-angle: 360deg; }
+}
+
 /* ===== NATIVE VIEW TRANSITIONS — PG fade pattern ===== */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -176,5 +189,9 @@
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0.001ms;
+  }
+
+  .conversation-row-selected {
+    animation: none;
   }
 }

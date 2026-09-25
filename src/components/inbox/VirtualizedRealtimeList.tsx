@@ -326,8 +326,8 @@ const ConversationRow = memo(({
         className={cn(
           'w-full rounded-xl flex flex-col gap-1.5 transition-all text-left border group relative',
           ROW_CLASSES_BY_DENSITY[density],
-          selectedContactId === contactId ? 'bg-accent border-primary/40' : 'border-transparent hover:bg-muted/40',
-          isSelected && 'bg-accent',
+          selectedContactId === contactId ? 'conversation-row-selected' : 'border-transparent hover:bg-muted/40',
+          isSelected && selectedContactId !== contactId && 'bg-accent',
           isPinned && selectedContactId !== contactId && 'bg-muted/30'
         )}
       >

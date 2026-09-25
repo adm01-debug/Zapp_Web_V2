@@ -83,6 +83,27 @@
   box-shadow: inset 4px 0 8px -4px hsl(var(--primary) / 0.15);
 }
 
+/* ConversationRow (sidebar da inbox) selecionada — fundo escuro igual ao
+   card fixado (bg-muted/30) + arco luminoso girando na borda (efeito
+   inspirado no hover-border-gradient da Aceternity UI), via duas camadas
+   de background: o fill fica preso ao padding-box, o conic-gradient ao
+   border-box, entao só aparece no anel de 1px da borda. */
+.conversation-row-selected {
+  border-color: transparent;
+  background:
+    linear-gradient(hsl(var(--muted) / 0.35), hsl(var(--muted) / 0.35)) padding-box,
+    conic-gradient(
+      from var(--conv-border-angle, 0deg),
+      transparent 0deg,
+      hsl(var(--primary) / 0.15) 20deg,
+      hsl(var(--primary)) 45deg,
+      hsl(var(--primary) / 0.15) 70deg,
+      transparent 100deg,
+      transparent 360deg
+    ) border-box;
+  animation: conv-border-spin 3.5s linear infinite;
+}
+
 /* ===== MESSAGE BUBBLES ===== */
 .message-bubble { @apply max-w-[70%] px-4 py-2 rounded-2xl; }
 .message-bubble.sent { @apply bg-[hsl(var(--chat-bubble-sent))] text-[hsl(var(--chat-bubble-sent-foreground))] rounded-br-md; }
