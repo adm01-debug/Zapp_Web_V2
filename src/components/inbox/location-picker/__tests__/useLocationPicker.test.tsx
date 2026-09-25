@@ -369,4 +369,80 @@ describe('useLocationPicker', () => {
     expect(view.result.current.searchResults).toHaveLength(0);
     expect(view.result.current.selectedLocation).toEqual({ lat: -23.57, lng: -46.62, name: 'XBZ Brindes', address: 'R. da Independência, São Paulo' });
   });
+
+  // E30 (Fase 4) — clique no mapa/GPS não pode deixar sobra de uma busca antiga.
+  describe('convivência com clique no mapa e GPS (E30)', () => {
+    it('clicar no mapa depois de uma busca com vários candidatos limpa a lista antiga', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          features: [
+            { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+            { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          ],
+        }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('brindes'));
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.searchResults).toHaveLength(2);
+
+      // Clique no mapa: mesmo caminho de sempre (reverseGeocode -> select), sem token
+      // pra simplificar o teste (cai direto em select({ lat, lng })).
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.searchResults).toHaveLength(0));
+    });
+  });
+
+  // E31 (Fase 4) — proximity dinâmico: centro do mapa enquanto ele está visível, posição do
+  // agente (GPS) na aba "current" sem mapa, e São Paulo como piso sem nenhum dos dois.
+  describe('proximity dinâmico (E31)', () => {
+    it('sem mapa e sem GPS, proximity é São Paulo (DEFAULT_CENTER)', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = renderPicker();
+      await act(async () => {});
+      expect(view.result.current.proximity).toEqual({ lng: -46.6333, lat: -23.5505 });
+    });
+
+    it('com o mapa visível, proximity é o centro do mapa', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      expect(view.result.current.proximity).toEqual({ lng: -46.6333, lat: -23.5505 });
+    });
+
+    it('mover o mapa (moveend) atualiza o proximity para o novo centro', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      FakeMap.instances[0].opts.center = [-49.27, -25.43];
+      act(() => FakeMap.instances[0].emit('moveend'));
+      expect(view.result.current.proximity).toEqual({ lng: -49.27, lat: -25.43 });
+    });
+
+    it('GPS obtido na aba "current" (sem mapa) vira o proximity', async () => {
+      h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+      mockGeolocation(-23.5, -46.6);
+      const view = renderPicker();
+      await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.proximity).toEqual({ lng: -46.6, lat: -23.5 }));
+    });
+
+    it('sair da aba do mapa volta a priorizar a posição do agente sobre o centro do mapa antigo', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      mockGeolocation(-23.5, -46.6);
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      FakeMap.instances[0].opts.center = [-49.27, -25.43];
+      act(() => FakeMap.instances[0].emit('moveend'));
+      expect(view.result.current.proximity).toEqual({ lng: -49.27, lat: -25.43 });
+
+      act(() => view.rerender({ open: true, tab: 'current' }));
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.proximity).toEqual({ lng: -46.6, lat: -23.5 }));
+    });
+  });
 });
