@@ -23,6 +23,7 @@ vi.mock('@/lib/mapboxLoader', () => ({ loadMapbox: () => h.loadMapbox() }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
 
 import { useLocationPicker } from '../useLocationPicker';
+import { resetReverseGeocodeCacheForTests } from '@/lib/mapboxGeocode';
 import { MapboxTokenError, MAPBOX_MAP_LOAD_TIMEOUT_MS } from '@/lib/mapboxToken';
 
 type Handler = (event?: unknown) => void;
@@ -34,6 +35,7 @@ class FakeMap {
   removed = false;
   flyTo = vi.fn();
   addControl = vi.fn();
+  getCenter() { return { lng: this.opts.center[0], lat: this.opts.center[1] }; }
   constructor(opts: { center: [number, number]; zoom: number }) {
     this.opts = opts;
     FakeMap.instances.push(this);
@@ -104,6 +106,7 @@ describe('useLocationPicker', () => {
     h.loadMapbox.mockResolvedValue(fakeMapbox);
     FakeMap.instances = [];
     FakeMarker.instances = [];
+    resetReverseGeocodeCacheForTests();
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -235,7 +238,9 @@ describe('useLocationPicker', () => {
     await act(async () => { await view.result.current.searchLocation(); });
     expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Falha na busca' }));
 
-    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ features: [] }) });
+    // A busca tem duas camadas (Search Box e, se ela não achar, o geocoding v5).
+    const vazio = { ok: true, json: async () => ({ features: [] }) };
+    fetchMock.mockResolvedValueOnce(vazio).mockResolvedValueOnce(vazio);
     await act(async () => { await view.result.current.searchLocation(); });
     expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Local não encontrado' }));
     expect(view.result.current.isSearching).toBe(false);
@@ -279,5 +284,89 @@ describe('useLocationPicker', () => {
     act(() => view.result.current.reset());
     expect(view.result.current.selectedLocation).toBeNull();
     expect(view.result.current.searchQuery).toBe('');
+  });
+
+  it('geocoding pendurado não trava a seleção: depois do timeout vale a coordenada', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    mockGeolocation(-23.5, -46.6);
+    // Requisição que nunca responde: antes, `selectedLocation` ficava nulo para sempre e o
+    // botão Enviar nunca habilitava — sem erro na tela.
+    const fetchMock = vi.fn((_url: string, init: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    await act(async () => { view.result.current.getCurrentLocation(); await vi.advanceTimersByTimeAsync(0); });
+    expect(view.result.current.selectedLocation).toBeNull();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); });
+    expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 });
+  });
+
+  it('busca pendurada vira erro no timeout, libera o spinner e registra telemetria', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    const fetchMock = vi.fn((_url: string, init: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    act(() => view.result.current.setSearchQuery('avenida paulista'));
+
+    let search: Promise<void> = Promise.resolve();
+    act(() => { search = view.result.current.searchLocation(); });
+    expect(view.result.current.isSearching).toBe(true);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); await search; });
+    expect(view.result.current.isSearching).toBe(false);
+    expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Falha na busca' }));
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker', expect.anything());
+  });
+
+  it('com vários candidatos o marcador não se move sozinho: quem escolhe é o operador', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    // Search Box devolve 3 candidatos (é o que acontece com "Promo Brindes Curitiba").
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        features: [
+          { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+          { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          { geometry: { coordinates: [-40.36, -20.37] }, properties: { name: 'Brendes', full_address: 'Vila Velha - ES' } },
+        ],
+      }),
+    }));
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('load'));
+    act(() => view.result.current.setSearchQuery('brindes'));
+    await act(async () => { await view.result.current.searchLocation(); });
+
+    expect(view.result.current.searchResults).toHaveLength(3);
+    expect(view.result.current.selectedLocation).toBeNull();
+    expect(FakeMarker.instances).toHaveLength(0);
+
+    act(() => view.result.current.chooseSearchResult(view.result.current.searchResults[1]));
+    expect(view.result.current.selectedLocation).toEqual({ lat: -25.43, lng: -49.27, name: 'Brindes Curitiba', address: 'Curitiba - PR' });
+    expect(view.result.current.searchResults).toHaveLength(0);
+    expect(FakeMarker.instances[0].lngLat).toEqual([-49.27, -25.43]);
+  });
+
+  it('candidato único é selecionado direto, sem lista', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ features: [{ geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } }] }),
+    }));
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('load'));
+    act(() => view.result.current.setSearchQuery('xbz brindes'));
+    await act(async () => { await view.result.current.searchLocation(); });
+
+    expect(view.result.current.searchResults).toHaveLength(0);
+    expect(view.result.current.selectedLocation).toEqual({ lat: -23.57, lng: -46.62, name: 'XBZ Brindes', address: 'R. da Independência, São Paulo' });
   });
 });
