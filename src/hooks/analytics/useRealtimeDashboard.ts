@@ -24,18 +24,6 @@ export interface RealtimeDashboardState {
 }
 
 const MAX_HISTORY = 60; // Keep last 60 data points (1 per minute = 1 hour)
-const FLUSH_MS = 4000; // E27: batch de eventos realtime, evita 1 setState por INSERT/UPDATE
-
-type PendingDelta = {
-  hasUpdate: boolean;
-  unreadMessagesDelta: number;
-  newContactsTodayDelta: number;
-  lastMessageAt: Date | null;
-};
-
-function emptyPending(): PendingDelta {
-  return { hasUpdate: false, unreadMessagesDelta: 0, newContactsTodayDelta: 0, lastMessageAt: null };
-}
 
 export function useRealtimeDashboard() {
   const [state, setState] = useState<RealtimeDashboardState>({
@@ -53,7 +41,6 @@ export function useRealtimeDashboard() {
   const messageCountRef = useRef(0);
   const minuteCountRef = useRef(0);
   const isMountedRef = useRef(true);
-  const pendingRef = useRef<PendingDelta>(emptyPending());
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -97,10 +84,7 @@ export function useRealtimeDashboard() {
         .from('messages')
         .select('contact_id')
         .gte('created_at', hourAgo.toISOString())
-        .not('contact_id', 'is', null)
-        // E26: cap explícito — sem limit, PostgREST trunca silenciosamente em 1000 linhas
-        // (mesma classe de bug de A6/A11). Mitigação; fix definitivo é RPC de agregação (E24/E25).
-        .limit(5000);
+        .not('contact_id', 'is', null).limit(5000); // E26: cap PostgREST 1000 linhas — mitigação, fix definitivo é RPC (E24/E25)
 
       const uniqueContacts = new Set(activeContacts?.map(m => m.contact_id) || []);
 
@@ -126,6 +110,23 @@ export function useRealtimeDashboard() {
   useEffect(() => {
     fetchInitialData();
 
+    // E27: deltas de eventos realtime acumulados aqui e aplicados em lote pelo flushInterval
+    // abaixo, em vez de 1 setState sincrono por INSERT/UPDATE (evita cascading renders em pico).
+    const FLUSH_MS = 4000;
+    type PendingDelta = {
+      hasUpdate: boolean;
+      unreadMessagesDelta: number;
+      newContactsTodayDelta: number;
+      lastMessageAt: Date | null;
+    };
+    const emptyPending = (): PendingDelta => ({
+      hasUpdate: false,
+      unreadMessagesDelta: 0,
+      newContactsTodayDelta: 0,
+      lastMessageAt: null,
+    });
+    let pending: PendingDelta = emptyPending();
+
     const channel = supabase
       .channel('dashboard-realtime')
       .on(
@@ -136,11 +137,10 @@ export function useRealtimeDashboard() {
           minuteCountRef.current++;
           messageCountRef.current++;
 
-          // E27: acumula no ref em vez de setState por evento — aplicado no flushInterval abaixo
-          pendingRef.current.hasUpdate = true;
-          pendingRef.current.lastMessageAt = new Date();
+          pending.hasUpdate = true;
+          pending.lastMessageAt = new Date();
           if (payload.new.sender === 'contact') {
-            pendingRef.current.unreadMessagesDelta += 1;
+            pending.unreadMessagesDelta += 1;
           }
         }
       )
@@ -148,8 +148,8 @@ export function useRealtimeDashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'contacts' },
         () => {
-          pendingRef.current.hasUpdate = true;
-          pendingRef.current.newContactsTodayDelta += 1;
+          pending.hasUpdate = true;
+          pending.newContactsTodayDelta += 1;
         }
       )
       .on(
@@ -157,8 +157,8 @@ export function useRealtimeDashboard() {
         { event: 'UPDATE', schema: 'public', table: 'messages' },
         (payload) => {
           if (payload.new.is_read && !payload.old?.is_read) {
-            pendingRef.current.hasUpdate = true;
-            pendingRef.current.unreadMessagesDelta -= 1;
+            pending.hasUpdate = true;
+            pending.unreadMessagesDelta -= 1;
           }
         }
       )
@@ -166,9 +166,8 @@ export function useRealtimeDashboard() {
         setState(prev => ({ ...prev, isConnected: status === 'SUBSCRIBED' }));
       });
 
-    // E27: aplica os deltas acumulados em lote, no máximo 1 setState a cada FLUSH_MS
+    // E27: aplica os deltas acumulados em lote, no maximo 1 setState a cada FLUSH_MS
     const flushInterval = setInterval(() => {
-      const pending = pendingRef.current;
       if (!pending.hasUpdate) return;
 
       setState(prev => ({
@@ -179,7 +178,7 @@ export function useRealtimeDashboard() {
         newContactsToday: prev.newContactsToday + pending.newContactsTodayDelta,
       }));
 
-      pendingRef.current = emptyPending();
+      pending = emptyPending();
     }, FLUSH_MS);
 
     // Collect metrics every minute
