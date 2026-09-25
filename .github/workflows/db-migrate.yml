@@ -48,6 +48,9 @@ jobs:
   migrate:
     name: Migration oficial com preflight
     if: github.ref == 'refs/heads/main'
+    # Aprovacao humana obrigatoria antes de qualquer DDL tocar producao. Soma-se
+    # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
+    environment: producao-ddl
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
