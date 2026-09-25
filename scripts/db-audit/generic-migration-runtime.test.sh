@@ -36,7 +36,6 @@ done
 
 db() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres "$@"; }
 
-snapshots=0
 # snap <nome>: aplica o contrato e exige saida nao vazia e JSON valido. Sem esta
 # checagem, um contrato que falhasse silenciosamente produziria arquivos vazios
 # e os diffs abaixo passariam comparando nada com nada.
@@ -49,7 +48,6 @@ snap() {
   fi
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$out" \
     || { echo "FAIL: contrato generico devolveu JSON invalido em '$1'"; exit 1; }
-  snapshots=$((snapshots + 1))
   printf '%s' "$out"
 }
 exige_igual() {
@@ -157,8 +155,13 @@ r12=$(snap r12)
 exige_igual "$r11" "$r12" 'DDL fora de public mudou o hash — o escopo declarado e public'
 echo 'OK: escopo limitado ao schema public.'
 
-if [[ "$snapshots" != 12 ]]; then
-  echo "FAIL: esperava 12 snapshots, obtive $snapshots"
+# Conta os arquivos de fato gerados, nao uma variavel: snap() e chamada por
+# substituicao de comando, que roda em subshell, e um contador incrementado la
+# dentro nunca chega a este shell. Contar o efeito observavel tambem detecta um
+# cenario que tenha sido removido do meio do arquivo por engano.
+gerados=$(find "$test_dir" -maxdepth 1 -type f -name "*.json" | wc -l | tr -d " ")
+if [[ "$gerados" != 12 ]]; then
+  echo "FAIL: esperava 12 snapshots gerados, encontrei $gerados"
   exit 1
 fi
 echo "OK: contrato runtime generico aprovado em 12 cenarios ($image)."
