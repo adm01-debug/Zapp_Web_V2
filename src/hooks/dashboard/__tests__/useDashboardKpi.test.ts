@@ -8,6 +8,10 @@ import { aggregateDashboardKpi, type DashboardKpiRpcResult } from '../useDashboa
 // é mais coberto por vitest (SQL rodando em Postgres, não em JS). O que sobra
 // client-side, e o que este arquivo testa, é só a aplicação do guard de amostra
 // mínima (E19) sobre o resultado já agregado pela RPC.
+//
+// E44 (Fase 6) pede exatamente os casos que migraram pro SQL: 0 linhas, 1
+// outlier de 10h, virada de dia, timezone SP. Verificados ao vivo contra a
+// RPC em produção — ver supabase/tests/dashboard_kpi_edge_cases.sql (T1-T4).
 
 function buildResult(overrides: Partial<DashboardKpiRpcResult> = {}): DashboardKpiRpcResult {
   return {
