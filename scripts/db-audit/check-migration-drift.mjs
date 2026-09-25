@@ -13,7 +13,10 @@
  *   PSQL_BIN        executavel psql/fake (padrao: psql; nunca passa por shell)
  *   LEDGER_RETRY_DELAYS_MS  atrasos (ms, separados por virgula) entre novas
  *                   tentativas de consulta ao ledger apos falha transitoria
- *                   de conexao com o pooler (padrao: 5000,15000)
+ *                   de conexao com o pooler (padrao: 5000,15000). String vazia
+ *                   desliga este retry -- use quando o transporte ja repete
+ *                   (PSQL_CONNECT_RETRIES em psql-environment.mjs), senao as
+ *                   duas camadas se multiplicam.
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -516,9 +519,17 @@ function loadMigrations(dir, evidence) {
 }
 
 const TRANSIENT_CONNECTION_RE = /timeout expired|ECHECKOUTRETRIES|could not connect|connection refused|server closed the connection|terminating connection|too many clients|connection reset|connection terminated|could not translate host/iu;
-const LEDGER_RETRY_DELAYS_MS = (process.env.LEDGER_RETRY_DELAYS_MS || '5000,15000')
+// ?? e nao ||: string vazia precisa significar "sem retry aqui", nao "use o
+// padrao". Sem isso nao ha como desligar esta camada quando o transporte ja
+// repete, e as tentativas viram produto (3 x 3 = 9 execucoes de psql).
+const LEDGER_RETRY_DELAYS_MS = (process.env.LEDGER_RETRY_DELAYS_MS ?? '5000,15000')
   .split(',')
-  .map((value) => Number(value.trim()))
+  .map((value) => value.trim())
+  // Descarta entradas vazias ANTES do Number: Number("") e 0, nao NaN, entao
+  // sem este filtro LEDGER_RETRY_DELAYS_MS="" viraria [0] -- uma tentativa
+  // extra imediata em vez de desligar o retry.
+  .filter((value) => value !== '')
+  .map((value) => Number(value))
   .filter((value) => Number.isFinite(value) && value >= 0);
 
 function sleepSync(ms) {

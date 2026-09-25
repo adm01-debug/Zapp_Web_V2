@@ -84,7 +84,7 @@ export function useRealtimeDashboard() {
         .from('messages')
         .select('contact_id')
         .gte('created_at', hourAgo.toISOString())
-        .not('contact_id', 'is', null);
+        .not('contact_id', 'is', null).limit(5000); // E26: cap PostgREST 1000 linhas — mitigação, fix definitivo é RPC (E24/E25)
 
       const uniqueContacts = new Set(activeContacts?.map(m => m.contact_id) || []);
 
@@ -120,22 +120,19 @@ export function useRealtimeDashboard() {
           minuteCountRef.current++;
           messageCountRef.current++;
 
-          setState(prev => ({
-            ...prev,
-            messagesThisHour: messageCountRef.current,
-            lastMessageAt: new Date(),
-            unreadMessages: payload.new.sender === 'contact' ? prev.unreadMessages + 1 : prev.unreadMessages,
-          }));
+          pending.hasUpdate = true;
+          pending.lastMessageAt = new Date();
+          if (payload.new.sender === 'contact') {
+            pending.unreadMessagesDelta += 1;
+          }
         }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'contacts' },
         () => {
-          setState(prev => ({
-            ...prev,
-            newContactsToday: prev.newContactsToday + 1,
-          }));
+          pending.hasUpdate = true;
+          pending.newContactsTodayDelta += 1;
         }
       )
       .on(
@@ -143,16 +140,44 @@ export function useRealtimeDashboard() {
         { event: 'UPDATE', schema: 'public', table: 'messages' },
         (payload) => {
           if (payload.new.is_read && !payload.old?.is_read) {
-            setState(prev => ({
-              ...prev,
-              unreadMessages: Math.max(0, prev.unreadMessages - 1),
-            }));
+            pending.hasUpdate = true;
+            pending.unreadMessagesDelta -= 1;
           }
         }
       )
       .subscribe((status) => {
         setState(prev => ({ ...prev, isConnected: status === 'SUBSCRIBED' }));
       });
+
+    // E27: deltas de eventos realtime acumulados aqui (ver callbacks acima) e aplicados em lote
+    // pelo flushInterval abaixo, em vez de 1 setState sincrono por INSERT/UPDATE.
+    const FLUSH_MS = 4000;
+    type PendingDelta = {
+      hasUpdate: boolean;
+      unreadMessagesDelta: number;
+      newContactsTodayDelta: number;
+      lastMessageAt: Date | null;
+    };
+    let pending: PendingDelta = {
+      hasUpdate: false,
+      unreadMessagesDelta: 0,
+      newContactsTodayDelta: 0,
+      lastMessageAt: null,
+    };
+
+    const flushInterval = setInterval(() => {
+      if (!pending.hasUpdate) return;
+
+      setState(prev => ({
+        ...prev,
+        messagesThisHour: messageCountRef.current,
+        lastMessageAt: pending.lastMessageAt ?? prev.lastMessageAt,
+        unreadMessages: Math.max(0, prev.unreadMessages + pending.unreadMessagesDelta),
+        newContactsToday: prev.newContactsToday + pending.newContactsTodayDelta,
+      }));
+
+      pending = { hasUpdate: false, unreadMessagesDelta: 0, newContactsTodayDelta: 0, lastMessageAt: null };
+    }, FLUSH_MS);
 
     // Collect metrics every minute
     const metricsInterval = setInterval(() => {
@@ -165,7 +190,7 @@ export function useRealtimeDashboard() {
         };
 
         const newHistory = [...prev.metricsHistory, metric].slice(-MAX_HISTORY);
-        
+
         return {
           ...prev,
           messagesPerMinute: minuteCountRef.current,
@@ -181,6 +206,7 @@ export function useRealtimeDashboard() {
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(flushInterval);
       clearInterval(metricsInterval);
       clearInterval(refreshInterval);
     };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
@@ -35,6 +35,17 @@ export function ConnectionsView() {
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
   } = useConnectionsManager();
 
+  // Trava a criação de conexão nova até o token por instância (Vault) estar
+  // implementado — hoje ela nasceria sem credencial própria e usando o token
+  // global da PRINCIPAL. Ver docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md.
+  const [multiConnectionEnabled, setMultiConnectionEnabled] = useState(false);
+  useEffect(() => {
+    let active = true;
+    supabase.from('global_settings').select('value').eq('key', 'multi_connection_enabled').maybeSingle()
+      .then(({ data }) => { if (active) setMultiConnectionEnabled(data?.value === 'true'); });
+    return () => { active = false; };
+  }, []);
+
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [settingsDialog, setSettingsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
@@ -63,7 +74,15 @@ export function ConnectionsView() {
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild><Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Conexão</Button></DialogTrigger>
+            <DialogTrigger asChild>
+              <Button
+                className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
+                disabled={!multiConnectionEnabled}
+                title={multiConnectionEnabled ? undefined : 'Múltiplas conexões ainda não estão habilitadas neste sistema'}
+              >
+                <Plus className="w-4 h-4 mr-2" />Nova Conexão
+              </Button>
+            </DialogTrigger>
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
