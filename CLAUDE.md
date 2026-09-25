@@ -149,6 +149,17 @@ O retry vive em `withPsqlEnvironment` e é **desligado por padrão**: só cobre 
 comando não chegou ao servidor), nunca erro de SQL, de autenticação ou drift, e quem escreve
 (`register-migration --apply`) não liga.
 
+**Retry de conexão mora em UM lugar só: o transporte.** O PR #704 (sessão paralela) adicionou um
+segundo retry dentro de `queryLedger()` em `check-migration-drift.mjs`, no mesmo dia em que o #707
+adicionou o do transporte. Como `queryLedger()` chama `withPsqlEnvironment`, os dois empilhados
+viram produto, não soma: 3 × 3 = 9 execuções de psql e ~47s de espera acumulada. Por isso o job do
+`db-live-guard` passa `LEDGER_RETRY_DELAYS_MS: ""`, que desliga a camada de dentro — a de fora
+cobre todos os passos (ledger, catálogo, manifesto, paridade tripla, runtime config), não só o
+ledger. As duas regex ficam em sincronia deliberada: ao mexer numa, replique na outra. Cuidado ao
+mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, então entradas vazias
+precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
+nenhum.
+
 **Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
 segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
 primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
