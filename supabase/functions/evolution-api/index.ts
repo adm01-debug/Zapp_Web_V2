@@ -59,10 +59,37 @@ serve(async (req) => {
     const body = await json();
     const instance = String(body.instanceName || body.instance || '');
 
+    // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
+    // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a
+    // instância tentar logar de novo na Meta (connect/restart/disconnect) ficam
+    // bloqueadas — reconectar em loop durante um bloqueio tende a estendê-lo.
+    // create-instance entra na mesma trava (nasceria conectando outro número
+    // durante a mesma janela de risco).
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance']);
+    if (MAINTENANCE_GATED_ACTIONS.has(action)) {
+      const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
+      const until = maint?.value ? new Date(maint.value) : null;
+      if (until && !Number.isNaN(until.getTime()) && until.getTime() > Date.now()) {
+        return new Response(JSON.stringify({
+          error: true,
+          message: `Ação bloqueada: janela de manutenção do WhatsApp até ${until.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (proteção contra bloqueio da Meta — evita tentativas de login em loop).`,
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // ─── 1. Instance Management ───
     // Evolution GO exige token na criação (v2 auto-gerava) — gera um default;
     // ele volta na resposta para o operador guardar (EVOLUTION_INSTANCE_TOKEN).
-    if (action === 'create-instance') return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token ?? crypto.randomUUID(), number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
+    if (action === 'create-instance') {
+      const { data: multi } = await supabase.from('global_settings').select('value').eq('key', 'multi_connection_enabled').maybeSingle();
+      if (multi?.value !== 'true') {
+        return new Response(JSON.stringify({
+          error: true,
+          message: 'Múltiplas conexões de WhatsApp ainda não estão habilitadas neste sistema (ver plano multi-conexão Evolution GO).',
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return await proxy('/instance/create', 'POST', { instanceName: instance, qrcode: body.qrcode ?? true, integration: body.integration || 'WHATSAPP-BAILEYS', token: body.token ?? crypto.randomUUID(), number: body.number, businessId: body.businessId, wabaId: body.wabaId, phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot, typebot: body.typebot, proxy: body.proxy });
+    }
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {

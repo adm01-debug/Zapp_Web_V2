@@ -37,20 +37,27 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
       // action real do fluxo de QR e responde {qrcode:{base64}}.
       const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'connect', instanceName: id } });
       if (error) throw error;
+      // A edge devolve erro de negócio como 200 + {error:true, message} (convenção
+      // do proxy) — sem este check, um bloqueio (ex.: janela de manutenção) cairia
+      // no branch de "QR indisponível" silenciosamente, escondendo o motivo real.
+      if (data?.error === true) throw new Error(data.message || 'Erro ao buscar QR Code');
       const b64 = data?.qrcode?.base64 || data?.base64;
       if (b64) setQrCodes(p => ({ ...p, [id]: b64 }));
       else toast.info('QR Code indisponível — instância pode já estar conectada.');
-    } catch { toast.error('Erro ao buscar QR Code'); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Erro ao buscar QR Code'); }
     finally { setLoadingQr(p => ({ ...p, [id]: false })); }
   }, []);
 
   const reconnect = useCallback(async (id: string) => {
     setReconnecting(p => ({ ...p, [id]: true }));
     try {
-      const { error } = await supabase.functions.invoke('evolution-api', { body: { action: 'restart-instance', instanceName: id } });
+      const { data, error } = await supabase.functions.invoke('evolution-api', { body: { action: 'restart-instance', instanceName: id } });
       if (error) throw error;
+      // Mesmo motivo do fetchQr acima: sem este check, um bloqueio (200 +
+      // {error:true}) virava "reiniciada!" — sucesso falso.
+      if (data?.error === true) throw new Error(data.message || 'Erro ao reconectar');
       toast.success(`Instância ${id} reiniciada!`);
-    } catch { toast.error('Erro ao reconectar'); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Erro ao reconectar'); }
     finally { setReconnecting(p => ({ ...p, [id]: false })); }
   }, []);
 
