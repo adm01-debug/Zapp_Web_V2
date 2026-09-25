@@ -1,0 +1,36 @@
+name: Auto Update PR Branches
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-update-pr-branch
+  cancel-in-progress: false
+
+jobs:
+  update-behind-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Atualizar PRs com auto-merge que ficaram behind
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          prs=$(gh pr list --repo "$REPO" --state open \
+            --json number,autoMergeRequest,mergeStateStatus \
+            --jq '.[] | select(.autoMergeRequest != null and .mergeStateStatus == "BEHIND") | .number')
+          if [ -z "$prs" ]; then
+            echo "Nenhum PR com auto-merge esta behind."
+            exit 0
+          fi
+          for pr in $prs; do
+            echo "Atualizando PR #$pr (behind + auto-merge ativo)"
+            gh api -X PUT "repos/$REPO/pulls/$pr/update-branch" || echo "Falha ao atualizar PR #$pr, seguindo para o proximo"
+          done
