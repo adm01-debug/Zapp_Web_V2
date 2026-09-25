@@ -25,7 +25,7 @@ const TABS: TabDef[] = [
   { id: 'notes', label: 'Notas', icon: FileText, count: (c) => c.notesTotal },
   { id: 'files', label: 'Arquivos', icon: Paperclip, count: (c) => c.filesTotal },
   { id: 'history', label: 'Histórico', icon: History },
-  { id: 'reminders', label: 'Lembretes', icon: Bell },
+  { id: 'reminders', label: 'Lembretes', icon: Bell, count: (c) => c.remindersPending },
 ];
 
 interface ConversationTabsProps {
