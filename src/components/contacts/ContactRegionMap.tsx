@@ -137,7 +137,7 @@ export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: Co
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;
       el.className =
-        'rounded-full bg-primary/80 text-primary-foreground text-[10px] font-semibold ' +
+        'rounded-full bg-primary/80 text-primary-foreground text-3xs font-semibold ' +
         'flex items-center justify-center shadow-lg ring-2 ring-background cursor-pointer ' +
         'transition-transform hover:scale-110';
       el.textContent = String(count);
