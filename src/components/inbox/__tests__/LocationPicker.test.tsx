@@ -12,7 +12,7 @@ interface Selected { lat: number; lng: number; name?: string; address?: string }
 
 function hookState(selectedLocation: Selected | null) {
   return {
-    mapContainer: { current: null },
+    mapContainer: vi.fn(),
     isMapLoaded: false,
     mapError: null,
     retryMap: vi.fn(),
@@ -21,6 +21,8 @@ function hookState(selectedLocation: Selected | null) {
     setSearchQuery: vi.fn(),
     isSearching: false,
     selectedLocation,
+    searchResults: [],
+    chooseSearchResult: vi.fn(),
     getCurrentLocation: vi.fn(),
     searchLocation: vi.fn(),
     reset: vi.fn(),

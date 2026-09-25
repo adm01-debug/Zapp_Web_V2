@@ -17,13 +17,25 @@ const QUERY_ENV = new Map([
 // (pg_hba, senha, role) nem erro de SQL: esses sao deterministicos e repetir
 // so' atrasaria a falha. Um drift detectado tampouco passa por aqui — ele e'
 // resultado de uma consulta que teve sucesso.
+// Mantida em sincronia deliberada com TRANSIENT_CONNECTION_RE de
+// check-migration-drift.mjs (#704): como o db-live-guard desliga aquele retry
+// para nao multiplicar tentativas, esta regex precisa cobrir tudo o que a de la
+// cobria -- ECHECKOUTRETRIES, "too many clients", "terminating connection" e
+// "connection reset" vieram de la. Os padroes sao propositalmente amplos
+// ("could not connect", nao "could not connect to server") para pegar as
+// variantes de mensagem do pooler.
 const TRANSPORT_FAILURE = new RegExp([
   'timeout expired',
-  'could not connect to server',
-  'could not translate host name',
-  'server closed the connection unexpectedly',
+  'could not connect',
+  'could not translate host',
+  'server closed the connection',
   'connection refused',
   'connection timed out',
+  'connection reset',
+  'connection terminated',
+  'terminating connection',
+  'too many clients',
+  'ECHECKOUTRETRIES',
   'no route to host',
   'network is unreachable',
   'temporary failure in name resolution',

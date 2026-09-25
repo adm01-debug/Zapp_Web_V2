@@ -3,6 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
+import { reverseGeocodePlace, searchPlaces, type GeoSearchPlace } from '@/lib/mapboxGeocode';
 import {
   getMapboxToken,
   mapboxFailureKindFromMapError,
@@ -49,6 +50,9 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  // Candidatos da busca. A API sempre devolve algo (ate para texto sem sentido), entao com mais
+  // de um resultado quem decide e o operador — nao mandamos o marcador para o primeiro sozinho.
+  const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
 
   const select = useCallback((location: SelectedLocation | null) => {
     selectedRef.current = location;
@@ -94,20 +98,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
 
   const reverseGeocode = useCallback(async (lng: number, lat: number) => {
     // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
-    // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita.
+    // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
+    // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
     if (!mapboxToken) { select({ lat, lng }); return; }
     const signal = nextGeoSignal();
-    try {
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&language=pt`, { signal });
-      const data = response.ok ? await response.json() : null;
-      if (signal.aborted) return;
-      const feature = data?.features?.[0];
-      select(feature ? { lat, lng, name: feature.text, address: feature.place_name } : { lat, lng });
-    } catch (error) {
-      if (signal.aborted) return;
-      log.error('Error reverse geocoding:', error);
-      select({ lat, lng });
-    }
+    const place = await reverseGeocodePlace(lat, lng, mapboxToken);
+    if (signal.aborted) return;
+    select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng });
   }, [mapboxToken, nextGeoSignal, select]);
 
   useEffect(() => {
@@ -190,41 +187,74 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       return;
     }
     const signal = nextGeoSignal();
+    setSearchResults([]);
     setIsSearching(true);
     try {
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&language=pt&country=br`, { signal });
-      if (!response.ok) {
-        const limited = response.status === 429;
-        toast({ title: limited ? 'Muitas buscas seguidas' : 'Falha na busca', description: limited ? 'Aguarde um instante e tente de novo.' : 'Não foi possível consultar o endereço. Tente novamente.', variant: 'destructive' });
+      // Vies geografico: o centro do mapa (ou Sao Paulo, o centro padrao) desempata resultados
+      // homonimos e evita que uma busca de SP caia em outro estado.
+      const center = map.current?.getCenter();
+      const result = await searchPlaces(query, mapboxToken, signal, {
+        lng: center?.lng ?? DEFAULT_CENTER[0],
+        lat: center?.lat ?? DEFAULT_CENTER[1],
+      });
+      if (result.ok) {
+        if (result.places.length === 1) {
+          const only = result.places[0];
+          setSearchResults([]);
+          updateMarker(only.lng, only.lat);
+          select({ lat: only.lat, lng: only.lng, name: only.name, address: only.address });
+        } else {
+          setSearchResults(result.places);
+        }
         return;
       }
-      const data = await response.json();
-      if (signal.aborted) return;
-      const feature = data.features?.[0];
-      if (feature) {
-        const [lng, lat] = feature.center;
-        updateMarker(lng, lat);
-        select({ lat, lng, name: feature.text, address: feature.place_name });
-      } else {
+      setSearchResults([]);
+      // Busca substituída por outra mais nova: nada na tela.
+      if (result.kind === 'aborted') return;
+      if (result.kind === 'not_found') {
         toast({ title: 'Local não encontrado', description: 'Tente buscar por outro endereço.', variant: 'destructive' });
+        return;
       }
-    } catch (error) {
-      if (signal.aborted) return;
-      log.error('Error searching location:', error);
-      toast({ title: 'Falha na busca', description: 'Verifique sua conexão e tente novamente.', variant: 'destructive' });
-    } finally { setIsSearching(false); }
+      if (result.kind === 'rate_limited') {
+        toast({ title: 'Muitas buscas seguidas', description: 'Aguarde um instante e tente de novo.', variant: 'destructive' });
+        return;
+      }
+      if (result.kind === 'timeout') {
+        reportMapboxFailure('timeout', 'picker', { stage: 'search' });
+        toast({ title: 'Falha na busca', description: 'A busca demorou demais. Tente novamente.', variant: 'destructive' });
+        return;
+      }
+      toast({
+        title: 'Falha na busca',
+        description: result.kind === 'network'
+          ? 'Verifique sua conexão e tente novamente.'
+          : 'Não foi possível consultar o endereço. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      // A busca antiga não desliga o spinner da nova.
+      if (!signal.aborted) setIsSearching(false);
+    }
   }, [searchQuery, mapboxToken, updateMarker, nextGeoSignal, select]);
+
+  /** O operador escolheu um dos candidatos: marca no mapa e fecha a lista. */
+  const chooseSearchResult = useCallback((place: GeoSearchPlace) => {
+    setSearchResults([]);
+    updateMarker(place.lng, place.lat);
+    select({ lat: place.lat, lng: place.lng, name: place.name, address: place.address });
+  }, [select, updateMarker]);
 
   const reset = useCallback(() => {
     geoAbort.current?.abort();
     pendingMarker.current = null;
     select(null);
+    setSearchResults([]);
     setSearchQuery('');
     setIsSearching(false);
   }, [select]);
 
   return {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, searchQuery, setSearchQuery, isSearching,
-    selectedLocation, getCurrentLocation, searchLocation, reset,
+    selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset,
   };
 }

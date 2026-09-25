@@ -124,3 +124,27 @@ test('o passfile temporario e removido mesmo depois de esgotar os retries', () =
   assert.equal(fs.existsSync(file), false);
   assert.equal(fs.existsSync(path.dirname(file)), false);
 });
+
+// Paridade com TRANSIENT_CONNECTION_RE de check-migration-drift.mjs: o
+// db-live-guard desliga o retry de la (LEDGER_RETRY_DELAYS_MS="") para nao
+// multiplicar tentativas, entao esta camada precisa reconhecer os mesmos casos.
+test('reconhece como transporte os padroes herdados do retry do ledger', () => {
+  for (const stderr of [
+    'psql: error: connection to server failed: timeout expired',
+    'psql: error: ECHECKOUTRETRIES: could not obtain connection from pool',
+    'FATAL:  sorry, too many clients already',
+    'FATAL:  terminating connection due to administrator command',
+    'server closed the connection unexpectedly',
+    'psql: error: connection reset by peer',
+    'psql: error: connection terminated',
+    'could not translate host name "pooler.invalid" to address',
+    'psql: error: could not connect to server: Connection refused',
+  ]) {
+    let chamadas = 0;
+    assert.throws(() => withPsqlEnvironment(uri, () => {
+      chamadas += 1;
+      throw Object.assign(new Error('psql falhou'), { stderr });
+    }, { baseEnv: comRetry }), /psql falhou/);
+    assert.equal(chamadas, 3, `devia repetir: ${stderr.slice(0, 45)}`);
+  }
+});
