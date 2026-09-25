@@ -17,6 +17,9 @@ vi.mock('@/integrations/supabase/client', () => ({
       if (table === 'contacts') return { select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) };
       return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
     }),
+    // E24/E25: useDashboardStats agora chama a RPC dashboard_contact_counts
+    // em vez de select() cru em `contacts`.
+    rpc: vi.fn().mockResolvedValue({ data: { total: 0, open: 0, pending: 0, myActive: 0, queues: [] }, error: null }),
   },
 }));
 
