@@ -1,7 +1,7 @@
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
-# Cobre JS/TS de src/, scripts/ e supabase/functions/.
+# Cobre JS/TS de src/, scripts/ e supabase/functions/, e os proprios workflows.
 # Achados aparecem em Security -> Code scanning alerts.
 # G-02 da auditoria tecnica (2026-09-02).
 # =================================================
@@ -48,3 +48,33 @@ jobs:
         uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           category: '/language:javascript-typescript'
+
+  # Job separado de proposito: o check do job "analyze" e required na branch
+  # protection, e transformar aquele job numa matrix renomearia o check e
+  # travaria todos os merges. A linguagem "actions" analisa os .github/workflows
+  # em busca de injecao de expressao em run:, uso indevido de pull_request_target
+  # e permissoes excessivas — 3,5k linhas de YAML que nenhum guard do repo le.
+  analyze-actions:
+    name: 🔬 CodeQL (actions)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧬 Initialize CodeQL
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: actions
+          build-mode: none
+
+      - name: 🔬 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: '/language:actions'
