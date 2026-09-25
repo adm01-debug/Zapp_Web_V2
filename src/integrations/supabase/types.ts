@@ -1909,6 +1909,8 @@ export type Database = {
       }
       contacts: {
         Row: {
+          address: string | null
+          address_number: string | null
           ai_priority: string | null
           ai_sentiment: string | null
           assigned_to: string | null
@@ -1916,6 +1918,7 @@ export type Database = {
           avatar_url: string | null
           channel_connection_id: string | null
           channel_type: string | null
+          city: string | null
           company: string | null
           consent_status: string | null
           contact_type: string | null
@@ -1930,17 +1933,22 @@ export type Database = {
           lead_origin: string | null
           lead_score: number | null
           name: string
+          neighborhood: string | null
           nickname: string | null
           notes: string | null
           phone: string
+          postal_code: string | null
           queue_id: string | null
           risk_score: number | null
+          state: string | null
           surname: string | null
           tags: string[] | null
           updated_at: string
           whatsapp_connection_id: string | null
         }
         Insert: {
+          address?: string | null
+          address_number?: string | null
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
@@ -1948,6 +1956,7 @@ export type Database = {
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
+          city?: string | null
           company?: string | null
           consent_status?: string | null
           contact_type?: string | null
@@ -1962,17 +1971,22 @@ export type Database = {
           lead_origin?: string | null
           lead_score?: number | null
           name: string
+          neighborhood?: string | null
           nickname?: string | null
           notes?: string | null
           phone: string
+          postal_code?: string | null
           queue_id?: string | null
           risk_score?: number | null
+          state?: string | null
           surname?: string | null
           tags?: string[] | null
           updated_at?: string
           whatsapp_connection_id?: string | null
         }
         Update: {
+          address?: string | null
+          address_number?: string | null
           ai_priority?: string | null
           ai_sentiment?: string | null
           assigned_to?: string | null
@@ -1980,6 +1994,7 @@ export type Database = {
           avatar_url?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
+          city?: string | null
           company?: string | null
           consent_status?: string | null
           contact_type?: string | null
@@ -1994,11 +2009,14 @@ export type Database = {
           lead_origin?: string | null
           lead_score?: number | null
           name?: string
+          neighborhood?: string | null
           nickname?: string | null
           notes?: string | null
           phone?: string
+          postal_code?: string | null
           queue_id?: string | null
           risk_score?: number | null
+          state?: string | null
           surname?: string | null
           tags?: string[] | null
           updated_at?: string

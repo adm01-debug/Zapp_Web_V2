@@ -28,6 +28,12 @@ interface EditContactDialogProps {
     job_title?: string;
     company?: string;
     contact_type?: string | null;
+    postal_code?: string | null;
+    address?: string | null;
+    address_number?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    state?: string | null;
   };
 }
 
@@ -43,6 +49,12 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
     phone: contact.phone || '',
     email: contact.email || '',
     contact_type: contact.contact_type || 'cliente',
+    postal_code: contact.postal_code || '',
+    address: contact.address || '',
+    address_number: contact.address_number || '',
+    neighborhood: contact.neighborhood || '',
+    city: contact.city || '',
+    state: contact.state || '',
   });
 
   const handleChange = useCallback((field: string, value: string) => {
@@ -60,6 +72,12 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
       company: formValues.company || null,
       email: formValues.email || null,
       contact_type: formValues.contact_type || null,
+      postal_code: formValues.postal_code || null,
+      address: formValues.address || null,
+      address_number: formValues.address_number || null,
+      neighborhood: formValues.neighborhood || null,
+      city: formValues.city || null,
+      state: formValues.state || null,
     };
 
     // Optimistic update: update cache immediately for instant UI feedback
