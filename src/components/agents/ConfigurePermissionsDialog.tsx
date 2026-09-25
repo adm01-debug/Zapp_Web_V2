@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Users, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 
 interface ConfigurePermissionsDialogProps {
   open: boolean;
@@ -42,18 +43,8 @@ export function ConfigurePermissionsDialog({ open, onOpenChange }: ConfigurePerm
     enabled: open,
   });
 
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles-for-permissions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, email, role')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: open,
-  });
+  const { data: teamProfiles = [] } = useTeamProfiles(open);
+  const profiles = [...teamProfiles].sort((a, b) => a.name.localeCompare(b.name));
 
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
