@@ -1,23 +1,3 @@
--- Dashboard 50 etapas — Fase 3 (E23): RPC dashboard_kpi
--- Ref: claude/PLANO_DASHBOARD_50_ETAPAS.md
---
--- Move para o servidor a agregação de conversation_closures + conversation_sla que
--- useDashboardKpi.ts fazia no cliente: contagem de resolvidas, mediana (p50)/p90 do
--- tempo de resposta (antes calculado em JS via interpolação linear — agora via
--- percentile_cont nativo do Postgres) e os buckets de 3h usados nos sparklines.
---
--- Validado em 25/09/2026 via SELECT manual equivalente antes de aplicar (mesmo
--- método do E22): resolvedToday=0, avgResponseToday=192s, p90ResponseToday=1030s,
--- slaBreachedToday=4, answeredTodayCount=9 — RPC bateu exatamente com o cálculo
--- manual e com filtro por fila (p_queue) testado sem erro.
---
--- Fuso: America/Sao_Paulo hardcoded (mesma premissa do E22 — client-side usava
--- Date.getHours()/startOfDay() do browser, que já assume o fuso local da equipe).
---
--- Parâmetros p_queue/p_agent preparam a Fase 4 (E31/E33) — join com contacts para
--- filtrar por queue_id/assigned_to sem reimplementar RLS: SECURITY INVOKER herda as
--- policies de conversation_closures/conversation_sla (mesmo padrão do E22).
-
 CREATE OR REPLACE FUNCTION public.dashboard_kpi(
   p_since timestamptz,
   p_queue uuid DEFAULT NULL,
