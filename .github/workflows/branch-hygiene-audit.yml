@@ -12,7 +12,7 @@ name: Branch Hygiene Audit
 
 on:
   schedule:
-    - cron: '0 8 * * 1' # segunda-feira, 08:00 UTC
+    - cron: '56 7 * * 1' # segunda-feira, 07:56 UTC (fora do minuto 0)
   workflow_dispatch: {}
 
 permissions:
@@ -70,7 +70,9 @@ jobs:
             echo
             echo "### PRs abertos ha mais de 14 dias"
             echo '```'
-            gh pr list --repo "$REPO" --state open --json number,title,createdAt,url \
+            # --limit explicito: o default do gh e 30, e o relatorio truncaria
+            # silenciosamente se a fila de PRs abertas passar disso.
+            gh pr list --repo "$REPO" --state open --limit 100 --json number,title,createdAt,url \
               --jq '.[] | select((now - (.createdAt | fromdateiso8601)) > (14*86400)) | "#\(.number) \(.title) — \(.url)"'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
