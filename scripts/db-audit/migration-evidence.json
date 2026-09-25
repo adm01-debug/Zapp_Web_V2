@@ -122,22 +122,6 @@
             "justification": "A execução histórica incluiu manutenção pontual insegura para replay; o arquivo mantém somente a restauração idempotente dos parâmetros de autovacuum."
         },
         {
-            "version": "20260827140000",
-            "filename": "20260827140000_fix_sicoob_bridge_url_official_db.sql",
-            "file_sha256": "9305d082d21ebd62e4f1543ca271e129fff04750fd010bd953434426cb575159",
-            "ledger_name": "fix_sicoob_bridge_url_official_db",
-            "kind": "ledger-only/name-and-file-pinned",
-            "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
-        },
-        {
-            "version": "20260827150000",
-            "filename": "20260827150000_sicoob_bridge_use_pg_net.sql",
-            "file_sha256": "3784a7816b8ba3f162f7bea835a5b458b3a026257174d0a21ff4aa5573377b92",
-            "ledger_name": "sicoob_bridge_use_pg_net",
-            "kind": "ledger-only/name-and-file-pinned",
-            "justification": "O ledger legado preserva versão e nome, mas não SQL ou hash; os bytes do replay ficam fixados sem serem apresentados como prova histórica."
-        },
-        {
             "version": "20260827160000",
             "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
             "file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
@@ -363,14 +347,6 @@
             "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger. O arquivo em supabase/migrations foi reconstruído depois com o DDL completo (CREATE TABLE + índice + RLS + policies); ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
         },
         {
-            "version": "20260901200001",
-            "filename": "20260901200001_e23_default_queue_rls_policies.sql",
-            "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
-            "ledger_name": "e23_default_queue_rls_policies",
-            "kind": "ledger-only/name-and-file-pinned",
-            "justification": "As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o arquivo PR #116 documenta retroativamente o DDL reprodutível; o ledger tem SQL canônico vazio — pinagem por filename e ledger_name apenas."
-        },
-        {
             "version": "20260902000200",
             "filename": "20260902000200_fix_cron_avatars_refresh_key.sql",
             "file_sha256": "b24a05f478f55fd29dfa5b8f6ed2c7e733e3a04a9a89b58e22db382b65877034",
@@ -510,14 +486,6 @@
             "reason": "format-only",
             "related_migration": null,
             "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL; ambas as formas canonicas ficam fixadas por hashes independentes."
-        },
-        {
-            "version": "20260906000001",
-            "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
-            "file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
-            "ledger_name": "e31_contacts_is_lid_legacy",
-            "kind": "ledger-only/name-and-file-pinned",
-            "justification": "O ledger registrou o nome sem SQL capturado (statements null); o arquivo contem o DDL real (ADD COLUMN IF NOT EXISTS is_lid_legacy boolean NOT NULL DEFAULT false + indice + filtro OmnichannelInbox). Os bytes do replay ficam fixados sem reescrever o historico do ledger."
         },
         {
             "version": "20260906090000",
