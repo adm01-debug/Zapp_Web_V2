@@ -64,7 +64,10 @@ const ActionSchema = z.object({
 });
 
 function sanitizeSearch(input: string): string {
-  return input.replace(/[%_.\\()]/g, "").trim().slice(0, 100);
+  // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
+  // um valor com vírgula literal quebra o parsing da expressão (ver
+  // buildTagOrExpr) — precisa ser removida junto com o resto do charset.
+  return input.replace(/[%_.\\(),]/g, "").trim().slice(0, 100);
 }
 
 /** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */
@@ -80,7 +83,7 @@ function sanitizeFtsQuery(input: string): string {
  * QUALQUER um dos valores selecionados, em QUALQUER um dos dois formatos.
  * contains (.cs.) evita ilike direto em jsonb (Postgres rejeita sem cast).
  */
-function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
+export function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
   const clauses = values
     .map((v) => sanitizeSearch(v))
     .filter((v) => v.length > 0)
@@ -153,7 +156,7 @@ function externalDatabaseErrorResponse(error: ExternalDatabaseError, req: Reques
   }, 503, req);
 }
 
-Deno.serve(async (req) => {
+async function promogiftsCatalogHandler(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -214,7 +217,7 @@ Deno.serve(async (req) => {
         price_min, price_max, color, material, has_engraving,
       } = paramsParse.data;
 
-      let query = extClient.from("products").select(compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS, { count: "exact" });
+      let query = extClient.from("products").select((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string, { count: "exact" });
       if (only_active) query = query.eq("is_active", true);
       if (only_in_stock) query = query.eq("is_stockout", false);
       if (supplier_id) query = query.eq("supplier_id", supplier_id);
@@ -356,4 +359,6 @@ Deno.serve(async (req) => {
     log.error("Error", { error: msg });
     return jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(promogiftsCatalogHandler);

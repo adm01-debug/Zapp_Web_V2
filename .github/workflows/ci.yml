@@ -68,6 +68,7 @@ jobs:
           supabase/functions/_shared/__tests__/avatar-storage-path.test.ts
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
           supabase/functions/crm-integration/index.test.ts
+          supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
 
