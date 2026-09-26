@@ -65,11 +65,20 @@ jobs:
     environment: producao-ddl
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    permissions:
-      contents: read
-      # actions: read apenas para o passo de deteccao de concorrencia abaixo.
-      actions: read
     steps:
+      # E47 (auditoria de GitHub Actions, 2026-09-26) — considerado e
+      # descartado: um passo dentro do job para detectar outro run
+      # waiting/queued nunca executaria de fato aqui. A concurrency (group:
+      # db-migrate-production, cancel-in-progress: false) ja impede um 2o job
+      # do mesmo grupo de rodar qualquer step enquanto o 1o estiver
+      # waiting/in_progress — o 2o dispatch fica preso em "queued" pelo
+      # proprio GitHub Actions ANTES de chegar a qualquer step, inclusive um
+      # de deteccao. Os runs 36247549783 (waiting) e 36263608943
+      # (queued/pending) em 26/09 foram exatamente isso: a concorrencia
+      # funcionou como desenhada, so ninguem cancelou o 1o "Waiting" antigo
+      # antes de disparar de novo. Mitigacao real: checar a aba Actions antes
+      # de um novo dispatch; um "Waiting" que nao vai mais ser aprovado deve
+      # ser cancelado, nao empilhado.
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -78,34 +87,6 @@ jobs:
 
       - name: Provar checkout imutavel
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-
-      # E47 (auditoria de GitHub Actions, 2026-09-26): dois dispatches
-      # seguidos deste workflow ficavam presos, um atras do outro, na fila da
-      # concurrency (cancel-in-progress: false) — o 2o so seria liberado
-      # depois do 1o ser aprovado/rejeitado no environment producao-ddl, o que
-      # podia nunca acontecer (runs 36247549783 e 36263608943, cancelados
-      # manualmente na auditoria). Falha rapido e com mensagem clara em vez de
-      # entrar silenciosamente na fila.
-      - name: Bloquear se ja houver outro run deste workflow em espera
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const outros = [];
-            for (const status of ['waiting', 'queued', 'requested']) {
-              const { data } = await github.rest.actions.listWorkflowRuns({
-                owner, repo, workflow_id: 'db-migrate.yml', status, per_page: 10,
-              });
-              outros.push(...data.workflow_runs.filter((run) => run.id !== context.runId));
-            }
-            if (outros.length > 0) {
-              const lista = outros.map((r) => `#${r.run_number} (${r.html_url})`).join(', ');
-              core.setFailed(
-                `Ja existe outro run deste workflow em espera: ${lista}. `
-                + 'Aprove ou cancele-o na aba Actions antes de disparar um novo dispatch.',
-              );
-            }
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
