@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { ContactService } from '@/services/contact.service';
 import { log } from '@/lib/logger';
 
@@ -28,6 +29,8 @@ export interface SLAInfo {
 }
 
 export function useContactEnrichedData(contactId: string) {
+  const queryClient = useQueryClient();
+
   const { data: enrichedData } = useQuery({
     queryKey: ['contact-enriched', contactId],
     queryFn: async () => {
@@ -65,6 +68,23 @@ export function useContactEnrichedData(contactId: string) {
       return data as SLAInfo | null;
     },
     enabled: !!contactId,
+  });
+
+  // EditContactDialog (o form deste próprio painel) já invalida este cache
+  // manualmente ao salvar. Mas apelido/cargo/empresa também são editáveis
+  // pela tela de Contatos, por merge de contatos e por import — nenhum
+  // desses caminhos invalidava ['contact-enriched'], então o painel podia
+  // ficar até staleTime (5min) desatualizado em relação à lista de
+  // conversas (que é realtime) sob edição concorrente. Assinar Realtime
+  // aqui cobre qualquer origem de UPDATE em contacts para este contato.
+  useSupabaseRealtime({
+    channelName: `contact-enriched:${contactId}`,
+    table: 'contacts',
+    filter: contactId ? `id=eq.${contactId}` : undefined,
+    enabled: !!contactId,
+    onUpdate: () => {
+      queryClient.invalidateQueries({ queryKey: ['contact-enriched', contactId] });
+    },
   });
 
   return { enrichedData, aiTags, slaInfo };
