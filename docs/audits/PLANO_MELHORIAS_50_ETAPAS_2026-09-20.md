@@ -221,7 +221,7 @@ SELECT query, calls, round(total_exec_time) ms, round(mean_exec_time,1) media
 FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 ```
 - [x] Snapshot commitado em `docs/audits/slow-queries-2026-09.md` — extensão já estava instalada em `extensions.pg_stat_statements` (schema não-default; era isso que faltava saber)
-- [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice), decisão de arquitetura registrada no doc, não aplicada sozinha
+- [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice). Decisão fechada em 26/09: **manter FULL** — `useMessages.ts` depende de `payload.old.contact_id` em DELETE (não é a PK), trocar quebraria o Realtime de deleção de mensagens no Inbox aberto. Evidência de código em `docs/audits/slow-queries-2026-09.md`
 
 ### E20 🟢 Conexões e pooling (herda E32/16-09)
 - [ ] Modo do pooler (transaction/session), limites e timeouts das edges documentados
