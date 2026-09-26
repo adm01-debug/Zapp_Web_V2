@@ -4,6 +4,7 @@
         "dashboard_contact_counts(p_since timestamp with time zone, p_until timestamp with time zone, p_queue uuid, p_agent uuid)",
         "dashboard_hourly_volume(p_days integer, p_queue uuid, p_agent uuid)",
         "dashboard_kpi(p_since timestamp with time zone, p_queue uuid, p_agent uuid)",
+        "dashboard_sentiment_alerts(p_since timestamp with time zone)",
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
         "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)",
@@ -163,6 +164,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 139,
-    "authenticated_execute_count": 88
+    "service_role_execute_count": 140,
+    "authenticated_execute_count": 89
 }

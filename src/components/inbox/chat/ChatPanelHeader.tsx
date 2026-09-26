@@ -69,7 +69,7 @@ function ChatPanelHeaderBase({
   const isHighPriority = conversation.priority === 'high';
 
   return (
-    <div className="flex items-center justify-between px-3 md:px-5 h-[72px] border-b border-border bg-card shrink-0">
+    <div className="flex items-center justify-between px-3 md:px-5 h-[72px] border-b border-border bg-inbox-panel shrink-0">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         {isMobile && onBack && (
           <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl shrink-0 touch-manipulation" onClick={onBack} aria-label="Voltar">

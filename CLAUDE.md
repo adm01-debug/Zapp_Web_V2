@@ -110,14 +110,24 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, strict mode e os 7 required checks da seção abaixo.
+  deleção, e os 7 required checks da seção abaixo.
+
+  **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
+  `required_status_checks.strict` está **`false`** ao vivo (confirmado via
+  `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
+  merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
+  manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
+  não é automaticamente marcada `BEHIND` só por `main` ter avançado; o `auto-update-pr-branch.yml`
+  ainda existe e roda, mas o gatilho que o tornava necessário (toda PR reprovada por estar atrás)
+  não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
+  um dos dois lados.
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 12 workflows, da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Required checks da `main`** (7, strict mode): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+**Required checks da `main`** (7; `strict` está `false` ao vivo — ver correção em 25/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
 sem bloquear merge.
@@ -166,8 +176,9 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
-**Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Com `strict` ligado e
-várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+**Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
+ligado (hoje está `false` ao vivo — ver correção acima, seção "Branch protection sem `Contrato DB
+vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
 adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem
@@ -251,6 +262,18 @@ pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar c
 - `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
+
+## Lição de UI (2026-09-25) — fundo de painel preto sem escopo de tema
+
+PRs #755 → #771 → #774: pedido de fundo preto nos painéis do inbox (sidebar de conversas,
+detalhes do contato, barra de chat) foi implementado com `bg-black` **fixo**, sem variante
+`dark:`. Quebrou o light mode: contraste do texto principal caiu para 1.24:1 (mínimo WCAG AA é
+4.5:1) e o modo alto-contraste claro chegou a 1:1 (texto preto sobre fundo preto, invisível).
+Corrigido em #771 (`dark:bg-black`) e consolidado em #774 no token `--inbox-panel-bg` (definido
+por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-lo em vez de
+`bg-black`/`dark:bg-black` literal sempre que escurecer um painel novo do inbox, para não repetir
+o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
+cálculo de contraste WCAG) ficou só na sessão que corrigiu.
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

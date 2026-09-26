@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,7 @@ export function CrisisRoom() {
   const [loading, setLoading] = useState(true);
   const [isCrisis, setIsCrisis] = useState(false);
 
-  useEffect(() => { loadMetrics(); }, []);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     setLoading(true);
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -82,7 +80,12 @@ export function CrisisRoom() {
     setMetrics(buildMetrics);
     setIsCrisis(buildMetrics.some(m => m.severity === 'critical'));
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    loadMetrics();
+  }, [loadMetrics]);
 
   const severityConfig = {
     ok: { bg: 'bg-success/10', border: 'border-success/30', text: 'text-success', label: 'Normal' },

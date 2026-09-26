@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import {
@@ -39,13 +39,7 @@ export function AddMemberDialog({
   const [loading, setLoading] = useState(true);
   const [addingId, setAddingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      fetchProfiles();
-    }
-  }, [open]);
-
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -61,7 +55,14 @@ export function AddMemberDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-open padrão, sem estado derivado de props para sincronizar.
+      fetchProfiles();
+    }
+  }, [open, fetchProfiles]);
 
   const handleAddMember = async (profileId: string) => {
     setAddingId(profileId);

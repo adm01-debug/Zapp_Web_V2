@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +15,7 @@ export function DemandForecast() {
   const [peakHours, setPeakHours] = useState<{ hour: number; avg: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadForecast();
-  }, []);
-
-  const loadForecast = async () => {
+  const loadForecast = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 28);
 
@@ -72,7 +68,12 @@ export function DemandForecast() {
     setPeakHours(peaks);
 
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    loadForecast();
+  }, [loadForecast]);
 
   const topPeaks = peakHours.slice(0, 5);
   const totalPredicted = historicalData.reduce((s, d) => s + d.predicted, 0);

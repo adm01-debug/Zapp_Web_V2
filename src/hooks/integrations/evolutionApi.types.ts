@@ -207,3 +207,23 @@ export interface CreateInstanceParams {
   chatwoot?: Partial<ChatwootConfig>;
   typebot?: Partial<TypebotConfig>;
 }
+
+// E11 (plano multi-conexão): substitui create-instance — cria a instância na
+// GO, a linha em whatsapp_connections e o token no Vault numa operação só
+// (o front não insere mais a linha manualmente).
+export interface CreateConnectionParams {
+  instanceName: string;
+  name: string;
+  phone_number: string;
+  is_default?: boolean;
+  number?: string;
+  integration?: 'WHATSAPP-BAILEYS' | 'WHATSAPP-BUSINESS-CLOUD';
+}
+
+export interface CreateConnectionResult {
+  // Linha completa de whatsapp_connections (select() sem args = '*' no
+  // backend) — tipar como Record em vez de duplicar o schema da tabela;
+  // o chamador faz o cast para WhatsAppConnection.
+  connection: Record<string, unknown>;
+  evolution: unknown;
+}

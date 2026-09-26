@@ -186,9 +186,27 @@ serve(async (req) => {
       if (!connName || !phoneNumber) {
         return new Response(JSON.stringify({ error: true, message: 'name e phone_number são obrigatórios.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      const { data: existing } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
-      if (existing) {
-        return new Response(JSON.stringify({ error: true, message: `Já existe uma conexão com instance_id '${instance}'.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // Reserva atômica do nome ANTES de tocar a GO: whatsapp_connections_instance_id_key
+      // (UNIQUE em instance_id) é a trava real contra a corrida de duas
+      // create-connection concorrentes com o mesmo nome. Quem perder o INSERT
+      // sai aqui, sem nunca ter chamado a GO — logo sem risco de a compensação
+      // dela apagar a instância de quem ganhou (bug original: o check-then-act
+      // do SELECT+INSERT antigo deixava as duas requisições passarem para a
+      // GO, e o "loser" resolvia a instância só pelo NOME e apagava a da
+      // outra). Enquanto esta linha existir, nenhum concorrente com o mesmo
+      // nome consegue passar deste ponto.
+      const { data: row, error: insertError } = await supabase.from('whatsapp_connections').insert({
+        name: connName, phone_number: phoneNumber, instance_id: instance, status: 'disconnected',
+        is_default: body.is_default === true,
+      }).select().single();
+      if (insertError || !row) {
+        if (insertError?.code !== '23505') {
+          new Logger('evolution-api').error('create-connection: insert falhou antes de tocar a GO', { instance, error: insertError?.message });
+        }
+        const message = insertError?.code === '23505'
+          ? `Já existe uma conexão com instance_id '${instance}'.`
+          : 'Falha ao registrar a conexão.';
+        return new Response(JSON.stringify({ error: true, message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       // proxyToEvolution nunca lança (timeout/erro de rede/GO viram Response
@@ -220,6 +238,39 @@ serve(async (req) => {
         }
       };
 
+      // A GO ecoa o token da instância no corpo de /instance/create (mesmo
+      // motivo por que create-instance legado o devolvia ao operador) — aqui
+      // o token já está no Vault, então devolvê-lo de novo só reabriria o
+      // vazamento que E08-E11 existem para fechar. Nunca confiar num shape
+      // único: além de achatado no topo, forks do Evolution API costumam
+      // aninhar sob "data", "hash" (padrão do Node.js v1/v2 original, de onde
+      // este projeto migrou — docs/migration/GO_GAPS.md) ou "instance" —
+      // remove recursivamente em qualquer um desses contêineres, nos dois
+      // branches (sucesso e erro).
+      const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
+      const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
+      const stripInstanceToken = (value: unknown): unknown => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+        for (const key of TOKEN_KEYS) delete clone[key];
+        for (const key of TOKEN_CONTAINER_KEYS) {
+          if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+            clone[key] = stripInstanceToken(clone[key]);
+          }
+        }
+        return clone;
+      };
+
+      // Libera a reserva quando algo falhar depois dela. Só existe uma linha
+      // com este instance_id (o INSERT acima é quem garante isso), então esta
+      // requisição é a única que pode legitimamente apagá-la.
+      const rollbackRow = async () => {
+        const { error: deleteRowError } = await supabase.from('whatsapp_connections').delete().eq('id', row.id);
+        if (deleteRowError) {
+          new Logger('evolution-api').error('create-connection: falha ao remover a linha reservada após erro — pode ter sobrado linha fantasma', { instance, connectionId: row.id, error: deleteRowError.message });
+        }
+      };
+
       const instanceToken = crypto.randomUUID();
       const createRes = await proxy('/instance/create', 'POST', {
         instanceName: instance, qrcode: true, integration: body.integration || 'WHATSAPP-BAILEYS',
@@ -232,19 +283,9 @@ serve(async (req) => {
       // nunca em createRes.ok.
       const createData: Record<string, unknown> = await createRes.json().catch(() => ({}));
       if (createData?.error) {
-        return new Response(JSON.stringify(createData), {
-          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const { data: row, error: insertError } = await supabase.from('whatsapp_connections').insert({
-        name: connName, phone_number: phoneNumber, instance_id: instance, status: 'disconnected',
-        is_default: body.is_default === true,
-      }).select().single();
-      if (insertError || !row) {
-        new Logger('evolution-api').error('create-connection: insert falhou — tentando compensar na GO', { instance, error: insertError?.message });
-        await compensateGoCreate();
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a conexão (tentativa de reverter na Evolution GO — confira os logs).' }), {
+        // A GO nunca chegou a criar nada aqui — só a reserva local para desfazer.
+        await rollbackRow();
+        return new Response(JSON.stringify(stripInstanceToken(createData)), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -253,11 +294,16 @@ serve(async (req) => {
       if (tokenError) {
         const log = new Logger('evolution-api');
         log.error('create-connection: set_instance_token falhou — tentando reverter linha e GO', { instance, error: tokenError.message });
-        const { error: deleteRowError } = await supabase.from('whatsapp_connections').delete().eq('id', row.id);
-        if (deleteRowError) {
-          log.error('create-connection: falha ao remover a linha após set_instance_token falhar — pode ter sobrado linha fantasma sem token', { instance, connectionId: row.id, error: deleteRowError.message });
-        }
+        // Ordem importa: compensar a GO PRIMEIRO, com a linha ainda reservada.
+        // Enquanto ela existir, nenhuma outra create-connection com o mesmo
+        // nome passou do INSERT — então a instância que resolveGoInstanceId
+        // encontra aqui só pode ser a que ESTA requisição acabou de criar. Se
+        // a ordem fosse invertida (linha removida antes), um concorrente
+        // poderia reservar o nome e criar a própria instância na GO entre as
+        // duas chamadas, e a compensação apagaria a instância dele, não a
+        // nossa — reabrindo o mesmo bug que esta reserva existe para fechar.
         await compensateGoCreate();
+        await rollbackRow();
         return new Response(JSON.stringify({ error: true, message: 'Falha ao guardar o token no Vault (tentativa de reverter — confira os logs).' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -278,21 +324,6 @@ serve(async (req) => {
           instance, error: err instanceof Error ? err.message : String(err),
         });
       }
-
-      // A GO ecoa o token da instância no corpo de /instance/create (mesmo
-      // motivo por que create-instance legado o devolvia ao operador) — aqui
-      // o token já está no Vault, então devolvê-lo de novo só reabriria o
-      // vazamento que E08-E11 existem para fechar. Nunca confiar no shape
-      // exato (a GO pode aninhar em .data): remove nos dois níveis.
-      const stripInstanceToken = (value: unknown): unknown => {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
-        delete clone.token; delete clone.Token; delete clone.apikey; delete clone.apiKey;
-        if (clone.data && typeof clone.data === 'object' && !Array.isArray(clone.data)) {
-          clone.data = stripInstanceToken(clone.data);
-        }
-        return clone;
-      };
 
       return new Response(JSON.stringify({ connection: row, evolution: stripInstanceToken(createData) }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

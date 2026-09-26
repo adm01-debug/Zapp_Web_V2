@@ -20,7 +20,7 @@
  * configurable, prop-driven widget with multi-metric tabs, Framer Motion
  * and TanStack Query caching. Both serve distinct UI contexts.
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,11 +41,7 @@ export function ConversationHeatmap() {
   const [period, setPeriod] = useState('30');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [period]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const since = new Date();
     since.setDate(since.getDate() - parseInt(period));
@@ -74,7 +70,12 @@ export function ConversationHeatmap() {
       setData(cells);
     }
     setLoading(false);
-  };
+  }, [period]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-período padrão, sem estado derivado de props para sincronizar.
+    loadData();
+  }, [loadData]);
 
   const maxCount = useMemo(() => Math.max(1, ...data.map(c => c.count)), [data]);
 

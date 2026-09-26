@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
@@ -30,20 +30,7 @@ export function useQueueGoals() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchGoals();
-
-    const channel = supabase
-      .channel(uniqueRealtimeTopic('queue-goals-changes'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_goals' }, fetchGoals)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('queue_goals')
@@ -62,7 +49,21 @@ export function useQueueGoals() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    fetchGoals();
+
+    const channel = supabase
+      .channel(uniqueRealtimeTopic('queue-goals-changes'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_goals' }, fetchGoals)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchGoals]);
 
   const saveGoal = async (queueId: string, goalData: Partial<QueueGoal>) => {
     try {

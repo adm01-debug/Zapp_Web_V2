@@ -8902,6 +8902,15 @@ export type Database = {
         Args: { p_agent?: string; p_queue?: string; p_since: string }
         Returns: Json
       }
+      dashboard_sentiment_alerts: {
+        Args: { p_since?: string }
+        Returns: {
+          created_at: string
+          details: Json
+          entity_id: string
+          id: string
+        }[]
+      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       effective_role: {
         Args: { _user_id: string }
