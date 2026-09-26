@@ -136,7 +136,7 @@ Vite + React 19 + TS + Tailwind 3.4 + shadcn/Radix + framer-motion + TanStack Qu
 | Busca da lista | **h 40** radius 12; botão filtro 40×40 | ±2 |
 | Cabeçalho de grupo | h 32 | ±2 |
 | Item de conversa | **h 72** (min), padding 12, radius 12; avatar **48**; dot online 12; badge canal 20; contador 22 | ±4 |
-| Item selecionado | `bg-accent border border-primary/40` (sem barra lateral) | — |
+| Item selecionado | classe `conversation-row-selected`: fundo `bg-muted/30` (igual ao fixado) + anel `conic-gradient` girando só na borda de 2px (máscara `mask-composite: exclude`, efeito hover-border-gradient), sem barra lateral — PR #780 (era `bg-accent border-primary/40`) | — |
 | Chat header | **h 72**; avatar 48; botões **40×40** radius 10 border-border gap 8 | ±2 |
 | Barra de abas | h 48 (mantém); pill ativa h 36 radius 8 | ±2 |
 | Banner IA | h 56 radius 12 | ±4 |
