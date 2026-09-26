@@ -195,3 +195,11 @@
     animation: none;
   }
 }
+
+/* Aba oculta/minimizada (document.hidden) — VirtualizedRealtimeList.tsx
+   alterna esta classe no <html> via visibilitychange. Sem isso o anel
+   giratorio do card selecionado continua repintando a GPU com ninguem
+   olhando pra tela. */
+:root.tab-hidden .conversation-row-selected::before {
+  animation-play-state: paused;
+}
