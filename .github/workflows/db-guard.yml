@@ -159,6 +159,11 @@ jobs:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: postgres:17-alpine
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
+      - name: Simular contrato de dados da Telefonia v2
+        env:
+          CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: postgres:17-alpine
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/calls-telefonia-contract.test.sh
+
       - name: Simular notificações atômicas de chamadas e sentimento
         env:
           NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: postgres:17-alpine
