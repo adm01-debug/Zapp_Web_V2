@@ -19,22 +19,26 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
 
-// Alturas calibradas para o conteudo real da linha (nome + previa + cluster
-// de badges com SLA/tags, que pode quebrar em 2 linhas por causa do
-// flex-wrap) — nao so pro avatar de 48px. Com o cluster de badges quase
-// sempre visivel (SLA aparece pra toda conversa sem 1a resposta), o
-// conteudo minimo fica em ~76-84px; valores menores cortavam a linha ou
-// faziam o virtualizador sobrepor linhas adjacentes.
+// Alturas calibradas para o conteudo real da linha (nome + linha de cargo
+// opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
+// linhas por causa do flex-wrap) — nao so pro avatar de 48px. Pior caso
+// (cargo preenchido + badges em 2 linhas, ambos opcionais e independentes)
+// soma ~90-100px de conteudo real; o buffer abaixo da area util (slot menos
+// margin/padding) fica deliberadamente acima disso. Estimativa revisada em
+// auditoria de 5 agentes (2026-09-26) que apontou que o ajuste anterior
+// (so +16px pra caber a linha de cargo) nao cobria os dois opcionais
+// coincidindo. Valores menores voltam a cortar linha / sobrepor no
+// virtualizador (estimateSize fixo, sem measureElement).
 const ITEM_HEIGHT_BY_DENSITY: Record<DensityMode, number> = {
-  comfortable: 108,
-  compact: 100,
-  dense: 96,
+  comfortable: 124,
+  compact: 116,
+  dense: 112,
 };
 
 const ROW_CLASSES_BY_DENSITY: Record<DensityMode, string> = {
-  comfortable: 'min-h-[92px] my-0.5 px-3 py-2.5',
-  compact: 'min-h-[84px] my-0.5 px-3 py-2',
-  dense: 'min-h-[80px] my-0.5 px-2.5 py-1.5',
+  comfortable: 'min-h-[108px] my-0.5 px-3 py-2.5',
+  compact: 'min-h-[100px] my-0.5 px-3 py-2',
+  dense: 'min-h-[96px] my-0.5 px-2.5 py-1.5',
 };
 
 const SNOOZE_OPTIONS: { value: string; label: string }[] = [
