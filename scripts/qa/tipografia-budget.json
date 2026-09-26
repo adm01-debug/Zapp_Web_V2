@@ -1,42 +1,42 @@
 {
-  "geradoEm": "2026-09-24T18:05:49.316Z",
+  "geradoEm": "2026-09-26T00:43:38.137Z",
   "commit": null,
   "escala": {
     "3xs": {
       "fontSizePx": 10,
       "lineHeightPx": 13,
       "lineHeightDeclarado": "0.8125rem",
-      "usos": 606
+      "usos": 590
     },
     "2xs": {
       "fontSizePx": 11,
       "lineHeightPx": 14,
       "lineHeightDeclarado": "0.875rem",
-      "usos": 327
+      "usos": 328
     },
     "xs": {
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1734
+      "usos": 1701
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1111
+      "usos": 1099
     },
     "base": {
       "fontSizePx": 16,
       "lineHeightPx": 24,
       "lineHeightDeclarado": "1.5rem",
-      "usos": 141
+      "usos": 140
     },
     "lg": {
       "fontSizePx": 18,
       "lineHeightPx": 28,
       "lineHeightDeclarado": "1.75rem",
-      "usos": 189
+      "usos": 187
     },
     "xl": {
       "fontSizePx": 20,
@@ -105,21 +105,21 @@
       "fontSizePx": 8,
       "lineHeightPx": 12,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 13,
+      "usos": 11,
       "equivalenteNaEscala": null
     },
     "9": {
       "fontSizePx": 9,
       "lineHeightPx": 13.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 104,
+      "usos": 103,
       "equivalenteNaEscala": null
     },
     "13": {
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 161,
+      "usos": 160,
       "equivalenteNaEscala": null
     },
     "15": {
@@ -138,9 +138,9 @@
     }
   },
   "totais": {
-    "usosNomeados": 4344,
-    "usosArbitrarios": 310,
-    "arquivosAnalisados": 1436
+    "usosNomeados": 4281,
+    "usosArbitrarios": 306,
+    "arquivosAnalisados": 1454
   },
   "violacoes": {
     "meiaMedida": 0,
@@ -148,9 +148,9 @@
     "comEquivalenteExato": 0,
     "cssMeiaMedida": 0,
     "cssFontFamilyLiteral": 0,
-    "tsxFontSizeInline": 34,
+    "tsxFontSizeInline": 2,
     "tsxFontFamilyLiteral": 0,
-    "pesoOrfao": 1
+    "pesoOrfao": 0
   },
   "detalheViolacoes": {
     "halfStep": [],
@@ -165,136 +165,8 @@
     "cssFontFamilyLiteral": [],
     "tsxFontSizeInline": [
       {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:93",
-        "px": 12
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:110",
-        "px": 10
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:111",
-        "px": 10
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:145",
-        "px": 10
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:146",
-        "px": 10
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:175",
-        "px": 10
-      },
-      {
-        "where": "src/components/admin/telemetry/TelemetryCharts.tsx:176",
-        "px": 10
-      },
-      {
         "where": "src/components/catalog/catalogShared.tsx:74",
         "px": 10
-      },
-      {
-        "where": "src/components/dashboard/AIStatsWidget.tsx:197",
-        "px": 10
-      },
-      {
-        "where": "src/components/dashboard/AIStatsWidget.tsx:198",
-        "px": 10
-      },
-      {
-        "where": "src/components/dashboard/DemandPrediction.tsx:116",
-        "px": 10
-      },
-      {
-        "where": "src/components/dashboard/overview/SentimentTrendCard.tsx:49",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/overview/SentimentTrendCard.tsx:51",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/overview/VolumeChart.tsx:89",
-        "px": 11
-      },
-      {
-        "where": "src/components/dashboard/overview/VolumeChart.tsx:95",
-        "px": 11
-      },
-      {
-        "where": "src/components/monitoring/MonitoringMessageChart.tsx:65",
-        "px": 10
-      },
-      {
-        "where": "src/components/monitoring/MonitoringMessageChart.tsx:66",
-        "px": 10
-      },
-      {
-        "where": "src/components/queues/chartConfig.ts:12",
-        "px": 12
-      },
-      {
-        "where": "src/components/reports/DemandForecast.tsx:113",
-        "px": 10
-      },
-      {
-        "where": "src/components/reports/DemandForecast.tsx:114",
-        "px": 10
-      },
-      {
-        "where": "src/components/reports/DemandForecast.tsx:115",
-        "px": 12
-      },
-      {
-        "where": "src/components/sla/SLACharts.tsx:40",
-        "px": 12
-      },
-      {
-        "where": "src/components/sla/SLACharts.tsx:41",
-        "px": 12
-      },
-      {
-        "where": "src/components/sla/SLACharts.tsx:62",
-        "px": 12
-      },
-      {
-        "where": "src/components/sla/SLACharts.tsx:63",
-        "px": 12
-      },
-      {
-        "where": "src/components/talkx/TalkXCampaignRunning.tsx:134",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXCampaignRunning.tsx:135",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXCampaignRunning.tsx:136",
-        "px": 12
-      },
-      {
-        "where": "src/components/talkx/TalkXLiveMonitor.tsx:184",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXLiveMonitor.tsx:185",
-        "px": 10
-      },
-      {
-        "where": "src/components/talkx/TalkXLiveMonitor.tsx:186",
-        "px": 12
-      },
-      {
-        "where": "src/lib/chart-theme.ts:5",
-        "px": 10
-      },
-      {
-        "where": "src/lib/chartColors.ts:164",
-        "px": 12
       },
       {
         "where": "src/pages/AdminTelemetriaPage.tsx:108",
@@ -302,15 +174,6 @@
       }
     ],
     "tsxFontFamilyLiteral": [],
-    "pesoOrfao": [
-      {
-        "where": "src/styles/base.css:82",
-        "weight": 900,
-        "faixaCarregada": [
-          200,
-          800
-        ]
-      }
-    ]
+    "pesoOrfao": []
   }
 }
