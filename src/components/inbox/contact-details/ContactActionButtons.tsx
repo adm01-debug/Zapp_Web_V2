@@ -58,26 +58,39 @@ type TileProps = React.ComponentPropsWithoutRef<'button'> & {
 };
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
-  { icon, label, testId, hoverColorClass = 'group-hover:text-primary', className, ...rest }, ref,
+  // `title` é descartado de propósito (nunca vai para o DOM): o `title` nativo
+  // do browser e o TooltipContent abaixo mostravam textos diferentes ao mesmo
+  // tempo (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+  { icon, label, testId, hoverColorClass = 'group-hover:text-primary', className, title, disabled, ...rest }, ref,
 ) {
+  const button = (
+    <button
+      ref={ref}
+      type="button"
+      data-testid={testId ?? 'contact-action-tile'}
+      disabled={disabled}
+      {...rest}
+      className={cn(
+        'group h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
+        'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
+        hoverColorClass,
+        className,
+      )}
+    >
+      {icon}
+    </button>
+  );
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
-            ref={ref}
-            type="button"
-            data-testid={testId ?? 'contact-action-tile'}
-            {...rest}
-            className={cn(
-              'group h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
-              'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
-              hoverColorClass,
-              className,
-            )}
-          >
-            {icon}
-          </button>
+          {disabled ? (
+            // <button disabled> nunca recebe foco nem dispara hover — sem este
+            // wrapper focável, o tooltip nunca aparecia no estado desabilitado
+            // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+            <span tabIndex={0} className="inline-flex cursor-not-allowed">{button}</span>
+          ) : button}
         </TooltipTrigger>
         <TooltipContent>{label}</TooltipContent>
       </Tooltip>
@@ -125,7 +138,11 @@ export function ContactActionButtons({
           label="Transferir"
           title="Transferir conversa"
           onClick={handleTransfer}
-          hoverColorClass="group-hover:text-success"
+          // --success (160 70% 42%) sobre bg-inbox-panel branco dá 2.60:1 —
+          // abaixo do mínimo WCAG 1.4.11 (3:1) para ícones. L reduzido pra
+          // 35% (mesmo tom/saturação) só neste hover, sem tocar o token
+          // global (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+          hoverColorClass="group-hover:text-[hsl(160_70%_35%)]"
         />
 
         <DropdownMenu>

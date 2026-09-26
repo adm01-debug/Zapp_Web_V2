@@ -44,7 +44,11 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      // e.defaultPrevented: o DismissableLayer do Radix (dropdown/tooltip)
+      // escuta Escape em fase de capture e chama preventDefault() ao fechar —
+      // sem este check, Escape fechava o dropdown de ações E o painel junto
+      // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+      if (e.key === 'Escape' && !e.defaultPrevented && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault(); onClose();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 't' && panelRef.current) {
