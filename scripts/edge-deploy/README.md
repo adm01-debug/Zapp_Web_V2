@@ -24,7 +24,7 @@ The production workflow runs only from `refs/heads/main`. After deployment it:
 3. requires exact `verify_jwt` equality for every function;
 4. requires ACTIVE functions with valid SHA-256 bundle digests, timestamps and
    advanced versions for the selected scope, observes at least 60 seconds and
-   three consecutive identical inventories (up to 18 attempts, 10-second intervals);
+   three consecutive identical inventories (up to 36 attempts, 10-second intervals);
 5. emits an attestation associating observed remote versions with the source
    manifest and GitHub SHA; records out-of-scope changes separately;
 6. runs a non-mutating smoke matrix against every function;
@@ -43,11 +43,3 @@ digest, which is distinct from our local source digest. Polling detects transien
 inventory states but cannot rule out later changes or independently reproduce
 the provider build. `source_to_bundle_equivalence_proven` remains **false**.
 This is not a cryptographic proof that source bytes equal remote runtime bytes,
-nor an authenticated business E2E. No full deploy is needed just to collect evidence.
-
-The single-snapshot `verify-remote.mjs` remains available for historical/offline
-inspection; the production workflow uses `collect-remote.mjs`. Failure to stabilize
-does not undo an already completed deploy: inspect the inventory before any retry.
-The collector is extracted from the trusted triggering `GITHUB_SHA`, while source
-inputs remain at `DEPLOYED_GIT_SHA`; this keeps rollback to an older ancestor
-working even when that ancestor does not contain the new collector.
