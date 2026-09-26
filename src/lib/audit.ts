@@ -16,7 +16,9 @@ export type AuditAction =
   | 'call_ended'
   | 'transfer'
   | 'settings_changed'
-  | 'client_error';
+  | 'client_error'
+  | 'searchbox_session'
+  | 'searchbox_cost_guard';
 
 interface AuditLogParams {
   action: AuditAction;

@@ -1,4 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }));
+
+import { logAudit } from '@/lib/audit';
 import {
   getSearchSession,
   noteSuggestCall,
@@ -11,6 +15,7 @@ describe('mapboxSession', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetSearchSessionForTests();
+    vi.mocked(logAudit).mockClear();
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -58,5 +63,29 @@ describe('mapboxSession', () => {
       vi.advanceTimersByTime(1_000);
     }
     expect(tokens.size).toBe(1);
+  });
+
+  it('E35: abrir sessão nova registra searchbox_session em audit_logs, com source', () => {
+    getSearchSession('contact-form');
+    expect(logAudit).toHaveBeenCalledTimes(1);
+    expect(logAudit).toHaveBeenCalledWith({
+      action: 'searchbox_session',
+      details: { source: 'contact-form' },
+    });
+  });
+
+  it('E35: reaproveitar a sessão dentro da janela não gera novo evento', () => {
+    getSearchSession('picker');
+    vi.advanceTimersByTime(60_000);
+    getSearchSession('picker');
+    expect(logAudit).toHaveBeenCalledTimes(1);
+  });
+
+  it('E35: sem source explícito, o evento usa "picker" como padrão', () => {
+    getSearchSession();
+    expect(logAudit).toHaveBeenCalledWith({
+      action: 'searchbox_session',
+      details: { source: 'picker' },
+    });
   });
 });
