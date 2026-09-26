@@ -312,32 +312,32 @@
 1. Registrar em `audit_logs` (evento `searchbox_session`) o início de cada sessão, com `source`.
 2. Um registro por sessão, nunca por `/suggest`.
 3. Sem dado pessoal: só contagem e origem.
-**Checklist:** [ ] 1 evento por sessão · [ ] sem PII
+**Checklist:** [x] 1 evento por sessão (só em `createSession`, nunca em `noteSuggestCall`) · [x] sem PII (só `source`)
 
 ### E36 · Painel de uso
 **Arquivos:** consulta SQL documentada em `docs/mapa/`
 1. Query de sessões/dia e sessões/mês a partir de `audit_logs`.
 2. Comparar com o teto gratuito de **500 sessões/mês**.
 3. Registrar o primeiro mês medido no apêndice B.
-**Checklist:** [ ] query no doc · [ ] comparação com o teto
+**Checklist:** [x] query no doc (`docs/mapa/USO_SEARCHBOX.md`) · [x] comparação com o teto
 
 ### E37 · Guarda de custo
 1. Se as sessões do mês passarem de um limite configurável (padrão: 450), o autocomplete cai para `/forward` automaticamente.
 2. O operador não vê erro — a busca continua funcionando, só sem sugestão enquanto digita.
 3. Registrar o rebaixamento em `audit_logs`.
-**Checklist:** [ ] limite configurável · [ ] degradação silenciosa · [ ] evento registrado
+**Checklist:** [x] limite configurável (`MONTHLY_SESSION_LIMIT`, padrão 450) · [x] degradação silenciosa (`/forward` de sempre, sem erro pro operador) · [x] evento registrado (`searchbox_cost_guard`, 1x por transição)
 
 ### E38 · Tratamento de 429
 1. `/suggest` com 429 → parar de sugerir por 60 s e avisar uma única vez.
 2. Não tentar de novo a cada tecla.
 3. Teste com fake timers.
-**Checklist:** [ ] backoff de 60 s · [ ] 1 aviso só · [ ] teste
+**Checklist:** [x] backoff de 60 s · [x] 1 aviso só (sem retry a cada tecla durante o backoff) · [x] teste
 
 ### E39 · Revisão de privacidade
 1. O termo digitado vai para a Mapbox — documentar isso no doc do módulo.
 2. Não registrar o termo em `audit_logs` (só a contagem).
 3. Conferir se a política de retenção do repo cobre o caso.
-**Checklist:** [ ] termo fora do log · [ ] doc atualizado
+**Checklist:** [x] termo fora do log (conferido em `mapboxSession.ts`/`mapboxCostGuard.ts`) · [x] doc atualizado (`docs/mapa/USO_SEARCHBOX.md#privacidade-e39`)
 
 ### E40 · PR da Fase 5
 1. PR com telemetria + guarda de custo.
@@ -447,7 +447,7 @@ features[0].properties.full_address= "R. da Independência, São Paulo, 01524, B
 | O que é 1 sessão | até 50 `/suggest` + 1 `/retrieve`, expira em 2 min de inatividade |
 | Geocoding v5 (fallback) | 100.000 req/mês grátis, depois US$ 0,75 / 1.000 |
 | Buscas/mês medidas hoje | **sem contador de volume ainda** — 0 eventos `mapbox_*` em 30 dias (telemetria só de falha, ver A13/E01); 0 mensagens de localização enviadas por agente |
-| Sessões/mês após o rollout | _a medir em E36_ |
+| Sessões/mês após o rollout | 0 em 2026-09-26 (flag ainda desligada) — query de acompanhamento em `docs/mapa/USO_SEARCHBOX.md` |
 | Custo real do 1º mês | _a medir em E50_ |
 
 ## Apêndice C — Cascata de decisão
