@@ -7,33 +7,36 @@ function assert(condition: unknown, message: string): asserts condition {
 const contact = { name: 'Joao Silva', nickname: 'Joao', company: 'Empresa Teste' };
 
 Deno.test('personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao)', () => {
-  const result = personalize('Ola {{nome}}, aqui é da {{empresa}}', contact, []);
+  const result = personalize('Ola {{nome}}, aqui é da {{empresa}}', contact, {});
   assert(result === 'Ola Joao, aqui é da Empresa Teste', `unexpected result: ${result}`);
 });
 
-Deno.test('personalize throws unknown_placeholder for a placeholder outside the fixed set and customVars', () => {
-  let threw = false;
-  try {
-    personalize('Seu cargo é {{cargo}}', contact, []);
-  } catch (e) {
-    threw = true;
-    assert(e instanceof Error && e.message.includes('unknown_placeholder: {{cargo}}'), `unexpected error: ${e}`);
-  }
-  assert(threw, 'expected personalize to throw for an unregistered placeholder');
-});
-
-Deno.test('personalize does NOT throw when the placeholder name is passed via customVars (template.custom_variables)', () => {
-  // Regressão: o envio real de campanha (talkx-send, action=start) chamava
-  // personalize(...) com customVars fixado como [] mesmo quando a campanha usa
-  // um template com custom_variables cadastradas (ex.: {{cargo}}), enquanto o
-  // preview do editor de template (action=test) sempre repassava
-  // customVariables corretamente. Resultado: campanhas com variável
-  // customizada falhavam para 100% dos destinatários com unknown_placeholder.
-  const result = personalize('Seu cargo é {{cargo}}', contact, ['cargo']);
+Deno.test('personalize falls back to a bracket placeholder for an unresolved variable instead of throwing', () => {
+  // Regressão: campanha sem template salvo (template_id null) ou contato sem
+  // aquele campo customizado preenchido não pode derrubar o envio inteiro com
+  // unknown_placeholder — antes isso falhava 100% dos destinatários.
+  const result = personalize('Seu cargo é {{cargo}}', contact, {});
   assert(result === 'Seu cargo é [cargo]', `unexpected result: ${result}`);
 });
 
+Deno.test('personalize substitutes the real value when the contact has that custom field', () => {
+  // Regressão: o envio real de campanha (talkx-send, action=start) sempre
+  // "resolvia" variável customizada como o próprio nome entre colchetes
+  // (ex.: {{cargo}} -> "[cargo]"), nunca o dado real de contact_custom_fields.
+  const result = personalize('Seu cargo é {{cargo}}', contact, { cargo: 'Diretor de Vendas' });
+  assert(result === 'Seu cargo é Diretor de Vendas', `unexpected result: ${result}`);
+});
+
+Deno.test('personalize resolves multiple custom values in the same message', () => {
+  const result = personalize(
+    'Ola {{nome}}, seu cargo e {{cargo}} no time {{time}}',
+    contact,
+    { cargo: 'Diretor', time: 'Vendas' },
+  );
+  assert(result === 'Ola Joao, seu cargo e Diretor no time Vendas', `unexpected result: ${result}`);
+});
+
 Deno.test('personalize replaces {{link}} with the per-recipient tracking URL when provided', () => {
-  const result = personalize('Veja aqui: {{link}}', contact, [], 'America/Sao_Paulo', 'https://zapp.example/l/abc');
+  const result = personalize('Veja aqui: {{link}}', contact, {}, 'America/Sao_Paulo', 'https://zapp.example/l/abc');
   assert(result === 'Veja aqui: https://zapp.example/l/abc', `unexpected result: ${result}`);
 });
