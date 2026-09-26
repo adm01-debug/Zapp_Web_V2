@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
-import { UserAgent, Inviter, Invitation, Session, SessionState, Web } from 'sip.js';
+import type { Invitation, Inviter, Session, Web } from 'sip.js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
@@ -23,6 +23,7 @@ export function useSipClient() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentNumber, setCurrentNumber] = useState('');
   const [callDirection, setCallDirection] = useState<CallDirection | null>(null);
+  const callDirectionRef = useRef<CallDirection | null>(null);
 
   const { startCall, answerCall, endCall, missCall, currentCallId } = useCalls();
 
@@ -76,10 +77,13 @@ export function useSipClient() {
     }
   }, []);
 
-  const handleSessionStateChange = useCallback((state: SessionState, session: Session, number: string, direction: CallDirection) => {
-    if (state === SessionState.Establishing) {
+  // `state` é comparado por valor (strings): sip.js só é importado de fato
+  // (import() dinâmico) no momento de conectar/discar, para não engordar o
+  // bundle inicial do app com uma lib que só entra em uso dentro de Telefonia.
+  const handleSessionStateChange = useCallback((state: string, session: Session, number: string, direction: CallDirection) => {
+    if (state === 'Establishing') {
       setCallStatus('ringing'); callStatusRef.current = 'ringing';
-    } else if (state === SessionState.Established) {
+    } else if (state === 'Established') {
       const answeredAt = new Date();
       answeredAtRef.current = answeredAt;
       setCallStatus('active'); callStatusRef.current = 'active'; startTimer();
@@ -89,7 +93,7 @@ export function useSipClient() {
       const sdh = session.sessionDescriptionHandler as Web.SessionDescriptionHandler;
       sdh?.peerConnection?.getReceivers().forEach(r => { if (r.track) stream.addTrack(r.track); });
       audio.srcObject = stream;
-    } else if (state === SessionState.Terminated) {
+    } else if (state === 'Terminated') {
       stopTimer();
       const answeredAt = answeredAtRef.current;
       setCallStatus('ended'); callStatusRef.current = 'ended'; setIsMuted(false);
@@ -110,7 +114,7 @@ export function useSipClient() {
       if (direction === 'inbound') incomingInvitationRef.current = null;
       setTimeout(() => {
         setCallStatus('idle'); callStatusRef.current = 'idle';
-        setCallDirection(null); setCurrentNumber('');
+        setCallDirection(null); callDirectionRef.current = null; setCurrentNumber('');
       }, 2000);
     }
   }, [startTimer, stopTimer, getRemoteAudio, answerCall, endCall, missCall]);
@@ -125,7 +129,7 @@ export function useSipClient() {
     incomingInvitationRef.current = invitation;
     answeredAtRef.current = null;
     setCurrentNumber(remoteUser);
-    setCallDirection('inbound');
+    setCallDirection('inbound'); callDirectionRef.current = 'inbound';
     setCallStatus('ringing'); callStatusRef.current = 'ringing';
 
     invitation.stateChange.addListener((state) => handleSessionStateChange(state, invitation, remoteUser, 'inbound'));
@@ -166,10 +170,11 @@ export function useSipClient() {
     if (!uaRef.current || sipStatus !== 'registered') { toast.error('VoIP não conectado.'); return; }
     if (callStatusRef.current !== 'idle') { toast.error('Já existe uma chamada em andamento.'); return; }
     try {
+      const { UserAgent, Inviter } = await import('sip.js');
       const target = UserAgent.makeURI(`sip:${number}@${uaRef.current.configuration.uri.host}`);
       if (!target) { toast.error('Número inválido'); return; }
 
-      setCurrentNumber(number); setCallDirection('outbound');
+      setCurrentNumber(number); setCallDirection('outbound'); callDirectionRef.current = 'outbound';
       setCallStatus('calling'); callStatusRef.current = 'calling';
       answeredAtRef.current = null;
 
@@ -192,7 +197,7 @@ export function useSipClient() {
       callIdPromiseRef.current?.then((id) => { if (id) missCall(id); });
       callIdPromiseRef.current = null;
       sessionRef.current = null;
-      setCallStatus('idle'); callStatusRef.current = 'idle'; setCallDirection(null);
+      setCallStatus('idle'); callStatusRef.current = 'idle'; setCallDirection(null); callDirectionRef.current = null;
       toast.error(`Erro ao ligar: ${err instanceof Error ? err.message : 'Falha'}`);
     }
   }, [sipStatus, uaRef, findContactByPhone, startCall, missCall, handleSessionStateChange]);
@@ -201,10 +206,10 @@ export function useSipClient() {
     const session = sessionRef.current;
     if (session) {
       try {
-        if (session.state === SessionState.Established) {
+        if (session.state === 'Established') {
           session.bye();
-        } else if (session instanceof Inviter) {
-          session.cancel();
+        } else if (callDirectionRef.current === 'outbound') {
+          (session as Inviter).cancel();
         } else {
           (session as Invitation).reject().catch((err) => log.error('Reject error:', err));
         }
@@ -224,7 +229,7 @@ export function useSipClient() {
   }, [isMuted]);
 
   const sendDTMF = useCallback((digit: string) => {
-    if (!sessionRef.current || sessionRef.current.state !== SessionState.Established) return;
+    if (!sessionRef.current || sessionRef.current.state !== 'Established') return;
     try {
       const sdh = sessionRef.current.sessionDescriptionHandler as Web.SessionDescriptionHandler;
       const sender = sdh?.peerConnection?.getSenders().find(s => s.track?.kind === 'audio');

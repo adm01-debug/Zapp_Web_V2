@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
-import { UserAgent, Registerer, Invitation } from 'sip.js';
+import type { UserAgent, Registerer, Invitation } from 'sip.js';
 import { toast } from 'sonner';
 
 const log = getLogger('SipConnection');
@@ -35,6 +35,9 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     try {
       clearReconnectTimer();
       setSipStatus('connecting');
+      // sip.js só é baixado quando o usuário realmente tenta conectar — mantém
+      // a lib (e seu vendor chunk) fora do bundle inicial do app.
+      const { UserAgent, Registerer } = await import('sip.js');
       const wsPort = config.wsPort || 8089;
       const wsServer = `wss://${config.server}:${wsPort}/ws`;
       const uri = UserAgent.makeURI(`sip:${config.user}@${config.server}`);
