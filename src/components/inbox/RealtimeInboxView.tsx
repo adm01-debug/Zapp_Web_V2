@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
@@ -52,6 +52,15 @@ export function RealtimeInboxView() {
   const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const conversationActions = useConversationActions();
+  // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
+  // livre quando o painel de detalhes está fechado).
+  const pinnedConversations = useMemo(
+    () => inbox.cachedConversations
+      .filter((c) => conversationActions.pinnedIds.has(c.contact.id))
+      .map((c) => ({ id: c.contact.id, name: c.contact.name || 'Sem nome', avatarUrl: c.contact.avatar_url })),
+    [inbox.cachedConversations, conversationActions.pinnedIds],
+  );
+
   const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await inbox.refetch(); }, disabled: !isMobile || !!inbox.selectedContactId });
 
   // Aba ativa do painel central, ancorada no contato que a selecionou.
@@ -204,6 +213,8 @@ export function RealtimeInboxView() {
                         conversationActions.archiveContact(inbox.legacyConversation.contact.id);
                       }}
                       onSwitchToAiTab={() => setActiveTab('ia')}
+                      pinnedConversations={pinnedConversations}
+                      onSelectPinned={inbox.handleSelectConversation}
                     />
                   </SectionErrorBoundary>
                   </ConversationTabContent>
