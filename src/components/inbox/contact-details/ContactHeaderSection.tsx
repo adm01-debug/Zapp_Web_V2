@@ -7,7 +7,6 @@ import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
@@ -147,7 +146,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
             </div>
 
             {companyName && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <div className="text-[15px] text-muted-foreground flex items-center gap-1 mt-0.5">
                 <CompanyLogo logoUrl={crmCompany?.logo_url} companyName={crmCompany?.nome_fantasia} fallbackCompanyName={companyName} size="sm" className="rounded-full" />
                 <span className="truncate min-w-0 flex-1">{companyName}</span>
               </div>
@@ -162,9 +161,16 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
             )}
 
             {conversation?.updatedAt && (
-              <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1">
-                <Calendar className="w-3.5 h-3.5 shrink-0" />Último contato em {format(conversation.updatedAt, "d MMM yyyy", { locale: ptBR })}
-              </p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1 w-fit">
+                      <Calendar className="w-3.5 h-3.5 shrink-0" />{format(conversation.updatedAt, 'dd/MM/yyyy')}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Último contato</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>

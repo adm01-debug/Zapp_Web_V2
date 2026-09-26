@@ -283,11 +283,11 @@ describe('ContactHeaderSection', () => {
         conversation={conversation}
       />
     );
-    expect(screen.getByText(/Último contato em/)).toBeInTheDocument();
+    expect(screen.getByText('22/09/2026')).toBeInTheDocument();
   });
 
   it('nao mostra a data do ultimo contato quando conversation nao e fornecida', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.queryByText(/Último contato em/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d{2}\/\d{2}\/\d{4}$/)).not.toBeInTheDocument();
   });
 });
