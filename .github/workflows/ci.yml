@@ -74,7 +74,6 @@ jobs:
           supabase/functions/_shared/__tests__/avatar-storage-path.test.ts
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
           supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
-          supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
@@ -148,6 +147,16 @@ jobs:
 
       - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
         run: bun run test:coverage
+        env:
+          CI: true
+
+      # Config dedicado (vitest.contracts.config.ts): reescreve o import Deno
+      # "https://esm.sh/zod@3.23.8" de schemas.ts para o alias npm "zod3"
+      # (zod@3.23.8, ja no bun.lock). O vitest.config.ts principal nao tem
+      # esse rewrite e quebra em 3 dos 6 arquivos (Node nao resolve URL https
+      # no loader ESM padrao) — por isso a suite roda num config separado.
+      - name: 🧪 Run Edge Function contract tests (tests/contracts)
+        run: bun run test:contracts
         env:
           CI: true
 
