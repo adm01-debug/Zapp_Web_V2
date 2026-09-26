@@ -342,7 +342,7 @@
 ### E40 · PR da Fase 5
 1. PR com telemetria + guarda de custo.
 2. Corpo com a query de acompanhamento.
-**Checklist:** [x] PR aberta (#820) · [x] CI verde (7/7 checks obrigatórios)
+**Checklist:** [x] PR aberta (#820) · [x] CI verde (7/7 checks obrigatórios) · [x] mergeada (`85201134b7`, 2026-09-26)
 
 ---
 
