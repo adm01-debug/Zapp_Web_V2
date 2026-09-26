@@ -7,6 +7,18 @@
 # Somente alvos com contrato runtime explicito neste arquivo sao aceitos. Para
 # aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
 # o runtime novamente para fechar a janela TOCTOU.
+#
+# ROTA ATUAL (decisao de 2026-09-26, ver CLAUDE.md secao "Decisoes de
+# 2026-09-26"): com varias sessoes paralelas trabalhando, o DDL do dia a dia
+# vai por MCP (db_query) + registro no ledger no MESMO turno — este workflow
+# pausa em "Waiting" no environment producao-ddl ate aprovacao humana, e
+# nesse intervalo o arquivo ja mergeado passa a ser drift (e exatamente o que
+# o db-live-guard.yml acusa). Este workflow continua sendo mais seguro no
+# papel (dry-run + hash + aprovacao) e serve como rota formal/auditavel
+# quando NAO houver pressa (ou quando Joaquim decidir voltar a exigi-la) —
+# nao e codigo morto, mas hoje nao e o caminho padrao. Antes de disparar,
+# confirme que nao ha outro run deste workflow em waiting/queued (regra
+# operacional; nao ha lock automatico no proprio workflow).
 # ==================================================================
 
 name: DB Migrate (production)
@@ -53,6 +65,10 @@ jobs:
     environment: producao-ddl
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    permissions:
+      contents: read
+      # actions: read apenas para o passo de deteccao de concorrencia abaixo.
+      actions: read
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,6 +78,34 @@ jobs:
 
       - name: Provar checkout imutavel
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      # E47 (auditoria de GitHub Actions, 2026-09-26): dois dispatches
+      # seguidos deste workflow ficavam presos, um atras do outro, na fila da
+      # concurrency (cancel-in-progress: false) — o 2o so seria liberado
+      # depois do 1o ser aprovado/rejeitado no environment producao-ddl, o que
+      # podia nunca acontecer (runs 36247549783 e 36263608943, cancelados
+      # manualmente na auditoria). Falha rapido e com mensagem clara em vez de
+      # entrar silenciosamente na fila.
+      - name: Bloquear se ja houver outro run deste workflow em espera
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const outros = [];
+            for (const status of ['waiting', 'queued', 'requested']) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner, repo, workflow_id: 'db-migrate.yml', status, per_page: 10,
+              });
+              outros.push(...data.workflow_runs.filter((run) => run.id !== context.runId));
+            }
+            if (outros.length > 0) {
+              const lista = outros.map((r) => `#${r.run_number} (${r.html_url})`).join(', ');
+              core.setFailed(
+                `Ja existe outro run deste workflow em espera: ${lista}. `
+                + 'Aprove ou cancele-o na aba Actions antes de disparar um novo dispatch.',
+              );
+            }
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
