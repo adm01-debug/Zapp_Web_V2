@@ -244,7 +244,11 @@ serve(async (req) => {
               log.error('create-connection: delete de compensação respondeu erro — instância pode ter ficado órfã na GO', { instance, detalhe: deleteData?.message });
             }
           } else {
-            await proxy(`/instance/delete/${instance}`, 'DELETE');
+            const deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE');
+            const deleteData: Record<string, unknown> = await deleteRes.json().catch(() => ({}));
+            if (deleteData?.error) {
+              log.error('create-connection: delete de compensação (v2) respondeu erro — instância pode ter ficado órfã', { instance, detalhe: deleteData?.message });
+            }
           }
         } catch (err: unknown) {
           log.error('create-connection: compensação (delete na GO) lançou exceção — instância pode ter ficado órfã', {
@@ -254,14 +258,18 @@ serve(async (req) => {
       };
 
       // A GO ecoa o token da instância no corpo de /instance/create (mesmo
-      // motivo por que create-instance legado o devolvia ao operador) — aqui
-      // o token já está no Vault, então devolvê-lo de novo só reabriria o
-      // vazamento que E08-E11 existem para fechar. Nunca confiar num shape
-      // único: além de achatado no topo, forks do Evolution API costumam
-      // aninhar sob "data", "hash" (padrão do Node.js v1/v2 original, de onde
-      // este projeto migrou — docs/migration/GO_GAPS.md) ou "instance" —
-      // remove recursivamente em qualquer um desses contêineres, nos dois
-      // branches (sucesso e erro).
+      // motivo por que create-instance legado o devolvia ao operador). No
+      // branch de sucesso o token já está no Vault, então devolvê-lo de novo
+      // só reabriria o vazamento que E08-E11 existem para fechar. No branch
+      // de erro (createData?.error) nada foi persistido — mas a GO recebeu o
+      // token no payload do /instance/create e pode ecoá-lo de volta mesmo
+      // numa resposta de erro (ex.: nome já em uso), então remover continua
+      // sendo a coisa certa nos dois branches, só por motivos diferentes.
+      // Nunca confiar num shape único: além de achatado no topo, forks do
+      // Evolution API costumam aninhar sob "data", "hash" (padrão do Node.js
+      // v1/v2 original, de onde este projeto migrou —
+      // docs/migration/GO_GAPS.md) ou "instance" — remove recursivamente em
+      // qualquer um desses contêineres, nos dois branches.
       const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
       const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
       const stripInstanceToken = (value: unknown): unknown => {
@@ -305,6 +313,11 @@ serve(async (req) => {
         // isIdempotent em evolution-api-proxy.ts). compensateGoCreate() só
         // age se resolveGoInstanceId achar algo com este nome — é no-op
         // seguro quando de fato nada foi criado, e fecha o caso em que foi.
+        // Custo aceito: resolveGoInstanceId faz fetch cru (não passa pelo
+        // circuit breaker do proxy) com até 8s de timeout — todo erro de
+        // /instance/create paga essa checagem extra agora, não só o branch
+        // de tokenError como antes. Mitigado pelo rate-limit da function e
+        // por cada tentativa usar nome com timestamp (chave de breaker nova).
         await compensateGoCreate();
         await rollbackRow();
         return new Response(JSON.stringify(stripInstanceToken(createData)), {
@@ -332,8 +345,12 @@ serve(async (req) => {
       }
 
       // Webhook na criação (best-effort): falhar aqui não desfaz a conexão já
-      // criada e com token guardado — o front sempre pode chamar 'connect'
-      // (usa o token da instância via E16, quando existir) para reparar.
+      // criada e com token guardado. A action 'connect' NÃO resolve token
+      // por instância ainda (usa só EVOLUTION_INSTANCE_TOKEN/o global — E16
+      // e E23 seguem pendentes no plano multi-conexão), então hoje ela não é
+      // um reparo funcional para uma instância não-default; o reparo real
+      // por ora é repetir este create-connection ou reconectar manualmente
+      // pela GO com o instanceToken salvo no Vault desta conexão.
       try {
         await fetch(`${evolutionApiUrl}/instance/connect`, {
           method: 'POST',
