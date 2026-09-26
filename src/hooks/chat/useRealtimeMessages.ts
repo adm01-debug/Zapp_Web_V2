@@ -130,6 +130,27 @@ export function useRealtimeMessages() {
     [commitConversations, hydrateConversationForMessage, notifyAboutIncomingMessage]
   );
 
+  // Sem isso, editar apelido/cargo/empresa etc. (EditContactDialog) so
+  // aparece na lista apos reload — o contato em memoria so era atualizado
+  // via hidratacao de mensagem nova, nunca por UPDATE direto na tabela.
+  // Postgres manda a linha completa no payload de UPDATE (nao e merge
+  // parcial), entao substituir c.contact inteiro e seguro.
+  const handleContactUpdate = useCallback(
+    (payload: RealtimePostgresChangesPayload<ConversationContact>) => {
+      const updatedContact = payload.new as ConversationContact;
+      if (!updatedContact?.id) return;
+      commitConversations((prev) => {
+        const idx = prev.findIndex((c) => c.contact.id === updatedContact.id);
+        if (idx < 0) return prev;
+        if (prev[idx].contact === updatedContact) return prev;
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], contact: updatedContact };
+        return updated;
+      });
+    },
+    [commitConversations]
+  );
+
   const fetchConversations = useCallback(async () => {
     const generation = ++fetchGenerationRef.current;
     const startingLiveRevision = liveRevisionRef.current;
@@ -179,6 +200,13 @@ export function useRealtimeMessages() {
     table: 'messages',
     onInsert: handleNewMessage,
     onUpdate: handleMessageUpdate,
+    enabled: true
+  });
+
+  useSupabaseRealtime<ConversationContact>({
+    channelName: 'global-contacts-realtime',
+    table: 'contacts',
+    onUpdate: handleContactUpdate,
     enabled: true
   });
 
