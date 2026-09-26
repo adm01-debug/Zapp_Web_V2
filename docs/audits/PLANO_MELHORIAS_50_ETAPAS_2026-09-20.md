@@ -70,10 +70,14 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   sem rastro de rotação em lugar nenhum. Ver `docs/audits/edges-secrets-2026-09-26.md`.
 - **E01** — os 2 remotos `claude/*` mergeados (`claude/audit-database-references-m1xp3p`,
   `claude/nice-pasteur-3h1emj`) já não existem (`git branch -r` = 0 matches). Fechado sem ação.
-- **E16** — PR #826 (migration `DROP INDEX IF EXISTS idx_talkx_template_versions_template_version`)
-  mergeada em `main` (`97ff94d`). **Apply em produção segue pendente** — `db-migrate.yml`
-  dry-run→apply exige aprovação humana no environment `producao-ddl` (regra 8); não é executado
-  autonomamente.
+- **E16** — PR #826 mergeada (`97ff94d`) e **aplicado em produção em 26/09** via MCP direto +
+  registro no ledger no mesmo turno (nova convenção da seção "Decisões de 2026-09-26" do
+  CLAUDE.md, que substituiu a espera pelo `db-migrate.yml`) — `idx_talkx_template_versions_template_version`
+  confirmado removido ao vivo (`pg_indexes` só lista pkey + unique + `idx_..._saved_by`).
+  Fechado de ponta a ponta.
+- **E17** — PR #855 mergeada e **aplicado em produção em 26/09** pela mesma via — as 13 FKs
+  confirmadas ao vivo em `pg_constraint`. `supabase-usage-guard.mjs` segue verde (`novas: 0`)
+  após o apply. Fechado de ponta a ponta.
 - **E23/E25 — achado real, corrigido**: a varredura anti-prosa achou 17 candidatos; 10 eram
   falso-positivo do regex (`...` dentro de comentário/hash abreviado, ou `resumo` como nome de
   campo JSON — SQL completo e real). **7 eram violação genuína da regra 7** (`statements` do
@@ -243,8 +247,8 @@ constraint / realmente mortos.
 ```sh
 # via MCP oficial: db_duplicate_indexes
 ```
-- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); apply em produção
-      via `db-migrate.yml` aguarda aprovação humana no environment `producao-ddl` (regra 8)
+- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); **aplicada em
+      produção em 26/09** via MCP direto — índice confirmado removido ao vivo
 
 ### E17 🔴 Integridade referencial não declarada (herda E34/16-09)
 Colunas `*_id` em `public.*` sem FK correspondente: inventário, verificação de órfãos
@@ -252,8 +256,9 @@ por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não blo
 - [x] Inventário completo com decisão por coluna: 13 FK criadas (11 → `auth.users`, 1 →
       `profiles`, 1 → `vault.secrets`), 38 justificadas por escrito (externas/polimórficas) —
       ver `docs/audits/referential-integrity-2026-09-26.md`. Migration
-      `20260926200000_e17_referential_integrity_fks.sql` preparada; **DDL em produção segue
-      pendente** de merge + apply via `db-migrate.yml` (regra 8)
+      `20260926200000_e17_referential_integrity_fks.sql` (re-versionada de `20260926160000` por
+      colisão, PR #872) **aplicada em produção em 26/09** via MCP direto — as 13 FKs confirmadas
+      ao vivo em `pg_constraint`
 - [x] 0 órfãos verificados ao vivo nas 13 relações antes de escrever a migration
 
 ### E18 🟡 Autovacuum por tabela quente (herda E30/16-09)
