@@ -1,44 +1,41 @@
-
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { normalizeWebhookEvents, type WebhookRecord } from "./index.ts";
 
-// Mock implementation of logic for testing without actual DB/API calls
-// In a real scenario, we'd use a test DB or mock the fetch
-function calculateHealthScore(connections: { status: string }[], webhooks: { configured: boolean }[]) {
-  if (connections.length === 0) return 0;
-  const activeCount = connections.filter(c => c.status === 'connected').length;
-  const webhookOk = webhooks.every(w => w.configured);
-  
-  let score = (activeCount / connections.length) * 80;
-  if (webhookOk) score += 20;
-  
-  return Math.round(score);
-}
+// Cobre a normalizacao real de `webhook.events` usada pelo diagnostico da
+// Evolution v2 legada (FIX desta sessao — o tipo `string | string[]` era
+// atribuido direto a `string[]` sem normalizar, e a interface `WebhookRecord`
+// nao declarava `webhookByEvents`/`webhookBase64`, lidos no mesmo objeto).
 
-Deno.test("Health Score Calculation - All Connected", () => {
-  const connections = [{ status: 'connected' }, { status: 'connected' }];
-  const webhooks = [{ configured: true }];
-  const score = calculateHealthScore(connections, webhooks);
-  assertEquals(score, 100);
+Deno.test("normalizeWebhookEvents - events já é array, passa direto", () => {
+  const webhook: WebhookRecord = { events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] };
+  assertEquals(normalizeWebhookEvents(webhook), ["MESSAGES_UPSERT", "CONNECTION_UPDATE"]);
 });
 
-Deno.test("Health Score Calculation - Half Connected", () => {
-  const connections = [{ status: 'connected' }, { status: 'disconnected' }];
-  const webhooks = [{ configured: true }];
-  const score = calculateHealthScore(connections, webhooks);
-  assertEquals(score, 60); // (0.5 * 80) + 20
+Deno.test("normalizeWebhookEvents - events é string única, empacota em array", () => {
+  const webhook: WebhookRecord = { events: "MESSAGES_UPSERT" };
+  assertEquals(normalizeWebhookEvents(webhook), ["MESSAGES_UPSERT"]);
 });
 
-Deno.test("Health Score Calculation - Webhook Missing", () => {
-  const connections = [{ status: 'connected' }];
-  const webhooks = [{ configured: false }];
-  const score = calculateHealthScore(connections, webhooks);
-  assertEquals(score, 80);
+Deno.test("normalizeWebhookEvents - events ausente, retorna array vazio", () => {
+  const webhook: WebhookRecord = {};
+  assertEquals(normalizeWebhookEvents(webhook), []);
 });
 
-Deno.test("Health Score Calculation - No Connections", () => {
-  const connections: { status: string }[] = [];
-  const webhooks = [{ configured: true }];
-  const score = calculateHealthScore(connections, webhooks);
-  assertEquals(score, 0);
+Deno.test("normalizeWebhookEvents - webhook null, retorna array vazio", () => {
+  assertEquals(normalizeWebhookEvents(null), []);
+});
+
+Deno.test("normalizeWebhookEvents - array vazio explícito, preserva vazio", () => {
+  const webhook: WebhookRecord = { events: [] };
+  assertEquals(normalizeWebhookEvents(webhook), []);
+});
+
+Deno.test("WebhookRecord aceita webhookByEvents/webhookBase64 sem erro de tipo", () => {
+  const webhook: WebhookRecord = {
+    events: ["ALL"],
+    webhookByEvents: false,
+    webhookBase64: true,
+  };
+  assertEquals(webhook.webhookByEvents, false);
+  assertEquals(webhook.webhookBase64, true);
 });

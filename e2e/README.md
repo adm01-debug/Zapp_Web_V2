@@ -82,7 +82,7 @@ do usuário de teste ou trazer specs que um agente consiga executar.
 `conversation.spec.ts` e `messaging.spec.ts` dependem de um contato real já
 seedado em produção — `e2e/fixtures/e2e-contact.ts` documenta o id e expõe
 `ensureFixtureConversationOpen()`. Em `conversation.spec.ts`, o `beforeEach`
-navega para `/inbox` primeiro (chamar `ensureFixtureConversationOpen` antes
+navega para `/` primeiro (chamar `ensureFixtureConversationOpen` antes
 de qualquer navegação lança `SecurityError` ao ler `localStorage` numa
 página ainda em `about:blank`), reabre a conversa (a suíte roda contra
 produção via `e2e-logado.yml`, então o teste de resolução precisa reverter o
@@ -96,5 +96,10 @@ mexe no status da conversa) faz só a navegação + clique em "Todas" no
 usuário de teste, sem fila) é o único item visível no inbox desse usuário —
 nunca apagar essa linha do banco.
 
-`talkx.spec.ts` continua com `test.skip`: além de não ter dados seedados,
-o usuário de teste não tem permissão de ver Campanhas de qualquer forma.
+`talkx.spec.ts` não está mais em `test.skip` (desde 2026-09-22) e tem specs
+reais cobrindo navegação/render do módulo Talk X — mas nenhum workflow de CI
+invoca o project `chromium-authenticated` hoje (ver seção acima), então esses
+testes não rodam automaticamente em lugar nenhum, só via
+`npx playwright test --project=chromium-authenticated` local (com as
+variáveis de `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` de um usuário que enxergue
+Campanhas).

@@ -12,7 +12,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20260926210000_calls_telefonia_v2.sql"
+migration="$repo_root/supabase/migrations/20260926300000_calls_telefonia_v2.sql"
 postgres_image="${CALLS_TELEFONIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-calls-telefonia-test-$$"
 
