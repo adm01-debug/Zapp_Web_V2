@@ -1,12 +1,13 @@
 -- =====================================================================
 -- Telefonia v2 — contrato de dados (ADITIVO)
 -- Plano: docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md (Apêndice A/B)
--- Fase 2, etapas 19–25. Versão 20260926210000 — reversionada de 20260926190000:
--- entre a escrita desta migration e o apply, a PR #872 mergeou e aplicou
--- 20260926200000 (e17_referential_integrity_fks), tornando 190000 uma versão
--- atrás do ledger. max(version) conferido em 2026-09-26 (pós #872): 20260926200000.
--- Conteúdo abaixo idêntico ao original — só o cabeçalho mudou (rename puro,
--- mesmo procedimento da PR #872 para a mesma classe de colisão de versão).
+-- Fase 2, etapas 19–25. Versão 20260926300000 — reversionada pela SEGUNDA vez:
+-- 20260926190000 -> 20260926210000 (PR #885, colisão com E17/#872) -> 20260926300000
+-- (colisão com outra migration concorrente registrada sob 20260926210000,
+-- "restrict_gmail_accounts_cascade", sem relação com Telefonia — 20260926210000
+-- ficou legitimamente ocupada por ela). max(version) conferido ao vivo antes
+-- desta versão: 20260926220000 — 300000 dá margem pra concorrência atual.
+-- Conteúdo abaixo idêntico ao original — só o cabeçalho mudou (rename puro).
 --
 -- Regras respeitadas: só aditivo; nenhum DROP de coluna/tabela; nenhum UPDATE
 -- em massa de histórico; backfill com contagem registrada no ledger.

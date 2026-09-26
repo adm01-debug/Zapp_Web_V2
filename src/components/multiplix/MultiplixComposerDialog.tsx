@@ -23,7 +23,7 @@ interface MultiplixComposerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCompanyIds: string[];
-  onCreated: () => void;
+  onCreated: (dispatchId: string) => void;
 }
 
 export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds, onCreated }: MultiplixComposerDialogProps) {
@@ -50,11 +50,11 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
         destino_e164: r.destino_e164,
         destino_origem: r.destino_origem,
       }));
-      await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
-      toast.success(startNow ? 'Disparo criado e iniciado.' : 'Disparo salvo como rascunho.');
+      const result = await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
+      toast.success(startNow ? 'Disparo criado. Envio iniciando…' : 'Disparo salvo como rascunho.');
       reset();
       onOpenChange(false);
-      onCreated();
+      onCreated(result.id);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao criar disparo');
     }

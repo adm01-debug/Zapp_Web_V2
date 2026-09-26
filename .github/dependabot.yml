@@ -12,7 +12,11 @@ updates:
       time: "09:00"
       timezone: "America/Sao_Paulo"
     open-pull-requests-limit: 10
-    reviewers:
+    # E76 (auditoria de GitHub Actions, 2026-09-26): "reviewers" nao aparece
+    # em nenhuma PR aberta do Dependabot nem em logs — a chave foi deprecada
+    # pelo GitHub (Settings -> Code security -> Dependabot -> auto-assign
+    # substitui). "assignees" e o campo ativo equivalente.
+    assignees:
       - "adm01-debug"
     labels:
       - "dependencies"
@@ -40,7 +44,7 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    reviewers:
+    assignees:
       - "adm01-debug"
     labels:
       - "dependencies"
@@ -49,7 +53,40 @@ updates:
       prefix: "⬆️ ci:"
     # init e analyze do codeql-action precisam da mesma versao: isolados, cada PR
     # falha no CodeQL ("Loaded a configuration file for version X, but running Y").
+    # E77: demais actions (checkout, setup-node, setup-bun, upload-artifact,
+    # github-script, setup-go, setup-deno, supabase/setup-cli) agrupadas —
+    # cada bump isolado abria 1 PR e rodava os 7 required checks (~8 min) so
+    # pra atualizar 1 SHA de action de terceiro/GitHub sem risco de conflito
+    # de versao entre si (ao contrario do par init/analyze do codeql-action).
     groups:
       codeql-action:
         patterns:
           - "github/codeql-action*"
+      actions-misc:
+        patterns:
+          - "actions/*"
+          - "oven-sh/setup-bun*"
+          - "denoland/setup-deno*"
+          - "supabase/setup-cli*"
+          - "peter-evans/create-pull-request*"
+          - "gitleaks/gitleaks-action*"
+
+  # E73 (auditoria de GitHub Actions, 2026-09-26): infrastructure/preview-egress-proxy
+  # tem go.mod e roda `go test ./...` no job Lint & TypeCheck do ci.yml, mas
+  # nenhum ecosystem do Dependabot cobria modulos Go — dependencias do proxy
+  # de egress (usado por fetch-link-preview) nunca recebiam atualizacao
+  # automatica de seguranca.
+  - package-ecosystem: "gomod"
+    directory: "/infrastructure/preview-egress-proxy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    assignees:
+      - "adm01-debug"
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "⬆️ go:"

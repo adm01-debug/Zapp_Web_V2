@@ -106,6 +106,36 @@ atendida que cai. Consolidado num único dono:
 **Parada obrigatória do plano (regra 7 da seção 0.2).** A migration existe, foi provada em PostgreSQL 17
 descartável e **não** foi aplicada no projeto Cloud `tnnnlkbymytvtqngbbqh`.
 
+### Correção de segurança #3 (26/09, achado de auditoria de 5 agentes — CRÍTICO, corrigido antes do apply)
+
+`set_call_agent_notes` tinha bypass de autorização: se o `auth.uid()` do chamador não tem linha em
+`public.profiles` (ex.: conta recém-criada antes do trigger de criação de perfil rodar, ou perfil
+apagado manualmente), `v_profile` fica `NULL`. Em PL/pgSQL, `if not (v_owner = NULL or ...)` avalia
+para `NULL` (nem TRUE nem FALSE), e `IF NULL THEN` é tratado como falso — o bloco de exceção era
+**pulado silenciosamente**, caindo direto no `UPDATE`: qualquer autenticado sem perfil conseguia
+sobrescrever `agent_notes` de qualquer chamada de qualquer agente, sem ser dono nem admin/supervisor.
+`upsert_my_call` já tinha a guarda certa (`if v_profile is null then raise exception ...`);
+`set_call_agent_notes` não tinha o equivalente.
+
+**Corrigido em arquivo NOVO, não editando `20260926300000_calls_telefonia_v2.sql`** (essa migration já
+está mergeada em `main` — editar o conteúdo de uma migration existente mantendo o mesmo nome é
+exatamente o que o guard "Rejeitar edicao de migration ja existente" de `.github/workflows/db-guard.yml`
+(PR #902, em revisão) passa a bloquear, e é a causa raiz dos drifts de setembro que o CLAUDE.md já
+documenta — regra 7 da seção 1): `20260926500000_fix_set_call_agent_notes_null_profile.sql`, um
+`CREATE OR REPLACE FUNCTION` idempotente com a guarda de `v_profile is null`. Aplicar **depois** de
+`20260926300000` (versão maior, mesma ordem). Adicionado também o caso de teste que faltava
+(`authenticated sem linha em profiles`) em `scripts/db-audit/calls-telefonia-contract.test.sh`, que só
+cobria "terceiro **com** perfil" e por isso não pegou o bug — o script agora aplica os dois arquivos em
+sequência antes dos testes funcionais.
+
+- Arquivo: `supabase/migrations/20260926500000_fix_set_call_agent_notes_null_profile.sql`
+- `sha256` do arquivo (para conferência): `ebee1343cde0724aeac46e39965d3ae1261492e0b3010455a9fa7a1e59b9845c`
+- Versão (14 dígitos): `20260926500000`
+
+### Correção de versão #2 (26/09, revisão Claude — colisão nova)
+
+A versão 20260926300000 acima já é a SEGUNDA reversão. Entre o merge da #885 (que fixou 190000 -> 210000) e o momento do apply, outra sessão registrou uma migration totalmente não relacionada (`restrict_gmail_accounts_cascade`, FK de `gmail_accounts`) sob a MESMA versão 20260926210000 — colisão real, não fantasma (a migration dela aplicou de verdade, confirmado lendo os 2 statements no ledger). `max(version)` pulou de 20260926200000 -> 210000 -> 220000 em menos de 20 minutos: concorrência muito alta nesta janela. Reversionado para 20260926300000 (margem grande de propósito) e a versão foi conferida ao vivo de novo imediatamente antes do apply.
+
 ### Correção de versão (26/09, revisão Claude — leia antes de aplicar)
 
 Entre a escrita deste ledger e agora, a PR #872 mergeou **e teve seu DDL aplicado** (`20260926200000
@@ -114,36 +144,40 @@ Isso tornou a versão original desta migration (`20260926190000`) obsoleta — f
 no banco, o mesmo padrão de out-of-order que causou os drifts de setembro (CLAUDE.md, seção 1, regra 2).
 
 Arquivo **reversionado** (rename puro, mesmo procedimento do #872, conteúdo SQL idêntico — só o cabeçalho do
-arquivo mudou): `20260926190000_calls_telefonia_v2.sql` → `20260926210000_calls_telefonia_v2.sql`.
+arquivo mudou): `20260926190000_calls_telefonia_v2.sql` → `20260926300000_calls_telefonia_v2.sql`.
 As três linhas abaixo ("Arquivo", "sha256", "Versão") e as referências a `migration_version=20260926190000`
-no restante desta seção estão **desatualizadas** por esta correção — use sempre `20260926210000`. O aviso
+no restante desta seção estão **desatualizadas** por esta correção — use sempre `20260926300000`. O aviso
 "aplique a minha (190000) primeiro" logo abaixo **não se aplica mais**: a `200000` já está no banco, então
 aplicar a `210000` depois dela é a ordem correta e não exige nenhum cuidado extra de sequenciamento.
 
-- Arquivo: `supabase/migrations/20260926210000_calls_telefonia_v2.sql`
-- `sha256` do arquivo (para conferência): `cc44a4989292b94eb38f893402085ccd389d6900498a13db921c3dc27cdb8bb4`
-- Versão (14 dígitos): `20260926210000`
+- Arquivo: `supabase/migrations/20260926300000_calls_telefonia_v2.sql`
+- `sha256` do arquivo (para conferência): `4cbc31a809312515520905a228de8007387a2f00f6eda7459b222214a3d72a04`
+- Versão (14 dígitos): `20260926300000`
+
+**Depois da correção de segurança #3, o apply é dos DOIS arquivos, nesta ordem** (`20260926300000` primeiro,
+`20260926500000` depois — versão maior, aplica por cima da mesma função): pular o segundo deixa o bypass de
+`set_call_agent_notes` em produção.
 
 Dois caminhos de aplicação, ambos exigindo o "APROVADO" do dono:
 
 | Caminho | Como | Observação |
 |---|---|---|
-| **A — pelo repo (recomendado)** | merge da #875 na `main` → workflow **DB Migrate** com `apply=false` (dry-run, exige `migration_version=20260926210000` e `confirm_project_ref=tnnnlkbymytvtqngbbqh`) → rodar de novo com `apply=true` + `confirm_runtime_sha256` do dry-run | o workflow só roda **na main** e para no environment **`producao-ddl`** (aprovação humana + aviso de card). É o único caminho com preflight/backup do próprio repo |
-| **B — pelo chat (o do plano)** | aplicar o SQL pelo MCP oficial do projeto (`db_query`) | mais rápido, sem preflight nem prova de destino; só com APROVADO explícito |
+| **A — pelo repo (recomendado)** | merge desta correção na `main` → workflow **DB Migrate** com `apply=false` (dry-run, exige `migration_version=20260926300000` e `confirm_project_ref=tnnnlkbymytvtqngbbqh`) → rodar de novo com `apply=true` + `confirm_runtime_sha256` do dry-run; repetir para `migration_version=20260926500000` | o workflow só roda **na main** e para no environment **`producao-ddl`** (aprovação humana + aviso de card). É o único caminho com preflight/backup do próprio repo |
+| **B — pelo chat (o do plano)** | aplicar os dois SQL pelo MCP oficial do projeto (`db_query`), na ordem `300000` → `500000`, cada um com seu `INSERT` no ledger | mais rápido, sem preflight nem prova de destino; só com APROVADO explícito |
 
 Depois do apply: conferir `select version, name from supabase_migrations.schema_migrations order by version desc limit 3`
-(esperado: `20260926210000` no topo) e o frescor de `types.ts`. O workflow **db-live-guard** compara o schema vivo
-com o repo — deve ficar verde depois do apply + merge.
+(esperado: `20260926500000` no topo, `20260926300000` logo abaixo) e o frescor de `types.ts`. O workflow
+**db-live-guard** compara o schema vivo com o repo — deve ficar verde depois do apply + merge.
 
 **Nota histórica (obsoleta, mantida por transparência — ver correção acima): "existe outra migration pendente
 na `main`".** No momento em que esta seção foi escrita originalmente, `20260926200000_e17_referential_integrity_fks.sql`
 (PR #872) ainda não tinha sido aplicada, e a recomendação era aplicar `20260926190000` antes dela para não
-"ficar atrás" no histórico. Isso mudou: a #872 aplicou primeiro, então a reversão para `20260926210000` é o
+"ficar atrás" no histórico. Isso mudou: a #872 aplicou primeiro, então a reversão para `20260926300000` é o
 que resolve a ordem agora — não há mais decisão de sequenciamento a tomar.
 
 Etapas 18–28:
 
-- **19. Migration** `supabase/migrations/20260926210000_calls_telefonia_v2.sql` (versão > `max(version)` = `20260926200000`, ver correção acima).
+- **19. Migration** `supabase/migrations/20260926300000_calls_telefonia_v2.sql` (versão > `max(version)` = `20260926200000`, ver correção acima).
   Aditiva: 9 colunas, 4 CHECKs (`NOT VALID` + `VALIDATE`), backfill de `channel`/`talk_seconds`, 2 índices,
   entrada em `supabase_realtime`, 4 RPCs novas + `CREATE OR REPLACE` de `record_incoming_call_event` (diff ≤ 15 linhas).
 - **20/21/22/23. RPCs** `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes` e o ajuste

@@ -24,7 +24,7 @@ The production workflow runs only from `refs/heads/main`. After deployment it:
 3. requires exact `verify_jwt` equality for every function;
 4. requires ACTIVE functions with valid SHA-256 bundle digests, timestamps and
    advanced versions for the selected scope, observes at least 60 seconds and
-   three consecutive identical inventories (up to 18 attempts, 10-second intervals);
+   three consecutive identical inventories (up to 36 attempts, 10-second intervals);
 5. emits an attestation associating observed remote versions with the source
    manifest and GitHub SHA; records out-of-scope changes separately;
 6. runs a non-mutating smoke matrix against every function;

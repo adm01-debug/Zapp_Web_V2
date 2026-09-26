@@ -9,13 +9,16 @@
 name: CI/CD Pipeline
 
 on:
+  # E23: 'develop' removido — branch nao existe no repo (so main).
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   # Fila de merge: sem este gatilho os required checks nunca reportariam no
   # merge group e a fila travaria todos os merges do repo.
   merge_group:
+  # E24: reexecutar a suite na main sem precisar de um push novo.
+  workflow_dispatch:
 
 env:
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -81,6 +84,7 @@ jobs:
           supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
           supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
           supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
+          supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
@@ -88,6 +92,8 @@ jobs:
           supabase/functions/talkx-send/index.test.ts
           supabase/functions/public-api/index.test.ts
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
+          supabase/functions/talkx-report/index.test.ts
+          supabase/functions/multiplix-send/index.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
