@@ -18,7 +18,7 @@ function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   return "Boa noite";
 }
 
-function personalize(
+export function personalize(
   template: string,
   contact: { name?: string | null; nickname?: string | null; company?: string | null },
   customVars: string[] = [],
@@ -85,7 +85,7 @@ function getMediaEndpoint(mediaType: string): string {
   }
 }
 
-Deno.serve(async (req) => {
+export async function handleTalkxSend(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -281,6 +281,22 @@ Deno.serve(async (req) => {
         ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
         : undefined;
 
+    // `custom_variables` (nomes de variável declarados no template, ex.: {{cargo}})
+    // moram em talkx_templates, não em talkx_campaigns nem em talkx_template_variants.
+    // Sem isso, personalize() tratava qualquer variável customizada como placeholder
+    // desconhecido no envio real (mesmo já resolvendo corretamente no preview do
+    // editor de template), falhando 100% dos destinatários de campanhas que usam a
+    // feature.
+    let templateCustomVars: string[] = [];
+    if (campaign.template_id) {
+      const { data: templateRow } = await supabase
+        .from("talkx_templates")
+        .select("custom_variables")
+        .eq("id", campaign.template_id)
+        .maybeSingle();
+      templateCustomVars = templateRow?.custom_variables ?? [];
+    }
+
     // Check against the source of truth for every recipient. This makes a
     // phone-only, formatted legacy opt-out equivalent to the contact phone
     // and lets us repeat the check immediately before a provider POST.
@@ -426,7 +442,7 @@ Deno.serve(async (req) => {
           calculatedMessage = legacyPersonalizedMessage ?? personalize(
             contentToSend,
             contact as { name: string; nickname?: string; company?: string },
-            [],
+            templateCustomVars,
             typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
             trackingUrlFor(recipient.id as string),
           );
@@ -717,4 +733,8 @@ Deno.serve(async (req) => {
       { status: 500, headers }
     );
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleTalkxSend);
+}
