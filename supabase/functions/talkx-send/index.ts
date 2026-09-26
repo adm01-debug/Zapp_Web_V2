@@ -323,11 +323,19 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
         for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
           // .range() sem .order() não garante ordenação estável entre chamadas —
           // páginas poderiam se sobrepor ou pular linhas (achado do review).
-          // "id" é a PK, então a ordenação é determinística.
+          // Ordena por "field_name" (não só "id"): o índice único de
+          // (contact_id, field_name) é case-sensitive, então um contato com
+          // "CPF" e "cpf" tem duas linhas reais — o "last write wins" do bucket
+          // abaixo precisa escolher a mesma linha que o preview do wizard
+          // (useContactCustomFields -> ContactService.fetchCustomFields, que
+          // também ordena por field_name), senão o preview mostraria um valor
+          // e o envio real mandaria outro (achado do review). "id" entra só
+          // como desempate determinístico entre páginas.
           const { data: customFieldRows, error: customFieldsError } = await supabase
             .from("contact_custom_fields")
             .select("contact_id, field_name, field_value")
             .in("contact_id", idChunk)
+            .order("field_name", { ascending: true })
             .order("id", { ascending: true })
             .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
           if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared, contactService, campaignWizard, wizardDelivery] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
@@ -10,6 +10,9 @@ const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInse
   readFile(new URL('../../supabase/migrations/20260916270000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916260000_talkx_links_slug_case_insensitive.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/talkxShared.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../../src/services/contact.service.ts', import.meta.url), 'utf8'),
+  readFile(new URL('../../src/components/talkx/TalkXCampaignWizard.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -84,6 +87,34 @@ test('Talk X custom-fields bucket preserves a field literally named __proto__', 
   // setter de protótipo quando field_name === "__proto__", entao o valor real
   // nunca aparece em Object.entries() -- precisa de um objeto sem prototype.
   assert.match(sender, /Object\.create\(null\) as Record<string, string>/);
+});
+
+test('Talk X wizard preview also preserves a field literally named __proto__', () => {
+  // Review da PR #909: o mesmo bug do bucket do envio real (values[__proto__]
+  // num objeto comum nunca vira propriedade enumeravel) tambem existia nos
+  // pontos onde o wizard monta sampleCustomValues para o preview.
+  assert.match(campaignWizard, /Object\.create\(null\) as Record<string, string>/);
+  assert.match(wizardDelivery, /Object\.create\(null\) as Record<string, string>/);
+});
+
+test('Talk X custom-fields lookup resolves case-colliding field names the same way the preview does', () => {
+  // Review da PR #909: o indice unico de (contact_id, field_name) e
+  // case-sensitive, entao um contato pode ter "CPF" e "cpf" como duas linhas
+  // reais. O envio real e o preview do wizard cada um monta um mapa
+  // "ultima escrita vence" apos normalizar a chave para minusculo -- se um
+  // ordena por "id" e o outro por "field_name", cada lado pode escolher uma
+  // linha diferente como vencedora, e o preview mentiria sobre o que o envio
+  // real manda. ContactService.fetchCustomFields (usado pelo preview via
+  // useContactCustomFields) ordena por "field_name"; o envio real precisa
+  // ordenar pela mesma coluna primeiro para convergir na mesma linha.
+  assert.match(contactService, /\.order\('field_name'\)/);
+  const pageSizeIdx = sender.indexOf('CUSTOM_FIELDS_PAGE_SIZE');
+  const fieldNameOrderIdx = sender.indexOf('.order("field_name", { ascending: true })', pageSizeIdx);
+  const idOrderIdx = sender.indexOf('.order("id", { ascending: true })', pageSizeIdx);
+  assert.ok(
+    fieldNameOrderIdx > -1 && idOrderIdx > fieldNameOrderIdx,
+    'o envio real deve ordenar por "field_name" antes de "id", igual ao preview do wizard',
+  );
 });
 
 test('Talk X personalize() and personalizePreview() both guard against inherited Object.prototype keys', () => {

@@ -449,7 +449,12 @@ function WizardRail({ ed }: { ed: WizardState }) {
   // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
   const { fields: sampleCustomFields } = useContactCustomFields(sample?.id);
   const sampleCustomValues = React.useMemo(() => {
-    const values: Record<string, string> = {};
+    // Object.create(null) (não {}): um campo customizado chamado "__proto__"
+    // num objeto comum invoca o setter de protótipo em vez de virar
+    // propriedade enumerável — o preview mostraria "[__proto__]" mesmo o
+    // envio real (que já usa o mesmo padrão) mandando o valor de verdade
+    // (achado do review).
+    const values = Object.create(null) as Record<string, string>;
     for (const f of sampleCustomFields) {
       if (f.field_value == null) continue;
       values[f.field_name] = f.field_value;
