@@ -27,9 +27,12 @@ export interface UseAddressAutocompleteResult {
   /** Chama `retrievePlace()` pela sugestão no índice, devolve a coordenada e encerra a sessão. */
   select: (index: number) => Promise<GeoSearchPlace | null>;
   /**
-   * ↓/↑/Home/End movem `highlightedIndex`; `Enter` com item destacado chama `select()`; `Esc`
-   * limpa. Sem item destacado, `Enter` não faz nada aqui — o hook não decide o fallback para a
-   * busca antiga (`/forward`); isso é decisão de quem usa (Fase 3).
+   * ↓/↑/Home/End movem `highlightedIndex`; `Esc` limpa (e encerra a sessão — E46). `Enter` com
+   * item destacado só previne o padrão do input — quem usa decide chamar `select(highlightedIndex)`
+   * (antes do E46 o próprio hook chamava `select()` aqui e descartava o resultado com `void`; quem
+   * usa nunca ficava sabendo que uma seleção por teclado tinha acontecido). Sem item destacado,
+   * `Enter` não faz nada aqui — o hook não decide o fallback para a busca antiga (`/forward`);
+   * isso é decisão de quem usa (Fase 3).
    */
   onKeyDown: (event: KeyboardEvent) => void;
   /** Limpa query, sugestões e destaque — usado pelo `Esc` e por quem usa o hook. */
@@ -113,6 +116,10 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   // Consulta corrente do /suggest: aborta a anterior antes de abrir uma nova, pra resposta
   // lenta da 1ª nunca sobrescrever a 2ª.
   const abortRef = useRef<AbortController | null>(null);
+  // /retrieve não tem AbortController (a Mapbox não define request in-flight cancelável aqui) —
+  // este contador é quem garante que uma seleção anterior, ainda em voo, nunca sobrescreva o
+  // resultado de uma seleção mais nova (E46: clique duplo ou Enter rápido em duas sugestões).
+  const selectionSeqRef = useRef(0);
 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
@@ -159,10 +166,15 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
   const select = useCallback(async (index: number): Promise<GeoSearchPlace | null> => {
     const suggestion = state.suggestions[index];
     if (!suggestion || !token) return null;
+    const seq = ++selectionSeqRef.current;
     dispatch({ type: 'RETRIEVE_START', id: suggestion.id });
     const session = getSearchSession();
     noteRetrieveCall();
     const place = await retrievePlace(suggestion.id, token, { session });
+    // Uma seleção mais nova já começou enquanto esta estava em voo (E46) — sem isso o resultado
+    // desta, mesmo sem nenhum AbortController, podia chegar depois e virar estado / ser aplicado
+    // por quem usa por cima da escolha mais recente do operador.
+    if (seq !== selectionSeqRef.current) return null;
     if (place) {
       dispatch({ type: 'RETRIEVE_END' });
     } else {
@@ -178,6 +190,10 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
 
   const clear = useCallback(() => {
     abortRef.current?.abort();
+    // E46: sem isso, fechar o picker (ou apertar Esc) sem escolher nada deixava a sessão aberta —
+    // a próxima busca, mesmo sobre um endereço completamente diferente, reaproveitava o mesmo
+    // session_token dentro da janela de 2 min (SESSION_IDLE_MS em mapboxSession.ts).
+    endSearchSession();
     dispatch({ type: 'CLEAR' });
   }, []);
 
@@ -206,9 +222,11 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
         return;
       case 'Enter':
         // Sem item destacado o hook não decide nada — quem usa cai na busca antiga (/forward).
+        // Com item destacado, só previne o padrão: quem usa é que chama select(highlightedIndex)
+        // (E46 — antes o hook chamava select() aqui dentro e descartava o resultado com `void`,
+        // então uma seleção por Enter nunca chegava a aplicar a localização no picker).
         if (state.highlightedIndex < 0 || state.highlightedIndex > lastIndex) return;
         event.preventDefault();
-        void select(state.highlightedIndex);
         return;
       case 'Escape':
         event.preventDefault();
@@ -217,7 +235,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
       default:
         return;
     }
-  }, [state.suggestions.length, state.highlightedIndex, select, clear]);
+  }, [state.suggestions.length, state.highlightedIndex, clear]);
 
   return {
     query: state.query,
