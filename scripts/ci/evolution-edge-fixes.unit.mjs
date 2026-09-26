@@ -189,7 +189,7 @@ test("create-connection: branch de createData?.error também compensa a GO antes
   // fantasma.
   const errAt = block.indexOf('if (createData?.error)');
   assert.notEqual(errAt, -1, "branch de createData?.error sumiu");
-  const errBlock = block.slice(errAt, errAt + 700);
+  const errBlock = block.slice(errAt, errAt + 1100);
   const compensateAt = errBlock.indexOf('await compensateGoCreate();');
   const rollbackAt = errBlock.indexOf('await rollbackRow();');
   assert.notEqual(compensateAt, -1, "compensateGoCreate() precisa ser chamado no branch de createData?.error — a GO pode ter criado a instancia mesmo com error:true (timeout apos criar)");
@@ -207,8 +207,17 @@ test("create-connection: mensagem de 23505 distingue instance_id de is_default (
   // colidem no segundo, e afirmar que foi o instance_id nesse caso é
   // diagnóstico incorreto (achado real de auditoria, sem precisar de nomes
   // iguais nem de corrida com a GO).
-  assert.match(block, /whatsapp_connections_one_default/, "precisa checar a constraint do índice parcial de is_default, não só assumir instance_id");
-  assert.match(block, /isDefaultCollision/, "precisa de um branch de mensagem dedicado à colisão de is_default");
+  // Mutation testing mostrou que checar só a PRESENÇA das duas substrings
+  // (whatsapp_connections_one_default / isDefaultCollision) deixa passar
+  // batido um isDefaultCollision hardcoded em false (ou "&& false") mantido
+  // por um comentário morto com a string certa — reabrindo o bug original
+  // com a suíte inteira verde. A regex abaixo fixa a expressão funcional
+  // real, não só os nomes soltos no bloco.
+  assert.match(
+    block,
+    /isDefaultCollision\s*=\s*isUniqueViolation\s*&&\s*!!insertError\?\.message\?\.includes\(['"]whatsapp_connections_one_default['"]\)/,
+    "isDefaultCollision precisa checar de fato insertError?.message?.includes('whatsapp_connections_one_default') — não pode ser hardcoded/morto",
+  );
 });
 
 test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
