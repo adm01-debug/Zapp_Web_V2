@@ -281,8 +281,16 @@ O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. F
       por relação (`n_live_tup`/`n_dead_tup`/`autovacuum_count`) mas não `pg_class.reltuples`
       (persistido), que o autovacuum de fato usa para calcular o limiar; `email_messages` já
       cruzou o limiar e rodou autovacuum desde o restart (prova que o mecanismo funciona),
-      `messages` ainda não. Dead ratio real hoje (`n_dead_tup`/`count(*)` real): `messages`
-      ≈ 2,0%, `email_messages` ≈ 1,8-1,9% — ambos saudáveis. Varredura ampla no banco não achou
+      `messages` ainda não. **Correção (Codex Review, achado real):** o `n_dead_tup=953`
+      calculado logo após o restart só contava tuplas mortas desde então — subestimava bloat
+      físico anterior ao restart. Rodado `ANALYZE public.messages` (não é DDL) para forçar
+      reamostragem real: `n_dead_tup` subiu para **2.502** (5,2% de 47.878 linhas) — acima do
+      limiar configurado (0,05 × reltuples ≈ 2.444), o que explica por que o autovacuum ainda
+      não disparou (está prestes a disparar, não travado) e não é mais o falso "saudável ~2%"
+      da primeira leitura. Ainda longe dos 94,5% originais e do limite de alerta da etapa
+      (>20% por 14 dias), mas o número correto é 5,2%, não 2%. `email_messages` seguiu
+      confirmado saudável (~1,8-1,9%, já vacuumada desde o restart). Varredura ampla no banco
+      não achou
       nenhuma outra tabela fora do escopo original com bloat real (as de 100% "dead" no
       `pg_stat_user_tables` são só tabelas pequenas/ociosas sem autovacuum desde o mesmo
       restart, não bloat; `whatsapp_connections`/`agent_presence` são tabelas de
