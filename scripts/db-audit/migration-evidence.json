@@ -109,19 +109,6 @@
             "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
         },
         {
-            "version": "20260827130500",
-            "filename": "20260827130500_vacuum_autovacuum_threshold_reset_m05.sql",
-            "file_sha256": "8c3cf3d961bff90df62c1486424bef28bd883ba976c731d3be07f4fa8b2e2f3d",
-            "file_sql_sha256": "6ad6993442c8f8eef3c5872527051cede9f8cdf12b62a92c2913c3947a81ca8f",
-            "ledger_name": "vacuum_autovacuum_threshold_reset_m05",
-            "ledger_statements_sha256": "7ece1f985624ebbec9960c2a73ca19a50a1c31cce2428f64e0898e2285c8ac98",
-            "ledger_sql_sha256": "56fd440b7c3a16d1c8dfd54406ac615533e2c8ff64016dbcd078225197109204",
-            "kind": "ledger-divergence/pinned-replay",
-            "reason": "safer-replay",
-            "related_migration": null,
-            "justification": "A execução histórica incluiu manutenção pontual insegura para replay; o arquivo mantém somente a restauração idempotente dos parâmetros de autovacuum."
-        },
-        {
             "version": "20260827160000",
             "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
             "file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
