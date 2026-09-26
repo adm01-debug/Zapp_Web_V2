@@ -312,6 +312,31 @@ describe('useRealtimeMessages', () => {
     expect(result.current.conversations[0].contact.job_title).toBe('Gerente de Compras');
   });
 
+  it('preserva conversation_sla (embed do join) ao aplicar um UPDATE realtime que so traz colunas de contacts', async () => {
+    // Regressão: o payload de UPDATE do Realtime só tem as colunas da tabela
+    // contacts, nunca o embed conversation_sla (join feito em
+    // fetchInitialConversations). Um merge que substituísse o objeto inteiro
+    // apagava o SLA em memória a cada UPDATE, mesmo um sem relação com o SLA.
+    const slaEmbed = { first_response_at: null, first_message_at: '2026-01-01T10:00:00Z', first_response_breached: false };
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva' }) as Record<string, unknown>;
+    contact.conversation_sla = [slaEmbed];
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect((result.current.conversations[0].contact as Record<string, unknown>).conversation_sla).toEqual([slaEmbed]);
+
+    const updatedContact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: 'Zé' });
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: updatedContact, old: contact });
+    });
+
+    await waitFor(() => {
+      expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+    });
+    expect((result.current.conversations[0].contact as Record<string, unknown>).conversation_sla).toEqual([slaEmbed]);
+  });
+
   it('ignora UPDATE de contato que nao esta na lista carregada (sem crash, sem entrada fantasma)', async () => {
     seededContacts = [makeContact({ id: 'contact-1' })];
 
