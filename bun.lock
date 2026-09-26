@@ -9,7 +9,7 @@
         "@elevenlabs/react": "^1.15.2",
         "@hello-pangea/dnd": "^18.0.1",
         "@hookform/resolvers": "^3.10.0",
-        "@lovable.dev/cloud-auth-js": "^1.1.1",
+        "@lovable.dev/cloud-auth-js": "^1.2.1",
         "@radix-ui/react-accordion": "^1.2.20",
         "@radix-ui/react-alert-dialog": "^1.1.23",
         "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -298,7 +298,7 @@
 
     "@livekit/protocol": ["@livekit/protocol@1.50.4", "", { "dependencies": { "@bufbuild/protobuf": "^1.10.0" } }, "sha512-L1uggNQAqyY21smQY8AllyOYbcv9Me9TaxwuLytL1R8ck9nbYPmQLNwEDi3pOFGAMa5F8I2nUi2Jc59W5awxlA=="],
 
-    "@lovable.dev/cloud-auth-js": ["@lovable.dev/cloud-auth-js@1.1.1", "", {}, "sha512-80elU8dSJG6bho0Xnfj2oy53wp883nYXrG1Wy948LC/ZUaUQ0i9EGXQFmwTLOBFrWqxb6aNaOlZUvQ8BVGhjMQ=="],
+    "@lovable.dev/cloud-auth-js": ["@lovable.dev/cloud-auth-js@1.2.1", "", {}, "sha512-BetMp9TvV/QgZ54KBr0yhPNqcB2Z6VqrF3H54sNgsKpKeSQO0CFDtPNtSmtKW9cCsHAp7yXCl04X82Zfdjo0CA=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.5", "", { "dependencies": { "@tybys/wasm-util": "^0.10.2" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q=="],
 
