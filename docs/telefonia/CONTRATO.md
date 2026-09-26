@@ -8,7 +8,8 @@ divergências medidas no banco oficial em 26/09/2026 (registradas em `docs/desig
 
 `'voip' | 'whatsapp'`.
 
-Backfill aplicado na migration `20260926190000_calls_telefonia_v2.sql`:
+Backfill aplicado na migration `20260926210000_calls_telefonia_v2.sql` (reversionada de
+`20260926190000` — ver correção em `docs/design/TELEFONIA_STATUS.md`):
 `whatsapp_connection_id IS NOT NULL → 'whatsapp'`, senão `'voip'`.
 Evidência no banco oficial antes do backfill: 21 linhas → **10 `whatsapp` / 11 `voip`** (a única trilha que
 preenche `whatsapp_connection_id` é o webhook da Evolution; o SIP nunca preenche).
@@ -88,7 +89,7 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 | D6 | KPIs respondem a busca/filtros? | **não** (escopo + período + canal, com rótulo explícito) |
 | D7 | Recusar chamada WhatsApp | **aberto** — endpoint de rejeição da Evolution GO não comprovado; rótulo honesto ("Ignorar") até prova |
 
-## 8. RPCs do contrato (migration `20260926190000_calls_telefonia_v2.sql`)
+## 8. RPCs do contrato (migration `20260926210000_calls_telefonia_v2.sql`)
 
 | RPC | Papel |
 |---|---|

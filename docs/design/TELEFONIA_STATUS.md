@@ -106,31 +106,44 @@ atendida que cai. Consolidado num único dono:
 **Parada obrigatória do plano (regra 7 da seção 0.2).** A migration existe, foi provada em PostgreSQL 17
 descartável e **não** foi aplicada no projeto Cloud `tnnnlkbymytvtqngbbqh`.
 
-- Arquivo: `supabase/migrations/20260926190000_calls_telefonia_v2.sql`
-- `sha256` do arquivo (para conferência): `5b0981f347aa2d6bda0d3a666d5a0853467b72835a846937337b71f36cdf4b49`
-- Versão (14 dígitos): `20260926190000`
+### Correção de versão (26/09, revisão Claude — leia antes de aplicar)
+
+Entre a escrita deste ledger e agora, a PR #872 mergeou **e teve seu DDL aplicado** (`20260926200000
+e17_referential_integrity_fks`, confirmado ao vivo: `max(version)` do ledger oficial é `20260926200000`).
+Isso tornou a versão original desta migration (`20260926190000`) obsoleta — ficaria **atrás** do que já está
+no banco, o mesmo padrão de out-of-order que causou os drifts de setembro (CLAUDE.md, seção 1, regra 2).
+
+Arquivo **reversionado** (rename puro, mesmo procedimento do #872, conteúdo SQL idêntico — só o cabeçalho do
+arquivo mudou): `20260926190000_calls_telefonia_v2.sql` → `20260926210000_calls_telefonia_v2.sql`.
+As três linhas abaixo ("Arquivo", "sha256", "Versão") e as referências a `migration_version=20260926190000`
+no restante desta seção estão **desatualizadas** por esta correção — use sempre `20260926210000`. O aviso
+"aplique a minha (190000) primeiro" logo abaixo **não se aplica mais**: a `200000` já está no banco, então
+aplicar a `210000` depois dela é a ordem correta e não exige nenhum cuidado extra de sequenciamento.
+
+- Arquivo: `supabase/migrations/20260926210000_calls_telefonia_v2.sql`
+- `sha256` do arquivo (para conferência): `cc44a4989292b94eb38f893402085ccd389d6900498a13db921c3dc27cdb8bb4`
+- Versão (14 dígitos): `20260926210000`
 
 Dois caminhos de aplicação, ambos exigindo o "APROVADO" do dono:
 
 | Caminho | Como | Observação |
 |---|---|---|
-| **A — pelo repo (recomendado)** | merge da #875 na `main` → workflow **DB Migrate** com `apply=false` (dry-run, exige `migration_version=20260926190000` e `confirm_project_ref=tnnnlkbymytvtqngbbqh`) → rodar de novo com `apply=true` + `confirm_runtime_sha256` do dry-run | o workflow só roda **na main** e para no environment **`producao-ddl`** (aprovação humana + aviso de card). É o único caminho com preflight/backup do próprio repo |
+| **A — pelo repo (recomendado)** | merge da #875 na `main` → workflow **DB Migrate** com `apply=false` (dry-run, exige `migration_version=20260926210000` e `confirm_project_ref=tnnnlkbymytvtqngbbqh`) → rodar de novo com `apply=true` + `confirm_runtime_sha256` do dry-run | o workflow só roda **na main** e para no environment **`producao-ddl`** (aprovação humana + aviso de card). É o único caminho com preflight/backup do próprio repo |
 | **B — pelo chat (o do plano)** | aplicar o SQL pelo MCP oficial do projeto (`db_query`) | mais rápido, sem preflight nem prova de destino; só com APROVADO explícito |
 
 Depois do apply: conferir `select version, name from supabase_migrations.schema_migrations order by version desc limit 3`
-(esperado: `20260926190000` no topo) e o frescor de `types.ts`. O workflow **db-live-guard** compara o schema vivo
+(esperado: `20260926210000` no topo) e o frescor de `types.ts`. O workflow **db-live-guard** compara o schema vivo
 com o repo — deve ficar verde depois do apply + merge.
 
-**Atenção ao aplicar: existe outra migration pendente na `main`.** A `main` já tem
-`20260926200000_e17_referential_integrity_fks.sql` (PR #872), **também ainda não aplicada** no banco (medido:
-`schema_migrations` para em `20260926180000`). Ela não toca `calls` (conferido por grep), então as duas são
-independentes — mas a versão dela é **maior** que a minha, e migration se aplica em ordem crescente: se o
-`20260926200000` entrar antes do meu, o `20260926190000` fica "atrás" no histórico. Aplique o meu primeiro
-(`migration_version=20260926190000`) e só depois o outro.
+**Nota histórica (obsoleta, mantida por transparência — ver correção acima): "existe outra migration pendente
+na `main`".** No momento em que esta seção foi escrita originalmente, `20260926200000_e17_referential_integrity_fks.sql`
+(PR #872) ainda não tinha sido aplicada, e a recomendação era aplicar `20260926190000` antes dela para não
+"ficar atrás" no histórico. Isso mudou: a #872 aplicou primeiro, então a reversão para `20260926210000` é o
+que resolve a ordem agora — não há mais decisão de sequenciamento a tomar.
 
 Etapas 18–28:
 
-- **19. Migration** `supabase/migrations/20260926190000_calls_telefonia_v2.sql` (versão > `max(version)` = `20260926180000`).
+- **19. Migration** `supabase/migrations/20260926210000_calls_telefonia_v2.sql` (versão > `max(version)` = `20260926200000`, ver correção acima).
   Aditiva: 9 colunas, 4 CHECKs (`NOT VALID` + `VALIDATE`), backfill de `channel`/`talk_seconds`, 2 índices,
   entrada em `supabase_realtime`, 4 RPCs novas + `CREATE OR REPLACE` de `record_incoming_call_event` (diff ≤ 15 linhas).
 - **20/21/22/23. RPCs** `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes` e o ajuste
@@ -184,7 +197,7 @@ Etapas 18–28:
 - **Índices**: `calls_pkey`, `calls_connection_provider_event_unique` (unique parcial em `whatsapp_connection_id, provider_event_id`), `idx_calls_agent_id`, `idx_calls_contact_id`, `idx_calls_whatsapp_connection_id`. Nenhum composto por `(agent_id, started_at)`.
 - **RPCs existentes**: só `record_incoming_call_event(p_contact_id, p_whatsapp_connection_id, p_status, p_is_video, p_provider_event_id, p_should_notify)` — `SECURITY DEFINER`; status aceitos `ringing|answered|ended|missed|busy|failed`; `ON CONFLICT (whatsapp_connection_id, provider_event_id) WHERE provider_event_id IS NOT NULL`; **regrava `agent_id = EXCLUDED.agent_id` e `notes = EXCLUDED.notes`** (o defeito que o plano aponta). `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes` **não existem**.
   Helpers úteis confirmados: `public.has_role(_user_id uuid, _role app_role)`, `public.is_admin_or_supervisor(uuid)`, `public.search_contacts(...)` (10 args).
-- **Ledger de migrations**: 502 registros, `max(version) = 20260926180000` → a migration desta tarefa precisa usar versão estritamente maior.
+- **Ledger de migrations**: 502 registros, `max(version) = 20260926180000` (medido em 26/09, antes do apply da #872 — ver correção acima) → a migration desta tarefa precisa usar versão estritamente maior que o `max(version)` **no momento do apply**, não no momento em que este número foi medido.
 - **Storage**: buckets existentes = `audio-memes, audio-messages, avatars, custom-emojis, stickers, team-chat-files, whatsapp-media`. **Nenhum bucket de gravação** → etapa 25 não tem policy a criar; `recording_status` fica `none` até prova em contrário.
 
 ---
