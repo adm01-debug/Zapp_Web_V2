@@ -378,7 +378,7 @@
 **Checklist:** [x] 3 casos · [x] verde
 
 ### E45 · PR da Fase 6
-**Checklist:** [ ] PR aberta · [ ] CI verde · [x] DDL destacada no corpo
+**Checklist:** [x] PR aberta (#850) · [ ] CI verde (migration não aplicada nesta sessão — ver corpo da PR) · [x] DDL destacada no corpo
 
 ---
 
