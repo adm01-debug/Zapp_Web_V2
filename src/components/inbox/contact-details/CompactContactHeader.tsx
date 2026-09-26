@@ -1,13 +1,9 @@
 import { Crown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 
 interface CompactContactHeaderProps {
-  contact: { name: string; phone: string; avatar?: string };
+  contact: { name: string; avatar?: string };
   isVip: boolean;
   companyName?: string;
   firstName: string;
@@ -36,19 +32,6 @@ export function CompactContactHeader({ contact, isVip, companyName, firstName }:
             </>
           )}
         </div>
-      </div>
-      <div className="flex items-center gap-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-primary/10"
-                onClick={() => { navigator.clipboard.writeText(contact.phone); toast.success('Telefone copiado!'); }}>
-                <Phone className="w-3.5 h-3.5 text-primary" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Copiar telefone</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
     </motion.div>
   );
