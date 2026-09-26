@@ -142,9 +142,13 @@ export function useRealtimeMessages() {
       commitConversations((prev) => {
         const idx = prev.findIndex((c) => c.contact.id === updatedContact.id);
         if (idx < 0) return prev;
-        if (prev[idx].contact === updatedContact) return prev;
         const updated = [...prev];
-        updated[idx] = { ...updated[idx], contact: updatedContact };
+        // Merge, não substitui: o payload de UPDATE do Realtime só traz colunas
+        // de contacts, nunca o embed conversation_sla (join feito em
+        // fetchInitialConversations/fetchContactsByIds). Substituir o objeto
+        // inteiro apagava o SLA em memória a cada UPDATE — o badge passava a
+        // contar desde created_at do contato em vez do atendimento aberto.
+        updated[idx] = { ...updated[idx], contact: { ...updated[idx].contact, ...updatedContact } };
         return updated;
       });
     },
