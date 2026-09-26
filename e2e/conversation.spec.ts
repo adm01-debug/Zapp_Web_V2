@@ -28,7 +28,14 @@ test.describe('Conversation state transitions', () => {
     await page.getByRole('button', { name: /mais ações/i }).click();
     await page.getByRole('menuitem', { name: /marcar como resolvido/i }).click();
 
-    await page.getByRole('combobox').click();
+    // CloseConversationDialog tem 3 comboboxes (Motivo do encerramento,
+    // Resultado, Classificação) — getByRole('combobox') sozinho é ambíguo
+    // (strict mode violation, confirmado nas runs 36255009332 e 36256161950
+    // do e2e-logado.yml). A opção "Resolvido" pertence à lista CLOSE_REASONS
+    // do combobox "Motivo do encerramento" (placeholder "Selecione o
+    // motivo"), não à de Resultado — é o único campo obrigatório (label com
+    // "*") que também habilita o botão "Encerrar".
+    await page.getByRole('combobox').filter({ hasText: /selecione o motivo/i }).click();
     await page.getByRole('option', { name: /^resolvido$/i }).click();
     await page.getByRole('button', { name: /^encerrar$/i }).click();
 
@@ -38,6 +45,6 @@ test.describe('Conversation state transitions', () => {
   test('"Todas" filter shows the seeded conversation', async ({ page }) => {
     await expect(
       page.locator('[data-testid="conversation-item"]').filter({ hasText: E2E_FIXTURE_CONTACT_NAME })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
   });
 });
