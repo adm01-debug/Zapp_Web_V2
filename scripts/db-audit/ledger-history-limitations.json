@@ -18,18 +18,6 @@
       "evidence_class": "name-and-file-pinned"
     },
     {
-      "version": "20260827140000",
-      "filename": "20260827140000_fix_sicoob_bridge_url_official_db.sql",
-      "local_file_sha256": "9305d082d21ebd62e4f1543ca271e129fff04750fd010bd953434426cb575159",
-      "evidence_class": "name-and-file-pinned"
-    },
-    {
-      "version": "20260827150000",
-      "filename": "20260827150000_sicoob_bridge_use_pg_net.sql",
-      "local_file_sha256": "3784a7816b8ba3f162f7bea835a5b458b3a026257174d0a21ff4aa5573377b92",
-      "evidence_class": "name-and-file-pinned"
-    },
-    {
       "version": "20260827160000",
       "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
       "local_file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
@@ -46,12 +34,6 @@
       "filename": "20260901000002_messages_unique_dedup_index.sql",
       "local_file_sha256": "2243dfa76a5400c2b73a05b055dc56ddd751f1adee01a76c41e6089f386695c3",
       "evidence_class": "live-guard-warning-no-historical-content"
-    },
-    {
-      "version": "20260901200001",
-      "filename": "20260901200001_e23_default_queue_rls_policies.sql",
-      "local_file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
-      "evidence_class": "name-and-file-pinned"
     },
     {
       "version": "20260902000200",
@@ -81,12 +63,6 @@
       "version": "20260902120000",
       "filename": "20260902120000_team_chat_v3_parity_reactions_status_departments.sql",
       "local_file_sha256": "0c19508fa9cf8522cea46d22c55b0fce91aa2070db0d2abf081811d8620ec790",
-      "evidence_class": "name-and-file-pinned"
-    },
-    {
-      "version": "20260906000001",
-      "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
-      "local_file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
       "evidence_class": "name-and-file-pinned"
     },
     {
