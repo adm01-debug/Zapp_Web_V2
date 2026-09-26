@@ -167,8 +167,13 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       onKeyDown={(e) => {
                         autocomplete.onKeyDown(e);
                         if (e.key === 'Escape') setAddressListOpen(false);
-                        // Enter sem sugestão destacada cai na busca antiga (/forward) — comportamento da #737.
-                        if (e.key === 'Enter' && autocomplete.highlightedIndex < 0) searchLocation();
+                        if (e.key === 'Enter') {
+                          // Com sugestão destacada, mesmo caminho do clique (E46: antes o hook
+                          // resolvia o /retrieve sozinho e o resultado nunca chegava até aqui).
+                          // Sem destaque, cai na busca antiga (/forward) — comportamento da #737.
+                          if (autocomplete.highlightedIndex >= 0) void handleSelectSuggestion(autocomplete.highlightedIndex);
+                          else searchLocation();
+                        }
                       }}
                       className="pl-9"
                     />

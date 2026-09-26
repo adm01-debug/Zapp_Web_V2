@@ -384,16 +384,37 @@
 
 # FASE 7 — Qualidade, rollout e fechamento (E46–E50)
 
-### E46 · Auditoria adversarial
+### E46 · Auditoria adversarial — FEITO (2026-09-26)
 1. Rodar uma revisão focada em: sessão vazando entre buscas, request sem debounce, resultado de request cancelada virando estado, foco perdido no teclado.
 2. Corrigir o que aparecer, cada achado com teste.
-**Checklist:** [ ] 4 frentes revisadas · [ ] achados com teste
 
-### E47 · Verificação com termos reais
+| Frente | Achado | Correção |
+|---|---|---|
+| Sessão vazando entre buscas | **Bug real.** `endSearchSession()` só era chamada dentro de `select()` (após um `/retrieve`). Fechar o picker ou apertar Esc sem escolher nada (`clear()`) nunca encerrava a sessão — a próxima busca, mesmo sobre um endereço completamente diferente, reaproveitava o `session_token` anterior dentro da janela de 2 min (`SESSION_IDLE_MS`) | `clear()` em `useAddressAutocomplete.ts` agora chama `endSearchSession()`. Teste: `useAddressAutocomplete.test.tsx` › "E46: clear() ... encerra a sessão" |
+| Request sem debounce | **Sem achado.** O debounce de 300 ms (`setTimeout` + cleanup) está correto; a única identidade que muda por causa do backoff de 429 (`state.rateLimitedUntil`) reagenda um timer que sempre no-opa dentro da janela de backoff, nunca dispara request duplicada. Coberto por `useAddressAutocomplete.test.tsx` › "300ms de debounce" e "E38" (já existiam, continuam verdes) | — |
+| Resultado de request cancelada virando estado | **Bug real, mas não no `/suggest`** (esse já tem o guard `if (controller.signal.aborted) return;` correto). O `/retrieve` do `select()` não tem `AbortController` — um clique duplo ou Enter rápido em duas sugestões disparava dois `/retrieve` concorrentes, e o mais lento podia resolver por último e sobrescrever a seleção mais recente sem nenhum aviso | Contador de geração (`selectionSeqRef`) em `select()`: um resultado só vira estado/é devolvido a quem chama se ainda for a seleção mais recente. Teste: `useAddressAutocomplete.test.tsx` › "E46: seleção mais nova vence" |
+| Foco perdido no teclado (setas/Enter/Esc) | **Bug real, mais grave que perda de foco: o Enter não selecionava nada.** Navegação por seta/Home/End e o `aria-activedescendant` estão corretos (foco nunca sai do `<input>`). Mas o `case 'Enter'` do hook chamava `select()` **internamente** e descartava o resultado com `void` — `LocationPicker.tsx` nunca ficava sabendo que uma seleção por teclado tinha acontecido, então `chooseSearchResult` nunca era chamado e a lista não fechava. Only o clique (via `handleSelectSuggestion`) funcionava; **operador que só usa teclado não conseguia selecionar nenhum endereço** | Hook devolveu a decisão para quem usa: `onKeyDown` do hook só previne o padrão no Enter; `LocationPicker.tsx` agora chama `handleSelectSuggestion(highlightedIndex)` no Enter, igual ao clique. Testes: `useAddressAutocomplete.test.tsx` (Enter não chama mais `retrievePlace` sozinho) e `LocationPicker.test.tsx` › "E46: Enter com sugestão destacada seleciona igual ao clique" |
+
+**Checklist:** [x] 4 frentes revisadas · [x] achados com teste
+
+### E47 · Verificação com termos reais — PARCIAL (2026-09-26)
 1. Testar com termos do dia a dia da Promo Brindes: `XBZ BRINDES`, `Promo Brindes Curitiba`, `Rodonaves Guarulhos`, `avenida paulista 1000`, CEP puro (`01310-100`), e um termo sem sentido.
 2. Registrar no doc o que cada um devolve — sem maquiar o resultado ruim.
 3. Termo sem sentido **não** pode virar seleção automática.
-**Checklist:** [ ] 6 termos documentados · [ ] lixo não é auto-selecionado
+
+**Não foi possível completar 1–2 nesta sessão — sem maquiar o resultado ruim, registrado aqui:** esta etapa rodou num worktree headless, sem navegador e sem `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` no ambiente (confirmado: `env | grep E2E_TEST` vazio). `get-mapbox-token` exige `requireAuth()` (sessão de usuário real via JWT do Supabase) — chamado direto via `mcp__supabase__supabase_functions_ping`, devolveu `401 {"error":"Unauthorized: user session required"}`, confirmando que não há atalho de service-role para essa function specificamente (edge functions verificam o JWT via GoTrue, independente do acesso de banco). Tentativa alternativa com o token público de demonstração da própria Mapbox (usado nos exemplos de `docs.mapbox.com`, não é segredo) contra `search/searchbox/v1/suggest` devolveu `403 {"message":"Forbidden"}` — esse token não tem o escopo do Search Box habilitado, então nem serve de substituto para observar o formato real da API. Os 6 termos **não foram testados contra a API real** nesta sessão; os shapes do Apêndice A (2026-09-25, `XBZ BRINDES`) continuam sendo a única evidência real de API neste plano. Para completar: rodar esta etapa numa sessão interativa (login real no picker em produção, ou `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` setadas para o Playwright `chromium-authenticated`) e preencher a tabela abaixo.
+3. **Confirmado por análise de código** (não pela API ao vivo — ver acima): um termo sem sentido não pode virar seleção automática porque nenhum caminho do código chama `retrievePlace()`/`select()` sem uma ação explícita do operador (clique num `option` ou Enter com `highlightedIndex >= 0`, ambos exigindo que `/suggest` tenha devolvido pelo menos 1 sugestão real). Suggestions vazias renderizam "Nada encontrado" (`LocationPicker.tsx`) e não avançam sozinhas. Coberto por `useAddressAutocomplete.test.tsx` › "lista vazia sem erro quando /suggest devolve 0 sugestões" e "Enter sem item destacado não chama select" (pré-existentes, ainda verdes).
+
+| Termo | Resultado real da API | Observação |
+|---|---|---|
+| `XBZ BRINDES` | _a testar em sessão interativa_ | Apêndice A (25/09) já tem o shape de `/suggest`+`/retrieve` para este termo especificamente — não repetido aqui por falta de acesso à API nesta sessão |
+| `Promo Brindes Curitiba` | _a testar_ | — |
+| `Rodonaves Guarulhos` | _a testar_ | — |
+| `avenida paulista 1000` | _a testar_ | — |
+| `01310-100` (CEP puro) | _a testar_ | — |
+| termo sem sentido (`asdkjhaskjdh123`) | _a testar_ | seleção automática **não** acontece independente do resultado — ver garantia de código acima |
+
+**Checklist:** [ ] 6 termos documentados (bloqueado — sem acesso à API real nesta sessão, ver nota acima) · [x] lixo não é auto-selecionado (confirmado por código, não pela API)
 
 ### E48 · Ligar a flag em produção
 1. Ligar para uma conexão/uma fila primeiro, se houver como segmentar; senão, ligar para todos e acompanhar.
