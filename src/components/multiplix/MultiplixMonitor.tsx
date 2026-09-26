@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft } from 'lucide-react';
+import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -157,9 +157,10 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { l: 'Enviadas', v: fmtInt(dispatch.sent_count), I: Send, c: 'text-primary' },
+          { l: 'Entregues', v: fmtInt(dispatch.delivered_count), I: CheckCircle2, c: 'text-dash-green' },
           { l: 'Falhas', v: fmtInt(dispatch.failed_count), I: XCircle, c: 'text-dash-red' },
           { l: 'A confirmar', v: fmtInt(outcomeUnknown), I: AlertTriangle, c: 'text-dash-amber' },
           { l: 'Restantes', v: fmtInt(remaining), I: Clock, c: 'text-foreground-secondary' },
