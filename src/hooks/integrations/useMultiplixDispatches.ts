@@ -101,6 +101,14 @@ async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause'
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (response.error) throw new Error(response.error.message);
+  // 'start' fora da janela de envio responde 200 com {ok:false, reason,
+  // next_window} em vez de status de erro (nao ha transicao pra reverter),
+  // entao invoke() nao rejeita sozinho -- sem isso, "Retomar" fecha o dialog
+  // como sucesso mas o disparo continua pausado.
+  const body = response.data as { ok?: boolean; reason?: string } | null;
+  if (body?.ok === false) {
+    throw new Error(body.reason ? `Fora da janela de envio: ${body.reason}` : 'Disparo recusado pelo motor de envio');
+  }
   return response.data;
 }
 

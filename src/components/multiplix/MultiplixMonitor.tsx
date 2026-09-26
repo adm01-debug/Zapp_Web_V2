@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
 } from '@/hooks/integrations/useMultiplixDispatches';
@@ -37,9 +38,14 @@ const RECIPIENT_STATUS: Record<string, { label: string; tone: 'success' | 'dange
   skipped: { label: 'Sem WhatsApp', tone: 'muted' },
 };
 
+const CSV_FORMULA_PREFIX = /^[=+\-@\t\r\n＝＋－＠]/u;
+
 function exportRecipientsCsv(rows: { company_name_snapshot: string | null; destino_e164: string | null; status: string; sent_at: string | null; error_message: string | null }[], dispatchName: string) {
   if (rows.length === 0) return;
-  const esc = (v: string) => (/[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  const esc = (v: string) => {
+    const safe = CSV_FORMULA_PREFIX.test(v) ? `'${v}` : v;
+    return /[,"\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
   const cols: Array<[string, (r: (typeof rows)[number]) => string]> = [
     ['Empresa', (r) => r.company_name_snapshot ?? ''],
     ['Telefone', (r) => r.destino_e164 ?? ''],
@@ -70,6 +76,24 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const { data: recipients = [] } = useMultiplixRecipients(dispatchId, statusFilter);
   const action = useMultiplixDispatchAction();
 
+  // total_recipients/sent_count/failed_count/outcome_unknown_count nao contam
+  // 'skipped' (empresa sem WhatsApp) -- sem isso, um disparo com destinatarios
+  // pulados nunca chega a 100% e "Restantes" fica preso contando quem ja foi
+  // resolvido como sem destino.
+  const { data: skippedCount = 0 } = useQuery({
+    queryKey: ['multiplix-skipped-count', dispatchId],
+    queryFn: async () => {
+      const { count, error } = await fromTable('multiplix_recipients')
+        .select('id', { count: 'exact', head: true })
+        .eq('dispatch_id', dispatchId)
+        .eq('status', 'skipped');
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    },
+    enabled: !!dispatchId,
+    refetchInterval: 5_000,
+  });
+
   useEffect(() => {
     const ch = supabase.channel(`multiplix-mon-${dispatchId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'multiplix_dispatches', filter: `id=eq.${dispatchId}` }, () => qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] }))
@@ -90,7 +114,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   if (!dispatch) return <div className="space-y-4 animate-pulse">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-2xl" />)}</div>;
 
   const outcomeUnknown = dispatch.outcome_unknown_count ?? 0;
-  const processed = dispatch.sent_count + dispatch.failed_count + outcomeUnknown;
+  const processed = dispatch.sent_count + dispatch.failed_count + outcomeUnknown + skippedCount;
   const progress = dispatch.total_recipients > 0 ? pct(processed, dispatch.total_recipients) : 0;
   const remaining = Math.max(0, dispatch.total_recipients - processed);
   const successRate = processed > 0 ? pct(dispatch.sent_count, processed) : 0;
