@@ -31,7 +31,7 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 |---|---|
 | F0 | E01 👤 · E02 🔧 · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
 | F1 | E07–E09 👤(3 cliques) · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
-| F2 | E14 🔧 · E15 📋🔧⏳(meta recalibrada) · E16 ✅(0) · E17 📋 · E18 🔧⏳ · E19 ✅ · E20 ✅ · E21 👤 |
+| F2 | E14 ✅ · E15 📋🔧⏳(meta recalibrada) · E16 ✅(aplicado em produção) · E17 ✅(aplicado em produção) · E18 ✅(nada a migrar) · E19 ✅ · E20 ✅ · E21 👤 |
 | F3 | E22 📋 · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
 | F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
 | F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
@@ -50,7 +50,8 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
 - **E14** — FKs sem índice de suporte: **0** (eram 3). Fechado, checkbox marcado abaixo.
 - **E16** — índices duplicados exatos: **1 acionável** (`idx_talkx_template_versions_template_version`,
   redundante com a unique `..._template_id_version_number_key`). O outro par é do schema `auth`
-  do Supabase (gerenciado — não tocar). DROP = DDL em produção ⇒ regra 8 (aguarda decisão).
+  do Supabase (gerenciado — não tocar). **Aplicado em produção em 26/09** (ver seção abaixo) —
+  não é mais decisão pendente.
 - **E15** — índices com `idx_scan=0`: **472/675** (o total cresceu: 503→675). `pg_stat_database.stats_reset`
   = **null** ⇒ não há 30 dias de estatística confiável; dropar em massa segue proibido pelo próprio
   critério da etapa. Sem ação autônoma.
@@ -115,9 +116,12 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   como está) ou planos históricos já arquivados (grandfathered pela própria regra do CLAUDE.md:
   "referências novas usam a grafia canônica"). Nada para corrigir. Fechado.
 
-Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E09–E11 governança/CI, E21 backup,
-rotação de secrets sensíveis) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do
-fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
+Conclusão: **E16, E17 e E18 fecharam** (os dois primeiros com DDL já aplicado em produção em
+26/09 — ver seção "Decisões de 2026-09-26" do CLAUDE.md; o terceiro sem nada a migrar). O núcleo
+🔴 remanescente é E15 (índices sem uso — bloqueado por `stats_reset=null`), E09–E11
+(governança/CI), E21 (backup) e a rotação de secrets sensíveis — **decisão de negócio**
+(custo/destrutivo/produção — regra 8 do fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já
+fecharam ou são falso-positivo.
 
 ## Regras de execução (herdadas e obrigatórias)
 
