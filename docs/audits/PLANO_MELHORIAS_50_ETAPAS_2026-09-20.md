@@ -269,15 +269,25 @@ por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não blo
 O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. Fixar
 `autovacuum_vacuum_scale_factor=0.05` e `autovacuum_analyze_scale_factor=0.05` em
 `messages`, `email_messages` e `talkx_*` de escrita intensa.
-- [x] Verificado ao vivo em 26/09: `messages` e `email_messages` **já têm**
-      `autovacuum_vacuum_scale_factor=0.05` / `autovacuum_analyze_scale_factor=0.05`
-      (aplicado por outra sessão, sem migration correspondente localizada — reloptions confirma
-      via `pg_class`). Nenhum `talkx_*` tem escrita ainda (todas as 12 tabelas com
-      `n_live_tup=0`, módulo em desenvolvimento ativo) — "de escrita intensa" não se aplica a
-      nenhuma hoje; revisitar quando Talk X sair de desenvolvimento. O "94,5% dead" de
-      `messages` em `pg_stat_user_tables` é estatística desatualizada, não bloat real:
-      `n_live_tup=55` ali contra `SELECT count(*)` real de 47.878 linhas — dead real
-      ≈ 953/47.878 ≈ 2%, saudável. Nada para migrar; etapa fecha sem PR.
+- [x] Verificado ao vivo em 26/09 (e revalidado por agente independente na mesma tarde):
+      `messages` e `email_messages` **já têm** `autovacuum_vacuum_scale_factor=0.05` /
+      `autovacuum_analyze_scale_factor=0.05` (aplicado por outra sessão, sem migration
+      correspondente localizada — reloptions confirma via `pg_class`). Das 12 tabelas
+      `talkx_*`, **10 seguem genuinamente vazias**; `talkx_templates` (5 linhas) e
+      `talkx_settings` (6 linhas) têm dados reais (seed/config), mas volume irrisório —
+      "de escrita intensa" não se aplica a nenhuma hoje; revisitar quando Talk X sair de
+      desenvolvimento. **Causa-raiz real do "94,5% dead"**: `pg_postmaster_start_time` mostra
+      restart do Postgres em 2026-09-25 12:28:28 UTC — isso zera os contadores incrementais
+      por relação (`n_live_tup`/`n_dead_tup`/`autovacuum_count`) mas não `pg_class.reltuples`
+      (persistido), que o autovacuum de fato usa para calcular o limiar; `email_messages` já
+      cruzou o limiar e rodou autovacuum desde o restart (prova que o mecanismo funciona),
+      `messages` ainda não. Dead ratio real hoje (`n_dead_tup`/`count(*)` real): `messages`
+      ≈ 2,0%, `email_messages` ≈ 1,8-1,9% — ambos saudáveis. Varredura ampla no banco não achou
+      nenhuma outra tabela fora do escopo original com bloat real (as de 100% "dead" no
+      `pg_stat_user_tables` são só tabelas pequenas/ociosas sem autovacuum desde o mesmo
+      restart, não bloat; `whatsapp_connections`/`agent_presence` são tabelas de
+      presença/heartbeat com autovacuum ativo e frequente, comportamento esperado). Nada para
+      migrar; etapa fecha sem PR de DDL.
 
 ### E19 🟡 Baseline de queries lentas (herda E29/16-09)
 ```sql
