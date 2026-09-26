@@ -8881,6 +8881,7 @@ export type Database = {
           count: number
         }[]
       }
+      count_searchbox_sessions_this_month: { Args: never; Returns: number }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
