@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { startOfDay, subDays, format, startOfHour, eachDayOfInterval, eachHourOfInterval, startOfToday, differenceInDays } from 'date-fns';
@@ -48,73 +48,6 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
   const [agentPerformance, setAgentPerformance] = useState<AgentPerformance[]>([]);
   const [statusData, setStatusData] = useState<StatusData[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (queueId && dateRange.from && dateRange.to) {
-      fetchAnalytics();
-    }
-  }, [queueId, dateRange.from.toISOString(), dateRange.to.toISOString()]);
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-
-      // Get contacts in this queue
-      const { data: contacts, error: contactsError } = await supabase
-        .from('contacts')
-        .select('id, assigned_to, created_at')
-        .eq('queue_id', queueId);
-
-      if (contactsError) throw contactsError;
-
-      const contactIds = contacts?.map(c => c.id) || [];
-
-      if (contactIds.length === 0) {
-        setDailyData(generateEmptyDailyData(dateRange));
-        setHourlyData(generateEmptyHourlyData());
-        setAgentPerformance([]);
-        setStatusData([
-          { name: 'Resolvidos', value: 0, color: 'hsl(var(--primary))' },
-          { name: 'Em Atendimento', value: 0, color: 'hsl(var(--secondary))' },
-          { name: 'Aguardando', value: 0, color: 'hsl(var(--accent-foreground))' },
-        ]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch messages for these contacts in the date range
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('id, contact_id, created_at, sender, agent_id')
-        .in('contact_id', contactIds)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: true });
-
-      if (messagesError) throw messagesError;
-
-      // Process daily data
-      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, contacts || [], dateRange);
-      setDailyData(dailyAggregation);
-
-      // Process hourly data (today only)
-      const hourlyAggregation = processHourlyData(messages || []);
-      setHourlyData(hourlyAggregation);
-
-      // Process agent performance
-      const agentAggregation = await processAgentPerformance(messages || []);
-      setAgentPerformance(agentAggregation);
-
-      // Process status distribution
-      const statusAggregation = processStatusData(contacts || []);
-      setStatusData(statusAggregation);
-
-    } catch (error) {
-      log.error('Error fetching queue analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const generateEmptyDailyData = (range: DateRange): DailyData[] => {
     const days = eachDayOfInterval({
@@ -219,7 +152,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
   ): Promise<AgentPerformance[]> => {
     // Count messages sent by agents
     const agentMessages: Record<string, number> = {};
-    
+
     messages.forEach(m => {
       if (m.sender === 'agent' && m.agent_id) {
         agentMessages[m.agent_id] = (agentMessages[m.agent_id] || 0) + 1;
@@ -276,6 +209,74 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       { name: 'Aguardando', value: waitingPercent, color: 'hsl(var(--accent-foreground))' },
     ];
   };
+
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Get contacts in this queue
+      const { data: contacts, error: contactsError } = await supabase
+        .from('contacts')
+        .select('id, assigned_to, created_at')
+        .eq('queue_id', queueId);
+
+      if (contactsError) throw contactsError;
+
+      const contactIds = contacts?.map(c => c.id) || [];
+
+      if (contactIds.length === 0) {
+        setDailyData(generateEmptyDailyData(dateRange));
+        setHourlyData(generateEmptyHourlyData());
+        setAgentPerformance([]);
+        setStatusData([
+          { name: 'Resolvidos', value: 0, color: 'hsl(var(--primary))' },
+          { name: 'Em Atendimento', value: 0, color: 'hsl(var(--secondary))' },
+          { name: 'Aguardando', value: 0, color: 'hsl(var(--accent-foreground))' },
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch messages for these contacts in the date range
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('id, contact_id, created_at, sender, agent_id')
+        .in('contact_id', contactIds)
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (messagesError) throw messagesError;
+
+      // Process daily data
+      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, contacts || [], dateRange);
+      setDailyData(dailyAggregation);
+
+      // Process hourly data (today only)
+      const hourlyAggregation = processHourlyData(messages || []);
+      setHourlyData(hourlyAggregation);
+
+      // Process agent performance
+      const agentAggregation = await processAgentPerformance(messages || []);
+      setAgentPerformance(agentAggregation);
+
+      // Process status distribution
+      const statusAggregation = processStatusData(contacts || []);
+      setStatusData(statusAggregation);
+
+    } catch (error) {
+      log.error('Error fetching queue analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [queueId, dateRange]);
+
+  useEffect(() => {
+    if (queueId && dateRange.from && dateRange.to) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-fila-ou-período padrão, sem estado derivado de props para sincronizar.
+      fetchAnalytics();
+    }
+  }, [queueId, dateRange, fetchAnalytics]);
 
   return {
     dailyData,

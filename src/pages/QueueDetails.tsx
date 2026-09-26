@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -33,9 +33,8 @@ export default function QueueDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
-  useEffect(() => { if (id && user) fetchQueueData(); }, [id, user]);
 
-  const fetchQueueData = async () => {
+  const fetchQueueData = useCallback(async () => {
     if (!id) return;
     try {
       setLoading(true);
@@ -64,7 +63,14 @@ export default function QueueDetails() {
       setMetrics({ totalContacts, assignedContacts, waitingContacts: totalContacts - assignedContacts, avgResponseTime: '~3 min', resolvedToday: Math.floor(assignedContacts * 0.7) });
     } catch (error) { log.error('Error fetching queue data:', error); }
     finally { setLoading(false); }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id && user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-fila padrão, sem estado derivado de props para sincronizar.
+      fetchQueueData();
+    }
+  }, [id, user, fetchQueueData]);
 
   if (authLoading || loading) {
     return (

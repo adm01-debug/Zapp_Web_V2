@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,11 +56,7 @@ export function AuditLogDashboard() {
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
 
-  useEffect(() => {
-    fetchLogs();
-  }, [actionFilter, entityFilter]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from('audit_logs')
@@ -94,7 +90,12 @@ export function AuditLogDashboard() {
       });
     }
     setLoading(false);
-  };
+  }, [actionFilter, entityFilter]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
+    fetchLogs();
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => {
     if (!search) return true;

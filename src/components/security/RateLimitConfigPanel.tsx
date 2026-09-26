@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Save, Plus, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,11 +34,7 @@ export function RateLimitConfigPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchRules();
-  }, []);
-
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('rate_limit_configs')
@@ -60,7 +56,12 @@ export function RateLimitConfigPanel() {
       setRules(DEFAULT_RULES.map((r, i) => ({ ...r, id: `temp-${i}` })));
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    fetchRules();
+  }, [fetchRules]);
 
   const updateRule = (id: string, updates: Partial<RateLimitRule>) => {
     setRules(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
