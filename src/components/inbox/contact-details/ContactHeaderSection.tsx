@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
-import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
