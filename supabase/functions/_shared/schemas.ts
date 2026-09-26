@@ -214,7 +214,7 @@ export const SicoobBridgeReplySchema = z.object({
 
 // ─── Gmail Send ──────────────────────────────────────────────
 export const GmailSendActionSchema = z.object({
-  action: z.enum(['send', 'reply', 'create-draft', 'modify-labels', 'mark-read', 'trash']),
+  action: z.enum(['send', 'reply', 'create-draft', 'modify-labels', 'mark-read', 'trash', 'trash-thread']),
   account_id: z.string().uuid("account_id must be a valid UUID"),
   to: z.union([z.string(), z.array(z.string())]).optional(),
   cc: z.array(z.string()).optional(),
