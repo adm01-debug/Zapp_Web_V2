@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
-import { UserAgent, Registerer } from 'sip.js';
+import type { UserAgent, Registerer, Invitation } from 'sip.js';
 import { toast } from 'sonner';
 
 const log = getLogger('SipConnection');
@@ -14,16 +14,30 @@ interface SipConfig {
   wsPort?: number;
 }
 
-export function useSipConnection() {
+export function useSipConnection(onIncomingInvitation?: (invitation: Invitation) => void) {
   const [sipStatus, setSipStatus] = useState<SipStatus>('disconnected');
   const uaRef = useRef<UserAgent | null>(null);
   const registererRef = useRef<Registerer | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxReconnectAttempts = 5;
+  const onIncomingInvitationRef = useRef(onIncomingInvitation);
+  useEffect(() => { onIncomingInvitationRef.current = onIncomingInvitation; }, [onIncomingInvitation]);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
   const connect = useCallback(async (config: SipConfig) => {
     try {
+      clearReconnectTimer();
       setSipStatus('connecting');
+      // sip.js só é baixado quando o usuário realmente tenta conectar — mantém
+      // a lib (e seu vendor chunk) fora do bundle inicial do app.
+      const { UserAgent, Registerer } = await import('sip.js');
       const wsPort = config.wsPort || 8089;
       const wsServer = `wss://${config.server}:${wsPort}/ws`;
       const uri = UserAgent.makeURI(`sip:${config.user}@${config.server}`);
@@ -36,6 +50,9 @@ export function useSipConnection() {
         authorizationUsername: config.user,
         logLevel: 'warn',
         displayName: config.user,
+        delegate: {
+          onInvite: (invitation) => onIncomingInvitationRef.current?.(invitation),
+        },
       });
 
       ua.transport.onDisconnect = () => {
@@ -44,7 +61,11 @@ export function useSipConnection() {
           reconnectAttemptsRef.current++;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
           toast.info(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
-          setTimeout(() => connect(config), delay);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            // eslint-disable-next-line react-hooks/immutability -- retry recursivo: só executa depois que connect() já terminou de ser atribuído.
+            connect(config);
+          }, delay);
         } else {
           toast.error('Não foi possível reconectar ao servidor VoIP.');
           reconnectAttemptsRef.current = 0;
@@ -65,17 +86,18 @@ export function useSipConnection() {
       setSipStatus('error');
       toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
     }
-  }, []);
+  }, [clearReconnectTimer]);
 
   const disconnect = useCallback(async () => {
     try {
       reconnectAttemptsRef.current = maxReconnectAttempts;
+      clearReconnectTimer();
       if (registererRef.current) await registererRef.current.unregister();
       if (uaRef.current) { uaRef.current.transport.onDisconnect = () => {}; await uaRef.current.stop(); }
       setSipStatus('disconnected');
       reconnectAttemptsRef.current = 0;
     } catch (err) { log.error('SIP disconnect error:', err); }
-  }, []);
+  }, [clearReconnectTimer]);
 
   return { sipStatus, uaRef, connect, disconnect };
 }

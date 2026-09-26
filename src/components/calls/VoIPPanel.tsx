@@ -1,107 +1,22 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Phone, PhoneCall, PhoneIncoming, PhoneOutgoing, PhoneMissed, Settings, Clock, FileAudio, History, Keyboard } from 'lucide-react';
+import { Phone, PhoneCall, PhoneIncoming, PhoneOutgoing, PhoneMissed, Clock, FileAudio, History, Keyboard, Loader2 } from 'lucide-react';
 import { format, formatDuration, intervalToDuration } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DialPad } from './DialPad';
-import { useSipClient } from '@/hooks/communication/useSipClient';
-
-interface Call {
-  id: string;
-  contact_id: string | null;
-  agent_id: string | null;
-  direction: string;
-  status: string;
-  started_at: string;
-  answered_at: string | null;
-  ended_at: string | null;
-  duration_seconds: number | null;
-  recording_url: string | null;
-  notes: string | null;
-}
-
-const SIP_SETTINGS_KEY = 'voip_sip_settings';
-
-interface SipSettings {
-  server: string;
-  user: string;
-  wsPort: number;
-  sipEnabled: boolean;
-  autoRecord: boolean;
-}
-
-function loadSipSettings(): SipSettings {
-  try {
-    const stored = localStorage.getItem(SIP_SETTINGS_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch { /* storage unavailable */ }
-  return {
-    server: 'ip.b24-9441-1552764901.bitrixphone.com',
-    user: 'phone1',
-    wsPort: 8089,
-    sipEnabled: true,
-    autoRecord: true,
-  };
-}
+import { useCallSession } from '@/providers/CallSessionProvider';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useCallHistory, type CallHistoryRow as Call } from '@/hooks/communication/useCallHistory';
 
 export function VoIPPanel() {
   const [activeTab, setActiveTab] = useState('dialer');
-  const defaults = loadSipSettings();
-  const [sipEnabled, setSipEnabled] = useState(defaults.sipEnabled);
-  const [autoRecord, setAutoRecord] = useState(defaults.autoRecord);
-  const [sipServer, setSipServer] = useState(defaults.server);
-  const [sipUser, setSipUser] = useState(defaults.user);
-  const [wsPort, setWsPort] = useState(defaults.wsPort);
-
-  const sip = useSipClient();
-
-  const saveSipSettings = () => {
-    const settings: SipSettings = { server: sipServer, user: sipUser, wsPort, sipEnabled, autoRecord };
-    localStorage.setItem(SIP_SETTINGS_KEY, JSON.stringify(settings));
-    toast.success('Configurações de VoIP salvas!');
-  };
-
-  const handleSipConnect = async () => {
-    const { data, error } = await supabase.functions.invoke('get-sip-password');
-    const password = data?.password;
-    if (error || !password) {
-      // FunctionsHttpError.context may be Response (status) or parsed body (code) depending on supabase-js version.
-      const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
-      const isMissingSecret = error
-        ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED'
-        : true;
-      toast.error(
-        isMissingSecret
-          ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.'
-          : 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.'
-      );
-      return;
-    }
-    sip.connect({ server: sipServer, user: sipUser, password, wsPort });
-  };
-
-  const { data: calls = [], isLoading } = useQuery({
-    queryKey: ['calls-history'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('calls')
-        .select('*')
-        .order('started_at', { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      return (data || []) as Call[];
-    },
-  });
+  const { profile } = useAuth();
+  const sip = useCallSession();
+  const { calls, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, statsRows } = useCallHistory(profile?.id);
 
   const getDirectionIcon = (direction: string, status: string) => {
     if (status === 'missed') return <PhoneMissed className="w-4 h-4 text-destructive" />;
@@ -112,27 +27,38 @@ export function VoIPPanel() {
   const formatCallDuration = (seconds: number | null) => {
     if (!seconds) return '—';
     const duration = intervalToDuration({ start: 0, end: seconds * 1000 });
-    return formatDuration(duration, { format: ['minutes', 'seconds'], locale: ptBR });
+    return formatDuration(duration, { format: ['hours', 'minutes', 'seconds'], locale: ptBR });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getChannelLabel = (call: Call) => (call.whatsapp_connection_id ? 'WhatsApp' : 'VoIP');
+
+  const getStatusBadge = (call: Call) => {
+    if (call.status === 'ended') {
+      return call.answered_at
+        ? <Badge className="text-3xs">Concluída</Badge>
+        : <Badge variant="destructive" className="text-3xs">Não atendida</Badge>;
+    }
     const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-      completed: { variant: 'default', label: 'Concluída' },
+      ringing: { variant: 'outline', label: 'Tocando' },
+      answered: { variant: 'default', label: 'Em andamento' },
       missed: { variant: 'destructive', label: 'Perdida' },
       busy: { variant: 'secondary', label: 'Ocupado' },
-      ringing: { variant: 'outline', label: 'Tocando' },
-      ongoing: { variant: 'default', label: 'Em andamento' },
+      failed: { variant: 'destructive', label: 'Falhou' },
     };
-    const s = map[status] || { variant: 'secondary' as const, label: status };
+    const s = map[call.status] || { variant: 'secondary' as const, label: call.status };
     return <Badge variant={s.variant} className="text-3xs">{s.label}</Badge>;
   };
 
   const callStats = {
-    total: calls.length,
-    inbound: calls.filter(c => c.direction === 'inbound').length,
-    outbound: calls.filter(c => c.direction === 'outbound').length,
-    missed: calls.filter(c => c.status === 'missed').length,
-    avgDuration: calls.filter(c => c.duration_seconds).reduce((acc, c) => acc + (c.duration_seconds || 0), 0) / (calls.filter(c => c.duration_seconds).length || 1),
+    total: statsRows.length,
+    inbound: statsRows.filter(c => c.direction === 'inbound').length,
+    outbound: statsRows.filter(c => c.direction === 'outbound').length,
+    missed: statsRows.filter(c => c.status === 'missed').length,
+    avgDuration: (() => {
+      const withDuration = statsRows.filter(c => c.duration_seconds != null);
+      if (!withDuration.length) return 0;
+      return withDuration.reduce((acc, c) => acc + (c.duration_seconds || 0), 0) / withDuration.length;
+    })(),
   };
 
   return (
@@ -140,10 +66,10 @@ export function VoIPPanel() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Phone className="w-6 h-6 text-primary" />
-          VoIP & Chamadas
+          Telefonia
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Click-to-call, histórico de chamadas e gravações
+          Suas ligações por VoIP e WhatsApp
         </p>
       </motion.div>
 
@@ -172,7 +98,6 @@ export function VoIPPanel() {
         <TabsList className="bg-muted/50">
           <TabsTrigger value="dialer"><Keyboard className="w-4 h-4 mr-1" /> Discador</TabsTrigger>
           <TabsTrigger value="history"><History className="w-4 h-4 mr-1" /> Histórico</TabsTrigger>
-          <TabsTrigger value="settings"><Settings className="w-4 h-4 mr-1" /> Configurações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dialer" className="mt-4">
@@ -184,10 +109,12 @@ export function VoIPPanel() {
                 callDuration={sip.callDuration}
                 isMuted={sip.isMuted}
                 currentNumber={sip.currentNumber}
-                onConnect={handleSipConnect}
+                callDirection={sip.callDirection}
+                onConnect={sip.connectWithStoredCredentials}
                 onDisconnect={sip.disconnect}
                 onCall={sip.makeCall}
                 onHangUp={sip.hangUp}
+                onAcceptIncoming={sip.acceptIncomingCall}
                 onToggleMute={sip.toggleMute}
                 onDTMF={sip.sendDTMF}
               />
@@ -208,124 +135,62 @@ export function VoIPPanel() {
               </CardContent>
             </Card>
           ) : (
-            calls.map((call, i) => (
-              <motion.div key={call.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
-                <Card className="border-secondary/30 hover:border-primary/20 transition-colors">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          {getDirectionIcon(call.direction, call.status)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {call.direction === 'inbound' ? 'Chamada recebida' : 'Chamada realizada'}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-3xs text-muted-foreground">
-                              {format(new Date(call.started_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                            </span>
-                            {call.duration_seconds && (
-                              <span className="text-3xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatCallDuration(call.duration_seconds)}
+            <>
+              {calls.map((call, i) => (
+                <motion.div key={call.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 10) * 0.03 }}>
+                  <Card className="border-secondary/30 hover:border-primary/20 transition-colors">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                            {getDirectionIcon(call.direction, call.status)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">
+                                {call.direction === 'inbound' ? 'Chamada recebida' : 'Chamada realizada'}
+                              </p>
+                              <Badge variant="outline" className="text-3xs">{getChannelLabel(call)}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-3xs text-muted-foreground">
+                                {format(new Date(call.started_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                               </span>
-                            )}
+                              {call.duration_seconds != null && (
+                                <span className="text-3xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatCallDuration(call.duration_seconds)}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          {call.recording_url && (
+                            <Button variant="ghost" size="icon" className="w-7 h-7" title="Gravação">
+                              <FileAudio className="w-3.5 h-3.5 text-primary" />
+                            </Button>
+                          )}
+                          {getStatusBadge(call)}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {call.recording_url && (
-                          <Button variant="ghost" size="icon" className="w-7 h-7" title="Gravação">
-                            <FileAudio className="w-3.5 h-3.5 text-primary" />
-                          </Button>
-                        )}
-                        {getStatusBadge(call.status)}
-                      </div>
-                    </div>
-                    {call.notes && (
-                      <p className="text-xs text-muted-foreground mt-2 pl-11">{call.notes}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4 mt-4">
-          <Card className="border-secondary/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Servidor SIP / VoIP</CardTitle>
-              <CardDescription className="text-xs">
-                Configure a conexão com seu provedor VoIP
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Habilitar VoIP</Label>
-                  <p className="text-xs text-muted-foreground">Ativar chamadas via SIP</p>
-                </div>
-                <Switch checked={sipEnabled} onCheckedChange={setSipEnabled} />
-              </div>
-
-              {sipEnabled && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
-                  <div className="space-y-2">
-                    <Label>Servidor SIP</Label>
-                    <Input
-                      value={sipServer}
-                      onChange={(e) => setSipServer(e.target.value)}
-                      placeholder="sip.provedor.com.br"
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Usuário SIP</Label>
-                    <Input
-                      value={sipUser}
-                      onChange={(e) => setSipUser(e.target.value)}
-                      placeholder="ramal@sip.provedor.com.br"
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Porta WebSocket</Label>
-                    <Input
-                      type="number"
-                      value={wsPort}
-                      onChange={(e) => setWsPort(parseInt(e.target.value) || 8089)}
-                      placeholder="8089"
-                      className="bg-muted border-border"
-                    />
-                    <p className="text-3xs text-muted-foreground">Porta WSS do servidor SIP (padrão: 8089)</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={saveSipSettings}
-                  >
-                    Salvar Configurações
-                  </Button>
+                      {call.notes && (
+                        <p className="text-xs text-muted-foreground mt-2 pl-11">{call.notes}</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </motion.div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-secondary/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Gravação</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Gravação automática</Label>
-                  <p className="text-xs text-muted-foreground">Gravar todas as chamadas automaticamente</p>
+              ))}
+              {hasNextPage && (
+                <div className="flex justify-center pt-2">
+                  <Button variant="outline" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                    {isFetchingNextPage && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+                    Carregar mais
+                  </Button>
                 </div>
-                <Switch checked={autoRecord} onCheckedChange={setAutoRecord} />
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>

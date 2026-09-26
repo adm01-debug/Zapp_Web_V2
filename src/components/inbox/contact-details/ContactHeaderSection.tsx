@@ -41,7 +41,7 @@ const getContactTypeBadge = (type: string) => ({
 });
 
 interface ContactHeaderSectionProps {
-  contact: { id: string; name: string; phone: string; avatar?: string; email?: string; createdAt?: Date };
+  contact: { id: string; name: string; phone: string; avatar?: string; email?: string };
   enrichedData: EnrichedContactData | null | undefined;
   conversation?: Conversation;
   onQuickAction?: (action: string) => void;
@@ -147,10 +147,10 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
             </div>
 
             {companyName && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <CompanyLogo logoUrl={crmCompany?.logo_url} companyName={crmCompany?.nome_fantasia} fallbackCompanyName={companyName} size="sm" className="rounded-full" />
-                {companyName}
-              </p>
+                <span className="truncate min-w-0 flex-1">{companyName}</span>
+              </div>
             )}
             {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
             {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>

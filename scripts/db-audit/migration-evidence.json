@@ -109,19 +109,6 @@
             "justification": "O array statements do ledger contém um resumo histórico, enquanto o arquivo versionado preserva o replay completo e ambos ficam fixados por hash."
         },
         {
-            "version": "20260827130500",
-            "filename": "20260827130500_vacuum_autovacuum_threshold_reset_m05.sql",
-            "file_sha256": "8c3cf3d961bff90df62c1486424bef28bd883ba976c731d3be07f4fa8b2e2f3d",
-            "file_sql_sha256": "6ad6993442c8f8eef3c5872527051cede9f8cdf12b62a92c2913c3947a81ca8f",
-            "ledger_name": "vacuum_autovacuum_threshold_reset_m05",
-            "ledger_statements_sha256": "7ece1f985624ebbec9960c2a73ca19a50a1c31cce2428f64e0898e2285c8ac98",
-            "ledger_sql_sha256": "56fd440b7c3a16d1c8dfd54406ac615533e2c8ff64016dbcd078225197109204",
-            "kind": "ledger-divergence/pinned-replay",
-            "reason": "safer-replay",
-            "related_migration": null,
-            "justification": "A execução histórica incluiu manutenção pontual insegura para replay; o arquivo mantém somente a restauração idempotente dos parâmetros de autovacuum."
-        },
-        {
             "version": "20260827160000",
             "filename": "20260827160000_scope_search_contacts_to_rls_m01.sql",
             "file_sha256": "32340bbb9089189537abd5dfbe0fbb7e0950b1fe6d57dfc9dc91ef4f7da440c8",
@@ -243,19 +230,6 @@
             "justification": "O registro versionado já existia sem SQL histórico recuperado; o arquivo mantém somente o stub factual e seus bytes são fixados pelo manifesto."
         },
         {
-            "version": "20260829060000",
-            "filename": "20260829060000_reconcile_ledger_drift.sql",
-            "file_sha256": "8de59bfb7df3561ec50cead7f7265799c85ab3eb04d78524184869ad62221b2b",
-            "file_sql_sha256": "e91e63ccb261f458f4b9a482ee8979c3b85dd9f68defab41709bdfa393c30bbe",
-            "ledger_name": "reconcile_ledger_drift",
-            "ledger_statements_sha256": "c08528fd1657c3535e3f2aea2a186457ddcf866049e1e987c3f4ecf699d97569",
-            "ledger_sql_sha256": "2733dbdedeae85eee10970f267c4e58257ca0e81b09481f199dc0a711af66533",
-            "kind": "ledger-divergence/pinned-replay",
-            "reason": "safer-replay",
-            "related_migration": null,
-            "justification": "O ledger preserva a reconciliação executada; o replay local restaurou os predicados criptográficos do G-11 para impedir rename incondicional, com as duas representações fixadas por hashes independentes."
-        },
-        {
             "version": "20260829070000",
             "filename": "20260829070000_fix_guard_clear_login_and_revoke_cleanup.sql",
             "file_sha256": "a5b1f2e521160e7bd37673c3603ecb57be1cfed72302c8e7b169ef193e506339",
@@ -319,19 +293,6 @@
             "reason": "format-only",
             "related_migration": null,
             "justification": "O arquivo não teve alteração executável após sua introdução e o ledger mantém o mesmo nome; a serialização do bloco cron diverge textualmente e ambas ficam fixadas por hash."
-        },
-        {
-            "version": "20260901100001",
-            "filename": "20260901100001_add_last_sender_to_email_threads.sql",
-            "file_sha256": "2040a949294f182a4ef8d3cb869bff1a097a2234d334773dba3d862b0b8bca43",
-            "file_sql_sha256": "739f3d1a671a4e44ef599d1cdece47c105b4f3c1c3f7e29bf56297222a243897",
-            "ledger_name": "add_last_sender_to_email_threads",
-            "ledger_statements_sha256": "32016f052b4a92fe8860ce7d71197d94d8d7ac55769cf986d93f5d0f55c6c2ae",
-            "ledger_sql_sha256": "5a09bfb4fe910fcbea02df506fc7a7dd3b091678fc3da2e25a5bf73f9c5d8ea9",
-            "kind": "ledger-divergence/pinned-replay",
-            "reason": "ledger-summary",
-            "related_migration": null,
-            "justification": "A migration foi aplicada direto em produção (fora do Git) com statements resumidos no ledger (corpo da função e trigger abreviados). O arquivo em supabase/migrations foi reconstruído depois via pg_get_functiondef/pg_get_triggerdef com o SQL executável completo; ambos os conteúdos ficam fixados por hashes independentes, sem reescrever o ledger histórico."
         },
         {
             "version": "20260901100003",
@@ -400,19 +361,6 @@
             "reason": "safer-replay",
             "related_migration": null,
             "justification": "A lista MIME original executada em produção incluía image/svg+xml (vetor XSS) e omitia audio/webm (formato de gravação de voz do TeamChatPanel). O bucket foi corrigido em produção logo depois e o arquivo versionado é o replay corrigido/seguro; o ledger preserva o statement original e ambos ficam fixados por hashes independentes."
-        },
-        {
-            "version": "20260902100003",
-            "filename": "20260902100003_lid_audit_snapshot.sql",
-            "file_sha256": "350b364c1b841ddc6685b85d3cb9c40577a1de3647c041d198a3a10a97d79165",
-            "file_sql_sha256": "697faa9fbab90a8be5c728089383b8dbdad02198fe86e0139fd62c0aec326bb4",
-            "ledger_name": "lid_audit_snapshot",
-            "ledger_statements_sha256": "47b0694bd7e911787a930b576a55fff8b0facf0598e522cd399fef98f27805d2",
-            "ledger_sql_sha256": "327f3c6cbdd4e8a04715860027042655e0e057ce858ce3424a34171d3942a850",
-            "kind": "ledger-divergence/pinned-replay",
-            "reason": "ledger-summary",
-            "related_migration": null,
-            "justification": "A migration foi aplicada direto em produção com statements resumidos no ledger (CREATE TABLE ... (...); INSERT ...). O arquivo em supabase/migrations reconstrói o DDL completo verificado contra o schema vivo (colunas com message_count bigint, índices idx_lid_snapshot_phone/contact, RLS com policies service_role_full_access e admin_read); ambos ficam fixados por hashes independentes."
         },
         {
             "version": "20260902120000",

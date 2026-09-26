@@ -249,8 +249,12 @@ constraint / realmente mortos.
 ### E17 🔴 Integridade referencial não declarada (herda E34/16-09)
 Colunas `*_id` em `public.*` sem FK correspondente: inventário, verificação de órfãos
 por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não bloqueia).
-- [ ] Inventário completo com decisão por coluna (FK criada × justificativa por escrito)
-- [ ] 0 órfãos nas relações declaradas nesta rodada
+- [x] Inventário completo com decisão por coluna: 13 FK criadas (11 → `auth.users`, 1 →
+      `profiles`, 1 → `vault.secrets`), 38 justificadas por escrito (externas/polimórficas) —
+      ver `docs/audits/referential-integrity-2026-09-26.md`. Migration
+      `20260926160000_e17_referential_integrity_fks.sql` preparada; **DDL em produção segue
+      pendente** de merge + apply via `db-migrate.yml` (regra 8)
+- [x] 0 órfãos verificados ao vivo nas 13 relações antes de escrever a migration
 
 ### E18 🟡 Autovacuum por tabela quente (herda E30/16-09)
 O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. Fixar
