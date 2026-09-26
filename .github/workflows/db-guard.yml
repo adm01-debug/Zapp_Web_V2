@@ -11,10 +11,11 @@ name: DB Guard (offline)
 on:
   # Sem filtro de paths: o nome do check precisa existir em todo PR para poder
   # ser exigido pela branch protection sem bloquear diffs apenas de docs.
+  # E23: 'develop' removido — branch nao existe no repo (so main).
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   # Fila de merge: sem este gatilho o check required nunca reportaria no merge
   # group e a fila travaria todos os merges do repo.
   merge_group:
@@ -25,7 +26,10 @@ permissions:
 
 concurrency:
   group: db-guard-offline-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # E21 (auditoria de GitHub Actions, 2026-09-26): cancelava TODO push na
+  # main, inclusive comparado a um commit anterior ja em analise — igual ao
+  # ci.yml, so cancela push NOVO na MESMA PR.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   offline-contract:
