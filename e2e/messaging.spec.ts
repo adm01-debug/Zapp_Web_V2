@@ -1,28 +1,30 @@
 import { test, expect } from '@playwright/test';
 
-// The auth fixture (e2e/auth.setup.ts, via the "setup" -> "chromium-authenticated" dependsOn)
-// now provides a logged-in session, but both tests below still need at least
-// one real conversation already seeded in the inbox — there is no seeded test
-// data in this environment yet, so they stay skipped rather than inventing a
-// fake fixture.
+// Seletores confirmados lendo src/components/inbox/chat/ChatInputArea.tsx: o
+// textarea não tem data-testid, o aria-label default (sem edição/resposta em
+// andamento) é "Digite sua mensagem"; o botão de anexo de imagem tem aria-label
+// "Enviar imagem" (não existe um botão genérico "anexar"). Enter sem Shift
+// envia (useChatPanelHandlers.ts: handleKeyDown), confirmado pelo tooltip
+// "Enviar (Enter)" no próprio botão de enviar.
 test.describe('Messaging flows', () => {
-  test.skip('send text message appears in conversation', async ({ page }) => {
+  test('send text message appears in conversation', async ({ page }) => {
     await page.goto('/inbox');
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
-    const input = page.locator('[data-testid="message-input"]');
-    await input.fill('Mensagem de teste E2E');
+
+    const input = page.getByRole('textbox', { name: /digite sua mensagem/i });
+    const text = `Mensagem de teste E2E ${Date.now()}`;
+    await input.fill(text);
     await page.keyboard.press('Enter');
-    await expect(page.locator('[data-testid="message-bubble"]').last()).toContainText(
-      'Mensagem de teste E2E'
-    );
+
+    await expect(page.getByText(text)).toBeVisible();
   });
 
-  test.skip('media attachment button opens file picker', async ({ page }) => {
+  test('image attachment button is enabled', async ({ page }) => {
     await page.goto('/inbox');
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
-    const attachBtn = page.getByRole('button', { name: /anexar|attach/i });
-    await expect(attachBtn).toBeEnabled();
+
+    await expect(page.getByRole('button', { name: /enviar imagem/i })).toBeEnabled();
   });
 });

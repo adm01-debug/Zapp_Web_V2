@@ -52,11 +52,14 @@ jobs:
       - name: 🎭 Install Playwright (Chromium)
         run: bunx playwright install --with-deps chromium
 
-      # Roda so o projeto "setup" (login real com o usuario de teste). O projeto
-      # "chromium-authenticated" (specs do Talk X) fica de fora: o usuario de
+      # Roda "setup" (login real) + conversation.spec.ts/messaging.spec.ts, que
+      # dependem so de sessao autenticada e do contato fixo ja seedado (ver
+      # e2e/fixtures/e2e-contact.ts). talkx.spec.ts fica de fora: o usuario de
       # teste e agente e nao enxerga "Campanhas" (ver e2e/README.md).
       - name: 🔐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup
+        run: >-
+          bun run test:e2e -- --project=chromium-authenticated
+          e2e/conversation.spec.ts e2e/messaging.spec.ts
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
