@@ -4,6 +4,7 @@
 // dispara as chamadas HTTP é `mapboxGeocode.ts` (E06/E07). Estado em closure de módulo (não React):
 // o picker some/volta e a sessão de busca precisa sobreviver a isso, na Fase 2.
 import { clearSuggestCacheForSession } from '@/lib/mapboxGeocode';
+import { logAudit } from '@/lib/audit';
 
 const SESSION_IDLE_MS = 120_000;
 const MAX_SUGGESTS_PER_SESSION = 50;
@@ -21,7 +22,8 @@ export function newSessionToken(): string {
   return crypto.randomUUID();
 }
 
-function createSession(now: number): SessionState {
+function createSession(now: number, source: string): SessionState {
+  void logAudit({ action: 'searchbox_session', details: { source } });
   return { token: newSessionToken(), lastActivityAt: now, suggestCount: 0, retrieved: false };
 }
 
@@ -30,7 +32,7 @@ function createSession(now: number): SessionState {
  * já teve um `/retrieve` (a Mapbox conta isso como sessão fechada) ou já bateu o teto de 50
  * `/suggest`. Toda chamada — mesmo quando reaproveita a sessão — atualiza o timestamp de atividade.
  */
-export function getSearchSession(): string {
+export function getSearchSession(source: string = 'picker'): string {
   const now = Date.now();
   if (
     !session ||
@@ -38,7 +40,7 @@ export function getSearchSession(): string {
     session.retrieved ||
     session.suggestCount >= MAX_SUGGESTS_PER_SESSION
   ) {
-    session = createSession(now);
+    session = createSession(now, source);
   } else {
     session.lastActivityAt = now;
   }
@@ -47,13 +49,13 @@ export function getSearchSession(): string {
 
 /** Conta um `/suggest` na sessão corrente (abre uma se ainda não houver). */
 export function noteSuggestCall(): void {
-  if (!session) session = createSession(Date.now());
+  if (!session) session = createSession(Date.now(), 'picker');
   session.suggestCount += 1;
 }
 
 /** Marca que a sessão corrente já foi usada num `/retrieve` — força sessão nova na próxima busca. */
 export function noteRetrieveCall(): void {
-  if (!session) session = createSession(Date.now());
+  if (!session) session = createSession(Date.now(), 'picker');
   session.retrieved = true;
 }
 

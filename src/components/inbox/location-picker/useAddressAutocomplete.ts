@@ -3,9 +3,11 @@ import type { KeyboardEvent } from 'react';
 import { suggestPlaces, retrievePlace } from '@/lib/mapboxGeocode';
 import type { GeoSuggestion, GeoFailureKind, GeoProximity, GeoSearchPlace } from '@/lib/mapboxGeocode';
 import { getSearchSession, noteSuggestCall, noteRetrieveCall, endSearchSession } from '@/lib/mapboxSession';
+import { isSearchBudgetOk } from '@/lib/mapboxCostGuard';
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 3;
+const RATE_LIMIT_BACKOFF_MS = 60_000;
 
 export interface UseAddressAutocompleteOptions {
   token: string | null;
@@ -41,6 +43,8 @@ interface State {
   error: GeoFailureKind | null;
   highlightedIndex: number;
   retrievingId: string | null;
+  /** E38: timestamp até quando o /suggest fica em backoff após um 429. */
+  rateLimitedUntil: number | null;
 }
 
 const initialState: State = {
@@ -50,13 +54,14 @@ const initialState: State = {
   error: null,
   highlightedIndex: -1,
   retrievingId: null,
+  rateLimitedUntil: null,
 };
 
 type Action =
   | { type: 'SET_QUERY'; query: string }
   | { type: 'SUGGEST_START' }
   | { type: 'SUGGEST_SUCCESS'; suggestions: GeoSuggestion[] }
-  | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind }
+  | { type: 'SUGGEST_ERROR'; kind: GeoFailureKind; rateLimitedUntil?: number }
   | { type: 'RETRIEVE_START'; id: string }
   | { type: 'RETRIEVE_END' }
   | { type: 'RETRIEVE_ERROR'; kind: GeoFailureKind }
@@ -72,7 +77,13 @@ function reducer(state: State, action: Action): State {
     case 'SUGGEST_SUCCESS':
       return { ...state, isLoading: false, error: null, suggestions: action.suggestions, highlightedIndex: -1 };
     case 'SUGGEST_ERROR':
-      return { ...state, isLoading: false, error: action.kind, suggestions: [] };
+      return {
+        ...state,
+        isLoading: false,
+        error: action.kind,
+        suggestions: [],
+        rateLimitedUntil: action.rateLimitedUntil ?? null,
+      };
     case 'RETRIEVE_START':
       // Falha de retrieve não fecha a lista: só o item some do estado de carregamento
       // (RETRIEVE_END), as sugestões continuam de pé.
@@ -105,6 +116,10 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
 
   const runSuggest = useCallback((term: string) => {
     if (!token) return;
+    // E38: 429 recente — não tenta de novo a cada tecla, espera o backoff passar.
+    if (state.rateLimitedUntil && Date.now() < state.rateLimitedUntil) return;
+    // E37: guarda de custo — mês estourou o teto, fica em silêncio (quem usa cai no /forward).
+    if (!isSearchBudgetOk()) return;
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -117,10 +132,11 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
       if (result.ok) {
         dispatch({ type: 'SUGGEST_SUCCESS', suggestions: result.suggestions });
       } else if (result.kind !== 'aborted') {
-        dispatch({ type: 'SUGGEST_ERROR', kind: result.kind });
+        const rateLimitedUntil = result.kind === 'rate_limited' ? Date.now() + RATE_LIMIT_BACKOFF_MS : undefined;
+        dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
       }
     });
-  }, [token, proximity]);
+  }, [token, proximity, state.rateLimitedUntil]);
 
   useEffect(() => {
     if (!enabled || !token) return;
