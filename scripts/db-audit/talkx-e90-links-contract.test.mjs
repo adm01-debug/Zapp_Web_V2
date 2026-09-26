@@ -70,6 +70,22 @@ test('Talk X custom-fields pagination orders by a stable unique key', () => {
   assert.ok(orderIdx > -1 && rangeIdx > orderIdx, 'o .order("id") deve vir antes do .range() na busca paginada');
 });
 
+test('Talk X custom-fields lookup chunks contact ids before querying', () => {
+  // Review da PR #909: .in() serializa todo contact_id na URL -- uma leva de
+  // ~1000 destinatarios geraria dezenas de KB de filtro e arriscaria rejeicao
+  // por tamanho de URL no gateway, derrubando o envio inteiro depois da
+  // campanha ja ter transicionado para "sending".
+  assert.match(sender, /CUSTOM_FIELDS_ID_CHUNK_SIZE/);
+  assert.match(sender, /\.in\("contact_id", idChunk\)/);
+});
+
+test('Talk X custom-fields bucket preserves a field literally named __proto__', () => {
+  // Review da PR #909: bucket[row.field_name] num objeto comum ({}) invoca o
+  // setter de protótipo quando field_name === "__proto__", entao o valor real
+  // nunca aparece em Object.entries() -- precisa de um objeto sem prototype.
+  assert.match(sender, /Object\.create\(null\) as Record<string, string>/);
+});
+
 test('Talk X personalize() and personalizePreview() both guard against inherited Object.prototype keys', () => {
   // Review da PR #909: "key in contactValues" tambem acha propriedades
   // herdadas (constructor, __proto__) -- um placeholder desses vazaria texto

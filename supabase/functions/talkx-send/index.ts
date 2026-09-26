@@ -309,31 +309,43 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
     );
     const customFieldsByContact = new Map<string, Record<string, string>>();
     if (recipientContactIds.length > 0) {
+      // .in() serializa cada contact_id (UUID) na URL da requisição — uma leva
+      // grande (ex.: 1000 destinatários) geraria ~37KB só de filtro, arriscando
+      // rejeição por tamanho de URL no gateway antes mesmo de paginar o
+      // resultado (achado do review). Delimita por lote de IDs.
+      const CUSTOM_FIELDS_ID_CHUNK_SIZE = 200;
       // PostgREST limita a 1000 linhas por chamada — leva com muitos contatos x
       // campos customizados perderia linhas em silêncio sem paginar (achado do
       // review).
       const CUSTOM_FIELDS_PAGE_SIZE = 1000;
-      for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
-        // .range() sem .order() não garante ordenação estável entre chamadas —
-        // páginas poderiam se sobrepor ou pular linhas (achado do review).
-        // "id" é a PK, então a ordenação é determinística.
-        const { data: customFieldRows, error: customFieldsError } = await supabase
-          .from("contact_custom_fields")
-          .select("contact_id, field_name, field_value")
-          .in("contact_id", recipientContactIds)
-          .order("id", { ascending: true })
-          .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
-        if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
-        for (const row of customFieldRows ?? []) {
-          // Campo customizado sem valor preenchido (field_value null) deve cair
-          // no fallback "[variavel]" do personalize(), não virar string vazia
-          // silenciosa (achado do review).
-          if (row.field_value == null) continue;
-          const bucket = customFieldsByContact.get(row.contact_id) ?? {};
-          bucket[row.field_name] = row.field_value;
-          customFieldsByContact.set(row.contact_id, bucket);
+      for (let idOffset = 0; idOffset < recipientContactIds.length; idOffset += CUSTOM_FIELDS_ID_CHUNK_SIZE) {
+        const idChunk = recipientContactIds.slice(idOffset, idOffset + CUSTOM_FIELDS_ID_CHUNK_SIZE);
+        for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
+          // .range() sem .order() não garante ordenação estável entre chamadas —
+          // páginas poderiam se sobrepor ou pular linhas (achado do review).
+          // "id" é a PK, então a ordenação é determinística.
+          const { data: customFieldRows, error: customFieldsError } = await supabase
+            .from("contact_custom_fields")
+            .select("contact_id, field_name, field_value")
+            .in("contact_id", idChunk)
+            .order("id", { ascending: true })
+            .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
+          if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
+          for (const row of customFieldRows ?? []) {
+            // Campo customizado sem valor preenchido (field_value null) deve cair
+            // no fallback "[variavel]" do personalize(), não virar string vazia
+            // silenciosa (achado do review).
+            if (row.field_value == null) continue;
+            // Object.create(null) (não {}): um campo chamado "__proto__" num
+            // objeto comum invoca o setter de protótipo em vez de virar
+            // propriedade enumerável — o valor real nunca apareceria em
+            // Object.entries() (achado do review).
+            const bucket = customFieldsByContact.get(row.contact_id) ?? (Object.create(null) as Record<string, string>);
+            bucket[row.field_name] = row.field_value;
+            customFieldsByContact.set(row.contact_id, bucket);
+          }
+          if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
         }
-        if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
       }
     }
 
