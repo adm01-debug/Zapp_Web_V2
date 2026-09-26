@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Building, Briefcase, Crown, Star, Pencil, Calendar, MessageCircle } from 'lucide-react';
+import { Building, Briefcase, Crown, Star, Calendar, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -18,11 +18,6 @@ import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
-
-const channelIcons: Record<string, string> = {
-  whatsapp: '💬', instagram: '📸', facebook: '📘', telegram: '✈️',
-  email: '📧', sms: '📱', webchat: '🌐',
-};
 
 const priorityConfig: Record<string, { label: string; color: string }> = {
   high: { label: 'Alta prioridade', color: 'bg-destructive/15 text-destructive border-destructive/40' },
@@ -60,6 +55,7 @@ const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => 
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const [manuallyCollapsed, setManuallyCollapsed] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
   const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
@@ -78,7 +74,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const displayName = enrichedData?.nickname?.trim() || firstName;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
-  const channelEmoji = enrichedData?.channel_type ? channelIcons[enrichedData.channel_type] || '💬' : null;
   const sentiment = enrichedData?.ai_sentiment;
   const priority = enrichedData?.ai_priority;
   const contactType = enrichedData?.contact_type;
@@ -96,6 +91,15 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
 
   if (isCompact) {
     return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
+  }
+
+  if (manuallyCollapsed) {
+    return (
+      <CompactContactHeader
+        contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName}
+        onExpand={() => setManuallyCollapsed(false)}
+      />
+    );
   }
 
   return (
@@ -130,11 +134,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                   <TooltipContent>Engajamento: {engagementScore >= 80 ? 'Alto' : engagementScore >= 50 ? 'Médio' : 'Baixo'} ({engagementScore}/100)</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {channelEmoji && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-success ring-2 ring-card">
-                  <MessageCircle className="w-3.5 h-3.5 text-white" />
-                </div>
-              )}
               {crmCompany?.logo_url && (
                 <img src={crmCompany.logo_url} alt={crmCompany.nome_fantasia || ''}
                   className="absolute -top-1 -left-1 w-8 h-8 rounded-md object-contain bg-background border border-border/30 ring-2 ring-background" />
@@ -151,10 +150,17 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                   <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
                 </button>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => onQuickAction?.('edit')}
-                className="h-9 px-3 rounded-lg border border-border bg-inbox-panel gap-1.5 text-[13px] font-medium shrink-0">
-                <Pencil className="w-3.5 h-3.5" />Editar
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setManuallyCollapsed(true)}
+                      aria-label="Recolher contato" className="w-8 h-8 rounded-lg shrink-0 hover:bg-muted">
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Recolher contato</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate"><Building className="w-3 h-3 shrink-0" />{companyName}</p>}
@@ -163,14 +169,9 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
             </p>}
 
-            <a href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1 w-fit hover:text-success transition-colors">
-              <MessageCircle className="w-4 h-4 text-success shrink-0" />{contact.phone}
-            </a>
-
-            {contact.createdAt && (
-              <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-0.5">
-                <Calendar className="w-3.5 h-3.5 shrink-0" />Cliente desde {format(contact.createdAt, "MMM 'de' yyyy", { locale: ptBR })}
+            {conversation?.updatedAt && (
+              <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />Último contato em {format(conversation.updatedAt, "d MMM yyyy", { locale: ptBR })}
               </p>
             )}
           </div>

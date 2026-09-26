@@ -1,5 +1,5 @@
 import {
-  Phone, PhoneCall, Headphones, MessageCircle, Mail, ArrowLeftRight,
+  Phone, PhoneCall, Headphones, Mail, ArrowLeftRight,
   Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
 import * as React from 'react';
@@ -86,7 +86,7 @@ export function ContactActionButtons({
   };
 
   return (
-    <div className="grid grid-cols-5 gap-2 justify-items-center mt-3">
+    <div className="grid grid-cols-4 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Tile icon={<Phone className="w-[18px] h-[18px] text-primary" />} label="Ligar" title="Opções de chamada" />
@@ -105,13 +105,6 @@ export function ContactActionButtons({
         </DropdownMenu>
 
         <Tile
-          icon={<MessageCircle className="w-[18px] h-[18px] text-success" />}
-          label="WhatsApp"
-          title="Abrir WhatsApp"
-          onClick={() => window.open(`https://wa.me/${contact.phone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
-        />
-
-        <Tile
           icon={<Mail className="w-[18px] h-[18px] text-primary" />}
           label="E-mail"
           title={contact.email ? 'Abrir email' : 'Sem email'}
@@ -120,15 +113,16 @@ export function ContactActionButtons({
         />
 
         <Tile
-          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-foreground" />}
+          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-success" />}
           label="Transferir"
           title="Transferir conversa"
           onClick={handleTransfer}
+          className="bg-success/10 border-success/30 hover:bg-success/20"
         />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-foreground" />} label="Mais" title="Mais ações" />
+            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-primary" />} label="Mais" title="Mais ações" className="border-primary/30" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">
