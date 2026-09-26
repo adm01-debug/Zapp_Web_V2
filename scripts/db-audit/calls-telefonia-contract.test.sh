@@ -13,6 +13,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260926300000_calls_telefonia_v2.sql"
+migration_fix_notes="$repo_root/supabase/migrations/20260926500000_fix_set_call_agent_notes_null_profile.sql"
 postgres_image="${CALLS_TELEFONIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-calls-telefonia-test-$$"
 
@@ -61,6 +62,7 @@ expect_eq() {
 U_A='20000000-0000-0000-0000-000000000001'; P_A='10000000-0000-0000-0000-000000000001'
 U_B='20000000-0000-0000-0000-000000000002'; P_B='10000000-0000-0000-0000-000000000002'
 U_C='20000000-0000-0000-0000-000000000003'; P_C='10000000-0000-0000-0000-000000000003'
+U_D='20000000-0000-0000-0000-000000000004'
 W1='50000000-0000-0000-0000-000000000001'
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
@@ -188,6 +190,7 @@ expect_eq 'pré-estado: calls na publicação Realtime' '0' \
 
 # ------------------------------------------------------------- aplica migration
 psql_file "$migration" >/dev/null
+psql_file "$migration_fix_notes" >/dev/null
 
 # --------------------------------------------------------- estrutura e backfill
 expect_eq '9 colunas aditivas presentes' '9' \
@@ -289,6 +292,11 @@ expect_eq 'admin também pode anotar' 'nota do admin' \
   "$(psql_sql "SELECT agent_notes FROM public.calls WHERE id='40000000-0000-0000-0000-000000000001'")"
 expect_failure 'terceiro não anota chamada alheia' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$U_B'; SELECT public.set_call_agent_notes('40000000-0000-0000-0000-000000000001','invasao');"
+# U_D é authenticated mas NÃO tem linha em public.profiles (v_profile ficaria NULL).
+# Regressão do bug de bypass por NULL em PL/pgSQL: 'not (v_owner = NULL or ...)' avalia
+# para NULL (não TRUE), então o IF era pulado sem levantar exceção e caía direto no UPDATE.
+expect_failure 'authenticated sem linha em profiles não anota chamada alheia' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$U_D'; SELECT public.set_call_agent_notes('40000000-0000-0000-0000-000000000001','sem-perfil');"
 expect_failure 'anon não executa search_my_calls' \
   "SET ROLE anon; SELECT count(*) FROM public.search_my_calls();"
 expect_failure 'anon não executa my_calls_kpi' \

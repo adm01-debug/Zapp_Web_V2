@@ -57,6 +57,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
 
       ua.transport.onDisconnect = () => {
         setSipStatus('disconnected');
+        clearReconnectTimer();
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);

@@ -130,6 +130,7 @@ export function DialPad({
                         size="icon"
                         className="rounded-full w-14 h-14 bg-success hover:bg-success/90"
                         onClick={onAcceptIncoming}
+                        aria-label="Atender"
                       >
                         <Phone className="w-6 h-6" />
                       </Button>
@@ -138,6 +139,7 @@ export function DialPad({
                         size="icon"
                         className="rounded-full w-14 h-14"
                         onClick={onHangUp}
+                        aria-label="Encerrar"
                       >
                         <PhoneOff className="w-6 h-6" />
                       </Button>
@@ -150,6 +152,7 @@ export function DialPad({
                         className="rounded-full w-12 h-12"
                         onClick={onToggleMute}
                         disabled={callStatus !== 'active'}
+                        aria-label={isMuted ? 'Ativar microfone' : 'Silenciar'}
                       >
                         {isMuted ? <MicOff className="w-5 h-5 text-destructive" /> : <Mic className="w-5 h-5" />}
                       </Button>
@@ -158,6 +161,7 @@ export function DialPad({
                         size="icon"
                         className="rounded-full w-14 h-14"
                         onClick={onHangUp}
+                        aria-label="Encerrar"
                       >
                         <PhoneOff className="w-6 h-6" />
                       </Button>
@@ -185,6 +189,7 @@ export function DialPad({
               size="icon"
               className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8"
               onClick={handleDelete}
+              aria-label="Apagar dígito"
             >
               <Delete className="w-4 h-4 text-muted-foreground" />
             </Button>
@@ -218,6 +223,7 @@ export function DialPad({
           className="rounded-full w-16 h-16 bg-success hover:bg-success/90"
           onClick={handleCall}
           disabled={!number.trim() || !isConnected}
+          aria-label="Ligar"
         >
           <Phone className="w-7 h-7 text-success-foreground" />
         </Button>

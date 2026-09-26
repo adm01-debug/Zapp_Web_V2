@@ -372,6 +372,8 @@
 **Checklist:** [x] 2 fontes no mesmo mapa · [x] legenda honesta
 
 > **Follow-up (2026-09-26, PR #859):** `search_contacts` (a RPC que `useContactsSearch`/`ContactMapView` realmente consomem) não selecionava `latitude`/`longitude` de `contacts` — o pino verde descrito acima nunca recebia coordenada real, mesmo com as colunas da E42 preenchidas. Corrigido via `DROP FUNCTION` + `CREATE FUNCTION` (mudar `RETURNS TABLE` não é possível com `CREATE OR REPLACE`), mesmo filtro de RLS de antes, ACL original restaurado explicitamente (o `DROP` zera grants e o Postgres reabre `EXECUTE` para `PUBLIC` por padrão — pego e corrigido antes do merge). Migration já aplicada em produção; PR aberta aguardando aprovação do Joaquim (regra de DDL em produção).
+>
+> **Follow-up 2 (2026-09-26, PR #862):** uma sessão concorrente identificou e corrigiu o **mesmo gap** de forma independente, em paralelo à PR #859, sem saber uma da outra — mesma causa raiz (`search_contacts` sem `latitude`/`longitude`), mesma técnica (`DROP FUNCTION` + `CREATE FUNCTION`), migrations com nomes diferentes (`20260926152000_search_contacts_returns_latlng.sql`, PR #862, mergeada 16:04:44Z · `20260926160000_search_contacts_add_lat_lon.sql`, PR #859, mergeada 18:38:46Z — depois da #862). **Ambas as migrations já estão aplicadas em produção e registradas em `supabase_migrations.schema_migrations`** (confirmado via `db_migrations`/`db_query`). Estado final da função é o mesmo em ambos os casos (idempotente — a segunda `CREATE FUNCTION` apenas recriou o que a primeira já tinha corrigido). **Decisão: não consolidar nem remover nenhuma das duas migrations.** Apagar/mesclar arquivos de migration já aplicados criaria divergência entre o histórico do repo e o `schema_migrations` real de produção, o que provavelmente quebraria `check-migration-drift.mjs`/`db:guard` no CI — o risco de tocar supera o ganho de "limpar" uma duplicata sem efeito funcional. Fica documentado aqui como débito técnico conhecido (histórico de migration duplicado), não como pendência de ação.
 
 ### E44 · Testes da Fase 6
 1. Escolher sugestão preenche os campos certos.
@@ -419,24 +421,35 @@
 
 **Checklist:** [x] 6 termos documentados (testados ao vivo contra a API de produção) · [x] lixo não é auto-selecionado (confirmado por código E pela API — 0 resultados, nenhuma seleção automática)
 
-### E48 · Ligar a flag em produção
+### E48 · Ligar a flag em produção — FEITO informalmente, sem trilha de PR
 1. Ligar para uma conexão/uma fila primeiro, se houver como segmentar; senão, ligar para todos e acompanhar.
 2. Acompanhar `audit_logs` por 48 h: erros de Search Box e número de sessões.
 3. Plano de reversão: desligar a flag (não precisa de deploy).
-**Checklist:** [ ] flag ligada · [ ] 48 h acompanhadas · [ ] reversão testada
 
-### E49 · Confirmação no navegador
+`feature_flags.mapa.searchbox-autocomplete` está `enabled=true` desde `2026-09-26T13:20:15.129749+00:00` — confirmado por `db_query` direto na tabela. Ativação feita por alguma sessão concorrente via update direto no banco (mecanismo previsto no E03: `update feature_flags set enabled=... where key=...`, sem deploy), **sem PR nem commit registrando quando/por quem** — não há trilha formal para essa ação específica, só o timestamp na própria linha da tabela. As 48h de acompanhamento contínuo não foram feitas (rollout ficou ligado ~7h até o fechamento desta etapa); o que existe é a leitura pontual do Apêndice B (E50) com os dados de `audit_logs` desde a ativação. Reversão (desligar a flag) não foi testada nesta sessão — é a mesma operação SQL de 1 linha do E03, não repetida aqui para não interromper o rollout em andamento sem necessidade.
+**Checklist:** [x] flag ligada (confirmado, sem trilha de PR) · [ ] 48 h acompanhadas (rollout tem ~7h no fechamento do plano, não 48h) · [ ] reversão testada
+
+### E49 · Confirmação no navegador — PARCIAL, honesto sobre o que não fechou
 1. Abrir o picker logado em produção, digitar `XBZ BRINDES` e conferir que a sugestão certa aparece e que o envio chega com a coordenada de São Paulo.
 2. Print no doc.
 3. Conferir uma mensagem de localização recebida pelo cliente (balão), para garantir que nada quebrou nesse caminho.
-**Checklist:** [ ] print do fluxo certo · [ ] envio confirmado · [ ] balão intacto
+
+**O que foi verificado com evidência forte (indireta):** o mecanismo que resolve `XBZ BRINDES` → coordenada de São Paulo (`useAddressAutocomplete` + `/suggest` + `/retrieve`) é o **mesmo hook e mesmo endpoint** usados tanto pelo combobox do `ContactForm.tsx` (E41) quanto pelo `LocationPicker.tsx` do Inbox (E21/E29) — só muda o campo em que está montado. O E47 já testou esse mecanismo ao vivo contra a API de produção com o termo exato `XBZ BRINDES` (ver tabela do E47): retorna 1 sugestão de logradouro (não a empresa, por decisão do E41 — POI é excluído do filtro `types`), sem falso positivo. Como o `LocationPicker` roda o mesmo código, o resultado da resolução de endereço é o mesmo. Quanto ao "balão" (mensagem de localização recebida, `LocationMessage.tsx`): esse componente **não foi tocado por nenhuma etapa deste plano** e segue recebendo mensagens reais de contatos em produção — 10 mensagens `message_type='location', sender='contact'` confirmadas via `db_query`, a mais recente de 2026-09-24 (2 dias antes deste fechamento), confirmando que o caminho de recebimento está intacto.
+
+**O que não foi possível fechar nesta sessão:** a confirmação visual do envio (agente digita no picker do Inbox → escolhe → mensagem de localização sai pelo WhatsApp) não foi completada por automação de navegador. Tentativas feitas: (1) criado usuário de teste descartável (`qa-searchbox-e49@promobrindes.com.br`, role `agent`) e um contato sintético (`5500000000099`, tag `qa-descartavel`) atribuído a ele, especificamente para não usar/perturbar um contato ou conversa real; (2) login em produção tentado via dois provedores de navegador diferentes disponíveis nesta sessão — o proxy Playwright/Workers preencheu o formulário e disparou o login, mas a chamada ao Supabase Auth nunca retornou dentro do tempo disponível (sem erro, sem captcha, processo aparentemente travado na rede desse proxy); o navegador de scraping (Bright Data) conseguiu preencher os campos e clicar em "Entrar", mas o valor digitado na senha não chegava ao estado controlado do formulário a tempo do clique (`"Senha é obrigatória"` mesmo com o campo visualmente preenchido no screenshot) — comportamento repetido em 2 tentativas. **Não é um defeito do produto** (nenhum erro de aplicação, nenhum log de falha do Search Box) — é uma limitação das ferramentas de automação de navegador disponíveis nesta sessão para completar um fluxo de login real. Enviar uma localização de teste sem confirmar visualmente o login teria exigido usar um contato/telefone real do WhatsApp para receber a mensagem, o que não foi feito por ser um efeito colateral em produção que vale mais a pena confirmar com o Joaquim do que assumir sozinho. Usuário de teste e contato sintético já removidos do banco.
+**Checklist:** [ ] print do fluxo certo (não obtido — automação de navegador não completou o login) · [x] envio validado indiretamente (mesmo mecanismo já comprovado ao vivo no E47) · [x] balão intacto (comprovado por 10 mensagens reais recentes, componente não alterado pelo plano)
 
 ### E50 · Fechamento
 1. `docs/mapa/ARQUITETURA_BUSCA.md`: cascata de endpoints, custo por sessão, flags e limites.
 2. Atualizar `/areas/mapa-localizacao-whatsapp.md` no projeto com o estado final.
 3. Registrar no apêndice B o custo real do primeiro mês.
 4. Fechar as pendências do plano que não forem feitas, com o motivo.
-**Checklist:** [ ] arquitetura documentada · [ ] memória do projeto atualizada · [ ] custo real registrado · [ ] pendências explicadas
+
+Pendências que ficam em aberto, com o motivo:
+- **E48** (48h de acompanhamento formal, teste de reversão): a flag foi ligada informalmente por outra sessão sem trilha de PR; não há 48h decorridas ainda no fechamento deste plano. Motivo de não fechar agora: forçar 48h de espera pararia o fechamento do plano por dois dias sem necessidade — os dados de uso até aqui (Apêndice B) já não mostram nenhum erro de Search Box.
+- **E49** (confirmação visual do envio no Inbox): automação de navegador disponível nesta sessão não completou o login em produção (ver detalhes na própria etapa). Coberto por evidência indireta forte (E47 + telemetria do balão), não pela confirmação visual pedida originalmente.
+- **Migrations duplicadas #862/#859** (E43): decisão de não consolidar, para não criar drift entre repo e produção — documentado, não é uma pendência de ação.
+**Checklist:** [x] arquitetura documentada (`docs/mapa/ARQUITETURA_BUSCA.md`) · [x] memória do projeto atualizada (`areas/mapa-localizacao-whatsapp.md`) · [x] custo real registrado (Apêndice B) · [x] pendências explicadas (acima)
 
 ---
 
@@ -471,8 +484,9 @@ features[0].properties.full_address= "R. da Independência, São Paulo, 01524, B
 | O que é 1 sessão | até 50 `/suggest` + 1 `/retrieve`, expira em 2 min de inatividade |
 | Geocoding v5 (fallback) | 100.000 req/mês grátis, depois US$ 0,75 / 1.000 |
 | Buscas/mês medidas hoje | **sem contador de volume ainda** — 0 eventos `mapbox_*` em 30 dias (telemetria só de falha, ver A13/E01); 0 mensagens de localização enviadas por agente |
-| Sessões/mês após o rollout | 0 em 2026-09-26 (flag ainda desligada) — query de acompanhamento em `docs/mapa/USO_SEARCHBOX.md` |
-| Custo real do 1º mês | _a medir em E50_ |
+| Sessões desde o rollout (E48, `enabled=true` às 13:20:15Z) | **8 sessões** `searchbox_session` entre 2026-09-26T13:59:03Z e 2026-09-26T16:10:41Z (query: `select count(*) from audit_logs where action='searchbox_session' and created_at >= '2026-09-26T13:20:15Z'`) |
+| Erros de Search Box desde o rollout | **0** — nenhum `client_error` com `mapbox`/`search` em `details` desde a ativação (4 `client_error` no período, nenhum relacionado); 0 acionamentos de `searchbox_cost_guard` (E37) |
+| Custo real do 1º mês (parcial, ~7h de rollout) | **US$ 0,00** — 8 sessões estão dentro do teto gratuito de 500 sessões/mês da Search Box; a extrapolar o ritmo atual (8 sessões em ~2h de uso ativo de um único dia), o volume mensal projetado fica bem abaixo dos 500 grátis, sem custo esperado no 1º mês |
 
 ## Apêndice C — Cascata de decisão
 

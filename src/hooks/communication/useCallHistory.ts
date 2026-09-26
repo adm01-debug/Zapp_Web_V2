@@ -29,13 +29,21 @@ export interface CallHistoryFilters {
 
 const PAGE_SIZE = 20;
 
+// Sintaxe .or() do PostgREST usa vírgula (separador) e parênteses (agrupamento)
+// sem nenhum escape automático — um termo de busca com esses caracteres quebra
+// a gramática do filtro. Valor entre aspas duplas é literal; \ e " dentro dele
+// precisam ser escapados com \.
+function escapeOrFilterValue(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
 async function findContactIdsByNameOrPhone(term: string): Promise<string[] | null> {
   const trimmed = term.trim();
   if (!trimmed) return null;
   const digits = trimmed.replace(/\D/g, '');
   const orFilter = digits.length >= 4
-    ? `name.ilike.%${trimmed}%,phone.ilike.%${digits}%`
-    : `name.ilike.%${trimmed}%`;
+    ? `name.ilike.${escapeOrFilterValue(`%${trimmed}%`)},phone.ilike.%${digits}%`
+    : `name.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`;
   const { data, error } = await supabase.from('contacts').select('id').or(orFilter).limit(200);
   if (error) return [];
   return (data || []).map(c => c.id);

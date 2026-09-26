@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
@@ -163,7 +163,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               </p>
             )}
 
-            {conversation?.updatedAt && (
+            {conversation?.updatedAt && isValid(conversation.updatedAt) && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

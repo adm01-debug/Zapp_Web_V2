@@ -338,13 +338,18 @@ const ConversationRow = memo(({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      // overflow-hidden: a altura da linha e uma estimativa fixa
-      // (ITEM_HEIGHT_BY_DENSITY, sem measureElement no virtualizer). Cargo
-      // preenchido + varias tags/badges quebrando em 2+ linhas (flex-wrap)
-      // pode superar essa estimativa (auditoria 2026-09-26 mediu ate +68px
-      // no pior caso) — sem isso o excesso vazava visualmente por cima da
-      // linha seguinte em vez de só cortar dentro da própria linha.
-      className="px-3 overflow-hidden"
+      // overflow-clip (não overflow-hidden): a altura da linha e uma
+      // estimativa fixa (ITEM_HEIGHT_BY_DENSITY, sem measureElement no
+      // virtualizer). Cargo preenchido + varias tags/badges quebrando em 2+
+      // linhas (flex-wrap) pode superar essa estimativa (auditoria
+      // 2026-09-26 mediu ate +68px no pior caso) — sem isso o excesso
+      // vazava visualmente por cima da linha seguinte em vez de só cortar
+      // dentro da própria linha. `overflow-hidden` cria um scroll container:
+      // Tab até um botão da barra de ações (que só aparece no hover/foco)
+      // rolava a linha por dentro e deslocava o conteúdo visível (achado na
+      // 4a rodada da auditoria) — `overflow-clip` corta sem virar scroll
+      // container.
+      className="px-3 overflow-clip"
       data-testid="conversation-item"
     >
       <div
