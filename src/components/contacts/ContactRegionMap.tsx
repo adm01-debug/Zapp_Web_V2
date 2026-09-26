@@ -17,8 +17,18 @@ export interface RegionBubble {
   count: number;
 }
 
+/** Contato com endereço confirmado (E42: `latitude`/`longitude` preenchidos pelo `/retrieve`). */
+export interface PreciseContactPoint {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 interface ContactRegionMapProps {
   regions: RegionBubble[];
+  /** E43: contatos com coordenada real — ponto próprio, fora da bolha aproximada por DDD. */
+  preciseContacts?: PreciseContactPoint[];
   selectedRegion: string | null;
   onSelectRegion: (region: string) => void;
 }
@@ -29,7 +39,7 @@ function bubbleSize(count: number, max: number): number {
   return Math.round(22 + ratio * 26);
 }
 
-export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: ContactRegionMapProps) {
+export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion, onSelectRegion }: ContactRegionMapProps) {
   // Callback ref com estado (mesmo padrão do picker, #688): o container pode chegar num render
   // posterior ao do effect, e com useRef o mapa nunca seria criado.
   const [mapNode, setMapNode] = useState<HTMLDivElement | null>(null);
@@ -49,8 +59,11 @@ export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: Co
   const plotted = regions.filter((r) => regionCoordinates(r.region) !== null);
   const hidden = regions.length - plotted.length;
   const maxCount = plotted.reduce((max, r) => Math.max(max, r.count), 0);
-  // Assinatura das bolhas: só redesenha quando região/contagem realmente mudam.
-  const signature = plotted.map((r) => `${r.region}:${r.count}`).join('|');
+  // Assinatura das bolhas + pontos precisos: só redesenha quando algo realmente muda.
+  const signature =
+    plotted.map((r) => `${r.region}:${r.count}`).join('|') +
+    '||' +
+    preciseContacts.map((c) => `${c.id}:${c.lat}:${c.lng}`).join('|');
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +136,7 @@ export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: Co
     if (!map.current || !mapboxgl || !isMapLoaded) return;
     markers.current.forEach((m) => m.remove());
     markers.current = [];
-    if (plotted.length === 0) return;
+    if (plotted.length === 0 && preciseContacts.length === 0) return;
 
     const bounds = new mapboxgl.LngLatBounds();
     plotted.forEach(({ region, count }) => {
@@ -142,6 +155,19 @@ export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: Co
         'transition-transform hover:scale-110';
       el.textContent = String(count);
       el.addEventListener('click', () => onSelectRef.current(region));
+      markers.current.push(new mapboxgl.Marker(el).setLngLat(coords).addTo(map.current!));
+      bounds.extend(coords);
+    });
+    // Pontos precisos (E43): pino menor, cor diferente da bolha por DDD — nunca a mesma
+    // aparência, senão a legenda vira maquiagem em vez de distinção real.
+    preciseContacts.forEach(({ id, name, lat, lng }) => {
+      const coords: [number, number] = [lng, lat];
+      const el = document.createElement('div');
+      el.title = `${name} · endereço confirmado`;
+      el.setAttribute('aria-label', el.title);
+      el.setAttribute('data-precise-contact-id', id);
+      el.className =
+        'w-3.5 h-3.5 rounded-full bg-success ring-2 ring-background shadow-lg';
       markers.current.push(new mapboxgl.Marker(el).setLngLat(coords).addTo(map.current!));
       bounds.extend(coords);
     });
@@ -182,6 +208,18 @@ export function ContactRegionMap({ regions, selectedRegion, onSelectRegion }: Co
         Posição aproximada pela região do DDD, não pelo endereço do cliente.
         {hidden > 0 && ` ${hidden} região${hidden !== 1 ? 'ões' : ''} sem ponto conhecido ficam só nos cartões abaixo.`}
       </p>
+      {preciseContacts.length > 0 && (
+        <div className="flex items-center gap-3 text-3xs text-muted-foreground/70">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-success shrink-0" aria-hidden="true" />
+            Endereço confirmado ({preciseContacts.length})
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
+            Aproximado pelo DDD
+          </span>
+        </div>
+      )}
     </div>
   );
 }
