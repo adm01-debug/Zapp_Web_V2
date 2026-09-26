@@ -26,15 +26,15 @@ import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
 // conteudo minimo fica em ~76-84px; valores menores cortavam a linha ou
 // faziam o virtualizador sobrepor linhas adjacentes.
 const ITEM_HEIGHT_BY_DENSITY: Record<DensityMode, number> = {
-  comfortable: 92,
-  compact: 84,
-  dense: 80,
+  comfortable: 108,
+  compact: 100,
+  dense: 96,
 };
 
 const ROW_CLASSES_BY_DENSITY: Record<DensityMode, string> = {
-  comfortable: 'min-h-[76px] my-0.5 px-3 py-2.5',
-  compact: 'min-h-[68px] my-0.5 px-3 py-2',
-  dense: 'min-h-[64px] my-0.5 px-2.5 py-1.5',
+  comfortable: 'min-h-[92px] my-0.5 px-3 py-2.5',
+  compact: 'min-h-[84px] my-0.5 px-3 py-2',
+  dense: 'min-h-[80px] my-0.5 px-2.5 py-1.5',
 };
 
 const SNOOZE_OPTIONS: { value: string; label: string }[] = [
@@ -431,8 +431,9 @@ const ConversationRow = memo(({
                 <span className="font-semibold text-foreground truncate text-[15px]">
                   {(() => {
                     const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
+                    const displayName = conversation.contact.nickname?.trim() || firstName;
                     const company = conversation.contact.company;
-                    return company ? `${firstName} · ${company}` : firstName;
+                    return company ? `${displayName} · ${company}` : displayName;
                   })()}
                 </span>
                 {conversation.contact.contact_type === 'sicoob_gifts' && (
@@ -458,6 +459,11 @@ const ConversationRow = memo(({
                 </button>
               </div>
             </div>
+            {conversation.contact.job_title && (
+              <p className="text-2xs text-muted-foreground truncate -mt-0.5 mb-0.5">
+                {conversation.contact.job_title}
+              </p>
+            )}
             <div className="flex items-center justify-between gap-2">
               <p className="text-[13px] text-muted-foreground truncate pr-2">
                 {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company
