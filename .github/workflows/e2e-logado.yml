@@ -52,16 +52,18 @@ jobs:
       - name: 🎭 Install Playwright (Chromium)
         run: bunx playwright install --with-deps chromium
 
-      # Uma unica invocacao do Playwright: "chromium-e2e-core" (playwright.config.ts)
-      # ja declara dependsOn: ['setup'], entao o login real (auth.setup.ts) roda
-      # sozinho antes, no MESMO processo/webServer — 2 invocacoes separadas
-      # (uma so p/ setup, outra p/ os specs) forcavam 2 boots do vite dev server
-      # do zero, sem o "setup" aquecer o bundle antes dos specs autenticados
-      # (root cause dos timeouts de 30s esperando conversation-item na run
-      # 36249048738). talkx.spec.ts fica de fora: o usuario de teste e agente
-      # e nao enxerga "Campanhas" (ver e2e/README.md).
+      # Uma unica invocacao do Playwright, com os 2 projects listados
+      # EXPLICITAMENTE ("setup" e "chromium-e2e-core") em vez de confiar na
+      # resolucao automatica de dependsOn: na run 36250631355 (commit 9aea3c2),
+      # rodar so "--project=chromium-e2e-core" (sem path de arquivo no CLI)
+      # nao disparou "setup" (log mostrou so "Running 4 tests", nunca
+      # "Running 1 test" do setup) e e2e/.auth/user.json nunca foi gerado.
+      # Ainda sem path de arquivo no CLI (evita o bug original da PR #839,
+      # onde o filtro de arquivo quebrava a dependencia). talkx.spec.ts fica
+      # de fora: o usuario de teste e agente e nao enxerga "Campanhas" (ver
+      # e2e/README.md).
       - name: 🔐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=chromium-e2e-core
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
