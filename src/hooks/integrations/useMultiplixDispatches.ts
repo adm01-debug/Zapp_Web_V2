@@ -1,6 +1,83 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+
+export interface MultiplixDispatch {
+  id: string;
+  name: string;
+  message_template: string;
+  status: 'draft' | 'scheduled' | 'sending' | 'paused' | 'completed' | 'failed' | 'cancelled';
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  delivered_count: number;
+  outcome_unknown_count: number;
+  started_at: string | null;
+  paused_at: string | null;
+  pause_reason: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface MultiplixRecipientRow {
+  id: string;
+  company_name_snapshot: string | null;
+  destino_e164: string | null;
+  status: string;
+  sent_at: string | null;
+  error_message: string | null;
+  personalized_message: string | null;
+}
+
+export function useMultiplixDispatchesList() {
+  return useQuery({
+    queryKey: ['multiplix-dispatches-list'],
+    queryFn: async () => {
+      const { data, error } = await fromTable('multiplix_dispatches')
+        .select('id, name, message_template, status, total_recipients, sent_count, failed_count, delivered_count, outcome_unknown_count, started_at, paused_at, pause_reason, completed_at, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as MultiplixDispatch[];
+    },
+    refetchInterval: 10_000,
+  });
+}
+
+export function useMultiplixDispatch(dispatchId: string | null) {
+  return useQuery({
+    queryKey: ['multiplix-dispatch', dispatchId],
+    queryFn: async () => {
+      const { data, error } = await fromTable('multiplix_dispatches')
+        .select('id, name, message_template, status, total_recipients, sent_count, failed_count, delivered_count, outcome_unknown_count, started_at, paused_at, pause_reason, completed_at, created_at')
+        .eq('id', dispatchId!)
+        .single();
+      if (error) throw new Error(error.message);
+      return data as MultiplixDispatch;
+    },
+    enabled: !!dispatchId,
+    refetchInterval: 5_000,
+  });
+}
+
+export function useMultiplixRecipients(dispatchId: string | null, statusFilter = 'all') {
+  return useQuery({
+    queryKey: ['multiplix-recipients', dispatchId, statusFilter],
+    queryFn: async () => {
+      let q = fromTable('multiplix_recipients')
+        .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message, personalized_message')
+        .eq('dispatch_id', dispatchId!)
+        .order('updated_at', { ascending: false })
+        .limit(500);
+      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      return (data ?? []) as MultiplixRecipientRow[];
+    },
+    enabled: !!dispatchId,
+    refetchInterval: 5_000,
+  });
+}
 
 export interface MultiplixDispatchRecipientInput {
   company_id: string;

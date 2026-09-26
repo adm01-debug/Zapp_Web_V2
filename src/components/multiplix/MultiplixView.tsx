@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Send, Search, Loader2 } from 'lucide-react';
-import { ModuleHeader } from '@/components/talkx/talkxShared';
+import { Send, Search, Loader2, ListChecks } from 'lucide-react';
+import { ModuleHeader, StatusPill, fmtInt, fmtDateTime } from '@/components/talkx/talkxShared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,19 @@ import {
   useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
   type MultiplixSearchFilters,
 } from '@/hooks/integrations/useMultiplixAudience';
+import { useMultiplixDispatchesList } from '@/hooks/integrations/useMultiplixDispatches';
 import { MultiplixComposerDialog } from './MultiplixComposerDialog';
+import { MultiplixMonitor } from './MultiplixMonitor';
+
+const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger' | 'warning' | 'info' | 'violet' | 'muted' }> = {
+  draft: { label: 'Rascunho', tone: 'muted' },
+  scheduled: { label: 'Agendado', tone: 'violet' },
+  sending: { label: 'Enviando', tone: 'info' },
+  paused: { label: 'Pausado', tone: 'warning' },
+  completed: { label: 'Concluído', tone: 'success' },
+  failed: { label: 'Falhou', tone: 'danger' },
+  cancelled: { label: 'Cancelado', tone: 'danger' },
+};
 
 const ROLE_LABELS: Record<'cliente' | 'fornecedor' | 'transportadora', string> = {
   cliente: 'Cliente', fornecedor: 'Fornecedor', transportadora: 'Transportadora',
@@ -33,6 +45,8 @@ export default function MultiplixView() {
   const [term, setTerm] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [composerOpen, setComposerOpen] = useState(false);
+  const [monitorId, setMonitorId] = useState<string | null>(null);
+  const dispatches = useMultiplixDispatchesList();
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
     roles: role ? [role] : undefined,
@@ -61,6 +75,14 @@ export default function MultiplixView() {
     setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.company_id)));
   };
 
+  if (monitorId) {
+    return (
+      <div className="p-6">
+        <MultiplixMonitor dispatchId={monitorId} onBack={() => setMonitorId(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <ModuleHeader
@@ -69,6 +91,28 @@ export default function MultiplixView() {
         title="Multiplix"
         subtitle="Envio em massa para fornecedores, transportadoras e clientes"
       />
+
+      {(dispatches.data?.length ?? 0) > 0 && (
+        <div className="rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
+          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
+          <div className="divide-y divide-border/40">
+            {dispatches.data!.slice(0, 8).map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setMonitorId(d.id)}
+                className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-muted/20 rounded-lg px-2 -mx-2"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground truncate">{d.name}</p>
+                  <p className="text-2xs text-muted-foreground">{fmtDateTime(d.created_at)} · {fmtInt(d.sent_count)}/{fmtInt(d.total_recipients)} enviadas</p>
+                </div>
+                <StatusPill status={d.status} map={DISPATCH_STATUS} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
         <div className="flex flex-col gap-1">
@@ -201,7 +245,11 @@ export default function MultiplixView() {
         open={composerOpen}
         onOpenChange={setComposerOpen}
         selectedCompanyIds={Array.from(selected)}
-        onCreated={() => setSelected(new Set())}
+        onCreated={(dispatchId) => {
+          setSelected(new Set());
+          dispatches.refetch();
+          setMonitorId(dispatchId);
+        }}
       />
     </div>
   );
