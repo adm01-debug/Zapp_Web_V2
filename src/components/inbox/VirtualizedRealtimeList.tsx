@@ -19,22 +19,26 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
 
-// Alturas calibradas para o conteudo real da linha (nome + previa + cluster
-// de badges com SLA/tags, que pode quebrar em 2 linhas por causa do
-// flex-wrap) — nao so pro avatar de 48px. Com o cluster de badges quase
-// sempre visivel (SLA aparece pra toda conversa sem 1a resposta), o
-// conteudo minimo fica em ~76-84px; valores menores cortavam a linha ou
-// faziam o virtualizador sobrepor linhas adjacentes.
+// Alturas calibradas para o conteudo real da linha (nome + linha de cargo
+// opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
+// linhas por causa do flex-wrap) — nao so pro avatar de 48px. Pior caso
+// (cargo preenchido + badges em 2 linhas, ambos opcionais e independentes)
+// soma ~90-100px de conteudo real; o buffer abaixo da area util (slot menos
+// margin/padding) fica deliberadamente acima disso. Estimativa revisada em
+// auditoria de 5 agentes (2026-09-26) que apontou que o ajuste anterior
+// (so +16px pra caber a linha de cargo) nao cobria os dois opcionais
+// coincidindo. Valores menores voltam a cortar linha / sobrepor no
+// virtualizador (estimateSize fixo, sem measureElement).
 const ITEM_HEIGHT_BY_DENSITY: Record<DensityMode, number> = {
-  comfortable: 92,
-  compact: 84,
-  dense: 80,
+  comfortable: 124,
+  compact: 116,
+  dense: 112,
 };
 
 const ROW_CLASSES_BY_DENSITY: Record<DensityMode, string> = {
-  comfortable: 'min-h-[76px] my-0.5 px-3 py-2.5',
-  compact: 'min-h-[68px] my-0.5 px-3 py-2',
-  dense: 'min-h-[64px] my-0.5 px-2.5 py-1.5',
+  comfortable: 'min-h-[108px] my-0.5 px-3 py-2.5',
+  compact: 'min-h-[100px] my-0.5 px-3 py-2',
+  dense: 'min-h-[96px] my-0.5 px-2.5 py-1.5',
 };
 
 const SNOOZE_OPTIONS: { value: string; label: string }[] = [
@@ -431,8 +435,9 @@ const ConversationRow = memo(({
                 <span className="font-semibold text-foreground truncate text-[15px]">
                   {(() => {
                     const firstName = (conversation.contact.name || 'Sem nome').split(' ')[0];
+                    const displayName = conversation.contact.nickname?.trim() || firstName;
                     const company = conversation.contact.company;
-                    return company ? `${firstName} · ${company}` : firstName;
+                    return company ? `${displayName} · ${company}` : displayName;
                   })()}
                 </span>
                 {conversation.contact.contact_type === 'sicoob_gifts' && (
@@ -458,6 +463,11 @@ const ConversationRow = memo(({
                 </button>
               </div>
             </div>
+            {conversation.contact.job_title && (
+              <p className="text-2xs text-muted-foreground truncate -mt-0.5 mb-0.5">
+                {conversation.contact.job_title}
+              </p>
+            )}
             <div className="flex items-center justify-between gap-2">
               <p className="text-[13px] text-muted-foreground truncate pr-2">
                 {conversation.contact.contact_type === 'sicoob_gifts' && conversation.contact.company

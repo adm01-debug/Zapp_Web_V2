@@ -2,22 +2,38 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-const mockFrom = vi.fn();
-const mockRemoveChannel = vi.fn();
-const realtimeHandlers: Record<string, (payload: any) => void> = {};
-
-const mockChannelInstance = {
-  on: vi.fn((_: string, filter: { event: string }, handler: (payload: any) => void) => {
-    realtimeHandlers[filter.event] = handler;
-    return mockChannelInstance;
-  }),
-  subscribe: vi.fn((callback?: (status: string) => void) => {
-    callback?.('SUBSCRIBED');
-    return mockChannelInstance;
-  }),
+type MockRealtimePayload = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: Record<string, unknown> | null;
+  old: Record<string, unknown> | null;
 };
 
-const mockChannel = vi.fn(() => mockChannelInstance);
+const mockFrom = vi.fn();
+const mockRemoveChannel = vi.fn();
+// Um canal real por topico fisico (mensagens x contatos usam topicos
+// distintos) — indexar so por `filter.event` (sempre '*') misturava os dois
+// handlers num unico slot e o mais recente sobrescrevia o anterior.
+const realtimeHandlersByTopic: Record<string, (payload: MockRealtimePayload) => void> = {};
+
+const mockChannel = vi.fn((topic: string) => {
+  const instance = {
+    on: vi.fn((_: string, __: { event: string }, handler: (payload: MockRealtimePayload) => void) => {
+      realtimeHandlersByTopic[topic] = handler;
+      return instance;
+    }),
+    subscribe: vi.fn((callback?: (status: string) => void) => {
+      callback?.('SUBSCRIBED');
+      return instance;
+    }),
+  };
+  return instance;
+});
+
+function emitRealtimeEvent(tableSuffix: string, payload: MockRealtimePayload) {
+  const topic = Object.keys(realtimeHandlersByTopic).find((t) => t.includes(`:${tableSuffix}:`));
+  if (!topic) throw new Error(`Nenhum canal realtime assinado para a tabela "${tableSuffix}"`);
+  realtimeHandlersByTopic[topic](payload);
+}
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -154,7 +170,13 @@ describe('useRealtimeMessages', () => {
     seededContacts = [];
     recentMessages = [];
     contactsById = {};
-    Object.keys(realtimeHandlers).forEach((key) => delete realtimeHandlers[key]);
+    // NAO limpar realtimeHandlersByTopic aqui: o canal mockado (como o real
+    // acquireSharedChannel) e cacheado no modulo entre testes — supabase.channel()
+    // so e chamado de novo quando NENHUM listener restou por >250ms (timer real,
+    // nao adiantado nos testes). O dispatcher capturado em .on() sempre lê os
+    // listeners atuais em `entry.listeners` no momento da chamada, entao segue
+    // valido entre testes; apagar o dicionario so perderia a referencia sem
+    // nunca ser re-populado.
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'contacts') return makeContactsQuery();
@@ -268,5 +290,44 @@ describe('useRealtimeMessages', () => {
     expect(result.current.conversations).toEqual([]);
     expect(typeof result.current.sendMessage).toBe('function');
     expect(typeof result.current.refetch).toBe('function');
+  });
+
+  it('patches the contact in-memory when a realtime UPDATE arrives on contacts (ex: apelido/cargo editados)', async () => {
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: null, job_title: null });
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.conversations).toHaveLength(1);
+    expect(result.current.conversations[0].contact.nickname).toBeNull();
+
+    const updatedContact = { ...contact, nickname: 'Zé', job_title: 'Gerente de Compras' };
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: updatedContact, old: contact });
+    });
+
+    await waitFor(() => {
+      expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+    });
+    expect(result.current.conversations[0].contact.job_title).toBe('Gerente de Compras');
+  });
+
+  it('ignora UPDATE de contato que nao esta na lista carregada (sem crash, sem entrada fantasma)', async () => {
+    seededContacts = [makeContact({ id: 'contact-1' })];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const before = result.current.conversations;
+
+    act(() => {
+      emitRealtimeEvent('contacts', {
+        eventType: 'UPDATE',
+        new: makeContact({ id: 'contact-nao-listado', nickname: 'Fantasma' }),
+        old: makeContact({ id: 'contact-nao-listado' }),
+      });
+    });
+
+    expect(result.current.conversations).toBe(before);
+    expect(result.current.conversations).toHaveLength(1);
   });
 });
