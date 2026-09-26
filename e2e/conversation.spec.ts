@@ -18,19 +18,17 @@ import {
 // (useNavigationHistory('inbox') e estado interno da SPA, nao rota de URL).
 // Reproduzido ao vivo com magiclink real: "/inbox" devolve 404.
 //
-// O reload() depois do PATCH e obrigatorio: ensureFixtureConversationOpen
-// reabre a conversa direto via REST (bypassa qualquer estado otimista da
-// UI), entao a unica forma da pagina saber que o status mudou e via
-// realtime (canal 'global-contacts-realtime'). Confirmado na run 36257595651
-// (pos PR #869, apos o combobox ser corrigido): o teste 'resolving
-// conversation' passou a COMPLETAR o close_conversation_atomic de verdade
-// pela primeira vez, deixando o contato 'resolved' no banco antes do fetch
-// inicial do teste seguinte carregar a pagina — se o canal realtime ainda
-// nao tiver se inscrito quando o PATCH de reabertura commita, o evento
-// nunca chega e a conversa nunca aparece sob "Todas", nao importa quanto se
-// espere (15000ms de timeout no assert nao resolveu). O reload forca um
-// fetch inicial novo que le o status certo direto do banco, sem depender de
-// realtime.
+// O reload() depois do PATCH fica por robustez, nao por causa comprovada:
+// ensureFixtureConversationOpen reabre a conversa direto via REST, e sem
+// reload a pagina so saberia do novo status via realtime (canal
+// 'global-contacts-realtime'), cuja inscricao pode ainda nao estar pronta
+// quando o PATCH commita. A run 36257595651 (workflow_dispatch, pos PR
+// #869) foi citada aqui antes como prova desse mecanismo — mas essa run
+// teve conclusion=failure, e o teste que ela quebrou tinha causa raiz
+// diferente e ja identificada (ver comentario abaixo: truncamento do nome
+// exibido, PR #816). O reload() nunca foi isolado como a correcao real da
+// falha; mantido por forcar um fetch inicial fresco e nao ter custo
+// perceptivel no teste.
 //
 // O assert do chip "Todas" compara com o texto RENDERIZADO no item, e a lista
 // exibe so `contact.nickname?.trim() || name.split(' ')[0]` (a primeira
@@ -65,7 +63,7 @@ test.describe('Conversation state transitions', () => {
     // Resultado, Classificação) — getByRole('combobox') sozinho é ambíguo
     // (strict mode violation, confirmado nas runs 36255009332 e 36256161950
     // do e2e-logado.yml). A opção "Resolvido" pertence à lista CLOSE_REASONS
-    // do combobox "Motivo do encerramento" (placeholder "Selecione o
+    // do combobox "Motivo do encerramento", placeholder "Selecione o
     // motivo"), não à de Resultado — é o único campo obrigatório (label com
     // "*") que também habilita o botão "Encerrar".
     await page.getByRole('combobox').filter({ hasText: /selecione o motivo/i }).click();
