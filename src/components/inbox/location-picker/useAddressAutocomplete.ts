@@ -13,6 +13,10 @@ export interface UseAddressAutocompleteOptions {
   token: string | null;
   proximity?: GeoProximity;
   enabled: boolean;
+  /** Filtro de tipo do `/suggest` (ex: `'address,street,place'` no cadastro de contato, sem POI). */
+  types?: string;
+  /** Origem gravada em `searchbox_session` (E35) — `'picker'` por padrão para não mudar a telemetria do picker existente. */
+  sessionSource?: string;
 }
 
 export interface UseAddressAutocompleteResult {
@@ -106,12 +110,14 @@ function reducer(state: State, action: Action): State {
 }
 
 /**
- * Autocomplete estilo playground da Mapbox (`/suggest` enquanto digita). Base do hook — Fase 2,
- * E13: debounce, piso de caracteres, cancelamento, seleção/retrieve e teclado chegam nas próximas
- * etapas deste mesmo arquivo. Não sabe de UI nem de feature flag: só trabalha quando `enabled`.
+ * Autocomplete estilo playground da Mapbox (`/suggest` enquanto digita): debounce, piso de
+ * caracteres, cancelamento, seleção/retrieve e teclado. Não sabe de UI nem de feature flag: só
+ * trabalha quando `enabled`. Compartilhado entre o picker de localização do inbox (Fase 2 do plano
+ * de busca) e o autocomplete de endereço do cadastro de contato (Fase 6) — `types`/`sessionSource`
+ * existem para o segundo consumidor não herdar filtro nem telemetria do primeiro.
  */
 export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): UseAddressAutocompleteResult {
-  const { token, proximity, enabled } = options;
+  const { token, proximity, enabled, types, sessionSource = 'picker' } = options;
   const [state, dispatch] = useReducer(reducer, initialState);
   // Consulta corrente do /suggest: aborta a anterior antes de abrir uma nova, pra resposta
   // lenta da 1ª nunca sobrescrever a 2ª.
@@ -131,9 +137,9 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     const controller = new AbortController();
     abortRef.current = controller;
     dispatch({ type: 'SUGGEST_START' });
-    const session = getSearchSession();
+    const session = getSearchSession(sessionSource);
     noteSuggestCall();
-    suggestPlaces(term, token, { session, proximity, signal: controller.signal }).then((result) => {
+    suggestPlaces(term, token, { session, proximity, signal: controller.signal, types }).then((result) => {
       // Resposta de uma consulta abortada nunca vira estado — nem sucesso, nem erro.
       if (controller.signal.aborted) return;
       if (result.ok) {
@@ -143,7 +149,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
         dispatch({ type: 'SUGGEST_ERROR', kind: result.kind, rateLimitedUntil });
       }
     });
-  }, [token, proximity, state.rateLimitedUntil]);
+  }, [token, proximity, types, sessionSource, state.rateLimitedUntil]);
 
   useEffect(() => {
     if (!enabled || !token) return;
@@ -168,7 +174,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     if (!suggestion || !token) return null;
     const seq = ++selectionSeqRef.current;
     dispatch({ type: 'RETRIEVE_START', id: suggestion.id });
-    const session = getSearchSession();
+    const session = getSearchSession(sessionSource);
     noteRetrieveCall();
     const place = await retrievePlace(suggestion.id, token, { session });
     // Uma seleção mais nova já começou enquanto esta estava em voo (E46) — sem isso o resultado
@@ -186,7 +192,7 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // resultado que decide isso.
     endSearchSession();
     return place;
-  }, [state.suggestions, token]);
+  }, [state.suggestions, token, sessionSource]);
 
   const clear = useCallback(() => {
     abortRef.current?.abort();

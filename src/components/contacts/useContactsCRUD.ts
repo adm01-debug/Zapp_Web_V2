@@ -21,12 +21,15 @@ interface ContactFormData {
   neighborhood: string;
   city: string;
   state: string;
+  latitude: string;
+  longitude: string;
 }
 
 const EMPTY_CONTACT: ContactFormData = {
   name: '', nickname: '', surname: '', job_title: '',
   company: '', phone: '', email: '', contact_type: 'cliente',
   postal_code: '', address: '', address_number: '', neighborhood: '', city: '', state: '',
+  latitude: '', longitude: '',
 };
 
 export interface Contact {
@@ -45,6 +48,14 @@ export interface Contact {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
+}
+
+/** `latitude`/`longitude` chegam como string (mesmo padrão dos demais campos de endereço). */
+function toCoordinate(value: string): number | null {
+  const parsed = Number(value);
+  return value.trim() && Number.isFinite(parsed) ? parsed : null;
 }
 
 export function useContactsCRUD() {
@@ -112,6 +123,8 @@ export function useContactsCRUD() {
           neighborhood: newContact.neighborhood || null,
           city: newContact.city || null,
           state: newContact.state || null,
+          latitude: toCoordinate(newContact.latitude),
+          longitude: toCoordinate(newContact.longitude),
           assigned_to: profile?.id || null,
         });
         if (error) {
@@ -161,6 +174,8 @@ export function useContactsCRUD() {
             neighborhood: editingContact.neighborhood || null,
             city: editingContact.city || null,
             state: editingContact.state || null,
+            latitude: toCoordinate(editingContact.latitude || ''),
+            longitude: toCoordinate(editingContact.longitude || ''),
           })
           .eq('id', editingContact.id);
         if (error) {

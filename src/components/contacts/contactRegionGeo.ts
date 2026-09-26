@@ -1,7 +1,8 @@
 // Coordenada aproximada de cada região atendida por um DDD (cidade-sede) e dos países que a
-// lista de contatos reconhece. É o único dado geográfico que existe: `contacts` não tem
-// endereço, cidade nem estado — só telefone. Por isso o mapa marca a REGIÃO do DDD, não onde
-// o cliente está, e a tela diz isso.
+// lista de contatos reconhece. Fallback para contatos sem coordenada confirmada: `contacts` tem
+// campos de endereço (PR #751) e `latitude`/`longitude` (E42), mas nem todo contato passou pelo
+// autocomplete do cadastro — por isso o mapa ainda marca a REGIÃO do DDD para quem não tem
+// coordenada própria (ver `ContactRegionMap.tsx`), e a tela diz isso na legenda.
 
 /** [longitude, latitude] da cidade-sede — o rótulo é o mesmo devolvido por getRegionFromPhone. */
 export const REGION_COORDINATES: Record<string, [number, number]> = {

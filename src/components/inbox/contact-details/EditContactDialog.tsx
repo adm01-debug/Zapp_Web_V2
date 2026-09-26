@@ -34,6 +34,8 @@ interface EditContactDialogProps {
     neighborhood?: string | null;
     city?: string | null;
     state?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
   };
 }
 
@@ -55,6 +57,8 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
     neighborhood: contact.neighborhood || '',
     city: contact.city || '',
     state: contact.state || '',
+    latitude: contact.latitude != null ? String(contact.latitude) : '',
+    longitude: contact.longitude != null ? String(contact.longitude) : '',
   });
 
   const handleChange = useCallback((field: string, value: string) => {
@@ -78,6 +82,8 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
       neighborhood: formValues.neighborhood || null,
       city: formValues.city || null,
       state: formValues.state || null,
+      latitude: formValues.latitude.trim() && Number.isFinite(Number(formValues.latitude)) ? Number(formValues.latitude) : null,
+      longitude: formValues.longitude.trim() && Number.isFinite(Number(formValues.longitude)) ? Number(formValues.longitude) : null,
     };
 
     // Optimistic update: update cache immediately for instant UI feedback
