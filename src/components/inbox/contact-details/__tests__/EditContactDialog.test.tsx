@@ -1,7 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EditContactDialog } from '../EditContactDialog';
+
+// O jsdom não implementa isso; o Radix Select chama nos 3 ao abrir/fechar
+// (usado só pelo teste que exercita o Select de job_title).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = Element.prototype.hasPointerCapture ?? (() => false);
+  Element.prototype.releasePointerCapture = Element.prototype.releasePointerCapture ?? (() => {});
+  Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? (() => {});
+});
 
 // Mock supabase
 const mockUpdate = vi.fn();
@@ -166,12 +174,13 @@ describe('EditContactDialog', () => {
     expect(screen.getByText('Cancelar')).toBeInTheDocument();
   });
 
-  // ========== SUBMIT ==========
+  // ========== SUBMIT (só manda o que o usuário editou — ver bloco "SÓ CAMPOS
+  // ALTERADOS" abaixo; por isso todo teste de submit precisa mudar algo antes) ==========
   it('calls supabase update on submit', async () => {
     renderDialog();
-    const submitBtn = screen.getByText('Salvar');
-    fireEvent.click(submitBtn);
-    
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalled();
     });
@@ -179,27 +188,92 @@ describe('EditContactDialog', () => {
 
   it('passes correct contact id to eq', async () => {
     renderDialog();
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
     fireEvent.click(screen.getByText('Salvar'));
-    
+
     await waitFor(() => {
       expect(mockEq).toHaveBeenCalledWith('id', 'c1');
     });
   });
 
-  it('sends nullable fields as null when empty', async () => {
-    renderDialog({
-      contact: { ...baseContact, nickname: '', surname: '', job_title: '', company: '', email: '' },
-    });
+  it('sends nullable fields as null when the user clears them', async () => {
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('Doe'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('Acme'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('john@test.com'), { target: { value: '' } });
+    // job_title é um Select (sentinela '__none__' → string vazia), não um <input>
+    // de texto — cobertura perdida na reescrita "só campos alterados" (auditoria
+    // de 5 agentes, 2026-09-26, 5a rodada, achada por mutação: os 24 testes
+    // continuavam verdes com o normalizador de job_title trocado por identidade).
+    fireEvent.click(screen.getByRole('combobox', { name: /cargo/i }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Selecione o cargo' }));
     fireEvent.click(screen.getByText('Salvar'));
-    
+
     await waitFor(() => {
       const updatePayload = mockUpdate.mock.calls[0][0];
       expect(updatePayload.nickname).toBeNull();
       expect(updatePayload.surname).toBeNull();
-      expect(updatePayload.job_title).toBeNull();
       expect(updatePayload.company).toBeNull();
       expect(updatePayload.email).toBeNull();
+      expect(updatePayload.job_title).toBeNull();
     });
+  });
+
+  // NOTA (auditoria de 5 agentes, 2026-09-26, 5a rodada): o autocomplete de
+  // endereço do ContactForm chama onChange várias vezes em sequência, dentro
+  // do mesmo handler síncrono (sem re-render entre uma chamada e outra) — o
+  // updater funcional de setFormValues (`prev => ({...prev, [field]: value})`)
+  // é o que protege isso de virar closure velha perdendo campo. Uma 1a versão
+  // deste teste tentava provar isso com 3 `fireEvent.change` dentro de um
+  // `act()`, mas cada `fireEvent.change` do RTL já força seu próprio flush
+  // síncrono (evento discreto) — não reproduz "mesmo tick, sem render no
+  // meio", e continuava verde mesmo com o updater mutado pra versão com
+  // closure velha (falso positivo, removido). Cobertura real disso exigiria
+  // montar o fluxo completo do autocomplete de endereço (mock da busca de
+  // lugar) — não existe hoje; ver "Próximos passos".
+
+  // ========== SÓ CAMPOS ALTERADOS (achado da auditoria de 5 agentes,
+  // 2026-09-26, 4a rodada: o painel nunca preenche/seleciona endereço e
+  // lat/lon — o form abre sempre com esses campos vazios. Mandar o objeto
+  // inteiro a cada Salvar sobrescrevia com null assim que o 1o endereço
+  // fosse cadastrado por outra tela, e também perdia um UPDATE que chegasse
+  // via Realtime num campo que o usuário não tocou enquanto o diálogo
+  // estava aberto) ==========
+  it('não sobrescreve com null um campo que o form nunca recebeu (ex: endereço)', async () => {
+    // `contact` não traz nenhum campo de endereço — como em produção hoje
+    // (ContactDetails/Crm360Tab não os repassam).
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: 'Jonas' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload.nickname).toBe('Jonas');
+      expect(updatePayload).not.toHaveProperty('address');
+      expect(updatePayload).not.toHaveProperty('postal_code');
+      expect(updatePayload).not.toHaveProperty('latitude');
+      expect(updatePayload).not.toHaveProperty('longitude');
+    });
+  });
+
+  it('manda só o campo que o usuário editou, não o objeto inteiro', async () => {
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: 'Jonas' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toEqual({ nickname: 'Jonas' });
+    });
+  });
+
+  it('não chama o supabase quando Salvar é clicado sem nenhuma edição', async () => {
+    const { onOpenChange } = renderDialog();
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // ========== FORM STATE ISOLATION ==========
