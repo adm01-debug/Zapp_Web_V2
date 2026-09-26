@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { E2E_FIXTURE_CONTACT_NAME, ensureFixtureConversationOpen } from './fixtures/e2e-contact';
+import {
+  E2E_FIXTURE_CONTACT_DISPLAY_NAME,
+  ensureFixtureConversationOpen,
+} from './fixtures/e2e-contact';
 
 // beforeEach navega para "/" (raiz) e clica no chip "Todas" ANTES de reabrir
 // o fixture: 1) ensureFixtureConversationOpen le o token via page.evaluate ->
@@ -28,6 +31,15 @@ import { E2E_FIXTURE_CONTACT_NAME, ensureFixtureConversationOpen } from './fixtu
 // espere (15000ms de timeout no assert nao resolveu). O reload forca um
 // fetch inicial novo que le o status certo direto do banco, sem depender de
 // realtime.
+//
+// O assert do chip "Todas" compara com o texto RENDERIZADO no item, e a lista
+// exibe so `contact.nickname?.trim() || name.split(' ')[0]` (a primeira
+// palavra do nome) desde o #816 — ver
+// src/components/inbox/VirtualizedRealtimeList.tsx. Sem apelido no fixture, o
+// item mostra "[E2E]", entao filtrar pelo nome completo do contato
+// (E2E_FIXTURE_CONTACT_NAME) nunca encontrava nada — element(s) not found na
+// run 36262158460, independentemente do realtime. Por isso o filtro usa
+// E2E_FIXTURE_CONTACT_DISPLAY_NAME.
 test.describe('Conversation state transitions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -59,7 +71,9 @@ test.describe('Conversation state transitions', () => {
 
   test('"Todas" filter shows the seeded conversation', async ({ page }) => {
     await expect(
-      page.locator('[data-testid="conversation-item"]').filter({ hasText: E2E_FIXTURE_CONTACT_NAME })
+      page
+        .locator('[data-testid="conversation-item"]')
+        .filter({ hasText: E2E_FIXTURE_CONTACT_DISPLAY_NAME })
     ).toBeVisible();
   });
 });
