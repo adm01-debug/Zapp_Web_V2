@@ -17,6 +17,19 @@
 -- possui duas representacoes revisadas e semanticamente equivalentes: o fonte
 -- formatado do repo e o corpo compactado recuperado do runtime. Qualquer outro
 -- corpo exige revisao explicita deste contrato.
+--
+-- postgres->cli_login_postgres (SET-only, sem INHERIT/ADMIN) fica em
+-- tolerated_service_role_edges, nao em expected: e artefato normal da propria
+-- Supabase CLI, role temporaria (rolvaliduntil de poucas centenas de segundos)
+-- criada pelo supabase_admin interno quando um comando roda sem senha
+-- explicita, recriada a cada uso e nunca removida por nos (DROP ROLE falha com
+-- permission denied mesmo como postgres). Confirmado na doc oficial:
+-- https://supabase.com/docs/guides/troubleshooting/permission-denied-when-deleting-the-cli_login_postgres-role-808bae
+-- Nao e originada por nenhuma migration deste repo. "Tolerated" (nao
+-- "expected") porque e opcional nos dois sentidos: presente nao e violacao
+-- (unexpected), ausente tambem nao (missing) -- o Postgres descartavel do
+-- check-mcp-exec-acl.test.sh nunca a cria, e produção pode ou nao te-la a
+-- qualquer momento conforme alguem rodar `supabase` sem SUPABASE_DB_PASSWORD.
 
 \set ON_ERROR_STOP on
 \pset tuples_only on
@@ -64,6 +77,17 @@ expected_service_role_edges(
     ('service_role', 'postgres', true, true, true, true),
     ('service_role', 'supabase_realtime_admin', false, false, true, false)
 ),
+tolerated_service_role_edges(
+  granted_role_name,
+  member_role_name,
+  member_rolinherit,
+  inherit_option,
+  set_option,
+  admin_option
+) AS (
+  VALUES
+    ('postgres', 'cli_login_postgres', false, false, true, false)
+),
 service_role_reachability(member_oid, membership_path) AS (
   SELECT
     membership.member,
@@ -103,6 +127,8 @@ unexpected_service_role_edges AS (
   SELECT * FROM actual_service_role_edges
   EXCEPT
   SELECT * FROM expected_service_role_edges
+  EXCEPT
+  SELECT * FROM tolerated_service_role_edges
 ),
 missing_service_role_edges AS (
   SELECT * FROM expected_service_role_edges
