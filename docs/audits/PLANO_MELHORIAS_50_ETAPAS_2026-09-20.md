@@ -31,7 +31,7 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 |---|---|
 | F0 | E01 👤 · E02 🔧 · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
 | F1 | E07–E09 👤(3 cliques) · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
-| F2 | E14 🔧 · E15 📋🔧⏳(meta recalibrada) · E16 ✅(0) · E17 📋 · E18 🔧⏳ · E19 ✅ · E20 ✅ · E21 👤 |
+| F2 | E14 ✅ · E15 📋🔧⏳(meta recalibrada) · E16 ✅(aplicado em produção) · E17 ✅(aplicado em produção) · E18 ✅(nada a migrar) · E19 ✅ · E20 ✅ · E21 👤 |
 | F3 | E22 📋 · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
 | F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
 | F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
@@ -50,7 +50,8 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
 - **E14** — FKs sem índice de suporte: **0** (eram 3). Fechado, checkbox marcado abaixo.
 - **E16** — índices duplicados exatos: **1 acionável** (`idx_talkx_template_versions_template_version`,
   redundante com a unique `..._template_id_version_number_key`). O outro par é do schema `auth`
-  do Supabase (gerenciado — não tocar). DROP = DDL em produção ⇒ regra 8 (aguarda decisão).
+  do Supabase (gerenciado — não tocar). **Aplicado em produção em 26/09** (ver seção abaixo) —
+  não é mais decisão pendente.
 - **E15** — índices com `idx_scan=0`: **472/675** (o total cresceu: 503→675). `pg_stat_database.stats_reset`
   = **null** ⇒ não há 30 dias de estatística confiável; dropar em massa segue proibido pelo próprio
   critério da etapa. Sem ação autônoma.
@@ -70,10 +71,14 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   sem rastro de rotação em lugar nenhum. Ver `docs/audits/edges-secrets-2026-09-26.md`.
 - **E01** — os 2 remotos `claude/*` mergeados (`claude/audit-database-references-m1xp3p`,
   `claude/nice-pasteur-3h1emj`) já não existem (`git branch -r` = 0 matches). Fechado sem ação.
-- **E16** — PR #826 (migration `DROP INDEX IF EXISTS idx_talkx_template_versions_template_version`)
-  mergeada em `main` (`97ff94d`). **Apply em produção segue pendente** — `db-migrate.yml`
-  dry-run→apply exige aprovação humana no environment `producao-ddl` (regra 8); não é executado
-  autonomamente.
+- **E16** — PR #826 mergeada (`97ff94d`) e **aplicado em produção em 26/09** via MCP direto +
+  registro no ledger no mesmo turno (nova convenção da seção "Decisões de 2026-09-26" do
+  CLAUDE.md, que substituiu a espera pelo `db-migrate.yml`) — `idx_talkx_template_versions_template_version`
+  confirmado removido ao vivo (`pg_indexes` só lista pkey + unique + `idx_..._saved_by`).
+  Fechado de ponta a ponta.
+- **E17** — PR #855 mergeada e **aplicado em produção em 26/09** pela mesma via — as 13 FKs
+  confirmadas ao vivo em `pg_constraint`. `supabase-usage-guard.mjs` segue verde (`novas: 0`)
+  após o apply. Fechado de ponta a ponta.
 - **E23/E25 — achado real, corrigido**: a varredura anti-prosa achou 17 candidatos; 10 eram
   falso-positivo do regex (`...` dentro de comentário/hash abreviado, ou `resumo` como nome de
   campo JSON — SQL completo e real). **7 eram violação genuína da regra 7** (`statements` do
@@ -111,9 +116,12 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   como está) ou planos históricos já arquivados (grandfathered pela própria regra do CLAUDE.md:
   "referências novas usam a grafia canônica"). Nada para corrigir. Fechado.
 
-Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E09–E11 governança/CI, E21 backup,
-rotação de secrets sensíveis) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do
-fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
+Conclusão: **E16, E17 e E18 fecharam** (os dois primeiros com DDL já aplicado em produção em
+26/09 — ver seção "Decisões de 2026-09-26" do CLAUDE.md; o terceiro sem nada a migrar). O núcleo
+🔴 remanescente é E15 (índices sem uso — bloqueado por `stats_reset=null`), E09–E11
+(governança/CI), E21 (backup) e a rotação de secrets sensíveis — **decisão de negócio**
+(custo/destrutivo/produção — regra 8 do fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já
+fecharam ou são falso-positivo.
 
 ## Regras de execução (herdadas e obrigatórias)
 
@@ -243,8 +251,8 @@ constraint / realmente mortos.
 ```sh
 # via MCP oficial: db_duplicate_indexes
 ```
-- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); apply em produção
-      via `db-migrate.yml` aguarda aprovação humana no environment `producao-ddl` (regra 8)
+- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); **aplicada em
+      produção em 26/09** via MCP direto — índice confirmado removido ao vivo
 
 ### E17 🔴 Integridade referencial não declarada (herda E34/16-09)
 Colunas `*_id` em `public.*` sem FK correspondente: inventário, verificação de órfãos
@@ -252,23 +260,42 @@ por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não blo
 - [x] Inventário completo com decisão por coluna: 13 FK criadas (11 → `auth.users`, 1 →
       `profiles`, 1 → `vault.secrets`), 38 justificadas por escrito (externas/polimórficas) —
       ver `docs/audits/referential-integrity-2026-09-26.md`. Migration
-      `20260926200000_e17_referential_integrity_fks.sql` preparada; **DDL em produção segue
-      pendente** de merge + apply via `db-migrate.yml` (regra 8)
+      `20260926200000_e17_referential_integrity_fks.sql` (re-versionada de `20260926160000` por
+      colisão, PR #872) **aplicada em produção em 26/09** via MCP direto — as 13 FKs confirmadas
+      ao vivo em `pg_constraint`
 - [x] 0 órfãos verificados ao vivo nas 13 relações antes de escrever a migration
 
 ### E18 🟡 Autovacuum por tabela quente (herda E30/16-09)
 O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. Fixar
 `autovacuum_vacuum_scale_factor=0.05` e `autovacuum_analyze_scale_factor=0.05` em
 `messages`, `email_messages` e `talkx_*` de escrita intensa.
-- [x] Verificado ao vivo em 26/09: `messages` e `email_messages` **já têm**
-      `autovacuum_vacuum_scale_factor=0.05` / `autovacuum_analyze_scale_factor=0.05`
-      (aplicado por outra sessão, sem migration correspondente localizada — reloptions confirma
-      via `pg_class`). Nenhum `talkx_*` tem escrita ainda (todas as 12 tabelas com
-      `n_live_tup=0`, módulo em desenvolvimento ativo) — "de escrita intensa" não se aplica a
-      nenhuma hoje; revisitar quando Talk X sair de desenvolvimento. O "94,5% dead" de
-      `messages` em `pg_stat_user_tables` é estatística desatualizada, não bloat real:
-      `n_live_tup=55` ali contra `SELECT count(*)` real de 47.878 linhas — dead real
-      ≈ 953/47.878 ≈ 2%, saudável. Nada para migrar; etapa fecha sem PR.
+- [x] Verificado ao vivo em 26/09 (e revalidado por agente independente na mesma tarde):
+      `messages` e `email_messages` **já têm** `autovacuum_vacuum_scale_factor=0.05` /
+      `autovacuum_analyze_scale_factor=0.05` (aplicado por outra sessão, sem migration
+      correspondente localizada — reloptions confirma via `pg_class`). Das 12 tabelas
+      `talkx_*`, **10 seguem genuinamente vazias**; `talkx_templates` (5 linhas) e
+      `talkx_settings` (6 linhas) têm dados reais (seed/config), mas volume irrisório —
+      "de escrita intensa" não se aplica a nenhuma hoje; revisitar quando Talk X sair de
+      desenvolvimento. **Causa-raiz real do "94,5% dead"**: `pg_postmaster_start_time` mostra
+      restart do Postgres em 2026-09-25 12:28:28 UTC — isso zera os contadores incrementais
+      por relação (`n_live_tup`/`n_dead_tup`/`autovacuum_count`) mas não `pg_class.reltuples`
+      (persistido), que o autovacuum de fato usa para calcular o limiar; `email_messages` já
+      cruzou o limiar e rodou autovacuum desde o restart (prova que o mecanismo funciona),
+      `messages` ainda não. **Correção (Codex Review, achado real):** o `n_dead_tup=953`
+      calculado logo após o restart só contava tuplas mortas desde então — subestimava bloat
+      físico anterior ao restart. Rodado `ANALYZE public.messages` (não é DDL) para forçar
+      reamostragem real: `n_dead_tup` subiu para **2.502** (5,2% de 47.878 linhas) — acima do
+      limiar configurado (0,05 × reltuples ≈ 2.444), o que explica por que o autovacuum ainda
+      não disparou (está prestes a disparar, não travado) e não é mais o falso "saudável ~2%"
+      da primeira leitura. Ainda longe dos 94,5% originais e do limite de alerta da etapa
+      (>20% por 14 dias), mas o número correto é 5,2%, não 2%. `email_messages` seguiu
+      confirmado saudável (~1,8-1,9%, já vacuumada desde o restart). Varredura ampla no banco
+      não achou
+      nenhuma outra tabela fora do escopo original com bloat real (as de 100% "dead" no
+      `pg_stat_user_tables` são só tabelas pequenas/ociosas sem autovacuum desde o mesmo
+      restart, não bloat; `whatsapp_connections`/`agent_presence` são tabelas de
+      presença/heartbeat com autovacuum ativo e frequente, comportamento esperado). Nada para
+      migrar; etapa fecha sem PR de DDL.
 
 ### E19 🟡 Baseline de queries lentas (herda E29/16-09)
 ```sql
