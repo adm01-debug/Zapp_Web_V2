@@ -216,6 +216,36 @@ describe('EditContactDialog', () => {
     expect(screen.getByDisplayValue(longName)).toBeInTheDocument();
   });
 
+  // ========== RESSINCRONIZAÇÃO AO ABRIR (ContactDetails mantém o diálogo sempre
+  // montado pra não cortar a animação de fechamento do Radix; sem ressincronizar
+  // ao abrir, o formulário ficava travado com os valores vazios capturados na
+  // 1a montagem, de quando enrichedData ainda era undefined — Salvar sem tocar
+  // em nada sobrescrevia apelido/cargo/empresa reais com null) ==========
+  it('ressincroniza os campos quando o diálogo é aberto depois que os dados reais chegam', () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const onOpenChange = vi.fn();
+    // Simula o estado do 1o render de ContactDetails, com enrichedData ainda
+    // undefined (React Query não resolveu) — diálogo montado, mas fechado.
+    const emptyContact = { id: 'c1', name: 'John Doe', phone: '+5511999999999' };
+    const { rerender } = render(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={false} onOpenChange={onOpenChange} contact={emptyContact} />
+      </QueryClientProvider>
+    );
+
+    // enrichedData chega e o usuário clica em "Editar".
+    rerender(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={true} onOpenChange={onOpenChange} contact={baseContact} />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByDisplayValue('Johnny')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Acme')).toBeInTheDocument();
+    expect(screen.getByText('Dev')).toBeInTheDocument();
+  });
+
   // ========== CANCEL ==========
   it('calls onOpenChange(false) on cancel click', () => {
     const { onOpenChange } = renderDialog();

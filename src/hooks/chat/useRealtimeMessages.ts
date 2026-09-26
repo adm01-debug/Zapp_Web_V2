@@ -139,6 +139,13 @@ export function useRealtimeMessages() {
     (payload: RealtimePostgresChangesPayload<ConversationContact>) => {
       const updatedContact = payload.new as ConversationContact;
       if (!updatedContact?.id) return;
+      // Sem isso, um fetchConversations em voo (disparado por handleSendMessage,
+      // por exemplo) sobrescrevia esse UPDATE ao resolver: fetchConversations só
+      // preserva eventos ao vivo quando liveRevisionRef mudou durante o request
+      // (linha ~166), e este handler nunca incrementava a revision — apelido/
+      // cargo/empresa editados voltavam ao valor antigo na lista até o próximo
+      // evento realtime.
+      liveRevisionRef.current += 1;
       commitConversations((prev) => {
         const idx = prev.findIndex((c) => c.contact.id === updatedContact.id);
         if (idx < 0) return prev;

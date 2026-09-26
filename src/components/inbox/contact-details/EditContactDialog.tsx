@@ -39,10 +39,8 @@ interface EditContactDialogProps {
   };
 }
 
-export function EditContactDialog({ open, onOpenChange, contact }: EditContactDialogProps) {
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formValues, setFormValues] = useState({
+function contactToFormValues(contact: EditContactDialogProps['contact']) {
+  return {
     name: contact.name || '',
     nickname: contact.nickname || '',
     surname: contact.surname || '',
@@ -59,7 +57,28 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
     state: contact.state || '',
     latitude: contact.latitude != null ? String(contact.latitude) : '',
     longitude: contact.longitude != null ? String(contact.longitude) : '',
-  });
+  };
+}
+
+export function EditContactDialog({ open, onOpenChange, contact }: EditContactDialogProps) {
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState(() => contactToFormValues(contact));
+  // O diálogo fica montado o tempo todo (Radix precisa disso pra animar o
+  // fechamento); o `useState` acima só captura `contact` na 1a montagem, que
+  // acontece antes do usuário nunca ter clicado em "Editar" — nesse momento
+  // enrichedData ainda está undefined (React Query ainda não resolveu), então
+  // o formulário ficava travado com apelido/cargo/empresa vazios e
+  // contact_type='cliente' para sempre. Ao clicar Salvar sem editar nada,
+  // isso sobrescrevia dados reais do contato com null. Ressincroniza no
+  // instante em que o diálogo é de fato aberto, quando os dados já chegaram
+  // (ajuste de state durante o render, sem useEffect, pro React não fazer um
+  // 2o commit — https://react.dev/learn/you-might-not-need-an-effect).
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setFormValues(contactToFormValues(contact));
+  }
 
   const handleChange = useCallback((field: string, value: string) => {
     setFormValues(prev => ({ ...prev, [field]: value }));

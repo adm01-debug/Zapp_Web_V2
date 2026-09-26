@@ -33,11 +33,16 @@ export function useContactEnrichedData(contactId: string) {
 
   const { data: enrichedData } = useQuery({
     queryKey: ['contact-enriched', contactId],
+    // Lança em vez de engolir o erro: um `return null` aqui vira "sucesso" pro
+    // React Query, que trava esse null em cache até o staleTime (5min) expirar
+    // — sem retry (retry só se aplica a queryFn que rejeita) e apagando apelido/
+    // cargo/empresa/tipo do painel por causa de uma falha passageira. Lançando,
+    // o retry:2 default (src/lib/queryClient.ts) tenta de novo antes de desistir.
     queryFn: async () => {
       const { data, error } = await ContactService.fetchEnrichedData(contactId);
       if (error) {
         log.error('Error fetching enriched contact data:', error);
-        return null;
+        throw error;
       }
       return data as EnrichedContactData;
     },
@@ -50,7 +55,7 @@ export function useContactEnrichedData(contactId: string) {
       const { data, error } = await ContactService.fetchAITags(contactId);
       if (error) {
         log.error('Error fetching AI tags:', error);
-        return [];
+        throw error;
       }
       return data as AIConversationTag[];
     },
@@ -63,7 +68,7 @@ export function useContactEnrichedData(contactId: string) {
       const { data, error } = await ContactService.fetchSLA(contactId);
       if (error) {
         log.error('Error fetching SLA info:', error);
-        return null;
+        throw error;
       }
       return data as SLAInfo | null;
     },
