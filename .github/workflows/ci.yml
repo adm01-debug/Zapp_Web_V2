@@ -75,10 +75,13 @@ jobs:
           supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
           supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
           supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
+          supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
+          supabase/functions/public-api/index.test.ts
+          supabase/functions/webhook-diagnostic/diagnostic.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
