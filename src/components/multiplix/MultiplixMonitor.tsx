@@ -120,6 +120,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const successRate = processed > 0 ? pct(dispatch.sent_count, processed) : 0;
   const isRunning = dispatch.status === 'sending';
   const isPaused = dispatch.status === 'paused';
+  const isDraft = dispatch.status === 'draft' || dispatch.status === 'scheduled';
+  const canStart = isPaused || isDraft;
   const isDone = dispatch.status === 'completed' || dispatch.status === 'cancelled' || dispatch.status === 'failed';
 
   return (
@@ -141,7 +143,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             <StatusPill status={dispatch.status} map={DISPATCH_STATUS} />
             {!isDone && (<>
               {isRunning && <button type="button" onClick={() => setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4" />Pausar</button>}
-              {isPaused && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />Retomar</button>}
+              {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
             <button type="button" onClick={() => exportRecipientsCsv(recipients, dispatch.name)} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
@@ -207,8 +209,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('cancel'); setConfirmCancel(false); }}>Cancelar disparo</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Retomar disparo?</AlertDialogTitle><AlertDialogDescription>O envio continua de onde parou.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('start'); setConfirmResume(false); }}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{isPaused ? 'Retomar disparo?' : 'Iniciar disparo?'}</AlertDialogTitle><AlertDialogDescription>{isPaused ? 'O envio continua de onde parou.' : 'Isso envia mensagens reais no WhatsApp para os destinatários deste disparo — sem volta.'}</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('start'); setConfirmResume(false); }}>{isPaused ? 'Retomar' : 'Iniciar agora'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
     </div>
   );

@@ -50,11 +50,15 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
         destino_e164: r.destino_e164,
         destino_origem: r.destino_origem,
       }));
-      const dispatchId = await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
-      toast.success(startNow ? 'Disparo criado e iniciado.' : 'Disparo salvo como rascunho.');
+      const result = await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
+      if (result.startRejectedReason) {
+        toast.warning(`Disparo salvo, mas não iniciado: ${result.startRejectedReason}`);
+      } else {
+        toast.success(startNow ? 'Disparo criado e iniciado.' : 'Disparo salvo como rascunho.');
+      }
       reset();
       onOpenChange(false);
-      onCreated(dispatchId);
+      onCreated(result.id);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao criar disparo');
     }

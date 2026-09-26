@@ -112,9 +112,14 @@ async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause'
   return response.data;
 }
 
+export interface CreateMultiplixDispatchResult {
+  id: string;
+  startRejectedReason?: string;
+}
+
 export function useCreateMultiplixDispatch() {
   return useMutation({
-    mutationFn: async (input: CreateMultiplixDispatchInput) => {
+    mutationFn: async (input: CreateMultiplixDispatchInput): Promise<CreateMultiplixDispatchResult> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       const { data: profile, error: profileError } = await supabase
@@ -143,10 +148,21 @@ export function useCreateMultiplixDispatch() {
       if (recipientsError) throw new Error(recipientsError.message);
 
       if (input.startNow) {
-        await invokeMultiplixSend(dispatch.id, 'start');
+        try {
+          await invokeMultiplixSend(dispatch.id, 'start');
+        } catch (startError) {
+          // Dispatch e destinatarios ja foram persistidos; nao desfazer a
+          // criacao so porque o motor recusou iniciar agora (ex.: fora da
+          // janela de envio) -- sem isso, o composer reportava falha e uma
+          // nova tentativa duplicava dispatch+destinatarios.
+          return {
+            id: dispatch.id as string,
+            startRejectedReason: startError instanceof Error ? startError.message : 'Erro ao iniciar disparo',
+          };
+        }
       }
 
-      return dispatch.id as string;
+      return { id: dispatch.id as string };
     },
   });
 }
