@@ -11,6 +11,7 @@
         "prevent_contact_queue_hijack()",
         "prevent_conversation_task_field_forgery()",
         "seed_default_goals_for_profile()",
+        "set_scheduled_report_config_owner()",
         "talkx_campaign_report(p_campaign uuid)",
         "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone)",
         "talkx_segment_tags(p_segment uuid)",
@@ -161,6 +162,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 141,
-    "authenticated_execute_count": 90
+    "service_role_execute_count": 143,
+    "authenticated_execute_count": 92
 }
