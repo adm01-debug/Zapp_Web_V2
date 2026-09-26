@@ -6,9 +6,18 @@ import { test, expect } from '@playwright/test';
 // "Enviar imagem" (não existe um botão genérico "anexar"). Enter sem Shift
 // envia (useChatPanelHandlers.ts: handleKeyDown), confirmado pelo tooltip
 // "Enviar (Enter)" no próprio botão de enviar.
+//
+// beforeEach clica no chip "Todas" antes de cada teste — o chip padrão ("Em
+// atendimento") depende do feature flag inbox.status-fsm e de assigned_to
+// bater com o profile logado; "Todas" não filtra por isso, então é o caminho
+// determinístico para garantir que o contato fixo apareça.
 test.describe('Messaging flows', () => {
-  test('send text message appears in conversation', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/inbox');
+    await page.getByTestId('status-chip-all').click();
+  });
+
+  test('send text message appears in conversation', async ({ page }) => {
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
 
@@ -21,7 +30,6 @@ test.describe('Messaging flows', () => {
   });
 
   test('image attachment button is enabled', async ({ page }) => {
-    await page.goto('/inbox');
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
 
