@@ -7,4 +7,7 @@
 -- chamador não autorizado), mas quebra o padrão de defesa em profundidade já
 -- aplicado nas funções irmãs. Somente authenticated e service_role devem
 -- poder chamar esta RPC.
+--
+-- Aplicada em produção e registrada no ledger sob esta version
+-- (20260926161500) via MCP db_query em 2026-09-26.
 REVOKE EXECUTE ON FUNCTION public.dashboard_leaderboard(text, integer) FROM anon;
