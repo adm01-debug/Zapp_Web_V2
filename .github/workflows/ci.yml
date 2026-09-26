@@ -79,6 +79,7 @@ jobs:
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
           supabase/functions/sentiment-alert/index.test.ts
+          supabase/functions/talkx-send/index.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
