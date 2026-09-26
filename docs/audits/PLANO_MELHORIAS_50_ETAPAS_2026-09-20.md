@@ -260,7 +260,15 @@ por consulta, e criação de FKs `NOT VALID` → `VALIDATE CONSTRAINT` (não blo
 O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. Fixar
 `autovacuum_vacuum_scale_factor=0.05` e `autovacuum_analyze_scale_factor=0.05` em
 `messages`, `email_messages` e `talkx_*` de escrita intensa.
-- [ ] `ALTER TABLE ... SET (...)` via migration · `pg_stat_user_tables` sem tabela >20% dead por 14 dias
+- [x] Verificado ao vivo em 26/09: `messages` e `email_messages` **já têm**
+      `autovacuum_vacuum_scale_factor=0.05` / `autovacuum_analyze_scale_factor=0.05`
+      (aplicado por outra sessão, sem migration correspondente localizada — reloptions confirma
+      via `pg_class`). Nenhum `talkx_*` tem escrita ainda (todas as 12 tabelas com
+      `n_live_tup=0`, módulo em desenvolvimento ativo) — "de escrita intensa" não se aplica a
+      nenhuma hoje; revisitar quando Talk X sair de desenvolvimento. O "94,5% dead" de
+      `messages` em `pg_stat_user_tables` é estatística desatualizada, não bloat real:
+      `n_live_tup=55` ali contra `SELECT count(*)` real de 47.878 linhas — dead real
+      ≈ 953/47.878 ≈ 2%, saudável. Nada para migrar; etapa fecha sem PR.
 
 ### E19 🟡 Baseline de queries lentas (herda E29/16-09)
 ```sql
