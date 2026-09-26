@@ -488,6 +488,19 @@
             "justification": "O arquivo usa corpo dollar-quoted multiline; o ledger preservou a serializacao em uma linha. Semantica identica — divergencia de whitespace interno ao corpo PL/pgSQL; ambas as formas canonicas ficam fixadas por hashes independentes."
         },
         {
+            "version": "20260906000001",
+            "filename": "20260906000001_e31_contacts_is_lid_legacy.sql",
+            "file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
+            "file_sql_sha256": "8d9a1bd0225d0f9555d29304dcb7fbdcf616e33a080424a485efe8de57d8e2f9",
+            "ledger_name": "e31_contacts_is_lid_legacy",
+            "ledger_statements_sha256": "3b2a89e803f1502cda7686cf9531e2403caa896e4e725327cdf56f80c03d14c3",
+            "ledger_sql_sha256": "b71b7b40bfea5a3b1c20297b585eda0c7918c9f1fdaedcc3590f55df49c92675",
+            "kind": "ledger-divergence/pinned-replay",
+            "reason": "ledger-summary",
+            "related_migration": null,
+            "justification": "O corpo DO $$ ... $$ e dollar-quoted e preservado integralmente pelo comparador; o ledger guardou o bloco sem os dois comentarios inline que o arquivo tem (limites esperados e observacao de soma). DDL e logica de validacao identicos, apenas documentacao interna ausente no ledger; ambas as formas ficam fixadas por hashes independentes."
+        },
+        {
             "version": "20260906090000",
             "filename": "20260906090000_fix_secdef_search_path.sql",
             "file_sha256": "bc9fef4f53fb271f029aed5f8c3ca3df1e70c04456b0486ba460b7a98f213612",
