@@ -44,7 +44,7 @@ function exportRecipientsCsv(rows: { company_name_snapshot: string | null; desti
   if (rows.length === 0) return;
   const esc = (v: string) => {
     const safe = CSV_FORMULA_PREFIX.test(v) ? `'${v}` : v;
-    return /[,"\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+    return /[,"\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
   const cols: Array<[string, (r: (typeof rows)[number]) => string]> = [
     ['Empresa', (r) => r.company_name_snapshot ?? ''],

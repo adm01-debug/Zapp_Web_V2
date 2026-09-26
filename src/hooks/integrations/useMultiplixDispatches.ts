@@ -114,7 +114,6 @@ async function invokeMultiplixSend(dispatchId: string, action: 'start' | 'pause'
 
 export interface CreateMultiplixDispatchResult {
   id: string;
-  startRejectedReason?: string;
 }
 
 export function useCreateMultiplixDispatch() {
@@ -148,18 +147,17 @@ export function useCreateMultiplixDispatch() {
       if (recipientsError) throw new Error(recipientsError.message);
 
       if (input.startNow) {
-        try {
-          await invokeMultiplixSend(dispatch.id, 'start');
-        } catch (startError) {
-          // Dispatch e destinatarios ja foram persistidos; nao desfazer a
-          // criacao so porque o motor recusou iniciar agora (ex.: fora da
-          // janela de envio) -- sem isso, o composer reportava falha e uma
-          // nova tentativa duplicava dispatch+destinatarios.
-          return {
-            id: dispatch.id as string,
-            startRejectedReason: startError instanceof Error ? startError.message : 'Erro ao iniciar disparo',
-          };
-        }
+        // Nao aguarda: multiplix-send processa o loop de envio inteiro dentro
+        // da mesma invocacao (sleep real de digitacao/intervalo por
+        // destinatario), entao esperar aqui travaria o composer pelo tempo
+        // total do disparo, sem permitir pausar/cancelar/acompanhar. Dispara
+        // em background e deixa o monitor (que abre logo em seguida) refletir
+        // o progresso via realtime/polling; se a janela de envio recusar o
+        // start, o dispatch fica em 'draft' e o botao "Iniciar" do monitor
+        // permite tentar de novo (com o erro real, via toast do runAction).
+        invokeMultiplixSend(dispatch.id, 'start').catch((startError) => {
+          console.error('multiplix-send start (background) falhou:', startError);
+        });
       }
 
       return { id: dispatch.id as string };

@@ -51,11 +51,7 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
         destino_origem: r.destino_origem,
       }));
       const result = await createDispatch.mutateAsync({ name: name.trim(), messageTemplate: messageTemplate.trim(), recipients, startNow });
-      if (result.startRejectedReason) {
-        toast.warning(`Disparo salvo, mas não iniciado: ${result.startRejectedReason}`);
-      } else {
-        toast.success(startNow ? 'Disparo criado e iniciado.' : 'Disparo salvo como rascunho.');
-      }
+      toast.success(startNow ? 'Disparo criado. Envio iniciando…' : 'Disparo salvo como rascunho.');
       reset();
       onOpenChange(false);
       onCreated(result.id);
