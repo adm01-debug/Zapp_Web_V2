@@ -4,12 +4,20 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // vi.hoisted ensures this reference is available inside the vi.mock() factory closure.
-const { mockConnectWithStoredCredentials } = vi.hoisted(() => ({ mockConnectWithStoredCredentials: vi.fn() }));
+const { mockConnectWithStoredCredentials, mockAddCallNotes } = vi.hoisted(() => ({
+  mockConnectWithStoredCredentials: vi.fn(),
+  mockAddCallNotes: vi.fn().mockResolvedValue(true),
+}));
 
 function makeCallsQueryBuilder({ historyResult = { data: [], error: null }, statsResult = { data: [], error: null } } = {}) {
   const builder = {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    or: vi.fn(() => builder),
+    is: vi.fn(() => builder),
+    not: vi.fn(() => builder),
+    in: vi.fn(() => builder),
+    limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
     order: vi.fn(() => builder),
     range: vi.fn(() => Promise.resolve(historyResult)),
     then: (resolve, reject) => Promise.resolve(statsResult).then(resolve, reject),
@@ -25,6 +33,19 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'profile-1' }, user: { id: 'user-1' } }),
+}));
+
+vi.mock('@/hooks/communication/useCalls', () => ({
+  useCalls: () => ({
+    startCall: vi.fn(),
+    answerCall: vi.fn(),
+    endCall: vi.fn(),
+    missCall: vi.fn(),
+    addCallNotes: mockAddCallNotes,
+    getContactCalls: vi.fn(),
+    currentCallId: null,
+    isLoading: false,
+  }),
 }));
 
 vi.mock('@/providers/CallSessionProvider', () => ({
@@ -60,6 +81,7 @@ describe('VoIPPanel', () => {
     const { supabase } = await import('@/integrations/supabase/client');
     supabase.from.mockReturnValue(makeCallsQueryBuilder());
     mockConnectWithStoredCredentials.mockReset();
+    mockAddCallNotes.mockReset().mockResolvedValue(true);
   });
 
   it('renders the Telefonia header', () => {
@@ -67,23 +89,12 @@ describe('VoIPPanel', () => {
     expect(screen.getByText('Telefonia')).toBeInTheDocument();
   });
 
-  it('renders only the operator tabs — no admin configuration tab', () => {
-    renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('Discador')).toBeInTheDocument();
-    expect(screen.getByText('Histórico')).toBeInTheDocument();
-    expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
-    expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
-  });
-
-  it('defaults to dialer tab with number input visible', () => {
+  it('shows history and the dialer side by side — no admin configuration tab', () => {
     renderWithProviders(<VoIPPanel />);
     expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
-  });
-
-  it('can click history tab without crashing', () => {
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByText('Histórico'));
-    expect(screen.getByText('Histórico')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar por nome ou telefone...')).toBeInTheDocument();
+    expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
+    expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
   });
 
   it('renders stat cards', () => {
@@ -107,7 +118,6 @@ describe('VoIPPanel', () => {
     supabase.from.mockReturnValue(builder);
 
     renderWithProviders(<VoIPPanel />);
-    fireEvent.mouseDown(screen.getByText('Histórico'));
 
     await waitFor(() => {
       expect(builder.eq).toHaveBeenCalledWith('agent_id', 'profile-1');
@@ -122,16 +132,64 @@ describe('VoIPPanel', () => {
       id: `call-${i}`, contact_id: null, agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'outbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 30, recording_url: null, notes: null,
+      duration_seconds: 30, recording_url: null, notes: null, contact: null,
     }));
     supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: fullPage, error: null } }));
 
     renderWithProviders(<VoIPPanel />);
-    // Radix TabsTrigger ativa a aba no mousedown, não no click sintético do jsdom.
-    fireEvent.mouseDown(screen.getByText('Histórico'));
 
     await waitFor(() => {
       expect(screen.getByText('Carregar mais')).toBeInTheDocument();
+    });
+  });
+
+  it('opens the call detail panel on row click and hides the dialer', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const page = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, recording_url: null, notes: 'nota antiga',
+      contact: { name: 'Maria Souza', phone: '5511999999999' },
+    }];
+    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Maria Souza'));
+
+    expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Digite o número')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Fechar detalhe'));
+    expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+  });
+
+  it('saves an edited note through addCallNotes', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const page = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, recording_url: null, notes: null,
+      contact: { name: 'Maria Souza', phone: '5511999999999' },
+    }];
+    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Maria Souza'));
+
+    fireEvent.change(screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...'), {
+      target: { value: 'Cliente pediu retorno amanhã' },
+    });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(mockAddCallNotes).toHaveBeenCalledWith('call-1', 'Cliente pediu retorno amanhã');
     });
   });
 
