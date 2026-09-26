@@ -64,3 +64,19 @@ export function useMultiplixCount() {
       invokeMultiplixAudience<number>('count', filters),
   });
 }
+
+export interface MultiplixResolvedRecipient {
+  company_id: string;
+  contact_id: string | null;
+  company_name: string | null;
+  destino_e164: string | null;
+  destino_origem: string | null;
+  elegibilidade: 'apto' | 'destino_invalido' | 'fora_do_escopo';
+}
+
+export function useMultiplixResolve() {
+  return useMutation({
+    mutationFn: (companyIds: string[]) =>
+      invokeMultiplixAudience<MultiplixResolvedRecipient[]>('resolve', { company_ids: companyIds }),
+  });
+}
