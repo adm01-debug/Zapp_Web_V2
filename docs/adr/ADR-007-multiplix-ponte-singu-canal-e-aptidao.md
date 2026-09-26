@@ -1,7 +1,7 @@
 # ADR-007 — Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa
 
-**Status:** Proposto (recomendação do tech lead) — vira **Aceito** com `APROVADO` do Joaquim; item recusado volta a "Em discussão".
-**Data:** 2026-09-26
+**Status:** Aceito — D1, D2 e D4 confirmados por Joaquim conforme recomendado; **D3 divergiu da recomendação** (ver nota na seção D3).
+**Data:** 2026-09-26 (decisões confirmadas em sessão separada, mesma data)
 **Contexto:** Plano `docs/multiplix/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_2026-09-26.md` (E003–E006) · Evidências em `docs/multiplix/ESTADO_INICIAL.md` e `docs/multiplix/CANAL.md`.
 
 Quatro decisões bloqueiam a Fase 1 do Multiplix. Cada uma abaixo traz o problema medido, as opções, a recomendação e o que ela custa.
@@ -44,17 +44,14 @@ Quatro decisões bloqueiam a Fase 1 do Multiplix. Cada uma abaixo traz o problem
 
 **Problema.** Consentimento não existe como dado: ZAPP `consent_status = unknown` em 3.099/3.099; Singu `contact_preferences` = 0 linhas; `contacts.last_interaction_at` no Singu = **0 contatos nos últimos 180 dias** (campo não é alimentado). `talkx_blacklist` = 0 (mas o mecanismo de "PARE" já existe).
 
-**Decisão recomendada: duas classes, decididas no servidor.**
+**Decidido por Joaquim: todos aptos por padrão, sem trava de interação prévia — divergiu da recomendação abaixo.**
 
-| Classe | Quem | Apto quando | Motivo |
-|---|---|---|---|
-| **B2B operacional** | contato ou telefone de empresa com `is_supplier` ou `is_carrier` | não está em `talkx_blacklist` (`talkx_recipient_is_suppressed`) **e** destino válido no WhatsApp (`/user/check`) | relação comercial ativa por definição (cadastro em `suppliers`/`carriers`, homologação); comunicação operacional (cotação, coleta) |
-| **Cliente** | empresa só `is_customer` | além do acima, **existe conversa no ZAPP com mensagem recebida do contato** nos últimos `multiplix_customer_window_days` (novo em `talkx_settings`, padrão **180**) | base de 55 mil clientes inclui importação fria do Bitrix; sem relação registrada, não há base para mensagem livre |
+A recomendação original propunha duas classes (B2B operacional apto direto; Cliente exigindo interação real recente — ver "Alternativas rejeitadas"). Joaquim optou pela opção mais ampla, ciente do risco: os ~55 mil `is_customer` (incluindo importação fria do Bitrix, sem qualquer relação registrada) entram como aptos exatamente como fornecedor/transportadora.
 
-- Fonte da "conversa no ZAPP": `messages.sender = 'contact'` ligado ao contato Singu por `crm_contact_links`. O campo `last_interaction_at` do Singu **não** serve hoje (zerado) — passa a ser alimentado por `sync_interaction_from_zapp` (E097) e poderá substituir a consulta no futuro.
+- Único gate real: não estar em `talkx_blacklist` (`talkx_recipient_is_suppressed`) **e** destino válido no WhatsApp (`/user/check`).
 - Opt-out inbound ("PARE"/"STOP") continua indo para `talkx_blacklist` — compartilhado com Campanhas.
 - Revalidação imediatamente antes de cada POST ao provedor (mesmo padrão do `talkx-send`).
-- Isto é política operacional, não parecer jurídico. A base LGPD assumida é legítimo interesse em relação B2B; o Joaquim confirma ou ajusta a janela de 180 dias.
+- Isto é política operacional, não parecer jurídico — e é risco aceito deliberadamente, não ausência de análise. Registrado aqui para a auditoria de histórico (Fase 14/15) saber que o alcance foi deliberado, não um bug.
 
 ## D4 (E006) — Telefone da empresa como destino
 
@@ -78,12 +75,12 @@ Sem telefone de empresa, Compras alcança 1 em cada 9 fornecedores.
 ## Consequências
 
 - Fase 1 do plano (Ponte Singu) começa com D1 aceito; DDL no Singu continua 🔒 PARA por PR aberta.
-- `talkx_settings` ganha 2 chaves: `multiplix_customer_window_days` (180) e `multiplix_max_recipients_default` (200).
+- `talkx_settings` ganha 1 chave: `multiplix_max_recipients_default` (200). (`multiplix_customer_window_days` não é mais necessária — ver D3.)
 - O GATE C (`docs/crm-external-grants.md`) tem caminho de fechamento (E195) e deixa de ser risco aberto sem dono.
 - Painel "Pronto para sair?" mostra: Aptos · Sem destino WhatsApp · Suprimidos · Fora do escopo · **Empresa sem pessoa** (subgrupo dos aptos).
 
 ## Alternativas rejeitadas
 
 - Criar tabela própria de política de ritmo para o Multiplix — duplicaria `talkx_settings` e divergiria de Campanhas.
-- Tratar todo contato como apto — ignora o risco de bloqueio e a base fria de clientes.
-- Bloquear todo cliente até existir opt-in formal — inviabiliza o caso "Comercial" da especificação; a janela por interação real é o meio-termo verificável.
+- Exigir interação real recente (`messages.sender = 'contact'` via `crm_contact_links`, janela de 180 dias) antes de aptar cliente — era a recomendação inicial deste ADR para a classe "Cliente"; Joaquim decidiu por todos aptos (D3), assumindo o risco de alcançar a base fria em vez de restringir o alcance. Se o risco se materializar (reclamação, bloqueio de conexão), este é o mecanismo a reativar.
+- Bloquear todo cliente até existir opt-in formal — inviabiliza o caso "Comercial" da especificação.
