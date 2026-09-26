@@ -5,6 +5,10 @@
 -- daquele usuario -- efeito colateral de uma migration de integridade
 -- referencial, nao uma decisao deliberada de retencao.
 --
+-- Versao reversionada de 20260926260000 para 20260926420000: max(version)
+-- avancou para 20260926410000 entre a abertura da PR e a aplicacao (varias
+-- sessoes paralelas). Conteudo SQL idêntico, so o cabecalho mudou.
+--
 -- Ambas as colunas ja sao NULLABLE (confirmado ao vivo antes desta migration
 -- via information_schema.columns), entao SET NULL nao quebra nenhuma
 -- constraint na hora do delete. Nenhuma tabela referencia ai_usage_logs.id ou
