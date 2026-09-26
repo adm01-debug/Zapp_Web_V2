@@ -487,6 +487,49 @@ describe('session — persistedStatus', () => {
     expect(persistedStatusForEndReason('declined')).toBe('declined');
     expect(persistedStatusForEndReason('busy')).toBe('busy');
     expect(persistedStatusForEndReason('failed')).toBe('failed');
+    // Todos os valores da união canônica de `./callStatus` (o EndReason deixou
+    // de ser uma união local em 26/09/2026): ligação atendida que termina por
+    // qualquer um dos lados vira `ended`; segunda chamada recebida vira `missed`.
+    expect(persistedStatusForEndReason('hangup_local')).toBe('ended');
+    expect(persistedStatusForEndReason('hangup_remote')).toBe('ended');
+    expect(persistedStatusForEndReason('busy_here')).toBe('missed');
+  });
+
+  it('cobre a união canônica inteira de EndReason (nenhum valor devolve undefined)', () => {
+    const todos: EndReason[] = [
+      'completed',
+      'busy',
+      'no_answer',
+      'cancelled',
+      'declined',
+      'failed',
+      'cancelled_remote',
+      'timeout',
+      'busy_here',
+      'hangup_local',
+      'hangup_remote',
+    ];
+    for (const motivo of todos) {
+      expect(persistedStatusForEndReason(motivo)).not.toBeUndefined();
+    }
+    expect(todos.map(persistedStatusForEndReason)).toEqual([
+      'ended',
+      'busy',
+      'ended',
+      'cancelled',
+      'declined',
+      'failed',
+      'missed',
+      'missed',
+      'missed',
+      'ended',
+      'ended',
+    ]);
+  });
+
+  it('sipCodeToEndReason é a mesma função de ./callStatus (sem cópia local)', async () => {
+    const callStatus = await import('../callStatus');
+    expect(sipCodeToEndReason).toBe(callStatus.sipCodeToEndReason);
   });
 
   it('isTerminal só é true em ended', () => {

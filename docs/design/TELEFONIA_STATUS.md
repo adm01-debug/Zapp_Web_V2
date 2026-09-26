@@ -57,7 +57,7 @@ Etapas 1–9:
 
 ---
 
-## CP1 Contrato        [x] sha=local (commit da fase 1) · testes lib/calls=215 (6 arquivos, 100% verde) · deps react/supabase=0
+## CP1 Contrato        [x] sha=f94871d (+4º commit de reconciliação) · testes lib/calls=217 (6 arquivos, 100% verde) · deps react/supabase=0
 
 Etapas 10–17 — `src/lib/calls/` (6 módulos puros + 6 arquivos de teste):
 
@@ -71,9 +71,55 @@ Etapas 10–17 — `src/lib/calls/` (6 módulos puros + 6 arquivos de teste):
 | `events.ts` | contrato `zapp:start-call` (`StartCallPayload`, `dispatchStartCall`, `onStartCall`) com compatibilidade do evento legado `start-voip-call` | `__tests__/events.test.ts` (_round-trip_ + conversão do legado) |
 
 Gate do CP1: `grep -c "from 'react'\|supabase" src/lib/calls/*.ts` = **0** (nenhum módulo de domínio
-depende de React ou Supabase). Resultado: `npx vitest run src/lib/calls` → **6 arquivos, 215 testes, exit 0**.
+depende de React ou Supabase). Resultado: `npx vitest run src/lib/calls` → **6 arquivos, 217 testes, exit 0**.
 
-## CP2 Banco (gate)    [~] PR-A=aberta · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · AGUARDANDO APROVAÇÃO — **nada aplicado em produção**
+### Reconciliação do CP1 (26/09) — duas uniões de `EndReason` eram um defeito real
+
+Os dois subagentes que escreveram os módulos em paralelo declararam `EndReason` cada um por conta própria:
+`session.ts` tinha uma união local de 8 valores e `callStatus.ts` a união canônica de 11 (com
+`hangup_local`, `hangup_remote`, `busy_here`). Pior: `persistedStatusForEndReason` (session.ts) não tratava
+esses 3 valores → devolveria `undefined` e a Fase 3 gravaria `calls.status` inválido (ou nada) numa ligação
+atendida que cai. Consolidado num único dono:
+
+- `session.ts` agora **importa** `EndReason`, `PersistedStatus` e `sipCodeToEndReason` de `./callStatus` e os
+  reexporta (a cópia local do mapa SIP foi apagada);
+- `persistedStatusForEndReason` cobre a união inteira: `hangup_local`/`hangup_remote` → `ended`,
+  `busy_here` → `missed`;
+- 2 testes novos: uma tabela exaustiva que falha se qualquer valor devolver `undefined`, e um teste de
+  identidade (`sipCodeToEndReason === callStatus.sipCodeToEndReason`) que impede a cópia de voltar;
+- **prova de mutação**: trocando `busy_here → 'ended'` no código, 5 testes quebram; revertido, 217 voltam a
+  passar (`npx vitest run src/lib/calls` → 6 arquivos/217, `npx tsc -b --force` → exit 0).
+
+### Divergências internas dos módulos, aceitas e registradas
+
+| Ponto | Decisão | Motivo |
+|---|---|---|
+| `487 → cancelled` (etapa 10) vs `487 → no_answer` (etapa 88) | **etapa 10 vence** | é ela que governa o mapa do front; a etapa 88 é reconciliação com o Bitrix e pode divergir sem quebrar a UI |
+| `connecting` ganha saídas (`HANGUP_LOCAL→cancelled`, `HANGUP_REMOTE→no_answer`, `FAILED→failed`) | aceito, marcado como extensão no teste | sem isso o estado é beco sem saída |
+| `ringing_in` continua estrito (`ACCEPT`/`REJECT`/`CANCEL_REMOTE`/`TIMEOUT`) | aceito | `BYE` remoto tocando chega como `CANCEL_REMOTE`, conforme o plano |
+| `ending` colapsa para `ended` na mesma chamada | aceito, mas `ending` é aceito como estado de entrada | a tabela diz `ending→ended`; sem colapsar, a persistência de entrada em `ended` nunca ocorreria |
+| `INVITE_RECEIVED` com sessão ocupada → mesma referência, **sem** `warn` | aceito | é linha da tabela, não transição inválida (`busyHereOutcome()` = `{missed, busy}`) |
+| `zapp:start-call` em `document`, legado `start-voip-call` em `window` | aceito | o emissor real (`ContactActionButtons.tsx:100`) usa `window.dispatchEvent`; os dois são removidos no cleanup |
+
+## CP2 Banco (gate)    [~] PR-A=**#875** · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · **AGUARDANDO APROVAÇÃO — nada aplicado em produção**
+
+**Parada obrigatória do plano (regra 7 da seção 0.2).** A migration existe, foi provada em PostgreSQL 17
+descartável e **não** foi aplicada no projeto Cloud `tnnnlkbymytvtqngbbqh`.
+
+- Arquivo: `supabase/migrations/20260926190000_calls_telefonia_v2.sql`
+- `sha256` do arquivo (para conferência): `5b0981f347aa2d6bda0d3a666d5a0853467b72835a846937337b71f36cdf4b49`
+- Versão (14 dígitos): `20260926190000`
+
+Dois caminhos de aplicação, ambos exigindo o "APROVADO" do dono:
+
+| Caminho | Como | Observação |
+|---|---|---|
+| **A — pelo repo (recomendado)** | merge da #875 na `main` → workflow **DB Migrate** com `apply=false` (dry-run, exige `migration_version=20260926190000` e `confirm_project_ref=tnnnlkbymytvtqngbbqh`) → rodar de novo com `apply=true` + `confirm_runtime_sha256` do dry-run | o workflow só roda **na main** e para no environment **`producao-ddl`** (aprovação humana + aviso de card). É o único caminho com preflight/backup do próprio repo |
+| **B — pelo chat (o do plano)** | aplicar o SQL pelo MCP oficial do projeto (`db_query`) | mais rápido, sem preflight nem prova de destino; só com APROVADO explícito |
+
+Depois do apply: conferir `select version, name from supabase_migrations.schema_migrations order by version desc limit 3`
+(esperado: `20260926190000` no topo) e o frescor de `types.ts`. O workflow **db-live-guard** compara o schema vivo
+com o repo — deve ficar verde depois do apply + merge.
 
 Etapas 18–28:
 

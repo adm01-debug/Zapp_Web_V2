@@ -17,6 +17,12 @@
  *   chamada vira `missed` com motivo `busy_here` fora da máquina).
  */
 
+import { sipCodeToEndReason } from './callStatus';
+import type { EndReason, PersistedStatus } from './callStatus';
+
+export type { EndReason, PersistedStatus };
+export { sipCodeToEndReason };
+
 /** Estados do ciclo de vida da chamada (Apêndice C). */
 export type CallSessionStatus =
   | 'idle'
@@ -34,16 +40,7 @@ export type SessionDirection = 'inbound' | 'outbound';
 /** Canal do transporte — mesma união de `calls.channel` (seção 2.7). */
 export type SessionChannel = 'voip' | 'whatsapp';
 
-/** Motivo de encerramento (coluna `calls.end_reason`). */
-export type EndReason =
-  | 'completed'
-  | 'cancelled'
-  | 'cancelled_remote'
-  | 'declined'
-  | 'timeout'
-  | 'no_answer'
-  | 'busy'
-  | 'failed';
+// `EndReason` vem de ./callStatus (dono canônico do contrato — etapa 10).
 
 /** Como a chamada terminou do nosso ponto de vista (origem do encerramento). */
 export type EndedBy =
@@ -54,20 +51,7 @@ export type EndedBy =
   | 'timeout'
   | 'failure';
 
-/**
- * Status persistido em `calls.status` (união da seção 2.7 do plano, sem
- * apagar legado: `completed`→`ended` e `ongoing`→`answered` são traduzidos na
- * leitura, nunca reescritos).
- */
-export type PersistedStatus =
-  | 'ringing'
-  | 'answered'
-  | 'ended'
-  | 'missed'
-  | 'busy'
-  | 'failed'
-  | 'cancelled'
-  | 'declined';
+// `PersistedStatus` também vem de ./callStatus (mesma união da seção 2.7).
 
 /** Marca temporal comum a todos os eventos (epoch ms). */
 export interface CallSessionEventStamp {
@@ -151,22 +135,9 @@ export function isTerminal(status: CallSessionStatus): boolean {
 }
 
 /**
- * Código SIP → `end_reason` (200→completed, 486→busy, 480/408→no_answer,
- * 487→cancelled, 603→declined, 5xx/desconhecido→failed).
- *
- * O dono canônico é a etapa 10 (`callStatus.ts`), que expõe o mesmo mapa;
- * esta cópia existe para o módulo de sessão ficar sem dependências — ao
- * consolidar a Fase 1, trocar por `import { sipCodeToEndReason } from './callStatus'`.
+ * Código SIP → `end_reason` é do dono canônico `./callStatus` (etapa 10) e é
+ * reexportado no topo deste arquivo. Não duplicar o mapa aqui.
  */
-export function sipCodeToEndReason(code: number): EndReason {
-  if (code === 200) return 'completed';
-  if (code === 486) return 'busy';
-  if (code === 408 || code === 480) return 'no_answer';
-  if (code === 487) return 'cancelled';
-  if (code === 603) return 'declined';
-  if (code >= 500) return 'failed';
-  return 'failed';
-}
 
 /** Status a persistir para um `end_reason` já decidido (seção 2.7). */
 export function persistedStatusForEndReason(endReason: EndReason | null): PersistedStatus | null {
@@ -175,11 +146,14 @@ export function persistedStatusForEndReason(endReason: EndReason | null): Persis
       return null;
     case 'completed':
     case 'no_answer':
+    case 'hangup_local':
+    case 'hangup_remote':
       return 'ended';
     case 'cancelled':
       return 'cancelled';
     case 'cancelled_remote':
     case 'timeout':
+    case 'busy_here':
       return 'missed';
     case 'declined':
       return 'declined';
