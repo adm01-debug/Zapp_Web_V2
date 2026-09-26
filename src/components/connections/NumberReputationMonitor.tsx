@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,9 +29,7 @@ export function NumberReputationMonitor() {
   const [reputations, setReputations] = useState<(ReputationData & { connection?: ConnectionInfo })[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const { data: reps } = await supabase
       .from('number_reputation')
@@ -48,7 +46,12 @@ export function NumberReputationMonitor() {
       })));
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    loadData();
+  }, [loadData]);
 
   const startWarmup = async (id: string) => {
     await supabase.from('number_reputation').update({

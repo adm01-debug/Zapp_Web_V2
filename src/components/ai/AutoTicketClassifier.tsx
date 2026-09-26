@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Tag, Brain, RefreshCw, Loader2, CheckCircle, Filter, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -44,12 +44,25 @@ export function AutoTicketClassifier() {
   const [classifying, setClassifying] = useState(false);
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    loadClassifiedTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const classifyTag = (tagName: string): string => {
+    const lower = tagName.toLowerCase();
+    if (lower.includes('suporte') || lower.includes('bug') || lower.includes('erro')) return 'Suporte Técnico';
+    if (lower.includes('vend') || lower.includes('preço') || lower.includes('compra')) return 'Vendas';
+    if (lower.includes('pag') || lower.includes('boleto') || lower.includes('fatura')) return 'Financeiro';
+    if (lower.includes('reclam') || lower.includes('insatisf')) return 'Reclamação';
+    if (lower.includes('agend') || lower.includes('horário')) return 'Agendamento';
+    return 'Informação';
+  };
 
-  const loadClassifiedTickets = async () => {
+  const derivePriority = (tagName: string, confidence: number): string => {
+    const lower = tagName.toLowerCase();
+    if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
+    if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
+    if (confidence > 0.5) return 'medium';
+    return 'low';
+  };
+
+  const loadClassifiedTickets = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch AI-tagged contacts
@@ -95,25 +108,12 @@ export function AutoTicketClassifier() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const classifyTag = (tagName: string): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('suporte') || lower.includes('bug') || lower.includes('erro')) return 'Suporte Técnico';
-    if (lower.includes('vend') || lower.includes('preço') || lower.includes('compra')) return 'Vendas';
-    if (lower.includes('pag') || lower.includes('boleto') || lower.includes('fatura')) return 'Financeiro';
-    if (lower.includes('reclam') || lower.includes('insatisf')) return 'Reclamação';
-    if (lower.includes('agend') || lower.includes('horário')) return 'Agendamento';
-    return 'Informação';
-  };
-
-  const derivePriority = (tagName: string, confidence: number): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
-    if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
-    if (confidence > 0.5) return 'medium';
-    return 'low';
-  };
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    loadClassifiedTickets();
+  }, [loadClassifiedTickets]);
 
   const runBatchClassification = async () => {
     setClassifying(true);

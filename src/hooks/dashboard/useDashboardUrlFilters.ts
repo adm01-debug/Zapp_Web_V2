@@ -41,6 +41,15 @@ function isValidPeriod(value: string | null): value is DashboardFiltersState['pe
   return value === 'today' || value === 'yesterday' || value === 'week' || value === 'month' || value === 'custom';
 }
 
+// Parseia uma string 'YYYY-MM-DD' (date-only) como data LOCAL. `new Date(str)`
+// trata date-only ISO como meia-noite UTC, o que desloca o dia em -1 em
+// fusos negativos (America/Sao_Paulo) ao combinar com startOfDay/endOfDay
+// (que operam em hora local) — daí o off-by-one no filtro de período custom.
+function parseDateOnlyLocal(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: DashboardFiltersState) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -53,8 +62,8 @@ export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: Dash
     if (period === 'custom') {
       const fromParam = searchParams.get(PARAM_KEYS.from);
       const toParam = searchParams.get(PARAM_KEYS.to);
-      const from = fromParam ? new Date(fromParam) : null;
-      const to = toParam ? new Date(toParam) : null;
+      const from = fromParam ? parseDateOnlyLocal(fromParam) : null;
+      const to = toParam ? parseDateOnlyLocal(toParam) : null;
       if (from && to && !Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
         return { period, dateRange: { from: startOfDay(from), to: endOfDay(to) }, queueId, agentId };
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,11 +17,7 @@ export function PeriodComparison() {
   const [period, setPeriod] = useState('week');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadComparison();
-  }, [period]);
-
-  const loadComparison = async () => {
+  const loadComparison = useCallback(async () => {
     setLoading(true);
     const now = new Date();
     let currentStart: Date, previousStart: Date, previousEnd: Date;
@@ -67,7 +63,12 @@ export function PeriodComparison() {
       },
     });
     setLoading(false);
-  };
+  }, [period]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-período padrão, sem estado derivado de props para sincronizar.
+    loadComparison();
+  }, [loadComparison]);
 
   const getVariation = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
