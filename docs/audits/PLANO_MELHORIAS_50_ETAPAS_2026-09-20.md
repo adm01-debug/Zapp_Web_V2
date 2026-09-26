@@ -68,6 +68,48 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
   (webhook HMAC, cron secret, lockout, rate-limit, ou endpoint desativado). Inventário de secrets
   commitado; achado real: secrets sensíveis (`EVOLUTION_API_KEY` etc.) não estão no GH Actions —
   sem rastro de rotação em lugar nenhum. Ver `docs/audits/edges-secrets-2026-09-26.md`.
+- **E01** — os 2 remotos `claude/*` mergeados (`claude/audit-database-references-m1xp3p`,
+  `claude/nice-pasteur-3h1emj`) já não existem (`git branch -r` = 0 matches). Fechado sem ação.
+- **E16** — PR #826 (migration `DROP INDEX IF EXISTS idx_talkx_template_versions_template_version`)
+  mergeada em `main` (`97ff94d`). **Apply em produção segue pendente** — `db-migrate.yml`
+  dry-run→apply exige aprovação humana no environment `producao-ddl` (regra 8); não é executado
+  autonomamente.
+- **E23/E25 — achado real, corrigido**: a varredura anti-prosa achou 17 candidatos; 10 eram
+  falso-positivo do regex (`...` dentro de comentário/hash abreviado, ou `resumo` como nome de
+  campo JSON — SQL completo e real). **7 eram violação genuína da regra 7** (`statements` do
+  ledger resumido/truncado em vez do SQL real e completo): `20260827130500`
+  (vacuum_autovacuum_threshold_reset_m05 — ledger tinha os 5 `SET` do workaround + 1 resumo do
+  `cron.schedule`, faltavam os 5 `RESET` reais do arquivo), `20260829060000`
+  (reconcile_ledger_drift — 2 UPDATEs resumidos), `20260901100001`
+  (add_last_sender_to_email_threads — 3 statements, todos parafraseados/truncados),
+  `20260902100003` (lid_audit_snapshot — 8 statements reais colapsados em 1 string truncada),
+  `20260904320000` (fix_critical_security_functions — 2 funções truncadas com `(add admin guard)`
+  / `(remove SECURITY DEFINER)` no lugar do corpo real), `20260904370000`
+  (fix_record_failed_login_race_and_revoke_grants — 1 de 4 statements truncado),
+  `20260909130000` (talkx_template_versions_custom_variables — `CREATE TABLE ... (...)` sem
+  colunas). Verificado ao vivo ANTES de escrever: schema real bate com os 4 arquivos em disco
+  (`pg_get_functiondef`, `information_schema.columns`, `pg_constraint`), nenhum tocava
+  função/tabela já registrada sob outra version. Corrigido via `UPDATE ...
+  schema_migrations SET statements = <SQL real do arquivo, gerado por
+  parseMigrationFile/splitStatements do register-migration.mjs> WHERE version=X AND <estado atual
+  conhecido> RETURNING`, guardado contra concorrência — as 2 primeiras tentativas de guard usaram
+  suposição de cardinalidade errada e corretamente deram 0 linhas afetadas (sem corrupção) antes
+  de eu conferir o estado real e ajustar. `supabase-usage-guard.mjs` seguiu verde durante todo o
+  processo. **0 exceções pinned-replay necessárias** — não sobrou prosa real; `migration-evidence.json`
+  não existe porque nunca foi preciso. Fechado, checkboxes marcados abaixo.
+- **E26** — projeção forward-only atual: **0 relações, 4 funções** (`grant_agent_achievement`,
+  `dashboard_leaderboard`, `set_scheduled_report_config_owner`,
+  `count_searchbox_sessions_this_month`) — todas de migrations datadas de hoje (26/09, mesmo dia
+  da geração do `schema-catalog.json`), por design do guard (snapshot só guarda `YYYY-MM-DD`, não
+  a hora exata). Sem dono/prazo necessário: resolve sozinho no próximo `graphify`/regeneração do
+  catálogo. Fechado.
+- **E33** — `performance-budget.json` já apertado: `initial-js=340`, `largest-chunk=550`,
+  `total-assets=4100` (nota interna do arquivo documenta o `+100KB` de 25/09 para o tile do padrão
+  de brindes do chat, estático/cacheável). Meta da etapa cumprida. Fechado.
+- **E47** — `CLAUDE.md` já usa a grafia canônica `Zapp_Web_V2` (linha "Repo:"); as ocorrências
+  lowercase restantes em `docs/` são domínio real do Vercel (`zapp-web-v2.vercel.app`, correto
+  como está) ou planos históricos já arquivados (grandfathered pela própria regra do CLAUDE.md:
+  "referências novas usam a grafia canônica"). Nada para corrigir. Fechado.
 
 Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E09–E11 governança/CI, E21 backup,
 rotação de secrets sensíveis) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do
@@ -92,7 +134,7 @@ Ação humana (o classificador de permissões nega à IA):
 git push origin --delete claude/audit-database-references-m1xp3p claude/nice-pasteur-3h1emj
 git fetch --prune && git branch -r | grep -c claude/   # esperado: 0
 ```
-- [ ] 0 remotos `claude/*`
+- [x] 0 remotos `claude/*` — verificado 26/09, ambos já não existem
 
 ### E02 🟡 CRM Sync Worker: ligar de verdade ou desligar o cron (herda E42/16-09)
 Hoje: run agendado a cada ~8min, 100% `skipped` — poluição de histórico e minutos de Actions.
@@ -201,7 +243,8 @@ constraint / realmente mortos.
 ```sh
 # via MCP oficial: db_duplicate_indexes
 ```
-- [ ] 0 duplicados exatos (drop do redundante com migration)
+- [x] 0 duplicados exatos — migration criada e mergeada (PR #826, `97ff94d`); apply em produção
+      via `db-migrate.yml` aguarda aprovação humana no environment `producao-ddl` (regra 8)
 
 ### E17 🔴 Integridade referencial não declarada (herda E34/16-09)
 Colunas `*_id` em `public.*` sem FK correspondente: inventário, verificação de órfãos
@@ -244,19 +287,22 @@ Eram 36 em 16/09 — cresceu sem decisão. Incluir `prokind='f'` retorno `trigge
 SELECT version FROM supabase_migrations.schema_migrations
 WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(add |resumo');
 ```
-- [ ] 0 statements-prosa fora das exceções `pinned-replay` do `migration-evidence.json`
+- [x] 0 statements-prosa reais — 7 violações genuínas encontradas e corrigidas em 26/09 (ver
+      "Re-verificação ao vivo"); as 10 restantes eram falso-positivo do regex (SQL completo)
 
 ### E24 🟢 Replay integral das 443 migrations em PG 17.6 efêmero (herda E20/16-09)
 - [ ] Job (ou doc de execução local) com replay verde ponta a ponta
 - [ ] Divergências (se houver) viram exceção documentada ou fix
 
 ### E25 🟢 Inventário das exceções pinned-replay (herda E15/16-09)
-- [ ] Tabela em `docs/audits/`: versão, motivo, hash, data — 100% das exceções
+- [x] 0 exceções pinned-replay necessárias em 26/09 — as 7 violações reais foram corrigidas na
+      origem (ledger passou a refletir o SQL real do arquivo), não exigem exceção permanente
 
 ### E26 🟢 Projeção forward-only: 2 relações pendentes (herda E17/16-09)
 Guard reporta "projecao forward-only: 4 relacoes, 9 funcoes" — conferir se as 2 originais
 fecharam ou viraram 4.
-- [ ] Cada relação/função da projeção com dono e prazo, ou promovida ao catálogo
+- [x] 0 relações · 4 funções, todas de migrations do próprio dia da geração do catálogo (by
+      design do guard) — resolve sozinho no próximo `graphify`/regeneração, sem dono/prazo
 
 ## F4 — Edges e secrets (E27–E32)
 
@@ -298,7 +344,7 @@ Folga atual: initial 330,6/350 · largest 486/700 · total 3.954/4.200.
 ```json
 { "initial-js": 340, "largest-chunk": 550, "total-assets": 4000 }
 ```
-- [ ] `performance-budget.json` apertado + CI verde no mesmo PR
+- [x] `performance-budget.json` já apertado (340/550/4100, ajustes de 25/09) — meta cumprida
 
 ### E34 🟡 vendor-ui eager: 137,5 KB gzip (radix + framer-motion + cva)
 Maior chunk inicial restante. Medir quanto o entry realmente usa; candidatos: adiar
@@ -361,7 +407,8 @@ invoca antes de escrever.
 ### E47 🟢 Padronizar nome do repo nas referências
 GitHub é `Zapp_Web_V2`, CLAUDE.md diz `zapp-web-v2` (case-insensitive funciona, mas
 confunde tooling e humanos).
-- [ ] Referências uniformizadas no CLAUDE.md/docs (sem renomear o repo)
+- [x] CLAUDE.md já usa a grafia canônica; lowercase restante em docs/ é domínio Vercel real ou
+      plano histórico arquivado (grandfathered) — nada para corrigir
 
 ## F8 — Fechamento (E48–E50)
 
