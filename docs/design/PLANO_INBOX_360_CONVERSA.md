@@ -114,7 +114,7 @@ Vite + React 19 + TS + Tailwind 3.4 + shadcn + framer-motion 12 + TanStack Query
 | Header da lista ("Conversas" + badge + Nova conversa) | h 56 | ±4 |
 | Chips de status da lista | h 32, radius 8, gap 8, 2 linhas com wrap | ±2 |
 | Busca da lista | h 40, radius 10; botão filtro 40×40 | ±2 |
-| Item de conversa | h 78–84, avatar **44**, padding 12, radius 12; selecionado `bg-primary/10 border border-primary/40` | ±6 |
+| Item de conversa | h 78–84, avatar **44**, padding 12, radius 12; selecionado classe `conversation-row-selected` (fundo `bg-muted/30` + anel girando só na borda de 2px, PR #780; era `bg-primary/10 border-primary/40`) | ±6 |
 | Chat header (avatar 48, nome 18/700, linha status+badges, 4 botões 40×40) | h 72 | ±4 |
 | Barra de abas do centro | h 48; aba h 36 radius 8 px-14, ícone 16, texto 14/500 (ativa 600) | ±2 |
 | Conteúdo das abas | padding 20, grid gap 16, cards radius 14 `bg-card border-border` | ±4 |
