@@ -106,15 +106,7 @@
     },
     {
       "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "sha256": "d388de219f209caed12f3ebd6e6af8221696e43a70066954e9dd59cd3412f551"
-    },
-    {
-      "path": "src/components/calls/CallDialog.tsx",
-      "sha256": "a4e4e798ddd8e3e89cc799db201b1e73c618be99cb82a479b747259666c474b5"
-    },
-    {
-      "path": "src/components/calls/VoIPPanel.tsx",
-      "sha256": "75e2f281ef18752d57a97de5d651e8fe391d4b1dc99fa8269c4c2ab83f855878"
+      "sha256": "d4e3851d3d82e96ea6989b87f23843f64f058a2262309094e444374c82861313"
     },
     {
       "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -226,7 +218,7 @@
     },
     {
       "path": "src/components/contacts/useContactsCRUD.ts",
-      "sha256": "c90a3286b3bceea373bb0735b9eed3a6bf6a9df2d3582a6e82306a6661e5bf88"
+      "sha256": "d70489a41ea298233a971783c2b17beb7bcfcae57c9cf651e612e1627ca13a3a"
     },
     {
       "path": "src/components/crm360/CompanyFormDialog.tsx",
@@ -390,7 +382,7 @@
     },
     {
       "path": "src/components/inbox/chat/MarkdownPreview.tsx",
-      "sha256": "18adeb9e8e37d3c7c96698df17025ff20422f1d1db8cf646994a5fbae29e0184"
+      "sha256": "7db03d6e06a6714f7d8b48b9df36a09c80582e5786d5525c0ff56d926e78b8f5"
     },
     {
       "path": "src/components/inbox/chat/MentionAutocomplete.tsx",
@@ -450,7 +442,7 @@
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
-      "sha256": "3db2043d6ae9d9f7e92f695342af96c2f86ad43d9259900638feebfa2deabfa1"
+      "sha256": "b79f1412eee702657f9ce3441587b24723a588981a9b7cb3e28d06bbce2e7665"
     },
     {
       "path": "src/components/inbox/contact-details/StoryViewer.tsx",
@@ -466,7 +458,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "66255485aa346efbebdec3da4839132b1530464f7fcd260621ef3ecbb4131337"
+      "sha256": "4f6ac3747b6930f791800fa722bdac0a3499528e7b562781454fe1e612b7f070"
     },
     {
       "path": "src/components/inbox/ConversationMemoryPanel.tsx",
@@ -491,10 +483,6 @@
     {
       "path": "src/components/inbox/LinkPreview.tsx",
       "sha256": "a4eadd2ebe18480fa8688f942244de32c229957efa0e03c93ebffbaf6d6c25c9"
-    },
-    {
-      "path": "src/components/inbox/linkPreviewUtils.ts",
-      "sha256": "f6287ad6433b4e946cac2750c49d2d2a0e68c933ccbab81edd6a7a2731629d24"
     },
     {
       "path": "src/components/inbox/MessageContextActions.tsx",
@@ -1198,7 +1186,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "sha256": "5f4f63e5f8887ea3520406e6bfc8a127195c2d89aa39713737dfe2e925281653"
+      "sha256": "e3502d22004f4d29cef3fd49ed71a8f1c2d20a2868aa6b967ff516bcecbba662"
     },
     {
       "path": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
@@ -1219,10 +1207,6 @@
     {
       "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
       "sha256": "c5dcfa5b3c68ab5cdd0687431ac8ac2786bf524956cd416e2def228d0272a9c6"
-    },
-    {
-      "path": "src/hooks/__tests__/useSipClient.test.ts",
-      "sha256": "53aebf59b7e39b8f9cb13a43ddc8fa20b0386fa4b1e6e44fb1d2e1bfe28f5ad9"
     },
     {
       "path": "src/hooks/__tests__/useSLAHistory.test.tsx",
@@ -1285,10 +1269,6 @@
       "sha256": "6ec06e7fa6099a8fc636a6bd003db5e26c54cd9457cc4254196bfbdcd36fefce"
     },
     {
-      "path": "src/hooks/business/useCSAT.ts",
-      "sha256": "1ab6b6af755f8a0327425a5d172484e85eed5e4483b5b14ee681e4e48d69e862"
-    },
-    {
       "path": "src/hooks/business/useNPSSurveys.ts",
       "sha256": "5596e5562312c17cb7b44c1874d74a4a4bb802180b8dc97a02894ef8424c794a"
     },
@@ -1327,10 +1307,6 @@
     {
       "path": "src/hooks/communication/useAudioRecorder.ts",
       "sha256": "4b9def42509dd4c6fe2c0f631ab001506c5ac0d65ee89c878d3306514698d531"
-    },
-    {
-      "path": "src/hooks/communication/useSipClient.ts",
-      "sha256": "ca2803b79cb7f372a2ff776341db71eb5ce885dd72df3fbcbd9a164852e486ff"
     },
     {
       "path": "src/hooks/communication/useTextToSpeech.ts",
@@ -1415,10 +1391,6 @@
     {
       "path": "src/hooks/realtime/useSupabaseRealtime.ts",
       "sha256": "23cdb344a425eba3f417909fe8d53ad3e966431644da533f0694ca33138c4ca6"
-    },
-    {
-      "path": "src/hooks/sip/useSipConnection.ts",
-      "sha256": "6cd4568e3e964044cdb4e89dcff9ead01392e8598cbc66f1c1d878b776907b6d"
     },
     {
       "path": "src/hooks/sticker-picker/useStickerPicker.ts",
@@ -1646,7 +1618,7 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "sha256": "c92f93103040c39d9d2ff864ab6306110e0156a32896c249ddd3473efff1ca53"
+      "sha256": "49b25ac385706b519368059706bbb523a555fa6382fefdd3061b055c297eb629"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
@@ -2445,34 +2417,6 @@
       "spanHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
       "lineHash": "f41fc2ab973675e013d5d5ee7d799ec073a2da86d8bed5b6070cc20029ff6a36",
       "contextHash": "4a50b3839012b6d9063836bf70d7b6675c5a6091bb26fe8e8236eb327b36b57a"
-    },
-    {
-      "file": "src/components/calls/CallDialog.tsx",
-      "line": 88,
-      "column": 7,
-      "endLine": 88,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/calls/CallDialog.tsx:88:7 86 | useEffect(() => { 87 | if (!open) { > 88 | setStatus('ringing'); | ^^^^^^^^^ Avoid calling setState() directly within an effect 89 | setDuration(0); 90 | setIsMuted(false); 91 | setCallId(null);",
-      "spanHash": "d5471899f181684ef6f4b83e84e1da87cc2a44d33c19eb98ec2fef98ea7db791",
-      "lineHash": "11fba4cc5c063d711295056be51c2a4a9e886c50e223317cec7fc52462157037",
-      "contextHash": "526dfc525b3663d63bdef760429e20b82eea05f47d985566432822786899ce75"
-    },
-    {
-      "file": "src/components/calls/VoIPPanel.tsx",
-      "line": 11,
-      "column": 1,
-      "endLine": 11,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "79c2b238af9e7016d3400f7f539a67375ca1f919fe3675a3916fb80582ecfae0"
     },
     {
       "file": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -4055,20 +3999,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "794d26316572943b5b3e98783b4eb22c3fe21c946a3ae879522ae1e03582f5f3"
-    },
-    {
-      "file": "src/components/inbox/chat/MarkdownPreview.tsx",
-      "line": 18,
-      "column": 20,
-      "endLine": 18,
-      "endColumn": 21,
-      "severity": 2,
-      "ruleId": "no-useless-escape",
-      "messageId": "unnecessaryEscape",
-      "message": "Unnecessary escape character: \\*.",
-      "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
-      "lineHash": "e696eb341bb6dc6677ef7e68b7c10f478d06db92e156f05eddda341ac4ac584b",
-      "contextHash": "91d0b72a65000625f2f244bf1a3cf8deccee2a64c2659f046c4e814701cc6732"
     },
     {
       "file": "src/components/inbox/chat/MarkdownPreview.tsx",
@@ -5735,34 +5665,6 @@
       "spanHash": "7b80288cd485867d4ea058ccf7eebb5abf567a605ba6a61ece6ec3e5264dd29b",
       "lineHash": "ff363a26e87498d8d0ea21bc15e65f07cbc681142a2a55db8e9af79333c89e76",
       "contextHash": "c2d4396aa55b0da43635a788dd0d322bfc6fafe9984a93dd89bb529154606aee"
-    },
-    {
-      "file": "src/components/inbox/linkPreviewUtils.ts",
-      "line": 2,
-      "column": 115,
-      "endLine": 2,
-      "endColumn": 116,
-      "severity": 2,
-      "ruleId": "no-useless-escape",
-      "messageId": "unnecessaryEscape",
-      "message": "Unnecessary escape character: \\+.",
-      "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
-      "lineHash": "b525fb5fc768d5234536abdd7092d897ba86252ea8442c91bb03914cf6e8d987",
-      "contextHash": "7b9255bd928d182a0d36b796738c3caf1c86bcf468b79a7173ec81f23dad0302"
-    },
-    {
-      "file": "src/components/inbox/linkPreviewUtils.ts",
-      "line": 2,
-      "column": 62,
-      "endLine": 2,
-      "endColumn": 63,
-      "severity": 2,
-      "ruleId": "no-useless-escape",
-      "messageId": "unnecessaryEscape",
-      "message": "Unnecessary escape character: \\+.",
-      "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
-      "lineHash": "b525fb5fc768d5234536abdd7092d897ba86252ea8442c91bb03914cf6e8d987",
-      "contextHash": "7b9255bd928d182a0d36b796738c3caf1c86bcf468b79a7173ec81f23dad0302"
     },
     {
       "file": "src/components/inbox/MessageContextActions.tsx",
@@ -11743,90 +11645,6 @@
       "contextHash": "23ac3f89bcab6521db2bf237ae191f5abb59051d7d4ec28013aae89b6cd562bb"
     },
     {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 33,
-      "column": 43,
-      "endLine": 33,
-      "endColumn": 46,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "6e0e9a82f52e220b0981f2b74954d2462613a6c54a3b0910a7dda5c683c4d32e",
-      "contextHash": "ef2575d0f3f26bfcc3a7dd87c5928d4c155898ef2cf200b62572c18c51bd096d"
-    },
-    {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 39,
-      "column": 27,
-      "endLine": 39,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "3ba682f1e2ff46d6e253e8db887c05d7d8ffacf2e84b1f1b1be572cf371b5fbf",
-      "contextHash": "e16188ae842dc0f63eb8a026e7a347870d18414dc9f83d532755e25cd0b4d2cb"
-    },
-    {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 48,
-      "column": 27,
-      "endLine": 48,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "8fa62a68011d5939b07ae51a05c576d23224aca659645842dc4b71b7a0f4d229",
-      "contextHash": "b7d0b6e348472ae15ec9fe04f21308c4ff47040864d1135b8de9ffce5137cdd3"
-    },
-    {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 73,
-      "column": 6,
-      "endLine": 73,
-      "endColumn": 9,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "e144071732b8927d9bb1a14f4c306af0262369110f18fa8c6813063748fcfcc4",
-      "contextHash": "bc3276bd1e0072f92c10ec1ac42c9dc9a65c9569180ac4f0556a771fbb827305"
-    },
-    {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 8,
-      "column": 33,
-      "endLine": 8,
-      "endColumn": 41,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "7082f6d9a1a4918d36c6afaed8276ac402bbbddbc9db0976d6650a23f2cfcb94",
-      "contextHash": "ddd428e2628ff303158ff23420a9803c202c7787dcfb70cbd5caccfdc6154e74"
-    },
-    {
-      "file": "src/hooks/__tests__/useSipClient.test.ts",
-      "line": 9,
-      "column": 35,
-      "endLine": 9,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unsafe-function-type",
-      "messageId": "bannedFunctionType",
-      "message": "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type.",
-      "spanHash": "c803710302d5769d8fcd51958c516ff27f2a3c5ad9373c348d1d180c04a74624",
-      "lineHash": "293b9c5aa943b1567bd85adc4ff45b6759ede32cbd48df3af089c846ef637186",
-      "contextHash": "3ef1d79312006ebf49d08aedee415e32e0db6edd673b2e837841fab56c14eb08"
-    },
-    {
       "file": "src/hooks/__tests__/useSLAHistory.test.tsx",
       "line": 1,
       "column": 1,
@@ -12513,34 +12331,6 @@
       "contextHash": "a2c1379f1120da1f75d50aa86a0191932bdb158753eac1ed445082e286671af9"
     },
     {
-      "file": "src/hooks/business/useCSAT.ts",
-      "line": 32,
-      "column": 9,
-      "endLine": 32,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "no-case-declarations",
-      "messageId": "unexpected",
-      "message": "Unexpected lexical declaration in case block.",
-      "spanHash": "0965dd88ccfede2b7d7a4592f45a9b1f4bf044b934ad1c2cf88e4945bf4c48a2",
-      "lineHash": "0965dd88ccfede2b7d7a4592f45a9b1f4bf044b934ad1c2cf88e4945bf4c48a2",
-      "contextHash": "671b7de7a9bf9fc685fe27a5303b0e58ec5174d8a3b8944399e5b8f515abd0b0"
-    },
-    {
-      "file": "src/hooks/business/useCSAT.ts",
-      "line": 36,
-      "column": 9,
-      "endLine": 36,
-      "endColumn": 40,
-      "severity": 2,
-      "ruleId": "no-case-declarations",
-      "messageId": "unexpected",
-      "message": "Unexpected lexical declaration in case block.",
-      "spanHash": "f37346fbbd1cd9f0f446e7b741a3605a3a660d3ab4c88d98f259a6c572d5b3a4",
-      "lineHash": "f37346fbbd1cd9f0f446e7b741a3605a3a660d3ab4c88d98f259a6c572d5b3a4",
-      "contextHash": "94c5db6e9ab4f3dc519d0eeac4854fbebf5f4e63ba3272fe973be462596a1513"
-    },
-    {
       "file": "src/hooks/business/useNPSSurveys.ts",
       "line": 62,
       "column": 5,
@@ -12791,48 +12581,6 @@
       "spanHash": "f082b920f8481b193e28828f8647c855b1541487ab0067c05be6fb6407c8634c",
       "lineHash": "4ab8a533713a2b40273e07de4a61c373b5053ed28e50f1ac3e05737cefe9f6b3",
       "contextHash": "52fdf1301ccc594135ab0f3fcd73f9a3a3f74d426790fb082ecf0f5cd0ba99da"
-    },
-    {
-      "file": "src/hooks/communication/useSipClient.ts",
-      "line": 110,
-      "column": 13,
-      "endLine": 110,
-      "endColumn": 124,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-unused-expressions",
-      "messageId": "unusedExpression",
-      "message": "Expected an assignment or function call and instead saw an expression.",
-      "spanHash": "1b443519fcb3ac67c2f7103939a5510ddec36376651163d15f2d1f1771599b9e",
-      "lineHash": "5220ac50a1735c17f344a6cc0008d0bc63b3a95995adb8c4df75762631845be2",
-      "contextHash": "e76c66823b7c86d34b85b1e6b5342555422ef51362da418f3ffe8c23333e46c3"
-    },
-    {
-      "file": "src/hooks/communication/useSipClient.ts",
-      "line": 44,
-      "column": 37,
-      "endLine": 44,
-      "endColumn": 38,
-      "severity": 2,
-      "ruleId": "no-useless-escape",
-      "messageId": "unnecessaryEscape",
-      "message": "Unnecessary escape character: \\(.",
-      "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
-      "lineHash": "78e616ae82b88bfe84894c7ca7e22761bbff8f6115283d7f32daa71ff3c1140a",
-      "contextHash": "259fe7cdfa02ccdc458482cf5b8157636ed63d3de10f88bb96599408f28720d5"
-    },
-    {
-      "file": "src/hooks/communication/useSipClient.ts",
-      "line": 44,
-      "column": 39,
-      "endLine": 44,
-      "endColumn": 40,
-      "severity": 2,
-      "ruleId": "no-useless-escape",
-      "messageId": "unnecessaryEscape",
-      "message": "Unnecessary escape character: \\).",
-      "spanHash": "a9253dc8529dd214e5f22397888e78d3390daa47593e26f68c18f97fd7a3876b",
-      "lineHash": "78e616ae82b88bfe84894c7ca7e22761bbff8f6115283d7f32daa71ff3c1140a",
-      "contextHash": "259fe7cdfa02ccdc458482cf5b8157636ed63d3de10f88bb96599408f28720d5"
     },
     {
       "file": "src/hooks/communication/useTextToSpeech.ts",
@@ -13309,20 +13057,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "0923bacbfc4f8c49945e53cc23585442a83a5b267f4be68f830bf97ef9f972bc",
       "contextHash": "67336c9645e17ca98f08cd4fe2e7f37b6f1a679daad19ac02d658cfe194a5e5c"
-    },
-    {
-      "file": "src/hooks/sip/useSipConnection.ts",
-      "line": 47,
-      "column": 28,
-      "endLine": 47,
-      "endColumn": 35,
-      "severity": 2,
-      "ruleId": "react-hooks/immutability",
-      "messageId": null,
-      "message": "Error: Cannot access variable before it is declared `connect` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time. <ROOT>/src/hooks/sip/useSipConnection.ts:47:28 45 | const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); 46 | toast.info(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`); > 47 | setTimeout(() => connect(config), delay); | ^^^^^^^ `connect` accessed before it is declared 48 | } else { 49 | toast.error('Não foi possível reconectar ao servidor VoIP.'); 50 | reconnectAttemptsRef.current = 0; <ROOT>/src/hooks/sip/useSipConnection.ts:24:3 22 | const maxReconnectAttempts = 5; 23 | > 24 | const connect = useCallback(async (config: SipConfig) => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 25 | try { | ^^^^^^^^^ > 26 | setSipStatus('connecting'); … | ^^^^^^^^^ > 67 | } | ^^^^^^^^^ > 68 | }, []); | ^^^^^^^^^^ `connect` is declared here 69 | 70 | const disconnect = useCallback(async () => { 71 | try {",
-      "spanHash": "5a638a128ca67348f1073ba0aed26d85905a29128cbd71b250c9cf4e598c7f0d",
-      "lineHash": "75b67f2e04ad63f532482cd0e38a4fa77bbd115a01680e643e4b1d0026ce7057",
-      "contextHash": "5123344637bbf38764b4bc5611e11e7243ef3997e253f672be21853950774009"
     },
     {
       "file": "src/hooks/sticker-picker/useStickerPicker.ts",
