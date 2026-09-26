@@ -43,18 +43,29 @@ describe('rulesToPostgrest', () => {
     expect(barrasNoFinal % 2).toBe(0);
   });
 
-  it('escapes a trailing backslash before quoting inside contains/ilike (esc + quoted)', () => {
-    // contains passa por DUAS camadas de escape (esc para o padrao LIKE,
-    // quoted para a string do filtro) — 1 backslash de entrada sai como 4
-    // (cada camada dobra), nunca um numero impar antes do fechamento.
+  it('escapes a trailing backslash before quoting inside contains/ilike', () => {
     const filtro = rulesToPostgrest({
       groups: [{ id: 'group-1', match: 'and', rules: [
         { id: 'rule-1', field: 'company', op: 'contains', value: 'Acme\\' },
       ] }],
     });
-    expect(filtro).toBe('company.ilike."*Acme\\\\\\\\*"');
+    expect(filtro).toBe('company.ilike."*Acme\\\\*"');
     const antesDoAsterisco = filtro!.slice(0, filtro!.lastIndexOf('*'));
     const barras = antesDoAsterisco.length - antesDoAsterisco.replace(/\\+$/, '').length;
     expect(barras % 2).toBe(0);
+  });
+
+  // Achado do Codex (PR #896): uma camada extra de escape de virgula fazia
+  // "Acme, Inc" virar uma busca por "Acme\, Inc" (com barra invertida
+  // espuria), que nunca bate com o dado real — excluindo contatos que
+  // deveriam entrar no segmento. Virgula dentro de aspas nao precisa de
+  // escape para o parser do PostgREST.
+  it('does not corrupt a value containing a comma inside contains/ilike', () => {
+    const filtro = rulesToPostgrest({
+      groups: [{ id: 'group-1', match: 'and', rules: [
+        { id: 'rule-1', field: 'company', op: 'contains', value: 'Acme, Inc' },
+      ] }],
+    });
+    expect(filtro).toBe('company.ilike."*Acme, Inc*"');
   });
 });

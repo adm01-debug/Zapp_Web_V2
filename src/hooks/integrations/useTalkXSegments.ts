@@ -72,11 +72,14 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
 export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }] });
 export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
 
-// Escapa \ ANTES de escapar , . ( ) " — tudo em um unico passe do regex, para
-// nao deixar uma barra invertida do valor original "engolir" o escape de uma
-// aspa/virgula inserida depois (js/incomplete-sanitization: sem isso, um
-// valor terminado em \ fecha a string do filtro PostgREST antes do previsto).
-const esc = (v: string) => v.replace(/[\\,.()"]/g, (c) => (c === '\\' ? '\\\\' : c === '"' ? '\\"' : c === ',' ? '\\,' : c)).trim();
+// Escapa \ ANTES de escapar " — em um unico passe, para nao deixar uma barra
+// invertida do valor original "engolir" a aspa de fechamento do filtro
+// PostgREST (js/incomplete-sanitization: sem isso, um valor terminado em \
+// fecha a string do filtro antes do previsto). Virgula nao precisa de escape
+// aqui: dentro de uma string entre aspas, o parser do PostgREST nao a trata
+// como separador de filtros — escapa-la geraria uma barra invertida espuria
+// no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
+// porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
 const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
@@ -109,8 +112,8 @@ function ruleToFilter(r: SegmentRule): string | null {
   switch (r.op) {
     case 'eq': return `${r.field}.eq.${quoted(v)}`;
     case 'neq': return `or(${r.field}.is.null,${r.field}.neq.${quoted(v)})`;
-    case 'contains': return `${r.field}.ilike.${quoted(`*${esc(v)}*`)}`;
-    case 'not_contains': return `or(${r.field}.is.null,${r.field}.not.ilike.${quoted(`*${esc(v)}*`)})`;
+    case 'contains': return `${r.field}.ilike.${quoted(`*${v}*`)}`;
+    case 'not_contains': return `or(${r.field}.is.null,${r.field}.not.ilike.${quoted(`*${v}*`)})`;
     default: return null;
   }
 }
