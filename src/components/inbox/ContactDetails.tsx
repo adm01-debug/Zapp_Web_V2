@@ -86,7 +86,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 100, opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }} ref={panelRef} role="complementary" aria-label="Detalhes do contato"
       data-testid="contact-panel"
-      className="w-[380px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"
+      className="w-[323px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-inbox-panel shrink-0">
         <div className="flex items-center gap-2">
