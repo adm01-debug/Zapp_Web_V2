@@ -98,6 +98,7 @@ export function useLeaderboard() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchLeaderboard so seta estado apos o await da RPC; a chamada aqui e sincrona (so dispara a query).
     fetchLeaderboard(timeRange);
     const channel = supabase
       .channel(uniqueRealtimeTopic('leaderboard-updates'))
