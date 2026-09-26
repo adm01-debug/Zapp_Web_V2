@@ -1,7 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EditContactDialog } from '../EditContactDialog';
+
+// O jsdom não implementa isso; o Radix Select chama nos 3 ao abrir/fechar
+// (usado só pelo teste que exercita o Select de job_title).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = Element.prototype.hasPointerCapture ?? (() => false);
+  Element.prototype.releasePointerCapture = Element.prototype.releasePointerCapture ?? (() => {});
+  Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? (() => {});
+});
 
 // Mock supabase
 const mockUpdate = vi.fn();
@@ -193,6 +201,13 @@ describe('EditContactDialog', () => {
     fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: '' } });
     fireEvent.change(screen.getByDisplayValue('Doe'), { target: { value: '' } });
     fireEvent.change(screen.getByDisplayValue('Acme'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('john@test.com'), { target: { value: '' } });
+    // job_title é um Select (sentinela '__none__' → string vazia), não um <input>
+    // de texto — cobertura perdida na reescrita "só campos alterados" (auditoria
+    // de 5 agentes, 2026-09-26, 5a rodada, achada por mutação: os 24 testes
+    // continuavam verdes com o normalizador de job_title trocado por identidade).
+    fireEvent.click(screen.getByRole('combobox', { name: /cargo/i }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Selecione o cargo' }));
     fireEvent.click(screen.getByText('Salvar'));
 
     await waitFor(() => {
@@ -200,8 +215,23 @@ describe('EditContactDialog', () => {
       expect(updatePayload.nickname).toBeNull();
       expect(updatePayload.surname).toBeNull();
       expect(updatePayload.company).toBeNull();
+      expect(updatePayload.email).toBeNull();
+      expect(updatePayload.job_title).toBeNull();
     });
   });
+
+  // NOTA (auditoria de 5 agentes, 2026-09-26, 5a rodada): o autocomplete de
+  // endereço do ContactForm chama onChange várias vezes em sequência, dentro
+  // do mesmo handler síncrono (sem re-render entre uma chamada e outra) — o
+  // updater funcional de setFormValues (`prev => ({...prev, [field]: value})`)
+  // é o que protege isso de virar closure velha perdendo campo. Uma 1a versão
+  // deste teste tentava provar isso com 3 `fireEvent.change` dentro de um
+  // `act()`, mas cada `fireEvent.change` do RTL já força seu próprio flush
+  // síncrono (evento discreto) — não reproduz "mesmo tick, sem render no
+  // meio", e continuava verde mesmo com o updater mutado pra versão com
+  // closure velha (falso positivo, removido). Cobertura real disso exigiria
+  // montar o fluxo completo do autocomplete de endereço (mock da busca de
+  // lugar) — não existe hoje; ver "Próximos passos".
 
   // ========== SÓ CAMPOS ALTERADOS (achado da auditoria de 5 agentes,
   // 2026-09-26, 4a rodada: o painel nunca preenche/seleciona endereço e
