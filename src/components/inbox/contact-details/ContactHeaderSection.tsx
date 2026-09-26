@@ -153,9 +153,13 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               </div>
             )}
             {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
-            {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
-              {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
-            </p>}
+            {enrichedData?.job_title && (
+              <p className={companyName
+                ? 'text-3xs text-muted-foreground truncate mt-0.5'
+                : 'text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5'}>
+                {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
+              </p>
+            )}
 
             {conversation?.updatedAt && (
               <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1">
