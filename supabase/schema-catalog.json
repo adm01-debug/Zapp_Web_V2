@@ -1764,6 +1764,7 @@
         "dashboard_contact_counts",
         "dashboard_hourly_volume",
         "dashboard_kpi",
+        "dashboard_leaderboard",
         "dashboard_sentiment_alerts",
         "decrypt_gmail_token",
         "effective_role",
@@ -1849,7 +1850,7 @@
         "upsert_crm_contact_link_guarded",
         "user_has_permission"
     ],
-    "generated_at": "2026-09-25",
+    "generated_at": "2026-09-26",
     "format_version": 2,
     "database_identity": {
         "schema": "public",
@@ -1878,6 +1879,7 @@
         "dashboard_contact_counts(p_since timestamp with time zone, p_until timestamp with time zone, p_queue uuid, p_agent uuid)->jsonb|kind=f",
         "dashboard_hourly_volume(p_days integer, p_queue uuid, p_agent uuid)->TABLE(day date, hour integer, message_count bigint)|kind=f",
         "dashboard_kpi(p_since timestamp with time zone, p_queue uuid, p_agent uuid)->jsonb|kind=f",
+        "dashboard_leaderboard(p_period text, p_limit integer)->jsonb|kind=f",
         "dashboard_sentiment_alerts(p_since timestamp with time zone)->TABLE(id uuid, entity_id uuid, created_at timestamp with time zone, details jsonb)|kind=f",
         "decrypt_gmail_token(p_encrypted bytea)->text|kind=f",
         "effective_role(_user_id uuid)->app_role|kind=f",
