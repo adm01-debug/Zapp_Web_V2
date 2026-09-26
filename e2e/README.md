@@ -55,17 +55,24 @@ npm run test:e2e
   podem referenciar secrets (regra em `scripts/ci/check-pr-workflow-secrets.mjs`),
   então esse teste não bloqueia PR.
 
-`chromium-authenticated` **não roda no CI**: hoje só tem specs do Talk X, e o
-usuário de teste (agente) não enxerga "Campanhas". Para incluí-lo é preciso
+`chromium-authenticated` roda no `e2e-logado.yml`, mas **restrito a
+`conversation.spec.ts` e `messaging.spec.ts`** (`--project=chromium-authenticated
+e2e/conversation.spec.ts e2e/messaging.spec.ts`). `talkx.spec.ts` fica de fora:
+o usuário de teste é agente e não enxerga "Campanhas". Para incluí-lo é preciso
 decidir o perfil do usuário de teste ou trazer specs que um agente consiga
 executar.
 
-## Specs que dependem de dados seedados
+## Fixture de dados (contato seedado)
 
-Alguns testes em `conversation.spec.ts`, `messaging.spec.ts` e `talkx.spec.ts`
-continuam com `test.skip` mesmo depois da fixture de auth, porque dependem de
-dados que não existem neste ambiente (ex.: uma conversa específica já aberta
-no inbox, ou uma conexão de WhatsApp + segmento já seedados para avançar o
-wizard de campanha). O comentário acima de cada `test.skip` explica a
-dependência específica. Não inventamos fixtures de dados falsos só para
-destravar esses casos.
+`conversation.spec.ts` e `messaging.spec.ts` dependem de um contato real já
+seedado em produção — `e2e/fixtures/e2e-contact.ts` documenta o id e expõe
+`ensureFixtureConversationOpen()`, chamado num `beforeEach` para reabrir a
+conversa antes de cada teste (a suíte roda contra produção via
+`e2e-logado.yml`, então o teste de resolução precisa reverter o próprio efeito
+colateral a cada execução; o FSM em `enforce_conversation_status_transition`
+permite `resolved -> open`). O contato ("[E2E] Contato de teste - nao
+apagar", atribuído ao usuário de teste, sem fila) é o único item visível no
+inbox desse usuário — nunca apagar essa linha do banco.
+
+`talkx.spec.ts` continua com `test.skip`: além de não ter dados seedados,
+o usuário de teste não tem permissão de ver Campanhas de qualquer forma.
