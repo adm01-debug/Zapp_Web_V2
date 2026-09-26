@@ -51,9 +51,9 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('TechCo')).toBeInTheDocument();
   });
 
-  it('renders phone number', () => {
+  it('does not render phone number or WhatsApp link', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.getByText('+5511999999999')).toBeInTheDocument();
+    expect(screen.queryByText('+5511999999999')).not.toBeInTheDocument();
   });
 
   it('does not render a sentiment chip (fora do escopo dos chips §5.3: tipo/VIP/alta prioridade)', () => {
@@ -136,6 +136,13 @@ describe('ContactHeaderSection', () => {
       />
     );
     expect(screen.getByText('Zé')).toBeInTheDocument();
+  });
+
+  // ========== COLLAPSE CONTATO ==========
+  it('recolhe o header ao clicar no botão "Recolher contato" e mostra o header compacto', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    fireEvent.click(screen.getByLabelText('Recolher contato'));
+    expect(screen.getByLabelText('Expandir contato')).toBeInTheDocument();
   });
 
   // ========== COLLAPSE ALL ==========
