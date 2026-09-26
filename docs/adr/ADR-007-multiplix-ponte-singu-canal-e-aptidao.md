@@ -19,7 +19,10 @@ Quatro decisões bloqueiam a Fase 1 do Multiplix. Cada uma abaixo traz o problem
 | C — Reusar as RPCs `anon` atuais | 0 | Amplia a superfície já insegura. | Multiplix nasce em cima do GATE C. |
 
 **Decisão recomendada: A.**
-- Secret `SINGU_SERVICE_KEY` nas edge functions do ZAPP (via `deploy-functions.yml`); nunca no front.
+- Secrets `EXTERNAL_SUPABASE_URL`/`EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` nas edge functions do ZAPP
+  (via `deploy-functions.yml`) — os mesmos já usados pelo `crm-integration` para o Singu, reusados
+  em vez de duplicar credencial sob um nome novo (`SINGU_SERVICE_KEY`, cogitado aqui originalmente,
+  não existe); nunca no front.
 - RPCs novas no Singu (`multiplix_search_audience`, `multiplix_count_audience`, `multiplix_resolve_recipients`, `multiplix_list_ramos`, `multiplix_list_ufs`) são `SECURITY DEFINER`, recebem o escopo do usuário ZAPP como parâmetro assinado pela edge e **não** têm GRANT para `anon`.
 - Escopo (carteira/departamento) é decidido na edge a partir do JWT do ZAPP e aplicado dentro da RPC (E015). O front nunca manda escopo.
 - Quando o banco único chegar, a edge vira chamada local; as RPCs permanecem.

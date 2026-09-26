@@ -101,7 +101,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
   cabeçalho do workflow), logo o check nunca reportaria no SHA de PR e torná-lo required
   congelaria todos os merges. O contrato vivo roda pós-merge (push na `main`), agendado (segunda
   06:00 UTC) e via `workflow_dispatch`; os required checks de PR seguem sendo os offline.
-  Complemento E43 verificado em 2026-09-17: force-push e deleção da `main` bloqueados, strict
+  Complemento E43 verificado em 2026-09-17: force-push e delеção da `main` bloqueados, strict
   mode ligado.
 
   **Correção de 2026-09-25:** a linha original afirmava "review obrigatório". A API não retorna
@@ -254,14 +254,50 @@ deixou de ser necessário: não crie o secret.** Se o Job Summary algum dia list
 pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar com PAT.
 
 **Não mexer nestes, que parecem bugs e não são:**
-- `chromium-authenticated` fora do CI: `conversation.spec.ts` e `messaging.spec.ts` estão
-  inteiramente em `test.skip` (sem dados semeados) e o único spec ativo é o do Talk X, que o
-  usuário de teste (agente) não enxerga. Habilitar hoje = zero cobertura e `main` vermelha.
+- `talkx.spec.ts` fora do CI: é o único spec do `chromium-authenticated` que continua de fora —
+  o usuário de teste (agente) não enxerga "Campanhas". Habilitar hoje = zero cobertura e `main`
+  vermelha. **Correção de 2026-09-26:** `conversation.spec.ts`/`messaging.spec.ts` NÃO estão mais
+  nesta lista — havia um contato fixo já seedado em produção desde 24/09
+  (`04dff4dc-c6b1-4283-ac22-bd8639804759`, "[E2E] Contato de teste - nao apagar", atribuído ao
+  usuário de teste) que ninguém tinha ligado ao código; os dois specs tinham `test.skip` e
+  seletores que nunca bateram com a UI real (`data-testid="message-input"`/`"message-bubble"`
+  não existem no código; o fluxo de "resolver" real é `ChatPanelHeader` → "Mais ações" → "Marcar
+  como resolvido" → `CloseConversationDialog`, não um botão simples). Reescritos e habilitados no
+  `e2e-logado.yml` (ver `e2e/README.md` e `e2e/fixtures/e2e-contact.ts`).
 - `vars.CRM_SYNC_WORKER_ENABLED` no crm-sync-worker: o schedule está comentado e a condição é
   preparação deliberada para a reativação, não código morto.
 - `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
+
+## Incidente de 2026-09-26 — DDL do E40 direto no banco, sem PR (issue #724)
+
+Às 11:38 outra sessão aplicou a mudança do E40 (decisão de Joaquim: `scheduled_report_configs`
+vira owner-only) direto em produção via MCP, sem passar pelo fluxo arquivo→PR→merge da seção 3 —
+nenhum arquivo em `supabase/migrations/`. Isso é exatamente o padrão dos drifts de setembro que a
+seção 1/regra 6 já documenta, e voltou a acontecer apesar do aviso. `db-live-guard` pegou (version
+`20260926113806` "DDL fora do Git"), reconciliado na PR #824 com o SQL exato lido do ledger — sem
+aplicar nada novo, só documentando o que já estava em produção.
+
+**Efeito cascata que isso disparou** (nenhum sozinho seria óbvio, juntos formam uma cadeia de 4 PRs
+numa hora): (1) reconciliar o arquivo do E40 (#824) não bastou — o `types-sync` automático (#823)
+ainda precisava rodar e mergear para o catálogo/`types.ts`/manifesto pegarem as novas policies,
+porque o DDL aplicado fora do fluxo nunca passou pelo passo que regenera esses artefatos; (2) uma
+auditoria de segurança (5 agentes, a pedido do Joaquim) sobre a migration reconciliada achou que a
+policy de INSERT só validava `is_admin_or_supervisor()`, sem restringir `created_by` — um
+supervisor podia plantar um registro "possuído" por outra pessoa (corrigido em #833); (3) o
+`db-live-guard` disparado após o merge de #833 falhou de novo, mas por causa **não relacionada**:
+3 exceções `pinned-replay` antigas (`20260904320000`, `20260904370000`, `20260909130000`) ficaram
+obsoletas porque uma sessão paralela corrigiu essas linhas do ledger (que só tinham resumo em
+prosa) para conter o SQL completo — coincidência de timing com sessões mergeando em paralelo,
+removidas em #842.
+
+**Lição:** um DDL fora do fluxo nunca é "só aquele objeto" — quebra o catálogo até o próximo
+`types-sync`, e qualquer lacuna de segurança na migration reconciliada só aparece se alguém
+auditar de propósito (a auditoria de 5 agentes achou o INSERT; um reconciliamento só de "faz o
+guard passar" não teria achado). Se você é a sessão que vai aplicar DDL: pare, abra o arquivo,
+espere o PR mergear — a regra 6 da seção 1 existe por isto, escrita depois dos drifts de
+02/09 e 04/09, e ainda assim isso se repetiu em 26/09.
 
 ## Lição de UI (2026-09-25) — fundo de painel preto sem escopo de tema
 
