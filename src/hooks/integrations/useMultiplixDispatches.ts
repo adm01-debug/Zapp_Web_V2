@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 
@@ -156,7 +157,12 @@ export function useCreateMultiplixDispatch() {
         // start, o dispatch fica em 'draft' e o botao "Iniciar" do monitor
         // permite tentar de novo (com o erro real, via toast do runAction).
         invokeMultiplixSend(dispatch.id, 'start').catch((startError) => {
+          // Nao e so o caso esperado (fora da janela): auth/409/500/rede
+          // tambem caem aqui, e sem avisar o usuario o disparo fica parado
+          // (draft) ou preso em 'sending' sem ninguem saber o motivo.
+          const message = startError instanceof Error ? startError.message : 'Erro ao iniciar disparo';
           console.error('multiplix-send start (background) falhou:', startError);
+          toast.error(`Disparo salvo, mas o início falhou: ${message}`);
         });
       }
 
