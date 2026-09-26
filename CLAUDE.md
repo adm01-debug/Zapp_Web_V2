@@ -311,6 +311,32 @@ por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-l
 o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
 cálculo de contraste WCAG) ficou só na sessão que corrigiu.
 
+## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
+
+**DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
+`db-migrate.yml`.** O workflow existe, funciona e é mais seguro no papel (dry-run + hash), mas
+pausa em `Waiting` no environment `producao-ddl` até alguém aprovar na aba Actions. Com várias
+sessões trabalhando e o Joaquim fora do teclado, o DDL fica parado e o arquivo já mergeado passa a
+ser drift — exatamente o que o guarda vivo acusa. Regra prática, nesta ordem:
+
+1. arquivo em `supabase/migrations/` → PR → merge em `main` (regra 6 da seção 1 continua valendo);
+2. `node scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o SQL exato (nunca
+   transcrever à mão — é isso que garante a regra 7 do `statements`);
+3. o DDL e o `INSERT` no ledger na **mesma** chamada de `db_query` (1 transação), com
+   `RETURNING` não-vazio como guarda;
+4. fechar com `supabase-usage-guard.mjs` (`novas: 0`) e paridade arquivos↔ledger.
+
+Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_template_version`,
+índice duplicado da unique `(template_id, version_number)`; 0 linhas e 0 `idx_scan` na tabela
+antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
+
+**Merge em `main` NÃO deploya edge function.** O front é Vercel e sobe sozinho; as edge functions
+sobem **só** por `workflow_dispatch` do `deploy-functions.yml` (é deliberado — ver cabeçalho do
+workflow), e o job ainda pausa em `Waiting` no environment `producao-edge-functions`. Ou seja:
+uma correção de edge function mergeada continua **fora do ar** até alguém disparar o workflow E
+aprovar. Quem mergear fix de edge function e disser "está em produção" sem esse par de passos está
+reportando errado — aconteceu nesta sessão com o fix do `trash-thread` do Gmail (PR #840).
+
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 - For codebase questions: `graphify query "<question>"` when graph.json exists.
