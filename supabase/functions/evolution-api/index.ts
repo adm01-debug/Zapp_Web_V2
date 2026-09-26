@@ -195,17 +195,32 @@ serve(async (req) => {
       // GO, e o "loser" resolvia a instância só pelo NOME e apagava a da
       // outra). Enquanto esta linha existir, nenhum concorrente com o mesmo
       // nome consegue passar deste ponto.
+      // Risco aceito, não coberto por nenhuma limpeza automática: se o
+      // processo morrer entre este INSERT e a chamada à GO mais abaixo, a
+      // linha reservada fica "fantasma" (sem token, sem instância) e só sai
+      // por delete manual (handleDelete no front). Impacto baixo porque o
+      // nome vem com sufixo de timestamp (generateInstanceName) — bloqueia
+      // só aquele nome exato, nunca reaparece por acidente.
       const { data: row, error: insertError } = await supabase.from('whatsapp_connections').insert({
         name: connName, phone_number: phoneNumber, instance_id: instance, status: 'disconnected',
         is_default: body.is_default === true,
       }).select().single();
       if (insertError || !row) {
-        if (insertError?.code !== '23505') {
+        const isUniqueViolation = insertError?.code === '23505';
+        if (!isUniqueViolation) {
           new Logger('evolution-api').error('create-connection: insert falhou antes de tocar a GO', { instance, error: insertError?.message });
         }
-        const message = insertError?.code === '23505'
-          ? `Já existe uma conexão com instance_id '${instance}'.`
-          : 'Falha ao registrar a conexão.';
+        // A tabela tem DOIS unique index que geram 23505: instance_id (o caso
+        // comum) e o parcial whatsapp_connections_one_default (is_default
+        // WHERE true) — duas criações concorrentes com is_default:true
+        // colidem nesse segundo, e a mensagem não pode afirmar que foi o
+        // instance_id se a constraint foi outra.
+        const isDefaultCollision = isUniqueViolation && !!insertError?.message?.includes('whatsapp_connections_one_default');
+        const message = isDefaultCollision
+          ? 'Já existe uma conexão marcada como padrão — outra criação concorrente chegou primeiro.'
+          : isUniqueViolation
+            ? `Já existe uma conexão com instance_id '${instance}'.`
+            : 'Falha ao registrar a conexão.';
         return new Response(JSON.stringify({ error: true, message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -283,7 +298,14 @@ serve(async (req) => {
       // nunca em createRes.ok.
       const createData: Record<string, unknown> = await createRes.json().catch(() => ({}));
       if (createData?.error) {
-        // A GO nunca chegou a criar nada aqui — só a reserva local para desfazer.
+        // error:true aqui não prova que a GO não criou nada: proxyToEvolution
+        // devolve o mesmo formato tanto pra erro de negócio da GO quanto pra
+        // timeout/erro de rede depois que a requisição JÁ pode ter chegado lá
+        // (/instance/create é POST, nunca é retried/idempotente — ver
+        // isIdempotent em evolution-api-proxy.ts). compensateGoCreate() só
+        // age se resolveGoInstanceId achar algo com este nome — é no-op
+        // seguro quando de fato nada foi criado, e fecha o caso em que foi.
+        await compensateGoCreate();
         await rollbackRow();
         return new Response(JSON.stringify(stripInstanceToken(createData)), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
