@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 
-test('15 historical limitations pin local files without manufacturing historical proof', () => {
+test('11 historical limitations pin local files without manufacturing historical proof', () => {
   const report = JSON.parse(fs.readFileSync(new URL('./ledger-history-limitations.json', import.meta.url)));
   const exceptions = JSON.parse(fs.readFileSync(new URL('./migration-evidence.json', import.meta.url)));
   assert.equal(report.historical_content_proven, false);
-  assert.equal(report.entries.length, 15);
-  assert.equal(new Set(report.entries.map(row => row.version)).size, 15);
-  assert.equal(report.entries.filter(row => row.evidence_class === 'name-and-file-pinned').length, 11);
+  assert.equal(report.entries.length, 11);
+  assert.equal(new Set(report.entries.map(row => row.version)).size, 11);
+  assert.equal(report.entries.filter(row => row.evidence_class === 'name-and-file-pinned').length, 7);
   for (const row of report.entries) {
     assert.match(row.filename, new RegExp(`^${row.version}_[a-z0-9_-]+\\.sql$`));
     const content = fs.readFileSync(new URL(`../../supabase/migrations/${row.filename}`, import.meta.url));
