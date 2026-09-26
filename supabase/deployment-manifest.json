@@ -313,8 +313,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 52672,
-      "sha256": "26c292d6d48b4e53cf95e9d65b1bebce1dc783d0087e3dcf269cae35067ec743"
+      "bytes": 52799,
+      "sha256": "010f0298fb4461f0da0173ef045792c52a931c1d8cc3aadb6a86453a24f6af27"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -443,8 +443,8 @@
     },
     {
       "path": "supabase/functions/talkx-report/index.ts",
-      "bytes": 13625,
-      "sha256": "cb49b63ef0f6a045857f79b9403362964b75869c5ce87d678425da87dfac0522"
+      "bytes": 13650,
+      "sha256": "b83382c1decb318fa87fc2110db6748a372fd551e7100dc51f3ab9f73f5b1c39"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
@@ -478,8 +478,8 @@
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "bytes": 9600,
-      "sha256": "138836b34bbfece58fda4554e3f76159c02150b16bb89a2277dc29dc96f1df1f"
+      "bytes": 9724,
+      "sha256": "699e4290115497f119d0fa4192c5de5ec0e8e8b8e2d7d6c24e72d43c03a255a5"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -905,7 +905,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e70c6c96b33cbd2923d070958c901d6d84e611d0a614ab78fd6a9e4ce47190d8",
+      "source_sha256": "cafcc3055dff58662d7205d26801c8f9e58c99d3cd6b2b1227fcff535457cfb9",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1233,7 +1233,7 @@
       "name": "talkx-report",
       "entrypoint": "supabase/functions/talkx-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "25554a7a9fc72f27d48b55619f54d8ad34763172184519ad30ab51e15082e6a2",
+      "source_sha256": "1175ad9f72b74bbcbf09125e3d31ea81b1ff6da1479fbebf1e05bb881f8aeea3",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1318,7 +1318,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6abbbf50bc15b6a5e9b4f2e4dca048e595c74ce5075cc6b6183f1232a57c15ba",
+      "source_sha256": "de5098c1ed9a9836111a7642dc922f4a22a818ce1414357ed5897e37e585b5f4",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1339,5 +1339,5 @@
       ]
     }
   ],
-  "manifest_sha256": "361f02ae0cbc59c06a427983b1f2ec657ae331c9c3815f29e3e3a854ef88baa7"
+  "manifest_sha256": "00269bbbae704213dff94e9f52528e566a5a4f2d7b1f7c63910b088bb90b16e1"
 }
