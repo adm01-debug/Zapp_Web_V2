@@ -4,12 +4,14 @@ import { ModuleHeader } from '@/components/talkx/talkxShared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import {
   useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
   type MultiplixSearchFilters,
 } from '@/hooks/integrations/useMultiplixAudience';
+import { MultiplixComposerDialog } from './MultiplixComposerDialog';
 
 const ROLE_LABELS: Record<'cliente' | 'fornecedor' | 'transportadora', string> = {
   cliente: 'Cliente', fornecedor: 'Fornecedor', transportadora: 'Transportadora',
@@ -29,6 +31,8 @@ export default function MultiplixView() {
   const [ramo, setRamo] = useState('');
   const [uf, setUf] = useState('');
   const [term, setTerm] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
     roles: role ? [role] : undefined,
@@ -38,8 +42,23 @@ export default function MultiplixView() {
   }), [role, ramo, uf, term]);
 
   const runSearch = () => {
+    setSelected(new Set());
     count.mutate(filters);
     search.mutate({ ...filters, page: 0, page_size: 50 });
+  };
+
+  const toggleRow = (companyId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) next.delete(companyId); else next.add(companyId);
+      return next;
+    });
+  };
+
+  const toggleAllVisible = () => {
+    const rows = search.data ?? [];
+    const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.company_id));
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.company_id)));
   };
 
   return (
@@ -116,6 +135,13 @@ export default function MultiplixView() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={search.data.length > 0 && search.data.every((r) => selected.has(r.company_id))}
+                    onCheckedChange={toggleAllVisible}
+                    aria-label="Selecionar todas as empresas visíveis"
+                  />
+                </TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Ramo</TableHead>
                 <TableHead>UF</TableHead>
@@ -126,6 +152,13 @@ export default function MultiplixView() {
             <TableBody>
               {search.data.map((row) => (
                 <TableRow key={row.company_id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(row.company_id)}
+                      onCheckedChange={() => toggleRow(row.company_id)}
+                      aria-label={`Selecionar ${row.company_name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{row.company_name}</TableCell>
                   <TableCell>{row.ramo_atividade}</TableCell>
                   <TableCell>{row.uf ?? '—'}</TableCell>
@@ -141,7 +174,7 @@ export default function MultiplixView() {
               ))}
               {search.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Nenhuma empresa encontrada para este filtro.
                   </TableCell>
                 </TableRow>
@@ -154,6 +187,22 @@ export default function MultiplixView() {
       {search.error && (
         <p className="text-sm text-destructive">{search.error.message}</p>
       )}
+
+      {selected.size > 0 && (
+        <div className="sticky bottom-4 flex items-center justify-between gap-4 self-center rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] px-4 py-3 shadow-lg">
+          <span className="text-sm">
+            <strong>{selected.size}</strong> empresa(s) selecionada(s)
+          </span>
+          <Button onClick={() => setComposerOpen(true)}>Criar disparo</Button>
+        </div>
+      )}
+
+      <MultiplixComposerDialog
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        selectedCompanyIds={Array.from(selected)}
+        onCreated={() => setSelected(new Set())}
+      />
     </div>
   );
 }

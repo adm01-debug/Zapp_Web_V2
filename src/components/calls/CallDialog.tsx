@@ -30,6 +30,11 @@ interface CallDialogProps {
   };
   direction: 'inbound' | 'outbound';
   whatsappConnectionId?: string;
+  /** Chamada já identificada e/ou já atendida antes da abertura do diálogo
+   *  (ex.: aceite feito no alerta de chamada recebida) — evita recriar o
+   *  registro e evita pedir "Atender" uma segunda vez. */
+  existingCallId?: string | null;
+  initialStatus?: 'ringing' | 'answered';
   onAnswer?: () => void;
   onEnd: () => void;
 }
@@ -40,21 +45,24 @@ export function CallDialog({
   contact,
   direction,
   whatsappConnectionId,
+  existingCallId,
+  initialStatus,
   onAnswer,
   onEnd,
 }: CallDialogProps) {
-  const [status, setStatus] = useState<'ringing' | 'answered' | 'ended'>('ringing');
+  const [status, setStatus] = useState<'ringing' | 'answered' | 'ended'>(initialStatus ?? 'ringing');
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-  const [callId, setCallId] = useState<string | null>(null);
+  const [callId, setCallId] = useState<string | null>(existingCallId ?? null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const { startCall, answerCall, endCall, missCall } = useCalls();
 
-  // Start call when dialog opens
+  // Start call when dialog opens (pulado quando a chamada já tem id — ex.
+  // aceite feito a partir do alerta de chamada recebida).
   useEffect(() => {
-    if (open && !callId) {
+    if (open && !callId && !existingCallId) {
       startCall({
         contactId: contact.id,
         contactPhone: contact.phone,
@@ -65,7 +73,7 @@ export function CallDialog({
         if (id) setCallId(id);
       });
     }
-  }, [open, callId, contact, direction, whatsappConnectionId, startCall]);
+  }, [open, callId, existingCallId, contact, direction, whatsappConnectionId, startCall]);
 
   // Timer for call duration
   useEffect(() => {
@@ -85,12 +93,13 @@ export function CallDialog({
   // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
-      setStatus('ringing');
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reseta para a próxima chamada só quando o diálogo fecha, não em toda renderização.
+      setStatus(initialStatus ?? 'ringing');
       setDuration(0);
       setIsMuted(false);
-      setCallId(null);
+      setCallId(existingCallId ?? null);
     }
-  }, [open]);
+  }, [open, initialStatus, existingCallId]);
 
   const handleAnswer = async () => {
     setStatus('answered');
