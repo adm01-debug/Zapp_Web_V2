@@ -101,10 +101,13 @@ atendida que cai. Consolidado num único dono:
 | `INVITE_RECEIVED` com sessão ocupada → mesma referência, **sem** `warn` | aceito | é linha da tabela, não transição inválida (`busyHereOutcome()` = `{missed, busy}`) |
 | `zapp:start-call` em `document`, legado `start-voip-call` em `window` | aceito | o emissor real (`ContactActionButtons.tsx:100`) usa `window.dispatchEvent`; os dois são removidos no cleanup |
 
-## CP2 Banco (gate)    [~] PR-A=**#875** · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · **AGUARDANDO APROVAÇÃO — nada aplicado em produção**
+## CP2 Banco (gate)    [x] PR-A=**#875** · schema efetivo medido · backfill: wa=10 voip=11 (+ 0 talk_seconds) · rls_test=PASS 61/61 · **APLICADO EM PRODUÇÃO (26/09)**
 
-**Parada obrigatória do plano (regra 7 da seção 0.2).** A migration existe, foi provada em PostgreSQL 17
-descartável e **não** foi aplicada no projeto Cloud `tnnnlkbymytvtqngbbqh`.
+**Aplicado no projeto Cloud `tnnnlkbymytvtqngbbqh` em 26/09** via `db_query` + registro no ledger (mesma
+transação, PR #930 mergeada antes): `20260926800000_calls_telefonia_v2.sql` (`rows_affected: 1`) seguida
+de `20260926900000_fix_set_call_agent_notes_null_profile.sql` (`rows_affected: 1`, `max(version)` reconferido
+ao vivo antes de cada apply). Verificado ao vivo: ledger com as duas versions no topo e
+`pg_get_functiondef(set_call_agent_notes) LIKE '%v_profile is null%'` = `true` (guarda de autorização ativa).
 
 ### Correção de segurança #3 (26/09, achado de auditoria de 5 agentes — CRÍTICO, corrigido antes do apply)
 
