@@ -23,17 +23,30 @@ export default defineConfig({
     },
     {
       // Login real (e2e/auth.setup.ts), executado só quando o projeto
-      // "chromium-authenticated" roda (via dependsOn abaixo) — nunca bloqueia
-      // o projeto "chromium" acima.
+      // "chromium-authenticated" ou "chromium-e2e-core" roda (via dependsOn
+      // abaixo) — nunca bloqueia o projeto "chromium" acima.
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      // conversation.spec.ts / messaging.spec.ts: specs autenticados do
+      // e2e-logado.yml. Projeto dedicado (em vez de rodar via path de arquivo
+      // no CLI sob "chromium-authenticated") para que uma única invocação do
+      // Playwright resolva "setup" sozinha via dependsOn — ver e2e/README.md.
+      name: 'chromium-e2e-core',
+      testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      dependsOn: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
+    {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
       // "setup" e salva em e2e/.auth/user.json.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts/,
       dependsOn: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
