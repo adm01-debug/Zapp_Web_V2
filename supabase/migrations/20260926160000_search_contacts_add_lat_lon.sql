@@ -62,6 +62,10 @@ BEGIN
 END;
 $function$;
 
--- DROP FUNCTION zera o ACL; restaura exatamente o grant original (sem PUBLIC/anon).
+-- DROP FUNCTION zera o ACL. ALTER DEFAULT PRIVILEGES concede EXECUTE direto a
+-- anon/authenticated/service_role em toda funcao NOVA do owner postgres (nao via
+-- PUBLIC — REVOKE FROM PUBLIC sozinho nao cobre isso; ver 20260926152000, que
+-- corrige o mesmo padrao). REVOKE explicito de anon abaixo, alem do de PUBLIC —
+-- restaura exatamente o grant original (sem PUBLIC/anon).
 GRANT EXECUTE ON FUNCTION public.search_contacts(text, text, text, text, text, timestamp with time zone, text, text, integer, integer) TO authenticated, service_role;
-REVOKE EXECUTE ON FUNCTION public.search_contacts(text, text, text, text, text, timestamp with time zone, text, text, integer, integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.search_contacts(text, text, text, text, text, timestamp with time zone, text, text, integer, integer) FROM PUBLIC, anon;
