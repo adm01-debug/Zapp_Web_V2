@@ -164,6 +164,21 @@ export function VirtualizedRealtimeList({
     virtualizer.measure();
   }, [density, virtualizer]);
 
+  // O anel giratorio do card selecionado (.conversation-row-selected, PR #780)
+  // roda em animation infinite via CSS puro — sem isso ele continua repintando
+  // a GPU com a aba oculta/minimizada e ninguem olhando. Pausa via classe no
+  // <html>, que animations.css usa pra travar animation-play-state.
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => root.classList.toggle('tab-hidden', document.hidden);
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      document.removeEventListener('visibilitychange', sync);
+      root.classList.remove('tab-hidden');
+    };
+  }, []);
+
   const handleClick = useCallback((contactId: string, e: React.SyntheticEvent) => {
     if (selectionMode && onToggleSelection) {
       e.preventDefault();
