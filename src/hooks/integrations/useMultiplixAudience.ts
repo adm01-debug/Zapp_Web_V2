@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-async function invokeMultiplixAudience<T>(action: string, params?: Record<string, unknown>): Promise<T> {
+async function invokeMultiplixAudience<T>(action: string, params?: object): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
   const response = await supabase.functions.invoke('multiplix-audience', {
