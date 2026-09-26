@@ -8902,6 +8902,10 @@ export type Database = {
         Args: { p_agent?: string; p_queue?: string; p_since: string }
         Returns: Json
       }
+      dashboard_leaderboard: {
+        Args: { p_limit?: number; p_period?: string }
+        Returns: Json
+      }
       dashboard_sentiment_alerts: {
         Args: { p_since?: string }
         Returns: {
