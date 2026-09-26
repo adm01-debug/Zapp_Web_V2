@@ -270,6 +270,35 @@ pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar c
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
 
+## Incidente de 2026-09-26 — DDL do E40 direto no banco, sem PR (issue #724)
+
+Às 11:38 outra sessão aplicou a mudança do E40 (decisão de Joaquim: `scheduled_report_configs`
+vira owner-only) direto em produção via MCP, sem passar pelo fluxo arquivo→PR→merge da seção 3 —
+nenhum arquivo em `supabase/migrations/`. Isso é exatamente o padrão dos drifts de setembro que a
+seção 1/regra 6 já documenta, e voltou a acontecer apesar do aviso. `db-live-guard` pegou (version
+`20260926113806` "DDL fora do Git"), reconciliado na PR #824 com o SQL exato lido do ledger — sem
+aplicar nada novo, só documentando o que já estava em produção.
+
+**Efeito cascata que isso disparou** (nenhum sozinho seria óbvio, juntos formam uma cadeia de 4 PRs
+numa hora): (1) reconciliar o arquivo do E40 (#824) não bastou — o `types-sync` automático (#823)
+ainda precisava rodar e mergear para o catálogo/`types.ts`/manifesto pegarem as novas policies,
+porque o DDL aplicado fora do fluxo nunca passou pelo passo que regenera esses artefatos; (2) uma
+auditoria de segurança (5 agentes, a pedido do Joaquim) sobre a migration reconciliada achou que a
+policy de INSERT só validava `is_admin_or_supervisor()`, sem restringir `created_by` — um
+supervisor podia plantar um registro "possuído" por outra pessoa (corrigido em #833); (3) o
+`db-live-guard` disparado após o merge de #833 falhou de novo, mas por causa **não relacionada**:
+3 exceções `pinned-replay` antigas (`20260904320000`, `20260904370000`, `20260909130000`) ficaram
+obsoletas porque uma sessão paralela corrigiu essas linhas do ledger (que só tinham resumo em
+prosa) para conter o SQL completo — coincidência de timing com sessões mergeando em paralelo,
+removidas em #842.
+
+**Lição:** um DDL fora do fluxo nunca é "só aquele objeto" — quebra o catálogo até o próximo
+`types-sync`, e qualquer lacuna de segurança na migration reconciliada só aparece se alguém
+auditar de propósito (a auditoria de 5 agentes achou o INSERT; um reconciliamento só de "faz o
+guard passar" não teria achado). Se você é a sessão que vai aplicar DDL: pare, abra o arquivo,
+espere o PR mergear — a regra 6 da seção 1 existe por isto, escrita depois dos drifts de
+02/09 e 04/09, e ainda assim isso se repetiu em 26/09.
+
 ## Lição de UI (2026-09-25) — fundo de painel preto sem escopo de tema
 
 PRs #755 → #771 → #774: pedido de fundo preto nos painéis do inbox (sidebar de conversas,
