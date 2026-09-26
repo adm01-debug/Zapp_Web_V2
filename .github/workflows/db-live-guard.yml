@@ -299,13 +299,28 @@ jobs:
             });
             const existing = issues.find((issue) => issue.title === title);
             if (existing) {
+              // listComments é paginado (max 100/pagina); a issue #724 ja passou
+              // de 150 comentarios, entao pegar so a 1a pagina nunca chega no
+              // comentario mais recente (achado do Codex na PR #918). Com
+              // per_page:1, a pagina "last" do header Link E' o indice do
+              // ultimo comentario — 2 chamadas, sem paginar tudo.
+              const primeira = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1,
+              });
+              const linkHeader = primeira.headers?.link || '';
+              const ultimaPaginaMatch = linkHeader.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+              const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existing.number,
-                per_page: 100,
+                per_page: 1,
+                page: ultimaPagina,
               });
-              const last = comments[comments.length - 1];
+              const last = comments[0];
               const lastCausaMatch = last?.body?.match(/<!-- causa:([0-9a-f]*|credencial-ou-erro-antes-do-veredito) -->/);
               const lastCausa = lastCausaMatch ? lastCausaMatch[1] : null;
               const seisHorasMs = 6 * 60 * 60 * 1000;
