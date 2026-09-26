@@ -1,5 +1,9 @@
 -- Correção de segurança (26/09, achado de auditoria de 5 agentes — CRÍTICO,
--- corrigido antes do apply de 20260926300000_calls_telefonia_v2.sql).
+-- corrigido antes do apply de 20260926800000_calls_telefonia_v2.sql).
+-- Versão reversionada uma vez: 20260926500000 -> 20260926900000, junto com a
+-- 3ª reversão de 20260926800000_calls_telefonia_v2.sql (mesmo PR) — mantém a
+-- ordem relativa (esta aplica DEPOIS da base) com margem acima do
+-- max(version) ao vivo (20260926420000 no momento da reversão).
 --
 -- set_call_agent_notes tinha bypass de autorização: se o auth.uid() do
 -- chamador não tem linha em public.profiles (v_profile fica NULL), o teste
@@ -10,7 +14,7 @@
 -- qualquer chamada de qualquer agente, sem ser dono nem admin/supervisor.
 -- upsert_my_call já tinha a guarda certa; esta migration aplica o mesmo
 -- padrão a set_call_agent_notes. Arquivo novo (não edita
--- 20260926300000_calls_telefonia_v2.sql, que já está mergeada em main —
+-- 20260926800000_calls_telefonia_v2.sql, que já está mergeada em main —
 -- ver .github/workflows/db-guard.yml, guard "Rejeitar edicao de migration
 -- ja existente").
 create or replace function public.set_call_agent_notes(p_call_id uuid, p_notes text)
@@ -39,4 +43,4 @@ end;
 $$;
 
 comment on function public.set_call_agent_notes is
-  'Grava somente agent_notes (anotação humana) na chamada do dono ou por admin/supervisor. Apêndice B.4. Corrigido: exige perfil (v_profile not null) antes de comparar dono, ver 20260926500000.';
+  'Grava somente agent_notes (anotação humana) na chamada do dono ou por admin/supervisor. Apêndice B.4. Corrigido: exige perfil (v_profile not null) antes de comparar dono, ver 20260926900000.';

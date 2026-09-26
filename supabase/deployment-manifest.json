@@ -218,8 +218,8 @@
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
-      "bytes": 8925,
-      "sha256": "8a2cfaa9c824275a85bf347b879a3ccc9a93fec288fda33189ddbf7e2c8e4634"
+      "bytes": 9157,
+      "sha256": "709bc5ee0d2001a236611a00d3f4a25bf8150ae0bdfd4b41053d57e758c01c4e"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -328,8 +328,8 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 8611,
-      "sha256": "85169262336757b01313b6b8c371608d92a43133d046e19d37e88b91bf32c0e2"
+      "bytes": 8844,
+      "sha256": "c116e2f253a4f1d7515ac1bc432112de2804924a5a4117116177d23426f1be05"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
@@ -458,8 +458,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 37562,
-      "sha256": "54c9fe053d4065377b137434aa1c7f658aa7880025810efed2cf262957b95f1f"
+      "bytes": 38836,
+      "sha256": "4f4a625c9fbf8dbaddbd557efce7cf520b96e28d9e3f4348493c10563f94ecff"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -681,7 +681,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "05e0514fa42886988cb3453b4392356ea3c146a72844d0da758f4dcc1ec9948e",
+      "source_sha256": "29d592e9560bfe264e992f79d3dc113b02d9ed3324e1e312bc41acbf3b09ecc4",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -962,7 +962,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "521965d3c5aad3acae5f43dd58b0e61b8cb5a5c28a51e6d72bb59f433dc4bf73",
+      "source_sha256": "63daafe1f838c4c9974e476c32e12b1a0ad2583a9c0e4e953313f862c15d6798",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1278,7 +1278,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "372b04578faa8a1a0a62cb9a55087b3a52acb5bb3dc48cb3c4ce1356552903d9",
+      "source_sha256": "02fcdb75aadeeec15e5ed6b563543b385a3b77fdd2ea9f8c6bc72f49cd46befe",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1360,5 +1360,5 @@
       ]
     }
   ],
-  "manifest_sha256": "10e3ad2c941eeb1acb910ff539c14a552facca1208bdf0cef65e239e2af4c11f"
+  "manifest_sha256": "31c8b1a8a9a9904a6a416912b011eaffc73500d80154d7abb57698c509b5b742"
 }

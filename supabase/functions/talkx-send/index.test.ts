@@ -40,3 +40,38 @@ Deno.test('personalize replaces {{link}} with the per-recipient tracking URL whe
   const result = personalize('Veja aqui: {{link}}', contact, {}, 'America/Sao_Paulo', 'https://zapp.example/l/abc');
   assert(result === 'Veja aqui: https://zapp.example/l/abc', `unexpected result: ${result}`);
 });
+
+Deno.test('personalize falls back to a bracket placeholder for {{link}} when no tracking URL is available', () => {
+  const result = personalize('Veja aqui: {{link}}', contact, {});
+  assert(result === 'Veja aqui: [link]', `unexpected result: ${result}`);
+});
+
+Deno.test('personalize matches a custom field key case-insensitively', () => {
+  // Regressão: o CRM guarda o nome do campo como foi digitado (ex.: "CPF"),
+  // mas o editor de template força minúsculo no placeholder ({{cpf}}) — o
+  // match não pode depender de bater exatamente a mesma caixa.
+  const result = personalize('CPF: {{cpf}}', contact, { CPF: '000.000.000-00' });
+  assert(result === 'CPF: 000.000.000-00', `unexpected result: ${result}`);
+});
+
+Deno.test('personalize ignores a custom value using a reserved built-in name', () => {
+  // Regressão: um campo customizado chamado "link" comia {{link}} antes do
+  // passe de tracking, e um campo "nome"/"empresa" sequestrava o dado real do
+  // contato.
+  const result = personalize(
+    'Nome: {{nome}} - Link: {{link}}',
+    contact,
+    { nome: 'Valor Errado', link: 'https://phishing.example' },
+    'America/Sao_Paulo',
+    'https://zapp.example/l/abc',
+  );
+  assert(result === 'Nome: Joao - Link: https://zapp.example/l/abc', `unexpected result: ${result}`);
+});
+
+Deno.test('personalize does not reinterpret placeholder-shaped text inside a custom value', () => {
+  // Regressão: um campo customizado com valor literal "{{empresa}}" não pode
+  // ser reescaneado e virar o nome da empresa do contato — é o dado de CRM
+  // como está, ponto.
+  const result = personalize('Cargo: {{cargo}}', contact, { cargo: '{{empresa}}' });
+  assert(result === 'Cargo: {{empresa}}', `unexpected result: ${result}`);
+});

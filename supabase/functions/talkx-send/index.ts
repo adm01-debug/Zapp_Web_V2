@@ -18,6 +18,12 @@ function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   return "Boa noite";
 }
 
+// Nomes reservados aos built-ins — um campo customizado do CRM com um desses
+// nomes (ex.: contato com campo "link") nunca pode sequestrar o placeholder
+// built-in correspondente (achado do review: "link" comeria {{link}} antes do
+// passe de tracking).
+const RESERVED_PLACEHOLDER_KEYS = new Set(["saudacao", "link", "nome", "nome_completo", "apelido", "empresa"]);
+
 export function personalize(
   template: string,
   contact: { name?: string | null; nickname?: string | null; company?: string | null },
@@ -26,33 +32,38 @@ export function personalize(
   trackingUrl?: string,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
-  // Substituições de valor confiável (saudação computada, campos customizados
-  // do contato, link gerado pelo servidor) primeiro; dado de contato (nome/
-  // apelido/empresa, editável via CRM) por último e em passe único — caso
-  // contrário um campo como `company` contendo literalmente "{{saudacao}}" ou
-  // "{{link}}" seria reinterpretado como placeholder pela chamada seguinte.
-  let result = template.replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
-  for (const [key, value] of Object.entries(customValues)) {
-    result = result.split('{{' + key + '}}').join(value);
-  }
-  // E90: {{link}} -> URL de rastreamento por destinatário
-  if (trackingUrl) {
-    result = result.split('{{link}}').join(trackingUrl);
-  }
   const contactValues: Record<string, string> = {
     nome: firstName,
     nome_completo: contact.name || '',
     apelido: contact.nickname || firstName,
     empresa: contact.company || '',
   };
-  result = result.replace(/\{\{(nome_completo|nome|apelido|empresa)\}\}/gi, (_match, key: string) => contactValues[key.toLowerCase()]);
-  // Uma variável fora da lista acima e sem valor em customValues (nome digitado
-  // errado, campanha sem template com placeholder solto, ou contato sem aquele
-  // campo customizado preenchido) antes derrubava o envio inteiro para o
-  // destinatário (unknown_placeholder). Mostrar "[variavel]" é sempre melhor
-  // que vazar "{{variavel}}" cru ou bloquear o disparo.
-  result = result.replace(/\{\{([^}]+)\}\}/g, (_match, key: string) => `[${key}]`);
-  return result;
+  // Nome do campo customizado vem do CRM (case livre, ex.: "CPF"); o editor de
+  // template força minúsculo no placeholder — casar por chave normalizada.
+  const normalizedCustomValues = new Map<string, string>();
+  for (const [key, value] of Object.entries(customValues)) {
+    const normalizedKey = key.toLowerCase();
+    if (RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
+    normalizedCustomValues.set(normalizedKey, value);
+  }
+  // Passe único sobre o template original: um valor inserido (campo customizado
+  // ou dado de contato) nunca é rescaneado como se fosse sintaxe de placeholder
+  // (achado do review: {{cargo}} com valor literal "{{empresa}}" não pode virar
+  // o nome da empresa).
+  return template.replace(/\{\{([^}]+)\}\}/g, (fullMatch, rawKey: string) => {
+    const key = rawKey.toLowerCase();
+    if (key === "saudacao") return getGreeting(timeZone);
+    // E90: {{link}} -> URL de rastreamento por destinatário
+    if (key === "link") return trackingUrl ?? `[${rawKey}]`;
+    if (key in contactValues) return contactValues[key];
+    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
+    // Uma variável sem valor (nome digitado errado, campanha sem template com
+    // placeholder solto, ou contato sem aquele campo customizado preenchido)
+    // antes derrubava o envio inteiro para o destinatário (unknown_placeholder).
+    // Mostrar "[variavel]" é sempre melhor que vazar "{{variavel}}" cru ou
+    // bloquear o disparo.
+    return `[${rawKey}]`;
+  });
 }
 
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
@@ -295,15 +306,27 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
     );
     const customFieldsByContact = new Map<string, Record<string, string>>();
     if (recipientContactIds.length > 0) {
-      const { data: customFieldRows, error: customFieldsError } = await supabase
-        .from("contact_custom_fields")
-        .select("contact_id, field_name, field_value")
-        .in("contact_id", recipientContactIds);
-      if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
-      for (const row of customFieldRows ?? []) {
-        const bucket = customFieldsByContact.get(row.contact_id) ?? {};
-        bucket[row.field_name] = row.field_value ?? "";
-        customFieldsByContact.set(row.contact_id, bucket);
+      // PostgREST limita a 1000 linhas por chamada — leva com muitos contatos x
+      // campos customizados perderia linhas em silêncio sem paginar (achado do
+      // review).
+      const CUSTOM_FIELDS_PAGE_SIZE = 1000;
+      for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
+        const { data: customFieldRows, error: customFieldsError } = await supabase
+          .from("contact_custom_fields")
+          .select("contact_id, field_name, field_value")
+          .in("contact_id", recipientContactIds)
+          .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
+        if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
+        for (const row of customFieldRows ?? []) {
+          // Campo customizado sem valor preenchido (field_value null) deve cair
+          // no fallback "[variavel]" do personalize(), não virar string vazia
+          // silenciosa (achado do review).
+          if (row.field_value == null) continue;
+          const bucket = customFieldsByContact.get(row.contact_id) ?? {};
+          bucket[row.field_name] = row.field_value;
+          customFieldsByContact.set(row.contact_id, bucket);
+        }
+        if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
       }
     }
 
