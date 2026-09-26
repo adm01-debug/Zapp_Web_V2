@@ -99,18 +99,29 @@ export function personalizePreview(template: string, contact?: { name?: string |
   const firstName = (c.name || '').split(' ')[0];
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  return template
-    .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, c.name || '')
-    .replace(/\{\{apelido\}\}/gi, c.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, c.company || '')
-    .replace(/\{\{saudacao\}\}/gi, greeting)
+  const contactValues: Record<string, string> = {
+    nome: firstName,
+    nome_completo: c.name || '',
+    apelido: c.nickname || firstName,
+    empresa: c.company || '',
+    saudacao: greeting,
+  };
+  // Passe único sobre o template original: substituições sequenciais permitem
+  // que um dado de contato contendo literalmente "{{algumacoisa}}" (ex.:
+  // empresa = "{{cargo}}") seja rescaneado e reinterpretado como placeholder
+  // pela chamada seguinte — o preview mostraria algo diferente do que o envio
+  // real produz (personalize() em talkx-send/index.ts já resolve tudo num
+  // único passe pelo mesmo motivo).
+  return template.replace(/\{\{([^}]+)\}\}/g, (_match, rawKey: string) => {
+    const key = rawKey.toLowerCase();
+    // hasOwnProperty (não "in"): evita vazar propriedade herdada de
+    // Object.prototype para um placeholder tipo {{constructor}}.
+    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
     // Qualquer variável sem valor no preview (link de rastreio, variável
     // customizada) — mostrar "[variavel]" bate com o que o envio real faz
-    // quando o contato não tem aquele campo preenchido (ver personalize() em
-    // talkx-send/index.ts). Antes o preview deixava "{{cargo}}" cru, diferente
-    // do que o destinatário de fato recebia.
-    .replace(/\{\{([^}]+)\}\}/g, (_match, key: string) => `[${key}]`);
+    // quando o contato não tem aquele campo preenchido.
+    return `[${rawKey}]`;
+  });
 }
 
 export function extractVariables(template: string): string[] {

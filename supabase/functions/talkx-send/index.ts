@@ -55,7 +55,10 @@ export function personalize(
     if (key === "saudacao") return getGreeting(timeZone);
     // E90: {{link}} -> URL de rastreamento por destinatário
     if (key === "link") return trackingUrl ?? `[${rawKey}]`;
-    if (key in contactValues) return contactValues[key];
+    // hasOwnProperty (não "in"): "in" também acha propriedades herdadas de
+    // Object.prototype — um placeholder {{constructor}}/{{__proto__}} vazaria
+    // texto de função/objeto em vez de cair no fallback (achado do review).
+    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
     if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
     // Uma variável sem valor (nome digitado errado, campanha sem template com
     // placeholder solto, ou contato sem aquele campo customizado preenchido)
@@ -311,10 +314,14 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
       // review).
       const CUSTOM_FIELDS_PAGE_SIZE = 1000;
       for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
+        // .range() sem .order() não garante ordenação estável entre chamadas —
+        // páginas poderiam se sobrepor ou pular linhas (achado do review).
+        // "id" é a PK, então a ordenação é determinística.
         const { data: customFieldRows, error: customFieldsError } = await supabase
           .from("contact_custom_fields")
           .select("contact_id, field_name, field_value")
           .in("contact_id", recipientContactIds)
+          .order("id", { ascending: true })
           .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
         if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
         for (const row of customFieldRows ?? []) {

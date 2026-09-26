@@ -75,3 +75,12 @@ Deno.test('personalize does not reinterpret placeholder-shaped text inside a cus
   const result = personalize('Cargo: {{cargo}}', contact, { cargo: '{{empresa}}' });
   assert(result === 'Cargo: {{empresa}}', `unexpected result: ${result}`);
 });
+
+Deno.test('personalize does not leak an inherited Object.prototype property for an unresolved placeholder', () => {
+  // Regressão: "key in contactValues" também acha propriedades herdadas
+  // (constructor, __proto__, etc.) antes de consultar o mapa de valores
+  // customizados — um placeholder desses vazaria texto de função/objeto em
+  // vez de cair no fallback "[variavel]".
+  const result = personalize('X: {{constructor}}', contact, {});
+  assert(result === 'X: [constructor]', `unexpected result: ${result}`);
+});

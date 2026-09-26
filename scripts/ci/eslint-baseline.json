@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "command": "eslint . --format json",
   "eslintVersion": "9.32.0",
-  "eslintConfigSha256": "bbf27a15fb5d5d33687a98f9362bbf808e49fb90c848376c49bbeae13ac622cd",
+  "eslintConfigSha256": "4e112dfb7a528c3b962a127b05876e92d18f0ce8c4a8c9884966c7fa448b6382",
   "files": [
     {
       "path": "src/components/a11y/a11yHooks.tsx",
@@ -106,7 +106,7 @@
     },
     {
       "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
-      "sha256": "d4e3851d3d82e96ea6989b87f23843f64f058a2262309094e444374c82861313"
+      "sha256": "66934e09aff5b715bbbec32cd7dc623c7103a8f31fb17d9f4c0a15e7827ab3b4"
     },
     {
       "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
@@ -410,7 +410,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "dda136c8b6a195067c38abd68fc90988e3099d75df49fcfcd9561df01da01966"
+      "sha256": "051e7a3028164aaf363a77336890b7f10faa7e009f9f9b21917007768341e4e5"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -442,7 +442,7 @@
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
-      "sha256": "b79f1412eee702657f9ce3441587b24723a588981a9b7cb3e28d06bbce2e7665"
+      "sha256": "a841212d4308eb4713af4e6d32b463741b79dce176d7de37880413ba431d643e"
     },
     {
       "path": "src/components/inbox/contact-details/StoryViewer.tsx",
@@ -506,7 +506,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "7696a18bd9310a5b30236bdbf5644eb5aba30b5822a6bead26a68907f72a0341"
+      "sha256": "f046eb1ec672af36aeaffee0702817a7d6758cf75808ca72fe153c5f6053f156"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -1002,7 +1002,7 @@
     },
     {
       "path": "src/components/ui/tooltip.tsx",
-      "sha256": "830c7cf87d80fb3967195e446bc4c27d2d0abaf51d6b4e99929e9ce780f80e57"
+      "sha256": "7f27fffd04c247d2ddfc87bf111661698f8e14d813871bbcb99347e98d81d7b3"
     },
     {
       "path": "src/components/ui/visually-hidden.tsx",
@@ -1186,7 +1186,7 @@
     },
     {
       "path": "src/hooks/__tests__/useRealtimeMessages.test.tsx",
-      "sha256": "e3502d22004f4d29cef3fd49ed71a8f1c2d20a2868aa6b967ff516bcecbba662"
+      "sha256": "507ba37fe2b9c48ec18c60f7b791b933262fc3c1b94637172d26333cce3a6486"
     },
     {
       "path": "src/hooks/__tests__/useRealtimeSentimentAlerts.test.ts",
@@ -1618,7 +1618,7 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "sha256": "49b25ac385706b519368059706bbb523a555fa6382fefdd3061b055c297eb629"
+      "sha256": "9478e32404108906f15bd2c903a225e12259f7179052738ebf5a843c71c329b4"
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
@@ -4156,9 +4156,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 132,
+      "line": 135,
       "column": 101,
-      "endLine": 132,
+      "endLine": 135,
       "endColumn": 104,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4170,9 +4170,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 132,
+      "line": 135,
       "column": 68,
-      "endLine": 132,
+      "endLine": 135,
       "endColumn": 71,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -4184,9 +4184,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 135,
+      "line": 138,
       "column": 39,
-      "endLine": 135,
+      "endLine": 138,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -4348,7 +4348,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "791c14b10d48a0e0d57dde788e990b3d5f2bec692107760a82dd7348f58a963b"
+      "contextHash": "ad15c3e0580bb56fba26db5b524059bfdea7a86bfbdfb2b74d1b44d57d2566d6"
     },
     {
       "file": "src/components/inbox/contact-details/StoryViewer.tsx",
@@ -5752,9 +5752,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 97,
+      "line": 106,
       "column": 6,
-      "endLine": 97,
+      "endLine": 106,
       "endColumn": 45,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -9602,9 +9602,9 @@
     },
     {
       "file": "src/components/ui/tooltip.tsx",
-      "line": 129,
+      "line": 138,
       "column": 3,
-      "endLine": 129,
+      "endLine": 138,
       "endColumn": 18,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",

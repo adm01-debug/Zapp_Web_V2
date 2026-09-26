@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration] = await Promise.all([
+const [sender, linkFn, sharedValidation, linksMigration, idorMigration, caseInsensitiveMigration, talkxShared] = await Promise.all([
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-link/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/validation.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916200000_talkx_e90_links.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916270000_talkx_link_click_idor_guard.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/migrations/20260916260000_talkx_links_slug_case_insensitive.sql', import.meta.url), 'utf8'),
+  readFile(new URL('../../src/components/talkx/talkxShared.tsx', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site', () => {
@@ -42,7 +43,7 @@ test('Talk X personalize() resolves every placeholder in a single pass over the 
   assert.ok(singlePassIdx > -1, 'personalize() deve resolver tudo num unico regex.replace() sobre o template original');
   const saudacaoIdx = sender.indexOf('key === "saudacao"', singlePassIdx);
   const linkIdx = sender.indexOf('key === "link"', singlePassIdx);
-  const contactValuesIdx = sender.indexOf('key in contactValues', singlePassIdx);
+  const contactValuesIdx = sender.indexOf('Object.prototype.hasOwnProperty.call(contactValues, key)', singlePassIdx);
   const customValuesIdx = sender.indexOf('normalizedCustomValues.has(key)', singlePassIdx);
   assert.ok(
     saudacaoIdx > singlePassIdx && linkIdx > saudacaoIdx && contactValuesIdx > linkIdx && customValuesIdx > contactValuesIdx,
@@ -56,6 +57,36 @@ test('Talk X personalize() never lets a custom field with a reserved name overri
   // correspondente antes do passe de resolucao real.
   assert.match(sender, /RESERVED_PLACEHOLDER_KEYS/);
   assert.match(sender, /if \(RESERVED_PLACEHOLDER_KEYS\.has\(normalizedKey\)\) continue/);
+});
+
+test('Talk X custom-fields pagination orders by a stable unique key', () => {
+  // Review da PR #909: .range() sem .order() nao garante ordenacao estavel
+  // entre chamadas paginadas -- paginas poderiam se sobrepor ou pular linhas
+  // e mandar "[variavel]" no lugar do dado real.
+  const pageSizeIdx = sender.indexOf('CUSTOM_FIELDS_PAGE_SIZE');
+  assert.ok(pageSizeIdx > -1, 'a paginacao de contact_custom_fields deve existir');
+  const orderIdx = sender.indexOf('.order("id", { ascending: true })', pageSizeIdx);
+  const rangeIdx = sender.indexOf('.range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1)', pageSizeIdx);
+  assert.ok(orderIdx > -1 && rangeIdx > orderIdx, 'o .order("id") deve vir antes do .range() na busca paginada');
+});
+
+test('Talk X personalize() and personalizePreview() both guard against inherited Object.prototype keys', () => {
+  // Review da PR #909: "key in contactValues" tambem acha propriedades
+  // herdadas (constructor, __proto__) -- um placeholder desses vazaria texto
+  // de funcao/objeto em vez de cair no fallback "[variavel]".
+  assert.match(sender, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
+  assert.match(talkxShared, /Object\.prototype\.hasOwnProperty\.call\(contactValues, key\)/);
+});
+
+test('Talk X personalizePreview() resolves every placeholder in a single pass, matching the real send', () => {
+  // Review da PR #909: o preview do wizard fazia .replace() sequencial —
+  // dado de contato (nome/empresa/etc.) contendo literalmente "{{cargo}}"
+  // era rescaneado pelo passe de fallback seguinte e divergia do que
+  // personalize() (envio real) de fato produz.
+  const previewIdx = talkxShared.indexOf('export function personalizePreview');
+  assert.ok(previewIdx > -1, 'personalizePreview() deve existir');
+  const singlePassIdx = talkxShared.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g', previewIdx);
+  assert.ok(singlePassIdx > -1, 'personalizePreview() deve resolver tudo num unico regex.replace() sobre o template original');
 });
 
 test('Talk X link redirect enforces rate limiting on both GET and POST', () => {
