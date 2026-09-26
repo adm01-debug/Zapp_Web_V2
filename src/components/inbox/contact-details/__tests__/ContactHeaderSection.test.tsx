@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { ContactHeaderSection } from '../ContactHeaderSection';
+import type { Conversation } from '@/types/chat';
 
 // Minimal mocks
 let crm360DataMock: unknown = null;
@@ -248,5 +249,45 @@ describe('ContactHeaderSection', () => {
     );
     expect(screen.getByText('Mari')).toBeInTheDocument();
     expect(screen.getByText('"Dona Maria"')).toBeInTheDocument();
+  });
+
+  // ========== LOGO DA EMPRESA ==========
+  it('mostra o círculo com iniciais da empresa quando há nome mas nenhuma logo do CRM', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, company: 'Tech Corp' }}
+      />
+    );
+    expect(screen.getByText('Tech Corp')).toBeInTheDocument();
+    expect(screen.getByTitle('Tech Corp')).toHaveTextContent('TC');
+  });
+
+  it('nao mostra logo nem nome de empresa quando nao ha empresa', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, company: null }}
+      />
+    );
+    expect(screen.queryByText('TechCo')).not.toBeInTheDocument();
+  });
+
+  // ========== ÚLTIMO CONTATO ==========
+  it('mostra a data do último contato quando a conversation tem updatedAt', () => {
+    const conversation = { updatedAt: new Date('2026-09-22T10:00:00Z') } as unknown as Conversation;
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={baseEnriched}
+        conversation={conversation}
+      />
+    );
+    expect(screen.getByText(/Último contato em/)).toBeInTheDocument();
+  });
+
+  it('nao mostra a data do ultimo contato quando conversation nao e fornecida', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.queryByText(/Último contato em/)).not.toBeInTheDocument();
   });
 });
