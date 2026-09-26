@@ -151,6 +151,16 @@ jobs:
         env:
           CI: true
 
+      # Config dedicado (vitest.contracts.config.ts): reescreve o import Deno
+      # "https://esm.sh/zod@3.23.8" de schemas.ts para o alias npm "zod3"
+      # (zod@3.23.8, ja no bun.lock). O vitest.config.ts principal nao tem
+      # esse rewrite e quebra em 3 dos 6 arquivos (Node nao resolve URL https
+      # no loader ESM padrao) — por isso a suite roda num config separado.
+      - name: 🧪 Run Edge Function contract tests (tests/contracts)
+        run: bun run test:contracts
+        env:
+          CI: true
+
       - name: 📊 Upload coverage report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
