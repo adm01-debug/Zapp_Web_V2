@@ -27,6 +27,8 @@ interface ContactFormValues {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
 }
 
 interface ContactDialogsProps {
