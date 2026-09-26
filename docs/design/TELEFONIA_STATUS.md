@@ -57,7 +57,7 @@ Etapas 1–9:
 
 ---
 
-## CP1 Contrato        [x] sha=f94871d (+4º commit de reconciliação) · testes lib/calls=217 (6 arquivos, 100% verde) · deps react/supabase=0
+## CP1 Contrato        [x] commits `feat(telefonia): fase 1...` + `refactor(telefonia): unifica EndReason...` · testes lib/calls=217 (6 arquivos, 100% verde) · deps react/supabase=0
 
 Etapas 10–17 — `src/lib/calls/` (6 módulos puros + 6 arquivos de teste):
 
