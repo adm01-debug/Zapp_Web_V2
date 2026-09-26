@@ -43,3 +43,11 @@ digest, which is distinct from our local source digest. Polling detects transien
 inventory states but cannot rule out later changes or independently reproduce
 the provider build. `source_to_bundle_equivalence_proven` remains **false**.
 This is not a cryptographic proof that source bytes equal remote runtime bytes,
+nor an authenticated business E2E. No full deploy is needed just to collect evidence.
+
+The single-snapshot `verify-remote.mjs` remains available for historical/offline
+inspection; the production workflow uses `collect-remote.mjs`. Failure to stabilize
+does not undo an already completed deploy: inspect the inventory before any retry.
+The collector is extracted from the trusted triggering `GITHUB_SHA`, while source
+inputs remain at `DEPLOYED_GIT_SHA`; this keeps rollback to an older ancestor
+working even when that ancestor does not contain the new collector.
