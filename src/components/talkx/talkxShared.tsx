@@ -94,17 +94,50 @@ export const fmtTime = (d: string | null | undefined) => (d ? format(new Date(d)
 export const fmtAgo = (d: string | null | undefined) =>
   d ? formatDistanceToNowStrict(new Date(d), { locale: ptBR, addSuffix: true }) : '—';
 
-export function personalizePreview(template: string, contact?: { name?: string | null; nickname?: string | null; company?: string | null } | null) {
+// Mesmo conjunto de talkx-send/index.ts — um campo customizado com um desses
+// nomes nunca pode sequestrar o placeholder built-in correspondente no preview.
+const PREVIEW_RESERVED_PLACEHOLDER_KEYS = new Set(['saudacao', 'link', 'nome', 'nome_completo', 'apelido', 'empresa']);
+
+export function personalizePreview(
+  template: string,
+  contact?: { name?: string | null; nickname?: string | null; company?: string | null } | null,
+  customValues: Record<string, string> = {},
+) {
   const c = contact ?? { name: 'João Silva', nickname: null, company: 'Sua Empresa' };
   const firstName = (c.name || '').split(' ')[0];
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  return template
-    .replace(/\{\{nome\}\}/gi, firstName)
-    .replace(/\{\{nome_completo\}\}/gi, c.name || '')
-    .replace(/\{\{apelido\}\}/gi, c.nickname || firstName)
-    .replace(/\{\{empresa\}\}/gi, c.company || '')
-    .replace(/\{\{saudacao\}\}/gi, greeting);
+  const contactValues: Record<string, string> = {
+    nome: firstName,
+    nome_completo: c.name || '',
+    apelido: c.nickname || firstName,
+    empresa: c.company || '',
+    saudacao: greeting,
+  };
+  // Campo customizado do CRM casado por chave normalizada, igual ao envio real.
+  const normalizedCustomValues = new Map<string, string>();
+  for (const [key, value] of Object.entries(customValues)) {
+    const normalizedKey = key.toLowerCase();
+    if (PREVIEW_RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
+    normalizedCustomValues.set(normalizedKey, value);
+  }
+  // Passe único sobre o template original: substituições sequenciais permitem
+  // que um dado de contato ou campo customizado contendo literalmente
+  // "{{algumacoisa}}" (ex.: empresa = "{{cargo}}") seja rescaneado e
+  // reinterpretado como placeholder pela chamada seguinte — o preview
+  // mostraria algo diferente do que o envio real produz (personalize() em
+  // talkx-send/index.ts já resolve tudo num único passe pelo mesmo motivo).
+  return template.replace(/\{\{([^}]+)\}\}/g, (_match, rawKey: string) => {
+    const key = rawKey.toLowerCase();
+    // hasOwnProperty (não "in"): evita vazar propriedade herdada de
+    // Object.prototype para um placeholder tipo {{constructor}}.
+    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
+    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
+    // Qualquer variável sem valor no preview (link de rastreio, variável
+    // customizada sem valor real) — mostrar "[variavel]" bate com o que o
+    // envio real faz quando o contato não tem aquele campo preenchido.
+    return `[${rawKey}]`;
+  });
 }
 
 export function extractVariables(template: string): string[] {
@@ -452,9 +485,9 @@ export function TalkXSkeletonRows({ rows = 4 }: { rows?: number }) {
 }
 
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E13 — KpiCard: card de métrica hero com mini-barras e delta
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 interface KpiCardProps {
   icon: LucideIcon; color?: TileColor; label: string; value: string;
   delta?: { value: number; suffix?: '%' | 'p.p.'; tone?: 'up' | 'down' };
@@ -520,9 +553,9 @@ export function KpiCardSkeleton({ compact = false }: { compact?: boolean } = {})
   return <div className={cn('bg-card border border-border/70 rounded-xl animate-pulse', compact ? 'h-[72px]' : 'h-24')} />;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E15 — RowActionsMenu, SegmentedToggle, PrimaryButtonGlow
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface RowAction { label: string; icon?: LucideIcon; onSelect: () => void; danger?: boolean; disabled?: boolean; }
 
 export function RowActionsMenu({ actions, label = 'Ações' }: { actions: RowAction[]; label?: string }) {
@@ -585,9 +618,9 @@ export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'prim
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E17 — TalkXTable genérico
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface TalkXColumn<T> {
   key: string; header: string; width?: string | number; align?: 'left' | 'center' | 'right';
   render: (row: T, idx: number) => ReactNode;
@@ -662,9 +695,9 @@ export function TalkXTable<T extends object>({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E18 — Rail: HeroCard, RecentList, TipCard, AlertCard
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export function HeroCard({ icon, title, subtitle, metrics }: {
   icon: LucideIcon; title: string; subtitle?: string;
   metrics?: { label: string; value: string | number }[];
@@ -747,9 +780,9 @@ export function AlertCard({ children, tone = 'warning', actionLabel, onAction }:
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E19 — TalkXConfirmDialog: modal crítico com checks opcionais
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface ConfirmCheck { id: string; label: string; }
 
 export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor = 'blue', title, description, entityName, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', tone = 'primary', checks = [], details = [], loading = false }: {
@@ -887,7 +920,7 @@ export function FilterBarV2({
   );
 }
 
-// ─── E92: InsightCard ───────────────────────────────────────────────────────
+// ─── E92: InsightCard ──────────────────────────────────────────────────────────────────────
 export type InsightType = 'timing' | 'template' | 'reactivation' | 'links';
 export type InsightPriority = 'high' | 'medium' | 'low';
 
@@ -953,4 +986,3 @@ export function InsightCard({
     </div>
   );
 }
-
