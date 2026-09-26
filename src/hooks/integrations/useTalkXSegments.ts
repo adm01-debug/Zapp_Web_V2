@@ -72,8 +72,12 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
 export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }] });
 export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
 
-const esc = (v: string) => v.replace(/[,.()"]/g, (c) => (c === '"' ? '\\"' : c === ',' ? '\\,' : c)).trim();
-const quoted = (v: string) => `"${v.replace(/"/g, '\\"')}"`;
+// Escapa \ ANTES de escapar , . ( ) " — tudo em um unico passe do regex, para
+// nao deixar uma barra invertida do valor original "engolir" o escape de uma
+// aspa/virgula inserida depois (js/incomplete-sanitization: sem isso, um
+// valor terminado em \ fecha a string do filtro PostgREST antes do previsto).
+const esc = (v: string) => v.replace(/[\\,.()"]/g, (c) => (c === '\\' ? '\\\\' : c === '"' ? '\\"' : c === ',' ? '\\,' : c)).trim();
+const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
