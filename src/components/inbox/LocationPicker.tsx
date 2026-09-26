@@ -47,7 +47,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   const {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken,
     searchQuery, setSearchQuery, isSearching, selectedLocation, searchResults,
-    chooseSearchResult, getCurrentLocation, searchLocation, reset,
+    chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   } = useLocationPicker(open, activeTab);
 
   // Fase 2/3 do plano de busca (docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md): sugestão
@@ -56,10 +56,27 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   const autocompleteEnabled = useFeatureFlag('mapa.searchbox-autocomplete', false);
   const autocomplete = useAddressAutocomplete({
     token: mapboxToken,
+    proximity,
     enabled: autocompleteEnabled && open && activeTab === 'map',
   });
   const [addressListOpen, setAddressListOpen] = useState(false);
   const addressComboRef = useRef<HTMLDivElement>(null);
+  // E30: clique no mapa e GPS mudam `selectedLocation` pelo caminho antigo (reverseGeocode ->
+  // select), sem passar pelo autocomplete. Se a lista de sugestoes estava aberta ela precisa
+  // fechar E esvaziar - senao, ao focar o campo de novo (onFocus reabre incondicionalmente),
+  // a sugestao velha reaparece flutuando sobre o marcador que acabou de mudar por outra origem.
+  // Ajuste durante o render (nao um useEffect: react-hooks/set-state-in-effect proibe setState
+  // sincrono no corpo do effect) - padrao React para "derivar estado quando uma prop muda".
+  // useRef não pode ser lido/escrito durante o render (react-hooks/refs) - useState é o
+  // jeito aceito pelo lint para guardar "valor da render anterior" e comparar aqui.
+  const [prevSelectedLocation, setPrevSelectedLocation] = useState(selectedLocation);
+  if (selectedLocation !== prevSelectedLocation) {
+    setPrevSelectedLocation(selectedLocation);
+    if (selectedLocation && addressListOpen) {
+      setAddressListOpen(false);
+      autocomplete.clear();
+    }
+  }
 
   // Clique fora fecha a lista; rolar dentro dela não conta como "fora" (E24).
   useEffect(() => {
