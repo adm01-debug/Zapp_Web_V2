@@ -64,6 +64,11 @@ jobs:
         with:
           deno-version: '2.9.5'
 
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
       - name: 🧪 Run executable Edge handler contracts
         run: >-
           deno test --config scripts/ci/deno.json --frozen --allow-env

@@ -46,7 +46,8 @@ function jsonErr(req: Request, body: Record<string, unknown>, status: number): R
 
 // ─── Main handler ─────────────────────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return handleCors(req);
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',

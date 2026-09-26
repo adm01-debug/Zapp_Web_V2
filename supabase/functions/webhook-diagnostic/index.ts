@@ -9,6 +9,8 @@ interface WebhookRecord {
   webhookUrl?: string;
   name?: string;
   enabled?: boolean;
+  webhookByEvents?: boolean;
+  webhookBase64?: boolean;
 }
 
 const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
@@ -102,7 +104,7 @@ Deno.serve(async (req: Request) => {
           const whData = await whRes.json();
           webhook = whData?.webhook || whData;
           currentUrl = webhook?.url || webhook?.webhookUrl || '';
-          events = webhook?.events || [];
+          events = Array.isArray(webhook?.events) ? webhook.events : webhook?.events ? [webhook.events] : [];
         }
 
         const criticalEvents = IS_GO

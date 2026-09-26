@@ -393,7 +393,9 @@ serve(async (req) => {
       let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
       if (rawQrCode.startsWith('2@')) {
         try {
-          const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.3');
+          const { default: QRCode } = (await import('https://esm.sh/qrcode@1.5.3')) as unknown as {
+            default: { toString(text: string, opts: Record<string, unknown>): Promise<string> };
+          };
           const svg = await QRCode.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
           qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
         } catch (err: unknown) {
