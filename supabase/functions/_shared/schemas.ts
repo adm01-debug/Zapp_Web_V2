@@ -213,6 +213,11 @@ export const SicoobBridgeReplySchema = z.object({
 });
 
 // ─── Gmail Send ──────────────────────────────────────────────
+// IDs reais do Gmail (message/thread) sao strings opacas alfanumericas
+// (hex/base64url), sempre curtas. Restringe o charset a algo que nao permite
+// injecao de path (/, ?, #, espaco) quando interpolado direto na URL da API.
+const GMAIL_ID_RE = /^[0-9A-Za-z_-]{1,100}$/;
+
 export const GmailSendActionSchema = z.object({
   action: z.enum(['send', 'reply', 'create-draft', 'modify-labels', 'mark-read', 'trash', 'trash-thread']),
   account_id: z.string().uuid("account_id must be a valid UUID"),
@@ -222,9 +227,12 @@ export const GmailSendActionSchema = z.object({
   subject: z.string().max(1000).optional(),
   text_body: z.string().max(100000).optional(),
   html_body: z.string().max(500000).optional(),
-  thread_id: z.string().max(500).optional(),
-  message_id: z.string().max(500).optional(),
-  message_ids: z.array(z.string()).max(100).optional(),
+  // IDs do Gmail sao interpolados direto na URL (/messages/{id}/modify,
+  // /threads/{id}/trash, etc.) em varios cases do handler — regex fecha
+  // injecao de path (/, ?, #, espaco) na validacao, uma vez, pra todos eles.
+  thread_id: z.string().max(100).regex(GMAIL_ID_RE, 'Formato de thread_id invalido').optional(),
+  message_id: z.string().max(100).regex(GMAIL_ID_RE, 'Formato de message_id invalido').optional(),
+  message_ids: z.array(z.string().max(100).regex(GMAIL_ID_RE, 'Formato de message_id invalido')).max(100).optional(),
   add_labels: z.array(z.string()).max(50).optional(),
   remove_labels: z.array(z.string()).max(50).optional(),
   attachments: z.array(z.object({

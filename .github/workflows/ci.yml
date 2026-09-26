@@ -81,6 +81,7 @@ jobs:
           supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
           supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
           supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
+          supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
           supabase/functions/crm-integration/index.test.ts
           supabase/functions/promogifts-catalog/index.test.ts
           supabase/functions/message-delivery/index.test.ts
@@ -88,6 +89,8 @@ jobs:
           supabase/functions/talkx-send/index.test.ts
           supabase/functions/public-api/index.test.ts
           supabase/functions/webhook-diagnostic/diagnostic.test.ts
+          supabase/functions/talkx-report/index.test.ts
+          supabase/functions/multiplix-send/index.test.ts
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
