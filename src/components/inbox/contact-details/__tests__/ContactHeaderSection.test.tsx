@@ -183,4 +183,37 @@ describe('ContactHeaderSection', () => {
     );
     expect(screen.getByText('50')).toBeInTheDocument();
   });
+
+  // ========== APELIDO (paridade com o nome exibido na lista de conversas) ==========
+  it('prioriza o apelido (enrichedData.nickname) sobre o primeiro nome quando preenchido', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+    expect(screen.queryByText('Maria')).not.toBeInTheDocument();
+  });
+
+  it('cai no primeiro nome quando o apelido e so espacos', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: '   ' }}
+      />
+    );
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+  });
+
+  it('usa o apelido tambem no modo compacto', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+        isCompact={true}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+  });
 });

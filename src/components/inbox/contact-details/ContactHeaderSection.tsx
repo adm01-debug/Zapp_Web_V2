@@ -72,6 +72,10 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
   const nomeTratamento = crmContact?.nome_tratamento || crmContact?.apelido;
   const firstName = contact.name.split(' ')[0];
+  // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
+  // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um
+  // nome na lista e outro aqui no painel de detalhes, lado a lado na mesma tela.
+  const displayName = enrichedData?.nickname?.trim() || firstName;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
   const channelEmoji = enrichedData?.channel_type ? channelIcons[enrichedData.channel_type] || '💬' : null;
@@ -91,7 +95,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   if (isCompact) {
-    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={firstName} />;
+    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
   }
 
   return (
@@ -141,7 +145,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="font-bold text-lg text-foreground leading-tight truncate">{firstName}</h4>
+                <h4 className="font-bold text-lg text-foreground leading-tight truncate">{displayName}</h4>
                 <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
                   aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
                   <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
