@@ -828,50 +828,77 @@ export type Database = {
       calls: {
         Row: {
           agent_id: string | null
+          agent_notes: string | null
           answered_at: string | null
+          answered_by: string | null
+          channel: string | null
           contact_id: string | null
           created_at: string
           direction: string
           duration_seconds: number | null
+          end_reason: string | null
           ended_at: string | null
           id: string
           notes: string | null
+          peer_name: string | null
+          peer_number: string | null
+          provider_call_id: string | null
           provider_event_id: string | null
+          recording_status: string
           recording_url: string | null
           started_at: string
           status: string
+          talk_seconds: number | null
           whatsapp_connection_id: string | null
         }
         Insert: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Update: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction?: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Relationships: [
@@ -9594,6 +9621,17 @@ export type Database = {
         }
         Returns: Json
       }
+      my_calls_kpi: {
+        Args: { p_channel?: string; p_from?: string; p_scope?: string; p_to?: string }
+        Returns: {
+          answered: number
+          avg_talk_seconds: number
+          inbound: number
+          missed_inbound: number
+          outbound: number
+          total: number
+        }[]
+      }
       notify_due_reminders: { Args: never; Returns: number }
       persist_multiplix_recipient_message_snapshot: {
         Args: {
@@ -9788,6 +9826,46 @@ export type Database = {
           title: string
         }[]
       }
+      search_my_calls: {
+        Args: {
+          p_channel?: string
+          p_direction?: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_q?: string
+          p_result?: string
+          p_scope?: string
+          p_to?: string
+        }
+        Returns: {
+          agent_id: string
+          agent_notes: string
+          answered_at: string
+          answered_by: string
+          channel: string
+          contact_avatar_url: string
+          contact_id: string
+          contact_name: string
+          contact_phone: string
+          direction: string
+          end_reason: string
+          ended_at: string
+          id: string
+          notes: string
+          peer_name: string
+          peer_number: string
+          recording_status: string
+          started_at: string
+          status: string
+          talk_seconds: number
+          total_count: number
+        }[]
+      }
+      set_call_agent_notes: {
+        Args: { p_call_id: string; p_notes: string }
+        Returns: undefined
+      }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
@@ -9883,6 +9961,23 @@ export type Database = {
           updated_at: string
           version_number: number
         }[]
+      }
+      upsert_my_call: {
+        Args: {
+          p_answered_at?: string
+          p_channel?: string
+          p_contact_id?: string
+          p_direction: string
+          p_end_reason?: string
+          p_ended_at?: string
+          p_id: string
+          p_peer_name?: string
+          p_peer_number?: string
+          p_provider_call_id?: string
+          p_status?: string
+          p_talk_seconds?: number
+        }
+        Returns: string
       }
       upsert_crm_contact_link_guarded: {
         Args: {
