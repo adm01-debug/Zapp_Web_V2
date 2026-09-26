@@ -52,7 +52,13 @@ test.describe('Conversation state transitions', () => {
     const conversation = page.locator('[data-testid="conversation-item"]').first();
     await conversation.click();
 
-    await page.getByRole('button', { name: /mais ações/i }).click();
+    // getByRole('button', { name: /mais ações/i }) sem escopo bate em 2
+    // elementos desde que o painel de contato ganhou seu proprio botao
+    // "Mais ações" (contact-action-tile, data-testid="contact-panel") —
+    // strict mode violation confirmado na run 36266992388. O botao do
+    // header do chat (o que abre "Marcar como resolvido") agora tem
+    // data-testid proprio para nao depender de ordem no DOM.
+    await page.getByTestId('chat-header-more-actions').click();
     await page.getByRole('menuitem', { name: /marcar como resolvido/i }).click();
 
     // CloseConversationDialog tem 3 comboboxes (Motivo do encerramento,

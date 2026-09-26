@@ -161,7 +161,7 @@ function ChatPanelHeaderBase({
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
+              <Button variant="ghost" size="icon" data-testid="chat-header-more-actions" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
                 <MoreVertical className="w-[18px] h-[18px]" />
               </Button>
             </DropdownMenuTrigger>
