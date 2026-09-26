@@ -218,8 +218,8 @@
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
-      "bytes": 8925,
-      "sha256": "8a2cfaa9c824275a85bf347b879a3ccc9a93fec288fda33189ddbf7e2c8e4634"
+      "bytes": 9157,
+      "sha256": "709bc5ee0d2001a236611a00d3f4a25bf8150ae0bdfd4b41053d57e758c01c4e"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -328,8 +328,8 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 8611,
-      "sha256": "85169262336757b01313b6b8c371608d92a43133d046e19d37e88b91bf32c0e2"
+      "bytes": 8844,
+      "sha256": "c116e2f253a4f1d7515ac1bc432112de2804924a5a4117116177d23426f1be05"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
@@ -681,7 +681,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d07b2a524423b8c0f6b281919699de15dcd3bd1fc71a1fba052d98543e515c12",
+      "source_sha256": "7b33ca5f6c9793a7a242f899b24e54017ca7bd74a65499a9b6ed9e458e0b3c8d",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -962,7 +962,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6dd74fdc215cbb5ed70bae92495472a8d63f4a42a0f868902c1c2fb35755ca29",
+      "source_sha256": "82210d595128040d095e13edd09c9f007063eae28b530f339a6de582770f2c23",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1360,5 +1360,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f12cfc1f9d27ba42abffdd727c0775d501f602276382a57173c82c70dc5fa5de"
+  "manifest_sha256": "3c820fc7a038c309ffb59cf96a4e3e0607246abb1ad6abccd2806b4f1e721ed2"
 }
