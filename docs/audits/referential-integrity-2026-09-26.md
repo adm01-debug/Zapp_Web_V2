@@ -53,8 +53,9 @@ na criação; validação já sabida verde pelos 0 órfãos).
 - Inventário completo: **13 FK criadas, 38 justificadas por escrito** — 100% das 51 colunas
   decididas.
 - 0 órfãos nas 13 relações declaradas nesta rodada (verificado antes de escrever a migration).
-- Migration segue a ordem do CLAUDE.md §1.6: arquivo → PR → merge → deploy → apply. PR fica
-  aberta aguardando aprovação para rodar o `db-migrate.yml` (regra 8 — DDL em produção).
+- Migration seguiu a ordem do CLAUDE.md §1.6 (arquivo → PR #855 → merge → apply) e **foi
+  aplicada em produção em 26/09** via MCP direto + registro no ledger no mesmo turno (seção
+  "Decisões de 2026-09-26" do CLAUDE.md) — as 13 FKs confirmadas ao vivo em `pg_constraint`.
 
 ---
 *Gerado em 2026-09-26, sessão de execução do `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (E17).*
