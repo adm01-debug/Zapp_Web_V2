@@ -166,12 +166,13 @@ describe('EditContactDialog', () => {
     expect(screen.getByText('Cancelar')).toBeInTheDocument();
   });
 
-  // ========== SUBMIT ==========
+  // ========== SUBMIT (só manda o que o usuário editou — ver bloco "SÓ CAMPOS
+  // ALTERADOS" abaixo; por isso todo teste de submit precisa mudar algo antes) ==========
   it('calls supabase update on submit', async () => {
     renderDialog();
-    const submitBtn = screen.getByText('Salvar');
-    fireEvent.click(submitBtn);
-    
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalled();
     });
@@ -179,27 +180,70 @@ describe('EditContactDialog', () => {
 
   it('passes correct contact id to eq', async () => {
     renderDialog();
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
     fireEvent.click(screen.getByText('Salvar'));
-    
+
     await waitFor(() => {
       expect(mockEq).toHaveBeenCalledWith('id', 'c1');
     });
   });
 
-  it('sends nullable fields as null when empty', async () => {
-    renderDialog({
-      contact: { ...baseContact, nickname: '', surname: '', job_title: '', company: '', email: '' },
-    });
+  it('sends nullable fields as null when the user clears them', async () => {
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('Doe'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('Acme'), { target: { value: '' } });
     fireEvent.click(screen.getByText('Salvar'));
-    
+
     await waitFor(() => {
       const updatePayload = mockUpdate.mock.calls[0][0];
       expect(updatePayload.nickname).toBeNull();
       expect(updatePayload.surname).toBeNull();
-      expect(updatePayload.job_title).toBeNull();
       expect(updatePayload.company).toBeNull();
-      expect(updatePayload.email).toBeNull();
     });
+  });
+
+  // ========== SÓ CAMPOS ALTERADOS (achado da auditoria de 5 agentes,
+  // 2026-09-26, 4a rodada: o painel nunca preenche/seleciona endereço e
+  // lat/lon — o form abre sempre com esses campos vazios. Mandar o objeto
+  // inteiro a cada Salvar sobrescrevia com null assim que o 1o endereço
+  // fosse cadastrado por outra tela, e também perdia um UPDATE que chegasse
+  // via Realtime num campo que o usuário não tocou enquanto o diálogo
+  // estava aberto) ==========
+  it('não sobrescreve com null um campo que o form nunca recebeu (ex: endereço)', async () => {
+    // `contact` não traz nenhum campo de endereço — como em produção hoje
+    // (ContactDetails/Crm360Tab não os repassam).
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: 'Jonas' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload.nickname).toBe('Jonas');
+      expect(updatePayload).not.toHaveProperty('address');
+      expect(updatePayload).not.toHaveProperty('postal_code');
+      expect(updatePayload).not.toHaveProperty('latitude');
+      expect(updatePayload).not.toHaveProperty('longitude');
+    });
+  });
+
+  it('manda só o campo que o usuário editou, não o objeto inteiro', async () => {
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: 'Jonas' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toEqual({ nickname: 'Jonas' });
+    });
+  });
+
+  it('não chama o supabase quando Salvar é clicado sem nenhuma edição', async () => {
+    const { onOpenChange } = renderDialog();
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // ========== FORM STATE ISOLATION ==========
