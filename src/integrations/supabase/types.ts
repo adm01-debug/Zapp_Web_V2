@@ -1930,8 +1930,10 @@ export type Database = {
           id: string
           is_lid_legacy: boolean
           job_title: string | null
+          latitude: number | null
           lead_origin: string | null
           lead_score: number | null
+          longitude: number | null
           name: string
           neighborhood: string | null
           nickname: string | null
@@ -1968,8 +1970,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name: string
           neighborhood?: string | null
           nickname?: string | null
@@ -2006,8 +2010,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name?: string
           neighborhood?: string | null
           nickname?: string | null
