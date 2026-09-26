@@ -46,6 +46,13 @@ function personalize(
     empresa: contact.company || '',
   };
   result = result.replace(/\{\{(nome_completo|nome|apelido|empresa)\}\}/gi, (_match, key: string) => contactValues[key.toLowerCase()]);
+  // Um placeholder fora da lista acima (nome_completo/nome/apelido/empresa/saudacao/link ou
+  // customVars) chegava intacto na mensagem do destinatário sem erro nem aviso. Falha explícita
+  // é melhor que vazar "{{campo_errado}}" numa conversa real do WhatsApp.
+  const unknownPlaceholder = result.match(/\{\{[^}]+\}\}/);
+  if (unknownPlaceholder) {
+    throw new Error(`unknown_placeholder: ${unknownPlaceholder[0]}`);
+  }
   return result;
 }
 
@@ -140,7 +147,12 @@ Deno.serve(async (req) => {
       }
       // Personalizar com dados ficticios para preview
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
-      const personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
+      let personalizedText: string;
+      try {
+        personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
+      }
       const cleanPhone = phone.replace(/\D/g, "");
       try {
         let sendRes: Response;
@@ -409,13 +421,30 @@ Deno.serve(async (req) => {
         if ((candidateMediaUrl === null) !== (candidateMediaType === null)) {
           throw new Error("talkx_invalid_media_snapshot_source");
         }
-        const calculatedMessage = legacyPersonalizedMessage ?? personalize(
-          contentToSend,
-          contact as { name: string; nickname?: string; company?: string },
-          [],
-          typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-          trackingUrlFor(recipient.id as string),
-        );
+        let calculatedMessage: string;
+        try {
+          calculatedMessage = legacyPersonalizedMessage ?? personalize(
+            contentToSend,
+            contact as { name: string; nickname?: string; company?: string },
+            [],
+            typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+            trackingUrlFor(recipient.id as string),
+          );
+        } catch (e) {
+          // Placeholder desconhecido no roteiro: falha permanente deste destinatário (não do
+          // provedor, nenhum POST foi feito). Não pode derrubar o lote inteiro nem deixar
+          // "{{...}}" vazar para a mensagem real dos demais destinatários já processados.
+          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
+            p_recipient_id: recipient.id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
+          });
+          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
+          failedCount++;
+          processedCount++;
+          continue;
+        }
         const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
           p_recipient_id: recipient.id,
           p_claim_token: claim.claim_token,
