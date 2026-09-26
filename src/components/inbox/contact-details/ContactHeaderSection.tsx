@@ -155,7 +155,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
             {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
             {enrichedData?.job_title && (
               <p className={companyName
-                ? 'text-[10px] text-muted-foreground truncate mt-0.5'
+                ? 'text-3xs text-muted-foreground truncate mt-0.5'
                 : 'text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5'}>
                 {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
               </p>
