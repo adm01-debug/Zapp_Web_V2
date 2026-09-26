@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingDown, Users, AlertTriangle, Brain, RefreshCw, Loader2, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,11 +29,7 @@ export function ChurnPredictionDashboard() {
   const [analyzing, setAnalyzing] = useState(false);
   const [stats, setStats] = useState({ total: 0, critical: 0, high: 0, medium: 0, low: 0 });
 
-  useEffect(() => {
-    analyzeChurnRisk();
-  }, []);
-
-  const analyzeChurnRisk = async () => {
+  const analyzeChurnRisk = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch contacts with their latest messages
@@ -117,7 +113,12 @@ export function ChurnPredictionDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+    analyzeChurnRisk();
+  }, [analyzeChurnRisk]);
 
   const runAIAnalysis = async () => {
     setAnalyzing(true);

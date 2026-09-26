@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,11 +39,7 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
   const [saving, setSaving] = useState(false);
   const [newItems, setNewItems] = useState<Record<string, string>>({}); const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    loadMemory();
-  }, [contactId]);
-
-  const loadMemory = async () => {
+  const loadMemory = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from('conversation_memory')
@@ -62,7 +58,12 @@ export function ConversationMemoryPanel({ contactId, profileId }: ConversationMe
       });
     }
     setLoading(false);
-  };
+  }, [contactId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-contato padrão, sem estado derivado de props para sincronizar.
+    loadMemory();
+  }, [loadMemory]);
 
   const addItem = (key: keyof Pick<MemoryData, 'facts' | 'objections_handled' | 'promises_made' | 'pending_items'>) => {
     const value = newItems[key]?.trim();

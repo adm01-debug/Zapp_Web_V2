@@ -3,7 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import type mapboxgl from 'mapbox-gl';
 import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
-import { reverseGeocodePlace, searchPlaces, type GeoSearchPlace } from '@/lib/mapboxGeocode';
+import { reverseGeocodePlace, searchPlaces, type GeoSearchPlace, type GeoProximity } from '@/lib/mapboxGeocode';
 import {
   getMapboxToken,
   mapboxFailureKindFromMapError,
@@ -21,6 +21,10 @@ interface SelectedLocation {
 }
 
 const DEFAULT_CENTER: [number, number] = [-46.6333, -23.5505];
+// Referencia estavel: usada como fallback de `proximity` (abaixo). Um objeto literal novo a
+// cada render quebraria a igualdade referencial nas deps do useCallback/useEffect de quem
+// consome `proximity` (useAddressAutocomplete), reiniciando o debounce sem o operador digitar.
+const DEFAULT_PROXIMITY: GeoProximity = { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] };
 
 export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   // Callback ref com estado, e nao useRef: o Radix Tabs monta os filhos da aba num
@@ -50,6 +54,11 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  // E31: proximity dinamico do /suggest (Fase 4) - centro do mapa enquanto ele esta visivel,
+  // ou a posicao do agente apos o GPS, com Sao Paulo como piso. Nenhum efeito no fluxo antigo:
+  // so alimenta quem ler `proximity` (o hook de autocomplete).
+  const [mapCenter, setMapCenter] = useState<GeoProximity | null>(null);
+  const [agentPosition, setAgentPosition] = useState<GeoProximity | null>(null);
   // Candidatos da busca. A API sempre devolve algo (ate para texto sem sentido), entao com mais
   // de um resultado quem decide e o operador — nao mandamos o marcador para o primeiro sozinho.
   const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
@@ -100,8 +109,9 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
     // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
     // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
-    if (!mapboxToken) { select({ lat, lng }); return; }
+    if (!mapboxToken) { setSearchResults([]); select({ lat, lng }); return; }
     const signal = nextGeoSignal();
+    setSearchResults([]);
     const place = await reverseGeocodePlace(lat, lng, mapboxToken);
     if (signal.aborted) return;
     select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng });
@@ -126,6 +136,8 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       mapboxgl.accessToken = mapboxToken;
       // Voltar para a aba do mapa recria o mapa: centraliza direto na seleção existente.
       const restored = selectedRef.current;
+      const initialCenter: GeoProximity = restored ? { lng: restored.lng, lat: restored.lat } : { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] };
+      setMapCenter(initialCenter);
       map.current = new mapboxgl.Map({
         container: mapNode,
         style: 'mapbox://styles/mapbox/streets-v12',
@@ -151,6 +163,8 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
         if (target) updateMarker(target[0], target[1]);
       });
       map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat); });
+      // E31: centro do mapa alimenta o `proximity` do autocomplete enquanto o operador navega.
+      map.current.on('moveend', () => { const c = map.current?.getCenter(); if (c) setMapCenter({ lng: c.lng, lat: c.lat }); });
     }).catch((err) => {
       if (cancelled) return;
       const kind = mapboxFailureKindOf(err);
@@ -173,7 +187,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      async (position) => { const { latitude, longitude } = position.coords; updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude); setIsLoadingLocation(false); },
+      async (position) => { const { latitude, longitude } = position.coords; setAgentPosition({ lng: longitude, lat: latitude }); updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude); setIsLoadingLocation(false); },
       (error) => { log.error('Error getting location:', error); toast({ title: 'Erro ao obter localização', description: 'Verifique se a permissão de localização está ativada.', variant: 'destructive' }); setIsLoadingLocation(false); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -253,8 +267,21 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     setIsSearching(false);
   }, [select]);
 
+  // E31: centro do mapa manda enquanto ele esta visivel (aba 'map'); o ramo do GPS na aba
+  // 'current' so importa de verdade de forma indireta hoje - o autocomplete so fica habilitado
+  // com activeTab === 'map', entao a posicao do agente influencia a busca via selectedRef
+  // (vira o centro inicial do mapa ao trocar de aba), nao por este ramo ser lido diretamente.
+  // Mantido explicito mesmo assim: documenta a prioridade e deixa a saida sempre definida
+  // (nunca undefined) para qualquer consumidor futuro deste hook. Sem nenhum dos dois, Sao
+  // Paulo (o DEFAULT_CENTER de hoje).
+  const proximity: GeoProximity = activeTab === 'map' && mapCenter
+    ? mapCenter
+    : activeTab === 'current' && agentPosition
+      ? agentPosition
+      : DEFAULT_PROXIMITY;
+
   return {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken, searchQuery, setSearchQuery, isSearching,
-    selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset,
+    selectedLocation, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   };
 }

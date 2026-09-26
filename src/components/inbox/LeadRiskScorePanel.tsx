@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
@@ -31,11 +31,7 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false); const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    loadData();
-  }, [contactId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const { data } = await supabase
       .from('contacts')
       .select('lead_score, risk_score, lead_origin, consent_status')
@@ -48,7 +44,12 @@ export function LeadRiskScorePanel({ contactId }: LeadRiskScorePanelProps) {
       setConsentStatus(data.consent_status ?? '');
     }
     setLoaded(true);
-  };
+  }, [contactId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-contato padrão, sem estado derivado de props para sincronizar.
+    loadData();
+  }, [loadData]);
 
   const save = async () => {
     setSaving(true);

@@ -31,14 +31,7 @@ export function useForwardMessage(
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<'contacts' | 'groups'>('contacts');
 
-  useEffect(() => {
-    if (open) {
-      fetchContacts();
-      fetchGroups();
-    }
-  }, [open]);
-
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -52,9 +45,9 @@ export function useForwardMessage(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('whatsapp_groups')
@@ -65,7 +58,15 @@ export function useForwardMessage(
     } catch (error) {
       log.error('Error fetching groups:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-open padrão, sem estado derivado de props para sincronizar.
+      fetchContacts();
+      fetchGroups();
+    }
+  }, [open, fetchContacts, fetchGroups]);
 
   const filteredContacts = contacts.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone.includes(searchQuery)

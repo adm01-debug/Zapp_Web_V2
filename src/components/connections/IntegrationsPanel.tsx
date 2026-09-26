@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -112,11 +112,7 @@ export function IntegrationsPanel({
   const [chatwoot, setChatwoot] = useState<Record<string, unknown>>({ enabled: false });
   const [evolutionBot, setEvolutionBot] = useState<Record<string, unknown>>({ enabled: false });
 
-  useEffect(() => {
-    if (open && instanceName) loadAll();
-  }, [open, instanceName]);
-
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     const load = async (getter: (n: string) => Promise<unknown>, setter: (v: Record<string, unknown>) => void) => {
       try {
         const data = await getter(instanceName);
@@ -131,7 +127,13 @@ export function IntegrationsPanel({
       load(api.getChatwoot, setChatwoot),
       load(api.getEvolutionBot, setEvolutionBot),
     ]);
-  };
+  }, [api, instanceName]);
+
+  useEffect(() => {
+    if (open && instanceName) {
+      loadAll();
+    }
+  }, [open, instanceName, loadAll]);
 
   const typebotFields = [
     { key: 'url', label: 'URL do Typebot', placeholder: 'https://typebot.io' },

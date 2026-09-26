@@ -186,5 +186,31 @@ describe('LocationPicker', () => {
       fireEvent.change(input, { target: { value: 'xbz' } });
       expect(screen.getByRole('link', { name: /Mapbox/ })).toHaveAttribute('href', expect.stringContaining('mapbox.com'));
     });
+
+    // Fase 4 (E30) — clique no mapa/GPS muda `selectedLocation` pelo caminho antigo
+    // (reverseGeocode -> select), sem passar pelo autocomplete. Uma lista de sugestões
+    // aberta na hora não pode sobrar flutuando por cima do marcador que acabou de mudar.
+    it('clique no mapa (nova selectedLocation) fecha a lista de sugestões aberta', async () => {
+      const ac = autocompleteState({ query: 'xbz', suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }] });
+      h.hook.mockReturnValue(hookState(null));
+      h.flag.mockReturnValue(true);
+      h.autocomplete.mockReturnValue(ac);
+      const view = render(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+      const mapTab = screen.getByRole('tab', { name: /Escolher no Mapa/ });
+      fireEvent.click(mapTab);
+      fireEvent.focus(mapTab);
+      const input = await screen.findByRole('combobox');
+      fireEvent.focusIn(input);
+      fireEvent.change(input, { target: { value: 'xbz' } });
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+      // Simula o clique no mapa completando a seleção via useLocationPicker.
+      h.hook.mockReturnValue(hookState({ lat: -23.5, lng: -46.6 }));
+      view.rerender(<LocationPicker open onOpenChange={vi.fn()} onSend={vi.fn()} />);
+
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+      expect(ac.clear).toHaveBeenCalled();
+    });
   });
 });

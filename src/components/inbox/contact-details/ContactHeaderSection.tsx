@@ -148,7 +148,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                 </button>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={() => onQuickAction?.('edit')}
-                className="h-9 px-3 rounded-lg border border-border bg-card gap-1.5 text-[13px] font-medium shrink-0">
+                className="h-9 px-3 rounded-lg border border-border bg-inbox-panel gap-1.5 text-[13px] font-medium shrink-0">
                 <Pencil className="w-3.5 h-3.5" />Editar
               </Button>
             </div>

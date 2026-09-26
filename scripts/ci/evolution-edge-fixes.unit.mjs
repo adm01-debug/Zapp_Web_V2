@@ -121,6 +121,61 @@ test("create-connection: compensacao e rollback nunca afirmam sucesso sem confir
   assert.match(block, /if \(deleteRowError\)/, "delete da linha apos tokenError precisa checar o proprio erro");
 });
 
+test("create-connection: reserva o instance_id (INSERT) antes de tocar a GO — trava a corrida de nomes iguais", () => {
+  const cConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  const listAt = apiSrc.indexOf("if (action === 'list-instances')");
+  const block = apiSrc.slice(cConnAt, listAt);
+
+  // Bug original: SELECT (check) + INSERT (act) depois da GO já ter sido
+  // chamada é check-then-act — duas requisições com o mesmo nome passavam as
+  // duas para a GO, e quem perdesse o INSERT resolvia a instância da outra
+  // só pelo nome e apagava. A trava real é o UNIQUE em instance_id: o INSERT
+  // tem que ser a PRIMEIRA coisa que a action faz depois de validar o body,
+  // e tem que vir antes de qualquer chamada a /instance/create.
+  const insertAt = block.indexOf(".from('whatsapp_connections').insert({");
+  const createCallAt = block.indexOf("proxy('/instance/create'");
+  assert.notEqual(insertAt, -1, "o INSERT de reserva sumiu");
+  assert.notEqual(createCallAt, -1, "a chamada de criação na GO sumiu");
+  assert.ok(insertAt < createCallAt, "o INSERT em whatsapp_connections precisa vir ANTES da chamada a /instance/create na GO");
+
+  // Só pode existir UM insert nesta action (o antigo tinha dois: reserva
+  // nenhuma reserva de fato, e um insert pós-GO) — dois inserts de volta é
+  // sinal de que a reserva atômica foi desfeita.
+  const insertCount = block.split(".from('whatsapp_connections').insert({").length - 1;
+  assert.equal(insertCount, 1, "create-connection só pode inserir a linha uma vez (antes da GO)");
+
+  // O SELECT+maybeSingle antigo (check-then-act) não pode voltar.
+  assert.doesNotMatch(
+    block, /\.select\('id'\)\.eq\('instance_id', instance\)\.maybeSingle\(\)/,
+    "o check-then-act antigo (SELECT antes do INSERT) não fecha a corrida — não pode voltar",
+  );
+
+  // Falha no INSERT por corrida (unique_violation, 23505) precisa de mensagem
+  // amigável e não pode acionar compensação na GO (nada foi criado lá ainda).
+  assert.match(block, /insertError\?\.code === '23505'/, "precisa distinguir unique_violation (corrida) de outras falhas de insert");
+});
+
+test("create-connection: compensa a GO ANTES de liberar a reserva (nunca depois)", () => {
+  const cConnAt = apiSrc.indexOf("if (action === 'create-connection')");
+  const listAt = apiSrc.indexOf("if (action === 'list-instances')");
+  const block = apiSrc.slice(cConnAt, listAt);
+
+  // Enquanto a linha reservada existir, nenhum concorrente com o mesmo nome
+  // passa do INSERT — então resolveGoInstanceId(instance) só pode achar a
+  // instância desta própria requisição. Se rollbackRow() rodasse antes de
+  // compensateGoCreate(), um concorrente poderia reservar o nome e criar sua
+  // própria instância na GO nesse intervalo, e a compensação apagaria a
+  // instância DELE — o mesmo bug que a reserva existe para fechar.
+  const tokenErrAt = block.indexOf('if (tokenError)');
+  assert.notEqual(tokenErrAt, -1, "branch de tokenError sumiu");
+  const tokenErrBlock = block.slice(tokenErrAt, tokenErrAt + 1000);
+  const compensateAt = tokenErrBlock.indexOf('await compensateGoCreate();');
+  const rollbackAt = tokenErrBlock.indexOf('await rollbackRow();');
+  assert.notEqual(compensateAt, -1, "compensateGoCreate() precisa ser chamado no branch de tokenError");
+  assert.notEqual(rollbackAt, -1, "rollbackRow() precisa ser chamado no branch de tokenError");
+  assert.ok(compensateAt < rollbackAt, "compensateGoCreate() tem que rodar ANTES de rollbackRow() — a linha reservada é o que garante que a instância resolvida é a nossa");
+});
+
 test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
   for (const action of ["find-messages", "find-status-messages"]) {
     const at = apiSrc.indexOf(`if (action === '${action}')`);

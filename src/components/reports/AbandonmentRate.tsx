@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +11,7 @@ export function AbandonmentRate() {
   const [period, setPeriod] = useState('7');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadData(); }, [period]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const since = new Date();
     since.setDate(since.getDate() - parseInt(period));
@@ -41,7 +39,12 @@ export function AbandonmentRate() {
       setData({ total, abandoned, responded });
     }
     setLoading(false);
-  };
+  }, [period]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-período padrão, sem estado derivado de props para sincronizar.
+    loadData();
+  }, [loadData]);
 
   const rate = data.total > 0 ? Math.round((data.abandoned / data.total) * 100) : 0;
 
