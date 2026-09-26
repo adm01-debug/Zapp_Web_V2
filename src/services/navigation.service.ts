@@ -8,7 +8,7 @@ import {
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
   ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
-  Webhook, HardDrive, Landmark, FlaskConical, ListChecks,
+  Webhook, HardDrive, Landmark, FlaskConical, ListChecks, Send,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -69,6 +69,7 @@ export class NavigationService {
         icon: Bot,
         items: [
           { id: 'talkx', icon: Sparkles, label: 'Campanhas', roles: STAFF_ROLES },
+          { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
           { id: 'chatbot', icon: Bot, label: 'Chatbot', roles: STAFF_ROLES },
           { id: 'automations', icon: RefreshCw, label: 'Automações', roles: STAFF_ROLES },
           { id: 'wa-flows', icon: Workflow, label: 'WhatsApp Flows', roles: STAFF_ROLES },
