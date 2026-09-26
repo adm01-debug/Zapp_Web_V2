@@ -14,6 +14,15 @@ const SUPABASE_ANON_KEY =
 export const E2E_FIXTURE_CONTACT_ID = '04dff4dc-c6b1-4283-ac22-bd8639804759';
 export const E2E_FIXTURE_CONTACT_NAME = '[E2E] Contato de teste - nao apagar';
 
+// A lista de conversas NAO renderiza o nome completo do contato: cada item
+// mostra `contact.nickname?.trim() || name.split(' ')[0]` — a primeira palavra
+// do nome — desde o #816 (ver src/components/inbox/VirtualizedRealtimeList.tsx).
+// Sem apelido no fixture, o item exibe exatamente "[E2E]", entao filtrar pelo
+// E2E_FIXTURE_CONTACT_NAME completo nunca casa (element(s) not found, run
+// 36262158460). Este token e o prefixo exibido — casa tanto com o nome
+// truncado quanto com o nome completo, caso a exibicao mude de novo.
+export const E2E_FIXTURE_CONTACT_DISPLAY_NAME = E2E_FIXTURE_CONTACT_NAME.split(' ')[0];
+
 async function getAccessToken(page: Page): Promise<string> {
   const token = await page.evaluate(() => {
     for (let i = 0; i < window.localStorage.length; i++) {
