@@ -3,7 +3,7 @@
 > Inventário das 51 colunas `public.*.*_id` sem `FOREIGN KEY` declarada (levantamento de
 > 26/09, `pg_attribute`/`pg_constraint`). Decisão por coluna: FK criada × justificativa por
 > escrito. 0 órfãos confirmados antes de qualquer escrita (ver migration
-> `20260926160000_e17_referential_integrity_fks.sql`).
+> `20260926200000_e17_referential_integrity_fks.sql`).
 
 ## FK criada (13 colunas — 0 órfãos verificados ao vivo)
 
