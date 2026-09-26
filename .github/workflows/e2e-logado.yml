@@ -25,9 +25,17 @@ on:
 permissions:
   contents: read
 
+# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
+# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
+# de push eram canceladas por push seguinte, varias delas a segundos de
+# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
+# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
+# chegarem enquanto a run atual roda, so o mais recente pendente roda em
+# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
+# commit mais novo", sem desperdicar runs quase completas.
 concurrency:
   group: e2e-logado-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: false
 
 jobs:
   e2e-logado:
