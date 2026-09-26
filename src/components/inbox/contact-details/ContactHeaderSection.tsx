@@ -66,12 +66,18 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
-  const nomeTratamento = crmContact?.nome_tratamento || crmContact?.apelido;
   const firstName = contact.name.split(' ')[0];
   // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
   // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um
   // nome na lista e outro aqui no painel de detalhes, lado a lado na mesma tela.
   const displayName = enrichedData?.nickname?.trim() || firstName;
+  const nomeTratamentoRaw = crmContact?.nome_tratamento || crmContact?.apelido;
+  // Não repete a legenda quando ela é igual ao nome já exibido no título
+  // (comum: quem cadastra o apelido local copia o que o CRM já mostrava).
+  const nomeTratamento =
+    nomeTratamentoRaw && nomeTratamentoRaw.trim().toLowerCase() !== displayName.trim().toLowerCase()
+      ? nomeTratamentoRaw
+      : null;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
   const sentiment = enrichedData?.ai_sentiment;
