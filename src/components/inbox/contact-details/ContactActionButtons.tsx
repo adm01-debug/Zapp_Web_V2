@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
@@ -53,27 +54,34 @@ function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
 }
 
 type TileProps = React.ComponentPropsWithoutRef<'button'> & {
-  icon: React.ReactNode; label: string; testId?: string;
+  icon: React.ReactNode; label: string; testId?: string; hoverColorClass?: string;
 };
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
-  { icon, label, testId, className, ...rest }, ref,
+  { icon, label, testId, hoverColorClass = 'group-hover:text-primary', className, ...rest }, ref,
 ) {
   return (
-    <button
-      ref={ref}
-      type="button"
-      data-testid={testId ?? 'contact-action-tile'}
-      {...rest}
-      className={cn(
-        'w-14 h-14 rounded-xl bg-muted/40 border border-border flex flex-col items-center justify-center gap-1',
-        'hover:bg-muted/70 transition-colors disabled:opacity-40 disabled:pointer-events-none',
-        className,
-      )}
-    >
-      {icon}
-      <span className="text-2xs font-medium text-muted-foreground leading-none">{label}</span>
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            ref={ref}
+            type="button"
+            data-testid={testId ?? 'contact-action-tile'}
+            {...rest}
+            className={cn(
+              'group h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
+              'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
+              hoverColorClass,
+              className,
+            )}
+          >
+            {icon}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 });
 
@@ -89,7 +97,7 @@ export function ContactActionButtons({
     <div className="grid grid-cols-4 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<Phone className="w-[18px] h-[18px] text-primary" />} label="Ligar" title="Opções de chamada" />
+            <Tile icon={<Phone className="w-[18px] h-[18px]" />} label="Ligar" title="Opções de chamada" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onStartCall('whatsapp')} className="gap-2 text-xs">
@@ -105,7 +113,7 @@ export function ContactActionButtons({
         </DropdownMenu>
 
         <Tile
-          icon={<Mail className="w-[18px] h-[18px] text-primary" />}
+          icon={<Mail className="w-[18px] h-[18px]" />}
           label="E-mail"
           title={contact.email ? 'Abrir email' : 'Sem email'}
           disabled={!contact.email}
@@ -113,16 +121,16 @@ export function ContactActionButtons({
         />
 
         <Tile
-          icon={<ArrowLeftRight className="w-[18px] h-[18px] text-success" />}
+          icon={<ArrowLeftRight className="w-[18px] h-[18px]" />}
           label="Transferir"
           title="Transferir conversa"
           onClick={handleTransfer}
-          className="bg-success/10 border-success/30 hover:bg-success/20"
+          hoverColorClass="group-hover:text-success"
         />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px] text-primary" />} label="Mais" title="Mais ações" className="border-primary/30" />
+            <Tile icon={<MoreHorizontal className="w-[18px] h-[18px]" />} label="Mais" title="Mais ações" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">

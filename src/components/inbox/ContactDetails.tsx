@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditContactDialog } from './contact-details/EditContactDialog';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { X, PanelRightClose } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactAccordionSections } from './contact-details/ContactAccordionSections';
@@ -93,9 +94,21 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
           <div className="w-1 h-5 rounded-full bg-primary" />
           <h3 className="font-semibold text-foreground text-sm">Detalhes do Contato</h3>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar painel de detalhes" className="w-7 h-7 hover:bg-destructive/10 hover:text-destructive transition-colors">
-          <X className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={onClose} aria-label="Recolher painel de detalhes" className="w-7 h-7 hover:bg-muted transition-colors">
+                  <PanelRightClose className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Recolher painel</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar painel de detalhes" className="w-7 h-7 hover:bg-destructive/10 hover:text-destructive transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">
