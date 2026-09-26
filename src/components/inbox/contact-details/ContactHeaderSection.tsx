@@ -1,9 +1,9 @@
 import { useState, lazy, Suspense } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Building, Briefcase, Crown, Star, Calendar, ChevronUp } from 'lucide-react';
+import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
+import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -55,7 +55,6 @@ const CallDialog = lazy(() => import('@/components/calls/CallDialog').then(m => 
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
-  const [manuallyCollapsed, setManuallyCollapsed] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
   const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
@@ -99,15 +98,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
     return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
   }
 
-  if (manuallyCollapsed) {
-    return (
-      <CompactContactHeader
-        contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName}
-        onExpand={() => setManuallyCollapsed(false)}
-      />
-    );
-  }
-
   return (
     <>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
@@ -148,28 +138,20 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           </div>
 
           <div className="flex-1 min-w-0 pt-0.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="font-bold text-lg text-foreground leading-tight truncate">{displayName}</h4>
-                <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
-                  aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
-                  <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
-                </button>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => setManuallyCollapsed(true)}
-                      aria-label="Recolher contato" className="w-8 h-8 rounded-lg shrink-0 hover:bg-muted">
-                      <ChevronUp className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Recolher contato</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h4 className="font-bold text-lg text-foreground leading-tight truncate">{displayName}</h4>
+              <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
+                aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
+                <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
+              </button>
             </div>
 
-            {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate"><Building className="w-3 h-3 shrink-0" />{companyName}</p>}
+            {companyName && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+                <CompanyLogo logoUrl={crmCompany?.logo_url} companyName={crmCompany?.nome_fantasia} fallbackCompanyName={companyName} size="sm" className="rounded-full" />
+                {companyName}
+              </p>
+            )}
             {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
             {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
               {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}

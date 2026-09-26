@@ -1,4 +1,4 @@
-import { Crown, ChevronDown } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -11,10 +11,9 @@ interface CompactContactHeaderProps {
   isVip: boolean;
   companyName?: string;
   firstName: string;
-  onExpand?: () => void;
 }
 
-export function CompactContactHeader({ contact, isVip, companyName, firstName, onExpand }: CompactContactHeaderProps) {
+export function CompactContactHeader({ contact, isVip, companyName, firstName }: CompactContactHeaderProps) {
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-inbox-panel">
@@ -50,18 +49,6 @@ export function CompactContactHeader({ contact, isVip, companyName, firstName, o
             <TooltipContent>Copiar telefone</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        {onExpand && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-primary/10" onClick={onExpand} aria-label="Expandir contato">
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Expandir contato</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
       </div>
     </motion.div>
   );

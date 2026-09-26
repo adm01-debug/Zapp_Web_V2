@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ContactHeaderSection } from '../ContactHeaderSection';
 
 // Minimal mocks
@@ -138,13 +138,6 @@ describe('ContactHeaderSection', () => {
       />
     );
     expect(screen.getByText('Zé')).toBeInTheDocument();
-  });
-
-  // ========== COLLAPSE CONTATO ==========
-  it('recolhe o header ao clicar no botão "Recolher contato" e mostra o header compacto', () => {
-    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    fireEvent.click(screen.getByLabelText('Recolher contato'));
-    expect(screen.getByLabelText('Expandir contato')).toBeInTheDocument();
   });
 
   // ========== COLLAPSE ALL ==========
