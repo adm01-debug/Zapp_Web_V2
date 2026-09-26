@@ -54,18 +54,24 @@ Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
 - **E15** — índices com `idx_scan=0`: **472/675** (o total cresceu: 503→675). `pg_stat_database.stats_reset`
   = **null** ⇒ não há 30 dias de estatística confiável; dropar em massa segue proibido pelo próprio
   critério da etapa. Sem ação autônoma.
-- **E19** — `pg_stat_statements` **não instalada** no banco ⇒ baseline de queries lentas bloqueado
-  até a extensão ser criada (mudança de infra, regra 8).
+- **E19** — **correção**: `pg_stat_statements` já estava instalada — só não estava no schema
+  `public` (está em `extensions.pg_stat_statements`). Baseline real coletado (22h de janela);
+  achou causa raiz do UPDATE lento de `messages.is_read` (`REPLICA IDENTITY FULL` + publicação
+  Realtime, não falta de índice). Ver `docs/audits/slow-queries-2026-09.md`. Fechado.
 - **E22** — trigger functions: **44** (eram 38). Segue fora do catálogo; análise pendente.
 - **E40** — implicit-any: **0**. **E42** — TODO/FIXME reais: **0** (o único hit é a palavra "TODOS" em
   comentário PT). **E43** — console.log em src: **0** reais (o único hit é `@example` de JSDoc em
   `src/lib/retry.ts`). Todos fechados, checkboxes marcados abaixo.
 - **E33** — `performance-budget.json` já apertado (initial 340 / largest 550 / total 4100 pós ajustes
   de 25/09). Meta da etapa cumprida.
+- **E28/E29/E30** — as 10 edges `verify_jwt=false` têm justificativa e proteção compensatória real
+  (webhook HMAC, cron secret, lockout, rate-limit, ou endpoint desativado). Inventário de secrets
+  commitado; achado real: secrets sensíveis (`EVOLUTION_API_KEY` etc.) não estão no GH Actions —
+  sem rastro de rotação em lugar nenhum. Ver `docs/audits/edges-secrets-2026-09-26.md`.
 
-Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E27–E29 edges/secrets, E09–E11
-governança/CI, E21 backup) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do fluxo Git),
-não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
+Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E09–E11 governança/CI, E21 backup,
+rotação de secrets sensíveis) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do
+fluxo Git), não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
 
 ## Regras de execução (herdadas e obrigatórias)
 
@@ -214,8 +220,8 @@ O incidente de `messages` (>75% dead em 16/09) se resolveu sozinho, mas tarde. F
 SELECT query, calls, round(total_exec_time) ms, round(mean_exec_time,1) media
 FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 ```
-- [ ] Snapshot commitado em `docs/audits/slow-queries-2026-09.md`
-- [ ] Top-3 com plano de ação (índice da E14/E15, reescrita, ou aceite)
+- [x] Snapshot commitado em `docs/audits/slow-queries-2026-09.md` — extensão já estava instalada em `extensions.pg_stat_statements` (schema não-default; era isso que faltava saber)
+- [x] Top-3 com plano de ação — causa raiz real encontrada: `messages` está com `REPLICA IDENTITY FULL` (não falta de índice), decisão de arquitetura registrada no doc, não aplicada sozinha
 
 ### E20 🟢 Conexões e pooling (herda E32/16-09)
 - [ ] Modo do pooler (transaction/session), limites e timeouts das edges documentados
@@ -267,17 +273,17 @@ supabase functions list --project-ref tnnnlkbymytvtqngbbqh   # exige access toke
 ### E28 🔴 10 edges com `verify_jwt=false` (herda E38/16-09 — eram 9)
 Uma function entrou sem auditoria desde 16/09. Para cada uma: por que não exige JWT,
 qual a proteção compensatória (assinatura, token de instância, rate limit), teste.
-- [ ] Tabela de justificativa por function commitada
-- [ ] As sem justificativa migram para `verify_jwt=true` ou ganham proteção equivalente
+- [x] Tabela de justificativa por function commitada em `docs/audits/edges-secrets-2026-09-26.md`
+- [x] As 10 têm justificativa e proteção compensatória real (webhook HMAC, cron secret, lockout, rate-limit, ou endpoint desativado) — nenhuma migração necessária
 
 ### E29 🔴 Auditoria de secrets das edges (herda E39/16-09)
-- [ ] Inventário: secret → functions que usam → última rotação
-- [ ] `EVOLUTION_API_KEY`/`EVOLUTION_INSTANCE_TOKEN` e chaves de IA rotacionados se >90d
-- [ ] 0 secrets órfãos definidos e não usados
+- [x] Inventário: secret → functions que usam commitado em `docs/audits/edges-secrets-2026-09-26.md` — última rotação **não rastreável** (gap real: secrets sensíveis não estão no GH Actions, sem tool de listagem no MCP do projeto oficial; registrado, não fabricado)
+- [ ] `EVOLUTION_API_KEY`/`EVOLUTION_INSTANCE_TOKEN` e chaves de IA rotacionados se >90d — **pendente, decisão sua**: rotação exige acesso aos provedores externos + troca em produção, risco de derrubar sessão WhatsApp ativa
+- [x] 0 secrets órfãos definidos e não usados
 
 ### E30 🟡 Rate limiting nas edges expostas
 `csp-report`, `talkx-link` (clique público), `evolution-webhook`, `elevenlabs-webhook`:
-- [ ] Cobertura de rate-limit confirmada por teste (o `cleanup-rate-limit-logs` sugere base pronta)
+- [x] Cobertura de rate-limit confirmada por leitura do código em 26/09: `csp-report` (30/60s), `talkx-link` (60/60s), `evolution-webhook` (rate-limit + HMAC), `elevenlabs-webhook` (secret + HMAC) — ver `docs/audits/edges-secrets-2026-09-26.md`
 
 ### E31 🟢 Pinning de dependências Deno nas 67 functions
 - [ ] `deno.land/std`/`esm.sh` com versões pinadas e uniformes (`_shared/` como fonte)
