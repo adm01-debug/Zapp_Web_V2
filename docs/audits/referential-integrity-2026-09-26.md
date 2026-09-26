@@ -53,9 +53,12 @@ na criação; validação já sabida verde pelos 0 órfãos).
 - Inventário completo: **13 FK criadas, 38 justificadas por escrito** — 100% das 51 colunas
   decididas.
 - 0 órfãos nas 13 relações declaradas nesta rodada (verificado antes de escrever a migration).
-- Migration seguiu a ordem do CLAUDE.md §1.6 (arquivo → PR #855 → merge → apply) e **foi
-  aplicada em produção em 26/09** via MCP direto + registro no ledger no mesmo turno (seção
-  "Decisões de 2026-09-26" do CLAUDE.md) — as 13 FKs confirmadas ao vivo em `pg_constraint`.
+- Migration seguiu a ordem do CLAUDE.md §1.6: arquivo criado como `20260926160000` na PR #855
+  → re-versionada para `20260926200000` pela PR #872 (colisão com a migration
+  `search_contacts_add_lat_lon`, já ocupando `160000`) → merge em `main` → **aplicada em
+  produção em 26/09** via MCP direto + registro no ledger no mesmo turno (seção
+  "Decisões de 2026-09-26" do CLAUDE.md). O artefato de produção real é `20260926200000`
+  (não `160000`) — as 13 FKs confirmadas ao vivo em `pg_constraint`.
 
 ---
 *Gerado em 2026-09-26, sessão de execução do `PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (E17).*
