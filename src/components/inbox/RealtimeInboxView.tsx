@@ -57,7 +57,7 @@ export function RealtimeInboxView() {
   const pinnedConversations = useMemo(
     () => inbox.cachedConversations
       .filter((c) => conversationActions.pinnedIds.has(c.contact.id))
-      .map((c) => ({ id: c.contact.id, name: c.contact.name || 'Sem nome', avatarUrl: c.contact.avatar_url })),
+      .map((c) => ({ id: c.contact.id, name: (c.contact.name || '').trim() || 'Sem nome', avatarUrl: c.contact.avatar_url })),
     [inbox.cachedConversations, conversationActions.pinnedIds],
   );
 
