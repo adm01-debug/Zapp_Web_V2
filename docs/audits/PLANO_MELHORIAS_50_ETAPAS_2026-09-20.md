@@ -43,6 +43,30 @@ Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 
 "244 sem uso" é FK-support/feature vazia — dropar seria erro), E39 (dívida 99%
 não-autofixável — redução por módulo, não em massa), E40/E42/E43 (já estavam zerados).
 
+## Re-verificação ao vivo (2026-09-26)
+
+Estado real conferido no banco oficial e no repo em 26/09 (delta desde 20/09):
+
+- **E14** — FKs sem índice de suporte: **0** (eram 3). Fechado, checkbox marcado abaixo.
+- **E16** — índices duplicados exatos: **1 acionável** (`idx_talkx_template_versions_template_version`,
+  redundante com a unique `..._template_id_version_number_key`). O outro par é do schema `auth`
+  do Supabase (gerenciado — não tocar). DROP = DDL em produção ⇒ regra 8 (aguarda decisão).
+- **E15** — índices com `idx_scan=0`: **472/675** (o total cresceu: 503→675). `pg_stat_database.stats_reset`
+  = **null** ⇒ não há 30 dias de estatística confiável; dropar em massa segue proibido pelo próprio
+  critério da etapa. Sem ação autônoma.
+- **E19** — `pg_stat_statements` **não instalada** no banco ⇒ baseline de queries lentas bloqueado
+  até a extensão ser criada (mudança de infra, regra 8).
+- **E22** — trigger functions: **44** (eram 38). Segue fora do catálogo; análise pendente.
+- **E40** — implicit-any: **0**. **E42** — TODO/FIXME reais: **0** (o único hit é a palavra "TODOS" em
+  comentário PT). **E43** — console.log em src: **0** reais (o único hit é `@example` de JSDoc em
+  `src/lib/retry.ts`). Todos fechados, checkboxes marcados abaixo.
+- **E33** — `performance-budget.json` já apertado (initial 340 / largest 550 / total 4100 pós ajustes
+  de 25/09). Meta da etapa cumprida.
+
+Conclusão: o núcleo 🔴 remanescente (E15/E16/E17/E18 banco, E27–E29 edges/secrets, E09–E11
+governança/CI, E21 backup) é **decisão de negócio** (custo/destrutivo/produção — regra 8 do fluxo Git),
+não trabalho autônomo. Os 🟢 autônomos ou já fecharam ou são falso-positivo.
+
 ## Regras de execução (herdadas e obrigatórias)
 
 1. **1 etapa = 1 PR** quando tocar o repo; branch `chore|fix|feat/e{NN}-slug`; merge ⇒ deletar branch no mesmo turno.
@@ -155,8 +179,8 @@ WHERE c.contype='f' AND c.connamespace='public'::regnamespace
   AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid=c.conrelid
     AND (i.indkey::int2[])[0:array_length(c.conkey,1)-1] @> c.conkey);
 ```
-- [ ] 3 FKs nomeadas, custo medido (EXPLAIN nas queries reais que fazem o join/delete)
-- [ ] Índices criados via migration (ritual §1.6) → query acima retorna 0
+- [x] 3 FKs nomeadas, custo medido (EXPLAIN nas queries reais que fazem o join/delete) — resolvido; a query retorna **0** em 26/09
+- [x] Índices criados via migration (ritual §1.6) → query acima retorna 0 — verificado 26/09 (0 FKs sem índice)
 
 ### E15 🔴 244/503 índices nunca usados (herda E23/16-09)
 Antes de qualquer DROP: idade das estatísticas (`SELECT stats_reset FROM
@@ -298,17 +322,17 @@ mais tocados: `talkx/`, `inbox/`, `catalog/`).
 - [ ] Meta da rodada: baseline ≤ 800
 
 ### E40 🟡 implicit-any: 2 → 0
-- [ ] Baseline zerado e trava mantida
+- [x] Baseline zerado e trava mantida — implicit-any = 0 em 26/09
 
 ### E41 🟡 Mapa de cobertura de testes
 - [ ] Contagem atual do vitest registrada como baseline
 - [ ] 3 módulos críticos sem teste identificados (candidatos: `_shared/evolution-go-routes.ts`, hooks de envio, `external-db-proxy`) e cobertos com testes de contrato
 
 ### E42 🟢 TODO/FIXME (4) → 0
-- [ ] Cada um resolvido ou promovido a issue com link no código
+- [x] Cada um resolvido ou promovido a issue com link no código — 0 TODO/FIXME reais em 26/09 (único hit é a palavra "TODOS" em comentário PT)
 
 ### E43 🟢 console.log em src (1) → 0
-- [ ] Substituído pelo logger do projeto
+- [x] Substituído pelo logger do projeto — 0 console.log reais em 26/09 (único hit é `@example` de JSDoc em `src/lib/retry.ts`)
 
 ## F7 — Infra, MCPs e automação (E44–E47)
 
