@@ -5,7 +5,11 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // .claude/worktrees/: checkouts efêmeros do Agent tool (isolation: worktree) — são
+  // criados/destruídos em paralelo por agentes em background; sem este ignore o lint do
+  // pre-push varre esses diretórios e quebra com ENOENT quando um worktree é desmontado
+  // no meio do scan (achado 2026-09-26, sessão de auditoria de 5 agentes).
+  { ignores: ["dist", ".claude/worktrees/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
+import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
 import { toast } from '@/hooks/ui/use-toast';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
@@ -54,13 +55,16 @@ interface ChatPanelHeaderProps {
   onSelectSuggestion?: (text: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  /** Conversas fixadas — exibidas no centro do header quando os detalhes estão fechados. */
+  pinnedConversations?: PinnedChatItem[];
+  onSelectPinned?: (contactId: string) => void;
 }
 
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
-  isFavorite, onToggleFavorite,
+  isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
   const [participantsOpen, setParticipantsOpen] = useState(false);
@@ -131,6 +135,16 @@ function ChatPanelHeaderBase({
           </div>
         </div>
       </div>
+
+      {!showDetails && !isMobile && pinnedConversations && pinnedConversations.length > 0 && onSelectPinned && (
+        <div className="hidden lg:flex flex-1 items-center justify-center px-4 min-w-0">
+          <PinnedConversationsStack
+            items={pinnedConversations}
+            activeId={conversation.contact.id}
+            onSelect={onSelectPinned}
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <Tooltip><TooltipTrigger asChild>

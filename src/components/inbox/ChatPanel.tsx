@@ -17,6 +17,7 @@ import { useAmbientColor } from '@/hooks/ui/useAmbientColor';
 import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
+import type { PinnedChatItem } from './chat/PinnedConversationsStack';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
 import { ChatWatermark } from './chat/ChatWatermark';
 import { ChatInputArea } from './chat/ChatInputArea';
@@ -52,6 +53,8 @@ interface ChatPanelProps {
   onToggleFavorite?: () => void;
   onArchiveConversation?: () => void;
   onSwitchToAiTab?: () => void;
+  pinnedConversations?: PinnedChatItem[];
+  onSelectPinned?: (contactId: string) => void;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -90,7 +93,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onSwitchToAiTab }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onSwitchToAiTab, pinnedConversations, onSelectPinned }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -251,6 +254,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}
+            pinnedConversations={pinnedConversations} onSelectPinned={onSelectPinned}
             onSelectSuggestion={(text) => handlers.setInputValue(text)} />
         )}
 
