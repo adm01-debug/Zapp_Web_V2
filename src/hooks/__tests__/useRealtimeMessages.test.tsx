@@ -312,6 +312,64 @@ describe('useRealtimeMessages', () => {
     expect(result.current.conversations[0].contact.job_title).toBe('Gerente de Compras');
   });
 
+  it('preserva um UPDATE realtime recebido durante um refetch em voo (ex: refetch disparado por handleSendMessage)', async () => {
+    // Regressão: handleContactUpdate não incrementava liveRevisionRef, então
+    // fetchConversations achava que nenhum evento ao vivo tinha chegado durante
+    // o voo e sobrescrevia com o snapshot desatualizado — o apelido editado
+    // voltava ao valor antigo na lista até o próximo evento realtime.
+    const contact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: null });
+    seededContacts = [contact];
+
+    const { result } = renderHook(() => useRealtimeMessages());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.conversations[0].contact.nickname).toBeNull();
+
+    let resolvePending: (() => void) | undefined;
+    const pending = new Promise<void>((resolve) => { resolvePending = resolve; });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'contacts') {
+        return {
+          select: vi.fn(() => ({
+            order: vi.fn(() => ({
+              // Snapshot deliberadamente lento e desatualizado (nickname antigo).
+              limit: vi.fn(() => pending.then(() => ({ data: seededContacts, error: null }))),
+            })),
+            in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+          })),
+        };
+      }
+      if (table === 'messages') return makeMessagesQuery();
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+          order: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+        }),
+        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    let refetchPromise: Promise<void>;
+    act(() => {
+      refetchPromise = result.current.refetch();
+    });
+
+    // Chega um UPDATE real-time enquanto o refetch (snapshot antigo) ainda está em voo.
+    act(() => {
+      emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: { ...contact, nickname: 'Zé' }, old: contact });
+    });
+    expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+
+    // O snapshot desatualizado finalmente resolve.
+    resolvePending!();
+    await act(async () => { await refetchPromise; });
+
+    expect(result.current.conversations[0].contact.nickname).toBe('Zé');
+  });
+
   it('preserva conversation_sla (embed do join) ao aplicar um UPDATE realtime que so traz colunas de contacts', async () => {
     // Regressão: o payload de UPDATE do Realtime só tem as colunas da tabela
     // contacts, nunca o embed conversation_sla (join feito em

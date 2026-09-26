@@ -85,6 +85,7 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+import { log } from '@/lib/logger';
 import { useContactEnrichedData } from '../useContactEnrichedData';
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -116,6 +117,31 @@ describe('useContactEnrichedData — sincronização ao vivo via Realtime', () =
     });
 
     await waitFor(() => expect(result.current.enrichedData?.nickname).toBe('Mari'));
+  });
+
+  it('lança em vez de esconder erro transitório como sucesso (evita cache "success:null" travado sem retry)', async () => {
+    const originalImpl = mockFrom.getMockImplementation()!;
+    mockFrom.mockImplementation(((table: string) => {
+      if (table === 'contacts') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(() => Promise.resolve({ data: null, error: { message: 'falha transitória' } })),
+            })),
+          })),
+        };
+      }
+      return originalImpl(table);
+    }) as typeof originalImpl);
+
+    const { result } = renderHook(() => useContactEnrichedData('contact-1'), { wrapper });
+
+    await waitFor(() => expect(log.error).toHaveBeenCalled());
+    // Não pode virar `null`: isso é tratado como sucesso pelo React Query e
+    // trava em cache até o staleTime (5min), sem nova tentativa.
+    expect(result.current.enrichedData).toBeUndefined();
+
+    mockFrom.mockImplementation(originalImpl);
   });
 
   it('não quebra quando contactId muda (assina o canal do novo id)', async () => {

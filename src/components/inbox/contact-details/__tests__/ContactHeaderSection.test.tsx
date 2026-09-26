@@ -130,6 +130,11 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('MS')).toBeInTheDocument();
   });
 
+  it('cai em "Sem nome" quando o nome do contato e so espacos', () => {
+    render(<ContactHeaderSection contact={{ ...baseContact, name: '   ' }} enrichedData={null} />);
+    expect(screen.getByText('Sem nome')).toBeInTheDocument();
+  });
+
   // ========== SINGLE NAME ==========
   it('handles single-word name', () => {
     render(
@@ -236,7 +241,21 @@ describe('ContactHeaderSection', () => {
   it('nao repete a legenda quando e igual ao primeiro nome (sem apelido local)', () => {
     crm360DataMock = { found: true, contact: { nome_tratamento: 'Maria', apelido: null, relationship_score: 10 }, company: null };
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.getAllByText('Maria')).toHaveLength(1);
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+    expect(screen.queryByText('"Maria"')).not.toBeInTheDocument();
+  });
+
+  it('nao repete a legenda quando difere so por acento/caixa (auditoria 2026-09-26)', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: 'JOSÉ', apelido: null, relationship_score: 10 }, company: null };
+    render(<ContactHeaderSection contact={{ ...baseContact, name: 'Jose Souza' }} enrichedData={baseEnriched} />);
+    expect(screen.getByText('Jose')).toBeInTheDocument();
+    expect(screen.queryByText('"JOSÉ"')).not.toBeInTheDocument();
+  });
+
+  it('cai no apelido do CRM quando nome_tratamento e so espacos', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: '   ', apelido: 'Zeca', relationship_score: 10 }, company: null };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('"Zeca"')).toBeInTheDocument();
   });
 
   it('mostra a legenda do CRM quando e diferente do nome exibido no titulo', () => {

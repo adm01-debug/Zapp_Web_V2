@@ -338,7 +338,13 @@ const ConversationRow = memo(({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      className="px-3"
+      // overflow-hidden: a altura da linha e uma estimativa fixa
+      // (ITEM_HEIGHT_BY_DENSITY, sem measureElement no virtualizer). Cargo
+      // preenchido + varias tags/badges quebrando em 2+ linhas (flex-wrap)
+      // pode superar essa estimativa (auditoria 2026-09-26 mediu ate +68px
+      // no pior caso) — sem isso o excesso vazava visualmente por cima da
+      // linha seguinte em vez de só cortar dentro da própria linha.
+      className="px-3 overflow-hidden"
       data-testid="conversation-item"
     >
       <div

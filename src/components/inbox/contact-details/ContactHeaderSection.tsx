@@ -64,16 +64,20 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
-  const firstName = contact.name.split(' ')[0];
+  const firstName = contact.name.trim().split(/\s+/)[0] || 'Sem nome';
   // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
   // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um
   // nome na lista e outro aqui no painel de detalhes, lado a lado na mesma tela.
   const displayName = enrichedData?.nickname?.trim() || firstName;
-  const nomeTratamentoRaw = crmContact?.nome_tratamento || crmContact?.apelido;
+  const nomeTratamentoRaw = crmContact?.nome_tratamento?.trim() || crmContact?.apelido?.trim();
   // Não repete a legenda quando ela é igual ao nome já exibido no título
   // (comum: quem cadastra o apelido local copia o que o CRM já mostrava).
+  // localeCompare com sensitivity:'base' ignora acento/case (ex.: "Jose" vs
+  // "JOSÉ") — CRM e Zapp acentuam nomes de forma inconsistente entre si
+  // (auditoria 2026-09-26: 22% vs 46% dos nomes comuns testados), então um
+  // simples toLowerCase() deixava a legenda duplicada visualmente.
   const nomeTratamento =
-    nomeTratamentoRaw && nomeTratamentoRaw.trim().toLowerCase() !== displayName.trim().toLowerCase()
+    nomeTratamentoRaw && nomeTratamentoRaw.localeCompare(displayName, 'pt-BR', { sensitivity: 'base' }) !== 0
       ? nomeTratamentoRaw
       : null;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
