@@ -355,30 +355,30 @@
 1. O campo "Logradouro" vira o mesmo combobox, com `types=address,street,place`.
 2. Escolher preenche logradouro, bairro, cidade, UF e CEP quando o `/retrieve` trouxer `context`.
 3. O operador pode editar qualquer campo depois — nada fica travado.
-**Checklist:** [ ] 1 escolha preenche 5 campos · [ ] tudo editável
+**Checklist:** [x] 1 escolha preenche 5 campos · [x] tudo editável
 
 ### E42 · Guardar a coordenada do contato
 **Arquivos:** migration nova
 1. Colunas `latitude`/`longitude` em `contacts` (nullable), preenchidas pelo `/retrieve`.
 2. Sem geocodificar contato antigo em massa (custo); só ao editar.
 3. DDL aditiva, PR aberta esperando aprovação (regra de banco de produção).
-**Checklist:** [ ] 2 colunas · [ ] sem backfill automático · [ ] PR sem merge
+**Checklist:** [x] 2 colunas (migration criada, NÃO aplicada em produção nesta sessão — MCP Supabase conectado não é o oficial do projeto, ver corpo da PR) · [x] sem backfill automático · [x] PR sem merge
 
 ### E43 · Mapa de contatos passa a usar coordenada real
 **Arquivos:** `src/components/contacts/ContactRegionMap.tsx`
 1. Contato com `latitude/longitude` vira ponto próprio no mapa.
 2. Contato sem coordenada continua na bolha do DDD.
 3. A legenda distingue "endereço confirmado" de "aproximado pelo DDD".
-**Checklist:** [ ] 2 fontes no mesmo mapa · [ ] legenda honesta
+**Checklist:** [x] 2 fontes no mesmo mapa · [x] legenda honesta
 
 ### E44 · Testes da Fase 6
 1. Escolher sugestão preenche os campos certos.
 2. Contato sem coordenada não some do mapa.
 3. Legenda aparece quando há mistura das duas fontes.
-**Checklist:** [ ] 3 casos · [ ] verde
+**Checklist:** [x] 3 casos · [x] verde
 
 ### E45 · PR da Fase 6
-**Checklist:** [ ] PR aberta · [ ] CI verde · [ ] DDL destacada no corpo
+**Checklist:** [ ] PR aberta · [ ] CI verde · [x] DDL destacada no corpo
 
 ---
 
