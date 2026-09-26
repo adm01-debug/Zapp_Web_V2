@@ -6,6 +6,7 @@ import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 export interface IncomingCall {
   id: string;
+  callId: string | null;
   contact_id: string | null;
   contact_name: string;
   contact_phone: string;
@@ -28,6 +29,7 @@ interface IncomingCallNotification {
     call_status?: string;
     whatsapp_connection_id?: string;
     event_id?: string;
+    call_id?: string;
   } | null;
 }
 
@@ -117,6 +119,7 @@ export function useIncomingCallListener() {
             userId: subscribedUserId,
             call: {
               id: notification.id,
+              callId: metadata.call_id || null,
               contact_id: metadata.contact_id || null,
               contact_name: contactName,
               contact_phone: contactPhone,
