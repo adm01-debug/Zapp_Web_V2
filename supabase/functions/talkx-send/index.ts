@@ -18,42 +18,52 @@ function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
   return "Boa noite";
 }
 
+// Nomes reservados aos built-ins — um campo customizado do CRM com um desses
+// nomes (ex.: contato com campo "link") nunca pode sequestrar o placeholder
+// built-in correspondente (achado do review: "link" comeria {{link}} antes do
+// passe de tracking).
+const RESERVED_PLACEHOLDER_KEYS = new Set(["saudacao", "link", "nome", "nome_completo", "apelido", "empresa"]);
+
 export function personalize(
   template: string,
   contact: { name?: string | null; nickname?: string | null; company?: string | null },
-  customVars: string[] = [],
+  customValues: Record<string, string> = {},
   timeZone = DEFAULT_SCHEDULE_TIMEZONE,
   trackingUrl?: string,
 ): string {
   const firstName = (contact.name || '').split(' ')[0] || '';
-  // Substituições de valor confiável (saudação computada, vars de campanha,
-  // link gerado pelo servidor) primeiro; dado de contato (nome/apelido/
-  // empresa, editável via CRM) por último e em passe único — caso contrário
-  // um campo como `company` contendo literalmente "{{saudacao}}" ou
-  // "{{link}}" seria reinterpretado como placeholder pela chamada seguinte.
-  let result = template.replace(/\{\{saudacao\}\}/gi, getGreeting(timeZone));
-  for (const v of customVars) {
-    result = result.split('{{' + v + '}}').join('[' + v + ']');
-  }
-  // E90: {{link}} -> URL de rastreamento por destinatário
-  if (trackingUrl) {
-    result = result.split('{{link}}').join(trackingUrl);
-  }
   const contactValues: Record<string, string> = {
     nome: firstName,
     nome_completo: contact.name || '',
     apelido: contact.nickname || firstName,
     empresa: contact.company || '',
   };
-  result = result.replace(/\{\{(nome_completo|nome|apelido|empresa)\}\}/gi, (_match, key: string) => contactValues[key.toLowerCase()]);
-  // Um placeholder fora da lista acima (nome_completo/nome/apelido/empresa/saudacao/link ou
-  // customVars) chegava intacto na mensagem do destinatário sem erro nem aviso. Falha explícita
-  // é melhor que vazar "{{campo_errado}}" numa conversa real do WhatsApp.
-  const unknownPlaceholder = result.match(/\{\{[^}]+\}\}/);
-  if (unknownPlaceholder) {
-    throw new Error(`unknown_placeholder: ${unknownPlaceholder[0]}`);
+  // Nome do campo customizado vem do CRM (case livre, ex.: "CPF"); o editor de
+  // template força minúsculo no placeholder — casar por chave normalizada.
+  const normalizedCustomValues = new Map<string, string>();
+  for (const [key, value] of Object.entries(customValues)) {
+    const normalizedKey = key.toLowerCase();
+    if (RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
+    normalizedCustomValues.set(normalizedKey, value);
   }
-  return result;
+  // Passe único sobre o template original: um valor inserido (campo customizado
+  // ou dado de contato) nunca é rescaneado como se fosse sintaxe de placeholder
+  // (achado do review: {{cargo}} com valor literal "{{empresa}}" não pode virar
+  // o nome da empresa).
+  return template.replace(/\{\{([^}]+)\}\}/g, (fullMatch, rawKey: string) => {
+    const key = rawKey.toLowerCase();
+    if (key === "saudacao") return getGreeting(timeZone);
+    // E90: {{link}} -> URL de rastreamento por destinatário
+    if (key === "link") return trackingUrl ?? `[${rawKey}]`;
+    if (key in contactValues) return contactValues[key];
+    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
+    // Uma variável sem valor (nome digitado errado, campanha sem template com
+    // placeholder solto, ou contato sem aquele campo customizado preenchido)
+    // antes derrubava o envio inteiro para o destinatário (unknown_placeholder).
+    // Mostrar "[variavel]" é sempre melhor que vazar "{{variavel}}" cru ou
+    // bloquear o disparo.
+    return `[${rawKey}]`;
+  });
 }
 
 /** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
@@ -128,7 +138,10 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
 
     // E47: action test --- envia template de teste para um numero
     if (action === "test") {
-      const { templateContent, mediaUrl, mediaType, phone, customVariables } = body as {
+      // customVariables (nomes) e aceito no corpo por retrocompatibilidade com o
+      // frontend, mas nao e mais necessario: qualquer placeholder sem valor real
+      // vira "[nome]" automaticamente (ver personalize()).
+      const { templateContent, mediaUrl, mediaType, phone } = body as {
         templateContent: string;
         mediaUrl?: string | null;
         mediaType?: string | null;
@@ -149,7 +162,7 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
       let personalizedText: string;
       try {
-        personalizedText = personalize(templateContent, dummyContact, customVariables ?? []);
+        personalizedText = personalize(templateContent, dummyContact);
       } catch (e) {
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
       }
@@ -281,20 +294,40 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
         ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
         : undefined;
 
-    // `custom_variables` (nomes de variável declarados no template, ex.: {{cargo}})
-    // moram em talkx_templates, não em talkx_campaigns nem em talkx_template_variants.
-    // Sem isso, personalize() tratava qualquer variável customizada como placeholder
-    // desconhecido no envio real (mesmo já resolvendo corretamente no preview do
-    // editor de template), falhando 100% dos destinatários de campanhas que usam a
-    // feature.
-    let templateCustomVars: string[] = [];
-    if (campaign.template_id) {
-      const { data: templateRow } = await supabase
-        .from("talkx_templates")
-        .select("custom_variables")
-        .eq("id", campaign.template_id)
-        .maybeSingle();
-      templateCustomVars = templateRow?.custom_variables ?? [];
+    // Valor real de variável customizada (ex.: {{cargo}}) vem de
+    // contact_custom_fields, por contato — nunca do template. Antes, o valor
+    // "resolvido" era sempre o nome da variável entre colchetes (`[cargo]`),
+    // nunca o dado de verdade; e campanha sem template salvo (template_id
+    // null) derrubava 100% dos destinatários com unknown_placeholder. Busca
+    // única em lote para todos os contact_id da leva atual, não por
+    // destinatário.
+    const recipientContactIds = Array.from(
+      new Set((recipients || []).map((r) => r.contact_id).filter((id): id is string => typeof id === "string")),
+    );
+    const customFieldsByContact = new Map<string, Record<string, string>>();
+    if (recipientContactIds.length > 0) {
+      // PostgREST limita a 1000 linhas por chamada — leva com muitos contatos x
+      // campos customizados perderia linhas em silêncio sem paginar (achado do
+      // review).
+      const CUSTOM_FIELDS_PAGE_SIZE = 1000;
+      for (let offset = 0; ; offset += CUSTOM_FIELDS_PAGE_SIZE) {
+        const { data: customFieldRows, error: customFieldsError } = await supabase
+          .from("contact_custom_fields")
+          .select("contact_id, field_name, field_value")
+          .in("contact_id", recipientContactIds)
+          .range(offset, offset + CUSTOM_FIELDS_PAGE_SIZE - 1);
+        if (customFieldsError) throw new Error(`contact_custom_fields_lookup_failed: ${customFieldsError.message}`);
+        for (const row of customFieldRows ?? []) {
+          // Campo customizado sem valor preenchido (field_value null) deve cair
+          // no fallback "[variavel]" do personalize(), não virar string vazia
+          // silenciosa (achado do review).
+          if (row.field_value == null) continue;
+          const bucket = customFieldsByContact.get(row.contact_id) ?? {};
+          bucket[row.field_name] = row.field_value;
+          customFieldsByContact.set(row.contact_id, bucket);
+        }
+        if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
+      }
     }
 
     // Check against the source of truth for every recipient. This makes a
@@ -438,11 +471,12 @@ export async function handleTalkxSend(req: Request): Promise<Response> {
           throw new Error("talkx_invalid_media_snapshot_source");
         }
         let calculatedMessage: string;
+        const customValues = customFieldsByContact.get(recipient.contact_id as string) ?? {};
         try {
           calculatedMessage = legacyPersonalizedMessage ?? personalize(
             contentToSend,
             contact as { name: string; nickname?: string; company?: string },
-            templateCustomVars,
+            customValues,
             typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
             trackingUrlFor(recipient.id as string),
           );

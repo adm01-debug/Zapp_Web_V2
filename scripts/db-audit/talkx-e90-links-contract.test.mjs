@@ -27,20 +27,35 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 300, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
 });
 
-test('Talk X personalize() resolves contact-derived placeholders last and in a single pass', () => {
-  // Auditoria 2026-09-16: {{empresa}} era substituido ANTES de {{saudacao}}/
-  // {{link}}, entao um campo de contato (company/name/nickname, editavel via
-  // CRM) contendo literalmente "{{saudacao}}" ou "{{link}}" era reinterpretado
-  // como placeholder pela chamada .replace() seguinte. Trava: saudacao/
-  // customVars/link tem que aparecer no código-fonte ANTES do bloco
-  // contactValues, e as 4 substituições de dado de contato têm que ser um
-  // único regex.replace() (não 4 chamadas encadeadas) para não se
-  // recontaminarem entre si.
-  const saudacaoIdx = sender.indexOf('replace(/\\{\\{saudacao\\}\\}/gi');
-  const contactValuesIdx = sender.indexOf('const contactValues');
-  assert.ok(saudacaoIdx > -1 && contactValuesIdx > -1, 'ambos os trechos devem existir');
-  assert.ok(saudacaoIdx < contactValuesIdx, 'saudação deve ser resolvida antes do bloco de dado de contato');
-  assert.match(sender, /result = result\.replace\(\/\\\{\\\{\(nome_completo\|nome\|apelido\|empresa\)\\\}\\\}\/gi/);
+test('Talk X personalize() resolves every placeholder in a single pass over the original template', () => {
+  // Auditoria 2026-09-16 (bug original): {{empresa}} era substituido ANTES de
+  // {{saudacao}}/{{link}}, entao um campo de contato (company/name/nickname,
+  // editavel via CRM) contendo literalmente "{{saudacao}}" ou "{{link}}" era
+  // reinterpretado como placeholder pela chamada .replace() seguinte.
+  // PR #909 (review do Codex): a mesma classe de bug tambem valia para campo
+  // customizado do CRM (ex.: {{cargo}} com valor literal "{{empresa}}"). A
+  // unica garantia estrutural robusta contra recontaminacao — de dado de
+  // contato OU de campo customizado — e um UNICO regex.replace() sobre a
+  // string original, resolvendo tudo (saudacao, link, dado de contato, campo
+  // customizado) dentro do mesmo callback, nunca reescaneando o resultado.
+  const singlePassIdx = sender.indexOf('return template.replace(/\\{\\{([^}]+)\\}\\}/g');
+  assert.ok(singlePassIdx > -1, 'personalize() deve resolver tudo num unico regex.replace() sobre o template original');
+  const saudacaoIdx = sender.indexOf('key === "saudacao"', singlePassIdx);
+  const linkIdx = sender.indexOf('key === "link"', singlePassIdx);
+  const contactValuesIdx = sender.indexOf('key in contactValues', singlePassIdx);
+  const customValuesIdx = sender.indexOf('normalizedCustomValues.has(key)', singlePassIdx);
+  assert.ok(
+    saudacaoIdx > singlePassIdx && linkIdx > saudacaoIdx && contactValuesIdx > linkIdx && customValuesIdx > contactValuesIdx,
+    'ordem de resolucao dentro do passe unico: saudacao, link, dado de contato, campo customizado',
+  );
+});
+
+test('Talk X personalize() never lets a custom field with a reserved name override a built-in placeholder', () => {
+  // Review da PR #909: um campo customizado do CRM chamado "link" (ou
+  // "nome"/"empresa"/etc.) nao pode sequestrar o placeholder built-in
+  // correspondente antes do passe de resolucao real.
+  assert.match(sender, /RESERVED_PLACEHOLDER_KEYS/);
+  assert.match(sender, /if \(RESERVED_PLACEHOLDER_KEYS\.has\(normalizedKey\)\) continue/);
 });
 
 test('Talk X link redirect enforces rate limiting on both GET and POST', () => {

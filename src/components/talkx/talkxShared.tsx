@@ -104,7 +104,13 @@ export function personalizePreview(template: string, contact?: { name?: string |
     .replace(/\{\{nome_completo\}\}/gi, c.name || '')
     .replace(/\{\{apelido\}\}/gi, c.nickname || firstName)
     .replace(/\{\{empresa\}\}/gi, c.company || '')
-    .replace(/\{\{saudacao\}\}/gi, greeting);
+    .replace(/\{\{saudacao\}\}/gi, greeting)
+    // Qualquer variável sem valor no preview (link de rastreio, variável
+    // customizada) — mostrar "[variavel]" bate com o que o envio real faz
+    // quando o contato não tem aquele campo preenchido (ver personalize() em
+    // talkx-send/index.ts). Antes o preview deixava "{{cargo}}" cru, diferente
+    // do que o destinatário de fato recebia.
+    .replace(/\{\{([^}]+)\}\}/g, (_match, key: string) => `[${key}]`);
 }
 
 export function extractVariables(template: string): string[] {
@@ -452,9 +458,9 @@ export function TalkXSkeletonRows({ rows = 4 }: { rows?: number }) {
 }
 
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E13 — KpiCard: card de métrica hero com mini-barras e delta
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 interface KpiCardProps {
   icon: LucideIcon; color?: TileColor; label: string; value: string;
   delta?: { value: number; suffix?: '%' | 'p.p.'; tone?: 'up' | 'down' };
@@ -520,9 +526,9 @@ export function KpiCardSkeleton({ compact = false }: { compact?: boolean } = {})
   return <div className={cn('bg-card border border-border/70 rounded-xl animate-pulse', compact ? 'h-[72px]' : 'h-24')} />;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E15 — RowActionsMenu, SegmentedToggle, PrimaryButtonGlow
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface RowAction { label: string; icon?: LucideIcon; onSelect: () => void; danger?: boolean; disabled?: boolean; }
 
 export function RowActionsMenu({ actions, label = 'Ações' }: { actions: RowAction[]; label?: string }) {
@@ -585,9 +591,9 @@ export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'prim
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E17 — TalkXTable genérico
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface TalkXColumn<T> {
   key: string; header: string; width?: string | number; align?: 'left' | 'center' | 'right';
   render: (row: T, idx: number) => ReactNode;
@@ -662,9 +668,9 @@ export function TalkXTable<T extends object>({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E18 — Rail: HeroCard, RecentList, TipCard, AlertCard
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export function HeroCard({ icon, title, subtitle, metrics }: {
   icon: LucideIcon; title: string; subtitle?: string;
   metrics?: { label: string; value: string | number }[];
@@ -747,9 +753,9 @@ export function AlertCard({ children, tone = 'warning', actionLabel, onAction }:
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // E19 — TalkXConfirmDialog: modal crítico com checks opcionais
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 export interface ConfirmCheck { id: string; label: string; }
 
 export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor = 'blue', title, description, entityName, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', tone = 'primary', checks = [], details = [], loading = false }: {
@@ -887,7 +893,7 @@ export function FilterBarV2({
   );
 }
 
-// ─── E92: InsightCard ───────────────────────────────────────────────────────
+// ─── E92: InsightCard ──────────────────────────────────────────────────────────────────────
 export type InsightType = 'timing' | 'template' | 'reactivation' | 'links';
 export type InsightPriority = 'high' | 'medium' | 'low';
 
@@ -953,4 +959,3 @@ export function InsightCard({
     </div>
   );
 }
-
