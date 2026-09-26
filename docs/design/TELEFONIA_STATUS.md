@@ -121,6 +121,13 @@ Depois do apply: conferir `select version, name from supabase_migrations.schema_
 (esperado: `20260926190000` no topo) e o frescor de `types.ts`. O workflow **db-live-guard** compara o schema vivo
 com o repo — deve ficar verde depois do apply + merge.
 
+**Atenção ao aplicar: existe outra migration pendente na `main`.** A `main` já tem
+`20260926200000_e17_referential_integrity_fks.sql` (PR #872), **também ainda não aplicada** no banco (medido:
+`schema_migrations` para em `20260926180000`). Ela não toca `calls` (conferido por grep), então as duas são
+independentes — mas a versão dela é **maior** que a minha, e migration se aplica em ordem crescente: se o
+`20260926200000` entrar antes do meu, o `20260926190000` fica "atrás" no histórico. Aplique o meu primeiro
+(`migration_version=20260926190000`) e só depois o outro.
+
 Etapas 18–28:
 
 - **19. Migration** `supabase/migrations/20260926190000_calls_telefonia_v2.sql` (versão > `max(version)` = `20260926180000`).
