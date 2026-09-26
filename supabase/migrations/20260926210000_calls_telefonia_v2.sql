@@ -1,8 +1,12 @@
 -- =====================================================================
 -- Telefonia v2 — contrato de dados (ADITIVO)
 -- Plano: docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md (Apêndice A/B)
--- Fase 2, etapas 19–25. Versão 20260926190000 (> max(version) do ledger:
--- 20260926180000, conferido em 2026-09-26 pelo gateway MCP do projeto).
+-- Fase 2, etapas 19–25. Versão 20260926210000 — reversionada de 20260926190000:
+-- entre a escrita desta migration e o apply, a PR #872 mergeou e aplicou
+-- 20260926200000 (e17_referential_integrity_fks), tornando 190000 uma versão
+-- atrás do ledger. max(version) conferido em 2026-09-26 (pós #872): 20260926200000.
+-- Conteúdo abaixo idêntico ao original — só o cabeçalho mudou (rename puro,
+-- mesmo procedimento da PR #872 para a mesma classe de colisão de versão).
 --
 -- Regras respeitadas: só aditivo; nenhum DROP de coluna/tabela; nenhum UPDATE
 -- em massa de histórico; backfill com contagem registrada no ledger.
@@ -364,7 +368,7 @@ comment on function public.upsert_my_call is
 
 -- B.4 anotação humana, separada do `notes` automático do provedor.
 -- SECURITY DEFINER de propósito (divergência registrada no ledger): a policy de UPDATE de
--- `public.calls` só permite o DONO, então o admin/supervisor aprovado pelo Apêndice B.4 não
+-- `public.calls` só permite o DONO, então o admin/supervisor do Apêndice B.4 não
 -- conseguiria gravar por uma função SECURITY INVOKER. Em vez de ampliar a policy de escrita
 -- da tabela (afetaria qualquer caminho de código), a autorização fica fechada aqui dentro:
 -- dono da chamada OU admin/supervisor. search_path fixo, nada de SQL dinâmico.
