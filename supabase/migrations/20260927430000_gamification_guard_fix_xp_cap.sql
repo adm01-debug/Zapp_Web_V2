@@ -1,7 +1,7 @@
 -- fix(db): corrigir guard lógico + cap XP + dedup daily_goal nas funções de gamificação
 -- Auditoria de 5 agentes (2026-09-27):
 -- Vector 2: guard 'IS NOT NULL AND NOT (...)' estava invertido para anon (auth.uid() IS NULL).
---            Corrigido para 'auth.role() = ''anon'' OR (auth.uid() IS NOT NULL AND NOT (...))'.
+--            Corrigido para 'auth.role() = ''anon'' OR (auth.uid() IS NOT NULL AND NOT (...))'.  
 --            Distingue anon (role=anon) de service_role (uid=null mas role=service_role):
 --            service_role passa (triggers, evolution-webhook); anon é bloqueado.
 --            Afeta: add_agent_xp, grant_agent_achievement, increment_agent_messages.
@@ -9,8 +9,10 @@
 -- Vector 9: add_agent_xp sem teto em p_xp (qualquer usuário podia chegar ao nível máximo).
 --            Cap de 500 XP por chamada adicionado.
 --            grant_agent_achievement: daily_goal sem dedup diário.
---            Adicionado check em earned_at >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
---            após FOR UPDATE (serializa concorrência; boundary SP e não UTC).
+--            Adicionado check (earned_at AT TIME ZONE 'America/Sao_Paulo')::date >=
+--            (now() AT TIME ZONE 'America/Sao_Paulo')::date após FOR UPDATE.
+--            Comparar earned_at (timestamptz) com date faz upcast para timestamptz UTC;
+--            converter earned_at para o fuso SP antes de extrair a data garante o boundary correto.
 
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp integer)
 RETURNS json
@@ -89,11 +91,14 @@ BEGIN
   IF NOT FOUND THEN RETURN json_build_object('alreadyHad', false); END IF;
 
   -- daily_goal dedup: one per calendar day (São Paulo timezone boundary)
+  -- earned_at is timestamptz; convert to SP timezone first so the date boundary
+  -- is São Paulo midnight, not UTC midnight.
   IF p_type = 'daily_goal' AND EXISTS (
     SELECT 1 FROM agent_achievements
     WHERE profile_id = p_profile_id
       AND achievement_type = 'daily_goal'
-      AND earned_at >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
+      AND (earned_at AT TIME ZONE 'America/Sao_Paulo')::date
+          >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
   ) THEN
     RETURN json_build_object('alreadyHad', true);
   END IF;
