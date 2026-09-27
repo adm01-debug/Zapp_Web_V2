@@ -841,7 +841,25 @@ function compare(migrations, records, exceptionsByVersion) {
     }
 
     if (hasEvidence && errors.length === errorsBeforeMigration) verifiedEvidence += 1;
-    else if (!hasEvidence) warnings.push(`${migration.version} (${migration.fileName})`);
+    else if (!hasEvidence) {
+      if (!exception && record.statements.length > 0) {
+        // O ledger TEM statements mas nenhum produz evidencia verificavel (sem hash
+        // SHA-256, sem SQL canonico) e nao ha excecao no manifesto: conteudo e prosa
+        // pura, violando a regra 7 da secao 1 do CLAUDE.md. Saía exit 0 com apenas
+        // console.warn — agora falha fechado (achado Agent 3 HIGH, auditoria 2026-09-27).
+        // Nota: statements: null fica normalizado a [] em parseLedger() e cai no
+        // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente
+        // de migracao com prosa no lugar do SQL.
+        errors.push(
+          `${migration.version} (${migration.fileName}): statements no ledger sao prosa pura `
+          + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '
+          + 'regra 7 da secao 1 do CLAUDE.md (statements devem ser o SQL real e completo). '
+          + 'Adicione o SQL real via register-migration.mjs ou crie excecao em migration-evidence.json.',
+        );
+      } else {
+        warnings.push(`${migration.version} (${migration.fileName})`);
+      }
+    }
   }
 
   return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
