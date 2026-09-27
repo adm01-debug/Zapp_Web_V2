@@ -508,6 +508,10 @@ serve(async (req) => {
         } catch { /* GO indisponível: cai no 409 abaixo */ }
       }
       if (goOrphan) {
+        if (!Deno.env.get('EVOLUTION_INSTANCE_TOKEN')) {
+          new Logger('evolution-api').error('connect: EVOLUTION_INSTANCE_TOKEN não configurado — recriação de instância órfã abortada', { instance });
+          return new Response(JSON.stringify({ error: true, status: 503, message: 'A recriação automática da instância exige que o secret EVOLUTION_INSTANCE_TOKEN esteja configurado na Edge Function. Configure o secret e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
