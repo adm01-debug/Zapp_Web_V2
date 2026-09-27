@@ -182,7 +182,7 @@ describe('EditContactDialog', () => {
     fireEvent.click(screen.getByText('Salvar'));
 
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalledWith({ name: 'John Doe Jr' });
     });
   });
 
@@ -318,6 +318,32 @@ describe('EditContactDialog', () => {
     expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme')).toBeInTheDocument();
     expect(screen.getByText('Dev')).toBeInTheDocument();
+  });
+
+  // Mutation blind detectada pela auditoria (Agent 4, 2026-09-27): remover
+  // setInitialValues(next) do bloco de resync faz setFormValues correto mas
+  // deixa initialValues com os valores vazios da 1a montagem — qualquer Save
+  // sem edição enviaria TODOS os campos ao banco (sobrescrevendo com null).
+  it('não chama update quando o diálogo ressincroniza e o usuário salva sem editar', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const onOpenChange = vi.fn();
+    const emptyContact = { id: 'c1', name: 'John Doe', phone: '+5511999999999' };
+    const { rerender } = render(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={false} onOpenChange={onOpenChange} contact={emptyContact} />
+      </QueryClientProvider>
+    );
+
+    rerender(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={true} onOpenChange={onOpenChange} contact={baseContact} />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // ========== CANCEL ==========

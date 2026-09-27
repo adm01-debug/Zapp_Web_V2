@@ -64,14 +64,14 @@ function contactToFormValues(contact: EditContactDialogProps['contact']) {
 }
 
 // Normaliza cada campo do form pro formato de coluna, só quando o campo foi
-// de fato alterado (ver `handleSubmit`) — nunca inclui `phone`, que o form
-// só exibe e não edita.
+// de fato alterado (ver `handleSubmit`).
 const FIELD_NORMALIZERS: Record<string, (raw: string) => string | number | null> = {
   name: (v) => v,
   nickname: (v) => v || null,
   surname: (v) => v || null,
   job_title: (v) => v || null,
   company: (v) => v || null,
+  phone: (v) => v || null,
   email: (v) => v || null,
   contact_type: (v) => v || null,
   postal_code: (v) => v || null,
