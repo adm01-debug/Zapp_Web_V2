@@ -119,7 +119,8 @@ bunx playwright test --project=setup --project=chromium-e2e-core
 
 - **Logs de disparo:** Supabase Dashboard → Edge Functions → `talkx-send` → Logs.
 - **Status de instância WhatsApp:** Evolution GO dashboard ou endpoint
-  `GET /instance/fetchInstances` com `X-Api-Key: <EVOLUTION_API_KEY>`.
+  `GET /instance/all` diretamente em `https://evolution-go-rxj2.srv1481814.hstgr.cloud`
+  com header `apikey: <EVOLUTION_API_KEY>` (rota interna do GO; via app usa `/instance/fetchInstances` que o tradutor mapeia para este path).
 - **Alertas de CI:** `db-live-guard.yml` abre/atualiza issue com label
   `db-live-guard` se detectar drift no schema.
 
@@ -129,21 +130,22 @@ bunx playwright test --project=setup --project=chromium-e2e-core
 
 ### 8.1 Adicionar nova categoria de template
 
-1. Atualizar o enum `talkx_template_category` no banco:
-   ```sql
-   ALTER TYPE talkx_template_category ADD VALUE 'nova_categoria';
-   ```
-2. Criar arquivo de migration em `supabase/migrations/`.
-3. Seguir fluxo: PR → merge `main` → apply via MCP (`db_query`) + registro no
-   ledger (seção 1/regra 1 do `CLAUDE.md`).
-4. Atualizar o array de categorias em `src/components/talkx/TalkXTemplates.tsx`
-   se houver filtro hardcoded.
+A coluna `category` é do tipo `text` (sem enum no banco). Para adicionar uma nova categoria:
+
+1. Adicionar o novo valor ao array `TEMPLATE_CATEGORIES` em
+   `src/components/talkx/talkxShared.tsx`.
+2. Abrir PR → merge `main` — sem migration de banco necessária.
 
 ### 8.2 Desabilitar o módulo temporariamente
 
-Remover `supervisor` de `STAFF_ROLES` em `navigation.service.ts` esconde o
-item de menu para supervisores mas mantém para admins. Para ocultar de todos,
-remover a entrada `talkx` do array `navigationItems`.
+**Nunca remover `supervisor` de `STAFF_ROLES`** — essa constante é compartilhada
+por ~30 itens de menu; removê-la esconderia toda a UI de supervisores.
+
+Para esconder só "Campanhas":
+- **Só para supervisores:** alterar `roles: STAFF_ROLES` para `roles: ['admin']`
+  na entrada `{ id: 'talkx' }` em `navigation.service.ts`.
+- **Para todos (admin + supervisor):** remover a entrada `{ id: 'talkx' }`
+  do array `navigationItems` em `navigation.service.ts`.
 
 ### 8.3 Rollback de migration de Talk X
 
