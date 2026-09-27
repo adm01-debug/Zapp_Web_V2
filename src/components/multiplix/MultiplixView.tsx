@@ -55,7 +55,21 @@ export default function MultiplixView() {
   const [rows, setRows] = useState<MultiplixAudienceRow[]>([]);
   const [page, setPage] = useState(0);
   const [submittedFilters, setSubmittedFilters] = useState<MultiplixSearchFilters>({});
+  // P2 fix (Codex, review da PR #958): 'search' e uma mutation COMPARTILHADA
+  // entre a busca inicial e o loadMore -- isSuccess vira false a cada
+  // 'loadMore' em andamento, escondendo a tabela (e as linhas ja carregadas)
+  // ate a proxima resposta. 'hasSearched' so liga na primeira busca e nunca
+  // desliga, entao a tabela nao pisca/some durante paginacao nem fica
+  // escondida se uma pagina seguinte falhar.
+  const [hasSearched, setHasSearched] = useState(false);
+  // P2 fix (Codex, review da PR #958): quando 'count' falha (RPC
+  // independente), count.data fica undefined para sempre e o botao
+  // "Carregar mais" nunca aparecia de novo, mesmo com mais paginas
+  // disponiveis. Uma pagina cheia (== PAGE_SIZE) e evidencia de que pode
+  // haver mais -- usada como fallback so quando count.data e desconhecido.
+  const [lastPageFull, setLastPageFull] = useState(false);
   const dispatches = useMultiplixDispatchesList();
+  const selectableRows = rows.slice(0, MAX_SELECTABLE);
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
     roles: role ? [role] : undefined,
@@ -69,7 +83,7 @@ export default function MultiplixView() {
     setPage(0);
     setSubmittedFilters(filters);
     count.mutate(filters);
-    search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => setRows(data) });
+    search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => { setRows(data); setHasSearched(true); setLastPageFull(data.length === PAGE_SIZE); } });
   };
 
   // P1+P2 fix (Codex, review da PR #958):
@@ -85,7 +99,7 @@ export default function MultiplixView() {
     const nextPage = page + 1;
     search.mutate(
       { ...submittedFilters, page: nextPage, page_size: PAGE_SIZE },
-      { onSuccess: (data) => { setPage(nextPage); setRows((prev) => [...prev, ...data]); } },
+      { onSuccess: (data) => { setPage(nextPage); setRows((prev) => [...prev, ...data]); setLastPageFull(data.length === PAGE_SIZE); } },
     );
   };
 
@@ -108,13 +122,17 @@ export default function MultiplixView() {
   // pode juntar mais de 500 empresas -- o resolver do backend
   // (ResolveParamsSchema.company_ids) rejeita arrays maiores que isso, e o
   // disparo falharia com "Invalid request" sem nenhuma explicacao na UI.
+  // P2 fix (Codex, 2a review): 'allSelected' comparava contra TODAS as rows,
+  // nao so as selecionaveis -- acima de 500 carregadas, nunca ficava true e
+  // o clique repetido so reselecionava as mesmas 500 (sem bulk-deselect).
+  // Compara e seleciona contra 'selectableRows' (rows ate MAX_SELECTABLE).
   const toggleAllVisible = () => {
-    const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.company_id));
+    const allSelected = selectableRows.length > 0 && selectableRows.every((r) => selected.has(r.company_id));
     if (allSelected) { setSelected(new Set()); return; }
     if (rows.length > MAX_SELECTABLE) {
       toast.error(`"Selecionar todas" limitado a ${MAX_SELECTABLE} empresas (limite do backend) — foram selecionadas as primeiras ${MAX_SELECTABLE}. Refine o filtro para pegar o restante.`);
     }
-    setSelected(new Set(rows.slice(0, MAX_SELECTABLE).map((r) => r.company_id)));
+    setSelected(new Set(selectableRows.map((r) => r.company_id)));
   };
 
   if (monitorId) {
@@ -216,19 +234,20 @@ export default function MultiplixView() {
         </p>
       )}
 
-      {/* P2 fix (Codex, review da PR #958): gate na conclusao da busca, nao em
-          count.data -- se a busca (RPC 'search') tiver sucesso mas a
-          contagem (RPC 'count', independente) falhar, as linhas ja
-          resolvidas nao podem ficar escondidas por causa de um RPC que nem
-          e o dela. */}
-      {search.isSuccess && (
+      {/* P2 fix (Codex, review da PR #958, 2 rounds): gate em 'hasSearched'
+          (liga na 1a busca, nunca desliga) -- 'search.isSuccess' reflete a
+          mutation COMPARTILHADA com loadMore, entao virava false a cada
+          pagina seguinte em andamento e escondia as linhas ja carregadas;
+          tambem nao dependia de count.data (RPC independente que pode falhar
+          sem que a busca em si tenha falhado). */}
+      {hasSearched && (
         <div className="overflow-hidden rounded-2xl border border-[--zapp-border]">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
-                    checked={rows.length > 0 && rows.every((r) => selected.has(r.company_id))}
+                    checked={selectableRows.length > 0 && selectableRows.every((r) => selected.has(r.company_id))}
                     onCheckedChange={toggleAllVisible}
                     aria-label="Selecionar todas as empresas visíveis"
                   />
@@ -272,11 +291,13 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
-          {count.data !== undefined && rows.length < count.data && (
+          {(count.data !== undefined ? rows.length < count.data : lastPageFull) && (
             <div className="flex justify-center border-t border-[--zapp-border] p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Carregar mais ({count.data - rows.length} restante{count.data - rows.length === 1 ? '' : 's'})
+                {count.data !== undefined
+                  ? `Carregar mais (${count.data - rows.length} restante${count.data - rows.length === 1 ? '' : 's'})`
+                  : 'Carregar mais'}
               </Button>
             </div>
           )}
