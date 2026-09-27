@@ -449,7 +449,11 @@ serve(async (req) => {
       // connected nesse caso fecha o dialog sem QR quando o WhatsApp não chegou a parear.
       const isConnected = Boolean(stInner.Connected ?? stInner.connected);
       const isLoggedIn = Boolean(stInner.loggedIn ?? stInner.LoggedIn);
-      const loggedIn = (isConnected && isLoggedIn) || stData.state === 'open';
+      // state==='open' é fallback para respostas da GO sem inner flags; quando os flags
+      // estão presentes eles têm precedência — evita state:'open'+Connected:false = connected.
+      const hasInnerFlags = 'Connected' in stInner || 'connected' in stInner ||
+        'loggedIn' in stInner || 'LoggedIn' in stInner;
+      const loggedIn = (isConnected && isLoggedIn) || (!hasInnerFlags && stData.state === 'open');
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
         return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
