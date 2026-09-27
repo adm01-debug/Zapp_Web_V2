@@ -428,7 +428,7 @@ serve(async (req) => {
       }
       if (qr.base64) {
         await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-        return new Response(JSON.stringify({ ...data, qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
       // partir da sessão salva) ou tem uma sessão órfã na GO que não emite QR novo
@@ -554,7 +554,7 @@ serve(async (req) => {
           }
           if (healed.base64) {
             await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
-            return new Response(JSON.stringify({ qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
         }
         new Logger('evolution-api').error('connect: recriação da instância na GO não gerou QR', { instance, goId: goOrphan.id });
