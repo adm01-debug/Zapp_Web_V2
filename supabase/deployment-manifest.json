@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 69,
-    "source_file_count": 95,
+    "source_file_count": 96,
     "verify_jwt_true": 59,
     "verify_jwt_false": 10
   },
@@ -110,6 +110,11 @@
       "path": "supabase/functions/_shared/notification-events.ts",
       "bytes": 3197,
       "sha256": "38a957bcc07ca5e4415bed67a34debea89f34fb50896600c9e7c1611e550ed98"
+    },
+    {
+      "path": "supabase/functions/_shared/postgrest-filters.ts",
+      "bytes": 849,
+      "sha256": "5570aa4f0459b218bd557d52d08ed7eb24b133ef65233c80589d5fffd725a4b8"
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
@@ -218,8 +223,8 @@
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
-      "bytes": 8925,
-      "sha256": "8a2cfaa9c824275a85bf347b879a3ccc9a93fec288fda33189ddbf7e2c8e4634"
+      "bytes": 9157,
+      "sha256": "709bc5ee0d2001a236611a00d3f4a25bf8150ae0bdfd4b41053d57e758c01c4e"
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
@@ -328,8 +333,8 @@
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "bytes": 8611,
-      "sha256": "85169262336757b01313b6b8c371608d92a43133d046e19d37e88b91bf32c0e2"
+      "bytes": 8844,
+      "sha256": "c116e2f253a4f1d7515ac1bc432112de2804924a5a4117116177d23426f1be05"
     },
     {
       "path": "supabase/functions/external-db-proxy/index.ts",
@@ -458,8 +463,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 36642,
-      "sha256": "3cb701cb80ccd2fdd9536d0440872aba8ed17c72b866b2113d12460e924ebc72"
+      "bytes": 40909,
+      "sha256": "485072468394b96b7de32380f3a964777a615de23b66bbb4264be625add28893"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -473,8 +478,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 7060,
-      "sha256": "d4af62870978176ed6c8f919e800ce6bb4addb4b7bbcddb512f2d5de14164554"
+      "bytes": 7158,
+      "sha256": "98ef60e5a17a3b95969f2497e01c4daf1d5b4c18b77acec6547a4c4736afc631"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -681,7 +686,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "05e0514fa42886988cb3453b4392356ea3c146a72844d0da758f4dcc1ec9948e",
+      "source_sha256": "29d592e9560bfe264e992f79d3dc113b02d9ed3324e1e312bc41acbf3b09ecc4",
       "source_files": [
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -962,7 +967,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "521965d3c5aad3acae5f43dd58b0e61b8cb5a5c28a51e6d72bb59f433dc4bf73",
+      "source_sha256": "63daafe1f838c4c9974e476c32e12b1a0ad2583a9c0e4e953313f862c15d6798",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1278,7 +1283,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "94c045bc356c7c0c1f3f2876d9aa02e22a42b3e47f8ada5ed4a3382eeae5a294",
+      "source_sha256": "089be743ccd63c8e4b480f2d45ac92908200ae8f28751a9de66884426718c0c3",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1316,9 +1321,10 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dd28fd97744a8f4c8580140817c03f6e2f11c276eeb8fcfa908ef06be602e705",
+      "source_sha256": "fad56d5052e56ca9c83090a9d13a867953289d778a1a1e9255ab78c626a492f1",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/postgrest-filters.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-copilot-action/index.ts"
       ]
@@ -1360,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "75300ae618362f5feae830884523b046e01bb56d0d13425afc90800e3c41b1ca"
+  "manifest_sha256": "edb779c5c2c33e16e6ffbb2a219843cd16cedf6a4eb08c2a9e7110f8c348afb5"
 }

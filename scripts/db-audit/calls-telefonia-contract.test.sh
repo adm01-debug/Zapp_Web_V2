@@ -12,8 +12,8 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20260926300000_calls_telefonia_v2.sql"
-migration_fix_notes="$repo_root/supabase/migrations/20260926500000_fix_set_call_agent_notes_null_profile.sql"
+migration="$repo_root/supabase/migrations/20260926800000_calls_telefonia_v2.sql"
+migration_fix_notes="$repo_root/supabase/migrations/20260926900000_fix_set_call_agent_notes_null_profile.sql"
 postgres_image="${CALLS_TELEFONIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-calls-telefonia-test-$$"
 

@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
 import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables } from './talkxShared';
+import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -158,6 +159,23 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const sample = ed.contacts?.[0];
+  // Review da PR #909: sem os campos customizados reais do contato de
+  // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
+  // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
+  const { fields: sampleCustomFields } = useContactCustomFields(sample?.id);
+  const sampleCustomValues = React.useMemo(() => {
+    // Object.create(null) (não {}): um campo customizado chamado "__proto__"
+    // num objeto comum invoca o setter de protótipo em vez de virar
+    // propriedade enumerável — o preview mostraria "[__proto__]" mesmo o
+    // envio real (que já usa o mesmo padrão) mandando o valor de verdade
+    // (achado do review).
+    const values = Object.create(null) as Record<string, string>;
+    for (const f of sampleCustomFields) {
+      if (f.field_value == null) continue;
+      values[f.field_name] = f.field_value;
+    }
+    return values;
+  }, [sampleCustomFields]);
   const variables = extractVariables(ed.messageTemplate);
   const objective = OBJECTIVES.find((o) => o.value === ed.objective)?.label ?? ed.objective;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
@@ -198,7 +216,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched }: { ed: WizardStat
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} />
+        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} />
       </Section>
 
       <div className="space-y-4 min-w-0">

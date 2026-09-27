@@ -74,6 +74,11 @@ jobs:
         continue-on-error: true
         run: bash scripts/ci/install-pgbouncer.sh
 
+      # E37 (auditoria de GitHub Actions, 2026-09-26): TLS verify-full + CA
+      # Supabase pinada, mesmo padrao ja usado por db-live-guard.yml e
+      # targeted-ledger-evidence.yml. Antes, este passo so comprovava a
+      # identidade do endpoint (validarDestino) sem exigir TLS verify-full —
+      # unico dos 3 workflows que tocam DESTINO_URL sem esse endurecimento.
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
@@ -85,18 +90,29 @@ jobs:
           node --input-type=module <<'NODE'
           import {
             carregarIdentidadeEsperada,
+            endurecerDestinoTls,
             validarDestino,
+            validarSupabaseCa,
           } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
           const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
-          console.log('OK: endpoint do banco oficial comprovado por fingerprint.');
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint do banco oficial comprovado por fingerprint; TLS verify-full e CA Supabase pinada.');
           NODE
 
+      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
+      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
+      # com o secret cru sem TLS.
       - name: Gerar candidatos em diretorio temporario
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
@@ -140,10 +156,10 @@ jobs:
 
       # Contrato dos checkers: 0=igual, 1=drift valido, 2=erro/identidade.
       # Apenas exit 1 pode virar proposta de atualizacao.
+      # DESTINO_URL (endurecido) vem do GITHUB_ENV do 1o passo — sem env:
+      # proprio aqui pela mesma razao do passo "Gerar candidatos" acima.
       - name: Classificar drift com identidade comprovada
         id: diff
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           grep -v '^// ' /tmp/types.new.ts > /tmp/types.new.stripped
           grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.old.stripped

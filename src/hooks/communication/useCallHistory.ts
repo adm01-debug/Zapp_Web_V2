@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 export interface CallHistoryRow {
   id: string;
@@ -34,8 +35,8 @@ async function findContactIdsByNameOrPhone(term: string): Promise<string[] | nul
   if (!trimmed) return null;
   const digits = trimmed.replace(/\D/g, '');
   const orFilter = digits.length >= 4
-    ? `name.ilike.%${trimmed}%,phone.ilike.%${digits}%`
-    : `name.ilike.%${trimmed}%`;
+    ? `name.ilike.${escapeOrFilterValue(`%${trimmed}%`)},phone.ilike.%${digits}%`
+    : `name.ilike.${escapeOrFilterValue(`%${trimmed}%`)}`;
   const { data, error } = await supabase.from('contacts').select('id').or(orFilter).limit(200);
   if (error) return [];
   return (data || []).map(c => c.id);
