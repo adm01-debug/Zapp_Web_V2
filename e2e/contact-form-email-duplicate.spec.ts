@@ -31,6 +31,7 @@ async function getAccessToken(page: Page): Promise<string> {
 }
 
 // Garante que o contato fixture tenha o FIXTURE_EMAIL cadastrado.
+// Usa return=representation para detectar falha silenciosa de RLS (0 linhas → array vazio).
 async function ensureFixtureEmail(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
   const res = await page.request.patch(
@@ -40,7 +41,7 @@ async function ensureFixtureEmail(page: Page): Promise<void> {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
+        Prefer: 'return=representation',
       },
       data: { email: FIXTURE_EMAIL },
     },
@@ -52,9 +53,17 @@ async function ensureFixtureEmail(page: Page): Promise<void> {
       }`,
     );
   }
+  const rows = await res.json().catch(() => []);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error(
+      `ensureFixtureEmail: PATCH retornou 0 linhas — RLS bloqueou ou contato ${FIXTURE_CONTACT_ID} não existe. ` +
+      'Verifique que o usuário E2E tem permissão UPDATE em contacts.',
+    );
+  }
 }
 
 // Garante que o contato fixture tenha o FIXTURE_PHONE cadastrado.
+// Usa return=representation para detectar falha silenciosa de RLS (0 linhas → array vazio).
 async function ensureFixturePhone(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
   const res = await page.request.patch(
@@ -64,7 +73,7 @@ async function ensureFixturePhone(page: Page): Promise<void> {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
+        Prefer: 'return=representation',
       },
       data: { phone: FIXTURE_PHONE },
     },
@@ -74,6 +83,13 @@ async function ensureFixturePhone(page: Page): Promise<void> {
       `ensureFixturePhone falhou: HTTP ${res.status()} ${
         await res.text().catch(() => '')
       }`,
+    );
+  }
+  const rows = await res.json().catch(() => []);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error(
+      `ensureFixturePhone: PATCH retornou 0 linhas — RLS bloqueou ou contato ${FIXTURE_CONTACT_ID} não existe. ` +
+      'Verifique que o usuário E2E tem permissão UPDATE em contacts.',
     );
   }
 }
@@ -98,10 +114,10 @@ test.describe('Formulário de contato — aviso de email duplicado', () => {
       .fill(FIXTURE_EMAIL);
 
     // O aviso aparece após o debounce de 500 ms + round-trip ao banco.
-    // toBeVisible retentar até o timeout (3 s) — aguarda naturalmente sem sleep.
+    // 8 s cobre debounce (500 ms) + latência de rede + render em CI.
     await expect(
       page.getByRole('alert').filter({ hasText: /email já cadastrado/i }),
-    ).toBeVisible({ timeout: 3000 });
+    ).toBeVisible({ timeout: 8000 });
   });
 });
 
@@ -126,8 +142,9 @@ test.describe('Formulário de contato — aviso de telefone duplicado', () => {
       .fill(FIXTURE_PHONE);
 
     // O aviso aparece após o debounce de 500 ms + round-trip ao banco.
+    // 8 s cobre debounce (500 ms) + latência de rede + render em CI.
     await expect(
       page.getByRole('alert').filter({ hasText: /possível duplicata/i }),
-    ).toBeVisible({ timeout: 3000 });
+    ).toBeVisible({ timeout: 8000 });
   });
 });

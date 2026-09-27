@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const validateEmail = (email: string): boolean => {
@@ -50,6 +50,13 @@ export function useContactFormValidation(
   const emailDupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const emailCheckSeqRef = useRef(0);
   const phoneCheckSeqRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(dupCheckTimer.current);
+      clearTimeout(emailDupCheckTimer.current);
+    };
+  }, []);
 
   const checkDuplicate = useCallback(async (phone: string) => {
     const seq = phoneCheckSeqRef.current;
