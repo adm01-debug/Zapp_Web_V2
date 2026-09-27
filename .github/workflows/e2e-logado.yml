@@ -1,6 +1,6 @@
-# ==================================================================
+# ==========================================================================
 # ZAPP-WEB · E2E logado (Playwright, login real)
-# ==================================================================
+# ==========================================================================
 # SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele usa
 # os secrets E2E_TEST_EMAIL/E2E_TEST_PASSWORD (usuario de teste dedicado, perfil
 # supervisor -- enxerga Campanhas/Talk X) apenas depois de o codigo chegar a main ou em dispatch feito sobre
@@ -13,7 +13,7 @@
 # e-mail preenchido. Como o repo e publico, um upload-artifact aqui deixaria
 # esse e-mail baixavel por qualquer conta do GitHub. Falha deste job = ver o
 # log do proprio step (app fora do ar / seletor quebrou); nao vale o risco.
-# ==================================================================
+# ==========================================================================
 
 name: E2E logado
 
@@ -45,16 +45,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📥 Checkout confiavel da main
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba80582da764410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: 🧄 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e514198686518aeaa5fe80194621857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
-      - name: 📚 Install dependencies
+      - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
@@ -62,16 +62,41 @@ jobs:
 
       # Uma unica invocacao do Playwright, com os projetos listados
       # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
-      # na run 36250631355 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
+      # na run 362506313557 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
       # (sem path de arquivo no CLI) nao disparou "setup" e e2e/.auth/user.json
       # nunca foi gerado. chromium-authenticated cobre todos os specs autenticados;
       # firefox-talkx e webkit-talkx cobrem talkx.spec.ts nos engines alternativos
       # (auth cookies do user.json sao browser-agnosticos).
       # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
-      # messaging.spec.ts nos engines alternativos — mesma logica de browser-agnosticism.
-      - name: 🔐 Run Playwright E2E (login real)
+      # messaging.spec.ts nos engines alternativos -- mesma logica de browser-agnosticismo.
+      - name: 📐 Run Playwright E2E (login real)
         run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+
+      # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
+      # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
+      # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
+      # A UNIQUE constraint (contact_id, dia) impede duplicatas no mesmo dia,
+      # mas a tabela cresce 1 row/CI-run sem este step.
+      # Requer o secret SUPABASE_SERVICE_ROLE_KEY (chave nao exposta ao publico).
+      # Se o secret nao estiver configurado, o step e ignorado (continue-on-error).
+      - name: 🧹 E2E teardown - limpar fixture de conversation_closures
+        if: always()
+        continue-on-error: true
+        env:
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
+            exit 0
+          fi
+          curl -sf -X DELETE \
+            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            && echo "teardown OK" \
+            || echo "teardown falhou - nao bloqueia CI"
