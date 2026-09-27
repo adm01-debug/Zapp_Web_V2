@@ -1,4 +1,4 @@
--- 20260927290000_fix_handle_new_user_role_null_email
+-- 20260927300000_fix_handle_new_user_role_null_email
 -- NULL bypass: NEW.email pode ser NULL em signup por telefone (auth sem email).
 -- split_part(NULL, '@', 2) => NULL; NULL = ANY(...) => NULL;
 -- IF NOT NULL => condicao NULL => ramo "negado" NAO executa =>
