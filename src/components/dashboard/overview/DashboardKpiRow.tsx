@@ -19,9 +19,11 @@ interface DashboardKpiRowProps {
   isStaff?: boolean;
   /** Só usado quando !isStaff — conversas com assigned_to = eu, calculado no DashboardView. */
   myActiveConversations?: number;
+  /** Quando true, renderiza skeleton em todos os KPI cards enquanto os dados carregam. */
+  isLoading?: boolean;
 }
 
-export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActiveConversations = 0 }: DashboardKpiRowProps) {
+export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActiveConversations = 0, isLoading = false }: DashboardKpiRowProps) {
   const onlinePct = stats.totalAgents > 0 ? Math.round((stats.onlineAgents / stats.totalAgents) * 100) : 0;
   const responseTooltip = kpi?.p90ResponseToday != null
     ? <span title={`p90 hoje: ${formatShortDuration(kpi.p90ResponseToday)} (9 em cada 10 atendimentos responderam mais rápido que isso)`}><Info className="w-3 h-3 text-muted-foreground" /></span>
@@ -31,6 +33,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5">
       <DashboardKpiCard
         index={0}
+        isLoading={isLoading}
         label={isStaff ? 'Conversas Abertas' : 'Fila: Conversas Abertas'}
         value={String(stats.openConversations)}
         delta={null}
@@ -41,6 +44,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       />
       <DashboardKpiCard
         index={1}
+        isLoading={isLoading}
         label={isStaff ? 'Não Lidas' : 'Fila: Não Lidas'}
         value={String(realtime.unreadMessages)}
         delta={null}
@@ -51,6 +55,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       />
       <DashboardKpiCard
         index={2}
+        isLoading={isLoading}
         label={isStaff ? 'Tempo Médio de Resposta' : 'Meu Tempo Médio de Resposta'}
         labelAdornment={responseTooltip}
         value={kpi?.avgResponseToday != null ? formatShortDuration(kpi.avgResponseToday) : '—'}
@@ -63,6 +68,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       {isStaff ? (
         <DashboardKpiCard
           index={3}
+          isLoading={isLoading}
           label="Atendentes Online"
           value={stats.totalAgents > 0 ? `${stats.onlineAgents}/${stats.totalAgents}` : '—'}
           delta={stats.totalAgents > 0 ? { text: `● ${onlinePct}% online`, tone: 'success' } : { text: 'Sem dados', tone: 'muted' }}
@@ -74,6 +80,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       ) : (
         <DashboardKpiCard
           index={3}
+          isLoading={isLoading}
           label="Minhas Conversas Ativas"
           value={String(myActiveConversations)}
           delta={null}
@@ -85,6 +92,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       )}
       <DashboardKpiCard
         index={4}
+        isLoading={isLoading}
         label={isStaff ? 'Resolvidas Hoje' : 'Minhas Resolvidas Hoje'}
         value={kpi ? String(kpi.resolvedToday) : '—'}
         delta={kpi?.deltaResolvedPct != null ? { pct: kpi.deltaResolvedPct } : null}

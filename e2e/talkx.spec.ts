@@ -1,4 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
+import {
+  cleanupE2EDraftCampaigns,
+  E2E_TALKX_CONNECTION_LABEL,
+  E2E_TALKX_SEGMENT_REGEX,
+} from './fixtures/e2e-talkx';
 
 // SidebarNavGroup defaults to closed (defaultOpen=false). Fresh auth storageState
 // has no saved group-open state, so the group must be expanded before clicking
@@ -151,4 +156,53 @@ test.describe('Talk X module', () => {
     await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
+
+  test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }) => {
+    // Navigate directly to campaigns overview via URL deep-link.
+    await page.goto('/?view=talkx');
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+
+    // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button.
+    await page.getByRole('button', { name: /nova campanha/i }).first().click();
+    await expect(page.getByRole('heading', { name: /nova campanha/i })).toBeVisible();
+
+    // Step 1 — fill campaign name.
+    // The name field must be non-empty for canProceed[1] to be satisfied.
+    // NOTE: useCampaignEditor autosave fires ~3s after first keystroke.
+    // afterAll calls cleanupE2EDraftCampaigns() to remove the resulting draft.
+    await page.getByPlaceholder('Ex: Lançamento Linha Office').fill('[E2E] Campanha de Teste');
+
+    // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
+    await page.getByRole('combobox').click();
+    await page.getByRole('option', { name: E2E_TALKX_CONNECTION_LABEL }).click();
+
+    // Step 1 — select audience source "Segmento salvo" and pick the fixture segment.
+    // The SourceCard is only clickable when segments.length > 0 (fixture segment is seeded).
+    await page.getByRole('button', { name: /segmento salvo/i }).click();
+    await page.getByRole('button', { name: E2E_TALKX_SEGMENT_REGEX }).click();
+
+    // canProceed[1]: name ✓, connectionId ✓, segmentId ✓ → "Continuar" becomes enabled.
+    const continuar = page.getByRole('button', { name: /continuar/i });
+    await expect(continuar).toBeEnabled();
+    await continuar.click();
+
+    // Step 2 header ("Mensagem") should be active in the stepper.
+    await expect(page.getByText('Mensagem').first()).toBeVisible();
+
+    // Close the wizard before cleanup.
+    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+  });
+});
+
+// Remove draft campaigns created during the wizard step-2 test.
+// Runs once after all specs to keep the production DB clean on every CI run.
+test.afterAll(async ({ browser }) => {
+  const context = await browser.newContext({
+    storageState: 'e2e/.auth/user.json',
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  await cleanupE2EDraftCampaigns(page);
+  await context.close();
 });
