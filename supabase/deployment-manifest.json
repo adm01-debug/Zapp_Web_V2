@@ -454,7 +454,7 @@
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
       "bytes": 5996,
-      "sha256": "be0174fadc1f748f78aa78b6686667c4fbab7f3d15deabd3ba64cb7515c5752c"
+      "sha256": "da37eb74b1306f2a0b3d00e6da36a195f8c6f494a2165e30099a62577edf0b78"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
