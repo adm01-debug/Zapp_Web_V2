@@ -129,25 +129,26 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     // P2 fix (Codex, review da PR #958): paginacao por offset e instavel durante
     // disparo ativo com filtro de status -- destinatarios que mudam de status
     // entre paginas deslocam o offset, causando linhas puladas ou duplicadas no
-    // CSV. Keyset (lastId) e estavel: a ordem de id e imutavel, independente de
-    // mudancas de status.
+    // CSV. Keyset (lastId: string | null) e estavel: a ordem de id e imutavel,
+    // independente de mudancas de status. id e UUID -- inicializar com null e
+    // nao 0 (comparar UUID a inteiro falha no PostgREST).
     const PAGE = 1000;
-    let lastId = 0;
+    let lastId: string | null = null;
     const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
     for (;;) {
       let q = fromTable('multiplix_recipients')
         .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
         .eq('dispatch_id', dispatchId)
         .order('id')
-        .gt('id', lastId)
         .limit(PAGE);
+      if (lastId !== null) q = q.gt('id', lastId);
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
       const { data, error } = await q;
       if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; } // aborta: nao exporta parcial
       if (!data?.length) break;
       allRows.push(...(data as typeof allRows));
       if (data.length < PAGE) break;
-      lastId = (data[data.length - 1] as { id: number }).id;
+      lastId = (data[data.length - 1] as { id: string }).id;
     }
     if (allRows.length === 0) return;
     exportRecipientsCsv(allRows, dispatch?.name ?? 'disparo');
