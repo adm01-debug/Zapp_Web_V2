@@ -52,24 +52,39 @@ async function getAccessToken(page: Page): Promise<string> {
 // resolved -> open, então reabrir antes de cada teste é seguro mesmo que a run
 // anterior tenha encerrado a conversa via close_conversation_atomic — esta suíte
 // roda contra produção (e2e-logado.yml), não um banco descartável por execução.
+//
+// Usa set_conversation_status (SECURITY DEFINER) em vez do PATCH REST direto:
+// o PATCH passa por RLS e auth.uid() pode resolver para NULL em certas
+// configurações de PostgREST (ex. token expirado ou role=anon no gateway),
+// retornando 0 linhas silenciosamente. A RPC SECURITY DEFINER executa com
+// os privilégios do owner da função e bypassa RLS por design — garantindo que
+// o fixture reabra independente do estado do JWT ou da política de UPDATE.
+// Referência: PR #906 alterou a policy contacts UPDATE para TO authenticated;
+// o RPC set_conversation_status também atualiza conversation_status_changed_at
+// = NOW(), então o contato aparece no topo do inbox ordenado por data.
 export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
-  const response = await page.request.patch(
-    `${SUPABASE_URL}/rest/v1/contacts?id=eq.${E2E_FIXTURE_CONTACT_ID}`,
+  const response = await page.request.post(
+    `${SUPABASE_URL}/rest/v1/rpc/set_conversation_status`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
       },
-      data: { conversation_status: 'open' },
+      data: {
+        p_contact_id: E2E_FIXTURE_CONTACT_ID,
+        p_next: 'open',
+      },
     }
   );
   if (!response.ok()) {
+    const body = await response.text().catch(() => '');
+    // FSM não permite open -> open. Se o contato já está 'open' (p.ex. se o
+    // primeiro teste da suíte foi pulado), continua normalmente.
+    if (body.includes('invalid transition') || body.includes('invalid_transition')) return;
     throw new Error(
-      `Falha ao reabrir o contato fixo de E2E antes do teste: HTTP ${response.status()} ` +
-        (await response.text())
+      `Falha ao reabrir o contato fixo de E2E via RPC: HTTP ${response.status()} ${body}`
     );
   }
 }
