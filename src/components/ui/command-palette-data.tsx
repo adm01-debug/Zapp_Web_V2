@@ -4,7 +4,7 @@ import {
   Plus, Keyboard,
 } from 'lucide-react';
 
-export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent';
+export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent' | 'talkx';
 
 export interface CommandItem {
   id: string;
