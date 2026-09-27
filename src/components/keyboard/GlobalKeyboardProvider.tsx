@@ -35,7 +35,6 @@ interface GlobalKeyboardProviderProps {
 
 export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboardProviderProps) {
   const searchCatalogProducts = useCatalogQuickSearch();
-  const talkxCommands = useTalkXCommandItems();
   const [showHelp, setShowHelp] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const navigationHandlerRef = useRef<((view: string) => void) | null>(null);
@@ -97,6 +96,8 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     }
     setShowCommandPalette(false);
   }, []);
+
+  const talkxCommands = useTalkXCommandItems(handleNavigate);
 
   const registerNavigationHandler = useCallback((handler: (view: string) => void) => {
     navigationHandlerRef.current = handler;

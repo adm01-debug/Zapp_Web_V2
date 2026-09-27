@@ -158,8 +158,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
 
   const triggerDailyGoal = useCallback(async (goal: string) => {
     try {
-      await grantAchievement({ type: ACHIEVEMENT_TYPES.DAILY_GOAL, name: 'Meta Diária', description: `Meta "${goal}" concluída!`, xpReward: 60 });
-      showAchievement('daily_goal', `Meta "${goal}" concluída!`, 60);
+      const result = await grantAchievement({ type: ACHIEVEMENT_TYPES.DAILY_GOAL, name: 'Meta Diária', description: `Meta "${goal}" concluída!`, xpReward: 60 });
+      if (!result?.alreadyHad) {
+        showAchievement('daily_goal', `Meta "${goal}" concluída!`, 60);
+      }
     } catch (error) { log.error('Error triggering daily goal achievement:', error); }
   }, [grantAchievement, showAchievement]);
 
@@ -183,7 +185,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     if (dbStats) {
       const currentLevel = dbStats.level;
       const calculatedLevel = calculateLevel(dbStats.xp);
-      if (calculatedLevel > currentLevel) triggerLevelUp(calculatedLevel);
+      if (calculatedLevel > currentLevel) {
+        const timer = setTimeout(() => triggerLevelUp(calculatedLevel), 0);
+        return () => clearTimeout(timer);
+      }
     }
   }, [dbStats?.xp]);
 
