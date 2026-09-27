@@ -5,6 +5,12 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('team-chat-files', 'team-chat-files', false, 52428800)
 ON CONFLICT (id) DO NOTHING;
 
+-- Drop existing permissive policy (from E09) and our own if re-running (idempotent)
+DROP POLICY IF EXISTS "Team chat files readable by owner admin or conversation member"
+  ON storage.objects;
+DROP POLICY IF EXISTS "Conversation members can read team chat files"
+  ON storage.objects;
+
 CREATE POLICY "Conversation members can read team chat files"
   ON storage.objects FOR SELECT
   USING (
@@ -13,9 +19,10 @@ CREATE POLICY "Conversation members can read team chat files"
       -- File owner
       (storage.foldername(name))[1] = auth.uid()::text
       OR
-      -- Any member of a conversation that references this file
+      -- Admins/supervisors
       is_admin_or_supervisor(auth.uid())
       OR
+      -- Any member of a conversation that references this file
       EXISTS (
         SELECT 1
         FROM public.team_messages tm
