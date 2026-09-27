@@ -350,7 +350,7 @@ describe('ContactHeaderSection', () => {
   it('badge de alto engajamento usa texto branco (necessário para ratio WCAG)', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('color: white');
+    expect(badge).toHaveStyle('color: rgb(255, 255, 255)');
   });
 
   it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
