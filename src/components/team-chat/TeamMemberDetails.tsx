@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
 import {
-  type MemberProfile, getBirthdayInfo, getRoleBadge, InfoRow,
+  getBirthdayInfo, getRoleBadge, InfoRow,
   DirectProfileHeader, GroupProfileHeader,
 } from './TeamMemberProfileHeader';
 
@@ -33,39 +32,14 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
   const [sections, setSections] = useState({ info: true, team: false, activity: false });
   const toggleAll = () => { const allClosed = !sections.info && !sections.team && !sections.activity; setSections({ info: allClosed, team: allClosed, activity: allClosed }); };
 
-  const otherMemberId = conversation.type === 'direct' ? conversation.members?.find(m => m.profile_id !== profile?.id)?.profile_id : null;
-
-  const { data: memberProfile, isLoading } = useQuery({
-    queryKey: ['team-member-profile', otherMemberId || conversation.id],
-    queryFn: async () => {
-      if (conversation.type === 'direct' && otherMemberId) {
-        const { data, error } = await supabase.from('profiles').select('id, name, email, phone, avatar_url, job_title, department, role, is_active, created_at, birthday').eq('id', otherMemberId).single();
-        if (error) throw error;
-        return data as MemberProfile;
-      }
-      return null;
-    },
-    enabled: conversation.type === 'direct' && !!otherMemberId,
-  });
-
-  const memberIds = conversation.members?.map(m => m.profile_id) || [];
-  const { data: groupMembers = [] } = useQuery({
-    queryKey: ['team-group-members', conversation.id, memberIds.join(',')],
-    queryFn: async () => {
-      if (memberIds.length === 0) return [];
-      const { data, error } = await supabase.from('profiles').select('id, name, email, phone, avatar_url, job_title, department, role, is_active, created_at, birthday').in('id', memberIds);
-      if (error) throw error;
-      return (data || []) as MemberProfile[];
-    },
-    enabled: conversation.type === 'group' && memberIds.length > 0,
-  });
+  const { memberProfile, isLoading, groupMembers } = useTeamMemberDetails(conversation, profile?.id ?? null);
 
   return (
     <div className="w-[300px] border-l border-border flex flex-col bg-card h-full" role="complementary" aria-label="Detalhes da conversa">
       <div className="flex items-center justify-between p-3 border-b border-border">
         <h3 className="text-sm font-semibold flex items-center gap-1.5"><span className="w-1 h-4 bg-primary rounded-full" />{conversation.type === 'direct' ? 'Detalhes do Colaborador' : 'Detalhes do Grupo'}</h3>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleAll} title="Recolher/Expandir"><ChevronsDownUp className="w-3.5 h-3.5" /></Button>
+          <Button aria-label="Recolher/Expandir tudo" variant="ghost" size="icon" className="h-7 w-7" onClick={toggleAll} title="Recolher/Expandir"><ChevronsDownUp className="w-3.5 h-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar"><X className="w-3.5 h-3.5" /></Button>
         </div>
       </div>
@@ -82,7 +56,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                 <InfoRow icon={Briefcase} label="Cargo" value={memberProfile.job_title} />
                 <InfoRow icon={Building2} label="Departamento" value={memberProfile.department} />
                 <InfoRow icon={Cake} label="Aniversário" value={memberProfile.birthday ? format(new Date(memberProfile.birthday), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null} />
-                <InfoRow icon={Calendar} label="Membro desde" value={format(new Date(memberProfile.created_at), "dd/MM/yyyy", { locale: ptBR })} />
+                <InfoRow icon={Calendar} label="Membro desde" value={format(new Date(memberProfile.created_at), 'dd/MM/yyyy', { locale: ptBR })} />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -123,15 +97,20 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
             <SectionHeader icon={Cake} label="Próximos Aniversários" open={sections.activity} onToggle={() => setSections(s => ({ ...s, activity: !s.activity }))} />
             <CollapsibleContent>
               <div className="px-4 pb-3 space-y-2">
-                {groupMembers.filter(m => m.birthday).map(m => ({ ...m, bInfo: getBirthdayInfo(m.birthday)! })).sort((a, b) => a.bInfo.daysUntil - b.bInfo.daysUntil).slice(0, 5).map(member => (
-                  <div key={member.id} className="flex items-center gap-2.5 text-sm">
-                    <Cake className={cn('w-3.5 h-3.5 shrink-0', member.bInfo.isToday ? 'text-chart-4' : 'text-muted-foreground')} />
-                    <span className="truncate flex-1">{member.name}</span>
-                    <span className={cn('text-3xs shrink-0', member.bInfo.isToday ? 'text-chart-4 font-semibold' : 'text-muted-foreground')}>
-                      {member.bInfo.isToday ? '🎉 Hoje!' : `${format(member.bInfo.date, 'dd/MM')} (${member.bInfo.daysUntil}d)`}
-                    </span>
-                  </div>
-                ))}
+                {groupMembers
+                  .filter(m => m.birthday)
+                  .map(m => ({ ...m, bInfo: getBirthdayInfo(m.birthday) ?? { date: new Date(), age: 0, isToday: false, daysUntil: 365 } }))
+                  .sort((a, b) => a.bInfo.daysUntil - b.bInfo.daysUntil)
+                  .slice(0, 5)
+                  .map(member => (
+                    <div key={member.id} className="flex items-center gap-2.5 text-sm">
+                      <Cake className={cn('w-3.5 h-3.5 shrink-0', member.bInfo.isToday ? 'text-chart-4' : 'text-muted-foreground')} />
+                      <span className="truncate flex-1">{member.name}</span>
+                      <span className={cn('text-3xs shrink-0', member.bInfo.isToday ? 'text-chart-4 font-semibold' : 'text-muted-foreground')}>
+                        {member.bInfo.isToday ? '🎉 Hoje!' : `${format(member.bInfo.date, 'dd/MM')} (${member.bInfo.daysUntil}d)`}
+                      </span>
+                    </div>
+                  ))}
                 {groupMembers.filter(m => m.birthday).length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhum aniversário cadastrado</p>}
               </div>
             </CollapsibleContent>
