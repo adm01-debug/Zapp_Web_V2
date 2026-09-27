@@ -121,13 +121,12 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   }, [dispatchId, statusFilter, qc]);
 
   const handleExportCsv = async () => {
-    // P2 fix v2 (Codex, review da PR #958 em e3f4e10c): snapshot de IDs com
-    // .limit(100000) ainda batia no cap do PostgREST (1.000 rows por request)
-    // -- rows alem desse cap nunca entravam em snap. Fix: paginar o proprio
-    // snapshot com keyset (.gt('id', lastSnapId)) ate esgotar, antes de buscar
-    // os dados completos. 'all' continua com keyset simples (sem filtro de
-    // status, a membership nao muda durante o loop).
+    // P2 fix v3 (Codex, review da PR #958): .in('id', ids) com PAGE=1000 UUIDs
+    // produz URL GET >36KB -- rejeitado pelo proxy/PostgREST. DETAIL_CHUNK=200
+    // (mesmo limite de TalkXAnalytics.tsx:243-249). PAGE=1000 so para o
+    // snapshot keyset (nao usa .in(), nao afetado).
     const PAGE = 1000;
+    const DETAIL_CHUNK = 200;
     const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
     if (statusFilter !== 'all') {
       const snapIds: string[] = [];
@@ -148,8 +147,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         lastSnapId = (snap[snap.length - 1] as { id: string }).id;
       }
       if (!snapIds.length) return;
-      for (let i = 0; i < snapIds.length; i += PAGE) {
-        const ids = snapIds.slice(i, i + PAGE);
+      for (let i = 0; i < snapIds.length; i += DETAIL_CHUNK) {
+        const ids = snapIds.slice(i, i + DETAIL_CHUNK);
         const { data, error } = await fromTable('multiplix_recipients')
           .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
           .in('id', ids)

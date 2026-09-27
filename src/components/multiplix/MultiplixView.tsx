@@ -67,6 +67,10 @@ export default function MultiplixView() {
   // "Carregar mais" nunca aparecia de novo, mesmo com mais paginas
   // disponiveis. Uma pagina cheia (== PAGE_SIZE) e evidencia de que pode
   // haver mais -- usada como fallback so quando count.data e desconhecido.
+  // P2 fix v2 (Codex, 3a review da PR #958): tambem serve como guarda
+  // primario -- pagina curta (empresa removida apos snapshot do count) deve
+  // esconder o botao mesmo quando count.data > rows.length. Condicao:
+  // lastPageFull && (count.data === undefined || rows.length < count.data).
   const [lastPageFull, setLastPageFull] = useState(false);
   const dispatches = useMultiplixDispatchesList();
   const selectableRows = rows.slice(0, MAX_SELECTABLE);
@@ -303,12 +307,12 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
-          {/* P2 fix (Codex, 2a review da PR #958): !search.isError impedia botao
-              quando busca inicial falhava. Complemento (3a review): substituido
-              por (rows.length > 0 || !search.isError) para distinguir falha de
-              busca inicial (rows vazias -> esconde botao) de falha de loadMore
-              (rows populadas -> mantem botao para retry sem perder selecao). */}
-          {(rows.length > 0 || !search.isError) && (count.data !== undefined ? rows.length < count.data : lastPageFull) && (
+          {/* P2 fix v2 (Codex, 3a review da PR #958): lastPageFull agora e
+              guarda primario -- pagina curta (empresa removida apos snapshot
+              do count) definia lastPageFull=false mas count.data > rows.length
+              ainda mantinha o botao vísivel para sempre. Fix: lastPageFull &&
+              (count.data === undefined || rows.length < count.data). */}
+          {(rows.length > 0 || !search.isError) && lastPageFull && (count.data === undefined || rows.length < count.data) && (
             <div className="flex justify-center border-t border-[--zapp-border] p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
