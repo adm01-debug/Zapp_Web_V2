@@ -20,8 +20,10 @@ export function ActiveCallBar() {
 
   const isIncomingRinging = sip.callStatus === 'ringing' && sip.callDirection === 'inbound';
 
+  // bottom-24 (não bottom-4): livre da faixa ocupada por VoiceCopilotFAB e
+  // ScrollToTopButton, ambos fixed bottom-6 right-6, no mesmo canto.
   return (
-    <div className="fixed bottom-4 right-4 z-[9998] w-72 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+    <div className="fixed bottom-24 right-4 z-[9998] w-72 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
       <div className="px-4 py-3 flex items-center justify-between gap-2 bg-primary/10">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{sip.currentNumber || 'Chamada'}</p>

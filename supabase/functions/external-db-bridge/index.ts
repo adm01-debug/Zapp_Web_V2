@@ -204,7 +204,11 @@ Deno.serve(async (req) => {
 
     if (queryError) {
       log.done(500, { severity, durationMs: Math.round(durationMs) });
-      return jsonResponse({ error: queryError, telemetry: { severity, duration_ms: Math.round(durationMs) } }, 500, req);
+      // errorResponse (nao jsonResponse) para status 500: sanitiza a mensagem
+      // antes de expor ao cliente externo, que poderia revelar nome de
+      // tabela/coluna/SQL interno via queryError (js/stack-trace-exposure).
+      // queryError ja vai completo para a telemetria (error_message acima).
+      return errorResponse(queryError, 500, req);
     }
 
     log.done(200, { severity, durationMs: Math.round(durationMs) });

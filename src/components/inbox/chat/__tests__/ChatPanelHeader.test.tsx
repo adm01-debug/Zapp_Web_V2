@@ -157,6 +157,31 @@ describe('ChatPanelHeader', () => {
     expect(baseProps.onOpenSearch).toHaveBeenCalledTimes(1);
   });
 
+  const pinned = [
+    { id: 'c-2', name: 'Marilia Jomed', avatarUrl: null },
+    { id: 'c-3', name: 'Rodrigo Maciel', avatarUrl: null },
+  ];
+
+  it('renders pinned faces and opens the conversation on click when details are closed', () => {
+    const onSelectPinned = vi.fn();
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} showDetails={false} pinnedConversations={pinned} onSelectPinned={onSelectPinned} />
+      </Wrapper>
+    );
+    fireEvent.click(screen.getByLabelText('Abrir conversa fixada com Rodrigo Maciel'));
+    expect(onSelectPinned).toHaveBeenCalledWith('c-3');
+  });
+
+  it('hides pinned faces when the contact details panel is open', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} showDetails={true} pinnedConversations={pinned} onSelectPinned={vi.fn()} />
+      </Wrapper>
+    );
+    expect(screen.queryByLabelText('Abrir conversa fixada com Rodrigo Maciel')).not.toBeInTheDocument();
+  });
+
   it('renders the favorite star and calls onToggleFavorite when clicked', () => {
     const onToggleFavorite = vi.fn();
     render(

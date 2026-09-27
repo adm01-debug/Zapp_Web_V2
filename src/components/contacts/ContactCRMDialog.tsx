@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AdvancedCRMSearch } from '@/components/contacts/AdvancedCRMSearch';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 interface ContactCRMDialogProps {
   open: boolean;
@@ -27,7 +28,7 @@ export function ContactCRMDialog({ open, onOpenChange, onContactSelected }: Cont
               const cleanPhone = crmContact.phone_primary.replace(/\D/g, '');
               const { data: existing } = await supabase
                 .from('contacts').select('id')
-                .or(`phone.eq.${crmContact.phone_primary},phone.eq.${cleanPhone}`)
+                .or(`phone.eq.${escapeOrFilterValue(crmContact.phone_primary)},phone.eq.${cleanPhone}`)
                 .limit(1);
               if (existing && existing.length > 0) {
                 onOpenChange(false);
