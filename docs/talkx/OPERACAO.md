@@ -53,7 +53,7 @@ Tabelas principais do módulo:
 |---|---|
 | `talkx_templates` | Templates de mensagem WhatsApp (variáveis em `custom_variables[]`) |
 | `talkx_template_versions` | Versões históricas de cada template |
-| `talkx_campaigns` | Campanhas (em desenvolvimento — F2+) |
+| `talkx_campaigns` | Campanhas (operacional: criação via wizard, atualização, exclusão, gestão de destinatários; métricas consolidadas via `talkx-report`) |
 | `talkx_segments` | Segmentos de audiência |
 
 RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário autenticado.
@@ -141,12 +141,36 @@ A coluna `category` é do tipo `text` (sem enum no banco). Para adicionar uma no
 **Nunca remover `supervisor` de `STAFF_ROLES`** — essa constante é compartilhada
 por ~30 itens de menu; removê-la esconderia toda a UI de supervisores.
 
-Para esconder só "Campanhas":
+Para esconder só "Campanhas" na interface:
 - **Só para supervisores:** alterar `roles: STAFF_ROLES` para `roles: ['admin']`
   na entrada `{ id: 'talkx' }` em `navigation.service.ts`.
 - **Para todos (admin + supervisor):** remover a entrada `{ id: 'talkx' }`
   dos items do grupo `'Automação & IA'` em `NavigationService.getGroups()`
   (`navigation.service.ts`, linha ~72).
+
+> ⚠️ **Esconder o menu NÃO para o backend.** O cron `talkx-scheduler-1min`
+> continua rodando a cada minuto e invocando `talkx-send` para campanhas
+> ativas ou agendadas — independente de a UI estar visível ou não.
+>
+> **Para pausar o envio de mensagens de verdade:**
+>
+> 1. Cancelar campanhas em andamento (se houver):
+>    ```sql
+>    UPDATE talkx_campaigns
+>    SET status = 'cancelled'
+>    WHERE status IN ('sending', 'scheduled');
+>    ```
+>    Executar via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>
+> 2. Desativar o cron job:
+>    ```sql
+>    SELECT cron.unschedule('talkx-scheduler-1min');
+>    ```
+>    Ou: Supabase Dashboard → Database → Cron Jobs → desabilitar `talkx-scheduler-1min`.
+>
+> 3. Para **reativar**, use `workflow_dispatch` no `deploy-functions.yml` (que
+>    recria o cron via migration) ou reaplique o `SELECT cron.schedule(...)` da
+>    migration original.
 
 ### 8.3 Rollback de migration de Talk X
 
