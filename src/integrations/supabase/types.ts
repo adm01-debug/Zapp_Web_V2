@@ -9044,6 +9044,10 @@ export type Database = {
         Args: { p_profile_id: string; p_xp: number }
         Returns: Json
       }
+      add_wa_tag_if_not_exists: {
+        Args: { p_contact_id: string; p_prefix: string; p_tag: string }
+        Returns: undefined
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9962,6 +9966,18 @@ export type Database = {
       release_talkx_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
+      }
+      remove_wa_label_from_all_contacts: {
+        Args: { p_label_prefix: string }
+        Returns: undefined
+      }
+      remove_wa_tag_by_prefix: {
+        Args: { p_contact_id: string; p_prefix: string }
+        Returns: undefined
+      }
+      rename_wa_label_on_all_contacts: {
+        Args: { p_label_prefix: string; p_new_tag: string }
+        Returns: undefined
       }
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }

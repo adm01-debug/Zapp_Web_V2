@@ -1,6 +1,7 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
+        "add_wa_tag_if_not_exists(p_contact_id uuid, p_prefix text, p_tag text)",
         "bump_conversation_updated_at()",
         "enforce_conversation_status_transition()",
         "find_or_create_direct_conversation(other_profile_id uuid)",
@@ -9,6 +10,9 @@
         "prevent_contact_assignee_hijack()",
         "prevent_contact_queue_hijack()",
         "prevent_conversation_task_field_forgery()",
+        "remove_wa_label_from_all_contacts(p_label_prefix text)",
+        "remove_wa_tag_by_prefix(p_contact_id uuid, p_prefix text)",
+        "rename_wa_label_on_all_contacts(p_label_prefix text, p_new_tag text)",
         "seed_default_goals_for_profile()",
         "set_scheduled_report_config_owner()",
         "set_team_member_role(p_conversation_id uuid, p_profile_id uuid, p_new_role text)",
@@ -163,6 +167,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 168,
-    "authenticated_execute_count": 104
+    "service_role_execute_count": 172,
+    "authenticated_execute_count": 108
 }
