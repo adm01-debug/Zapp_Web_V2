@@ -2,6 +2,10 @@
 -- Replaces direct table access in mutations.ts with functions that
 -- bypass the agent_stats UPDATE RLS policy (admins only) safely.
 -- Each function validates the caller owns the target profile.
+-- service_role / trigger context (auth.uid() IS NULL) is allowed through
+-- to support webhook-driven gamification without crashing message inserts.
+-- Row is locked with FOR UPDATE before read-modify-write to prevent
+-- concurrent XP/counter loss.
 
 -- 1. Rebuild grant_agent_achievement: void→json, add security check
 DROP FUNCTION IF EXISTS public.grant_agent_achievement(uuid, text, text, text, int);
@@ -23,14 +27,14 @@ DECLARE
   v_new_xp      int;
   v_new_level   int;
 BEGIN
-  IF NOT (
+  IF auth.uid() IS NOT NULL AND NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
     OR is_admin_or_supervisor(auth.uid())
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
-  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id;
+  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN json_build_object('alreadyHad', false); END IF;
 
   INSERT INTO agent_achievements (profile_id, achievement_type, achievement_name, achievement_description, xp_earned)
@@ -80,14 +84,14 @@ DECLARE
   v_new_xp    int;
   v_new_level int;
 BEGIN
-  IF NOT (
+  IF auth.uid() IS NOT NULL AND NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
     OR is_admin_or_supervisor(auth.uid())
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
-  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id;
+  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
 
   v_new_xp    := v_row.xp + p_xp;
@@ -122,14 +126,14 @@ DECLARE
   v_new_streak      int;
   v_new_best_streak int;
 BEGIN
-  IF NOT (
+  IF auth.uid() IS NOT NULL AND NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
     OR is_admin_or_supervisor(auth.uid())
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
-  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id;
+  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
 
   v_new_best_streak := COALESCE(v_row.best_streak, 0);
@@ -169,14 +173,14 @@ DECLARE
   v_new_sent    int;
   v_new_recv    int;
 BEGIN
-  IF NOT (
+  IF auth.uid() IS NOT NULL AND NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
     OR is_admin_or_supervisor(auth.uid())
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
-  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id;
+  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
 
   v_new_sent := COALESCE(v_row.messages_sent, 0);
@@ -212,14 +216,14 @@ DECLARE
   v_row             agent_stats%ROWTYPE;
   v_new_resolutions int;
 BEGIN
-  IF NOT (
+  IF auth.uid() IS NOT NULL AND NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
     OR is_admin_or_supervisor(auth.uid())
   ) THEN
     RAISE EXCEPTION 'permission denied';
   END IF;
 
-  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id;
+  SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
 
   v_new_resolutions := COALESCE(v_row.conversations_resolved, 0) + 1;
