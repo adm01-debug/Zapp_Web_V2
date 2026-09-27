@@ -217,7 +217,7 @@ test("create-connection: mensagem de 23505 distingue instance_id de is_default (
   // real, não só os nomes soltos no bloco.
   assert.match(
     block,
-    /isDefaultCollision\s*=\s*isUniqueViolation\s*&&\s*!!insertError\?\.message\?\.includes\(['"\]whatsapp_connections_one_default['"]\)/,
+    /isDefaultCollision\s*=\s*isUniqueViolation\s*&&\s*!!insertError\?\.message\?\.includes\(['"]whatsapp_connections_one_default['"]\)/,
     "isDefaultCollision precisa checar de fato insertError?.message?.includes('whatsapp_connections_one_default') — não pode ser hardcoded/morto",
   );
 });
