@@ -11,6 +11,12 @@ BEGIN
   ) THEN RAISE EXCEPTION 'permission denied'; END IF;
   IF p_xp_reward < 0 THEN RAISE EXCEPTION 'p_xp_reward cannot be negative, got %', p_xp_reward; END IF;
   IF p_xp_reward > 500 THEN RAISE EXCEPTION 'p_xp_reward exceeds single-call maximum of 500, got %', p_xp_reward; END IF;
+  IF p_type IN ('resolution', 'streak', 'message_milestone')
+     AND auth.role() NOT IN ('service_role', 'postgres', 'supabase_admin')
+     AND NOT is_admin_or_supervisor(auth.uid())
+  THEN
+    RAISE EXCEPTION 'achievement type % requires service_role or admin privileges', p_type;
+  END IF;
   SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN json_build_object('alreadyHad', false); END IF;
   IF p_type = 'daily_goal' AND EXISTS (
