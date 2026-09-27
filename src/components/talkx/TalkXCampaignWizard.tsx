@@ -20,6 +20,7 @@ import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { IconTile, WhatsAppBubble, OBJECTIVES, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -443,6 +444,23 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
 
 function WizardRail({ ed }: { ed: WizardState }) {
   const sample = ed.contacts?.[0];
+  // Review da PR #909: sem os campos customizados reais do contato de
+  // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
+  // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
+  const { fields: sampleCustomFields } = useContactCustomFields(sample?.id);
+  const sampleCustomValues = React.useMemo(() => {
+    // Object.create(null) (não {}): um campo customizado chamado "__proto__"
+    // num objeto comum invoca o setter de protótipo em vez de virar
+    // propriedade enumerável — o preview mostraria "[__proto__]" mesmo o
+    // envio real (que já usa o mesmo padrão) mandando o valor de verdade
+    // (achado do review).
+    const values = Object.create(null) as Record<string, string>;
+    for (const f of sampleCustomFields) {
+      if (f.field_value == null) continue;
+      values[f.field_name] = f.field_value;
+    }
+    return values;
+  }, [sampleCustomFields]);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
   return (
     <div className="space-y-4 min-w-0">
@@ -457,7 +475,7 @@ function WizardRail({ ed }: { ed: WizardState }) {
         </div>
       </RailCard>
       <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
+        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
       </RailCard>
       {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
     </div>

@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 export interface CallHistoryRow {
   id: string;
@@ -28,14 +29,6 @@ export interface CallHistoryFilters {
 }
 
 const PAGE_SIZE = 20;
-
-// Sintaxe .or() do PostgREST usa vírgula (separador) e parênteses (agrupamento)
-// sem nenhum escape automático — um termo de busca com esses caracteres quebra
-// a gramática do filtro. Valor entre aspas duplas é literal; \ e " dentro dele
-// precisam ser escapados com \.
-function escapeOrFilterValue(value: string): string {
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-}
 
 async function findContactIdsByNameOrPhone(term: string): Promise<string[] | null> {
   const trimmed = term.trim();

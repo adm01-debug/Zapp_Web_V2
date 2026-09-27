@@ -76,6 +76,16 @@ describe('ContactActionButtons', () => {
     expect(focusableWrapper).not.toBeNull();
   });
 
+  it('o wrapper focável do botão desabilitado tem role=button, aria-disabled e aria-label (WCAG 4.1.2)', () => {
+    render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
+    const tiles = screen.getAllByTestId('contact-action-tile');
+    const emailTile = tiles.find(t => t.querySelector('svg.lucide-mail'))!;
+    const wrapper = emailTile.closest('[tabindex="0"]')!;
+    expect(wrapper).toHaveAttribute('role', 'button');
+    expect(wrapper).toHaveAttribute('aria-disabled', 'true');
+    expect(wrapper).toHaveAttribute('aria-label', 'E-mail');
+  });
+
   it('nenhum Tile expõe o atributo title nativo (era um 2º tooltip divergente do Radix Tooltip)', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     for (const tile of screen.getAllByTestId('contact-action-tile')) {

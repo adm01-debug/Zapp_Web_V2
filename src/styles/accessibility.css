@@ -21,6 +21,7 @@
   --border: 0 0% 0%;
   --input: 0 0% 90%;
   --ring: 258 100% 45%;
+  --inbox-panel-bg: 0 0% 100%;
 }
 
 .dark.high-contrast {
@@ -43,6 +44,7 @@
   --border: 0 0% 100%;
   --input: 0 0% 15%;
   --ring: 258 100% 65%;
+  --inbox-panel-bg: 0 0% 0%;
 }
 
 .high-contrast * { font-weight: calc(var(--font-weight, 400) + 100); }
