@@ -11,7 +11,7 @@
 //
 // Run with: deno test supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
 
-import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { assertEquals, assert } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   logWebhookAuthShadow,
   logElevenLabsAuthShadow,
@@ -162,7 +162,7 @@ function base64UrlEncode(json: unknown): string {
 
 Deno.test("logGmailOidcAuthShadow: no Authorization header -> never throws (proves gmail-webhook is not blocked)", () => {
   const headers = new Headers();
-  // Must not throw; there is nothing to assert on the return value since
+  // Must not throw; there is nothing to assert on the returned value since
   // this helper is void (log-only), which itself proves the call site
   // cannot use it to gate the response.
   logGmailOidcAuthShadow(headers);

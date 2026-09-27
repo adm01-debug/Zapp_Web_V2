@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { GmailSendActionSchema } from "../schemas.ts";
 
 // thread_id/message_id/message_ids sao interpolados direto na URL da API do

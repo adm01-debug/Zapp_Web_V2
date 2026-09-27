@@ -250,6 +250,10 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           FN: ${{ inputs.function_name }}
         run: |
+          # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
+          # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
+          # a verificação pós-deploy não encontrava o deploy esperado.
+          set -o pipefail
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"

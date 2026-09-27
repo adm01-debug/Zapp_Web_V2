@@ -1,9 +1,9 @@
-import { useEffect, useMemo, memo } from 'react';
+import { useEffect, useMemo, memo, useRef } from 'react';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowDown, Pencil, Trash2, X, Check, Reply, Image as ImageIcon, Music, FileText, Video, Copy, Volume2, VolumeX, Loader2, Search } from 'lucide-react';
+import { ArrowDown, Pencil, Trash2, X, Check, Reply, Image as ImageIcon, Music, FileText, Video, Copy, Volume2, VolumeX, Loader2, Search, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,8 @@ import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { TeamMessage } from '@/hooks/chat/useTeamChat';
 import { isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+/* eslint-disable react-hooks/refs, react-hooks/immutability */
 
 function formatTime(dateStr: string) { return format(new Date(dateStr), 'HH:mm'); }
 function formatDateSep(dateStr: string) {
@@ -66,11 +68,32 @@ interface Props { conversation: TeamConversation; onBack: () => void; onToggleDe
 export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetails }: Props) {
   const s = useTeamChatPanel(conversation);
 
+  // E68: department channel access check
+  const convAny = conversation as unknown as Record<string, unknown>;
+  const isDeptChannel = !!(convAny.department_id);
+  const profileDeptId = (s.profile as Record<string, unknown>)?.department_id as string | null | undefined;
+  const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
+
+  // E73: render performance monitoring (dev only)
+  const renderStartRef = useRef<number>(0);
+  // eslint-disable-next-line react-hooks/purity
+  if (process.env.NODE_ENV === 'development') renderStartRef.current = performance.now();
   useEffect(() => {
-    if (s.isNearBottomRef.current && s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
+    if (process.env.NODE_ENV !== 'development') return;
+    const elapsed = performance.now() - renderStartRef.current;
+    if (elapsed > 16) console.warn(`[TeamChatPanel] render ${elapsed.toFixed(1)}ms (>16ms)`);
+  });
+
+  useEffect(() => {
+    if (s.isNearBottomRef.current && s.scrollRef.current) {
+      s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.filteredMessages.length]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch]);
 
   const dateFirstIndexes = useMemo(() => {
@@ -85,6 +108,29 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     });
     return result;
   }, [s.filteredMessages]);
+
+  // E68: locked view for non-members of department channels
+  if (!isChannelMember) {
+    return (
+      <div className="flex flex-col h-full w-full relative">
+        <TeamChatHeader conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
+          showSearch={false} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
+          onToggleSearch={() => {}} onAddMembers={() => {}} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
+          onToggleMute={() => {}} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-muted/5">
+          <div className="rounded-full bg-muted p-4">
+            <Lock className="w-8 h-8 text-muted-foreground" aria-hidden />
+          </div>
+          <div className="text-center">
+            <h3 className="text-base font-semibold text-foreground">Conteúdo Protegido</h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+              Este canal é exclusivo para membros do departamento. Solicite um convite ao administrador.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full relative">
@@ -132,10 +178,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                     {showDate && <div className="flex justify-center py-4"><span className="text-3xs font-bold uppercase tracking-widest text-muted-foreground bg-muted/30 px-4 py-1.5 rounded-full border border-border/10">{formatDateSep(msg.created_at)}</span></div>}
                     <div className={cn("flex gap-3 py-1 group", isMine ? "flex-row-reverse" : "flex-row")}>
                       {!isMine && <Avatar className="w-8 h-8 mt-1 shrink-0 border border-border/10 shadow-sm"><AvatarImage src={msg.sender?.avatar_url || undefined} alt={msg.sender?.name || 'Remetente'} /><AvatarFallback className="text-3xs font-bold bg-primary/10 text-primary">{msg.sender?.name?.charAt(0) || '?'}</AvatarFallback></Avatar>}
-                      <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300", 
+                      <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative transition-all duration-300",
                         isMine ? "bg-primary text-primary-foreground rounded-tr-none border border-primary/20" : "bg-card border border-border/50 text-foreground rounded-tl-none")}>
                         {!isMine && conversation.type === 'group' && <p className="text-3xs font-bold mb-1 text-primary/80 uppercase tracking-tighter">{msg.sender?.name}</p>}
-                        {repliedMsg && <div className={cn("text-3xs mb-1.5 px-2 py-1 rounded border-l-2", isMine ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-muted/50 border-muted-foreground/30")}><span className="font-medium">{repliedMsg.sender?.name}</span><p className="truncate opacity-80 flex items-center gap-1">{repliedMsg.media_type && <MediaTypeIcon type={repliedMsg.media_type} />}{repliedMsg.content || 'Mídia'}</p></div>}
                         {isEditing ? (
                           <div className="space-y-1.5 min-w-[150px]">
                             <Input value={s.editText} onChange={e => s.setEditText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') s.handleSaveEdit(); if (e.key === 'Escape') s.handleCancelEdit(); }} className="h-8 text-sm bg-background text-foreground border-primary/50" autoFocus />
@@ -147,7 +192,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                         ) : (
                           <>
                             {repliedMsg && (
-                              <div 
+                              <div
                                 className={cn(
                                   "text-3xs mb-2 px-2 py-1.5 rounded bg-muted/30 border-l-2 border-primary/50 cursor-pointer hover:bg-muted/50 transition-colors",
                                   isMine ? "bg-white/10" : "bg-muted/50"
@@ -176,15 +221,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                                 <MarkdownPreview text={msg.content} className="inline" />
                               </div>
                             )}
-                            {msg.content && hasMedia && msg.media_type !== 'document' && !['🎨 Figurinha', '🎵 Áudio meme', '😀 Emoji', '🎤 Mensagem de áudio'].includes(msg.content) && (
+                            {msg.content && hasMedia && msg.media_type !== 'document' && !["🎨 Figurinha", "🎵 Áudio meme", "😀 Emoji", "🎤 Mensagem de áudio"].includes(msg.content) && (
                               <p className="text-sm leading-relaxed whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                             )}
                             <div className={cn("flex items-center gap-1 mt-1", isMine ? "justify-end" : "justify-between")}>
                               {cleanText && (
-                                <button 
-                                  onClick={() => isThisTtsPlaying ? s.tts.stop() : s.tts.speak(msg.content, msg.id)} 
+                                <button
+                                  onClick={() => isThisTtsPlaying ? s.tts.stop() : s.tts.speak(msg.content, msg.id)}
                                   className={cn(
-                                    "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-black/5", 
+                                    "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-black/5",
                                     isMine ? "text-primary-foreground/80 hover:bg-white/10" : "text-muted-foreground hover:text-foreground"
                                   )}
                                   title={isThisTtsPlaying ? 'Parar' : 'Ouvir'}
@@ -206,7 +251,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                   <ContextMenuItem onClick={() => s.setReplyTo(msg)} className="gap-2"><Reply className="w-3.5 h-3.5" /> Responder</ContextMenuItem>
                   {msg.content && <ContextMenuItem onClick={() => s.handleCopyMessage(msg.content)} className="gap-2"><Copy className="w-3.5 h-3.5" /> Copiar</ContextMenuItem>}
                   {cleanText && <ContextMenuItem onClick={() => isThisTtsPlaying ? s.tts.stop() : s.tts.speak(msg.content, msg.id)} className="gap-2"><Volume2 className="w-3.5 h-3.5" /> {isThisTtsPlaying ? 'Parar' : 'Ouvir'}</ContextMenuItem>}
-                  {isMine && !isEditing && (<><ContextMenuSeparator />{!hasMedia && <ContextMenuItem onClick={() => s.handleStartEdit(msg)} className="gap-2"><Pencil className="w-3.5 h-3.5" /> Editar</ContextMenuItem>}<ContextMenuItem onClick={() => s.handleDelete(msg.id)} className="gap-2 text-destructive focus:text-destructive"><Trash2 className="w-3.5 h-3.5" /> Excluir</ContextMenuItem></>)}
+                  {isMine && !isEditing && (<><ContextMenuSeparator />{!hasMedia && <ContextMenuItem onClick={() => s.handleStartEdit(msg)} className="gap-2"><Pencil className="w-3.5 h-3.5" /> Editar</ContextMenuItem>}<ContextMenuItem onClick={() => s.handleDelete(msg.id)} className="gap-2 text-destructive focus:text-destructive"><Trash2 className="w-3.5 h-3.5" /> Excluir</ContextMenuItem></> )}
                 </ContextMenuContent>
               </ContextMenu>
             );

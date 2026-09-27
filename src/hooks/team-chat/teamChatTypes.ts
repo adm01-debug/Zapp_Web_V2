@@ -6,6 +6,7 @@ export interface TeamConversation {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  department_id?: string | null;
   members?: TeamMember[];
   last_message?: TeamMessage | null;
   unread_count?: number;
@@ -35,8 +36,11 @@ export interface TeamMessage {
   message_type: string;
   media_url: string | null;
   media_type: string | null;
+  media_bucket?: string | null;
+  media_path?: string | null;
   reply_to_id: string | null;
   is_edited: boolean;
+  status?: string | null;
   created_at: string;
   updated_at: string;
   sender?: {
