@@ -9,8 +9,12 @@
 name: CodeQL
 
 on:
-  push:
-    branches: [main]
+  # F-09 (auditoria 2026-09-27): removido gatilho push/main. A action
+  # github/codeql-action/init cria uma entrada de cache com {run_id} na chave
+  # (~231 MB cada), que nunca e reusada entre runs diferentes. Com 46+ pushes
+  # num dia, o limite de 10 GB era atingido em <3 h, ativando evicção dos
+  # outros workflows. merge_group cobre o momento do merge; schedule cobre
+  # a varredura semanal completa.
   # 2026-09-27: sem gatilho de pull_request. A varredura roda em cada merge na
   # main e na segunda; em PR custava ~3 min de runner x 2 jobs por push, numa
   # conta que disputa 40 runners entre ~40 repos. Removido tambem dos required
