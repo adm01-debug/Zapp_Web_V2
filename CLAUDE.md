@@ -110,10 +110,10 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 7 required checks da seção abaixo.
+  deleção, e os 6 required checks da seção abaixo.
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
-  `required_status_checks.strict` está **`false`** ao vivo (confirmado via
+  `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
   `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
   merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
   manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
@@ -145,10 +145,11 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (7; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge.
+sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
+(não bloqueia merge).
 
 **Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
 protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
