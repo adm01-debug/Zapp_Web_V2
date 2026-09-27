@@ -579,7 +579,7 @@ serve(async (req) => {
         const _li = data.data.loggedIn ?? data.data.LoggedIn;
         const hasCo = 'connected' in data.data || 'Connected' in data.data;
         const _co = hasCo ? (data.data.connected ?? data.data.Connected) : undefined;
-        data.state = (_co !== undefined ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
+        data.state = (hasCo ? (_co === true && _li === true) : (data.data.State === 'open' || _li === true)) ? 'open' : 'close';
       }
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';

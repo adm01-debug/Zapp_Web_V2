@@ -318,8 +318,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 67327,
-      "sha256": "190becd935b64e6ef7b4bfe12f5f3c8683ba1afb8a33263de24678bb69d41f32"
+      "bytes": 67315,
+      "sha256": "2d9190eb9a25cdec0d74555ef4cdaabc37ec5f57c9b91fd40af2b0cad9519979"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -915,7 +915,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "70dbbcfc1721d11b4c284ad7e8278ef528a7609c20ef53b1d8aad4cd5b7567b5",
+      "source_sha256": "a03ae6515ad9d25ec13fabf88d4835b044e6ee86f1461c56231bec5ee8bc53b3",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1366,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "c935b6ab27ce21d4c73a1c1c8b404f3d0661648b6d44630d5c46406fd26f69f7"
+  "manifest_sha256": "a0a47d82dab6e693bc1362e3bd3c170fef2abed3adc4ab8910d5d902c271d14e"
 }
