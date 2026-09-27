@@ -7309,25 +7309,34 @@ export type Database = {
         Row: {
           conversation_id: string
           id: string
+          is_archived: boolean
           is_muted: boolean | null
+          is_pinned: boolean
           joined_at: string
           last_read_at: string | null
+          member_role: string
           profile_id: string
         }
         Insert: {
           conversation_id: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id: string
         }
         Update: {
           conversation_id?: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id?: string
         }
         Relationships: [
@@ -7360,6 +7369,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           department_id: string | null
+          direct_member_a: string | null
+          direct_member_b: string | null
           id: string
           metadata: Json
           name: string | null
@@ -7371,6 +7382,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7382,6 +7395,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7408,6 +7423,20 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_a_fkey"
+            columns: ["direct_member_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_b_fkey"
+            columns: ["direct_member_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7458,6 +7487,48 @@ export type Database = {
           },
         ]
       }
+      team_message_receipts: {
+        Row: {
+          delivered_at: string | null
+          id: string
+          message_id: string
+          profile_id: string
+          read_at: string | null
+          status: string
+        }
+        Insert: {
+          delivered_at?: string | null
+          id?: string
+          message_id: string
+          profile_id: string
+          read_at?: string | null
+          status?: string
+        }
+        Update: {
+          delivered_at?: string | null
+          id?: string
+          message_id?: string
+          profile_id?: string
+          read_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_message_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_messages: {
         Row: {
           content: string
@@ -7465,6 +7536,8 @@ export type Database = {
           created_at: string
           id: string
           is_edited: boolean | null
+          media_bucket: string | null
+          media_path: string | null
           media_type: string | null
           media_url: string | null
           message_type: string
@@ -7479,6 +7552,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -7493,6 +7568,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -9504,6 +9581,21 @@ export type Database = {
           role: string
         }[]
       }
+      find_or_create_direct_conversation: {
+        Args: { other_profile_id: string }
+        Returns: string
+      }
+      get_team_conversation_previews: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          last_message_content: string | null
+          last_message_created_at: string | null
+          last_message_id: string | null
+          last_message_sender_id: string | null
+          last_message_type: string | null
+        }[]
+      }
       get_team_profiles: {
         Args: never
         Returns: {
@@ -9519,6 +9611,13 @@ export type Database = {
           phone: string
           role: string
           user_id: string
+        }[]
+      }
+      get_team_unread_counts: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          unread_count: number
         }[]
       }
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
