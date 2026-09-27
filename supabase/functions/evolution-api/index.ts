@@ -438,8 +438,15 @@ serve(async (req) => {
       const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       let stData: { data?: Record<string, unknown>; state?: string } = {};
       try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // status !ok (token inválido, GO 500) NÃO é "sessão órfã": não mandar o
+      // operador para logout/reset quando o problema é auth/disponibilidade.
+      if (!stRes.ok) {
+        return new Response(JSON.stringify({ error: true, status: stRes.status, message: 'Não foi possível verificar o status da instância na Evolution GO (token inválido ou serviço indisponível). Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       const stInner = stData.data ?? {};
-      const loggedIn = (stInner.loggedIn ?? stInner.LoggedIn) || stInner.Connected || stData.state === 'open';
+      // Contrato GO: só está "aberto" com LoggedIn/state=open. Connected sozinho é
+      // só transporte (pode estar up sem WhatsApp pareado) — não é sinal de sucesso.
+      const loggedIn = (stInner.loggedIn ?? stInner.LoggedIn) || stData.state === 'open';
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
         return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
