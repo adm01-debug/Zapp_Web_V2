@@ -63,9 +63,6 @@ function contactToFormValues(contact: EditContactDialogProps['contact']) {
   };
 }
 
-// Normaliza cada campo do form pro formato de coluna, só quando o campo foi
-// de fato alterado (ver `handleSubmit`) — nunca inclui `phone`, que o form
-// só exibe e não edita.
 const FIELD_NORMALIZERS: Record<string, (raw: string) => string | number | null> = {
   name: (v) => v,
   nickname: (v) => v || null,
@@ -88,18 +85,7 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formValues, setFormValues] = useState(() => contactToFormValues(contact));
-  // Snapshot do que o form tinha ao abrir — usado só pra saber quais campos o
-  // usuário de fato editou (ver `handleSubmit`), nunca renderizado.
   const [initialValues, setInitialValues] = useState(formValues);
-  // O diálogo fica montado o tempo todo (Radix precisa disso pra animar o
-  // fechamento); o `useState` acima só captura `contact` na 1a montagem, que
-  // acontece antes do usuário nunca ter clicado em "Editar" — nesse momento
-  // enrichedData ainda está undefined (React Query ainda não resolveu), então
-  // o formulário ficava travado com apelido/cargo/empresa vazios e
-  // contact_type='cliente' para sempre. Ressincroniza no instante em que o
-  // diálogo é de fato aberto, quando os dados já chegaram (ajuste de state
-  // durante o render, sem useEffect, pro React não fazer um 2o commit —
-  // https://react.dev/learn/you-might-not-need-an-effect).
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
@@ -117,15 +103,6 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    // Manda só os campos que o usuário de fato tocou nesta abertura do
-    // diálogo, comparando com `initialValues`. Sem isso, todo Salvar grava
-    // TODOS os campos do form, inclusive os que o painel nunca preenche de
-    // verdade (endereço/lat-lon: ContactDetails/Crm360Tab não os repassam, e
-    // fetchEnrichedData nem seleciona essas colunas — abrem sempre vazios) —
-    // sobrescrevendo dado real com null assim que o primeiro endereço for
-    // cadastrado por outra tela. Também evita perder um UPDATE que chegou
-    // via Realtime num campo que o usuário não mexeu enquanto o diálogo
-    // estava aberto (auditoria de 5 agentes, 2026-09-26, 4a rodada).
     const updatePayload: Record<string, string | number | null> = {};
     for (const field of Object.keys(FIELD_NORMALIZERS)) {
       const key = field as keyof typeof formValues;
@@ -184,6 +161,7 @@ export function EditContactDialog({ open, onOpenChange, contact }: EditContactDi
           onCancel={() => onOpenChange(false)}
           submitLabel="Salvar"
           isSubmitting={isSubmitting}
+          excludeContactId={contact.id}
         />
       </DialogContent>
     </Dialog>
