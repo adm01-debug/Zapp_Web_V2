@@ -121,34 +121,49 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   }, [dispatchId, statusFilter, qc]);
 
   const handleExportCsv = async () => {
-    // P1 fix (auditoria de 5 agentes, 2026-09-27): a UI so mostra ate 500
-    // destinatarios (useMultiplixRecipients .limit(500)) -- exportar direto de
-    // 'recipients' truncava o CSV em silencio, sem aviso, em disparos maiores.
-    // Mesmo padrao de paginacao ja usado no handleExport da TalkX
-    // (TalkXLiveMonitor.tsx): pagina em lotes ate esgotar os destinatarios.
-    // P2 fix (Codex, review da PR #958): paginacao por offset e instavel durante
-    // disparo ativo com filtro de status -- destinatarios que mudam de status
-    // entre paginas deslocam o offset, causando linhas puladas ou duplicadas no
-    // CSV. Keyset (lastId: string | null) e estavel: a ordem de id e imutavel,
-    // independente de mudancas de status. id e UUID -- inicializar com null e
-    // nao 0 (comparar UUID a inteiro falha no PostgREST).
+    // P2 fix (Codex, review da PR #958): com statusFilter != 'all', keyset cursor
+    // (.gt('id', lastId)) perdia registros que transitavam sending->sent enquanto
+    // o loop rodava -- se o id deles fosse menor que lastId, nunca seriam
+    // revisitados. Fix: snapshot dos IDs em T0 via .select('id').eq('status',
+    // statusFilter).limit(100000) e paginar com .in('id', ids), que nao depende
+    // do status atual. 'all' continua com keyset simples (sem filtro de status,
+    // o problema nao existe).
     const PAGE = 1000;
-    let lastId: string | null = null;
     const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
-    for (;;) {
-      let q = fromTable('multiplix_recipients')
-        .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
+    if (statusFilter !== 'all') {
+      const { data: snap, error: snapErr } = await fromTable('multiplix_recipients')
+        .select('id')
         .eq('dispatch_id', dispatchId)
+        .eq('status', statusFilter)
         .order('id')
-        .limit(PAGE);
-      if (lastId !== null) q = q.gt('id', lastId);
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
-      if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; } // aborta: nao exporta parcial
-      if (!data?.length) break;
-      allRows.push(...(data as typeof allRows));
-      if (data.length < PAGE) break;
-      lastId = (data[data.length - 1] as { id: string }).id;
+        .limit(100000);
+      if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
+      if (!snap?.length) return;
+      for (let i = 0; i < snap.length; i += PAGE) {
+        const ids = snap.slice(i, i + PAGE).map((r) => (r as { id: string }).id);
+        const { data, error } = await fromTable('multiplix_recipients')
+          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
+          .in('id', ids)
+          .order('id');
+        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
+        if (data?.length) allRows.push(...(data as typeof allRows));
+      }
+    } else {
+      let lastId: string | null = null;
+      for (;;) {
+        let q = fromTable('multiplix_recipients')
+          .select('id, company_name_snapshot, destino_e164, status, sent_at, error_message')
+          .eq('dispatch_id', dispatchId)
+          .order('id')
+          .limit(PAGE);
+        if (lastId !== null) q = q.gt('id', lastId);
+        const { data, error } = await q;
+        if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; }
+        if (!data?.length) break;
+        allRows.push(...(data as typeof allRows));
+        if (data.length < PAGE) break;
+        lastId = (data[data.length - 1] as { id: string }).id;
+      }
     }
     if (allRows.length === 0) return;
     exportRecipientsCsv(allRows, dispatch?.name ?? 'disparo');
