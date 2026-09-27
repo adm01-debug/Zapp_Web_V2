@@ -12,9 +12,9 @@ import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
 import { SidebarUserPill } from './SidebarUserPill';
 import { SidebarBackButton } from './SidebarBackButton';
- import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
- import { useUserRole } from '@/hooks/system/useUserRole';
- import { NavigationService } from '@/services/navigation.service';
+import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { NavigationService } from '@/services/navigation.service';
 
 interface SidebarProps {
   currentView: string;
@@ -40,31 +40,40 @@ export const Sidebar = React.memo(function Sidebar({
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const { collapsed, toggle } = useSidebarCollapse();
-   const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
-   const { roles } = useUserRole();
- 
-   const filteredPrimaryNav = useMemo(() => 
-     NavigationService.filterNavItems(primaryNav, roles),
-     [roles]
-   );
+  const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
+  const { roles } = useUserRole();
 
-   const filteredGroups = useMemo(() => 
-     sidebarGroups.map(group => ({
-       ...group,
-       items: NavigationService.filterNavItems(group.items, roles)
-     })).filter(group => group.items.length > 0),
-     [roles]
-   );
- 
-   const allNavItems = useMemo(() => 
-     [...primaryNav, ...sidebarGroups.flatMap(g => g.items), ...advancedNav],
-     []
-   );
+  const filteredPrimaryNav = useMemo(() =>
+    NavigationService.filterNavItems(primaryNav, roles),
+    [roles]
+  );
 
-   const favoriteItems = useMemo(() => 
-     favorites.map(id => allNavItems.find(item => item.id === id)).filter(Boolean).filter(item => NavigationService.canAccess(item!.id, roles)) as typeof allNavItems,
-     [favorites, allNavItems, roles]
-   );
+  const filteredGroups = useMemo(() =>
+    sidebarGroups.map(group => ({
+      ...group,
+      items: NavigationService.filterNavItems(group.items, roles)
+    })).filter(group => group.items.length > 0),
+    [roles]
+  );
+
+  const allNavItems = useMemo(() =>
+    [...primaryNav, ...sidebarGroups.flatMap(g => g.items), ...advancedNav],
+    []
+  );
+
+  // Itens da nav primária ficam sempre visíveis por conta própria — não
+  // precisam de atalho em Favoritos (evita duplicar o mesmo item nos dois
+  // lugares quando alguém favoritou algo que depois passou a viver na nav
+  // primária, caso do Multiplix).
+  const primaryNavIds = useMemo(() => new Set(primaryNav.map(item => item.id)), []);
+
+  const favoriteItems = useMemo(() =>
+    favorites
+      .map(id => allNavItems.find(item => item.id === id))
+      .filter(Boolean)
+      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles)) as typeof allNavItems,
+    [favorites, allNavItems, primaryNavIds, roles]
+  );
 
   return (
     <aside id="main-navigation" role="navigation" aria-label="Menu de navegação principal"
@@ -98,85 +107,101 @@ export const Sidebar = React.memo(function Sidebar({
 
       {collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed />}
 
-       <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Menu principal">
-         <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
-           {filteredPrimaryNav.map((item) => (
-             <li key={item.id}>
-               <SidebarNavItem
-                 item={item}
-                 currentView={currentView}
-                 onViewChange={onViewChange}
-                 badge={item.id === 'inbox' ? inboxBadge : undefined}
-                 collapsed={collapsed}
-               />
-             </li>
-           ))}
-         </ul>
-       </nav>
+      {/* Área única de rolagem: nav primária + busca + favoritos + grupos.
+          Antes só os grupos rolavam e a nav primária ficava fixa no topo —
+          cada item novo ali (ex.: Multiplix) encolhia permanentemente o
+          espaço visível dos grupos em telas baixas. Agora tudo rola junto,
+          só o cabeçalho (logo) e os controles do rodapé ficam fixos. */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scroll-smooth [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
+        <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Menu principal">
+          <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
+            {filteredPrimaryNav.map((item) => (
+              <li key={item.id}>
+                <SidebarNavItem
+                  item={item}
+                  currentView={currentView}
+                  onViewChange={onViewChange}
+                  badge={item.id === 'inbox' ? inboxBadge : undefined}
+                  collapsed={collapsed}
+                />
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {/* Busca global */}
-      <div className={cn('px-2', collapsed && 'flex justify-center px-[11px]')}>
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
-                className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] transition-all duration-200"
-                aria-label="Busca global (⌘K)"
-              >
-                <Search className="w-[18px] h-[18px] text-primary" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
-              <span>Buscar</span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">⌘K</kbd>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
-            className="w-full flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-medium min-h-[44px] text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] hover:translate-x-1 transition-all duration-200"
-            aria-label="Busca global (⌘K)"
-          >
-            <Search className="w-[18px] h-[18px] shrink-0 text-primary" />
-            <span className="truncate">Buscar...</span>
-            <kbd className="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
-          </button>
+        {/* Busca global */}
+        <div className={cn('px-2', collapsed && 'flex justify-center px-[11px]')}>
+          {collapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+                  className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] transition-all duration-200"
+                  aria-label="Busca global (⌘K)"
+                >
+                  <Search className="w-[18px] h-[18px] text-primary" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
+                <span>Buscar</span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">⌘K</kbd>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+              className="w-full flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-medium min-h-[44px] text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] hover:translate-x-1 transition-all duration-200"
+              aria-label="Busca global (⌘K)"
+            >
+              <Search className="w-[18px] h-[18px] shrink-0 text-primary" />
+              <span className="truncate">Buscar...</span>
+              <kbd className="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
+            </button>
+          )}
+        </div>
+
+        {/* Favorites */}
+        {favoriteItems.length > 0 && (
+          <>
+            <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
+            {!collapsed && <div className="px-3 flex items-center gap-1.5"><Star className="w-[10px] h-[10px] text-warning fill-warning" /><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Favoritos</span></div>}
+            <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Favoritos">
+              <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
+                {favoriteItems.map((item) => (
+                  <li key={item.id}>
+                    <SidebarNavItem
+                      item={item}
+                      currentView={currentView}
+                      onViewChange={onViewChange}
+                      collapsed={collapsed}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={isFavorite(item.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </>
         )}
+
+        <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
+
+        <div className={cn('flex flex-col gap-1.5 py-1', collapsed ? 'items-center px-[11px]' : 'px-2')}>
+          {filteredGroups.map((group) => (
+            <SidebarNavGroup
+              key={group.label}
+              label={group.label}
+              icon={group.icon}
+              items={group.items}
+              currentView={currentView}
+              onViewChange={onViewChange}
+              collapsed={collapsed}
+              onToggleFavorite={toggleFavorite}
+              isFavorite={isFavorite}
+            />
+          ))}
+        </div>
       </div>
-
-      {/* Favorites */}
-      {favoriteItems.length > 0 && (
-        <>
-          <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
-          {!collapsed && <div className="px-3 flex items-center gap-1.5"><Star className="w-[10px] h-[10px] text-warning fill-warning" /><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Favoritos</span></div>}
-          <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Favoritos">
-            <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
-              {favoriteItems.map((item) => <li key={item.id}><SidebarNavItem item={item} currentView={currentView} onViewChange={onViewChange} collapsed={collapsed} /></li>)}
-            </ul>
-          </nav>
-        </>
-      )}
-
-      <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
-
-       <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scroll-smooth [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
-         <div className={cn('flex flex-col gap-1.5 py-1', collapsed ? 'items-center px-[11px]' : 'px-2')}>
-           {filteredGroups.map((group) => (
-             <SidebarNavGroup
-               key={group.label}
-               label={group.label}
-               icon={group.icon}
-               items={group.items}
-               currentView={currentView}
-               onViewChange={onViewChange}
-               collapsed={collapsed}
-               onToggleFavorite={toggleFavorite}
-               isFavorite={isFavorite}
-             />
-           ))}
-         </div>
-       </div>
 
       {/* Bottom Controls */}
       <div className="flex flex-col items-center gap-1.5 pt-1.5 pb-3 shrink-0">
