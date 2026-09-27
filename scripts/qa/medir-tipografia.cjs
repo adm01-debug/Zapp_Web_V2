@@ -198,7 +198,11 @@ function main() {
   const scale = parseScale();
   const named = Object.keys(scale);
   // so tokens de tamanho; evita text-primary / text-foreground (cores)
-  const namedRe = new RegExp(`\\btext-(${named.map((n) => n.replace(/[-]/g, '\\-')).join('|')})\\b`, 'g');
+  // Escapa TODOS os meta-caracteres de regex do nome do token, nao so o
+  // hifen (js/incomplete-sanitization) — hoje named vem de parseScale() sem
+  // ".", "(" etc, mas a escala pode ganhar um nome assim no futuro e a regex
+  // dinamica sairia incorreta silenciosamente sem este escape completo.
+  const namedRe = new RegExp(`\\btext-(${named.map((n) => n.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')).join('|')})\\b`, 'g');
   const arbRe = /\btext-\[([0-9.]+)(px|rem|em)\]/g;
 
   const files = walk(SRC);

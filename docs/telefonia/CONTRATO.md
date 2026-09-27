@@ -8,7 +8,7 @@ divergências medidas no banco oficial em 26/09/2026 (registradas em `docs/desig
 
 `'voip' | 'whatsapp'`.
 
-Backfill aplicado na migration `20260926300000_calls_telefonia_v2.sql` (reversionada duas vezes — ver `docs/design/TELEFONIA_STATUS.md`):
+Backfill aplicado na migration `20260926800000_calls_telefonia_v2.sql` (reversionada três vezes — ver `docs/design/TELEFONIA_STATUS.md`):
 `whatsapp_connection_id IS NOT NULL → 'whatsapp'`, senão `'voip'`.
 Evidência no banco oficial antes do backfill: 21 linhas → **10 `whatsapp` / 11 `voip`** (a única trilha que
 preenche `whatsapp_connection_id` é o webhook da Evolution; o SIP nunca preenche).
@@ -88,7 +88,7 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 | D6 | KPIs respondem a busca/filtros? | **não** (escopo + período + canal, com rótulo explícito) |
 | D7 | Recusar chamada WhatsApp | **aberto** — endpoint de rejeição da Evolution GO não comprovado; rótulo honesto ("Ignorar") até prova |
 
-## 8. RPCs do contrato (migration `20260926300000_calls_telefonia_v2.sql`)
+## 8. RPCs do contrato (migration `20260926800000_calls_telefonia_v2.sql`)
 
 | RPC | Papel |
 |---|---|
@@ -98,7 +98,15 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 | `set_call_agent_notes(p_call_id, p_notes)` | anotação humana; dono ou admin/supervisor |
 
 Prova comportamental: `scripts/db-audit/calls-telefonia-contract.test.sh` (PostgreSQL 17 descartável,
-61 asserções, incluindo RLS por ator, IDOR, teto de 50, idempotência e ACL de `anon`).
+prova de RLS por ator, IDOR, teto de 50, idempotência e ACL de `anon`; asserções cresceram para cobrir
+o 2º bug de autorização abaixo).
+
+**Correção de segurança #2 em `set_call_agent_notes` (27/09, auditoria de 5 agentes pós-deploy):**
+`calls.agent_id` aceita NULL (chamada inbound ainda sem agente atribuído) e `if not (v_owner = v_profile
+or is_admin_or_supervisor(...))` com `v_owner` NULL avalia para NULL — mesmo bypass do bug original
+(20260926900000), agora do lado do dono da chamada em vez do perfil do chamador. Corrigido em
+`supabase/migrations/20260927100000_fix_set_call_agent_notes_null_owner.sql` trocando a comparação por
+`coalesce(v_owner = v_profile, false)`. Chamada sem dono só pode ser anotada por admin/supervisor.
 
 ## 9. Glossário de rótulos (linguagem operacional — nada de jargão na tela do agente)
 
