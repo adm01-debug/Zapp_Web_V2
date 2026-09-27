@@ -166,7 +166,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 12 workflows, da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
 **Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
