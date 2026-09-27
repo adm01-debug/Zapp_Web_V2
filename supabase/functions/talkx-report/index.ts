@@ -8,7 +8,7 @@ import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────────────────
-function escCsv(v: string): string {
+export function escCsv(v: string): string {
   const FORMULA_PREFIX = /^[=+\-@\t\r\n]/;
   let safe = v;
   if (FORMULA_PREFIX.test(safe)) safe = "'" + safe;
@@ -18,7 +18,7 @@ function escCsv(v: string): string {
   return safe;
 }
 
-function escHtml(v: string): string {
+export function escHtml(v: string): string {
   return v
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -27,7 +27,7 @@ function escHtml(v: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function buildCsv(rows: Record<string, string | null>[]): string {
+export function buildCsv(rows: Record<string, string | null>[]): string {
   if (rows.length === 0) return '';
   const hdrs = Object.keys(rows[0]);
   const lines = [
@@ -45,7 +45,8 @@ function jsonErr(req: Request, body: Record<string, unknown>, status: number): R
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────────────────────
-Deno.serve(async (req: Request) => {
+if (import.meta.main) {
+  Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -222,4 +223,5 @@ Deno.serve(async (req: Request) => {
     log.error('Unhandled error', { err });
     return jsonErr(req, { ok: false, reason: 'internal_error', message: err instanceof Error ? err.message : 'Erro desconhecido' }, 500);
   }
-});
+  });
+}

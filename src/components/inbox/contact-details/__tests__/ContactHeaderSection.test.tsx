@@ -309,4 +309,12 @@ describe('ContactHeaderSection', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     expect(screen.queryByText(/^\d{2}\/\d{2}\/\d{4}$/)).not.toBeInTheDocument();
   });
+
+  it('nao quebra o render quando updatedAt e uma data invalida', () => {
+    const conversation = { updatedAt: new Date('invalid') } as unknown as Conversation;
+    expect(() =>
+      render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} conversation={conversation} />)
+    ).not.toThrow();
+    expect(screen.queryByText(/^\d{2}\/\d{2}\/\d{4}$/)).not.toBeInTheDocument();
+  });
 });

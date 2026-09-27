@@ -11,10 +11,11 @@ name: DB Guard (offline)
 on:
   # Sem filtro de paths: o nome do check precisa existir em todo PR para poder
   # ser exigido pela branch protection sem bloquear diffs apenas de docs.
+  # E23: 'develop' removido — branch nao existe no repo (so main).
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   # Fila de merge: sem este gatilho o check required nunca reportaria no merge
   # group e a fila travaria todos os merges do repo.
   merge_group:
@@ -25,18 +26,70 @@ permissions:
 
 concurrency:
   group: db-guard-offline-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # E21 (auditoria de GitHub Actions, 2026-09-26): cancelava TODO push na
+  # main, inclusive comparado a um commit anterior ja em analise — igual ao
+  # ci.yml, so cancela push NOVO na MESMA PR.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   offline-contract:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
+      # os arquivos do PR via API).
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # E49 (auditoria de GitHub Actions, 2026-09-26): ataca a causa raiz dos
+      # drifts documentados no CLAUDE.md (02/09, 04/09, 24-26/09) — um arquivo
+      # em supabase/migrations/ editado DEPOIS de já ter sido aplicado em
+      # produção (ou já mergeado) nunca deveria voltar a mudar; a regra 7 da
+      # seção 1 do CLAUDE.md já manda isso, mas nada impedia um PR de violá-la
+      # antes deste guard. Só roda em pull_request (a API de arquivos do PR
+      # não existe em push/schedule/dispatch).
+      - name: Rejeitar edicao de migration ja existente
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+            const arquivos = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number, per_page: 100,
+            });
+            // So bloqueia 'modified' (conteudo mudou, MESMO nome de arquivo) —
+            // e exatamente o padrao do incidente de 26/09 (arquivo editado
+            // depois de aplicado, drift entre ledger e disco). 'renamed' fica
+            // de fora de proposito: e uso legitimo e documentado no CLAUDE.md
+            // (ex.: PRs #856/#860, renomear para a version real do ledger
+            // antes de qualquer aplicacao); 'removed' tambem fica de fora
+            // (mudanca para _foreign/_superseded, arquivo morto).
+            const violacoes = arquivos.filter(
+              (f) => f.status === 'modified'
+                && /^supabase\/migrations\/\d{14}_.*\.sql$/.test(f.filename),
+            );
+            if (violacoes.length > 0) {
+              const lista = violacoes.map((f) => f.filename).join('\n  - ');
+              core.setFailed(
+                'Este PR edita o CONTEUDO de uma migration que ja existe, mantendo '
+                + 'o mesmo nome de arquivo (regra 7 da secao 1 do CLAUDE.md — '
+                + 'statements no ledger e o SQL real e completo; um arquivo ja '
+                + 'aplicado nao pode mudar depois):\n  - '
+                + lista
+                + '\n\nSe o objetivo e corrigir algo ja aplicado, crie um NOVO '
+                + 'arquivo com version maior contendo a correcao (nunca edite o '
+                + 'antigo). Renomear um arquivo que nunca foi registrado/aplicado '
+                + 'continua permitido.',
+              );
+            }
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

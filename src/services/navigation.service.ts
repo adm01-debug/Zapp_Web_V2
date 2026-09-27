@@ -41,6 +41,7 @@ export class NavigationService {
       { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
       { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
       { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
+      { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
       { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full', shortcut: 'Alt+P' },
@@ -69,7 +70,6 @@ export class NavigationService {
         icon: Bot,
         items: [
           { id: 'talkx', icon: Sparkles, label: 'Campanhas', roles: STAFF_ROLES },
-          { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
           { id: 'chatbot', icon: Bot, label: 'Chatbot', roles: STAFF_ROLES },
           { id: 'automations', icon: RefreshCw, label: 'Automações', roles: STAFF_ROLES },
           { id: 'wa-flows', icon: Workflow, label: 'WhatsApp Flows', roles: STAFF_ROLES },

@@ -171,6 +171,7 @@ export function useSipClient() {
     if (callStatusRef.current !== 'idle') { toast.error('Já existe uma chamada em andamento.'); return; }
     try {
       const { UserAgent, Inviter } = await import('sip.js');
+      if (callStatusRef.current !== 'idle') { toast.error('Já existe uma chamada em andamento.'); return; }
       const target = UserAgent.makeURI(`sip:${number}@${uaRef.current.configuration.uri.host}`);
       if (!target) { toast.error('Número inválido'); return; }
 

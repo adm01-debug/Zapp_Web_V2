@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 interface ContactResult {
   id: string;
@@ -61,7 +62,7 @@ export function useNewConversation(
       setIsLoading(true);
       const { data } = await supabase.from('contacts')
         .select('id, name, phone, avatar_url')
-        .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+        .or(`name.ilike.${escapeOrFilterValue(`%${searchQuery}%`)},phone.ilike.${escapeOrFilterValue(`%${searchQuery}%`)}`)
         .limit(10);
       if (!cancelled) {
         setContacts(data || []);

@@ -96,6 +96,11 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('useContactEnrichedData — sincronização ao vivo via Realtime', () => {
   beforeEach(() => {
     enrichedRow = { company: 'Acme', job_title: 'CTO', nickname: null, surname: null, contact_type: 'customer', ai_sentiment: null, ai_priority: null, channel_type: 'whatsapp' };
+    // Sem isso, `log.error` chamado num teste anterior deixava o
+    // `waitFor(() => expect(log.error).toHaveBeenCalled())` do teste de erro
+    // passar mesmo se o mock de erro parasse de ser exercitado (falso
+    // positivo achado na auditoria de 5 agentes, 2026-09-26, 4a rodada).
+    vi.mocked(log.error).mockClear();
   });
 
   it('reflete um UPDATE realtime em contacts (ex: apelido editado pela tela de Contatos) sem precisar do EditContactDialog', async () => {
@@ -134,14 +139,19 @@ describe('useContactEnrichedData — sincronização ao vivo via Realtime', () =
       return originalImpl(table);
     }) as typeof originalImpl);
 
-    const { result } = renderHook(() => useContactEnrichedData('contact-1'), { wrapper });
+    try {
+      const { result } = renderHook(() => useContactEnrichedData('contact-1'), { wrapper });
 
-    await waitFor(() => expect(log.error).toHaveBeenCalled());
-    // Não pode virar `null`: isso é tratado como sucesso pelo React Query e
-    // trava em cache até o staleTime (5min), sem nova tentativa.
-    expect(result.current.enrichedData).toBeUndefined();
-
-    mockFrom.mockImplementation(originalImpl);
+      await waitFor(() => expect(log.error).toHaveBeenCalled());
+      // Não pode virar `null`: isso é tratado como sucesso pelo React Query e
+      // trava em cache até o staleTime (5min), sem nova tentativa.
+      expect(result.current.enrichedData).toBeUndefined();
+    } finally {
+      // Sem o finally, uma asserção falha acima deixava o mock de erro
+      // aplicado pro próximo teste (achado na auditoria de 5 agentes,
+      // 2026-09-26, 4a rodada).
+      mockFrom.mockImplementation(originalImpl);
+    }
   });
 
   it('não quebra quando contactId muda (assina o canal do novo id)', async () => {

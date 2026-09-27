@@ -5,7 +5,8 @@
   "type": "module",
   "overrides": {
     "postcss": "^8.5.28",
-    "ws": "^8.21.3"
+    "ws": "^8.21.3",
+    "postcss-selector-parser": "^6.1.4"
   },
   "scripts": {
     "dev": "vite",

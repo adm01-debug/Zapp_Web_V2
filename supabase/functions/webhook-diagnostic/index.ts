@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
 
-interface WebhookRecord {
+export interface WebhookRecord {
   webhook?: string;
   events?: string | string[];
   url?: string;
@@ -13,9 +13,19 @@ interface WebhookRecord {
   webhookBase64?: boolean;
 }
 
+// Evolution v2 legada devolve `events` como array; algumas instalacoes devolvem
+// uma unica string quando ha so 1 evento inscrito. Normaliza os dois formatos
+// para array antes de contar eventos criticos ausentes (FIX desta sessao).
+export function normalizeWebhookEvents(webhook: WebhookRecord | null): string[] {
+  if (Array.isArray(webhook?.events)) return webhook.events;
+  if (webhook?.events) return [webhook.events];
+  return [];
+}
+
 const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
-Deno.serve(async (req: Request) => {
+if (import.meta.main) {
+  Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
   const corsHeaders = getCorsHeaders(req);
@@ -104,7 +114,7 @@ Deno.serve(async (req: Request) => {
           const whData = await whRes.json();
           webhook = whData?.webhook || whData;
           currentUrl = webhook?.url || webhook?.webhookUrl || '';
-          events = Array.isArray(webhook?.events) ? webhook.events : webhook?.events ? [webhook.events] : [];
+          events = normalizeWebhookEvents(webhook);
         }
 
         const criticalEvents = IS_GO
@@ -226,4 +236,5 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+  });
+}

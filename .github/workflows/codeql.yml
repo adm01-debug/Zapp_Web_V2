@@ -24,7 +24,11 @@ permissions:
 
 concurrency:
   group: codeql-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  # E20 (auditoria de GitHub Actions, 2026-09-26): estava invertido — cancelava
+  # em push (na main) e deixava rodar em PR. Igual ao ci.yml: cancela push
+  # NOVO na MESMA PR (retrabalho), nunca um commit ja mergeado na main (cada
+  # commit da main mantem seu proprio veredito de CodeQL).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:
