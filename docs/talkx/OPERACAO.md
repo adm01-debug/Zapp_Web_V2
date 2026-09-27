@@ -145,7 +145,8 @@ Para esconder só "Campanhas":
 - **Só para supervisores:** alterar `roles: STAFF_ROLES` para `roles: ['admin']`
   na entrada `{ id: 'talkx' }` em `navigation.service.ts`.
 - **Para todos (admin + supervisor):** remover a entrada `{ id: 'talkx' }`
-  do array `navigationItems` em `navigation.service.ts`.
+  dos items do grupo `'Automação & IA'` em `NavigationService.getGroups()`
+  (`navigation.service.ts`, linha ~72).
 
 ### 8.3 Rollback de migration de Talk X
 

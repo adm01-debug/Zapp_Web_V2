@@ -273,9 +273,9 @@ function TemplateListRow({ t, selected, onClick, onEdit, onDuplicate, onDelete, 
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold">Usar</button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
       </div>
     </div>
   );
