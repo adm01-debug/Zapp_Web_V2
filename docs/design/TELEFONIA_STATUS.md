@@ -109,6 +109,38 @@ de `20260926900000_fix_set_call_agent_notes_null_profile.sql` (`rows_affected: 1
 ao vivo antes de cada apply). Verificado ao vivo: ledger com as duas versions no topo e
 `pg_get_functiondef(set_call_agent_notes) LIKE '%v_profile is null%'` = `true` (guarda de autorização ativa).
 
+### Correção de segurança #4 (27/09, auditoria de 5 agentes pós-deploy — CRÍTICO, mesmo padrão do #3)
+
+Nova rodada de auditoria (Joaquim pediu validação exaustiva de tudo aplicado) achou um SEGUNDO bypass em
+`set_call_agent_notes`, confirmado independentemente por 2 dos 5 agentes (um deles reproduziu em produção
+dentro de `DO ... RAISE EXCEPTION` para garantir rollback — sem tocar dado real, confirmado por
+`agent_notes`/marcas de auditoria = 0 após o teste): `calls.agent_id` aceita NULL (chamada inbound ainda
+sem agente atribuído — **10 das 22 chamadas em produção têm `agent_id IS NULL`**) e
+`if not (v_owner = v_profile or is_admin_or_supervisor(...))` com `v_owner` NULL avalia para NULL — o mesmo
+bypass do bug #3, agora do lado do DONO da chamada em vez do perfil do chamador. Qualquer `authenticated`
+com perfil (não precisa ser dono nem admin) conseguia sobrescrever `agent_notes` dessas 10 chamadas.
+
+`upsert_my_call` **não** tem esse problema: usa `WHERE calls.agent_id = v_profile` no UPDATE (um `WHERE`
+com NULL nunca "passa" por engano) seguido de `if v_id is null then raise exception`, não uma comparação
+direta dentro de `IF`.
+
+- Arquivo: `supabase/migrations/20260927100000_fix_set_call_agent_notes_null_owner.sql`
+- Fix: troca `v_owner = v_profile` por `coalesce(v_owner = v_profile, false)` — chamada sem dono só pode
+  ser anotada por admin/supervisor.
+- Teste novo em `scripts/db-audit/calls-telefonia-contract.test.sh`: insere chamada com `agent_id NULL`,
+  confirma que agente comum falha e admin ainda consegue anotar.
+
+**Achados da mesma auditoria fora do escopo desta correção (não tocados aqui, ver Próximos Passos):**
+`handle_new_user_role` tem o mesmo padrão (`v_allowed` NULL quando `NEW.email` é NULL — login
+anônimo/telefone — pula a checagem de domínio permitido); `get_profile_role_for_check` vaza papel/permissão
+de qualquer usuário para qualquer autenticado; `CallDialog.tsx` tem 4 botões ícone sem `aria-label`; a
+mesma injeção de `.or()` corrigida no #917 (`useCallHistory.ts`) ainda existe, sem escape, em
+`useCatalogContactSearch.ts`, `useGlobalSearchData.ts` e `useNewConversation.ts` (fora do módulo de
+Telefonia); `schema-catalog.json` está desatualizado (não reflete as 9 colunas/4 RPCs do #800000, embora
+`types.ts` já esteja sincronizado); e a versão `20260926430000` (`multiplix_delivery_receipts`) está no
+ledger sem arquivo correspondente no repo (mesmo padrão do incidente E40 do CLAUDE.md) — descoberta ao
+conferir paridade 1:1 no range desta tarefa, não relacionada à Telefonia.
+
 ### Correção de segurança #3 (26/09, achado de auditoria de 5 agentes — CRÍTICO, corrigido antes do apply)
 
 `set_call_agent_notes` tinha bypass de autorização: se o `auth.uid()` do chamador não tem linha em
