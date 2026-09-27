@@ -76,6 +76,43 @@ export default defineConfig({
         storageState: 'e2e/.auth/user.json',
       },
     },
+    {
+      // auth.spec.ts on Firefox — cross-browser login UI coverage.
+      // No dependsOn, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
+      // safe to include in ci.yml (PR checks cannot reference those secrets).
+      name: 'firefox-auth',
+      testMatch: /auth\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      // auth.spec.ts on WebKit (Safari engine) — cross-browser login UI coverage.
+      // No dependsOn, no storageState: safe to include in ci.yml.
+      name: 'webkit-auth',
+      testMatch: /auth\.spec\.ts/,
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      // conversation.spec.ts / messaging.spec.ts on Firefox — cross-browser
+      // coverage of the authenticated inbox. Reuses the storageState from setup.
+      name: 'firefox-conversation',
+      testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      dependsOn: ['setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
+    {
+      // conversation.spec.ts / messaging.spec.ts on WebKit (Safari engine) —
+      // cross-browser coverage of the authenticated inbox.
+      name: 'webkit-conversation',
+      testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      dependsOn: ['setup'],
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
   ],
   webServer: {
     // The application development server intentionally defaults to port 8080.
