@@ -64,8 +64,8 @@ export function useContactFormValidation(
 
   const checkEmailDuplicate = useCallback(async (email: string) => {
     const trimmed = email.trim();
-    if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
     const seq = ++emailCheckSeqRef.current;
+    if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
     const escapedEmail = trimmed.replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
       .from('contacts')
