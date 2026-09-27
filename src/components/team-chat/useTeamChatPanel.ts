@@ -220,9 +220,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   }, []);
 
   const handleSaveEdit = useCallback(async () => {
-    if (!editingId || !editText.trim()) return;
+    const trimmed = editText.trim();
+    if (!editingId || !trimmed) return;
     try {
-      await editMutation.mutateAsync({ messageId: editingId, content: editText.trim(), conversationId: conversation.id });
+      await editMutation.mutateAsync({ messageId: editingId, content: trimmed, conversationId: conversation.id });
       setEditingId(null);
       setEditText('');
     } catch (err) {
