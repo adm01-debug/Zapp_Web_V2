@@ -1,13 +1,13 @@
 -- fix(db): corrigir guard lógico + cap XP + dedup daily_goal nas funções de gamificação
 -- Auditoria de 5 agentes (2026-09-27):
 -- Vector 2: guard 'IS NOT NULL AND NOT (...)' estava invertido para anon (auth.uid() IS NULL).
---           Corrigido para 'IS NULL OR NOT (...)'.
---           Afeta: add_agent_xp, grant_agent_achievement, increment_agent_messages.
---           (update_agent_streak e increment_agent_resolutions usam auth.role()='anon' — correto.)
+--            Corrigido para 'IS NULL OR NOT (...)'.
+--            Afeta: add_agent_xp, grant_agent_achievement, increment_agent_messages.
+--            (update_agent_streak e increment_agent_resolutions usam auth.role()='anon' — correto.)
 -- Vector 9: add_agent_xp sem teto em p_xp (qualquer usuário podia chegar ao nível máximo).
---           Cap de 500 XP por chamada adicionado.
---           grant_agent_achievement: daily_goal sem dedup diário.
---           Adicionado check: created_at >= CURRENT_DATE antes do INSERT.
+--            Cap de 500 XP por chamada adicionado.
+--            grant_agent_achievement: daily_goal sem dedup diário.
+--            Adicionado check: created_at >= CURRENT_DATE antes do INSERT.
 
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp integer)
 RETURNS json
@@ -126,9 +126,9 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_row         agent_stats%ROWTYPE;
-  v_new_sent    int;
-  v_new_recv    int;
+  v_row        agent_stats%ROWTYPE;
+  v_new_sent   int;
+  v_new_recv   int;
 BEGIN
   IF auth.uid() IS NULL OR NOT (
     p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
