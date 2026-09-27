@@ -3,7 +3,7 @@ import { BarChart3 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps,
+  ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
@@ -20,7 +20,12 @@ interface VolumeChartProps {
   agentId?: string | null;
 }
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload?: { actual?: number; predicted?: number } }>;
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const hoveredCount = (payload[0]?.payload?.actual as number | undefined) ?? 0;
   const hoveredPredicted = (payload[0]?.payload?.predicted as number | undefined) ?? null;
