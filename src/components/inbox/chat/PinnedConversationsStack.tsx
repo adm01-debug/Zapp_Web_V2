@@ -33,7 +33,7 @@ function PinnedFace({
 
   return (
     <div
-      className="relative -ml-3 first:ml-0"
+      className="relative -ml-4 first:ml-0"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onMouseMove={(e) => {
@@ -64,7 +64,7 @@ function PinnedFace({
         aria-label={`Abrir conversa fixada com ${item.name}`}
         className="relative block rounded-full transition-transform duration-300 hover:z-40 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <Avatar className={cn('h-9 w-9 ring-2', isActive ? 'ring-primary' : 'ring-border')}>
+        <Avatar className={cn('h-[47px] w-[47px] ring-2', isActive ? 'ring-primary' : 'ring-border')}>
           <AvatarImage src={item.avatarUrl || undefined} alt="" />
           <AvatarFallback className={cn('text-2xs font-semibold', colors.bg, colors.text)}>
             {getInitials(item.name || '?')}
@@ -76,8 +76,8 @@ function PinnedFace({
 }
 
 /**
- * Rostos das conversas fixadas, exibidos no centro do cabeçalho do chat quando o
- * painel de detalhes do contato está fechado (espaço livre na mesma faixa do nome).
+ * Rostos das conversas fixadas, exibidos no canto direito do cabeçalho do chat quando o
+ * painel de detalhes do contato está fechado.
  */
 export function PinnedConversationsStack({
   items, activeId, onSelect, maxVisible = 6, className,
@@ -93,7 +93,7 @@ export function PinnedConversationsStack({
       ))}
       {overflow > 0 && (
         <span
-          className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-2xs font-semibold text-muted-foreground ring-2 ring-border"
+          className="-ml-4 flex h-[47px] w-[47px] items-center justify-center rounded-full bg-muted text-2xs font-semibold text-muted-foreground ring-2 ring-border"
           aria-label={`Mais ${overflow} conversas fixadas`}
         >
           +{overflow}
