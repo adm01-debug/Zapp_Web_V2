@@ -26,6 +26,14 @@ vi.mock('@/integrations/supabase/client', () => ({
           },
         };
       },
+      // checkDuplicate em useContactFormValidation dispara debounce 500ms ao mudar
+      // o phone — sem este stub, o timer vaza para o teste seguinte como
+      // Unhandled Rejection com "select is not a function".
+      select: () => ({
+        or: () => ({
+          limit: () => Promise.resolve({ data: [] }),
+        }),
+      }),
     }),
   },
 }));
