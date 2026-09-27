@@ -10,6 +10,8 @@ import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { formatTime, formatDateSep, MediaContent, MediaTypeIcon } from './teamChatParts';
 import { TeamReactionBar, TeamQuickReactionBarWrapper } from './TeamMessageReactionsWrapper';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
+import { MessageStatus } from '@/components/inbox/MessageStatus';
+import { normalizeTeamMessageStatus } from '@/hooks/team-chat/teamMessageStatus';
 
 interface Props {
   msg: TeamMessage;
@@ -43,6 +45,12 @@ export const TeamMessageItem = memo(function TeamMessageItem({
   const cleanText = msg.content?.replace(/\[.*?\]/g, '').replace(/https?:\/\/\S+/g, '').trim();
   const DEFAULT_CAPTIONS = ['🎨 Figurinha', '🎵 Áudio meme', '😀 Emoji', '🎤 Mensagem de áudio'];
   const hasReactions = reactions.length > 0;
+
+  const rawStatus = normalizeTeamMessageStatus(msg.status);
+  const displayStatus: 'sent' | 'delivered' | 'read' | 'failed' | 'pending' | null =
+    rawStatus === 'sending' ? 'pending'
+    : rawStatus === 'deleted' ? null
+    : rawStatus;
 
   return (
     <ContextMenu>
@@ -163,9 +171,17 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                             : <Volume2 className="w-3 h-3" aria-hidden />}
                       </button>
                     )}
-                    <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-primary-foreground' : 'text-muted-foreground')}>
-                      {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-primary-foreground' : 'text-muted-foreground')}>
+                        {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
+                      </span>
+                      {isMine && displayStatus && (
+                        <MessageStatus
+                          status={displayStatus}
+                          className={cn('opacity-70', isMine && 'text-primary-foreground')}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Reaction bar below message */}
