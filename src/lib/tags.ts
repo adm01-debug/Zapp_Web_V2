@@ -1,4 +1,4 @@
-export function isWhatsAppTag(tag: string): boolean { return tag.startsWith('wa:'); }
+export function isWhatsAppTag(tag: string): boolean { return tag.toLowerCase().startsWith('wa:'); }
 
 export function parseWhatsAppTag(tag: string): { labelId: string; displayName: string } | null {
   if (!isWhatsAppTag(tag)) return null;

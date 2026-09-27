@@ -57,6 +57,8 @@ export function ContactBulkTagDialog({
 
   const handleApply = async () => {
     if (selectedTags.size === 0) return;
+    const safeSelected = [...selectedTags].filter(t => !isWhatsAppTag(t));
+    if (safeSelected.length === 0) return;
     setSaving(true);
     try {
       const { data: contacts } = await supabase
@@ -69,9 +71,9 @@ export function ContactBulkTagDialog({
       for (const contact of contacts) {
         const current = new Set(contact.tags || []);
         if (mode === 'add') {
-          selectedTags.forEach(t => current.add(t));
+          safeSelected.forEach(t => current.add(t));
         } else {
-          selectedTags.forEach(t => current.delete(t));
+          safeSelected.forEach(t => current.delete(t));
         }
         await supabase
           .from('contacts')
@@ -81,8 +83,8 @@ export function ContactBulkTagDialog({
 
       toast.success(
         mode === 'add'
-          ? `${selectedTags.size} tag(s) adicionada(s) a ${contactIds.length} contatos`
-          : `${selectedTags.size} tag(s) removida(s) de ${contactIds.length} contatos`
+          ? `${safeSelected.length} tag(s) adicionada(s) a ${contactIds.length} contatos`
+          : `${safeSelected.length} tag(s) removida(s) de ${contactIds.length} contatos`
       );
       onComplete();
       onOpenChange(false);
