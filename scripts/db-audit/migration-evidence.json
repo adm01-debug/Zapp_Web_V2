@@ -496,14 +496,6 @@
             "justification": "O ledger de producao guarda so um comentario factual (\"-- aplicado via MCP, ver PR #569\"), sem SQL historico recuperado: o DDL foi aplicado via MCP antes de ser versionado. O arquivo replay preserva o CREATE OR REPLACE FUNCTION audit_role_changes() completo (campos forenses actor_kind/actor_db_role/actor_app_name/actor_addr) mais o DROP FUNCTION audit_user_role_changes() (funcao orfa criada pela migration 20260924120000/PR #562, nunca chamada pelo trigger). Bytes do arquivo fixados pelo manifesto."
         },
         {
-            "version": "20260927410000",
-            "filename": "20260927410000_drop_legacy_tags_tables.sql",
-            "file_sha256": "06e2394fef2a2ab773f68e6e0b303c134e2bfe80bc8f97600bc40697ca847c18",
-            "ledger_name": "fix_dashboard_kpi_distinct_contacts",
-            "kind": "ledger-only/name-and-file-pinned",
-            "justification": "Versao 20260927410000 foi registrada no ledger como fix_dashboard_kpi_distinct_contacts (comment-only, sem SQL canonico) por sessao paralela antes do arquivo drop_legacy_tags_tables.sql ser commitado com a mesma versao. O arquivo tem DDL real (DROP TABLE IF EXISTS contact_tags/tags); o ledger preserva apenas o registro de nome sem conteudo SQL historico. Bytes do arquivo fixados pelo manifesto."
-        },
-        {
             "version": "20260927421000",
             "filename": "20260927421000_add_sync_contact_status_on_closure_trigger.sql",
             "file_sha256": "6825606e7ac2a09e59abf93d0a1b7b99f55be2555e195a6927d758e239848724",
