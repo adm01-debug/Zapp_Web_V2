@@ -9790,10 +9790,6 @@ export type Database = {
           role: string
         }[]
       }
-      find_or_create_direct_conversation: {
-        Args: { other_profile_id: string }
-        Returns: string
-      }
       get_team_conversation_previews: {
         Args: never
         Returns: {
