@@ -471,8 +471,14 @@ serve(async (req) => {
       // reconnect respondem 400/500 nesse estado ("no active session found"), então
       // a única saída é recriar a instância na GO com o MESMO token: isso zera o
       // device store e faz o connect seguinte emitir QR novo.
+      // Só !LoggedIn é sessão morta. {Connected:false, LoggedIn:true} é 'connecting'
+      // — socket caindo com credenciais VÁLIDAS — e apagar isso destrói uma sessão boa
+      // por causa de um soluço de rede. Contrato E25 em
+      // docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md:
+      // LoggedIn && Connected → open; LoggedIn && !Connected → connecting; !LoggedIn → close.
+      const sessionIsDead = hasInnerFlags ? !isLoggedIn : stData.state === 'close';
       let goOrphan: { id: string; jid: string } | null = null;
-      if (isGoFlavor) {
+      if (isGoFlavor && sessionIsDead) {
         try {
           const allRes = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
           if (allRes.ok) {
@@ -486,6 +492,13 @@ serve(async (req) => {
         } catch { /* GO indisponível: cai no 409 abaixo */ }
       }
       if (goOrphan) {
+        // connect é aberto a qualquer usuário logado, mas recriar a instância é
+        // destrutivo e força o negócio a parear de novo — mesmo guard do delete-instance.
+        const adminError = await requireAdmin();
+        if (adminError) {
+          new Logger('evolution-api').warn('connect: sessão órfã detectada mas quem chamou não é admin', { instance });
+          return new Response(JSON.stringify({ error: true, status: 409, message: 'A sessão do WhatsApp está com credenciais inconsistentes na Evolution GO e precisa ser recriada. Peça a um administrador para reconectar.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${goOrphan.id}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
         if (delRes.ok) {
