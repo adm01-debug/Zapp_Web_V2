@@ -70,3 +70,34 @@ e o arquivo mantinha `USING(true)` "por design".
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.
 Se precisar do conteudo em outro lugar, copie — nao mova de volta.
+
+---
+
+## `20260926410000_add_fk_support_indexes.sql` — duplicata funcional, nao incorrecao
+
+**Movido em:** 27/09/2026
+**Origem:** auditoria de 5 agentes coordenada nesta sessao, validando o fechamento do E17.
+
+Diferente dos 4 arquivos acima, o SQL deste arquivo **esta correto e bate com o banco vivo**
+— nao e o caso "DDL nunca rodou". O problema e outro: duas sessoes de IA em paralelo
+resolveram o mesmo achado (5 colunas FK do E17 sem indice de apoio) de forma independente,
+minutos uma da outra:
+
+- PR #900, merge `9a718d1` (20260926T20:30:38Z) — criou `20260926250000_e17_fk_indexes.sql`.
+- PR #899, merge `ad80651` (20260926T20:32:39Z, ~2min depois) — criou este arquivo.
+
+Os dois tem os mesmos 5 `CREATE INDEX` byte-identicos (so o comentario de cabecalho difere):
+`idx_gmail_accounts_user_id`, `idx_message_templates_user_id`, `idx_query_telemetry_user_id`,
+`idx_webauthn_challenges_user_id`, `idx_whatsapp_connections_instance_token_secret_id`.
+
+No banco vivo isso e inocuo — existe exatamente 1 copia fisica de cada indice (confirmado via
+`pg_indexes`), porque uma das duas sessoes encontrou os indices ja criados pela outra antes de
+aplicar sua propria DDL. Mas um **replay do zero em ordem de version** (`supabase db reset`,
+disaster recovery, ambiente novo) executaria `20260926250000` primeiro (sucesso) e depois este
+arquivo — `CREATE INDEX` sem `IF NOT EXISTS` — e falharia com "already exists", travando o
+replay a partir dali.
+
+**A versao que prevalece e `20260926250000_e17_fk_indexes.sql`** (mergeada 2min antes). O
+registro `20260926410000` **permanece** em `supabase_migrations.schema_migrations` — nao foi
+apagado, e evidencia historica valida de que essa sessao tambem aplicou (ou encontrou aplicado)
+o mesmo fix. Só o arquivo mudou de lugar, para nao quebrar um replay futuro.
