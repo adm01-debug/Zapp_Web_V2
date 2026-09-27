@@ -8882,6 +8882,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_agent_xp: {
+        Args: { p_profile_id: string; p_xp: number }
+        Returns: Json
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9530,7 +9534,7 @@ export type Database = {
           p_type: string
           p_xp_reward: number
         }
-        Returns: undefined
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -9538,6 +9542,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_agent_messages: {
+        Args: { p_profile_id: string; p_type: string }
+        Returns: Json
+      }
+      increment_agent_resolutions: {
+        Args: { p_profile_id: string }
+        Returns: Json
       }
       increment_talkx_template_use: {
         Args: { p_template_id: string }
@@ -9954,6 +9966,10 @@ export type Database = {
               previous_status: string
             }[]
           }
+      update_agent_streak: {
+        Args: { p_profile_id: string; p_increment: boolean }
+        Returns: Json
+      }
       update_own_profile: {
         Args: {
           p_avatar_url?: string
