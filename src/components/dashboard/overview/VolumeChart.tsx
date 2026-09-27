@@ -3,7 +3,7 @@ import { BarChart3 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps,
 } from 'recharts';
 import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
@@ -20,13 +20,17 @@ interface VolumeChartProps {
   agentId?: string | null;
 }
 
-function CustomTooltip({ active, currentHourCount, avg7dCurrentHour }: { active?: boolean; currentHourCount: number; avg7dCurrentHour: number | null }) {
-  if (!active) return null;
-  const pct = avg7dCurrentHour && avg7dCurrentHour > 0 ? Math.round(((currentHourCount - avg7dCurrentHour) / avg7dCurrentHour) * 100) : null;
+function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+  const hoveredCount = (payload[0]?.payload?.actual as number | undefined) ?? 0;
+  const hoveredPredicted = (payload[0]?.payload?.predicted as number | undefined) ?? null;
+  const pct = hoveredPredicted && hoveredPredicted > 0
+    ? Math.round(((hoveredCount - hoveredPredicted) / hoveredPredicted) * 100)
+    : null;
   return (
     <div className="bg-popover border border-border rounded-lg px-3 py-2 text-2xs">
-      <p className="text-muted-foreground">Agora</p>
-      <p className="text-xs font-semibold text-foreground">{currentHourCount} conversas</p>
+      <p className="text-muted-foreground">Conversas</p>
+      <p className="text-xs font-semibold text-foreground">{hoveredCount} conversas</p>
       {pct !== null && (
         <p className="text-foreground-secondary">{Math.abs(pct)}% {pct >= 0 ? 'acima' : 'abaixo'} da média</p>
       )}
@@ -58,7 +62,8 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
     }));
   }, [volumeQuery.data, demand.data, mode]);
 
-  const isEmpty = chartData.every((d) => !d.actual);
+  const isChartLoading = volumeQuery.isPending;
+  const isEmpty = !isChartLoading && chartData.every((d) => !d.actual);
 
   return (
     <DashboardCard testid="volume-card" className="min-h-[259px]">
@@ -102,7 +107,7 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
               <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} width={28} axisLine={false} tickLine={false} />
               <Tooltip
                 cursor={{ stroke: 'hsl(var(--border))', strokeDasharray: '4 4' }}
-                content={<CustomTooltip currentHourCount={volumeQuery.data?.currentHourCount ?? 0} avg7dCurrentHour={volumeQuery.data?.avg7dCurrentHour ?? null} />}
+                content={<CustomTooltip />}
               />
               <Area type="monotone" dataKey="actual" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#volumeFill)" dot={false} activeDot={{ r: 3 }} isAnimationActive />
               {hasPrediction && (
