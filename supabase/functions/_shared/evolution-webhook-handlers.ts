@@ -177,8 +177,7 @@ export async function handleChatsUpdate(supabase: any, instance: string, data: u
   }
 }
 
-// deno-lint-ignore no-explicit-any
-export async function handleLabelsEdit(supabase: any, _instance: string, data: unknown) {
+export async function handleLabelsEdit(supabase: any, _instance: string, data: unknown) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;

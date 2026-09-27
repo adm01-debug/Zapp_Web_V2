@@ -230,7 +230,7 @@ export function useGlobalSearchData(open: boolean) {
     } finally {
       if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, allTags, crmIntegrationEnabled, isSupervisor]);
+  }, [addToHistory, crmIntegrationEnabled, isSupervisor]);
 
   const handleSearch = useCallback((query: string) => {
     searchRequestId.current += 1;
