@@ -376,6 +376,8 @@ jobs:
           steps.gate2.outputs.passed == 'true' &&
           steps.gate3.outputs.passed == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        env:
+          HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
         with:
           token: ${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}
           base: main
