@@ -81,7 +81,7 @@ export function ContactsView() {
       <PageHeader
         variant="plain"
         title="Contatos"
-        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
+        subtitle={`Base de contatos (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-3 flex-wrap">
@@ -89,35 +89,35 @@ export function ContactsView() {
               <motion.div whileTap={tapAnimation}>
                 <Button
                   onClick={() => setIsCRMSearchOpen(true)}
-                  className="h-12 px-5 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-base gap-2"
+                  className="h-9 px-4 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-1.5"
                 >
-                  <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+                  <Sparkles className="w-4 h-4" />CRM 360°
                 </Button>
               </motion.div>
             )}
             <motion.div whileTap={tapAnimation}>
               <Button
                 onClick={() => setIsImportOpen(true)}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
               >
-                <Upload className="w-[18px] h-[18px]" />Importar CSV
+                <Upload className="w-4 h-4" />Importar CSV
               </Button>
             </motion.div>
             <motion.div whileTap={tapAnimation}>
               <Button
                 onClick={handleExportCSV}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
               >
-                <Download className="w-[18px] h-[18px]" />Exportar CSV
+                <Download className="w-4 h-4" />Exportar CSV
               </Button>
             </motion.div>
             <motion.div whileTap={tapAnimation}>
               <Button
                 onClick={handleSync}
                 disabled={loading}
-                className="h-12 px-5 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-base gap-2"
+                className="h-9 px-4 rounded-xl bg-card border border-border text-foreground hover:bg-muted font-semibold text-sm gap-1.5"
               >
-                <RefreshCw className={`w-[18px] h-[18px] ${loading ? 'animate-spin' : ''}`} />Sincronizar
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Sincronizar
               </Button>
             </motion.div>
             <ContactDialogs

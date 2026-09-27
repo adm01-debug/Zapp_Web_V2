@@ -144,12 +144,12 @@ export function PageHeader({
           <div className="min-w-0">
             <h1 className={cn(
               variant === 'plain'
-                ? 'text-4xl font-extrabold tracking-[-0.02em] leading-none text-foreground truncate'
+                ? 'text-2xl font-bold text-foreground truncate'
                 : 'text-xl font-display font-bold text-foreground truncate'
             )}>{title}</h1>
             {subtitle && (
               <p className={cn(
-                variant === 'plain' ? 'text-lg text-muted-foreground mt-2 truncate' : 'text-sm text-muted-foreground truncate'
+                variant === 'plain' ? 'text-sm text-muted-foreground mt-1 truncate' : 'text-sm text-muted-foreground truncate'
               )}>{subtitle}</p>
             )}
           </div>
