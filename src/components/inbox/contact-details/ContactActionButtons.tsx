@@ -58,10 +58,11 @@ type TileProps = React.ComponentPropsWithoutRef<'button'> & {
 };
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
-  // `title` é descartado de propósito (nunca vai para o DOM): o `title` nativo
+  // `_title` é descartado de propósito (nunca vai para o DOM): o `title` nativo
   // do browser e o TooltipContent abaixo mostravam textos diferentes ao mesmo
   // tempo (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
-  { icon, label, testId, hoverColorClass = 'group-hover:text-primary', className, title, disabled, ...rest }, ref,
+  // `_` prefix: evita no-unused-vars do ESLint (achado na auditoria de 27/09).
+  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: _title, disabled, ...rest }, ref,
 ) {
   const button = (
     <button
@@ -72,7 +73,7 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
       disabled={disabled}
       {...rest}
       className={cn(
-        'group h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
+        'h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
         'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
         hoverColorClass,
         className,
@@ -90,7 +91,9 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
             // <button disabled> nunca recebe foco nem dispara hover — sem este
             // wrapper focável, o tooltip nunca aparecia no estado desabilitado
             // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
-            <span tabIndex={0} className="inline-flex cursor-not-allowed">{button}</span>
+            // role/aria-disabled/aria-label: acessibilidade WCAG 4.1.2 para
+            // leitores de tela (achado na auditoria de 5 agentes, 27/09).
+            <span tabIndex={0} role="button" aria-disabled="true" aria-label={label} className="inline-flex cursor-not-allowed">{button}</span>
           ) : button}
         </TooltipTrigger>
         <TooltipContent>{label}</TooltipContent>
@@ -143,7 +146,9 @@ export function ContactActionButtons({
           // abaixo do mínimo WCAG 1.4.11 (3:1) para ícones. L reduzido pra
           // 35% (mesmo tom/saturação) só neste hover, sem tocar o token
           // global (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
-          hoverColorClass="group-hover:text-[hsl(160_70%_35%)]"
+          // group-hover: → hover: direto: group-hover num elemento sem ancestral
+          // com .group nunca dispara — CSS descendant combinator (27/09, rodada 5).
+          hoverColorClass="hover:text-[hsl(160_70%_35%)]"
         />
 
         <DropdownMenu>
