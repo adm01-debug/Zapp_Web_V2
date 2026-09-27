@@ -74,7 +74,17 @@ export function useCreateTeamConversation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ type, name, memberIds }: { type: 'direct' | 'group'; name?: string; memberIds: string[] }) => {
+    mutationFn: async ({
+      type,
+      name,
+      memberIds = [],
+      departmentId,
+    }: {
+      type: 'direct' | 'group' | 'department';
+      name?: string;
+      memberIds?: string[];
+      departmentId?: string;
+    }) => {
       if (!profile) throw new Error('Not authenticated');
 
       if (type === 'direct' && memberIds.length === 1) {
@@ -88,6 +98,28 @@ export function useCreateTeamConversation() {
           .eq('id', convId as string)
           .single();
         if (convErr) throw convErr;
+        return conv;
+      }
+
+      if (type === 'department' && departmentId) {
+        // Return existing department conversation if present
+        const { data: existing } = await supabase
+          .from('team_conversations')
+          .select('id')
+          .eq('department_id', departmentId)
+          .maybeSingle();
+        if (existing) return existing;
+
+        const { data: conv, error } = await supabase
+          .from('team_conversations')
+          .insert({ type: 'department', name: name || null, created_by: profile.id, department_id: departmentId })
+          .select()
+          .single();
+        if (error) throw error;
+        const { error: memError } = await supabase
+          .from('team_conversation_members')
+          .insert([{ conversation_id: conv.id, profile_id: profile.id }]);
+        if (memError) throw memError;
         return conv;
       }
 
