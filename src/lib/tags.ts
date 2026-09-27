@@ -17,3 +17,5 @@ export function normalizeTag(tag: string): string { return tag.trim(); }
 export function filterWATags(tags: string[]): string[] { return tags.filter(isWhatsAppTag); }
 
 export function filterCustomTags(tags: string[]): string[] { return tags.filter(t => !isWhatsAppTag(t)); }
+
+export type TagArray = string[];
