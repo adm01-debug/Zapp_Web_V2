@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-26T00:43:38.137Z",
+  "geradoEm": "2026-09-27T14:30:00.000Z",
   "commit": null,
   "escala": {
     "3xs": {
@@ -18,25 +18,25 @@
       "fontSizePx": 12,
       "lineHeightPx": 16,
       "lineHeightDeclarado": "1rem",
-      "usos": 1701
+      "usos": 1706
     },
     "sm": {
       "fontSizePx": 14,
       "lineHeightPx": 20,
       "lineHeightDeclarado": "1.25rem",
-      "usos": 1099
+      "usos": 1105
     },
     "base": {
       "fontSizePx": 16,
       "lineHeightPx": 24,
       "lineHeightDeclarado": "1.5rem",
-      "usos": 140
+      "usos": 135
     },
     "lg": {
       "fontSizePx": 18,
       "lineHeightPx": 28,
       "lineHeightDeclarado": "1.75rem",
-      "usos": 187
+      "usos": 186
     },
     "xl": {
       "fontSizePx": 20,
@@ -48,19 +48,19 @@
       "fontSizePx": 24,
       "lineHeightPx": 32,
       "lineHeightDeclarado": "2rem",
-      "usos": 128
+      "usos": 129
     },
     "3xl": {
       "fontSizePx": 30,
       "lineHeightPx": 36,
       "lineHeightDeclarado": "2.25rem",
-      "usos": 18
+      "usos": 19
     },
     "4xl": {
       "fontSizePx": 36,
       "lineHeightPx": 40,
       "lineHeightDeclarado": "2.5rem",
-      "usos": 12
+      "usos": 10
     },
     "5xl": {
       "fontSizePx": 48,
@@ -119,7 +119,7 @@
       "fontSizePx": 13,
       "lineHeightPx": 19.5,
       "lineHeightOrigem": "herdado (preflight 1.5)",
-      "usos": 160,
+      "usos": 155,
       "equivalenteNaEscala": null
     },
     "15": {

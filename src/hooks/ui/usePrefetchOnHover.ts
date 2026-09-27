@@ -15,7 +15,6 @@ const VIEW_QUERY_KEYS: Record<string, string[][]> = {
   automations: [['automations']],
   agents: [['team-members']],
   queues: [['queues']],
-  tags: [['tags']],
 };
 
 /**

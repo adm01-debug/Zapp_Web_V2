@@ -154,6 +154,36 @@ function runPsql(url, sql) {
   }
 }
 
+const OBJECT_NAME_PATTERNS = [
+  /\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+"?([\w.]+)"?/gi,
+  /\bCREATE\s+(?:TABLE|VIEW|MATERIALIZED\s+VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([\w.]+)"?/gi,
+  /\bCREATE\s+POLICY\s+"?([^"]+?)"?\s+ON\s+"?([\w.]+)"?/gi,
+];
+
+/**
+ * Extrai nomes de funcao/tabela/view/policy DEFINIDOS pela migration (nao
+ * ALTER/INDEX -- isso gera falso positivo demais em toque incremental) para
+ * checar colisao com outra version no ledger. Licao do incidente
+ * dashboard_kpi de 2026-09-25 (CLAUDE.md, secao "Auditoria de workflows"):
+ * checar so a VERSION nao basta -- a MESMA funcao pode ja estar registrada
+ * sob version diferente.
+ */
+export function extractObjectNames(statements) {
+  const nomes = new Set();
+  for (const stmt of statements) {
+    for (const pattern of OBJECT_NAME_PATTERNS) {
+      pattern.lastIndex = 0;
+      let m;
+      while ((m = pattern.exec(stmt))) {
+        for (let g = 1; g < m.length; g += 1) {
+          if (m[g]) nomes.add(m[g].toLowerCase());
+        }
+      }
+    }
+  }
+  return [...nomes];
+}
+
 export function parseMigrationFile(filePath) {
   const abs = path.resolve(filePath);
   const base = path.basename(abs);
@@ -259,6 +289,34 @@ function main() {
     console.error(`ABORT: versao ${version} nao e estritamente maior que max(version) atual (${maxRaw}). Renomeie o arquivo.`);
     process.exitCode = 1;
     return;
+  }
+
+  const nomesObjetos = extractObjectNames(statements);
+  if (nomesObjetos.length > 0) {
+    const condicoes = nomesObjetos
+      .map((nome) => `s ILIKE '%${nome.replace(/'/g, "''")}%'`)
+      .join(' OR ');
+    let colisaoRaw;
+    try {
+      colisaoRaw = runPsql(
+        urlSegura,
+        `SELECT DISTINCT version FROM supabase_migrations.schema_migrations, LATERAL unnest(statements) AS s WHERE version <> '${version}' AND (${condicoes}) ORDER BY 1`,
+      ).trim();
+    } catch (err) {
+      console.error(`ABORT: falha ao verificar colisao de objeto por nome: ${err.message}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (colisaoRaw) {
+      const versoes = colisaoRaw.split('\n').filter(Boolean).join(', ');
+      console.error(
+        `ABORT: objeto(s) [${nomesObjetos.join(', ')}] deste arquivo (${version}) ja aparece(m) no `
+        + `ledger sob outra version (${versoes}). Confirme se e a MESMA migration ja registrada -- `
+        + 'nao insira de novo (risco do incidente dashboard_kpi de 2026-09-25, ver CLAUDE.md).',
+      );
+      process.exitCode = 1;
+      return;
+    }
   }
 
   let returned;

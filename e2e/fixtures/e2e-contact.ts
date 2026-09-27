@@ -48,28 +48,70 @@ async function getAccessToken(page: Page): Promise<string> {
   return token;
 }
 
-// trg_contacts_fsm_transition (enforce_conversation_status_transition) permite
-// resolved -> open, então reabrir antes de cada teste é seguro mesmo que a run
-// anterior tenha encerrado a conversa via close_conversation_atomic — esta suíte
-// roda contra produção (e2e-logado.yml), não um banco descartável por execução.
+// Reabre o contato fixo de E2E e garante que ele apareça na inbox.
+//
+// Dois problemas raiz identificados após PR #906 (ALTER POLICY contacts UPDATE
+// TO authenticated):
+//
+// 1. STATUS: o PATCH REST passou a retornar 0 linhas silenciosamente quando
+//    auth.uid() resolve para NULL (token expirado ou role=anon no gateway).
+//    Fix: set_conversation_status (SECURITY DEFINER) — executa com privilégios
+//    de owner e bypassa RLS completamente. Trata "invalid transition open->open"
+//    como no-op (contato já está aberto).
+//
+// 2. INBOX VISIBILITY: InboxFilters.filteredConversations filtra contacts com
+//    c.messages.length === 0 (FSM mode exige mensagens para não inflar a inbox
+//    com contatos históricos sem atividade). O único message do fixture é de
+//    2026-09-24 e cai fora da janela de 1000 mensagens após um dia de tráfego.
+//    Fix: inserir uma message fresca antes de recarregar a página — a policy
+//    INSERT de messages não tem WITH CHECK (qualquer authenticated insere).
 export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
-  const response = await page.request.patch(
-    `${SUPABASE_URL}/rest/v1/contacts?id=eq.${E2E_FIXTURE_CONTACT_ID}`,
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  // 1. Reabrir via RPC SECURITY DEFINER (bypassa RLS, atualiza
+  //    conversation_status_changed_at = NOW() e updated_at = NOW())
+  const rpcResponse = await page.request.post(
+    `${SUPABASE_URL}/rest/v1/rpc/set_conversation_status`,
     {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      data: { conversation_status: 'open' },
+      headers,
+      data: { p_contact_id: E2E_FIXTURE_CONTACT_ID, p_next: 'open' },
     }
   );
-  if (!response.ok()) {
+  if (!rpcResponse.ok()) {
+    const body = await rpcResponse.text().catch(() => '');
+    // FSM não permite open -> open — contato já está open, continuar.
+    if (!body.includes('invalid transition') && !body.includes('invalid_transition')) {
+      throw new Error(
+        `set_conversation_status falhou: HTTP ${rpcResponse.status()} ${body}`
+      );
+    }
+  }
+
+  // 2. Inserir mensagem fresca para garantir que o contato apareça na inbox
+  //    (InboxFilters exige messages.length > 0; janela de 1000 msgs pode deixar
+  //    mensagens antigas de fora quando o volume diário ultrapassa esse limite).
+  //    A policy INSERT de messages não tem WITH CHECK — authenticated pode inserir.
+  const msgResponse = await page.request.post(
+    `${SUPABASE_URL}/rest/v1/messages`,
+    {
+      headers: { ...headers, Prefer: 'return=minimal' },
+      data: {
+        contact_id: E2E_FIXTURE_CONTACT_ID,
+        sender: 'contact',
+        content: '[E2E fixture setup]',
+        message_type: 'text',
+      },
+    }
+  );
+  if (!msgResponse.ok()) {
     throw new Error(
-      `Falha ao reabrir o contato fixo de E2E antes do teste: HTTP ${response.status()} ` +
-        (await response.text())
+      `Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ` +
+        (await msgResponse.text().catch(() => ''))
     );
   }
 }

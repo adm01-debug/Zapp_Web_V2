@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const validateEmail = (email: string): boolean => {
@@ -45,18 +45,50 @@ export function useContactFormValidation(
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldError>({});
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [duplicateEmailWarning, setDuplicateEmailWarning] = useState<string | null>(null);
   const dupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const emailDupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const emailCheckSeqRef = useRef(0);
+  const phoneCheckSeqRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(dupCheckTimer.current);
+      clearTimeout(emailDupCheckTimer.current);
+    };
+  }, []);
 
   const checkDuplicate = useCallback(async (phone: string) => {
+    const seq = phoneCheckSeqRef.current;
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length < 10) { setDuplicateWarning(null); return; }
+    // cleaned is pure digits after /\D/ strip — %, _ and \\ are impossible;
+    // escaping is defensive parity with checkEmailDuplicate.
+    const last8 = cleaned.slice(-8).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
       .from('contacts')
       .select('name, phone')
-      .or(`phone.ilike.%${cleaned.slice(-8)}%`);
+      .or(`phone.ilike.%${last8}%`);
     if (excludeContactId) query = query.neq('id', excludeContactId);
     const { data } = await query.limit(1);
+    if (seq !== phoneCheckSeqRef.current) return;
     setDuplicateWarning(data && data.length > 0 ? `Possível duplicata: "${data[0].name}" (${data[0].phone})` : null);
+  }, [excludeContactId]);
+
+  const checkEmailDuplicate = useCallback(async (email: string) => {
+    const trimmed = email.trim();
+    // Capture seq without incrementing — handleChange already incremented synchronously
+    const seq = emailCheckSeqRef.current;
+    if (!trimmed || !validateEmail(trimmed)) { setDuplicateEmailWarning(null); return; }
+    const escapedEmail = trimmed.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    let query = supabase
+      .from('contacts')
+      .select('name, email')
+      .ilike('email', escapedEmail);
+    if (excludeContactId) query = query.neq('id', excludeContactId);
+    const { data } = await query.limit(1);
+    if (seq !== emailCheckSeqRef.current) return;
+    setDuplicateEmailWarning(data && data.length > 0 ? `Email já cadastrado: "${data[0].name}"` : null);
   }, [excludeContactId]);
 
   const validate = useCallback((field: string, value: string): string | null => {
@@ -83,7 +115,14 @@ export function useContactFormValidation(
   const handleChange = useCallback((field: string, value: string) => {
     onChange(field, value);
     if (touched[field]) setErrors(prev => ({ ...prev, [field]: validate(field, value) }));
-  }, [onChange, touched, validate]);
+    if (field === 'email') {
+      // Increment synchronously so any in-flight query is immediately invalidated,
+      // even if it resolves before the 500 ms debounce fires.
+      ++emailCheckSeqRef.current;
+      clearTimeout(emailDupCheckTimer.current);
+      emailDupCheckTimer.current = setTimeout(() => checkEmailDuplicate(value), 500);
+    }
+  }, [onChange, touched, validate, checkEmailDuplicate]);
 
   const handleBlur = useCallback((field: string, value: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
@@ -94,6 +133,7 @@ export function useContactFormValidation(
     const formatted = formatPhone(value);
     onChange('phone', formatted);
     if (touched.phone) setErrors(prev => ({ ...prev, phone: validate('phone', formatted) }));
+    ++phoneCheckSeqRef.current;
     clearTimeout(dupCheckTimer.current);
     dupCheckTimer.current = setTimeout(() => checkDuplicate(formatted), 500);
   }, [onChange, touched, validate, checkDuplicate]);
@@ -115,7 +155,7 @@ export function useContactFormValidation(
   }, [values.name, values.phone, values.email]);
 
   return {
-    touched, errors, duplicateWarning, isValid,
+    touched, errors, duplicateWarning, duplicateEmailWarning, isValid,
     handleChange, handleBlur, handlePhoneChange, handleSubmit,
   };
 }

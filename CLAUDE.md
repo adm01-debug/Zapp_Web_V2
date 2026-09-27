@@ -72,6 +72,38 @@
 
 O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões WhatsApp). **Não confundir com o banco do projeto** (seção 1) e não aplicar migrations do repo nele.
 
+### Runbook: QR Code não aparece / trava no spinner (sessão órfã na GO)
+
+Sintoma: dialog "Escanear QR Code" fica só com o loader girando; a conexão nunca pareia.
+Causa comum: a instância na Evolution GO tem **JID persistido mas está deslogada**
+(`status` → `LoggedIn:false`/`Connected:false` com `jid` presente). Nesse estado o
+`/instance/connect` reusa a sessão salva e **não emite QR novo**; `/instance/qr` volta
+vazio. Diagnóstico rápido (edge `evolution-api`): `connect` responde `success` com `jid`
+mas sem `qrcode`; `disconnect` (logout GO) → 400; `restart-instance` (reconnect GO) → 500
+`no active session found`.
+
+Diagnóstico ao vivo (2026-09-27, via `list-instances`): o registro da instância na GO vem
+com `jid` preenchido, `connected:false` e **`disconnect_reason:"Reconnecting"`**. É a
+assinatura exata: o device foi desvinculado no celular, mas o whatsmeow ainda tem
+`Store.ID` setado e fica em loop tentando retomar a sessão salva — `Connect()` com
+`Store.ID != nil` **não abre o canal de QR**. Por isso `/instance/qr` volta vazio e
+`logout`/`reconnect` respondem 400/500 (`no active session found`): `Logout()` precisa de
+conexão ativa para mandar o IQ ao WhatsApp.
+
+Desde o fix de 2026-09-27 a edge `connect` resolve isso sozinha, em três camadas:
+1. poll do `/instance/qr` (3× / 1,5s), porque o QR na GO é assíncrono;
+2. sem QR + não logado + registro na GO com `jid` → **recria a instância na GO**
+   (`DELETE /instance/delete/{id}` + `POST /instance/create` com o **mesmo**
+   `EVOLUTION_INSTANCE_TOKEN` e o mesmo nome `PRINCIPAL`), o que zera o device store;
+   em seguida reconecta e faz novo poll do QR, devolvendo `recovered:true`;
+3. se ainda assim não sair QR, devolve `error:true`/409 em vez de `qrcode:undefined` —
+   o front mostra erro com "Gerar novo código" (nada de spinner infinito).
+
+`whatsapp_connections` **não** é tocado nesse fluxo (só o estado interno da GO), e o token
+não muda — então nenhum secret precisa ser regerado. Não há mais passo manual no Postgres
+da GO: o MCP `HOSTINGER` não expõe docker-exec e o Portainer não enxerga esses containers,
+então esse caminho nunca foi executável por agente de qualquer forma.
+
 ---
 
 ## 3. Repo e escrita
@@ -84,7 +116,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-09-25. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-27. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -110,10 +142,10 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 7 required checks da seção abaixo.
+  deleção, e os 6 required checks da seção abaixo.
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
-  `required_status_checks.strict` está **`false`** ao vivo (confirmado via
+  `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
   `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
   merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
   manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
@@ -121,6 +153,16 @@ Estado dos achados após re-auditoria de 2026-09-17:
   ainda existe e roda, mas o gatilho que o tornava necessário (toda PR reprovada por estar atrás)
   não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
   um dos dois lados.
+
+  **Correção de 2026-09-27:** `strict` regrediu para `true` entre 25/09 e 27/09 — causa não
+  identificada (busca no repo confirma: nenhum workflow toca branch protection; foi uma sessão
+  manual que chamou `github_update_branch_protection` sem preservar o campo). Descoberto ao
+  tentar mergear PR #958: todos os 6 required checks verdes no HEAD SHA, mas o merge retornava
+  405 "6 of 6 required status checks are expected". Restaurado para `false` com
+  `github_update_branch_protection` (PUT completo; 6 contexts + `enforce_admins: true`
+  preservados; merge bem-sucedido em seguida). **Sintoma inconfundível de `strict=true`:**
+  merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
+  verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
@@ -135,10 +177,11 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (7; `strict` está `false` ao vivo — ver correção em 25/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
+**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge.
+sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
+(não bloqueia merge).
 
 **Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
 protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
@@ -185,7 +228,7 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correção acima, seção "Branch protection sem `Contrato DB
+ligado (hoje está `false` ao vivo — ver correções em 25/09 e 27/09 acima, seção "Branch protection sem `Contrato DB
 vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
