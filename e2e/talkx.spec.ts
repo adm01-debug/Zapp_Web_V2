@@ -3,6 +3,9 @@ import { test, expect, type Page } from '@playwright/test';
 // SidebarNavGroup defaults to closed (defaultOpen=false). Fresh auth storageState
 // has no saved group-open state, so the group must be expanded before clicking
 // any item inside "Automação & IA".
+//
+// The 1920×1080 viewport (configured with test.use below) renders the sidebar in
+// full mode — no compact/icon layout, no pointer-event interception.
 async function expandCampanhasGroup(page: Page) {
   const nav = page.getByRole('navigation', { name: 'Menu de navegação principal' });
   const groupBtn = nav.getByRole('button', { name: /automação & ia/i }).first();
@@ -12,6 +15,10 @@ async function expandCampanhasGroup(page: Page) {
 }
 
 test.describe('Talk X module', () => {
+  // Full-width viewport: sidebar renders in full mode (not compact/icon), eliminating
+  // the pointer-event interception that required force: true at 1280×720.
+  test.use({ viewport: { width: 1920, height: 1080 } });
+
   test('campaigns overview renders after navigating from the sidebar', async ({ page }) => {
     await page.goto('/');
     await expandCampanhasGroup(page);
@@ -84,5 +91,64 @@ test.describe('Talk X module', () => {
     await page.getByRole('tab', { name: 'Templates' }).click();
     await expect(page.getByRole('tab', { name: 'Templates' })).toHaveAttribute('data-state', 'active');
     await expect(page.getByPlaceholder('Buscar templates…')).toBeVisible();
+  });
+
+  test('wizard step 1 shows audience fields and stepper', async ({ page }) => {
+    // Navigate directly via URL to the campaigns overview, bypassing sidebar clicks.
+    // This exercises the deep-link routing path (?view=talkx) independently of the
+    // sidebar-navigation tests above.
+    await page.goto('/?view=talkx');
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+
+    // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button
+    await page.getByRole('button', { name: /nova campanha/i }).first().click();
+    await expect(page.getByRole('heading', { name: /nova campanha/i })).toBeVisible();
+
+    // Step 1 label ("Público") is visible in the stepper
+    await expect(page.getByText('Público').first()).toBeVisible();
+
+    // Campaign name input is present and empty.
+    // IMPORTANT: do NOT use fill() — useCampaignEditor autosave fires ~3 s after
+    // first keystroke, creating real draft records on every CI run and retry.
+    const nameInput = page.getByPlaceholder('Ex: Lançamento Linha Office');
+    await expect(nameInput).toBeVisible();
+    await expect(nameInput).toHaveValue('');
+
+    // Step 1 always shows "Continuar"
+    await expect(page.getByRole('button', { name: /continuar/i })).toBeVisible();
+
+    // Close the wizard via the header Voltar button (aria-label="Voltar", calls onClose).
+    // On step 1 the footer Voltar is hidden (only shown when step > 1), so .first()
+    // reliably targets the header button.
+    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+  });
+
+  test('wizard stepper shows all four steps and continuar is initially disabled', async ({ page }) => {
+    await page.goto('/?view=talkx');
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
+
+    // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button
+    await page.getByRole('button', { name: /nova campanha/i }).first().click();
+    await expect(page.getByRole('heading', { name: /nova campanha/i })).toBeVisible();
+
+    // The stepper renders all four step labels simultaneously regardless of the current step.
+    // STEPS in TalkXCampaignWizard.tsx: Público | Mensagem | Entrega | Revisão
+    await expect(page.getByText('Público').first()).toBeVisible();
+    await expect(page.getByText('Mensagem').first()).toBeVisible();
+    await expect(page.getByText('Entrega').first()).toBeVisible();
+    await expect(page.getByText('Revisão').first()).toBeVisible();
+
+    // "Continuar" is disabled until canProceed[1] is satisfied:
+    //   name.trim().length > 0 && !!connectionId && (segmentId || selectedContacts.length > 0)
+    // The wizard starts with an empty form, so canProceed[1] is always false on open.
+    // IMPORTANT: do NOT fill any field — useCampaignEditor autosave fires ~3 s after
+    // the first keystroke and creates real draft records on every CI run.
+    const continuar = page.getByRole('button', { name: /continuar/i });
+    await expect(continuar).toBeVisible();
+    await expect(continuar).toBeDisabled();
+
+    await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 });
