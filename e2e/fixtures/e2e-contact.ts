@@ -115,3 +115,18 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
     );
   }
 }
+
+// Remove as mensagens "[E2E fixture setup]" inseridas por ensureFixtureConversationOpen.
+// Chamar dentro de test.afterAll para manter o histórico do contato limpo entre runs.
+export async function cleanupFixtureMessages(page: Page): Promise<void> {
+  const accessToken = await getAccessToken(page);
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+  await page.request.delete(
+    `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&content=eq.[E2E%20fixture%20setup]`,
+    { headers }
+  );
+}
