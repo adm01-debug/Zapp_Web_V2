@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { motion, useMotionValue, animate, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CountUpProps {
   value: string;
@@ -178,6 +179,8 @@ interface DashboardKpiCardProps {
   labelAdornment?: ReactNode;
   /** Substitui o sparkline por conteúdo arbitrário (ex.: ícone + "Sem avaliações no período"). */
   aside?: ReactNode;
+  /** Exibe placeholders de carregamento no lugar do conteúdo real. Evita layout shift mantendo o mesmo container. */
+  isLoading?: boolean;
 }
 
 function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSize }) {
@@ -218,9 +221,48 @@ function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSiz
 export function DashboardKpiCard({
   label, value, delta, tile, icon: Icon, bars, barsColor, testid, index = 0,
   chart = 'bars', footer, size = 'compact', valueClassName, badge, labelAdornment, aside,
+  isLoading = false,
 }: DashboardKpiCardProps) {
   const reducedMotion = useReducedMotion();
   const hero = size === 'hero';
+
+  if (isLoading) {
+    if (!hero) {
+      return (
+        <div
+          data-testid={testid ?? 'kpi-card'}
+          className={cn('rounded-xl bg-card border border-border/70 p-3 flex flex-col gap-1.5', kpiCardHeightClass[size])}
+        >
+          <div className="flex gap-3">
+            <Skeleton className="w-[34px] h-[34px] rounded-lg shrink-0" />
+            <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-2.5 w-20" />
+            </div>
+            <Skeleton className="w-[55px] h-[28px] shrink-0 self-end" />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div
+        data-testid={testid ?? 'kpi-card'}
+        className={cn('relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3', kpiCardHeightClass.hero)}
+      >
+        <div className="flex gap-4 items-start">
+          <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
+          <div className="min-w-0 flex-1 flex flex-col gap-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-3.5 w-16" />
+          </div>
+          <Skeleton className="w-[100px] h-[44px] shrink-0 self-center" />
+        </div>
+      </div>
+    );
+  }
+
   const graph = aside ?? (chart === 'none' ? null : chart === 'line'
     ? <KpiLine bars={bars} color={barsColor} size={size} />
     : <KpiBars bars={bars} color={barsColor} size={size} />);
