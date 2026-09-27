@@ -3,7 +3,7 @@
 # ==================================================================
 # SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele usa
 # os secrets E2E_TEST_EMAIL/E2E_TEST_PASSWORD (usuario de teste dedicado, perfil
-# agente) apenas depois de o codigo chegar a main ou em dispatch feito sobre
+# supervisor) apenas depois de o codigo chegar a main ou em dispatch feito sobre
 # main. Workflows de PR nao podem referenciar secrets
 # (scripts/ci/check-pr-workflow-secrets.mjs), por isso este teste nao fica no
 # ci.yml e nao bloqueia PR.
@@ -67,9 +67,9 @@ jobs:
       # nao disparou "setup" (log mostrou so "Running 4 tests", nunca
       # "Running 1 test" do setup) e e2e/.auth/user.json nunca foi gerado.
       # Ainda sem path de arquivo no CLI (evita o bug original da PR #839,
-      # onde o filtro de arquivo quebrava a dependencia). talkx.spec.ts fica
-      # de fora: o usuario de teste e agente e nao enxerga "Campanhas" (ver
-      # e2e/README.md).
+      # onde o filtro de arquivo quebrava a dependencia). talkx.spec.ts incluido
+      # via chromium-e2e-core testMatch (playwright.config.ts) -- o usuario de
+      # teste tem perfil supervisor e enxerga "Campanhas" (E99).
       - name: 🔐 Run Playwright E2E (login real)
         run: bun run test:e2e -- --project=setup --project=chromium-e2e-core
         env:

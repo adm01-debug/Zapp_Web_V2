@@ -35,7 +35,7 @@ export default defineConfig({
       // no CLI sob "chromium-authenticated") para que uma única invocação do
       // Playwright resolva "setup" sozinha via dependsOn — ver e2e/README.md.
       name: 'chromium-e2e-core',
-      testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/, /talkx\.spec\.ts/],
       dependsOn: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

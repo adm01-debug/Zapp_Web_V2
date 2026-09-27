@@ -30,7 +30,7 @@ que dependem de `setup` falham (propositalmente — não há fallback silencioso
 nem bypass de auth); `chromium` (`auth.spec.ts`) continua passando
 normalmente porque não depende de `setup`.
 
-Existe um usuário de teste dedicado, com perfil de agente (não enxerga
+Existe um usuário de teste dedicado, com perfil de supervisor (enxerga
 "Campanhas"/Talk X), e as credenciais estão nos secrets do repositório
 (`E2E_TEST_EMAIL` e `E2E_TEST_PASSWORD`). Para rodar localmente, peça as
 credenciais ao dono do projeto.
@@ -58,24 +58,22 @@ npm run test:e2e
   podem referenciar secrets (regra em `scripts/ci/check-pr-workflow-secrets.mjs`),
   então esse teste não bloqueia PR.
 
-`chromium-e2e-core` cobre só `conversation.spec.ts` e `messaging.spec.ts`
-(`testMatch` dedicado em `playwright.config.ts`) — passar os 2 arquivos como
-path no CLI junto de `--project` quebra a resolução de `dependsOn` (o filtro
-de arquivo vale para todos os projects da invocação, então `setup` roda com
-0 testes e nunca gera `e2e/.auth/user.json`; foi exatamente esse bug na
-primeira tentativa, run 36247270724). Rodar `setup` e os specs em 2
-invocações separadas do CLI evita esse bug mas sobe 2 `vite` dev server do
-zero (um por invocação) — sem o `setup` aquecer o bundle antes, a 1ª
-navegação real do job cai num vite frio e estoura o timeout de 30s
+`chromium-e2e-core` cobre `conversation.spec.ts`, `messaging.spec.ts` e
+`talkx.spec.ts` (`testMatch` dedicado em `playwright.config.ts`) — o usuário
+de teste tem perfil supervisor e enxerga "Campanhas" (E99, 2026-09-27). Passar
+os arquivos como path no CLI junto de `--project` quebra a resolução de
+`dependsOn` (o filtro de arquivo vale para todos os projects da invocação,
+então `setup` roda com 0 testes e nunca gera `e2e/.auth/user.json`; foi
+exatamente esse bug na primeira tentativa, run 36247270724). Rodar `setup` e
+os specs em 2 invocações separadas do CLI evita esse bug mas sobe 2 `vite`
+dev server do zero (um por invocação) — sem o `setup` aquecer o bundle antes,
+a 1ª navegação real do job cai num vite frio e estoura o timeout de 30s
 (confirmado na run 36249048738). O project dedicado com `dependsOn` resolve
 os dois problemas numa invocação só.
 
 `chromium-authenticated` (mesma dependência de `setup`, mas com
-`testIgnore` cobrindo auth + os 2 specs acima) fica reservado para specs
-futuros que não sejam `conversation`/`messaging` — hoje nenhum workflow o
-invoca. `talkx.spec.ts` fica fora do `e2e-logado.yml`: o usuário de teste é
-agente e não enxerga "Campanhas". Para incluí-lo é preciso decidir o perfil
-do usuário de teste ou trazer specs que um agente consiga executar.
+`testIgnore` cobrindo auth + os 3 specs acima) fica reservado para specs
+futuros — hoje nenhum workflow o invoca.
 
 ## Fixture de dados (contato seedado)
 
@@ -96,10 +94,8 @@ mexe no status da conversa) faz só a navegação + clique em "Todas" no
 usuário de teste, sem fila) é o único item visível no inbox desse usuário —
 nunca apagar essa linha do banco.
 
-`talkx.spec.ts` não está mais em `test.skip` (desde 2026-09-22) e tem specs
-reais cobrindo navegação/render do módulo Talk X — mas nenhum workflow de CI
-invoca o project `chromium-authenticated` hoje (ver seção acima), então esses
-testes não rodam automaticamente em lugar nenhum, só via
-`npx playwright test --project=chromium-authenticated` local (com as
-variáveis de `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` de um usuário que enxergue
-Campanhas).
+`talkx.spec.ts` cobre navegação/render do módulo Talk X e roda via
+`chromium-e2e-core` no `e2e-logado.yml` (E99, 2026-09-27) — o usuário de
+teste tem perfil supervisor e enxerga "Campanhas". Para rodar localmente:
+`bunx playwright test --project=chromium-e2e-core e2e/talkx.spec.ts` (com
+as variáveis `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas).

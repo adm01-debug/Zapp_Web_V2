@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Search, Image, Video, Music, X,
-  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff, Upload,
+  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff, Upload, LayoutGrid, List,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -36,6 +36,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
   const [editing, setEditing] = useState<TalkXTemplate | null>(null);
   const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
   const [selected, setSelected] = useState<TalkXTemplate | null>(null);
+  const [galleryMode, setGalleryMode] = useState<'grid' | 'list'>('grid');
 
   // editor state
   const [eName, setEName] = useState('');
@@ -167,16 +168,35 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
         <FilterBar search={search} onSearch={setSearch} placeholder="Buscar templates…" selects={[
           { key: 'cat', value: filterCat, onChange: setFilterCat, label: 'Todas as categorias', options: TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: c })) },
           { key: 'st', value: filterStatus, onChange: setFilterStatus, label: 'Todos os status', options: Object.entries(TEMPLATE_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
-        ]} right={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>} />
+        ]} right={
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-border/70 overflow-hidden">
+              <button type="button" aria-label="Grade" aria-pressed={galleryMode === 'grid'} onClick={() => setGalleryMode('grid')} className={cn('h-8 w-8 flex items-center justify-center transition-colors', galleryMode === 'grid' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')}><LayoutGrid className="w-3.5 h-3.5" /></button>
+              <button type="button" aria-label="Lista" aria-pressed={galleryMode === 'list'} onClick={() => setGalleryMode('list')} className={cn('h-8 w-8 flex items-center justify-center transition-colors', galleryMode === 'list' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground')}><List className="w-3.5 h-3.5" /></button>
+            </div>
+            <PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>
+          </div>
+        } />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
-          {isLoading ? (<div className="col-span-full"><TalkXSkeletonRows rows={3} /></div>)
-           : templates.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} /></div>)
-           : paged.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={Search} title="Nenhum template encontrado" /></div>)
-           : paged.map((t) => (
-            <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
-          ))}
-        </div>
+        {galleryMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
+            {isLoading ? (<div className="col-span-full"><TalkXSkeletonRows rows={3} /></div>)
+             : templates.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} /></div>)
+             : paged.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={Search} title="Nenhum template encontrado" /></div>)
+             : paged.map((t) => (
+              <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+            ))}
+          </div>
+        ) : (
+          <div className="border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/50">
+            {isLoading ? <TalkXSkeletonRows rows={4} />
+             : templates.length === 0 ? <TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} />
+             : paged.length === 0 ? <TalkXEmptyState icon={Search} title="Nenhum template encontrado" />
+             : paged.map((t) => (
+              <TemplateListRow key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+            ))}
+          </div>
+        )}
         {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="templates" />}
       </div>
 
@@ -227,6 +247,36 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={() => { if (deleting) deleteTemplate.mutate(deleting.id); setDeleting(null); }}>Excluir</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function TemplateListRow({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
+  const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+  return (
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
+      className={cn('flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/20', selected ? 'bg-primary/5' : '')}
+    >
+      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+        <p className="text-xs text-muted-foreground truncate">{t.content.slice(0, 80)}{t.content.length > 80 ? '…' : ''}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground hidden sm:block">{t.category}</span>
+        <Pill label={sm.label} tone={sm.tone} dot />
+        <span className="text-3xs text-muted-foreground w-12 text-right hidden md:block">{fmtInt(t.use_count)} usos</span>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold">Usar</button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-7 w-7 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
+      </div>
     </div>
   );
 }
