@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { toast } from 'sonner';
 
 export interface BaseEntity { 
@@ -67,7 +68,7 @@ export function useCRUD<T extends BaseEntity>(config: CRUDConfig<T>) {
         });
         
         if (search && searchColumns.length > 0) {
-          const orConditions = searchColumns.map(col => `${col}.ilike.%${search}%`).join(',');
+          const orConditions = searchColumns.map(col => `${col}.ilike.${escapeOrFilterValue(`%${search}%`)}`).join(',');
           query = query.or(orConditions);
         }
         

@@ -18,6 +18,18 @@ export interface GeoPlace {
 export interface GeoSearchPlace extends GeoPlace {
   lat: number;
   lng: number;
+  /** Componentes estruturados do `context` do `/retrieve` (E41) — ausente quando a Mapbox não devolve. */
+  components?: GeoAddressComponents;
+}
+
+/** Pedaços de endereço que dão para separar em campos de formulário (CEP, bairro, cidade, UF...). */
+export interface GeoAddressComponents {
+  postalCode?: string;
+  street?: string;
+  addressNumber?: string;
+  neighborhood?: string;
+  city?: string;
+  stateCode?: string;
 }
 
 export type GeoFailureKind = 'aborted' | 'timeout' | 'rate_limited' | 'http' | 'network' | 'not_found';
@@ -142,9 +154,33 @@ async function searchViaSearchBox(
   return { ok: true, places };
 }
 
+interface SearchBoxContext {
+  postcode?: { name?: unknown };
+  street?: { name?: unknown };
+  address?: { address_number?: unknown };
+  neighborhood?: { name?: unknown };
+  place?: { name?: unknown };
+  region?: { region_code?: unknown };
+}
+
 interface SearchBoxFeature {
   geometry?: { coordinates?: unknown };
-  properties?: { name?: unknown; full_address?: unknown; place_formatted?: unknown };
+  properties?: { name?: unknown; full_address?: unknown; place_formatted?: unknown; context?: SearchBoxContext };
+}
+
+/** `undefined` quando nenhum pedaço do `context` veio preenchido — nunca um objeto todo vazio. */
+function toAddressComponents(context: SearchBoxContext | undefined): GeoAddressComponents | undefined {
+  if (!context) return undefined;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined);
+  const components: GeoAddressComponents = {
+    postalCode: str(context.postcode?.name),
+    street: str(context.street?.name),
+    addressNumber: str(context.address?.address_number),
+    neighborhood: str(context.neighborhood?.name),
+    city: str(context.place?.name),
+    stateCode: str(context.region?.region_code),
+  };
+  return Object.values(components).some((v) => v !== undefined) ? components : undefined;
 }
 
 /**
@@ -264,7 +300,7 @@ function toSuggestion(feature: SuggestFeature): GeoSuggestion | null {
 export async function suggestPlaces(
   query: string,
   token: string,
-  opts: { session: string; proximity?: GeoProximity; signal?: AbortSignal },
+  opts: { session: string; proximity?: GeoProximity; signal?: AbortSignal; types?: string },
 ): Promise<GeoSuggestResult> {
   const term = query.trim();
   if (!term) return { ok: false, kind: 'not_found' };
@@ -274,7 +310,8 @@ export async function suggestPlaces(
   if (cached) return { ok: true, suggestions: cached };
 
   const prox = opts.proximity ? `&proximity=${opts.proximity.lng},${opts.proximity.lat}` : '';
-  const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(term)}&session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=${SEARCH_RESULT_LIMIT}${prox}`;
+  const types = opts.types ? `&types=${encodeURIComponent(opts.types)}` : '';
+  const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(term)}&session_token=${encodeURIComponent(opts.session)}&access_token=${encodeURIComponent(token)}&language=pt&country=br&limit=${SEARCH_RESULT_LIMIT}${prox}${types}`;
   const result = await requestJson(url, opts.signal);
   if (!result.ok) return { ok: false, kind: result.kind };
   const features = (result.data as { suggestions?: SuggestFeature[] } | null)?.suggestions ?? [];
@@ -316,5 +353,6 @@ export async function retrievePlace(
     lng: coords[0],
     name: typeof name === 'string' && name ? name : undefined,
     address: typeof address === 'string' ? address : '',
+    components: toAddressComponents(properties?.context),
   };
 }

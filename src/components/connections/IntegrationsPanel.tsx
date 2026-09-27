@@ -127,7 +127,7 @@ export function IntegrationsPanel({
       load(api.getChatwoot, setChatwoot),
       load(api.getEvolutionBot, setEvolutionBot),
     ]);
-  }, [api, instanceName]);
+  }, [api.getTypebot, api.getOpenAI, api.getDify, api.getFlowise, api.getChatwoot, api.getEvolutionBot, instanceName]);
 
   useEffect(() => {
     if (open && instanceName) {

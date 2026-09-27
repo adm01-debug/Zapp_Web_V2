@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { GeoSuggestion } from '@/lib/mapboxGeocode';
+import type { GeoSuggestion, GeoSearchPlace } from '@/lib/mapboxGeocode';
 
 const h = vi.hoisted(() => ({
   suggestPlaces: vi.fn(),
@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   noteSuggestCall: vi.fn(),
   noteRetrieveCall: vi.fn(),
   endSearchSession: vi.fn(),
+  isSearchBudgetOk: vi.fn(),
 }));
 
 vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
@@ -24,6 +25,9 @@ vi.mock('@/lib/mapboxSession', () => ({
   noteSuggestCall: () => h.noteSuggestCall(),
   noteRetrieveCall: () => h.noteRetrieveCall(),
   endSearchSession: () => h.endSearchSession(),
+}));
+vi.mock('@/lib/mapboxCostGuard', () => ({
+  isSearchBudgetOk: () => h.isSearchBudgetOk(),
 }));
 
 import { useAddressAutocomplete } from '../useAddressAutocomplete';
@@ -47,6 +51,7 @@ describe('useAddressAutocomplete', () => {
     h.noteSuggestCall.mockReset();
     h.noteRetrieveCall.mockReset();
     h.endSearchSession.mockReset();
+    h.isSearchBudgetOk.mockReset().mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -134,9 +139,8 @@ describe('useAddressAutocomplete', () => {
     expect(result.current.retrievingId).toBeNull();
   });
 
-  it('teclado: ArrowDown/ArrowUp/Home/End navegam e Enter seleciona o destacado', async () => {
+  it('teclado: ArrowDown/ArrowUp/Home/End navegam; Enter só previne o padrão (E46: quem usa decide chamar select) e Esc limpa e encerra a sessão', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB, suggestionC] });
-    h.retrievePlace.mockResolvedValue({ address: 'x', lat: 1, lng: 1 });
     const { result } = setup();
     act(() => { result.current.setQuery('rua'); });
     await act(async () => { vi.advanceTimersByTime(300); });
@@ -150,12 +154,58 @@ describe('useAddressAutocomplete', () => {
     act(() => { result.current.onKeyDown(fakeKeyEvent('Home')); });
     expect(result.current.highlightedIndex).toBe(0);
 
-    await act(async () => { result.current.onKeyDown(fakeKeyEvent('Enter')); });
-    expect(h.retrievePlace).toHaveBeenCalledWith('a', 'tok', expect.objectContaining({ session: 'session-1' }));
+    // E46: o hook NÃO resolve a seleção sozinho no Enter — antes ele chamava select() aqui e
+    // descartava o resultado (`void`), então quem usava o hook nunca sabia que uma seleção por
+    // teclado tinha acontecido. Agora só previne o padrão do input.
+    const preventDefault = vi.fn();
+    act(() => { result.current.onKeyDown({ key: 'Enter', preventDefault } as unknown as KeyDownEvent); });
+    expect(preventDefault).toHaveBeenCalled();
+    expect(h.retrievePlace).not.toHaveBeenCalled();
 
     act(() => { result.current.onKeyDown(fakeKeyEvent('Escape')); });
     expect(result.current.query).toBe('');
     expect(result.current.suggestions).toEqual([]);
+    // E46: Escape também encerra a sessão — ver teste dedicado abaixo para o cenário completo.
+    expect(h.endSearchSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('E46: clear() (Escape ou fechar o picker) encerra a sessão — não deixa sessão aberta para a próxima busca', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    expect(h.endSearchSession).not.toHaveBeenCalled();
+    act(() => { result.current.clear(); });
+    expect(h.endSearchSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('E46: seleção mais nova vence — resultado de uma seleção anterior em voo não sobrescreve a mais recente (sem AbortController no /retrieve)', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB] });
+    let resolveFirst: (value: GeoSearchPlace) => void = () => {};
+    const firstRetrieve = new Promise<GeoSearchPlace>((resolve) => { resolveFirst = resolve; });
+    h.retrievePlace
+      .mockImplementationOnce(() => firstRetrieve)
+      .mockImplementationOnce(() => Promise.resolve({ address: 'Rua B, 2', lat: 2, lng: 2 }));
+
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    let placeA: GeoSearchPlace | null = null;
+    let placeB: GeoSearchPlace | null = null;
+    await act(async () => {
+      const pendingA = result.current.select(0);
+      const pendingB = result.current.select(1);
+      resolveFirst({ address: 'Rua A, 1', lat: 1, lng: 1 });
+      placeA = await pendingA;
+      placeB = await pendingB;
+    });
+
+    expect(placeA).toBeNull();
+    expect(placeB).toEqual({ address: 'Rua B, 2', lat: 2, lng: 2 });
+    expect(result.current.retrievingId).toBeNull();
+    expect(result.current.error).toBeNull();
   });
 
   it('Enter sem item destacado não chama select', async () => {
@@ -188,5 +238,36 @@ describe('useAddressAutocomplete', () => {
     expect(result.current.error).toBe('network');
     expect(result.current.isLoading).toBe(false);
     expect(result.current.suggestions).toEqual([]);
+  });
+
+  it('E37: guarda de custo — mês estourou o teto, não chama suggestPlaces nem abre sessão', async () => {
+    h.isSearchBudgetOk.mockReturnValue(false);
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua augusta'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    expect(h.suggestPlaces).not.toHaveBeenCalled();
+    expect(h.getSearchSession).not.toHaveBeenCalled();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('E38: 429 ativa backoff de 60s — não tenta de novo a cada tecla dentro da janela', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBe('rate_limited');
+
+    act(() => { result.current.setQuery('rua ab'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    act(() => { vi.advanceTimersByTime(60_000); });
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    act(() => { result.current.setQuery('rua abc'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(h.suggestPlaces).toHaveBeenCalledTimes(2);
   });
 });

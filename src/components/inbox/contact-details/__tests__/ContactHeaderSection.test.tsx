@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ContactHeaderSection } from '../ContactHeaderSection';
+import type { Conversation } from '@/types/chat';
 
 // Minimal mocks
+let crm360DataMock: unknown = null;
 vi.mock('@/hooks/crm/useExternalContact360', () => ({
-  useExternalContact360: () => ({ data: null }),
+  useExternalContact360: () => ({ data: crm360DataMock }),
 }));
 
 vi.mock('@/integrations/supabase/externalClient', () => ({
   isExternalConfigured: false,
 }));
-vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
+vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => true }));
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -38,6 +40,7 @@ const baseEnriched = {
 describe('ContactHeaderSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    crm360DataMock = null;
   });
 
   // ========== RENDERING ==========
@@ -51,9 +54,9 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('TechCo')).toBeInTheDocument();
   });
 
-  it('renders phone number', () => {
+  it('does not render phone number or WhatsApp link', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.getByText('+5511999999999')).toBeInTheDocument();
+    expect(screen.queryByText('+5511999999999')).not.toBeInTheDocument();
   });
 
   it('does not render a sentiment chip (fora do escopo dos chips §5.3: tipo/VIP/alta prioridade)', () => {
@@ -127,6 +130,11 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('MS')).toBeInTheDocument();
   });
 
+  it('cai em "Sem nome" quando o nome do contato e so espacos', () => {
+    render(<ContactHeaderSection contact={{ ...baseContact, name: '   ' }} enrichedData={null} />);
+    expect(screen.getByText('Sem nome')).toBeInTheDocument();
+  });
+
   // ========== SINGLE NAME ==========
   it('handles single-word name', () => {
     render(
@@ -182,5 +190,131 @@ describe('ContactHeaderSection', () => {
       />
     );
     expect(screen.getByText('50')).toBeInTheDocument();
+  });
+
+  // ========== APELIDO (paridade com o nome exibido na lista de conversas) ==========
+  it('prioriza o apelido (enrichedData.nickname) sobre o primeiro nome quando preenchido', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+    expect(screen.queryByText('Maria')).not.toBeInTheDocument();
+  });
+
+  it('cai no primeiro nome quando o apelido e so espacos', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: '   ' }}
+      />
+    );
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+  });
+
+  it('usa o apelido tambem no modo compacto', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+        isCompact={true}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+  });
+
+  // ========== NOME DE TRATAMENTO DO CRM x APELIDO (sem duplicar a mesma palavra) ==========
+  it('nao repete a legenda do CRM quando e igual ao apelido ja exibido no titulo', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: 'Mari', apelido: null, relationship_score: 10 }, company: null };
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+    expect(screen.queryByText('"Mari"')).not.toBeInTheDocument();
+  });
+
+  it('nao repete a legenda quando e igual ao primeiro nome (sem apelido local)', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: 'Maria', apelido: null, relationship_score: 10 }, company: null };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+    expect(screen.queryByText('"Maria"')).not.toBeInTheDocument();
+  });
+
+  it('nao repete a legenda quando difere so por acento/caixa (auditoria 2026-09-26)', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: 'JOSÉ', apelido: null, relationship_score: 10 }, company: null };
+    render(<ContactHeaderSection contact={{ ...baseContact, name: 'Jose Souza' }} enrichedData={baseEnriched} />);
+    expect(screen.getByText('Jose')).toBeInTheDocument();
+    expect(screen.queryByText('"JOSÉ"')).not.toBeInTheDocument();
+  });
+
+  it('cai no apelido do CRM quando nome_tratamento e so espacos', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: '   ', apelido: 'Zeca', relationship_score: 10 }, company: null };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('"Zeca"')).toBeInTheDocument();
+  });
+
+  it('mostra a legenda do CRM quando e diferente do nome exibido no titulo', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: 'Dona Maria', apelido: null, relationship_score: 10 }, company: null };
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, nickname: 'Mari' }}
+      />
+    );
+    expect(screen.getByText('Mari')).toBeInTheDocument();
+    expect(screen.getByText('"Dona Maria"')).toBeInTheDocument();
+  });
+
+  // ========== LOGO DA EMPRESA ==========
+  it('mostra o círculo com iniciais da empresa quando há nome mas nenhuma logo do CRM', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, company: 'Tech Corp' }}
+      />
+    );
+    expect(screen.getByText('Tech Corp')).toBeInTheDocument();
+    expect(screen.getByTitle('Tech Corp')).toHaveTextContent('TC');
+  });
+
+  it('nao mostra logo nem nome de empresa quando nao ha empresa', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, company: null }}
+      />
+    );
+    expect(screen.queryByText('TechCo')).not.toBeInTheDocument();
+  });
+
+  // ========== ÚLTIMO CONTATO ==========
+  it('mostra a data do último contato quando a conversation tem updatedAt', () => {
+    const conversation = { updatedAt: new Date('2026-09-22T10:00:00Z') } as unknown as Conversation;
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={baseEnriched}
+        conversation={conversation}
+      />
+    );
+    expect(screen.getByText('22/09/2026')).toBeInTheDocument();
+  });
+
+  it('nao mostra a data do ultimo contato quando conversation nao e fornecida', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.queryByText(/^\d{2}\/\d{2}\/\d{4}$/)).not.toBeInTheDocument();
+  });
+
+  it('nao quebra o render quando updatedAt e uma data invalida', () => {
+    const conversation = { updatedAt: new Date('invalid') } as unknown as Conversation;
+    expect(() =>
+      render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} conversation={conversation} />)
+    ).not.toThrow();
+    expect(screen.queryByText(/^\d{2}\/\d{2}\/\d{4}$/)).not.toBeInTheDocument();
   });
 });

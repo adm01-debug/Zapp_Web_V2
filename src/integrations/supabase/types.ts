@@ -828,50 +828,77 @@ export type Database = {
       calls: {
         Row: {
           agent_id: string | null
+          agent_notes: string | null
           answered_at: string | null
+          answered_by: string | null
+          channel: string | null
           contact_id: string | null
           created_at: string
           direction: string
           duration_seconds: number | null
+          end_reason: string | null
           ended_at: string | null
           id: string
           notes: string | null
+          peer_name: string | null
+          peer_number: string | null
+          provider_call_id: string | null
           provider_event_id: string | null
+          recording_status: string
           recording_url: string | null
           started_at: string
           status: string
+          talk_seconds: number | null
           whatsapp_connection_id: string | null
         }
         Insert: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Update: {
           agent_id?: string | null
+          agent_notes?: string | null
           answered_at?: string | null
+          answered_by?: string | null
+          channel?: string | null
           contact_id?: string | null
           created_at?: string
           direction?: string
           duration_seconds?: number | null
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          peer_name?: string | null
+          peer_number?: string | null
+          provider_call_id?: string | null
           provider_event_id?: string | null
+          recording_status?: string
           recording_url?: string | null
           started_at?: string
           status?: string
+          talk_seconds?: number | null
           whatsapp_connection_id?: string | null
         }
         Relationships: [
@@ -1930,8 +1957,10 @@ export type Database = {
           id: string
           is_lid_legacy: boolean
           job_title: string | null
+          latitude: number | null
           lead_origin: string | null
           lead_score: number | null
+          longitude: number | null
           name: string
           neighborhood: string | null
           nickname: string | null
@@ -1968,8 +1997,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name: string
           neighborhood?: string | null
           nickname?: string | null
@@ -2006,8 +2037,10 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
+          longitude?: number | null
           name?: string
           neighborhood?: string | null
           nickname?: string | null
@@ -4381,6 +4414,188 @@ export type Database = {
         }
         Relationships: []
       }
+      multiplix_dispatches: {
+        Row: {
+          audience_filters: Json
+          business_hours_only: boolean
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          delivered_count: number
+          failed_count: number
+          id: string
+          media_type: string | null
+          media_url: string | null
+          message_template: string
+          name: string
+          outcome_unknown_count: number
+          pause_reason: string | null
+          paused_at: string | null
+          schedule_timezone: string
+          scheduled_at: string | null
+          send_interval_max: number
+          send_interval_min: number
+          send_window_end: string | null
+          send_window_start: string | null
+          sent_count: number
+          speed_profile: string
+          started_at: string | null
+          status: string
+          total_recipients: number
+          typing_delay_max: number
+          typing_delay_min: number
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        Insert: {
+          audience_filters?: Json
+          business_hours_only?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_template: string
+          name: string
+          outcome_unknown_count?: number
+          pause_reason?: string | null
+          paused_at?: string | null
+          schedule_timezone?: string
+          scheduled_at?: string | null
+          send_interval_max?: number
+          send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number
+          speed_profile?: string
+          started_at?: string | null
+          status?: string
+          total_recipients?: number
+          typing_delay_max?: number
+          typing_delay_min?: number
+          updated_at?: string
+          whatsapp_connection_id?: string | null
+        }
+        Update: {
+          audience_filters?: Json
+          business_hours_only?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_template?: string
+          name?: string
+          outcome_unknown_count?: number
+          pause_reason?: string | null
+          paused_at?: string | null
+          schedule_timezone?: string
+          scheduled_at?: string | null
+          send_interval_max?: number
+          send_interval_min?: number
+          send_window_end?: string | null
+          send_window_start?: string | null
+          sent_count?: number
+          speed_profile?: string
+          started_at?: string | null
+          status?: string
+          total_recipients?: number
+          typing_delay_max?: number
+          typing_delay_min?: number
+          updated_at?: string
+          whatsapp_connection_id?: string | null
+        }
+        Relationships: []
+      }
+      multiplix_recipients: {
+        Row: {
+          attempt_count: number
+          company_id: string
+          company_name_snapshot: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          destino_e164: string | null
+          destino_origem: string | null
+          dispatch_id: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          personalized_message: string | null
+          provider_dispatch_started_at: string | null
+          retry_after: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          company_id: string
+          company_name_snapshot?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          destino_e164?: string | null
+          destino_origem?: string | null
+          dispatch_id: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          retry_after?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          company_id?: string
+          company_name_snapshot?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_attempt_count?: number
+          delivery_claim_expires_at?: string | null
+          delivery_claim_token?: string | null
+          delivery_claimed_at?: string | null
+          delivery_claimed_by?: string | null
+          destino_e164?: string | null
+          destino_origem?: string | null
+          dispatch_id?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          personalized_message?: string | null
+          provider_dispatch_started_at?: string | null
+          retry_after?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_recipients_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -4768,7 +4983,22 @@ export type Database = {
           ttfb?: number | null
           user_agent?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "performance_snapshots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_snapshots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -8712,6 +8942,21 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_multiplix_recipient: {
+        Args: {
+          p_dispatch_id: string
+          p_lease_seconds?: number
+          p_recipient_id: string
+          p_worker: string
+        }
+        Returns: {
+          claim_expires_at: string
+          claim_token: string
+          company_id: string
+          delivery_attempt_count: number
+          recipient_id: string
+        }[]
+      }
       claim_outbound_message: {
         Args: {
           p_agent_id: string
@@ -8801,6 +9046,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      complete_multiplix_dispatch_if_drained: {
+        Args: { p_dispatch_id: string }
+        Returns: boolean
+      }
+      complete_multiplix_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       complete_outbound_message: {
         Args: {
           p_claim_token: string
@@ -8881,6 +9139,7 @@ export type Database = {
           count: number
         }[]
       }
+      count_searchbox_sessions_this_month: { Args: never; Returns: number }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
@@ -8900,6 +9159,10 @@ export type Database = {
       }
       dashboard_kpi: {
         Args: { p_agent?: string; p_queue?: string; p_since: string }
+        Returns: Json
+      }
+      dashboard_leaderboard: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: Json
       }
       dashboard_sentiment_alerts: {
@@ -9337,6 +9600,10 @@ export type Database = {
         Args: { p_contact_id: string }
         Returns: undefined
       }
+      mark_multiplix_recipient_dispatch_started: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: undefined
+      }
       mark_talkx_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
@@ -9354,7 +9621,26 @@ export type Database = {
         }
         Returns: Json
       }
+      my_calls_kpi: {
+        Args: { p_channel?: string; p_from?: string; p_scope?: string; p_to?: string }
+        Returns: {
+          answered: number
+          avg_talk_seconds: number
+          inbound: number
+          missed_inbound: number
+          outbound: number
+          total: number
+        }[]
+      }
       notify_due_reminders: { Args: never; Returns: number }
+      persist_multiplix_recipient_message_snapshot: {
+        Args: {
+          p_claim_token: string
+          p_personalized_message: string
+          p_recipient_id: string
+        }
+        Returns: string
+      }
       persist_sentiment_alert: {
         Args: {
           p_analysis_id: string
@@ -9416,6 +9702,14 @@ export type Database = {
           notification_id: string
         }[]
       }
+      record_multiplix_recipient_sent: {
+        Args: {
+          p_claim_token: string
+          p_external_id: string
+          p_recipient_id: string
+        }
+        Returns: undefined
+      }
       record_talkx_link_click: {
         Args: {
           p_ip_hash?: string
@@ -9445,6 +9739,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_multiplix_recipient_claim: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: boolean
+      }
       release_talkx_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
@@ -9452,6 +9750,15 @@ export type Database = {
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
+      }
+      reschedule_multiplix_recipient: {
+        Args: {
+          p_claim_token: string
+          p_error_message?: string
+          p_recipient_id: string
+          p_retry_after: string
+        }
+        Returns: Json
       }
       reschedule_talkx_recipient: {
         Args: {
@@ -9496,6 +9803,8 @@ export type Database = {
           email: string
           id: string
           job_title: string
+          latitude: number
+          longitude: number
           name: string
           nickname: string
           notes: string
@@ -9516,6 +9825,46 @@ export type Database = {
           tags: string[]
           title: string
         }[]
+      }
+      search_my_calls: {
+        Args: {
+          p_channel?: string
+          p_direction?: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_q?: string
+          p_result?: string
+          p_scope?: string
+          p_to?: string
+        }
+        Returns: {
+          agent_id: string
+          agent_notes: string
+          answered_at: string
+          answered_by: string
+          channel: string
+          contact_avatar_url: string
+          contact_id: string
+          contact_name: string
+          contact_phone: string
+          direction: string
+          end_reason: string
+          ended_at: string
+          id: string
+          notes: string
+          peer_name: string
+          peer_number: string
+          recording_status: string
+          started_at: string
+          status: string
+          talk_seconds: number
+          total_count: number
+        }[]
+      }
+      set_call_agent_notes: {
+        Args: { p_call_id: string; p_notes: string }
+        Returns: undefined
       }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
@@ -9549,6 +9898,18 @@ export type Database = {
         Returns: boolean
       }
       talkx_segment_tags: { Args: { p_segment: string }; Returns: Json }
+      transition_multiplix_dispatch: {
+        Args: {
+          p_action: string
+          p_dispatch_id: string
+          p_pause_reason?: string
+        }
+        Returns: {
+          current_status: string
+          dispatch_id: string
+          previous_status: string
+        }[]
+      }
       transition_talkx_campaign:
         | {
             Args: { p_action: string; p_campaign_id: string }
@@ -9600,6 +9961,23 @@ export type Database = {
           updated_at: string
           version_number: number
         }[]
+      }
+      upsert_my_call: {
+        Args: {
+          p_answered_at?: string
+          p_channel?: string
+          p_contact_id?: string
+          p_direction: string
+          p_end_reason?: string
+          p_ended_at?: string
+          p_id: string
+          p_peer_name?: string
+          p_peer_number?: string
+          p_provider_call_id?: string
+          p_status?: string
+          p_talk_seconds?: number
+        }
+        Returns: string
       }
       upsert_crm_contact_link_guarded: {
         Args: {

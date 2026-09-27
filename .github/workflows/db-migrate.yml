@@ -7,6 +7,18 @@
 # Somente alvos com contrato runtime explicito neste arquivo sao aceitos. Para
 # aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
 # o runtime novamente para fechar a janela TOCTOU.
+#
+# ROTA ATUAL (decisao de 2026-09-26, ver CLAUDE.md secao "Decisoes de
+# 2026-09-26"): com varias sessoes paralelas trabalhando, o DDL do dia a dia
+# vai por MCP (db_query) + registro no ledger no MESMO turno — este workflow
+# pausa em "Waiting" no environment producao-ddl ate aprovacao humana, e
+# nesse intervalo o arquivo ja mergeado passa a ser drift (e exatamente o que
+# o db-live-guard.yml acusa). Este workflow continua sendo mais seguro no
+# papel (dry-run + hash + aprovacao) e serve como rota formal/auditavel
+# quando NAO houver pressa (ou quando Joaquim decidir voltar a exigi-la) —
+# nao e codigo morto, mas hoje nao e o caminho padrao. Antes de disparar,
+# confirme que nao ha outro run deste workflow em waiting/queued (regra
+# operacional; nao ha lock automatico no proprio workflow).
 # ==================================================================
 
 name: DB Migrate (production)
@@ -54,6 +66,19 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
+      # E47 (auditoria de GitHub Actions, 2026-09-26) — considerado e
+      # descartado: um passo dentro do job para detectar outro run
+      # waiting/queued nunca executaria de fato aqui. A concurrency (group:
+      # db-migrate-production, cancel-in-progress: false) ja impede um 2o job
+      # do mesmo grupo de rodar qualquer step enquanto o 1o estiver
+      # waiting/in_progress — o 2o dispatch fica preso em "queued" pelo
+      # proprio GitHub Actions ANTES de chegar a qualquer step, inclusive um
+      # de deteccao. Os runs 36247549783 (waiting) e 36263608943
+      # (queued/pending) em 26/09 foram exatamente isso: a concorrencia
+      # funcionou como desenhada, so ninguem cancelou o 1o "Waiting" antigo
+      # antes de disparar de novo. Mitigacao real: checar a aba Actions antes
+      # de um novo dispatch; um "Waiting" que nao vai mais ser aprovado deve
+      # ser cancelado, nao empilhado.
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

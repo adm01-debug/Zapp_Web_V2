@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditContactDialog } from './contact-details/EditContactDialog';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { X, PanelRightClose } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactAccordionSections } from './contact-details/ContactAccordionSections';
@@ -43,7 +44,11 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      // e.defaultPrevented: o DismissableLayer do Radix (dropdown/tooltip)
+      // escuta Escape em fase de capture e chama preventDefault() ao fechar —
+      // sem este check, Escape fechava o dropdown de ações E o painel junto
+      // (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
+      if (e.key === 'Escape' && !e.defaultPrevented && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault(); onClose();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 't' && panelRef.current) {
@@ -86,16 +91,28 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 100, opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }} ref={panelRef} role="complementary" aria-label="Detalhes do contato"
       data-testid="contact-panel"
-      className="w-[380px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"
+      className="w-[323px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-inbox-panel shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full bg-primary" />
           <h3 className="font-semibold text-foreground text-sm">Detalhes do Contato</h3>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar painel de detalhes" className="w-7 h-7 hover:bg-destructive/10 hover:text-destructive transition-colors">
-          <X className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={onClose} aria-label="Recolher painel de detalhes" className="w-7 h-7 hover:bg-muted transition-colors">
+                  <PanelRightClose className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Recolher painel</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar painel de detalhes" className="w-7 h-7 hover:bg-destructive/10 hover:text-destructive transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">

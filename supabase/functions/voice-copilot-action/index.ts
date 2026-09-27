@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 Deno.serve(async (req) => {
@@ -35,10 +36,11 @@ Deno.serve(async (req) => {
           result = [];
           break;
         }
+        const q = escapeOrFilterValue(`%${sanitized}%`);
         const { data, error } = await authedClient
           .from('contacts')
           .select('id, name, phone, email, company, ai_sentiment, assigned_to')
-          .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
+          .or(`name.ilike.${q},phone.ilike.${q},email.ilike.${q}`)
           .limit(5);
         if (error) throw error;
         result = data;

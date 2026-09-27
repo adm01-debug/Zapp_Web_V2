@@ -156,6 +156,8 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     neighborhood: null,
     city: null,
     state: null,
+    latitude: null,
+    longitude: null,
     job_title: null,
     assigned_to: null,
     queue_id: null,

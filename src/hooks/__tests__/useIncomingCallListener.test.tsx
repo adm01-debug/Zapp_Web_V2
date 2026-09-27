@@ -100,6 +100,7 @@ describe('useIncomingCallListener', () => {
 
     expect(result.current.incomingCall).toEqual({
       id: 'notification-1',
+      callId: null,
       contact_id: 'contact-1',
       contact_name: 'Maria',
       contact_phone: '5511999999999',
@@ -109,6 +110,24 @@ describe('useIncomingCallListener', () => {
     });
     expect(mockLogInfo).toHaveBeenCalledTimes(1);
     expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('propagates the real call id from notification metadata (not the notification row id)', async () => {
+    const { result } = renderHook(() => useIncomingCallListener());
+    await act(async () => {
+      await realtimeCallback?.(incomingNotification({
+        metadata: {
+          contact_id: 'contact-1',
+          contact_name: 'Maria',
+          phone: '5511999999999',
+          call_status: 'ringing',
+          call_id: 'call-42',
+        },
+      }));
+    });
+
+    expect(result.current.incomingCall?.id).toBe('notification-1');
+    expect(result.current.incomingCall?.callId).toBe('call-42');
   });
 
   it('does not collapse two legitimate calls without a provider event ID', async () => {

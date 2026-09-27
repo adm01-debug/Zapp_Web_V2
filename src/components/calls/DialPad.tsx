@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import {
   Phone, PhoneOff, Mic, MicOff, Delete, Wifi, WifiOff, Loader2,
 } from 'lucide-react';
-import type { SipStatus, CallStatus } from '@/hooks/communication/useSipClient';
+import type { SipStatus, CallStatus, CallDirection } from '@/hooks/communication/useSipClient';
 
 interface DialPadProps {
   sipStatus: SipStatus;
@@ -15,10 +15,12 @@ interface DialPadProps {
   callDuration: number;
   isMuted: boolean;
   currentNumber: string;
+  callDirection: CallDirection | null;
   onConnect: () => void;
   onDisconnect: () => void;
   onCall: (number: string) => void;
   onHangUp: () => void;
+  onAcceptIncoming: () => void;
   onToggleMute: () => void;
   onDTMF: (digit: string) => void;
 }
@@ -44,11 +46,12 @@ function formatTime(seconds: number) {
 }
 
 export function DialPad({
-  sipStatus, callStatus, callDuration, isMuted, currentNumber,
-  onConnect, onDisconnect, onCall, onHangUp, onToggleMute, onDTMF,
+  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection,
+  onConnect, onDisconnect, onCall, onHangUp, onAcceptIncoming, onToggleMute, onDTMF,
 }: DialPadProps) {
   const [number, setNumber] = useState('');
   const isInCall = callStatus === 'calling' || callStatus === 'ringing' || callStatus === 'active';
+  const isIncomingRinging = callStatus === 'ringing' && callDirection === 'inbound';
   const isConnected = sipStatus === 'registered';
 
   const handleDigit = useCallback((digit: string) => {
@@ -116,27 +119,54 @@ export function DialPad({
                 <p className="text-lg font-bold text-foreground">{currentNumber || number}</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {callStatus === 'calling' && 'Chamando...'}
-                  {callStatus === 'ringing' && 'Tocando...'}
+                  {isIncomingRinging && 'Chamada recebida...'}
+                  {callStatus === 'ringing' && !isIncomingRinging && 'Tocando...'}
                   {callStatus === 'active' && formatTime(callDuration)}
                 </p>
                 <div className="flex justify-center gap-3 mt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full w-12 h-12"
-                    onClick={onToggleMute}
-                    disabled={callStatus !== 'active'}
-                  >
-                    {isMuted ? <MicOff className="w-5 h-5 text-destructive" /> : <Mic className="w-5 h-5" />}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="rounded-full w-14 h-14"
-                    onClick={onHangUp}
-                  >
-                    <PhoneOff className="w-6 h-6" />
-                  </Button>
+                  {isIncomingRinging ? (
+                    <>
+                      <Button
+                        size="icon"
+                        className="rounded-full w-14 h-14 bg-success hover:bg-success/90"
+                        onClick={onAcceptIncoming}
+                        aria-label="Atender"
+                      >
+                        <Phone className="w-6 h-6" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="rounded-full w-14 h-14"
+                        onClick={onHangUp}
+                        aria-label="Encerrar"
+                      >
+                        <PhoneOff className="w-6 h-6" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-12 h-12"
+                        onClick={onToggleMute}
+                        disabled={callStatus !== 'active'}
+                        aria-label={isMuted ? 'Ativar microfone' : 'Silenciar'}
+                      >
+                        {isMuted ? <MicOff className="w-5 h-5 text-destructive" /> : <Mic className="w-5 h-5" />}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="rounded-full w-14 h-14"
+                        onClick={onHangUp}
+                        aria-label="Encerrar"
+                      >
+                        <PhoneOff className="w-6 h-6" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -159,6 +189,7 @@ export function DialPad({
               size="icon"
               className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8"
               onClick={handleDelete}
+              aria-label="Apagar dígito"
             >
               <Delete className="w-4 h-4 text-muted-foreground" />
             </Button>
@@ -192,6 +223,7 @@ export function DialPad({
           className="rounded-full w-16 h-16 bg-success hover:bg-success/90"
           onClick={handleCall}
           disabled={!number.trim() || !isConnected}
+          aria-label="Ligar"
         >
           <Phone className="w-7 h-7 text-success-foreground" />
         </Button>

@@ -57,6 +57,7 @@ export const SicoobBridgeDashboard = lazyWithRetry(() => import('@/components/ad
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
+export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));
 export const AchievementsSystemLazy = lazyWithRetry(async () => {
   const m = await import('@/components/gamification/AchievementsSystem');

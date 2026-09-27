@@ -31,6 +31,10 @@ const IncomingCallAlert = lazy(() =>
   import("@/components/calls/IncomingCallAlert")
     .then(m => ({ default: m.IncomingCallAlert }))
 );
+const ActiveCallBar = lazy(() =>
+  import("@/components/calls/ActiveCallBar")
+    .then(m => ({ default: m.ActiveCallBar }))
+);
 const EasterEggsProvider = lazy(() =>
   import("@/components/effects/EasterEggs")
     .then(m => ({ default: m.EasterEggsProvider }))
@@ -56,6 +60,7 @@ function DeferredProviders() {
     <Suspense fallback={null}>
       <RealtimeSentimentAlertProvider />
       <IncomingCallAlert />
+      <ActiveCallBar />
       <InAppNotificationProvider>
         {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
         <EasterEggsProvider>{null}</EasterEggsProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,13 @@ import { useExternalCargos } from '@/hooks/crm/useExternalCargos';
 import { useExternalEmpresas } from '@/hooks/crm/useExternalEmpresas';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useContactFormValidation } from './useContactFormValidation';
+import { useAddressAutocomplete } from '@/components/inbox/location-picker/useAddressAutocomplete';
+import { getMapboxToken } from '@/lib/mapboxToken';
+import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
+
+const ADDRESS_LISTBOX_ID = 'contact-form-address-listbox';
+/** Só endereço/rua/cidade (E41) — POI não faz sentido para "onde entregar o brinde". */
+const ADDRESS_SEARCH_TYPES = 'address,street,place';
 
 interface ContactFormValues {
   name: string;
@@ -27,6 +34,8 @@ interface ContactFormValues {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
 }
 
 interface ContactFormProps {
@@ -68,6 +77,51 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   const empresaBlurTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const v = useContactFormValidation(values, onChange, onSubmit);
+
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getMapboxToken().then((token) => { if (!cancelled) setMapboxToken(token); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const addressAutocomplete = useAddressAutocomplete({
+    token: mapboxToken,
+    enabled: !!mapboxToken,
+    types: ADDRESS_SEARCH_TYPES,
+    sessionSource: 'contact-form',
+  });
+  const [addressListOpen, setAddressListOpen] = useState(false);
+  const addressComboRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!addressListOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!addressComboRef.current?.contains(e.target as Node)) setAddressListOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [addressListOpen]);
+
+  /** Preenche os campos a partir do `/retrieve` — o operador continua podendo editar tudo depois. */
+  const fillFromPlace = (place: GeoSearchPlace) => {
+    const c = place.components;
+    onChange('address', c?.street || place.name || values.address || '');
+    if (c?.addressNumber) onChange('address_number', c.addressNumber);
+    if (c?.neighborhood) onChange('neighborhood', c.neighborhood);
+    if (c?.city) onChange('city', c.city);
+    if (c?.stateCode) onChange('state', c.stateCode);
+    if (c?.postalCode) onChange('postal_code', c.postalCode.replace(/\D/g, ''));
+    onChange('latitude', String(place.lat));
+    onChange('longitude', String(place.lng));
+  };
+
+  const handleSelectAddressSuggestion = async (index: number) => {
+    const place = await addressAutocomplete.select(index);
+    setAddressListOpen(false);
+    addressAutocomplete.clear();
+    if (place) fillFromPlace(place);
+  };
 
   return (
     <TooltipProvider>
@@ -210,8 +264,99 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="address">Logradouro</Label>
-              <Input id="address" placeholder="Rua, avenida..." value={values.address || ''}
-                onChange={(e) => onChange('address', e.target.value)} maxLength={200} />
+              <div ref={addressComboRef} className="relative">
+                <Input
+                  id="address"
+                  role="combobox"
+                  aria-expanded={addressListOpen}
+                  aria-controls={ADDRESS_LISTBOX_ID}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    addressListOpen && addressAutocomplete.highlightedIndex >= 0
+                      ? `${ADDRESS_LISTBOX_ID}-option-${addressAutocomplete.highlightedIndex}`
+                      : undefined
+                  }
+                  placeholder="Rua, avenida..." value={values.address || ''}
+                  onChange={(e) => {
+                    onChange('address', e.target.value);
+                    addressAutocomplete.setQuery(e.target.value);
+                    setAddressListOpen(true);
+                  }}
+                  onFocus={() => setAddressListOpen(true)}
+                  onKeyDown={(e) => {
+                    addressAutocomplete.onKeyDown(e);
+                    if (e.key === 'Escape') setAddressListOpen(false);
+                    // O hook só previne o padrão do Enter (E46) — quem usa decide aplicar a seleção.
+                    if (e.key === 'Enter' && addressAutocomplete.highlightedIndex >= 0) {
+                      void handleSelectAddressSuggestion(addressAutocomplete.highlightedIndex);
+                    }
+                  }}
+                  maxLength={200}
+                />
+                {addressListOpen && (
+                  addressAutocomplete.isLoading ||
+                  addressAutocomplete.error ||
+                  addressAutocomplete.suggestions.length > 0 ||
+                  addressAutocomplete.query.trim().length >= 3
+                ) && (
+                  <div
+                    id={ADDRESS_LISTBOX_ID}
+                    role="listbox"
+                    className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-56 overflow-y-auto"
+                  >
+                    {addressAutocomplete.isLoading && addressAutocomplete.suggestions.length === 0 && (
+                      <div className="p-2 space-y-2">
+                        {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
+                      </div>
+                    )}
+                    {!addressAutocomplete.isLoading && addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && (
+                      <div className="px-3 py-3 flex items-center justify-between gap-2">
+                        <p className="text-sm text-muted-foreground">Falha ao buscar sugestões.</p>
+                        <Button size="sm" variant="ghost" onClick={() => addressAutocomplete.setQuery(addressAutocomplete.query)}>Tentar novamente</Button>
+                      </div>
+                    )}
+                    {!addressAutocomplete.isLoading && !addressAutocomplete.error && addressAutocomplete.suggestions.length === 0 && addressAutocomplete.query.trim().length >= 3 && (
+                      <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{addressAutocomplete.query}&quot;.</p>
+                    )}
+                    {addressAutocomplete.suggestions.length > 0 && (
+                      <div className="divide-y divide-border">
+                        {addressAutocomplete.suggestions.map((suggestion, index) => {
+                          const highlighted = index === addressAutocomplete.highlightedIndex;
+                          return (
+                            <button
+                              key={suggestion.id}
+                              id={`${ADDRESS_LISTBOX_ID}-option-${index}`}
+                              role="option"
+                              aria-selected={highlighted}
+                              type="button"
+                              onClick={() => void handleSelectAddressSuggestion(index)}
+                              className={cn(
+                                'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
+                                highlighted && 'bg-muted/60'
+                              )}
+                            >
+                              <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{suggestion.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{suggestion.address}</p>
+                              </div>
+                              {addressAutocomplete.retrievingId === suggestion.id && (
+                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="px-3 py-1.5 text-3xs text-muted-foreground/70 bg-muted/30 border-t border-border">
+                      Powered by{' '}
+                      <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline">
+                        Mapbox
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -5,16 +5,17 @@ name: Auto Update PR Branches
 # Sem o passo de liberacao abaixo, todo PR atualizado aqui fica esperando
 # alguem aprovar na aba Actions e o auto-merge nunca dispara (25/09/2026,
 # PRs #725 e #754). O passo espelha o "Destravar os checks" do types-sync.
-
+#
+# E15 (auditoria de GitHub Actions, 2026-09-26): gatilho "push" desligado.
+# Este job so tem efeito quando required_status_checks.strict=true (so ai um
+# PR fica automaticamente BEHIND so por a main ter avancado); ao vivo hoje
+# strict=false (ver CLAUDE.md, secao "Branch protection sem Contrato DB
+# vivo"), entao o job rodava a cada push (~95/dia) e sempre concluia "nenhum
+# PR esta behind" — 100% no-op. Reativar via workflow_dispatch se precisar
+# atualizar um PR especifico agora, ou volte o gatilho "push" junto com
+# strict=true.
 on:
-  push:
-    branches: [main]
   workflow_dispatch: {}
-
-permissions:
-  contents: write
-  pull-requests: write
-  actions: write
 
 concurrency:
   group: auto-update-pr-branch
@@ -22,7 +23,12 @@ concurrency:
 
 jobs:
   update-behind-branches:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
     steps:
       - name: Atualizar PRs com auto-merge que ficaram behind
         env:

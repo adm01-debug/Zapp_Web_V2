@@ -23,4 +23,49 @@ describe('rulesToPostgrest', () => {
       ] }],
     })).toBe('company.eq."Acme"');
   });
+
+  // js/incomplete-sanitization: um valor terminado em backslash nao pode
+  // "engolir" a aspa de fechamento do filtro PostgREST. Sem escapar \
+  // primeiro, quoted('Acme\\') produzia "Acme\" (4 chars: aspa, A, c, m, e,
+  // barra, aspa — a ultima aspa e interpretada como escapada, nao como
+  // fechamento), deixando a string do filtro aberta.
+  it('escapes a trailing backslash before quoting, so the filter string cannot stay open', () => {
+    const filtro = rulesToPostgrest({
+      groups: [{ id: 'group-1', match: 'and', rules: [
+        { id: 'rule-1', field: 'company', op: 'eq', value: 'Acme\\' },
+      ] }],
+    });
+    expect(filtro).toBe('company.eq."Acme\\\\"');
+    // A string entre aspas precisa terminar em backslash ESCAPADO (par),
+    // nunca em um numero impar de backslashes antes da aspa de fechamento.
+    const semAspaFinal = filtro!.slice(0, -1);
+    const barrasNoFinal = semAspaFinal.length - semAspaFinal.replace(/\\+$/, '').length;
+    expect(barrasNoFinal % 2).toBe(0);
+  });
+
+  it('escapes a trailing backslash before quoting inside contains/ilike', () => {
+    const filtro = rulesToPostgrest({
+      groups: [{ id: 'group-1', match: 'and', rules: [
+        { id: 'rule-1', field: 'company', op: 'contains', value: 'Acme\\' },
+      ] }],
+    });
+    expect(filtro).toBe('company.ilike."*Acme\\\\*"');
+    const antesDoAsterisco = filtro!.slice(0, filtro!.lastIndexOf('*'));
+    const barras = antesDoAsterisco.length - antesDoAsterisco.replace(/\\+$/, '').length;
+    expect(barras % 2).toBe(0);
+  });
+
+  // Achado do Codex (PR #896): uma camada extra de escape de virgula fazia
+  // "Acme, Inc" virar uma busca por "Acme\, Inc" (com barra invertida
+  // espuria), que nunca bate com o dado real — excluindo contatos que
+  // deveriam entrar no segmento. Virgula dentro de aspas nao precisa de
+  // escape para o parser do PostgREST.
+  it('does not corrupt a value containing a comma inside contains/ilike', () => {
+    const filtro = rulesToPostgrest({
+      groups: [{ id: 'group-1', match: 'and', rules: [
+        { id: 'rule-1', field: 'company', op: 'contains', value: 'Acme, Inc' },
+      ] }],
+    });
+    expect(filtro).toBe('company.ilike."*Acme, Inc*"');
+  });
 });

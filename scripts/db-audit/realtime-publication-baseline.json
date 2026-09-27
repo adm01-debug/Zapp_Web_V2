@@ -11,6 +11,8 @@
     "public.email_threads",
     "public.message_reactions",
     "public.messages",
+    "public.multiplix_dispatches",
+    "public.multiplix_recipients",
     "public.notifications",
     "public.payment_links",
     "public.queue_goals",

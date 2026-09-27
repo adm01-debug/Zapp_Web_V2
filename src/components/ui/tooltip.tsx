@@ -43,12 +43,19 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentProps
 >(({ className, sideOffset = 4, variant, size, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(tooltipVariants({ variant, size }), className)}
-    {...props}
-  />
+  // Portal (igual ao PopoverContent): sem isso, um tooltip dentro de um
+  // ancestral com overflow-hidden/clip (ex.: a linha da lista de conversas,
+  // VirtualizedRealtimeList.tsx) fica cortado e nunca aparece — Radix
+  // posiciona com `strategy: "fixed"` usando o ancestral com transform como
+  // containing block, então o corte se aplica mesmo a conteúdo position:fixed.
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(tooltipVariants({ variant, size }), className)}
+      {...props}
+    />
+  </TooltipPrimitive.Portal>
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
@@ -63,33 +70,35 @@ const TooltipContentEnhanced = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentEnhancedProps
 >(({ className, title, description, shortcut, children, variant, size, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(tooltipVariants({ variant, size }), "max-w-xs", className)}
-    {...props}
-  >
-    {title || description || shortcut ? (
-      <div className="flex flex-col gap-1">
-        {title && (
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-medium">{title}</span>
-            {shortcut && (
-              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-3xs font-medium text-muted-foreground">
-                {shortcut}
-              </kbd>
-            )}
-          </div>
-        )}
-        {description && (
-          <span className="text-xs text-muted-foreground">{description}</span>
-        )}
-        {children}
-      </div>
-    ) : (
-      children
-    )}
-  </TooltipPrimitive.Content>
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(tooltipVariants({ variant, size }), "max-w-xs", className)}
+      {...props}
+    >
+      {title || description || shortcut ? (
+        <div className="flex flex-col gap-1">
+          {title && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="font-medium">{title}</span>
+              {shortcut && (
+                <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-3xs font-medium text-muted-foreground">
+                  {shortcut}
+                </kbd>
+              )}
+            </div>
+          )}
+          {description && (
+            <span className="text-xs text-muted-foreground">{description}</span>
+          )}
+          {children}
+        </div>
+      ) : (
+        children
+      )}
+    </TooltipPrimitive.Content>
+  </TooltipPrimitive.Portal>
 ));
 TooltipContentEnhanced.displayName = "TooltipContentEnhanced";
 

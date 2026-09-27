@@ -1,13 +1,11 @@
 import { useState, lazy, Suspense } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Building, Briefcase, Crown, Star, Pencil, Calendar, MessageCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
+import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
@@ -18,11 +16,6 @@ import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
-
-const channelIcons: Record<string, string> = {
-  whatsapp: '💬', instagram: '📸', facebook: '📘', telegram: '✈️',
-  email: '📧', sms: '📱', webchat: '🌐',
-};
 
 const priorityConfig: Record<string, { label: string; color: string }> = {
   high: { label: 'Alta prioridade', color: 'bg-destructive/15 text-destructive border-destructive/40' },
@@ -46,7 +39,7 @@ const getContactTypeBadge = (type: string) => ({
 });
 
 interface ContactHeaderSectionProps {
-  contact: { id: string; name: string; phone: string; avatar?: string; email?: string; createdAt?: Date };
+  contact: { id: string; name: string; phone: string; avatar?: string; email?: string };
   enrichedData: EnrichedContactData | null | undefined;
   conversation?: Conversation;
   onQuickAction?: (action: string) => void;
@@ -70,11 +63,24 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
   const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
-  const nomeTratamento = crmContact?.nome_tratamento || crmContact?.apelido;
-  const firstName = contact.name.split(' ')[0];
+  const firstName = contact.name.trim().split(/\s+/)[0] || 'Sem nome';
+  // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
+  // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um
+  // nome na lista e outro aqui no painel de detalhes, lado a lado na mesma tela.
+  const displayName = enrichedData?.nickname?.trim() || firstName;
+  const nomeTratamentoRaw = crmContact?.nome_tratamento?.trim() || crmContact?.apelido?.trim();
+  // Não repete a legenda quando ela é igual ao nome já exibido no título
+  // (comum: quem cadastra o apelido local copia o que o CRM já mostrava).
+  // localeCompare com sensitivity:'base' ignora acento/case (ex.: "Jose" vs
+  // "JOSÉ") — CRM e Zapp acentuam nomes de forma inconsistente entre si
+  // (auditoria 2026-09-26: 22% vs 46% dos nomes comuns testados), então um
+  // simples toLowerCase() deixava a legenda duplicada visualmente.
+  const nomeTratamento =
+    nomeTratamentoRaw && nomeTratamentoRaw.localeCompare(displayName, 'pt-BR', { sensitivity: 'base' }) !== 0
+      ? nomeTratamentoRaw
+      : null;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
-  const channelEmoji = enrichedData?.channel_type ? channelIcons[enrichedData.channel_type] || '💬' : null;
   const sentiment = enrichedData?.ai_sentiment;
   const priority = enrichedData?.ai_priority;
   const contactType = enrichedData?.contact_type;
@@ -91,7 +97,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   if (isCompact) {
-    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={firstName} />;
+    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
   }
 
   return (
@@ -126,11 +132,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                   <TooltipContent>Engajamento: {engagementScore >= 80 ? 'Alto' : engagementScore >= 50 ? 'Médio' : 'Baixo'} ({engagementScore}/100)</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {channelEmoji && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-success ring-2 ring-card">
-                  <MessageCircle className="w-3.5 h-3.5 text-white" />
-                </div>
-              )}
               {crmCompany?.logo_url && (
                 <img src={crmCompany.logo_url} alt={crmCompany.nome_fantasia || ''}
                   className="absolute -top-1 -left-1 w-8 h-8 rounded-md object-contain bg-background border border-border/30 ring-2 ring-background" />
@@ -139,35 +140,40 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           </div>
 
           <div className="flex-1 min-w-0 pt-0.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <h4 className="font-bold text-lg text-foreground leading-tight truncate">{firstName}</h4>
-                <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
-                  aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
-                  <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
-                </button>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => onQuickAction?.('edit')}
-                className="h-9 px-3 rounded-lg border border-border bg-inbox-panel gap-1.5 text-[13px] font-medium shrink-0">
-                <Pencil className="w-3.5 h-3.5" />Editar
-              </Button>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h4 className="font-bold text-lg text-foreground leading-tight truncate">{displayName}</h4>
+              <button type="button" onClick={toggleFavorite} data-testid="contact-favorite-toggle"
+                aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar contato'} className="shrink-0 -m-1 p-1">
+                <Star className={cn('w-4 h-4 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground hover:text-warning')} />
+              </button>
             </div>
 
-            {companyName && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate"><Building className="w-3 h-3 shrink-0" />{companyName}</p>}
+            {companyName && (
+              <div className="text-[15px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                <CompanyLogo logoUrl={crmCompany?.logo_url} companyName={crmCompany?.nome_fantasia} fallbackCompanyName={companyName} size="sm" className="rounded-full" />
+                <span className="truncate min-w-0 flex-1">{companyName}</span>
+              </div>
+            )}
             {nomeTratamento && <p className="text-3xs text-primary/70 italic mt-0.5 truncate">"{nomeTratamento}"</p>}
-            {enrichedData?.job_title && <p className={`text-${companyName ? '[10px]' : 'xs'} text-muted-foreground truncate ${!companyName ? 'flex items-center gap-1' : ''} mt-0.5`}>
-              {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
-            </p>}
-
-            <a href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1 w-fit hover:text-success transition-colors">
-              <MessageCircle className="w-4 h-4 text-success shrink-0" />{contact.phone}
-            </a>
-
-            {contact.createdAt && (
-              <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-0.5">
-                <Calendar className="w-3.5 h-3.5 shrink-0" />Cliente desde {format(contact.createdAt, "MMM 'de' yyyy", { locale: ptBR })}
+            {enrichedData?.job_title && (
+              <p className={companyName
+                ? 'text-3xs text-muted-foreground truncate mt-0.5'
+                : 'text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5'}>
+                {!companyName && <Briefcase className="w-3 h-3 shrink-0" />}{enrichedData.job_title}
               </p>
+            )}
+
+            {conversation?.updatedAt && isValid(conversation.updatedAt) && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-1 w-fit">
+                      <Calendar className="w-3.5 h-3.5 shrink-0" />{format(conversation.updatedAt, 'dd/MM/yyyy')}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Último contato</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>

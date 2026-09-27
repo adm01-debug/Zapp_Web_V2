@@ -161,6 +161,23 @@ describe('LocationPicker', () => {
       expect(state.chooseSearchResult).not.toHaveBeenCalled();
     });
 
+    it('E46: Enter com sugestão destacada seleciona igual ao clique (antes só o hook resolvia o /retrieve e o picker nunca aplicava o resultado)', async () => {
+      const state = hookState(null);
+      const place = { name: 'XBZ Brindes', address: 'SP', lat: -23.5, lng: -46.6 };
+      const ac = autocompleteState({
+        query: 'xbz',
+        suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }],
+        highlightedIndex: 0,
+        select: vi.fn().mockResolvedValue(place),
+      });
+      const input = await renderOnMapTab(state, ac);
+
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(ac.select).toHaveBeenCalledWith(0);
+      await waitFor(() => expect(state.chooseSearchResult).toHaveBeenCalledWith(place));
+    });
+
     it('navegação por teclado delega ao hook e Esc fecha a lista', async () => {
       const ac = autocompleteState({ query: 'xbz', suggestions: [{ id: 'a', name: 'XBZ Brindes', address: 'SP', kind: 'poi' }] });
       const input = await renderOnMapTab(hookState(null), ac);

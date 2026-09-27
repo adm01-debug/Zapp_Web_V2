@@ -97,6 +97,7 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'ai-usage': Views.AIUsageDashboard,
   'sla': Views.SLADashboardView,
   'talkx': Views.TalkXView,
+  'multiplix': Views.MultiplixView,
   'evolution-monitor': Views.EvolutionMonitoringDashboard,
 };
 

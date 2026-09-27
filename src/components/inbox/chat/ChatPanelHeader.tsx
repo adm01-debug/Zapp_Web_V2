@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
+import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
 import { toast } from '@/hooks/ui/use-toast';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
@@ -54,13 +55,16 @@ interface ChatPanelHeaderProps {
   onSelectSuggestion?: (text: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  /** Conversas fixadas — exibidas no centro do header quando os detalhes estão fechados. */
+  pinnedConversations?: PinnedChatItem[];
+  onSelectPinned?: (contactId: string) => void;
 }
 
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onStartCall, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
-  isFavorite, onToggleFavorite,
+  isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
   const [participantsOpen, setParticipantsOpen] = useState(false);
@@ -132,6 +136,16 @@ function ChatPanelHeaderBase({
         </div>
       </div>
 
+      {!showDetails && !isMobile && pinnedConversations && pinnedConversations.length > 0 && onSelectPinned && (
+        <div className="hidden lg:flex flex-1 items-center justify-center px-4 min-w-0">
+          <PinnedConversationsStack
+            items={pinnedConversations}
+            activeId={conversation.contact.id}
+            onSelect={onSelectPinned}
+          />
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <Tooltip><TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onStartCall} aria-label="Ligar">
@@ -161,7 +175,7 @@ function ChatPanelHeaderBase({
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
+              <Button variant="ghost" size="icon" data-testid="chat-header-more-actions" className="h-10 w-10 rounded-[10px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
                 <MoreVertical className="w-[18px] h-[18px]" />
               </Button>
             </DropdownMenuTrigger>

@@ -1,10 +1,6 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
-        "dashboard_contact_counts(p_since timestamp with time zone, p_until timestamp with time zone, p_queue uuid, p_agent uuid)",
-        "dashboard_hourly_volume(p_days integer, p_queue uuid, p_agent uuid)",
-        "dashboard_kpi(p_since timestamp with time zone, p_queue uuid, p_agent uuid)",
-        "dashboard_sentiment_alerts(p_since timestamp with time zone)",
         "enforce_conversation_status_transition()",
         "enqueue_crm_sync_from_closure()",
         "grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer)",
@@ -14,13 +10,14 @@
         "prevent_contact_queue_hijack()",
         "prevent_conversation_task_field_forgery()",
         "seed_default_goals_for_profile()",
+        "set_scheduled_report_config_owner()",
         "talkx_campaign_report(p_campaign uuid)",
         "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone)",
         "talkx_segment_tags(p_segment uuid)",
         "trg_talkx_increment_replied_count()",
         "trg_talkx_increment_template_use_count()"
     ],
-    "generated_at": "2026-09-25",
+    "generated_at": "2026-09-26",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -95,6 +92,8 @@
         "messages",
         "meta_capi_events",
         "mfa_sessions",
+        "multiplix_dispatches",
+        "multiplix_recipients",
         "notifications",
         "nps_surveys",
         "number_reputation",
@@ -164,6 +163,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 140,
-    "authenticated_execute_count": 89
+    "service_role_execute_count": 152,
+    "authenticated_execute_count": 92
 }

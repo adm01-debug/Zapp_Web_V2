@@ -56,7 +56,7 @@ reset_fixture() {
   psql_sql "
     DROP FUNCTION IF EXISTS public.mcp_exec_many(text[], integer);
     DROP FUNCTION IF EXISTS public.mcp_exec(text, integer);
-    DROP ROLE IF EXISTS acl_owner, acl_direct, acl_inheritor, acl_reachable, acl_alt_grantor;
+    DROP ROLE IF EXISTS acl_owner, acl_direct, acl_inheritor, acl_reachable, acl_alt_grantor, cli_login_postgres;
     ALTER ROLE authenticator NOINHERIT;
     ALTER ROLE postgres INHERIT;
     ALTER ROLE supabase_realtime_admin NOINHERIT;
@@ -210,6 +210,13 @@ psql_sql "
   WHERE oid = 'public.mcp_exec(text,integer)'::regprocedure;
 " >/dev/null
 assert_guard_passes 'grant explicito legitimo com grantor diferente'
+
+reset_fixture
+psql_sql "
+  CREATE ROLE cli_login_postgres NOLOGIN NOINHERIT;
+  GRANT postgres TO cli_login_postgres;
+"
+assert_guard_passes 'aresta tolerada da Supabase CLI (postgres->cli_login_postgres) presente'
 
 run_negative_sql_case \
   'funcao esperada ausente' \

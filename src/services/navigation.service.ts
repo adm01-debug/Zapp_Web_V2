@@ -8,7 +8,7 @@ import {
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
   ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
-  Webhook, HardDrive, Landmark, FlaskConical, ListChecks,
+  Webhook, HardDrive, Landmark, FlaskConical, ListChecks, Send,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -41,6 +41,7 @@ export class NavigationService {
       { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
       { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
       { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
+      { id: 'multiplix', icon: Send, label: 'Multiplix', roles: STAFF_ROLES },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
       { id: 'pipeline', icon: Kanban, label: 'Pipeline', layout: 'full', shortcut: 'Alt+P' },

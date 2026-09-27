@@ -4,38 +4,65 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // vi.hoisted ensures this reference is available inside the vi.mock() factory closure.
-const { mockSipConnect } = vi.hoisted(() => ({ mockSipConnect: vi.fn() }));
+const { mockConnectWithStoredCredentials, mockAddCallNotes } = vi.hoisted(() => ({
+  mockConnectWithStoredCredentials: vi.fn(),
+  mockAddCallNotes: vi.fn().mockResolvedValue(true),
+}));
+
+function makeCallsQueryBuilder({ historyResult = { data: [], error: null }, statsResult = { data: [], error: null } } = {}) {
+  const builder = {
+    select: vi.fn(() => builder),
+    eq: vi.fn(() => builder),
+    or: vi.fn(() => builder),
+    is: vi.fn(() => builder),
+    not: vi.fn(() => builder),
+    in: vi.fn(() => builder),
+    limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+    order: vi.fn(() => builder),
+    range: vi.fn(() => Promise.resolve(historyResult)),
+    then: (resolve, reject) => Promise.resolve(statsResult).then(resolve, reject),
+  };
+  return builder;
+}
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-    }),
-    functions: {
-      invoke: vi.fn().mockResolvedValue({ data: { password: 'test-pass' }, error: null }),
-    },
+    from: vi.fn(() => makeCallsQueryBuilder()),
   },
 }));
 
-vi.mock('sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'profile-1' }, user: { id: 'user-1' } }),
 }));
 
-vi.mock('@/hooks/communication/useSipClient', () => ({
-  useSipClient: () => ({
+vi.mock('@/hooks/communication/useCalls', () => ({
+  useCalls: () => ({
+    startCall: vi.fn(),
+    answerCall: vi.fn(),
+    endCall: vi.fn(),
+    missCall: vi.fn(),
+    addCallNotes: mockAddCallNotes,
+    getContactCalls: vi.fn(),
+    currentCallId: null,
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/providers/CallSessionProvider', () => ({
+  useCallSession: () => ({
     sipStatus: 'disconnected' as const,
     callStatus: 'idle' as const,
     callDuration: 0,
     isMuted: false,
     currentNumber: '',
-    connect: mockSipConnect,
+    callDirection: null,
+    currentCallId: null,
+    connectWithStoredCredentials: mockConnectWithStoredCredentials,
     disconnect: vi.fn(),
     makeCall: vi.fn(),
     hangUp: vi.fn(),
+    acceptIncomingCall: vi.fn(),
+    rejectIncomingCall: vi.fn(),
     toggleMute: vi.fn(),
     sendDTMF: vi.fn(),
   }),
@@ -49,49 +76,25 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('VoIPPanel', () => {
-  // vi.resetAllMocks() clears queued mockResolvedValueOnce values (preventing bleed between
-  // tests), but also wipes the vi.mock() factory implementations. We re-establish the
-  // baseline stubs immediately after so the component always has working defaults.
   beforeEach(async () => {
     vi.resetAllMocks();
     const { supabase } = await import('@/integrations/supabase/client');
-    supabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-    });
-    supabase.functions.invoke.mockResolvedValue({ data: { password: 'test-pass' }, error: null });
+    supabase.from.mockReturnValue(makeCallsQueryBuilder());
+    mockConnectWithStoredCredentials.mockReset();
+    mockAddCallNotes.mockReset().mockResolvedValue(true);
   });
 
-  it('renders the VoIP header', () => {
+  it('renders the Telefonia header', () => {
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('VoIP & Chamadas')).toBeInTheDocument();
+    expect(screen.getByText('Telefonia')).toBeInTheDocument();
   });
 
-  it('renders all three tabs', () => {
-    renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('Discador')).toBeInTheDocument();
-    expect(screen.getByText('Histórico')).toBeInTheDocument();
-    expect(screen.getByText('Configurações')).toBeInTheDocument();
-  });
-
-  it('defaults to dialer tab with number input visible', () => {
+  it('shows history and the dialer side by side — no admin configuration tab', () => {
     renderWithProviders(<VoIPPanel />);
     expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
-  });
-
-  it('can click history tab without crashing', () => {
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByText('Histórico'));
-    expect(screen.getByText('Histórico')).toBeInTheDocument();
-  });
-
-  it('can click settings tab without crashing', () => {
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByText('Configurações'));
-    expect(screen.getByText('Configurações')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar por nome ou telefone...')).toBeInTheDocument();
+    expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
+    expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
   });
 
   it('renders stat cards', () => {
@@ -109,73 +112,92 @@ describe('VoIPPanel', () => {
     expect(zeros.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('renders description text', () => {
+  it('scopes both the history and the stats query to the signed-in agent', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const builder = makeCallsQueryBuilder();
+    supabase.from.mockReturnValue(builder);
+
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByText('Click-to-call, histórico de chamadas e gravações')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(builder.eq).toHaveBeenCalledWith('agent_id', 'profile-1');
+    });
+    // Duas consultas (histórico paginado + agregados) — ambas com o mesmo escopo.
+    expect(builder.eq.mock.calls.every(([col, val]) => col === 'agent_id' && val === 'profile-1')).toBe(true);
   });
 
-  // --- handleSipConnect happy path ---
-  it('happy path: calls sip.connect with server/user/password when invoke succeeds', async () => {
+  it('shows a load-more button only when a full page of history is returned', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
-    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      data: { password: 'secret123' },
-      error: null,
+    const fullPage = Array.from({ length: 20 }, (_, i) => ({
+      id: `call-${i}`, contact_id: null, agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'outbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 30, recording_url: null, notes: null, contact: null,
+    }));
+    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: fullPage, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Carregar mais')).toBeInTheDocument();
     });
+  });
+
+  it('opens the call detail panel on row click and hides the dialer', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const page = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, recording_url: null, notes: 'nota antiga',
+      contact: { name: 'Maria Souza', phone: '5511999999999' },
+    }];
+    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Maria Souza'));
+
+    expect(screen.getByText('Detalhe da chamada')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Digite o número')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Fechar detalhe'));
+    expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+  });
+
+  it('saves an edited note through addCallNotes', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const page = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, recording_url: null, notes: null,
+      contact: { name: 'Maria Souza', phone: '5511999999999' },
+    }];
+    supabase.from.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Maria Souza')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Maria Souza'));
+
+    fireEvent.change(screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...'), {
+      target: { value: 'Cliente pediu retorno amanhã' },
+    });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(mockAddCallNotes).toHaveBeenCalledWith('call-1', 'Cliente pediu retorno amanhã');
+    });
+  });
+
+  it('delegates the connect button to the shared call session (credential fetch lives in useSipClient)', async () => {
     renderWithProviders(<VoIPPanel />);
     fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
     await waitFor(() => {
-      expect(mockSipConnect).toHaveBeenCalledOnce();
-      expect(mockSipConnect).toHaveBeenCalledWith(
-        expect.objectContaining({ password: 'secret123' }),
-      );
+      expect(mockConnectWithStoredCredentials).toHaveBeenCalledOnce();
     });
-  });
-
-  // --- SIP_NOT_CONFIGURED path (error + status 503) ---
-  it('shows SIP_PASSWORD config toast when invoke returns 503', async () => {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { toast } = await import('sonner');
-    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      data: null,
-      error: { context: { status: 503, code: 'SIP_NOT_CONFIGURED' } },
-    });
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
-    });
-    expect(mockSipConnect).not.toHaveBeenCalled();
-  });
-
-  // --- Generic auth/network error path (error + non-503 status) ---
-  it('shows generic session toast for non-config invoke errors (401)', async () => {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { toast } = await import('sonner');
-    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      data: null,
-      error: { context: { status: 401, code: 'UNAUTHORIZED' } },
-    });
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('sessão'));
-    });
-    expect(mockSipConnect).not.toHaveBeenCalled();
-  });
-
-  // --- Missing password with no error (else branch of ternary: isMissingSecret = true) ---
-  it('shows SIP_PASSWORD config toast when invoke returns no error but no password', async () => {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { toast } = await import('sonner');
-    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      data: null,
-      error: null,
-    });
-    renderWithProviders(<VoIPPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /conectar sip/i }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
-    });
-    expect(mockSipConnect).not.toHaveBeenCalled();
   });
 });

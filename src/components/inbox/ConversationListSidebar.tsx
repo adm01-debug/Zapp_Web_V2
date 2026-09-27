@@ -43,14 +43,16 @@ export function ConversationListSidebar({ inbox, inboxFilters, bulkActions, pull
     if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
     await conversationActions.archiveContact(contactId);
     inbox.refetch();
-  }, [conversationActions, inbox]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- inbox é `any` (tipo de useRealtimeInbox()), então o linter não vê inbox.refetch como estável; dep no objeto inteiro reproduziria o bug do #810 (inbox é novo a cada render).
+  }, [conversationActions, inbox.refetch]);
 
   const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
     if (!transferTarget) return;
     if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
     await conversationActions.transferContact(transferTarget, type, targetId);
     inbox.refetch();
-  }, [transferTarget, conversationActions, inbox]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mesmo motivo acima.
+  }, [transferTarget, conversationActions, inbox.refetch]);
 
   // Se a conversa sumir da lista em tempo real (ex: outro agente ja
   // resolveu/moveu) enquanto o dialogo de Resolver/Transferir esta aberto

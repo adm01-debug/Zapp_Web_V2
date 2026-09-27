@@ -8,6 +8,7 @@ import { MapPin, Building, Users, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactRegionMap } from './ContactRegionMap';
+import type { PreciseContactPoint } from './ContactRegionMap';
 import { getRegionFromPhone } from './getRegionFromPhone';
 
 interface Contact {
@@ -17,6 +18,9 @@ interface Contact {
   phone: string;
   avatar_url?: string | null;
   lead_origin?: string | null;
+  /** Preenchidos pelo autocomplete de endereço do cadastro (E41/E42) — nem todo contato tem. */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface ContactMapViewProps {
@@ -49,6 +53,12 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
 
   const maxCount = regions[0]?.[1].length || 1;
 
+  const preciseContacts = useMemo<PreciseContactPoint[]>(() => contacts
+    .filter((c): c is Contact & { latitude: number; longitude: number } =>
+      typeof c.latitude === 'number' && typeof c.longitude === 'number')
+    .map((c) => ({ id: c.id, name: c.name, lat: c.latitude, lng: c.longitude })),
+  [contacts]);
+
   return (
     <div className="space-y-4">
       {/* Summary Bar */}
@@ -66,6 +76,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
       {/* Mapa por regiao do DDD */}
       <ContactRegionMap
         regions={regions.map(([region, members]) => ({ region, count: members.length }))}
+        preciseContacts={preciseContacts}
         selectedRegion={expandedRegion}
         onSelectRegion={(region) => setExpandedRegion((current) => (current === region ? null : region))}
       />

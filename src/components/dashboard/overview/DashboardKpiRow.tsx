@@ -74,7 +74,7 @@ export function DashboardKpiRow({ stats, realtime, kpi, isStaff = true, myActive
       ) : (
         <DashboardKpiCard
           index={3}
-          label=" Minhas Conversas Ativas"
+          label="Minhas Conversas Ativas"
           value={String(myActiveConversations)}
           delta={null}
           tile="violet"

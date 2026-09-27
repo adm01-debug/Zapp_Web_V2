@@ -11,6 +11,7 @@ import { getLogger } from "@/lib/logger";
 import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { QuarantineMonitorProvider } from "@/providers/QuarantineMonitorProvider";
+import { CallSessionProvider } from "@/providers/CallSessionProvider";
 
 const log = getLogger('AppProviders');
 
@@ -75,7 +76,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                 <ThemeSync />
                 <ThemeInitializer />
                 <QuarantineMonitorProvider>
-                  {children}
+                  <CallSessionProvider>
+                    {children}
+                  </CallSessionProvider>
                 </QuarantineMonitorProvider>
               </TooltipProvider>
             </AccessibleToastProvider>
