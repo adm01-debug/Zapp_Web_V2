@@ -264,7 +264,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       conversationId: conversation.id,
       content: fileName,
       mediaUrl,
-      mediaType: mediaType as TeamMessage['media_type'],
+      mediaType: (mediaType as TeamMessage['media_type']) ?? undefined,
     });
   }, [profile, conversation.id, sendMutation]);
 
