@@ -11,7 +11,7 @@ import {
 import {
   MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
   Briefcase, Calendar, Tag, Users, Truck, UserCheck,
-  Wrench, Star, Handshake, MoreHorizontal,
+  Wrench, Star, Handshake, MoreHorizontal, Package,
   ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -27,6 +27,7 @@ import type { CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
 const CONTACT_TYPE_ICONS: Record<string, React.ReactNode> = {
   cliente: <Users className="w-4 h-4" />,
   fornecedor: <Truck className="w-4 h-4" />,
+  transportadora: <Package className="w-4 h-4" />,
   colaborador: <UserCheck className="w-4 h-4" />,
   prestador_servico: <Wrench className="w-4 h-4" />,
   lead: <Star className="w-4 h-4" />,

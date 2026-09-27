@@ -38,7 +38,7 @@ export function ContactEmptyState({
             Comece sua base de contatos
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-6 leading-relaxed">
-            Adicione seu primeiro contato manualmente para começar sua base de clientes e leads
+            Adicione seu primeiro contato manualmente para começar sua base de contatos
           </p>
           <div className="flex items-center gap-3">
             {onAddContact && (
@@ -63,7 +63,7 @@ export function ContactEmptyState({
               >
                 <span className="text-2xl">{tip.icon}</span>
                 <p className="text-xs font-medium text-foreground mt-1">{tip.title}</p>
-                <p className="text-3xs text-muted-foreground">{tip.desc}</p>
+                <p className="text-xs text-muted-foreground">{tip.desc}</p>
               </motion.div>
             ))}
           </div>

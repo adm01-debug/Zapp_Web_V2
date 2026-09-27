@@ -81,7 +81,7 @@ export function ContactsView() {
       <PageHeader
         variant="plain"
         title="Contatos"
-        subtitle={`Base de clientes e leads (${totalCount.toLocaleString('pt-BR')} contatos)`}
+        subtitle={`Base de contatos (${totalCount.toLocaleString('pt-BR')} contatos)`}
         breadcrumbs={[{ label: 'Início' }, { label: 'Gestão' }, { label: 'Contatos' }]}
         actions={
           <div className="flex items-center gap-3 flex-wrap">
@@ -156,7 +156,7 @@ export function ContactsView() {
         onImportComplete={handleSync}
       />
 
-      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} leadsAll={contactCountByType['lead'] ?? 0} />
+      <ContactStatsCards totalAll={contactCountByType['all'] ?? 0} fornecedoresAll={contactCountByType['fornecedor'] ?? 0} />
 
       <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
 
