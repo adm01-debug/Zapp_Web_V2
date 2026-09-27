@@ -145,6 +145,19 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   );
 }
 
+/** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
+ * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
+ * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
+export function internalErrorResponse(err: unknown, req?: Request): Response {
+  const headers = req ? getCorsHeaders(req) : corsHeaders;
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg: message }));
+  return new Response(
+    JSON.stringify({ error: 'Internal server error' }),
+    { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
+  );
+}
+
 /** Standard JSON success response (with origin-validated CORS) */
 export function jsonResponse(data: unknown, status = 200, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AiClassifyTicketsSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
@@ -103,6 +103,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ classified: results.length, results, summary }, 200, req);
   } catch (err: unknown) {
     log.error("Error", { error: err instanceof Error ? err.message : String(err) });
-    return errorResponse(err instanceof Error ? err.message : "Erro interno", 500, req);
+    return internalErrorResponse(err, req);
   }
 });

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
+import { handleCors, jsonResponse, errorResponse, internalErrorResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
 
 serve(async (req) => {
@@ -120,7 +120,7 @@ serve(async (req) => {
   } catch (err: unknown) {
     log.error('Migration error', { error: err instanceof Error ? err.message : String(err) });
     log.done(500);
-    return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500, req);
+    return internalErrorResponse(err, req);
   }
 });
 
