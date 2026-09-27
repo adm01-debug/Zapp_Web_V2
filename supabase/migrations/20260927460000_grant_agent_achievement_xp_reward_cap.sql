@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION public.grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text DEFAULT NULL::text, p_xp_reward integer DEFAULT 0)
 RETURNS json LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
 AS $$
-DECLARE v_inserted_id uuid; v_row agent_stats%ROWTYPE; v_new_xp int; v_new_level int;
+DECLARE v_inserted_id uuid; v_row agent_stats%ROWTYPE; v_new_xp bigint; v_new_level int;
 BEGIN
   IF auth.role() = 'anon' OR (
     auth.uid() IS NOT NULL AND NOT (
