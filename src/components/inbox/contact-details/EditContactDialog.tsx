@@ -69,6 +69,7 @@ const FIELD_NORMALIZERS: Record<string, (raw: string) => string | number | null>
   surname: (v) => v || null,
   job_title: (v) => v || null,
   company: (v) => v || null,
+  phone: (v) => v || null,
   email: (v) => v || null,
   contact_type: (v) => v || null,
   postal_code: (v) => v || null,
