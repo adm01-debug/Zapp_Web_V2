@@ -1,12 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 // Runs against the "chromium-authenticated" project (see playwright.config.ts),
 // which depends on "setup" (e2e/auth.setup.ts) for its storageState. These tests
 // only exercise navigation/rendering that depends on being logged in, not on
 // seeded campaign/segment/WhatsApp-connection data.
+
+// SidebarNavGroup defaults to closed (defaultOpen=false). Fresh auth storageState
+// has no saved group-open state, so the group must be expanded before clicking
+// any item inside "Automação & IA".
+async function expandCampanhasGroup(page: Page) {
+  const nav = page.getByRole('navigation', { name: 'Menu de navegação principal' });
+  const groupBtn = nav.getByRole('button', { name: /automação & ia/i }).first();
+  if ((await groupBtn.getAttribute('aria-expanded')) === 'false') {
+    await groupBtn.click();
+  }
+}
+
 test.describe('Talk X module', () => {
   test('campaigns overview renders after navigating from the sidebar', async ({ page }) => {
     await page.goto('/');
+    await expandCampanhasGroup(page);
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
       .getByRole('button', { name: 'Campanhas', exact: true })
@@ -20,6 +33,7 @@ test.describe('Talk X module', () => {
 
   test('new campaign wizard opens on the audience step', async ({ page }) => {
     await page.goto('/');
+    await expandCampanhasGroup(page);
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
       .getByRole('button', { name: 'Campanhas', exact: true })
@@ -43,6 +57,7 @@ test.describe('Talk X module', () => {
 
   test('help modal opens and closes', async ({ page }) => {
     await page.goto('/');
+    await expandCampanhasGroup(page);
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
       .getByRole('button', { name: 'Campanhas', exact: true })
@@ -59,6 +74,7 @@ test.describe('Talk X module', () => {
 
   test('segments and templates tabs render', async ({ page }) => {
     await page.goto('/');
+    await expandCampanhasGroup(page);
     await page
       .getByRole('navigation', { name: 'Menu de navegação principal' })
       .getByRole('button', { name: 'Campanhas', exact: true })
