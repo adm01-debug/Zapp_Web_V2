@@ -46,3 +46,18 @@ Deno.test('GmailSendActionSchema aceita message_ids todos válidos', () => {
   }));
   assertEquals(result.success, true);
 });
+
+Deno.test('GmailSendActionSchema rejeita thread_id vazio', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: '' }));
+  assertEquals(result.success, false);
+});
+
+Deno.test('GmailSendActionSchema rejeita thread_id com mais de 100 caracteres', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: 'a'.repeat(101) }));
+  assertEquals(result.success, false);
+});
+
+Deno.test('GmailSendActionSchema rejeita thread_id com percent-encoding (%2F = /)', () => {
+  const result = GmailSendActionSchema.safeParse(baseBody({ thread_id: 'abc%2Fadmin' }));
+  assertEquals(result.success, false);
+});

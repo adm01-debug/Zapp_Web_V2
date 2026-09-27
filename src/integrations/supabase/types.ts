@@ -4428,6 +4428,56 @@ export type Database = {
         }
         Relationships: []
       }
+      multiplix_blocks: {
+        Row: {
+          block_order: number
+          block_type: string
+          created_at: string
+          dispatch_id: string
+          id: string
+          media_caption: string | null
+          media_url: string | null
+          template_text: string | null
+          updated_at: string
+          voice_id: string | null
+          voice_script: string | null
+        }
+        Insert: {
+          block_order?: number
+          block_type: string
+          created_at?: string
+          dispatch_id: string
+          id?: string
+          media_caption?: string | null
+          media_url?: string | null
+          template_text?: string | null
+          updated_at?: string
+          voice_id?: string | null
+          voice_script?: string | null
+        }
+        Update: {
+          block_order?: number
+          block_type?: string
+          created_at?: string
+          dispatch_id?: string
+          id?: string
+          media_caption?: string | null
+          media_url?: string | null
+          template_text?: string | null
+          updated_at?: string
+          voice_id?: string | null
+          voice_script?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplix_blocks_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "multiplix_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       multiplix_dispatches: {
         Row: {
           audience_filters: Json
@@ -7309,25 +7359,34 @@ export type Database = {
         Row: {
           conversation_id: string
           id: string
+          is_archived: boolean
           is_muted: boolean | null
+          is_pinned: boolean
           joined_at: string
           last_read_at: string | null
+          member_role: string
           profile_id: string
         }
         Insert: {
           conversation_id: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id: string
         }
         Update: {
           conversation_id?: string
           id?: string
+          is_archived?: boolean
           is_muted?: boolean | null
+          is_pinned?: boolean
           joined_at?: string
           last_read_at?: string | null
+          member_role?: string
           profile_id?: string
         }
         Relationships: [
@@ -7360,6 +7419,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           department_id: string | null
+          direct_member_a: string | null
+          direct_member_b: string | null
           id: string
           metadata: Json
           name: string | null
@@ -7371,6 +7432,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7382,6 +7445,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department_id?: string | null
+          direct_member_a?: string | null
+          direct_member_b?: string | null
           id?: string
           metadata?: Json
           name?: string | null
@@ -7410,10 +7475,39 @@ export type Database = {
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "team_conversations_direct_member_a_fkey"
+            columns: ["direct_member_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_a_fkey"
+            columns: ["direct_member_a"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_b_fkey"
+            columns: ["direct_member_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_conversations_direct_member_b_fkey"
+            columns: ["direct_member_b"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       team_message_reactions: {
         Row: {
+          conversation_id: string
           created_at: string
           emoji: string
           id: string
@@ -7421,6 +7515,7 @@ export type Database = {
           profile_id: string
         }
         Insert: {
+          conversation_id: string
           created_at?: string
           emoji: string
           id?: string
@@ -7428,6 +7523,7 @@ export type Database = {
           profile_id: string
         }
         Update: {
+          conversation_id?: string
           created_at?: string
           emoji?: string
           id?: string
@@ -7435,6 +7531,13 @@ export type Database = {
           profile_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_message_reactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "team_conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_message_reactions_message_id_fkey"
             columns: ["message_id"]
@@ -7458,6 +7561,55 @@ export type Database = {
           },
         ]
       }
+      team_message_receipts: {
+        Row: {
+          delivered_at: string | null
+          id: string
+          message_id: string
+          profile_id: string
+          read_at: string | null
+          status: string
+        }
+        Insert: {
+          delivered_at?: string | null
+          id?: string
+          message_id: string
+          profile_id: string
+          read_at?: string | null
+          status?: string
+        }
+        Update: {
+          delivered_at?: string | null
+          id?: string
+          message_id?: string
+          profile_id?: string
+          read_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_message_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_message_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_messages: {
         Row: {
           content: string
@@ -7465,6 +7617,8 @@ export type Database = {
           created_at: string
           id: string
           is_edited: boolean | null
+          media_bucket: string | null
+          media_path: string | null
           media_type: string | null
           media_url: string | null
           message_type: string
@@ -7479,6 +7633,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -7493,6 +7649,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_edited?: boolean | null
+          media_bucket?: string | null
+          media_path?: string | null
           media_type?: string | null
           media_url?: string | null
           message_type?: string
@@ -8886,6 +9044,10 @@ export type Database = {
         Args: { p_profile_id: string; p_xp: number }
         Returns: Json
       }
+      add_wa_tag_if_not_exists: {
+        Args: { p_contact_id: string; p_prefix: string; p_tag: string }
+        Returns: undefined
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9176,7 +9338,7 @@ export type Database = {
         }[]
       }
       dashboard_kpi: {
-        Args: { p_agent?: string; p_queue?: string; p_since: string }
+        Args: { p_agent?: string; p_queue?: string; p_since?: string }
         Returns: Json
       }
       dashboard_leaderboard: {
@@ -9368,6 +9530,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_or_create_direct_conversation: {
+        Args: { other_profile_id: string }
+        Returns: string
+      }
       fn_list_audio_meme_categories: {
         Args: never
         Returns: {
@@ -9477,6 +9643,7 @@ export type Database = {
           last_message_at: string
         }[]
       }
+      get_multiplix_cron_secret: { Args: never; Returns: string }
       get_own_gmail_accounts: {
         Args: never
         Returns: {
@@ -9508,6 +9675,17 @@ export type Database = {
           role: string
         }[]
       }
+      get_team_conversation_previews: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          last_message_content: string
+          last_message_created_at: string
+          last_message_id: string
+          last_message_sender_id: string
+          last_message_type: string
+        }[]
+      }
       get_team_profiles: {
         Args: never
         Returns: {
@@ -9523,6 +9701,13 @@ export type Database = {
           phone: string
           role: string
           user_id: string
+        }[]
+      }
+      get_team_unread_counts: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          unread_count: number
         }[]
       }
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
@@ -9782,6 +9967,18 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remove_wa_label_from_all_contacts: {
+        Args: { p_label_prefix: string }
+        Returns: undefined
+      }
+      remove_wa_tag_by_prefix: {
+        Args: { p_contact_id: string; p_prefix: string }
+        Returns: undefined
+      }
+      rename_wa_label_on_all_contacts: {
+        Args: { p_label_prefix: string; p_new_tag: string }
+        Returns: undefined
+      }
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
@@ -9909,6 +10106,14 @@ export type Database = {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
       }
+      set_team_member_role: {
+        Args: {
+          p_conversation_id: string
+          p_new_role: string
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       store_gmail_tokens: {
         Args: {
@@ -9966,8 +10171,9 @@ export type Database = {
               previous_status: string
             }[]
           }
+      trigger_pending_multiplix_dispatches: { Args: never; Returns: undefined }
       update_agent_streak: {
-        Args: { p_profile_id: string; p_increment: boolean }
+        Args: { p_increment: boolean; p_profile_id: string }
         Returns: Json
       }
       update_own_profile: {
