@@ -56,9 +56,18 @@ order by created_at desc;
 
 ## Primeiro mês medido
 
-A flag `mapa.searchbox-autocomplete` está desligada em produção até o rollout (E48) — em
-2026-09-26, `count(*) = 0` (ver Apêndice B do plano). O primeiro número real de sessões/mês só
-aparece depois da flag ligada; atualizar o Apêndice B do plano quando isso acontecer.
+**Atualizado em 2026-09-27** (queries executadas contra produção, ~31h após o rollout):
+
+| Métrica | Resultado |
+|---|---|
+| Sessões no mês (set/2026) | **8** (1,6% do teto de 500) |
+| Sessões por dia | 2026-09-26: 8 · 2026-09-27: 0 |
+| Por origem | `contact-form`: 6 · `picker`: 2 |
+| Degradações do guarda | **0** (nenhuma vez ativou o fallback para `/forward`) |
+| Custo estimado | **US$ 0,00** — projeção mensal ~240 sessões, dentro do teto grátis |
+
+A flag `mapa.searchbox-autocomplete` foi ligada em `2026-09-26T13:20:15Z` (E48). O Apêndice B
+do plano tem o histórico completo.
 
 ## Privacidade (E39)
 
