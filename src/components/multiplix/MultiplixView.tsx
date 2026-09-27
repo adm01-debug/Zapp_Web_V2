@@ -303,11 +303,12 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
-          {/* P2 fix (Codex, 2a review da PR #958): !search.isError impede que o
-              botao apareca quando search falhou -- sem este guard, se count
-              sucedeu mas search falhou, rows.length(0) < count.data mostra
-              o botao e o clique pede page 1 pulando page 0 permanentemente. */}
-          {!search.isError && (count.data !== undefined ? rows.length < count.data : lastPageFull) && (
+          {/* P2 fix (Codex, 2a review da PR #958): !search.isError impedia botao
+              quando busca inicial falhava. Complemento (3a review): substituido
+              por (rows.length > 0 || !search.isError) para distinguir falha de
+              busca inicial (rows vazias -> esconde botao) de falha de loadMore
+              (rows populadas -> mantem botao para retry sem perder selecao). */}
+          {(rows.length > 0 || !search.isError) && (count.data !== undefined ? rows.length < count.data : lastPageFull) && (
             <div className="flex justify-center border-t border-[--zapp-border] p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
