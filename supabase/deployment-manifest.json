@@ -78,13 +78,13 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "bytes": 16790,
-      "sha256": "fd8b582b55116307186478c6f7fc03f47656cf20af7dec14bdc7346b2b21b478"
+      "bytes": 16638,
+      "sha256": "e58a46de78d1945b892ca2ea78ea2da6e563a772046b70c18b3d05b033f324cb"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
-      "bytes": 16571,
-      "sha256": "240ea935f92a666d165a15e3767cd391d4691ac087f01fab1eb2b9bb619efef2"
+      "bytes": 16010,
+      "sha256": "cc02968c7added41718cbb6b0f95d11c6db27b1cd51dc316f4fb0d3fcf277fff"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -915,7 +915,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e26969d3eb000b82645e9751e5df7a3f28541ca34e5e579ecc168e1f89c8be29",
+      "source_sha256": "a2c7d0ab0f02fe745502a3c00a97c19c46765608ec475bbd7fd679451ccd5554",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -930,7 +930,7 @@
       "name": "evolution-sync",
       "entrypoint": "supabase/functions/evolution-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e3e3f43ccf5d0a382d915851758c5904b156d9966b1d8caeb5e4b190533e2f6a",
+      "source_sha256": "f885c64b21a789e15dc3f1715a7e0a61a0b0fa75eaf0b5e68c7d3c34cb7b3340",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -944,7 +944,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a411c46e7cdb733bc7be6e680cb70950d6d6c2f21dca88a1ef4186d999c135fa",
+      "source_sha256": "cf157e21869e86d8a5e5976b3d715362e8b73c805b7e46878530e155e673d872",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1366,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "aeaedf44601f78982d3912f0964050a56dffa00884a917b9464f53e64adca997"
+  "manifest_sha256": "57c43bfa872c97dd654d8205eda822fbbb2fd5cac7676e77634aa687a35238f8"
 }
