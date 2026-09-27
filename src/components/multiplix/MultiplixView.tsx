@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Send, Search, Loader2, ListChecks } from 'lucide-react';
 import { ModuleHeader, StatusPill, fmtInt, fmtDateTime } from '@/components/talkx/talkxShared';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,9 @@ const DESTINO_LABELS: Record<string, string> = {
 };
 
 const PAGE_SIZE = 50;
+// Limite duro do backend: ResolveParamsSchema.company_ids em
+// supabase/functions/multiplix-audience/index.ts rejeita arrays > 500.
+const MAX_SELECTABLE = 500;
 
 export default function MultiplixView() {
   const { data: ramos, isLoading: loadingRamos } = useMultiplixRamos();
@@ -50,6 +54,7 @@ export default function MultiplixView() {
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [rows, setRows] = useState<MultiplixAudienceRow[]>([]);
   const [page, setPage] = useState(0);
+  const [submittedFilters, setSubmittedFilters] = useState<MultiplixSearchFilters>({});
   const dispatches = useMultiplixDispatchesList();
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
@@ -62,34 +67,54 @@ export default function MultiplixView() {
   const runSearch = () => {
     setSelected(new Set());
     setPage(0);
+    setSubmittedFilters(filters);
     count.mutate(filters);
     search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => setRows(data) });
   };
 
-  // P2 fix (auditoria de 5 agentes, 2026-09-27): a busca sempre pedia page:0,
-  // page_size:50 e nunca avancava -- filtros com mais de 50 empresas nunca
-  // mostravam nem permitiam selecionar o restante. Acumula paginas em 'rows'
-  // ate esgotar 'count.data'.
+  // P1+P2 fix (Codex, review da PR #958):
+  // - 'loadMore' usava os filtros AO VIVO, nao o snapshot do ultimo Buscar --
+  //   se o usuario mudasse um filtro sem clicar Buscar e depois clicasse
+  //   Carregar mais, a resposta (de outro filtro) era anexada em cima da
+  //   audiencia antiga, misturando duas buscas na mesma selecao.
+  // - 'page' avancava antes da resposta: numa falha de rede/timeout a pagina
+  //   fica pulada para sempre (nunca mais pedida) sem nenhuma linha extra.
+  // Fix: usa 'submittedFilters' (travado no Buscar) e so avanca 'page' dentro
+  // do onSuccess.
   const loadMore = () => {
     const nextPage = page + 1;
-    setPage(nextPage);
     search.mutate(
-      { ...filters, page: nextPage, page_size: PAGE_SIZE },
-      { onSuccess: (data) => setRows((prev) => [...prev, ...data]) },
+      { ...submittedFilters, page: nextPage, page_size: PAGE_SIZE },
+      { onSuccess: (data) => { setPage(nextPage); setRows((prev) => [...prev, ...data]); } },
     );
   };
 
   const toggleRow = (companyId: string) => {
     setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(companyId)) next.delete(companyId); else next.add(companyId);
-      return next;
+      if (prev.has(companyId)) {
+        const next = new Set(prev);
+        next.delete(companyId);
+        return next;
+      }
+      if (prev.size >= MAX_SELECTABLE) {
+        toast.error(`Limite de ${MAX_SELECTABLE} empresas por disparo. Desmarque alguma antes de adicionar outra.`);
+        return prev;
+      }
+      return new Set(prev).add(companyId);
     });
   };
 
+  // P1 fix (Codex, review da PR #958): com paginacao, "Selecionar todas"
+  // pode juntar mais de 500 empresas -- o resolver do backend
+  // (ResolveParamsSchema.company_ids) rejeita arrays maiores que isso, e o
+  // disparo falharia com "Invalid request" sem nenhuma explicacao na UI.
   const toggleAllVisible = () => {
     const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.company_id));
-    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.company_id)));
+    if (allSelected) { setSelected(new Set()); return; }
+    if (rows.length > MAX_SELECTABLE) {
+      toast.error(`"Selecionar todas" limitado a ${MAX_SELECTABLE} empresas (limite do backend) — foram selecionadas as primeiras ${MAX_SELECTABLE}. Refine o filtro para pegar o restante.`);
+    }
+    setSelected(new Set(rows.slice(0, MAX_SELECTABLE).map((r) => r.company_id)));
   };
 
   if (monitorId) {
@@ -191,7 +216,12 @@ export default function MultiplixView() {
         </p>
       )}
 
-      {count.data !== undefined && (
+      {/* P2 fix (Codex, review da PR #958): gate na conclusao da busca, nao em
+          count.data -- se a busca (RPC 'search') tiver sucesso mas a
+          contagem (RPC 'count', independente) falhar, as linhas ja
+          resolvidas nao podem ficar escondidas por causa de um RPC que nem
+          e o dela. */}
+      {search.isSuccess && (
         <div className="overflow-hidden rounded-2xl border border-[--zapp-border]">
           <Table>
             <TableHeader>
@@ -242,7 +272,7 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
-          {rows.length < count.data && (
+          {count.data !== undefined && rows.length < count.data && (
             <div className="flex justify-center border-t border-[--zapp-border] p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
