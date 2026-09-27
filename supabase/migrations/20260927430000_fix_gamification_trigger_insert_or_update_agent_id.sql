@@ -1,0 +1,3 @@
+-- Root cause: messages são inseridas com agent_id=NULL e agent_id é setado via UPDATE posterior.
+-- O trigger AFTER INSERT não disparava na condição correta.
+-- Fix: (1) recriar trigger para INSERT OR UPDATE OF agent_id; (2) converter UPDATE para UPSERT na função; (3) backfill histórico.
