@@ -1,7 +1,9 @@
--- 20260927290000_multiplix_cron_scheduler
+-- 20260927320000_multiplix_cron_scheduler
 -- Scheduler pg_cron para disparar multiplix-send a cada 2 minutos.
 -- Padrao identico ao gmail-cron-sync: vault secret + x-cron-secret header.
 -- pg_cron 1.6.4 e pg_net 0.20.4 ja instalados em producao.
+-- Renomeado de 20260927290000 para evitar colisao com fix_handle_new_user_role_null_email
+-- (outra sessao usou a mesma version antes do merge).
 
 -- 1. Vault secret (idempotente via vault.create_secret, nao INSERT direto)
 DO $$
