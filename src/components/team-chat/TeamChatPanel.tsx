@@ -69,7 +69,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   const s = useTeamChatPanel(conversation);
 
   // E68: department channel access check
-  const convAny = conversation as Record<string, unknown>;
+  const convAny = conversation as unknown as Record<string, unknown>;
   const isDeptChannel = !!(convAny.department_id);
   const profileDeptId = (s.profile as Record<string, unknown>)?.department_id as string | null | undefined;
   const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
@@ -221,7 +221,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                                 <MarkdownPreview text={msg.content} className="inline" />
                               </div>
                             )}
-                            {msg.content && hasMedia && msg.media_type !== 'document' && !['🎨 Figurinha', '🎵 Áudio meme', '😀 Emoji', '🎤 Mensagem de áudio'].includes(msg.content) && (
+                            {msg.content && hasMedia && msg.media_type !== 'document' && !["🎨 Figurinha", "🎵 Áudio meme", "😀 Emoji", "🎤 Mensagem de áudio"].includes(msg.content) && (
                               <p className="text-sm leading-relaxed whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                             )}
                             <div className={cn("flex items-center gap-1 mt-1", isMine ? "justify-end" : "justify-between")}>

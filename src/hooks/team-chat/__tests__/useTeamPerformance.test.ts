@@ -47,7 +47,7 @@ describe('useTeamPerformance', () => {
     expect(result.current.data?.activeParticipants).toBe(2);
   });
 
-  it('E92: returns isLoading=true initially', () => {
+  it('E92: returns isLoading=true initially', async () => {
     const { useTeamPerformance } = await import('../useTeamPerformance');
     const { result } = renderHook(() => useTeamPerformance('conv-1'), { wrapper });
     expect(result.current.isLoading).toBe(true);

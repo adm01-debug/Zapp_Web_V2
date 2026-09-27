@@ -61,6 +61,7 @@ export function useTeamMessageReactions(conversationId: string) {
   useEffect(() => {
     const channel = supabase
       .channel(`team-reactions-${conversationId}`)
+      // @ts-expect-error Supabase Realtime .on() overload mismatch with postgres_changes cast
       .on(
         'postgres_changes' as Parameters<typeof channel.on>[0],
         {

@@ -63,7 +63,7 @@ export function GroupManagementDialog({
 }: Props) {
   const [name, setName] = useState(conversation.name ?? '');
 
-  const members = (conversation.members ?? []) as MemberItem[];
+  const members = (conversation.members ?? []) as unknown as MemberItem[];
 
   const handleRename = () => {
     const trimmed = name.trim();

@@ -103,9 +103,9 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
     queryKey: ['departmentChat', 'whatsapp', departmentId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_department_whatsapp_credentials', { p_department_id: departmentId });
+        .rpc('get_department_whatsapp_credentials', { _department_id: departmentId });
       if (error) throw error;
-      return (data as DepartmentWhatsAppCredentials) ?? { mode: 'none', evolution_url: null };
+      return (data as unknown as DepartmentWhatsAppCredentials) ?? { mode: 'none', evolution_url: null };
     },
     staleTime: 60 * 1000,
   });
@@ -221,6 +221,7 @@ export function useSaveDepartmentWhatsApp(departmentId: string) {
       } else if (mode === 'official') {
         if (config.official_token) payload.official_token = config.official_token;
       }
+      // @ts-expect-error table not yet in generated types
       const { error } = await supabase
         .from('department_whatsapp_configs')
         .upsert(payload, { onConflict: 'department_id' });

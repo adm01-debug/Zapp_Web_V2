@@ -59,7 +59,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const { settings, isLoading: settingsLoading } = useUserSettings();
   const isMuted = useMemo(() => {
-    const muted = settings?.muted_conversations as string[] | undefined;
+    const muted = (settings as unknown as Record<string, unknown>)?.muted_conversations as string[] | undefined;
     return Array.isArray(muted) && muted.includes(conversation.id);
   }, [settings, conversation.id]);
 
@@ -197,7 +197,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       await sendMutation.mutateAsync({
         conversationId: conversation.id,
         content,
-        senderId: profile.id,
         replyToId: reply?.id,
       });
     } catch (err) {
@@ -253,22 +252,19 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: '🎤 Mensagem de áudio',
-      senderId: profile.id,
       mediaPath: data.path,
       mediaBucket: 'team-chat-files',
       mediaType: 'audio',
     });
   }, [profile, conversation.id, sendMutation]);
 
-  const handleFileSent = useCallback(async ({ path, bucket, type, name }: { path: string; bucket: string; type: string; name: string }) => {
+  const handleFileSent = useCallback(async (mediaUrl: string, mediaType: string, fileName: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
-      content: name,
-      senderId: profile.id,
-      mediaPath: path,
-      mediaBucket: bucket,
-      mediaType: type as TeamMessage['media_type'],
+      content: fileName,
+      mediaUrl,
+      mediaType: mediaType as TeamMessage['media_type'],
     });
   }, [profile, conversation.id, sendMutation]);
 
@@ -277,7 +273,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: '🎨 Figurinha',
-      senderId: profile.id,
       mediaUrl: url,
       mediaType: 'sticker',
     });
@@ -288,7 +283,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: '🎵 Áudio meme',
-      senderId: profile.id,
       mediaUrl: url,
       mediaType: 'audio_meme',
     });
@@ -299,7 +293,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: '😀 Emoji',
-      senderId: profile.id,
       mediaUrl: url,
       mediaType: 'emoji',
     });

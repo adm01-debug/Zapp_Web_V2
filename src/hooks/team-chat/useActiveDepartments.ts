@@ -18,7 +18,7 @@ export function useActiveDepartments(enabled: boolean) {
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
-      return (data ?? []) as ActiveDepartment[];
+      return (data ?? []) as unknown as ActiveDepartment[];
     },
     enabled,
     staleTime: 30 * 1000,
