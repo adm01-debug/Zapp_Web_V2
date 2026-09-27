@@ -104,6 +104,7 @@ export function ContactDialogs({
               onCancel={handleCancelForm}
               submitLabel="Salvar"
               isSubmitting={isSubmitting}
+              excludeContactId={editingContact.id}
             />
           )}
         </DialogContent>
