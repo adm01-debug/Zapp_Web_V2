@@ -110,7 +110,7 @@ export function TeamChatHeader({
               type="button"
               variant="ghost"
               size="icon"
-              className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showSearch && 'text-primary bg-primary/10')}
+              className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showSearch && "text-primary bg-primary/10")}
               onClick={onToggleSearch}
               aria-label={showSearch ? 'Fechar busca' : 'Buscar mensagens'}
               aria-pressed={showSearch}
@@ -181,7 +181,7 @@ export function TeamChatHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showDetails && 'text-primary bg-primary/10')}
+                className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showDetails && "text-primary bg-primary/10")}
                 onClick={onToggleDetails}
                 aria-label={showDetails ? 'Fechar detalhes' : 'Ver detalhes'}
                 aria-pressed={showDetails}
