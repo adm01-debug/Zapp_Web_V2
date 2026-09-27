@@ -89,6 +89,13 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     );
   }, [s.leaveMutation, conversation.id, onBack]);
 
+  const handleDeleteConversation = useCallback(() => {
+    s.deleteConvMutation.mutate(
+      { conversationId: conversation.id },
+      { onSuccess: onBack },
+    );
+  }, [s.deleteConvMutation, conversation.id, onBack]);
+
   return (
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader
@@ -282,9 +289,11 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           isRenamePending={s.renameConvMutation.isPending}
           isRemovePending={s.removeMemberMutation.isPending}
           isLeavePending={s.leaveMutation.isPending}
+          isDeletePending={s.deleteConvMutation.isPending}
           onRename={name => s.renameConvMutation.mutate({ conversationId: conversation.id, name })}
           onRemoveMember={profileId => s.removeMemberMutation.mutate({ conversationId: conversation.id, profileId })}
           onLeave={handleLeave}
+          onDelete={s.isGroupCreator ? handleDeleteConversation : undefined}
         />
       )}
 

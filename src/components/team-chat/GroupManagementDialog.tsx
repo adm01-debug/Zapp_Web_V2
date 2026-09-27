@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserMinus, LogOut, Users } from 'lucide-react';
+import { UserMinus, LogOut, Users, Trash2 } from 'lucide-react';
 import type { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 
 interface MemberItem {
@@ -40,9 +40,11 @@ interface Props {
   isRenamePending?: boolean;
   isRemovePending?: boolean;
   isLeavePending?: boolean;
+  isDeletePending?: boolean;
   onRename: (name: string) => void;
   onRemoveMember: (profileId: string) => void;
   onLeave: () => void;
+  onDelete?: () => void;
 }
 
 export function GroupManagementDialog({
@@ -53,9 +55,11 @@ export function GroupManagementDialog({
   currentUserId,
   isRenamePending,
   isLeavePending,
+  isDeletePending,
   onRename,
   onRemoveMember,
   onLeave,
+  onDelete,
 }: Props) {
   const [name, setName] = useState(conversation.name ?? '');
 
@@ -204,6 +208,42 @@ export function GroupManagementDialog({
                       onClick={onLeave}
                     >
                       Sair
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+
+          {isGroupCreator && onDelete && (
+            <>
+              <Separator />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={isDeletePending}
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden />
+                    {isDeletePending ? 'Excluindo…' : 'Excluir grupo'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir grupo permanentemente</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Excluir <strong>{conversation.name || 'este grupo'}</strong>? Todas as mensagens e membros serão removidos. Essa ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive hover:bg-destructive/90"
+                      onClick={onDelete}
+                    >
+                      Excluir permanentemente
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

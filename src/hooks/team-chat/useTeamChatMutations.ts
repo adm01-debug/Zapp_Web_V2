@@ -234,3 +234,20 @@ export function useTransferConversation() {
     onError: () => { toast({ title: 'Erro ao transferir grupo', variant: 'destructive' }); },
   });
 }
+
+export function useDeleteConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId }: { conversationId: string }) => {
+      const { error } = await supabase
+        .from('team_conversations')
+        .delete()
+        .eq('id', conversationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+    },
+    onError: () => { toast({ title: 'Erro ao excluir grupo', variant: 'destructive' }); },
+  });
+}

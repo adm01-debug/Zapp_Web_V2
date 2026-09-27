@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
-import { useRenameConversation, useRemoveConversationMember, useLeaveConversation } from '@/hooks/team-chat/useTeamChatMutations';
+import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +53,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const renameConvMutation = useRenameConversation();
   const removeMemberMutation = useRemoveConversationMember();
   const leaveMutation = useLeaveConversation();
+  const deleteConvMutation = useDeleteConversation();
   const reactions = useTeamMessageReactions(conversation.id);
 
   const { settings, isLoading: settingsLoading } = useUserSettings();
@@ -357,6 +358,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     renameConvMutation,
     removeMemberMutation,
     leaveMutation,
+    deleteConvMutation,
     tts,
     reactions,
   };
