@@ -59,12 +59,10 @@ export function useTeamMessageReactions(conversationId: string) {
   });
 
   useEffect(() => {
-    // @ts-expect-error Supabase Realtime .on() overload mismatch
     const channel = supabase
       .channel(`team-reactions-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on('postgres_changes' as any, {
           event: '*',
           schema: 'public',
           table: 'team_message_reactions',
