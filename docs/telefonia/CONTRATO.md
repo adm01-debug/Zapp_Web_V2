@@ -98,7 +98,15 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 | `set_call_agent_notes(p_call_id, p_notes)` | anotação humana; dono ou admin/supervisor |
 
 Prova comportamental: `scripts/db-audit/calls-telefonia-contract.test.sh` (PostgreSQL 17 descartável,
-61 asserções, incluindo RLS por ator, IDOR, teto de 50, idempotência e ACL de `anon`).
+prova de RLS por ator, IDOR, teto de 50, idempotência e ACL de `anon`; asserções cresceram para cobrir
+o 2º bug de autorização abaixo).
+
+**Correção de segurança #2 em `set_call_agent_notes` (27/09, auditoria de 5 agentes pós-deploy):**
+`calls.agent_id` aceita NULL (chamada inbound ainda sem agente atribuído) e `if not (v_owner = v_profile
+or is_admin_or_supervisor(...))` com `v_owner` NULL avalia para NULL — mesmo bypass do bug original
+(20260926900000), agora do lado do dono da chamada em vez do perfil do chamador. Corrigido em
+`supabase/migrations/20260927100000_fix_set_call_agent_notes_null_owner.sql` trocando a comparação por
+`coalesce(v_owner = v_profile, false)`. Chamada sem dono só pode ser anotada por admin/supervisor.
 
 ## 9. Glossário de rótulos (linguagem operacional — nada de jargão na tela do agente)
 

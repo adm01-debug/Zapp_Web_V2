@@ -239,7 +239,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       <ChatDragOverlay isDraggingOver={isDraggingOver} />
       <CRMAutoSync conversation={conversation} messageCount={messages.length} messages={messages} />
 
-      <div className="relative isolate flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden bg-sidebar">
+      <div className="relative isolate flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden bg-inbox-panel">
         <ChatWatermark />
         {!hideHeader && (
           <ChatPanelHeader conversation={conversation} isContactTyping={isContactTyping} showAIAssistant={activeTool === 'aiAssistant'} showDetails={showDetails}
