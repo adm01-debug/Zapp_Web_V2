@@ -49,11 +49,13 @@ export function useContactFormValidation(
   const dupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const emailDupCheckTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const emailCheckSeqRef = useRef(0);
+  const phoneCheckSeqRef = useRef(0);
 
   const checkDuplicate = useCallback(async (phone: string) => {
+    const seq = phoneCheckSeqRef.current;
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length < 10) { setDuplicateWarning(null); return; }
-    // cleaned is pure digits after /\D/ strip — %, _ and \ are impossible;
+    // cleaned is pure digits after /\D/ strip — %, _ and \\ are impossible;
     // escaping is defensive parity with checkEmailDuplicate.
     const last8 = cleaned.slice(-8).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
@@ -62,6 +64,7 @@ export function useContactFormValidation(
       .or(`phone.ilike.%${last8}%`);
     if (excludeContactId) query = query.neq('id', excludeContactId);
     const { data } = await query.limit(1);
+    if (seq !== phoneCheckSeqRef.current) return;
     setDuplicateWarning(data && data.length > 0 ? `Possível duplicata: "${data[0].name}" (${data[0].phone})` : null);
   }, [excludeContactId]);
 
@@ -123,6 +126,7 @@ export function useContactFormValidation(
     const formatted = formatPhone(value);
     onChange('phone', formatted);
     if (touched.phone) setErrors(prev => ({ ...prev, phone: validate('phone', formatted) }));
+    ++phoneCheckSeqRef.current;
     clearTimeout(dupCheckTimer.current);
     dupCheckTimer.current = setTimeout(() => checkDuplicate(formatted), 500);
   }, [onChange, touched, validate, checkDuplicate]);
