@@ -59,25 +59,24 @@ npm run test:e2e
   referenciar secrets (regra em `scripts/ci/check-pr-workflow-secrets.mjs`),
   então esse teste não bloqueia PR.
 
-`chromium-e2e-core` cobre `conversation.spec.ts`, `messaging.spec.ts` e
-`talkx.spec.ts` (`testMatch` dedicado em `playwright.config.ts`, E99
-2026-09-27) — passar os arquivos como path no CLI junto de `--project`
-quebra a resolução de `dependsOn` (o filtro de arquivo vale para todos os
-projects da invocação, então `setup` roda com 0 testes e nunca gera
-`e2e/.auth/user.json`; foi exatamente esse bug na primeira tentativa, run
-36247270724). Rodar `setup` e os specs em 2 invocações separadas do CLI evita
-esse bug mas sobe 2 `vite` dev server do zero (um por invocação) — sem o
-`setup` aquecer o bundle antes, a 1ª navegação real do job cai num vite frio
-e estoura o timeout de 30s (confirmado na run 36249048738). O project
-dedicado com `dependsOn` resolve os dois problemas numa invocação só.
+`chromium-e2e-core` cobre só `conversation.spec.ts` e `messaging.spec.ts`
+(`testMatch` dedicado em `playwright.config.ts`) — passar os 2 arquivos como
+path no CLI junto de `--project` quebra a resolução de `dependsOn` (o filtro
+de arquivo vale para todos os projects da invocação, então `setup` roda com
+0 testes e nunca gera `e2e/.auth/user.json`; foi exatamente esse bug na
+primeira tentativa, run 36247270724). Rodar `setup` e os specs em 2
+invocações separadas do CLI evita esse bug mas sobe 2 `vite` dev server do
+zero (um por invocação) — sem o `setup` aquecer o bundle antes, a 1ª
+navegação real do job cai num vite frio e estoura o timeout de 30s
+(confirmado na run 36249048738). O project dedicado com `dependsOn` resolve
+os dois problemas numa invocação só.
 
 `chromium-authenticated` (mesma dependência de `setup`, mas com
-`testIgnore` cobrindo auth + os 3 specs acima) é invocado pelo
+`testIgnore` cobrindo auth + os 2 specs acima) é invocado pelo
 `e2e-logado.yml` junto de `chromium-e2e-core` — uma única chamada do
 Playwright com os 3 projects explícitos (`setup`, `chromium-e2e-core`,
-`chromium-authenticated`). Hoje nenhum spec roda sob este project (talkx,
-conversation e messaging estão no `testIgnore`); fica disponível para specs
-futuros que assumam sessão logada mas não pertençam ao core-set.
+`chromium-authenticated`). `talkx.spec.ts` roda sob este project: o
+usuário de teste é supervisor e enxerga "Campanhas".
 
 ## Fixture de dados (contato seedado)
 
@@ -99,9 +98,7 @@ usuário de teste, sem fila) é o único item visível no inbox desse usuário �
 nunca apagar essa linha do banco.
 
 `talkx.spec.ts` tem 4 specs cobrindo navegação/render do módulo Talk X e roda
-automaticamente em `e2e-logado.yml` via `chromium-e2e-core` (E99,
-2026-09-27). Para rodar localmente: `bunx playwright test --project=setup
---project=chromium-e2e-core` com `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`
-do usuário de teste (supervisor). Não passar caminho de arquivo junto de
-`--project` — o filtro quebraria a dependência do `setup` e
-`e2e/.auth/user.json` nunca seria gerado.
+automaticamente em `e2e-logado.yml` via `chromium-authenticated` (ver seção
+acima). Para rodar localmente: `npx playwright test --project=setup
+--project=chromium-authenticated` com `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`
+do usuário de teste (supervisor).

@@ -68,11 +68,8 @@ jobs:
       # "Running 4 tests", nunca "Running 1 test" do setup) e
       # e2e/.auth/user.json nunca foi gerado. Ainda sem path de arquivo no CLI
       # (evita o bug original da PR #839, onde o filtro de arquivo quebrava a
-      # dependencia). chromium-e2e-core cobre conversation.spec.ts,
-      # messaging.spec.ts e talkx.spec.ts (via testMatch em playwright.config.ts
-      # -- E99); chromium-authenticated cobre specs futuros (talkx esta no
-      # testIgnore desse project). O usuario de teste e supervisor e enxerga
-      # "Campanhas" (ver e2e/README.md).
+      # dependencia). chromium-authenticated cobre talkx.spec.ts -- o usuario
+      # de teste e supervisor e enxerga "Campanhas" (ver e2e/README.md).
       - name: 🔐 Run Playwright E2E (login real)
         run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated
         env:
