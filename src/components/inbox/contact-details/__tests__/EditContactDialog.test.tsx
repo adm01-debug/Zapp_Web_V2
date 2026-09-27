@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { EditContactDialog } from '../EditContactDialog';
 
 // O jsdom não implementa isso; o Radix Select chama nos 3 ao abrir/fechar
@@ -13,25 +14,27 @@ beforeAll(() => {
 
 // Mock supabase
 const mockUpdate = vi.fn();
+// mockEq controla o valor de retorno de .eq() no caminho de update;
+// default: { error: null } — sobrescreva com mockResolvedValueOnce nos testes de erro.
 const mockEq = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
       update: (...args: unknown[]) => {
         mockUpdate(...args);
-        return {
-          eq: (...eqArgs: unknown[]) => {
-            mockEq(...eqArgs);
-            return Promise.resolve({ error: null });
-          },
-        };
+        return { eq: mockEq };
       },
       // checkDuplicate em useContactFormValidation dispara debounce 500ms ao mudar
       // o phone — chama .select().or().neq().limit() quando excludeContactId está
       // presente (EditContactDialog sempre passa contact.id). Sem neq no mock,
       // o timer lança TypeError: query.neq is not a function.
+      // checkEmailDuplicate chama .select().ilike().neq().limit().
       select: () => ({
         or: () => ({
+          neq: () => ({ limit: () => Promise.resolve({ data: [] }) }),
+          limit: () => Promise.resolve({ data: [] }),
+        }),
+        ilike: () => ({
           neq: () => ({ limit: () => Promise.resolve({ data: [] }) }),
           limit: () => Promise.resolve({ data: [] }),
         }),
@@ -86,6 +89,7 @@ function renderDialog(props = {}) {
 describe('EditContactDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockEq.mockResolvedValue({ error: null });
   });
 
   // ========== RENDERING ==========
@@ -377,5 +381,63 @@ describe('EditContactDialog', () => {
     const { onOpenChange } = renderDialog();
     fireEvent.click(screen.getByText('Cancelar'));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  // ========== ERRO DE REDE (caminho catch do handleSubmit) ==========
+  // Estes 4 testes cobrem o bloco que ficava sem cobertura:
+  // catch(err) { rollback cache otimista; toast.error; } finally { setIsSubmitting(false) }
+
+  it('mostra toast de erro quando supabase retorna error', async () => {
+    mockEq.mockResolvedValueOnce({ error: { message: 'Network error' } });
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Erro ao atualizar contato');
+    });
+  });
+
+  it('não fecha o diálogo quando update falha', async () => {
+    mockEq.mockResolvedValueOnce({ error: { message: 'Network error' } });
+    const { onOpenChange } = renderDialog();
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('faz rollback do cache otimista quando supabase retorna error', async () => {
+    mockEq.mockResolvedValueOnce({ error: { message: 'Network error' } });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    qc.setQueryData(['contact-enriched', 'c1'], { ...baseContact });
+    const onOpenChange = vi.fn();
+    render(
+      <QueryClientProvider client={qc}>
+        <EditContactDialog open={true} onOpenChange={onOpenChange} contact={baseContact} />
+      </QueryClientProvider>
+    );
+
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const cached = qc.getQueryData<Record<string, unknown>>(['contact-enriched', 'c1']);
+      expect(cached?.name).toBe('John Doe');
+    });
+  });
+
+  it('reabilita o botão Salvar após falha no update', async () => {
+    mockEq.mockResolvedValueOnce({ error: { message: 'Network error' } });
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'John Doe Jr' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Salvar').closest('button')).not.toBeDisabled();
+    });
   });
 });

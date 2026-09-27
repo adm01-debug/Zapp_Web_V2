@@ -42,7 +42,7 @@
  - **Relatório em Markdown:** [docs/audit_report.md](docs/audit_report.md)
  - **Relatório em PDF:** [docs/audit_report.pdf](docs/audit_report.pdf)
  
- *O PDF é gerado automaticamente via CI a cada atualização do relatório (commit contendo 'audit').*
+ *O PDF é gerado manualmente; a geração automática via CI foi removida (PR #915).*
  
  ---
  
