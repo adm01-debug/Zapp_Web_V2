@@ -458,8 +458,57 @@ serve(async (req) => {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
         return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+      // Sessão órfã: a GO guarda o JID de um device que o celular já desvinculou
+      // (o registro fica com disconnect_reason "Reconnecting") e entra em loop de
+      // resume da sessão salva — nunca cai para o pareamento por QR. logout e
+      // reconnect respondem 400/500 nesse estado ("no active session found"), então
+      // a única saída é recriar a instância na GO com o MESMO token: isso zera o
+      // device store e faz o connect seguinte emitir QR novo.
+      let goOrphan: { id: string; jid: string } | null = null;
+      if (isGoFlavor) {
+        try {
+          const allRes = await fetch(`${evolutionApiUrl}/instance/all`, { headers: { 'apikey': evolutionApiKey }, signal: AbortSignal.timeout(8000) });
+          if (allRes.ok) {
+            const allJson = await allRes.json();
+            const records: Record<string, unknown>[] = Array.isArray(allJson?.data) ? allJson.data : [];
+            const rec = records.find((r) => r?.name === instance || r?.Name === instance);
+            const recId = String(rec?.id ?? rec?.ID ?? '');
+            const recJid = String(rec?.jid ?? rec?.JID ?? '');
+            if (recId && recJid) goOrphan = { id: recId, jid: recJid };
+          }
+        } catch { /* GO indisponível: cai no 409 abaixo */ }
+      }
+      if (goOrphan) {
+        new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
+        const delRes = await fetch(`${evolutionApiUrl}/instance/delete/${goOrphan.id}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey } });
+        if (delRes.ok) {
+          const createRes = await fetch(`${evolutionApiUrl}/instance/create`, {
+            method: 'POST',
+            headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: instance, token: instToken }),
+          });
+          if (createRes.ok) {
+            // Mesmo body do connect normal: o GO PERSISTE webhook/subscribe daqui.
+            await fetch(`${evolutionApiUrl}/instance/connect`, {
+              method: 'POST',
+              headers: { 'apikey': instToken, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscribe: ['ALL'], immediate: true, webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook` }),
+            });
+            let healed = await fetchQr();
+            for (let i = 0; i < 4 && !healed.base64; i++) {
+              await new Promise((r) => setTimeout(r, 1500));
+              healed = await fetchQr();
+            }
+            if (healed.base64) {
+              await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
+              return new Response(JSON.stringify({ qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+          }
+        }
+        new Logger('evolution-api').error('connect: recriação da instância na GO não gerou QR', { instance, goId: goOrphan.id });
+      }
       new Logger('evolution-api').warn('connect: nenhum QR gerado e instância não logada — sessão pendente na GO', { instance });
-      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo. A sessão está com credenciais inconsistentes na Evolution GO (sessão órfã) — é necessário limpar as credenciais internas via acesso administrativo ao banco da GO. Contate o suporte.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo e a recriação automática da sessão na Evolution GO não resolveu. Verifique se o serviço da Evolution GO está no ar e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
