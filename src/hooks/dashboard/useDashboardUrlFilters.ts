@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  format, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { DashboardFiltersState } from '@/components/dashboard/DashboardFilters';
@@ -86,8 +86,8 @@ export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: Dash
       else params.delete(PARAM_KEYS.agent);
 
       if (next.period === 'custom') {
-        params.set(PARAM_KEYS.from, next.dateRange.from.toISOString().split('T')[0]);
-        params.set(PARAM_KEYS.to, next.dateRange.to.toISOString().split('T')[0]);
+        params.set(PARAM_KEYS.from, format(next.dateRange.from, 'yyyy-MM-dd'));
+        params.set(PARAM_KEYS.to, format(next.dateRange.to, 'yyyy-MM-dd'));
       } else {
         params.delete(PARAM_KEYS.from);
         params.delete(PARAM_KEYS.to);

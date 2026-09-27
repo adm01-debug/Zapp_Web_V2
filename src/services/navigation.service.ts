@@ -2,7 +2,7 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, CreditCard, Tag, LayoutDashboard, CalendarClock, UsersRound,
+  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
@@ -59,8 +59,7 @@ export class NavigationService {
         items: [
           { id: 'crm360', icon: Building2, label: 'CRM 360°', roles: ADMIN_ONLY },
           { id: 'wallet', icon: Wallet, label: 'Carteira', roles: STAFF_ROLES },
-          { id: 'tags', icon: Tag, label: 'Etiquetas', roles: STAFF_ROLES },
-          { id: 'queues', icon: LayoutDashboard, label: 'Filas', roles: STAFF_ROLES },
+{ id: 'queues', icon: LayoutDashboard, label: 'Filas', roles: STAFF_ROLES },
           { id: 'schedule', icon: CalendarClock, label: 'Agendamentos', roles: STAFF_ROLES },
           { id: 'groups', icon: UsersRound, label: 'Grupos', roles: STAFF_ROLES },
         ],

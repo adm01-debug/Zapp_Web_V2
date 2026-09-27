@@ -57,21 +57,20 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🎭 Install Playwright (Chromium)
-        run: bunx playwright install --with-deps chromium
+      - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
+        run: bunx playwright install --with-deps chromium firefox webkit
 
-      # Uma unica invocacao do Playwright, com os 3 projects listados
-      # EXPLICITAMENTE ("setup", "chromium-e2e-core" e "chromium-authenticated")
-      # em vez de confiar na resolucao automatica de dependsOn: na run
-      # 36250631355 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
-      # (sem path de arquivo no CLI) nao disparou "setup" (log mostrou so
-      # "Running 4 tests", nunca "Running 1 test" do setup) e
-      # e2e/.auth/user.json nunca foi gerado. Ainda sem path de arquivo no CLI
-      # (evita o bug original da PR #839, onde o filtro de arquivo quebrava a
-      # dependencia). chromium-authenticated cobre talkx.spec.ts -- o usuario
-      # de teste e supervisor e enxerga "Campanhas" (ver e2e/README.md).
+      # Uma unica invocacao do Playwright, com os projetos listados
+      # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
+      # na run 36250631355 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
+      # (sem path de arquivo no CLI) nao disparou "setup" e e2e/.auth/user.json
+      # nunca foi gerado. chromium-authenticated cobre todos os specs autenticados;
+      # firefox-talkx e webkit-talkx cobrem talkx.spec.ts nos engines alternativos
+      # (auth cookies do user.json sao browser-agnosticos).
+      # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
+      # messaging.spec.ts nos engines alternativos — mesma logica de browser-agnosticism.
       - name: 🔐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}

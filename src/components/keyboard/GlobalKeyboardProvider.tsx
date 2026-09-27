@@ -1,6 +1,7 @@
 import React, { useEffect, useState, createContext, useContext, useCallback, useRef } from 'react';
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
 import { useCatalogQuickSearch } from '@/hooks/integrations/useCatalogQuickSearch';
+import { useTalkXCommandItems } from '@/hooks/integrations/useTalkXCommandItems';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { CommandPalette } from '@/components/ui/command-palette';
 
@@ -96,6 +97,8 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     setShowCommandPalette(false);
   }, []);
 
+  const talkxCommands = useTalkXCommandItems(handleNavigate);
+
   const registerNavigationHandler = useCallback((handler: (view: string) => void) => {
     navigationHandlerRef.current = handler;
   }, []);
@@ -120,6 +123,7 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
         onOpenChange={setShowCommandPalette}
         onNavigate={handleNavigate}
         onSearch={searchCatalogProducts}
+        customCommands={talkxCommands}
         placeholder="Buscar ou digitar comando... (⌘K)"
       />
     </GlobalKeyboardContext.Provider>

@@ -53,10 +53,13 @@ export function useContactFormValidation(
   const checkDuplicate = useCallback(async (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length < 10) { setDuplicateWarning(null); return; }
+    // cleaned is pure digits after /\D/ strip — %, _ and \ are impossible;
+    // escaping is defensive parity with checkEmailDuplicate.
+    const last8 = cleaned.slice(-8).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabase
       .from('contacts')
       .select('name, phone')
-      .or(`phone.ilike.%${cleaned.slice(-8)}%`);
+      .or(`phone.ilike.%${last8}%`);
     if (excludeContactId) query = query.neq('id', excludeContactId);
     const { data } = await query.limit(1);
     setDuplicateWarning(data && data.length > 0 ? `Possível duplicata: "${data[0].name}" (${data[0].phone})` : null);
