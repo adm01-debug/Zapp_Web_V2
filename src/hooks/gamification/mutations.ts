@@ -1,24 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateLevel } from './levelUtils';
 import type { AgentStats } from './types';
 
-export function useGamificationMutations(profileId: string | undefined, currentStats: AgentStats | null | undefined) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _Unused = AgentStats; // keep import for type consumers
+
+export function useGamificationMutations(profileId: string | undefined, _currentStats?: AgentStats | null) {
   const queryClient = useQueryClient();
 
   const addXpMutation = useMutation({
     mutationFn: async ({ xp }: { xp: number; reason: string }) => {
       if (!profileId) throw new Error('No profile ID');
-      const newXp = (currentStats?.xp || 0) + xp;
-      const newLevel = calculateLevel(newXp);
-      const leveledUp = newLevel > (currentStats?.level || 1);
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ xp: newXp, level: newLevel, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
+      const { data, error } = await supabase.rpc('add_agent_xp', {
+        p_profile_id: profileId,
+        p_xp: xp,
+      });
       if (error) throw error;
-      return { newXp, newLevel, leveledUp, previousLevel: currentStats?.level || 1 };
+      if (!data) throw new Error('No stats found');
+      const d = data as { newXp: number; newLevel: number; previousLevel: number; leveledUp: boolean };
+      return { newXp: d.newXp, newLevel: d.newLevel, leveledUp: d.leveledUp, previousLevel: d.previousLevel };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });
@@ -26,33 +26,18 @@ export function useGamificationMutations(profileId: string | undefined, currentS
   const grantAchievementMutation = useMutation({
     mutationFn: async ({ type, name, description, xpReward }: { type: string; name: string; description?: string; xpReward: number }) => {
       if (!profileId) throw new Error('No profile ID');
-
-      const { data: existing } = await supabase
-        .from('agent_achievements')
-        .select('id')
-        .eq('profile_id', profileId)
-        .eq('achievement_type', type)
-        .maybeSingle();
-
-      const allowDuplicates = ['daily_goal', 'streak', 'message_milestone'];
-      if (existing && !allowDuplicates.includes(type)) return { alreadyHad: true };
-
-      const { error: achievementError } = await supabase
-        .from('agent_achievements')
-        .insert({ profile_id: profileId, achievement_type: type, achievement_name: name, achievement_description: description, xp_earned: xpReward });
-      if (achievementError) throw achievementError;
-
-      const newXp = (currentStats?.xp || 0) + xpReward;
-      const newLevel = calculateLevel(newXp);
-      const newAchievementsCount = (currentStats?.achievements_count || 0) + 1;
-
-      const { error: statsError } = await supabase
-        .from('agent_stats')
-        .update({ xp: newXp, level: newLevel, achievements_count: newAchievementsCount, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
-      if (statsError) throw statsError;
-
-      return { alreadyHad: false, newXp, newLevel, leveledUp: newLevel > (currentStats?.level || 1) };
+      const { data, error } = await supabase.rpc('grant_agent_achievement', {
+        p_profile_id: profileId,
+        p_type: type,
+        p_name: name,
+        p_description: description ?? null,
+        p_xp_reward: xpReward,
+      });
+      if (error) throw error;
+      if (!data) return { alreadyHad: false as const };
+      const d = data as { alreadyHad: boolean; newXp?: number; newLevel?: number; leveledUp?: boolean };
+      if (d.alreadyHad) return { alreadyHad: true as const };
+      return { alreadyHad: false as const, newXp: d.newXp!, newLevel: d.newLevel!, leveledUp: d.leveledUp! };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] });
@@ -62,65 +47,4 @@ export function useGamificationMutations(profileId: string | undefined, currentS
 
   const updateStreakMutation = useMutation({
     mutationFn: async (increment: boolean) => {
-      if (!profileId) throw new Error('No profile ID');
-      let newStreak: number;
-      let newBestStreak = currentStats?.best_streak || 0;
-
-      if (increment) {
-        newStreak = (currentStats?.current_streak || 0) + 1;
-        if (newStreak > newBestStreak) newBestStreak = newStreak;
-      } else {
-        newStreak = 0;
-      }
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ current_streak: newStreak, best_streak: newBestStreak, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
-      if (error) throw error;
-      return { newStreak, newBestStreak };
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
-  });
-
-  const incrementMessagesMutation = useMutation({
-    mutationFn: async (type: 'sent' | 'received') => {
-      if (!profileId) throw new Error('No profile ID');
-      const newSent = type === 'sent' ? (currentStats?.messages_sent || 0) + 1 : currentStats?.messages_sent || 0;
-      const newReceived = type === 'received' ? (currentStats?.messages_received || 0) + 1 : currentStats?.messages_received || 0;
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ messages_sent: newSent, messages_received: newReceived, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
-      if (error) throw error;
-      return { newSent, newReceived };
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
-  });
-
-  const incrementResolutionsMutation = useMutation({
-    mutationFn: async () => {
-      if (!profileId) throw new Error('No profile ID');
-      const newResolutions = (currentStats?.conversations_resolved || 0) + 1;
-
-      const { error } = await supabase
-        .from('agent_stats')
-        .update({ conversations_resolved: newResolutions, updated_at: new Date().toISOString() })
-        .eq('profile_id', profileId);
-      if (error) throw error;
-      return { newResolutions };
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
-  });
-
-  return {
-    addXp: addXpMutation.mutateAsync,
-    grantAchievement: grantAchievementMutation.mutateAsync,
-    updateStreak: updateStreakMutation.mutateAsync,
-    incrementMessages: incrementMessagesMutation.mutateAsync,
-    incrementResolutions: incrementResolutionsMutation.mutateAsync,
-    isAddingXp: addXpMutation.isPending,
-    isGrantingAchievement: grantAchievementMutation.isPending,
-  };
-}
+      if (!profileId) throt¹•ÜÉÉ½È 9¼ÁÉ½™¥±”%œ¤ì(€€€€€½¹ÍÐì‘…Ñ„°•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”¹ÉÁŒ ÕÁ‘…Ñ•}…•¹Ñ}ÍÑÉ•…¬œ°ì(€€€€€€€Á}ÁÉ½™¥±•}¥èÁÉ½™¥±•%°(€€€€€€€Á}¥¹É•µ•¹Ðè¥¹É•µ•¹Ð°(€€€€€ô¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€¥˜€ …‘…Ñ„¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼ÍÑ…ÑÌ™½Õ¹œ¤ì(€€€€€½¹ÍÐ€ô‘…Ñ„…Ìì¹•ÝMÑÉ•…¬è¹Õµ‰•Èì¹•Ý	•ÍÑMÑÉ•…¬è¹Õµ‰•Èôì(€€€€€É•ÑÕÉ¸ì¹•ÝMÑÉ•…¬è¹¹•ÝMÑÉ•…¬°¹•Ý	•ÍÑMÑÉ•…¬è¹¹•Ý	•ÍÑMÑÉ•…¬ôì(€€€ô°(€€€½¹MÕ•ÍÌè€ ¤€ôøÅÕ•Éå±¥•¹Ð¹¥¹Ù…±¥‘…Ñ•EÕ•É¥•Ì¡ìÅÕ•Éå-•äèl…•¹ÐµÍÑ…ÑÌœ°ÁÉ½™¥±•%‘tô¤°(€ô¤ì((€½¹ÍÐ¥¹É•µ•¹Ñ5•ÍÍ…•Í5ÕÑ…Ñ¥½¸€ôÕÍ•5ÕÑ…Ñ¥½¸¡ì(€€€µÕÑ…Ñ¥½¹¸è…Íå¹Œ€¡ÑåÁ”è€Í•¹Ðœð€É••¥Ù•œ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±•%¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼ÁÉ½™¥±”%œ¤ì(€€€€€½¹ÍÐì‘…Ñ„°•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”¹ÉÁŒ ¥¹É•µ•¹Ñ}…•¹Ñ}µ•ÍÍ…•Ìœ°ì(€€€€€€€Á}ÁÉ½™¥±•}¥èÁÉ½™¥±•%°(€€€€€€€Á}ÑåÁ”èÑåÁ”°(€€€€€ô¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€¥˜€ …‘…Ñ„¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼ÍÑ…ÑÌ™½Õ¹œ¤ì(€€€€€½¹ÍÐ€ô‘…Ñ„…Ìì¹•ÝM•¹Ðè¹Õµ‰•Èì¹•ÝI••¥Ù•è¹Õµ‰•Èôì(€€€€€É•ÑÕÉ¸ì¹•ÝM•¹Ðè¹¹•ÝM•¹Ð°¹•ÝI••¥Ù•è¹¹•ÝI••¥Ù•ôì(€€€ô°(€€€½¹MÕ•ÍÌè€ ¤€ôøÅÕ•Éå±¥•¹Ð¹¥¹Ù…±¥‘…Ñ•EÕ•É¥•Ì¡ìÅÕ•Éå-•äèl…•¹ÐµÍÑ…ÑÌœ°ÁÉ½™¥±•%‘tô¤°(€ô¤ì((€½¹ÍÐ¥¹É•µ•¹ÑI•Í½±ÕÑ¥½¹Í5ÕÑ…Ñ¥½¸€ôÕÍ•5ÕÑ…Ñ¥½¸¡ì(€€€µÕÑ…Ñ¥½¹¸è…Íå¹Œ€ ¤€ôøì(€€€€€¥˜€ …ÁÉ½™¥±•%¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼ÁÉ½™¥±”%œ¤ì(€€€€€½¹ÍÐì‘…Ñ„°•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”¹ÉÁŒ ¥¹É•µ•¹Ñ}…•¹Ñ}É•Í½±ÕÑ¥½¹Ìœ°ì(€€€€€€€Á}ÁÉ½™¥±•}¥èÁÉ½™¥±•%°(€€€€€ô¤ì(€€€€€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü•ÉÉ½Èì(€€€€€¥˜€ …‘…Ñ„¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼ÍÑ…ÑÌ™½Õ¹œ¤ì(€€€€€½¹ÍÐ€ô‘…Ñ„…Ìì¹•ÝI•Í½±ÕÑ¥½¹Ìè¹Õµ‰•Èôì(€€€€€É•ÑÕÉ¸ì¹•ÝI•Í½±ÕÑ¥½¹Ìè¹¹•ÝI•Í½±ÕÑ¥½¹Ìôì(€€€ô°(€€€½¹MÕ•ÍÌè€ ¤€ôøÅÕ•Éå±¥•¹Ð¹¥¹Ù…±¥‘…Ñ•EÕ•É¥•Ì¡ìÅÕ•Éå-•äèl…•¹ÐµÍÑ…ÑÌœ°ÁÉ½™¥±•%‘tô¤°(€ô¤ì((€É•ÑÕÉ¸ì(€€€…‘‘aÀè…‘‘aÁ5ÕÑ…Ñ¥½¸¹µÕÑ…Ñ•Íå¹Œ°(€€€É…¹Ñ¡¥•Ù•µ•¹ÐèÉ…¹Ñ¡¥•Ù•µ•¹Ñ5ÕÑ…Ñ¥½¸¹µÕÑ…Ñ•Íå¹Œ°(€€€ÕÁ‘…Ñ•MÑÉ•…¬èÕÁ‘…Ñ•MÑÉ•…­5ÕÑ…Ñ¥½¸¹µÕÑ…Ñ•Íå¹Œ°(€€€¥¹É•µ•¹Ñ5•ÍÍ…•Ìè¥¹É•µ•¹Ñ5•ÍÍ…•Í5ÕÑ…Ñ¥½¸¹µÕÑ…Ñ•Íå¹Œ°(€€€¥¹É•µ•¹ÑI•Í½±ÕÑ¥½¹Ìè¥¹É•µ•¹ÑI•Í½±ÕÑ¥½¹Í5ÕÑ…Ñ¥½¸¹µÕÑ…Ñ•Íå¹Œ°(€€€¥Í‘‘¥¹aÀè…‘‘aÁ5ÕÑ…Ñ¥½¸¹¥ÍA•¹‘¥¹œ°(€€€¥ÍÉ…¹Ñ¥¹¡¥•Ù•µ•¹ÐèÉ…¹Ñ¡¥•Ù•µ•¹Ñ5ÕÑ…Ñ¥½¸¹¥ÍA•¹‘¥¹œ°(€ôì)ô(
