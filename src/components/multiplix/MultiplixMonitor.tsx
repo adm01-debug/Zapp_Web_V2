@@ -143,7 +143,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         const { data: snap, error: snapErr } = await q;
         if (snapErr) { toast.error(`Erro ao exportar CSV: ${snapErr.message}`); return; }
         if (!snap?.length) break;
-        snapIds.push(...snap.map((r) => (r as { id: string }).id));
+        snapIds.push(...snap.map((r: { id: string }) => r.id));
         if (snap.length < PAGE) break;
         lastSnapId = (snap[snap.length - 1] as { id: string }).id;
       }
@@ -266,8 +266,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
                   <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
-                </div>
+                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
                 <StatusPill status={r.status} map={RECIPIENT_STATUS} />
                 {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
               </div>
