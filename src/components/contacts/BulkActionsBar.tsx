@@ -8,10 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -184,9 +184,9 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {CONTACT_TYPES.map(type => (
-              <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+            {CONTACT_TYPES.map(ct => (
+              <DropdownMenuItem key={ct.value} onClick={() => handleBulkType(ct.value)}>
+                {ct.label}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
