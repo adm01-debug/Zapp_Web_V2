@@ -173,7 +173,9 @@ test.describe('Talk X module', () => {
     await page.getByPlaceholder('Ex: Lançamento Linha Office').fill('[E2E] Campanha de Teste');
 
     // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
-    await page.getByRole('combobox').click();
+    // StepAudience renders two comboboxes: index 0 = Objetivo, index 1 = Conexão WhatsApp.
+    // Using .nth(1) avoids StrictModeViolation from getByRole('combobox') matching both.
+    await page.getByRole('combobox').nth(1).click();
     await page.getByRole('option', { name: E2E_TALKX_CONNECTION_LABEL }).click();
 
     // Step 1 — select audience source "Segmento salvo" and pick the fixture segment.
@@ -197,12 +199,16 @@ test.describe('Talk X module', () => {
 
 // Remove draft campaigns created during the wizard step-2 test.
 // Runs once after all specs to keep the production DB clean on every CI run.
+// try/finally ensures context.close() is called even if goto or cleanup throws.
 test.afterAll(async ({ browser }) => {
   const context = await browser.newContext({
     storageState: 'e2e/.auth/user.json',
   });
-  const page = await context.newPage();
-  await page.goto('/');
-  await cleanupE2EDraftCampaigns(page);
-  await context.close();
+  try {
+    const page = await context.newPage();
+    await page.goto('/');
+    await cleanupE2EDraftCampaigns(page);
+  } finally {
+    await context.close();
+  }
 });
