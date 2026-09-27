@@ -185,7 +185,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     if (dbStats) {
       const currentLevel = dbStats.level;
       const calculatedLevel = calculateLevel(dbStats.xp);
-      if (calculatedLevel > currentLevel) triggerLevelUp(calculatedLevel);
+      if (calculatedLevel > currentLevel) {
+        const timer = setTimeout(() => triggerLevelUp(calculatedLevel), 0);
+        return () => clearTimeout(timer);
+      }
     }
   }, [dbStats?.xp]);
 
