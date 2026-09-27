@@ -405,8 +405,9 @@ serve(async (req) => {
       let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
       if (rawQrCode.startsWith('2@')) {
         try {
-          const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.3');
-          const svg = await QRCode.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+          // deno-lint-ignore no-explicit-any
+          const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
+          const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
           qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
         } catch (err: unknown) {
           new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
