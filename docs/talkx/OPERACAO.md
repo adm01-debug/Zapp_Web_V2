@@ -32,8 +32,7 @@ Caminho: **Campanhas → Templates**
 - **Usar:** botão "Usar" → encaminha o template para o compositor de mensagem
   da conversa ativa.
 - **Visualização:** toggle grade/lista no canto superior direito da tela.
-- **Status possíveis:** `draft` (rascunho), `active` (ativo), `paused`
-  (pausado), `archived` (arquivado).
+- **Status possíveis:** `draft` (rascunho), `review` (em revisão), `approved` (aprovado).
 
 ### 2.2 Segmentos de audiência
 
@@ -52,9 +51,8 @@ Tabelas principais do módulo:
 
 | Tabela | Descrição |
 |---|---|
-| `talkx_templates` | Templates de mensagem WhatsApp |
+| `talkx_templates` | Templates de mensagem WhatsApp (variáveis em `custom_variables[]`) |
 | `talkx_template_versions` | Versões históricas de cada template |
-| `talkx_template_variables` | Variáveis dinâmicas por template |
 | `talkx_campaigns` | Campanhas (em desenvolvimento — F2+) |
 | `talkx_segments` | Segmentos de audiência |
 
@@ -66,8 +64,10 @@ RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário aute
 
 | Função | Trigger | Responsabilidade |
 |---|---|---|
-| `talkx-send-campaign` | Manual / agendado | Disparo de mensagens via Evolution GO |
-| `talkx-template-sync` | Webhook Evolution | Sincroniza status de template com WhatsApp Business |
+| `talkx-send` | Manual / agendado | Disparo de mensagens via Evolution GO |
+| `talkx-scheduler` | Cron | Agenda e controla o ciclo de vida de campanhas |
+| `talkx-report` | Pós-envio | Consolida métricas de entrega por campanha |
+| `talkx-link` | Webhook | Rastreia cliques em links das mensagens enviadas |
 
 Deploy via: **Actions → `deploy-functions.yml` → `workflow_dispatch`** (requer
 aprovação no environment `producao-edge-functions`).
@@ -105,19 +105,19 @@ O usuário de teste (`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`) tem perfil
 ```bash
 export E2E_TEST_EMAIL="<seu-usuario-de-teste>"
 export E2E_TEST_PASSWORD="<sua-senha-de-teste>"
-bunx playwright test --project=setup --project=chromium-e2e-core e2e/talkx.spec.ts
+bunx playwright test --project=setup --project=chromium-e2e-core
 ```
 
-> Atenção: passar o path de arquivo junto de `--project` funciona aqui porque
-> estamos passando explicitamente `--project=setup` antes. O bug de `dependsOn`
-> (filtro de arquivo zerando testes do `setup`) só ocorre quando `setup` não é
-> listado explicitamente.
+> Isso roda os 3 specs do `chromium-e2e-core` (conversation, messaging e talkx).
+> Não passe path de arquivo junto de `--project`: o filtro se aplica a todos os
+> projetos, incluindo `setup`, zerando seus testes e impedindo a geração de
+> `e2e/.auth/user.json`.
 
 ---
 
 ## 7. Monitoramento
 
-- **Logs de disparo:** Supabase Dashboard → Edge Functions → `talkx-send-campaign` → Logs.
+- **Logs de disparo:** Supabase Dashboard → Edge Functions → `talkx-send` → Logs.
 - **Status de instância WhatsApp:** Evolution GO dashboard ou endpoint
   `GET /instance/fetchInstances` com `X-Api-Key: <EVOLUTION_API_KEY>`.
 - **Alertas de CI:** `db-live-guard.yml` abre/atualiza issue com label
