@@ -221,7 +221,6 @@ export async function cleanupMock(supabase: any, corsHeaders: Record<string, str
   if (mockContacts?.length) {
     const mockIds = mockContacts.map((c: { id: string }) => c.id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
-    await supabase.from('contact_tags').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
     return jsonRes({ success: true, removed: mockIds.length }, corsHeaders);
@@ -241,7 +240,6 @@ export async function fullSync(
   if (mockContacts?.length) {
     const mockIds = mockContacts.map((c: { id: string }) => c.id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
-    await supabase.from('contact_tags').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
     results.cleanup = { removed: mockIds.length };

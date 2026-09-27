@@ -10,6 +10,44 @@ Cobertas nas sessões anteriores (PRs #289–#307). Ver HANDOFF_SESSAO_03.md.
 
 ---
 
+## FASE 2 — VISÃO GERAL · tela 01 (E21–E30)
+
+### Tela 01 — Visão Geral (`TalkXOverview.tsx`)
+
+| Etapa | Item do mock / plano | Status | Arquivo / evidência |
+|---|---|---|---|
+| E21 | 5 KPI cards inline (Total, Em andamento, Concluídas, Taxa sucesso, Alcançados) | ✅ | `TalkXOverview.tsx` — `totals` computado de `campaigns` prop |
+| E22 | `FilterBarV2` com persistência `sessionStorage` + toggle lista/grade | ✅ | `talkxShared.tsx:860` + `STORAGE_KEY = 'talkx.overview.filters'` |
+| E23 | Tabela 9 colunas (☐ · Campanha · Segmento · Canal · Status · Progresso · Resultados · Agendada em · Ações) | ✅ | `TalkXOverview.tsx` — coluna `ações` com menu ⋮ |
+| E24 | Rail direito `xl:grid-cols-[minmax(0,1fr)_320px]` com HeroCard + ações rápidas + recentes + tip | ✅ | `TalkXOverview.tsx` — `HeroCard`, `RailCard`, `RecentList`, `TipCard` |
+| E25 | `TalkXConfirmDialog` para excluir, cancelar, iniciar campanha | ✅ | `talkxShared.tsx:784` + usado em `TalkXOverview.tsx` |
+| E26 | ⌘K: grupo "Talk X" com campanhas/segmentos/templates do react-query cache | ✅ | `useTalkXCommandItems.ts` + `GlobalKeyboardProvider.tsx` + `command-palette-data.tsx` (tipo `talkx`) |
+| E27 | Realtime subscription `talkx:campaigns` com debounce 500ms + fallback `refetchInterval: 15s` | ✅ | `useTalkX.ts:130–178` — `isLive`, `uniqueRealtimeTopic`, `setQueryData` pontual |
+| E28 | Grid de cards `CampaignGridCard` — `grid-cols-1 md:grid-cols-2 2xl:grid-cols-3` | ✅ | `TalkXOverview.tsx` — `CampaignGridCard` component |
+| E29 | Botão exportar CSV (BOM UTF-8, 10k limite) na `FilterBarV2` | ✅ | `talkxExport.ts` — `exportCampaignsCsv` + botão `Download` em `rightSlot` |
+| E30 | `PARIDADE.md` Fase 2 + paridade de mock 01 documentada + PR | ✅ | Este arquivo |
+
+### Mock 01 — checklist de paridade visual
+
+| Região | Item | Status |
+|---|---|---|
+| Header | Título "Campanhas" + subtítulo + botão "Nova Campanha" | ✅ |
+| Header | Badge de status realtime (`isLive` → ponto verde animado) | ✅ E27 |
+| KPIs | 5 cards com ícone, label, valor e cor de status | ✅ E21 |
+| Filtros | Campo busca, select status, select canal, toggle lista/grade | ✅ E22 |
+| Filtros | Botão exportar CSV à direita | ✅ E29 |
+| Tabela | 9 colunas com checkbox de seleção | ✅ E23 |
+| Tabela | Paginação com select de page size | ✅ `TalkXPagination` |
+| Rail | Largura fixa 320px em `xl+` | ✅ E24 |
+| Rail | HeroCard ilustrativo | ✅ E24 |
+| Rail | Ações rápidas (Nova Campanha, Ver Relatórios) | ✅ E24 |
+| Rail | Lista últimas 5 campanhas | ✅ E24 `RecentList` |
+| Rail | Dica contextual rotativa | ✅ E24 `TipCard` |
+| Grade | Cards `CampaignGridCard` responsivos | ✅ E28 |
+| ⌘K | Grupo "Talk X" aparece ao buscar campanha/segmento/template | ✅ E26 |
+
+---
+
 ## FASE 4 — TEMPLATES · telas 04 e 05 (E41–E50)
 
 ### Tela 04 — Galeria de Templates (`TalkXTemplates.tsx`)

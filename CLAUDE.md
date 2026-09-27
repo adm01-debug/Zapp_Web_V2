@@ -72,6 +72,38 @@
 
 O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões WhatsApp). **Não confundir com o banco do projeto** (seção 1) e não aplicar migrations do repo nele.
 
+### Runbook: QR Code não aparece / trava no spinner (sessão órfã na GO)
+
+Sintoma: dialog "Escanear QR Code" fica só com o loader girando; a conexão nunca pareia.
+Causa comum: a instância na Evolution GO tem **JID persistido mas está deslogada**
+(`status` → `LoggedIn:false`/`Connected:false` com `jid` presente). Nesse estado o
+`/instance/connect` reusa a sessão salva e **não emite QR novo**; `/instance/qr` volta
+vazio. Diagnóstico rápido (edge `evolution-api`): `connect` responde `success` com `jid`
+mas sem `qrcode`; `disconnect` (logout GO) → 400; `restart-instance` (reconnect GO) → 500
+`no active session found`.
+
+Diagnóstico ao vivo (2026-09-27, via `list-instances`): o registro da instância na GO vem
+com `jid` preenchido, `connected:false` e **`disconnect_reason:"Reconnecting"`**. É a
+assinatura exata: o device foi desvinculado no celular, mas o whatsmeow ainda tem
+`Store.ID` setado e fica em loop tentando retomar a sessão salva — `Connect()` com
+`Store.ID != nil` **não abre o canal de QR**. Por isso `/instance/qr` volta vazio e
+`logout`/`reconnect` respondem 400/500 (`no active session found`): `Logout()` precisa de
+conexão ativa para mandar o IQ ao WhatsApp.
+
+Desde o fix de 2026-09-27 a edge `connect` resolve isso sozinha, em três camadas:
+1. poll do `/instance/qr` (3× / 1,5s), porque o QR na GO é assíncrono;
+2. sem QR + não logado + registro na GO com `jid` → **recria a instância na GO**
+   (`DELETE /instance/delete/{id}` + `POST /instance/create` com o **mesmo**
+   `EVOLUTION_INSTANCE_TOKEN` e o mesmo nome `PRINCIPAL`), o que zera o device store;
+   em seguida reconecta e faz novo poll do QR, devolvendo `recovered:true`;
+3. se ainda assim não sair QR, devolve `error:true`/409 em vez de `qrcode:undefined` —
+   o front mostra erro com "Gerar novo código" (nada de spinner infinito).
+
+`whatsapp_connections` **não** é tocado nesse fluxo (só o estado interno da GO), e o token
+não muda — então nenhum secret precisa ser regerado. Não há mais passo manual no Postgres
+da GO: o MCP `HOSTINGER` não expõe docker-exec e o Portainer não enxerga esses containers,
+então esse caminho nunca foi executável por agente de qualquer forma.
+
 ---
 
 ## 3. Repo e escrita
