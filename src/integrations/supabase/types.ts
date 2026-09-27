@@ -3042,6 +3042,55 @@ export type Database = {
           },
         ]
       }
+      department_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          department_id: string
+          details: Json
+          id: string
+          profile_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          department_id: string
+          details?: Json
+          id?: string
+          profile_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          department_id?: string
+          details?: Json
+          id?: string
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_audit_logs_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_audit_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_audit_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_invitations: {
         Row: {
           code: string
@@ -3079,6 +3128,55 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "department_invitations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          department_id: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_invites_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
@@ -9040,6 +9138,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_department_invite: { Args: { p_code: string }; Returns: Json }
       add_agent_xp: {
         Args: { p_profile_id: string; p_xp: number }
         Returns: Json
