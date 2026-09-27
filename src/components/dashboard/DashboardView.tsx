@@ -83,7 +83,7 @@ export function DashboardView() {
   // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
   // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
   // filters.agentId trouxer.
-  const { data: kpi } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
+  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -172,7 +172,7 @@ export function DashboardView() {
                 Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
               </p>
             )}
-            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} />
+            <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
           </div>
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
             <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
