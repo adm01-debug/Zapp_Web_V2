@@ -1,8 +1,9 @@
--- 20260927340000_fix_handle_new_user_role_null_email
+-- 20260927290000_fix_handle_new_user_role_null_email
 -- NULL bypass: NEW.email pode ser NULL em signup por telefone (auth sem email).
 -- split_part(NULL, '@', 2) => NULL; NULL = ANY(...) => NULL;
 -- IF NOT NULL => condicao NULL => ramo "negado" NAO executa =>
 -- usuario sem email recebia role 'agent' ignorando trusted_domains.
+-- Mesmo padrao corrigido em set_call_agent_notes (20260927100000).
 -- Fix: coalesce(..., false) garante que email NULL seja tratado como dominio
 -- nao confiavel.
 
@@ -67,4 +68,4 @@ COMMENT ON FUNCTION public.handle_new_user_role IS
   'Trigger on auth.users INSERT: provisiona role agent para o dominio da empresa (fail-closed). '
   'Historico de correcoes: 20260830130000 (auditoria + dominio configuravel), '
   '20260925140000 (fail-closed: v_allowed := false por padrao), '
-  '20260927340000 (NULL bypass: email NULL => coalesce garante false, nao agent).';
+  '20260927110000 (NULL bypass: email NULL => coalesce garante false, nao agent).';

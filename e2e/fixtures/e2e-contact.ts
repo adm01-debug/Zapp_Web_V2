@@ -61,7 +61,7 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
+        Prefer: 'return=representation',
       },
       data: { conversation_status: 'open' },
     }
@@ -70,6 +70,15 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
     throw new Error(
       `Falha ao reabrir o contato fixo de E2E antes do teste: HTTP ${response.status()} ` +
         (await response.text())
+    );
+  }
+  // Detectar falha silenciosa de RLS: return=representation => [] se 0 rows atualizados
+  const updated = (await response.json()) as unknown[];
+  if (!Array.isArray(updated) || updated.length === 0) {
+    throw new Error(
+      'PATCH ao contato fixo E2E retornou 0 linhas atualizadas — ' +
+        'possivel bloqueio silencioso de RLS apos mudanca TO authenticated. ' +
+        'Verifique: is_admin_or_supervisor(auth.uid()) e get_visible_agent_ids para e2e.zapp.'
     );
   }
 }
