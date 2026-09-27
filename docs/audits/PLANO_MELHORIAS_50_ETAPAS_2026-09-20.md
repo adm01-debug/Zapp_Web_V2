@@ -30,10 +30,10 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 | Fase | Status por etapa |
 |---|---|
 | F0 | E01 👤 · E02 ✅ · E03 📋(3 deletados) · E04 📋 · E05 🔧 · E06 ✅ |
-| F1 | E07–E08 👤 · E09 ✅ · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅ |
+| F1 | E07–E08 👤 · E09 ✅ · E10 🔧 · E11 ✅(já existia) · E12 ✅(by design) · E13 ✅(crons+concurrency verificados) |
 | F2 | E14 ✅ · E15 📋🔧⏳(meta recalibrada) · E16 ✅(aplicado em produção) · E17 ✅(aplicado em produção) · E18 ✅(nada a migrar) · E19 ✅ · E20 ✅ · E21 👤 |
 | F3 | E22 ✅ · E23 ✅(0 resumos) · E24 📋 · E25 ✅ · E26 ✅(semântica esclarecida) |
-| F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
+| F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 ✅(deps pinadas) · E32 ✅ |
 | F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
 | F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
 | F7 | E44 👤 · E45 👤 · E46 ✅ · E47 ✅ |
@@ -221,10 +221,11 @@ Está `skipping` em 100% dos runs observados (16–17/09). Reativar com a condi�
 ou remover o job morto do `ci.yml`.
 - [x] Job não existe — `🛡️ Run Supabase usage guard` é um step dentro de `lint-and-typecheck`, não job separado; by design (verificado 27/09)
 
-### E13 🟢 Custo de Actions: crons e concurrency
+### E13 ✅ Custo de Actions: crons e concurrency
 Inventariar todos os `schedule:` (CRM worker, CodeQL, live-guard, etc.), consolidar
 horários, garantir `concurrency` com cancelamento onde falta.
-- [ ] Tabela de crons no PR · zero agendamento que sempre no-opa (pós E02)
+- [x] Tabela de crons confirmada (27/09): `types-sync` (seg 05:49 UTC) → `db-live-guard` (diário 06:13 UTC) → `branch-hygiene-audit` (seg 07:56 UTC) → `codeql` (seg 09:30 UTC); `crm-sync-worker` schedule comentado (E02 fechado). Sem sobreposição.
+- [x] `concurrency:` verificado em todos os 13 workflows (27/09) — nenhum gap
 
 ## F2 — Banco: índices e integridade (E14–E21)
 
@@ -337,10 +338,10 @@ WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(a
 - [x] 0 exceções pinned-replay necessárias em 26/09 — as 7 violações reais foram corrigidas na
       origem (ledger passou a refletir o SQL real do arquivo), não exigem exceção permanente
 
-### E26 🟢 Projeção forward-only: 2 relações pendentes (herda E17/16-09)
+### E26 ✅ Projeção forward-only: 2 relações pendentes (herda E17/16-09)
 Guard reporta "projecao forward-only: 4 relacoes, 9 funcoes" — conferir se as 2 originais
 fecharam ou viraram 4.
-- [x] Projeção zerada: `catalog.generated_at=2026-09-27` e migration mais recente é `20260926...` (prefixo < cutoff) → forward-only retorna 0 relações e 0 funções; guard reporta "projecao forward-only: 0 relacoes, 0 funcoes" (verificado 27/09)
+- [x] Projeção zerada: `catalog.generated_at=2026-09-27`; projeção forward-only projeta migrations do mesmo dia (`20260927*`), todas no baseline → guard reporta `novas: 0` (verificado 27/09)
 
 ## F4 — Edges e secrets (E27–E32)
 
@@ -369,8 +370,8 @@ qual a proteção compensatória (assinatura, token de instância, rate limit), 
 `csp-report`, `talkx-link` (clique público), `evolution-webhook`, `elevenlabs-webhook`:
 - [x] Cobertura de rate-limit confirmada por leitura do código em 26/09: `csp-report` (30/60s), `talkx-link` (60/60s), `evolution-webhook` (rate-limit + HMAC), `elevenlabs-webhook` (secret + HMAC) — ver `docs/audits/edges-secrets-2026-09-26.md`
 
-### E31 🟢 Pinning de dependências Deno nas 67 functions
-- [ ] `deno.land/std`/`esm.sh` com versões pinadas e uniformes (`_shared/` como fonte)
+### E31 ✅ Pinning de dependências Deno nas 67 functions
+- [x] `deno-types.ts` alinhado para `supabase-js@2.87.1` (era @2.49.1); 3 test files alinhados para `std@0.224.0` (eram @0.168.0) — todos em `_shared/` agora consistentes (27/09)
 
 ### E32 🟢 Contrato de segurança do `evolution-webhook`
 - [ ] Verificação de origem (token/assinatura) testada e documentada em `docs/`
@@ -456,7 +457,7 @@ Estado-base deste plano; paridade do ledger por dois caminhos (CI × `db_query`)
 
 ### E49 🟢 Atualizar CLAUDE.md e arquivar o plano de 16/09
 - [ ] CLAUDE.md aponta para este plano como vigente; 16/09 marcado como encerrado
-- [ ] Regra permanece: divergiu da infra real → corrige no mesmo commit
+- [ ] Regra permanente: divergiu da infra real → corrige no mesmo commit
 
 ### E50 🟢 Relatório final e sign-off
 - [ ] `docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md` com diff baseline→final,
