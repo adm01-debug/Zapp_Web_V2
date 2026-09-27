@@ -1,45 +1,176 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
-import { useTeamMessages, useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
+import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const log = getLogger('useTeamChatPanel');
+const log = getLogger('TeamChatPanel');
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
 export function useTeamChatPanel(conversation: TeamConversation) {
   const { profile } = useAuth();
-  const { data: messages = [], isLoading } = useTeamMessages(conversation.id);
+  const [text, setText] = useState('');
+  const [replyTo, setReplyTo] = useState<TeamMessage | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddMembers, setShowAddMembers] = useState(false);
+  const [showGroupManagement, setShowGroupManagement] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [olderMessages, setOlderMessages] = useState<TeamMessage[]>([]);
+  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [hasOlderMessages, setHasOlderMessages] = useState(true);
+  const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const isNearBottomRef = useRef(true);
+  const savedScrollFromBottomRef = useRef<number | null>(null);
+
+  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
   const muteMutation = useToggleMuteConversation();
+  const renameConvMutation = useRenameConversation();
+  const removeMemberMutation = useRemoveConversationMember();
+  const leaveMutation = useLeaveConversation();
+  const deleteConvMutation = useDeleteConversation();
+  const reactions = useTeamMessageReactions(conversation.id);
 
-  const currentMember = conversation.members?.find(m => m.profile_id === profile?.id);
-  const isMuted = currentMember?.is_muted ?? false;
+  const { settings, isLoading: settingsLoading } = useUserSettings();
+  const isMuted = useMemo(() => {
+    const muted = (settings as unknown as Record<string, unknown>)?.muted_conversations as string[] | undefined;
+    return Array.isArray(muted) && muted.includes(conversation.id);
+  }, [settings, conversation.id]);
 
-  const [text, setText] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
-  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-  const [replyTo, setReplyTo] = useState<TeamMessage | null>(null);
-  const [showScrollDown, setShowScrollDown] = useState(false);
-  const [showAddMembers, setShowAddMembers] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isNearBottomRef = useRef(true);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const canTransfer = useMemo(() => {
+    const r = (profile as { role?: string } | null)?.role;
+    return r === 'admin' || r === 'supervisor';
+  }, [profile]);
 
-  const { settings, updateSettings, saveSettings } = useUserSettings();
-  const handleVoiceChange = (v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); };
-  const handleSpeedChange = (s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); };
-  const tts = useTextToSpeech({
-    initialVoiceId: settings.tts_voice_id, initialSpeed: settings.tts_speed,
-    onVoiceChange: handleVoiceChange, onSpeedChange: handleSpeedChange,
-  });
+  const isGroupCreator = useMemo(() => {
+    return !!(profile?.id && conversation.created_by === profile.id);
+  }, [profile, conversation.created_by]);
+
+  const ttsOptions = useMemo(() => ({
+    initialVoiceId: settingsLoading ? undefined : settings.tts_voice_id,
+    initialSpeed: settingsLoading ? undefined : settings.tts_speed,
+  }), [settingsLoading, settings.tts_voice_id, settings.tts_speed]);
+
+  const tts = useTextToSpeech(ttsOptions);
+
+  const handleVoiceChange = useCallback((newVoiceId: string) => {
+    tts.setVoiceId(newVoiceId);
+    if (!profile?.id) return;
+    void supabase.from('user_settings').upsert(
+      { user_id: profile.id, tts_voice_id: newVoiceId },
+      { onConflict: 'user_id' },
+    );
+  }, [tts, profile]);
+
+  const handleSpeedChange = useCallback((newSpeed: number) => {
+    tts.setSpeed(newSpeed);
+    if (!profile?.id) return;
+    void supabase.from('user_settings').upsert(
+      { user_id: profile.id, tts_speed: newSpeed },
+      { onConflict: 'user_id' },
+    );
+  }, [tts, profile]);
+
+  const messages = useMemo(() => {
+    const ids = new Set<string>();
+    const combined: TeamMessage[] = [];
+    for (const m of [...olderMessages, ...newestMessages]) {
+      if (!ids.has(m.id)) { ids.add(m.id); combined.push(m); }
+    }
+    return combined;
+  }, [olderMessages, newestMessages]);
+
+  useEffect(() => {
+    if (newestMessages.length > 0 && oldestCursor === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOldestCursor(newestMessages[0].created_at);
+    }
+  }, [newestMessages, oldestCursor]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOlderMessages([]);
+    setOldestCursor(null);
+    setHasOlderMessages(true);
+    setShowStats(false);
+    setShowTransferDialog(false);
+    setShowGroupManagement(false);
+  }, [conversation.id]);
+
+  useEffect(() => {
+    if (savedScrollFromBottomRef.current === null) return;
+    const delta = savedScrollFromBottomRef.current;
+    savedScrollFromBottomRef.current = null;
+    requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (el) el.scrollTop = el.scrollHeight - delta;
+    });
+  }, [olderMessages.length]);
+
+  const fetchOlderMessages = useCallback(async () => {
+    if (isFetchingOlder || !hasOlderMessages || !oldestCursor) return;
+    const el = scrollRef.current;
+    if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
+    setIsFetchingOlder(true);
+    try {
+      const { data, error } = await supabase
+        .from('team_messages')
+        .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
+        .eq('conversation_id', conversation.id)
+        .lt('created_at', oldestCursor)
+        .order('created_at', { ascending: false })
+        .limit(60);
+      if (error) throw error;
+      const older = ((data || []) as TeamMessage[]).reverse();
+      if (older.length === 0) {
+        setHasOlderMessages(false);
+      } else {
+        setOldestCursor(older[0].created_at);
+        setOlderMessages(prev => {
+          const ids = new Set(prev.map(m => m.id));
+          return [...older.filter(m => !ids.has(m.id)), ...prev];
+        });
+      }
+    } catch (err) {
+      log.error('Erro ao carregar mensagens anteriores', err);
+    } finally {
+      setIsFetchingOlder(false);
+    }
+  }, [isFetchingOlder, hasOlderMessages, oldestCursor, conversation.id]);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
+
+  const filteredMessages = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) return messages;
+    const q = debouncedSearchQuery.toLowerCase();
+    return messages.filter(m => m.content?.toLowerCase().includes(q));
+  }, [messages, debouncedSearchQuery]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -49,78 +180,183 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setShowScrollDown(!nearBottom);
   }, []);
 
-  const scrollToBottom = useCallback(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }), []);
-
-  const handleSend = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || sendMutation.isPending) return;
-    sendMutation.mutate(
-      { conversationId: conversation.id, content: trimmed, replyToId: replyTo?.id },
-      { onError: (err) => { log.error('Failed to send:', err); toast.error('Falha ao enviar mensagem.'); setText(trimmed); } }
-    );
-    setText(''); setReplyTo(null);
-  }, [text, sendMutation, conversation.id, replyTo]);
-
-  const handleSendMedia = useCallback((mediaUrl: string, mediaType: string, content?: string) => {
-    sendMutation.mutate(
-      { conversationId: conversation.id, content: content || '', mediaUrl, mediaType, replyToId: replyTo?.id },
-      { onError: (err) => { log.error('Failed to send media:', err); toast.error('Falha ao enviar mídia.'); } }
-    );
-    setReplyTo(null);
-  }, [sendMutation, conversation.id, replyTo]);
-
-  const handleSendSticker = useCallback((url: string) => handleSendMedia(url, 'sticker', '🎨 Figurinha'), [handleSendMedia]);
-  const handleSendAudioMeme = useCallback((url: string) => handleSendMedia(url, 'audio_meme', '🎵 Áudio meme'), [handleSendMedia]);
-  const handleSendCustomEmoji = useCallback((url: string) => handleSendMedia(url, 'emoji', '😀 Emoji'), [handleSendMedia]);
-  const handleFileSent = useCallback((mediaUrl: string, mediaType: string, fileName: string) => handleSendMedia(mediaUrl, mediaType, fileName), [handleSendMedia]);
-
-  const handleAudioSend = useCallback(async (blob: Blob) => {
-    setIsRecordingAudio(false);
-    try {
-      const path = `${profile?.id}/${conversation.id}/${Date.now()}.webm`;
-      const { error } = await supabase.storage.from('team-chat-files').upload(path, blob, { contentType: 'audio/webm' });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from('team-chat-files').getPublicUrl(path);
-      handleSendMedia(urlData.publicUrl, 'audio', '🎤 Mensagem de áudio');
-    } catch (err) { toast.error('Erro ao enviar áudio'); log.error('Audio upload error:', err); }
-  }, [profile?.id, conversation.id, handleSendMedia]);
-
-  const handleDelete = useCallback((msgId: string) => {
-    deleteMutation.mutate({ messageId: msgId, conversationId: conversation.id },
-      { onError: (err) => { log.error('Failed to delete:', err); toast.error('Falha ao excluir.'); } });
-  }, [deleteMutation, conversation.id]);
-
-  const handleStartEdit = useCallback((msg: TeamMessage) => { setEditingId(msg.id); setEditText(msg.content || ''); }, []);
-  const handleSaveEdit = useCallback(() => {
-    const trimmed = editText.trim();
-    if (!editingId || !trimmed) { handleCancelEdit(); return; }
-    editMutation.mutate({ messageId: editingId, content: trimmed, conversationId: conversation.id },
-      { onError: (err) => { log.error('Failed to edit:', err); toast.error('Falha ao editar.'); } });
-    setEditingId(null); setEditText('');
-  }, [editingId, editText, editMutation, conversation.id]);
-
-  const handleCancelEdit = useCallback(() => { setEditingId(null); setEditText(''); }, []);
-  const handleCopyMessage = useCallback((content: string | null) => {
-    if (!content) return;
-    navigator.clipboard.writeText(content).then(() => toast.success('Copiado!')).catch(() => toast.error('Erro ao copiar'));
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      setShowScrollDown(false);
+    }
   }, []);
 
-  const filteredMessages = useMemo(() => {
-    if (!searchQuery.trim()) return messages;
-    const q = searchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, searchQuery]);
+  const handleSend = useCallback(async () => {
+    const content = text.trim();
+    if (!content || !profile?.id) return;
+    setText('');
+    const reply = replyTo;
+    setReplyTo(null);
+    try {
+      await sendMutation.mutateAsync({
+        conversationId: conversation.id,
+        content,
+        replyToId: reply?.id,
+      });
+    } catch (err) {
+      log.error('Erro ao enviar mensagem', err);
+      toast.error('Erro ao enviar mensagem');
+    }
+  }, [text, profile, replyTo, conversation.id, sendMutation]);
+
+  const handleDelete = useCallback(async (messageId: string) => {
+    try {
+      await deleteMutation.mutateAsync({ messageId, conversationId: conversation.id });
+    } catch (err) {
+      log.error('Erro ao excluir mensagem', err);
+      toast.error('Erro ao excluir');
+    }
+  }, [deleteMutation, conversation.id]);
+
+  const handleStartEdit = useCallback((msg: TeamMessage) => {
+    setEditingId(msg.id);
+    setEditText(msg.content ?? '');
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    const trimmed = editText.trim();
+    if (!editingId || !trimmed) return;
+    try {
+      await editMutation.mutateAsync({ messageId: editingId, content: trimmed, conversationId: conversation.id });
+      setEditingId(null);
+      setEditText('');
+    } catch (err) {
+      log.error('Erro ao editar mensagem', err);
+      toast.error('Erro ao editar');
+    }
+  }, [editingId, editText, editMutation, conversation.id]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditText('');
+  }, []);
+
+  const handleCopyMessage = useCallback((content: string) => {
+    void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
+  }, []);
+
+  const handleAudioSend = useCallback(async (blob: Blob) => {
+    if (!profile?.id) return;
+    const fileName = `audio-${Date.now()}.webm`;
+    const { data, error } = await supabase.storage.from('team-chat-files').upload(
+      `${conversation.id}/${fileName}`,
+      blob,
+      { contentType: 'audio/webm', upsert: false },
+    );
+    if (error) { toast.error('Erro ao enviar áudio'); return; }
+    await sendMutation.mutateAsync({
+      conversationId: conversation.id,
+      content: '🎤 Mensagem de áudio',
+      mediaPath: data?.path ?? undefined,
+      mediaBucket: 'team-chat-files',
+      mediaType: 'audio',
+    });
+  }, [profile, conversation.id, sendMutation]);
+
+  const handleFileSent = useCallback(async (mediaUrl: string, mediaType: string, fileName: string) => {
+    if (!profile?.id) return;
+    await sendMutation.mutateAsync({
+      conversationId: conversation.id,
+      content: fileName,
+      mediaUrl,
+      mediaType: (mediaType as TeamMessage['media_type']) ?? undefined,
+    });
+  }, [profile, conversation.id, sendMutation]);
+
+  const handleSendSticker = useCallback(async (url: string) => {
+    if (!profile?.id) return;
+    await sendMutation.mutateAsync({
+      conversationId: conversation.id,
+      content: '🎨 Figurinha',
+      mediaUrl: url,
+      mediaType: 'sticker',
+    });
+  }, [profile, conversation.id, sendMutation]);
+
+  const handleSendAudioMeme = useCallback(async (url: string) => {
+    if (!profile?.id) return;
+    await sendMutation.mutateAsync({
+      conversationId: conversation.id,
+      content: '🎵 Áudio meme',
+      mediaUrl: url,
+      mediaType: 'audio_meme',
+    });
+  }, [profile, conversation.id, sendMutation]);
+
+  const handleSendCustomEmoji = useCallback(async (url: string) => {
+    if (!profile?.id) return;
+    await sendMutation.mutateAsync({
+      conversationId: conversation.id,
+      content: '😀 Emoji',
+      mediaUrl: url,
+      mediaType: 'emoji',
+    });
+  }, [profile, conversation.id, sendMutation]);
 
   return {
-    profile, messages, isLoading, isMuted, filteredMessages,
-    text, setText, editingId, editText, setEditText,
-    isRecordingAudio, setIsRecordingAudio, replyTo, setReplyTo,
-    showScrollDown, showAddMembers, setShowAddMembers,
-    showSearch, setShowSearch, searchQuery, setSearchQuery,
-    scrollRef, isNearBottomRef, searchInputRef,
-    tts, muteMutation, sendMutation,
-    checkNearBottom, scrollToBottom, handleSend, handleSendSticker, handleSendAudioMeme,
-    handleSendCustomEmoji, handleFileSent, handleAudioSend,
-    handleDelete, handleStartEdit, handleSaveEdit, handleCancelEdit, handleCopyMessage,
+    profile,
+    messages,
+    filteredMessages,
+    isLoading,
+    isMuted,
+    canTransfer,
+    isGroupCreator,
+    isFetchingOlder,
+    hasOlderMessages,
+    fetchOlderMessages,
+    showStats,
+    setShowStats,
+    showTransferDialog,
+    setShowTransferDialog,
+    showGroupManagement,
+    setShowGroupManagement,
+    text,
+    setText,
+    replyTo,
+    setReplyTo,
+    editingId,
+    editText,
+    setEditText,
+    showSearch,
+    setShowSearch,
+    searchQuery,
+    setSearchQuery,
+    showAddMembers,
+    setShowAddMembers,
+    isRecordingAudio,
+    setIsRecordingAudio,
+    showScrollDown,
+    scrollRef,
+    searchInputRef,
+    isNearBottomRef,
+    checkNearBottom,
+    scrollToBottom,
+    handleSend,
+    handleDelete,
+    handleStartEdit,
+    handleSaveEdit,
+    handleCancelEdit,
+    handleCopyMessage,
+    handleAudioSend,
+    handleFileSent,
+    handleSendSticker,
+    handleSendAudioMeme,
+    handleSendCustomEmoji,
+    handleVoiceChange,
+    handleSpeedChange,
+    sendMutation,
+    muteMutation,
+    renameConvMutation,
+    removeMemberMutation,
+    leaveMutation,
+    deleteConvMutation,
+    tts,
+    reactions,
   };
 }

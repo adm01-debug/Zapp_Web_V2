@@ -6,20 +6,7 @@ import { cn } from '@/lib/utils';
 import { format, differenceInYears, isSameDay, addYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
-
-interface MemberProfile {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-  job_title: string | null;
-  department: string | null;
-  role: string | null;
-  is_active: boolean | null;
-  created_at: string;
-  birthday: string | null;
-}
+import type { MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
 
 export type { MemberProfile };
 

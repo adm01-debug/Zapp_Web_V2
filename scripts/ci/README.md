@@ -71,3 +71,38 @@ Somente a URL e a chave publishable do Supabase são permitidas nesse contexto.
 ```sh
 node scripts/ci/check-pr-workflow-secrets.mjs
 ```
+
+## noImplicitAny ratchet
+
+`implicit-any-ratchet.mjs` falha se o número de erros `noImplicitAny` no projeto
+crescer acima do baseline registrado em `implicit-any-baseline.json`. Permite
+reduzir a dívida tipagem legada de forma incremental: ao corrigir erros, abaixe
+o baseline; ao introduzir código novo tipado corretamente, o contador não cresce.
+
+```sh
+bun install --frozen-lockfile
+node scripts/ci/implicit-any-ratchet.mjs
+```
+
+Para atualizar o baseline após correções:
+
+```sh
+node scripts/ci/implicit-any-ratchet.mjs --update-baseline
+git diff -- scripts/ci/implicit-any-baseline.json
+```
+
+## Budget de bundle
+
+`bundle-budget.mjs` lê `dist/index.html` após o build, soma o gzip de todo
+JS carregado no first paint (`script[type=module]` + `link[rel=modulepreload]`)
+e do CSS (`link[rel=stylesheet]`) e compara com os limites em
+`performance-budget.json`. Falha com exit 1 se `initial-js` ou `initial-css`
+passarem do `maxKB` configurado. O budget é medido em gzip porque é o que o
+navegador recebe da Vercel (br/gzip).
+
+```sh
+bun run build
+node scripts/ci/bundle-budget.mjs
+# ou com caminhos customizados:
+node scripts/ci/bundle-budget.mjs --dist dist --budget performance-budget.json
+```
