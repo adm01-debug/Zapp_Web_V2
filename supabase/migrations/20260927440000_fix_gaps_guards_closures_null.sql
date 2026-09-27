@@ -1,21 +1,11 @@
--- Migration: 20260927440000
+-- Migration: 20260927440000 (corrigida: DELETE antes de UNIQUE)
 -- Fase 2: Gaps da auditoria 5-agentes
--- Conteudo:
---   1. Uniformizar guard nas 3 funcoes de gamificacao com padrao antigo
---   2. UNIQUE parcial em conversation_closures (evita ON CONFLICT dead code)
---   3. DELETE dos 74 rows de teste E2E em conversation_closures
---   4. UPDATE avg_response_time_seconds = NULL onde 0 (alinhamento semantico)
---
--- Pre-condicoes verificadas antes desta migration:
---   - status_violations = 0, xp_negative = 0, level_below_1 = 0
---   - duplicatas em conversation_closures (exceto E2E) = 0
---   - avg_response_time_seconds NAO e lido diretamente pelo front-end
+-- CORRECAO: BLOCO ordem invertida para evitar falha de constraint
+--   Original: UNIQUE primeiro (falha com 96 rows E2E em 2 datas distintas)
+--   Correto:  DELETE primeiro, depois UNIQUE
 
 -- ============================================================
 -- BLOCO 1: Uniformizar guard das 3 funcoes de gamificacao
--- Antes: IF auth.uid() IS NOT NULL AND NOT (...)
--- Depois: IF auth.role() = 'anon' OR (auth.role() = 'authenticated' AND NOT (...))
--- LEMBRETE: CREATE OR REPLACE reseta GRANTs -> BLOCO 1b re-aplica
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp int)
@@ -50,10 +40,8 @@ BEGIN
   WHERE profile_id = p_profile_id;
 
   RETURN json_build_object(
-    'newXp',         v_new_xp,
-    'newLevel',      v_new_level,
-    'previousLevel', v_row.level,
-    'leveledUp',     v_new_level > v_row.level
+    'newXp', v_new_xp, 'newLevel', v_new_level,
+    'previousLevel', v_row.level, 'leveledUp', v_new_level > v_row.level
   );
 END;
 $$;
@@ -92,9 +80,7 @@ BEGIN
   DO NOTHING
   RETURNING id INTO v_inserted_id;
 
-  IF v_inserted_id IS NULL THEN
-    RETURN json_build_object('alreadyHad', true);
-  END IF;
+  IF v_inserted_id IS NULL THEN RETURN json_build_object('alreadyHad', true); END IF;
 
   v_new_xp    := v_row.xp + p_xp_reward;
   v_new_level := GREATEST(1, FLOOR(SQRT(GREATEST(0, v_new_xp) / 50.0))::int + 1);
@@ -116,9 +102,9 @@ CREATE OR REPLACE FUNCTION public.increment_agent_messages(
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, pg_temp AS $$
 DECLARE
-  v_row         agent_stats%ROWTYPE;
-  v_new_sent    int;
-  v_new_recv    int;
+  v_row      agent_stats%ROWTYPE;
+  v_new_sent int;
+  v_new_recv int;
 BEGIN
   IF auth.role() = 'anon'
      OR (auth.role() = 'authenticated' AND NOT (
@@ -147,25 +133,22 @@ GRANT EXECUTE ON FUNCTION public.grant_agent_achievement(uuid, text, text, text,
 GRANT EXECUTE ON FUNCTION public.increment_agent_messages(uuid, int, int) TO authenticated, service_role;
 
 -- ============================================================
--- BLOCO 2: UNIQUE parcial em conversation_closures
--- Garante max 1 closure por (contact_id, dia)
--- NOT VALID + VALIDATE: nao bloqueia writes durante a criacao
+-- BLOCO 2 (ANTES ERA BLOCO 3): DELETE E2E primeiro
+-- Motivo: UNIQUE abaixo falha com 96 rows (38 em 26/09, 58 em 27/09)
+-- ============================================================
+DELETE FROM public.conversation_closures
+WHERE contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759';
+
+-- ============================================================
+-- BLOCO 3 (ANTES ERA BLOCO 2): UNIQUE constraint APOS a limpeza
+-- Seguro: zero duplicatas em producao para contatos reais
 -- ============================================================
 ALTER TABLE public.conversation_closures
   ADD CONSTRAINT uq_closures_contact_day
   UNIQUE (contact_id, (date(created_at)));
 
 -- ============================================================
--- BLOCO 3: Limpar rows de teste E2E em conversation_closures
--- (74 rows para o contato de fixture)
--- ============================================================
-DELETE FROM public.conversation_closures
-WHERE contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759';
-
--- ============================================================
 -- BLOCO 4: Alinhar semantica de avg_response_time_seconds
--- 0 = "respondeu em 0 segundos" (impossivel) -> NULL = "sem dado"
--- Verificado: nenhuma funcao de banco ou front-end le avg_response_time_seconds = 0
 -- ============================================================
 UPDATE public.agent_stats
 SET avg_response_time_seconds = NULL
