@@ -444,15 +444,18 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: true, status: stRes.status, message: 'Não foi possível verificar o status da instância na Evolution GO (token inválido ou serviço indisponível). Tente novamente em instantes.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       const stInner = stData.data ?? {};
-      // Contrato GO: só está "aberto" com LoggedIn/state=open. Connected sozinho é
-      // só transporte (pode estar up sem WhatsApp pareado) — não é sinal de sucesso.
-      const loggedIn = (stInner.loggedIn ?? stInner.LoggedIn) || stData.state === 'open';
+      // Exige Connected=true E LoggedIn=true para considerar aberta: {Connected:false,
+      // LoggedIn:true} é estado "reconnecting" (socket indisponível) — devolver
+      // connected nesse caso fecha o dialog sem QR quando o WhatsApp não chegou a parear.
+      const isConnected = Boolean(stInner.Connected ?? stInner.connected);
+      const isLoggedIn = Boolean(stInner.loggedIn ?? stInner.LoggedIn);
+      const loggedIn = (isConnected && isLoggedIn) || stData.state === 'open';
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
         return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       new Logger('evolution-api').warn('connect: nenhum QR gerado e instância não logada — sessão pendente na GO', { instance });
-      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo. A sessão anterior ainda está pendente na Evolution GO — reinicie a instância (logout/reset) e tente de novo.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo. A sessão está com credenciais inconsistentes na Evolution GO (sessão órfã) — é necessário limpar as credenciais internas via acesso administrativo ao banco da GO. Contate o suporte.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
