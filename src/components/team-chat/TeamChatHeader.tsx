@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -26,7 +27,10 @@ import {
   Pin,
   BarChart2,
   Activity,
+  Volume2,
 } from 'lucide-react';
+
+const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5] as const;
 
 interface TeamChatHeaderProps {
   conversation: TeamConversation;
@@ -51,7 +55,7 @@ interface TeamChatHeaderProps {
 export function TeamChatHeader({
   conversation,
   showDetails,
-  voiceId,
+  voiceId: _voiceId,
   speed,
   showSearch,
   showStats,
@@ -62,7 +66,7 @@ export function TeamChatHeader({
   onToggleSearch,
   onToggleStats,
   onAddMembers,
-  onVoiceChange,
+  onVoiceChange: _onVoiceChange,
   onSpeedChange,
   onToggleMute,
   onTransfer,
@@ -183,7 +187,7 @@ export function TeamChatHeader({
             </TooltipTrigger>
             <TooltipContent side="bottom">Mais ações</TooltipContent>
           </Tooltip>
-          <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
+          <DropdownMenuContent align="end" className="w-52 bg-popover border-border">
             {onToggleMute && (
               <DropdownMenuItem onClick={onToggleMute}>
                 {isMuted ? (
@@ -205,6 +209,30 @@ export function TeamChatHeader({
                 Transferir departamento
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-muted-foreground font-normal py-1.5">
+              <Volume2 className="w-3.5 h-3.5" aria-hidden />
+              Velocidade de voz
+            </DropdownMenuLabel>
+            <div className="flex gap-1 px-2 pb-2" role="group" aria-label="Velocidade de leitura">
+              {SPEED_OPTIONS.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onSpeedChange(s)}
+                  className={cn(
+                    'flex-1 text-xs rounded px-1 py-0.5 border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    speed === s
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                  aria-pressed={speed === s}
+                  aria-label={`Velocidade ${s}x`}
+                >
+                  {s}×
+                </button>
+              ))}
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="opacity-50">
               <Pin className="w-4 h-4 mr-2" />

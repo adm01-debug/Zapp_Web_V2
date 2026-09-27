@@ -50,7 +50,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const muteMutation = useToggleMuteConversation();
   const reactions = useTeamMessageReactions(conversation.id);
 
-  const { settings } = useUserSettings();
+  const { settings, isLoading: settingsLoading } = useUserSettings();
   const isMuted = useMemo(() => {
     const muted = settings?.muted_conversations as string[] | undefined;
     return Array.isArray(muted) && muted.includes(conversation.id);
@@ -61,7 +61,30 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
 
-  const tts = useTextToSpeech();
+  const ttsOptions = useMemo(() => ({
+    initialVoiceId: settingsLoading ? undefined : settings.tts_voice_id,
+    initialSpeed: settingsLoading ? undefined : settings.tts_speed,
+  }), [settingsLoading, settings.tts_voice_id, settings.tts_speed]);
+
+  const tts = useTextToSpeech(ttsOptions);
+
+  const handleVoiceChange = useCallback((newVoiceId: string) => {
+    tts.setVoiceId(newVoiceId);
+    if (!profile?.id) return;
+    void supabase.from('user_settings').upsert(
+      { user_id: profile.id, tts_voice_id: newVoiceId },
+      { onConflict: 'user_id' },
+    );
+  }, [tts.setVoiceId, profile?.id]);
+
+  const handleSpeedChange = useCallback((newSpeed: number) => {
+    tts.setSpeed(newSpeed);
+    if (!profile?.id) return;
+    void supabase.from('user_settings').upsert(
+      { user_id: profile.id, tts_speed: newSpeed },
+      { onConflict: 'user_id' },
+    );
+  }, [tts.setSpeed, profile?.id]);
 
   const messages = useMemo(() => {
     const ids = new Set<string>();
@@ -314,6 +337,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     handleSendSticker,
     handleSendAudioMeme,
     handleSendCustomEmoji,
+    handleVoiceChange,
+    handleSpeedChange,
     sendMutation,
     muteMutation,
     tts,
