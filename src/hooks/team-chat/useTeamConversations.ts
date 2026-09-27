@@ -15,16 +15,15 @@ export function useTeamConversations() {
 
       const { data: memberships, error: memErr } = await supabase
         .from('team_conversation_members')
-        .select('conversation_id, last_read_at')
+        .select('conversation_id, last_read_at, is_muted, is_pinned, is_archived, member_role')
         .eq('profile_id', profile.id);
 
       if (memErr) throw memErr;
       if (!memberships?.length) return [];
 
       const convIds = memberships.map(m => m.conversation_id);
-      const lastReadMap = new Map(memberships.map(m => [m.conversation_id, m.last_read_at]));
 
-      const [convResult, membersResult] = await Promise.all([
+      const [convResult, membersResult, previewsResult, unreadResult] = await Promise.all([
         supabase
           .from('team_conversations')
           .select('*')
@@ -34,54 +33,58 @@ export function useTeamConversations() {
           .from('team_conversation_members')
           .select('*, profile:profiles(id, name, email, avatar_url, is_active)')
           .in('conversation_id', convIds),
+        supabase.rpc('get_team_conversation_previews'),
+        supabase.rpc('get_team_unread_counts'),
       ]);
 
       if (convResult.error) throw convResult.error;
       const conversations = convResult.data || [];
       const allMembers = membersResult.data || [];
 
-      const { data: recentMessages } = await supabase
-        .from('team_messages')
-        .select('id, conversation_id, content, sender_id, created_at')
-        .in('conversation_id', convIds)
-        .order('created_at', { ascending: false })
-        .limit(convIds.length * 2);
-
-      const lastMessageMap = new Map<string, { id: string; conversation_id: string; content: string; sender_id: string; created_at: string }>();
-      for (const msg of recentMessages || []) {
-        if (!lastMessageMap.has(msg.conversation_id)) {
-          lastMessageMap.set(msg.conversation_id, msg);
-        }
+      const previewMap = new Map<string, {
+        last_message_id: string;
+        last_message_content: string;
+        last_message_type: string;
+        last_message_sender_id: string;
+        last_message_created_at: string;
+      }>();
+      for (const p of (previewsResult.data || [])) {
+        previewMap.set(p.conversation_id, p);
       }
 
-      const unreadPromises = convIds.map(async (cid) => {
-        const lastRead = lastReadMap.get(cid);
-        let query = supabase
-          .from('team_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', cid)
-          .neq('sender_id', profile.id);
-
-        if (lastRead) {
-          query = query.gt('created_at', lastRead);
-        }
-
-        const { count } = await query;
-        return { cid, count: count || 0 };
-      });
-
-      const unreadResults = await Promise.all(unreadPromises);
-      const unreadMap = new Map(unreadResults.map(r => [r.cid, r.count]));
+      const unreadMap = new Map<string, number>();
+      for (const u of (unreadResult.data || [])) {
+        unreadMap.set(u.conversation_id, Number(u.unread_count) || 0);
+      }
 
       const enriched: TeamConversation[] = conversations.map(conv => {
         const members = ((allMembers || []).filter(m => m.conversation_id === conv.id)) as unknown as TeamMember[];
-        const lastMsg = lastMessageMap.get(conv.id) || null;
+        const preview = previewMap.get(conv.id);
 
         let displayName = conv.name;
         if (conv.type === 'direct' && !conv.name) {
           const other = members.find(m => m.profile_id !== profile.id);
           displayName = other?.profile?.name || 'Chat Direto';
         }
+
+        const lastMsg: TeamMessage | null = preview
+          ? {
+              id: preview.last_message_id,
+              conversation_id: conv.id,
+              sender_id: preview.last_message_sender_id,
+              content: preview.last_message_content,
+              message_type: preview.last_message_type,
+              status: 'delivered',
+              media_url: null,
+              media_type: null,
+              media_bucket: null,
+              media_path: null,
+              reply_to_id: null,
+              is_edited: false,
+              created_at: preview.last_message_created_at,
+              updated_at: preview.last_message_created_at,
+            }
+          : null;
 
         return {
           ...conv,
@@ -91,7 +94,7 @@ export function useTeamConversations() {
             ? members.find(m => m.profile_id !== profile.id)?.profile?.avatar_url ?? null
             : conv.avatar_url,
           members,
-          last_message: lastMsg as TeamMessage | null,
+          last_message: lastMsg,
           unread_count: unreadMap.get(conv.id) || 0,
         };
       });
@@ -108,6 +111,12 @@ export function useTeamConversations() {
     const channel = supabase
       .channel('team-chat-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_conversation_members' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, () => {
         queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
       })
       .subscribe();

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, memo } from 'react';
-import { TeamConversation } from '@/hooks/chat/useTeamChat';
+import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { useTeamChatPanel } from './useTeamChatPanel';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
-import { TeamMessage } from '@/hooks/chat/useTeamChat';
+import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -28,9 +28,11 @@ function formatDateSep(dateStr: string) {
 }
 
 const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessage }) {
-  const source = msg.media_url || '';
+  const source = (msg.media_bucket && msg.media_path)
+    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/${msg.media_bucket}/${msg.media_path}`
+    : (msg.media_url || '');
   const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(source);
-  if (!msg.media_url) return null;
+  if (!source) return null;
   if (isLoading || !resolvedUrl) return isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-xs text-destructive">Mídia indisponível</span>;
   switch (msg.media_type) {
     case 'image': case 'sticker': case 'emoji':
@@ -119,7 +121,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             const showDate = dateFirstIndexes.has(idx);
             const isMine = msg.sender_id === s.profile?.id;
             const isEditing = s.editingId === msg.id;
-            const hasMedia = !!msg.media_url;
+            const hasMedia = !!(msg.media_url || (msg.media_bucket && msg.media_path));
             const repliedMsg = msg.reply_to_id ? s.messages.find(m => m.id === msg.reply_to_id) : null;
             const isThisTtsPlaying = s.tts.isPlaying && s.tts.currentMessageId === msg.id;
             const isThisTtsLoading = s.tts.isLoading && s.tts.currentMessageId === msg.id;
