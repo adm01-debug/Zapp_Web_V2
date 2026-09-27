@@ -8,6 +8,8 @@
 --            (update_agent_streak e increment_agent_resolutions usam auth.role()='anon' — correto.)
 -- Vector 9: add_agent_xp sem teto em p_xp (qualquer usuário podia chegar ao nível máximo).
 --            Cap de 500 XP por chamada adicionado.
+--            grant_agent_achievement: p_xp_reward sem teto (Codex P1 2026-09-27).
+--            Cap de 500 XP por chamada adicionado — mesmo limite de add_agent_xp.
 --            grant_agent_achievement: daily_goal sem dedup diário.
 --            Adicionado check (earned_at AT TIME ZONE 'America/Sao_Paulo')::date >=
 --            (now() AT TIME ZONE 'America/Sao_Paulo')::date após FOR UPDATE.
@@ -84,6 +86,10 @@ BEGIN
 
   IF p_xp_reward < 0 THEN
     RAISE EXCEPTION 'p_xp_reward cannot be negative, got %', p_xp_reward;
+  END IF;
+
+  IF p_xp_reward > 500 THEN
+    RAISE EXCEPTION 'p_xp_reward exceeds single-call maximum of 500, got %', p_xp_reward;
   END IF;
 
   -- Acquire row lock first; daily_goal check runs under lock to serialize concurrent calls
