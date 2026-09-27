@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
@@ -43,7 +43,7 @@ function aggregateReactions(rows: RawReaction[], myProfileId: string | undefined
 export function useTeamMessageReactions(conversationId: string) {
   const { profile } = useAuth();
   const qc = useQueryClient();
-  const qKey = ['team-reactions', conversationId];
+  const qKey = useMemo(() => ['team-reactions', conversationId], [conversationId]);
 
   const { data: rows = [] } = useQuery<RawReaction[]>({
     queryKey: qKey,
@@ -73,7 +73,7 @@ export function useTeamMessageReactions(conversationId: string) {
       )
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [conversationId]);
+  }, [conversationId, qc, qKey]);
 
   const aggregated = aggregateReactions(rows, profile?.id);
 

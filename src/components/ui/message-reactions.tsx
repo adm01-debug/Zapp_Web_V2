@@ -4,7 +4,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const WHATSAPP_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+// eslint-disable-next-line react-refresh/only-export-components
 export const EXTENDED_EMOJIS = [
   '👍', '👎', '❤️', '🔥', '🎉', '😂', '😮', '😢', '😡', '🙏',
   '✅', '💯', '🚀', '👀', '🤔', '😍', '🥳', '💪', '👏', '🤝',

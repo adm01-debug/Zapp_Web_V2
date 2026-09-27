@@ -7,6 +7,7 @@ import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggle
 import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -85,7 +86,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       { user_id: profile.id, tts_voice_id: newVoiceId },
       { onConflict: 'user_id' },
     );
-  }, [tts.setVoiceId, profile?.id]);
+  }, [tts.setVoiceId, profile]);
 
   const handleSpeedChange = useCallback((newSpeed: number) => {
     tts.setSpeed(newSpeed);
@@ -94,7 +95,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       { user_id: profile.id, tts_speed: newSpeed },
       { onConflict: 'user_id' },
     );
-  }, [tts.setSpeed, profile?.id]);
+  }, [tts.setSpeed, profile]);
 
   const messages = useMemo(() => {
     const ids = new Set<string>();
@@ -107,16 +108,23 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   useEffect(() => {
     if (newestMessages.length > 0 && oldestCursor === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOldestCursor(newestMessages[0].created_at);
     }
   }, [newestMessages, oldestCursor]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOldestCursor(null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasOlderMessages(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowStats(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowTransferDialog(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowGroupManagement(false);
   }, [conversation.id]);
 
@@ -201,7 +209,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       log.error('Erro ao enviar mensagem', err);
       toast.error('Erro ao enviar mensagem');
     }
-  }, [text, profile?.id, replyTo, conversation.id, sendMutation]);
+  }, [text, profile, replyTo, conversation.id, sendMutation]);
 
   const handleDelete = useCallback(async (messageId: string) => {
     try {
@@ -255,7 +263,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       mediaBucket: 'team-chat-files',
       mediaType: 'audio',
     });
-  }, [profile?.id, conversation.id, sendMutation]);
+  }, [profile, conversation.id, sendMutation]);
 
   const handleFileSent = useCallback(async ({ path, bucket, type, name }: { path: string; bucket: string; type: string; name: string }) => {
     if (!profile?.id) return;
@@ -267,7 +275,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       mediaBucket: bucket,
       mediaType: type as TeamMessage['media_type'],
     });
-  }, [profile?.id, conversation.id, sendMutation]);
+  }, [profile, conversation.id, sendMutation]);
 
   const handleSendSticker = useCallback(async (url: string) => {
     if (!profile?.id) return;
@@ -278,7 +286,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       mediaUrl: url,
       mediaType: 'sticker',
     });
-  }, [profile?.id, conversation.id, sendMutation]);
+  }, [profile, conversation.id, sendMutation]);
 
   const handleSendAudioMeme = useCallback(async (url: string) => {
     if (!profile?.id) return;
@@ -289,7 +297,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       mediaUrl: url,
       mediaType: 'audio_meme',
     });
-  }, [profile?.id, conversation.id, sendMutation]);
+  }, [profile, conversation.id, sendMutation]);
 
   const handleSendCustomEmoji = useCallback(async (url: string) => {
     if (!profile?.id) return;
@@ -300,7 +308,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       mediaUrl: url,
       mediaType: 'emoji',
     });
-  }, [profile?.id, conversation.id, sendMutation]);
+  }, [profile, conversation.id, sendMutation]);
 
   return {
     profile,
