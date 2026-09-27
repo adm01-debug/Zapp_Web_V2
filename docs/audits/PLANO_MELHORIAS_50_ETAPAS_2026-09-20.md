@@ -36,7 +36,7 @@ ação deferida com justificativa · 👤 exige ação humana · ⏳ janela de o
 | F4 | E27 ✅local/👤live · E28 ✅auditoria+plano · E29 ✅matriz/👤rotação · E30 ✅ · E31 🔧 · E32 ✅ |
 | F5 | E33 🔧 · E34 📋 · E35–E37 📋 · E38 ✅/📋 |
 | F6 | E39 🔧📋(meta recalibrada) · E40 ✅(já era 0) · E41 ✅baseline/📋 · E42 ✅(falso positivo) · E43 ✅(falso positivo) |
-| F7 | E44 👤 · E45 👤 · E46 ✅ · E47 🔧 |
+| F7 | E44 👤 · E45 👤 · E46 ✅ · E47 ✅ |
 | F8 | E48 ✅rodada · E49 🔧 · E50 📋(critérios no dossiê) |
 
 Correções de premissa aplicadas pela execução (o plano segue os fatos): E15 (maioria dos
@@ -145,13 +145,13 @@ checks estritos + strict mode; (b) revisor-bot (CodeRabbit já roda) contando co
 Com a política exequível, eliminar o caminho silencioso que deixou o Build vermelho
 mergear por 2 dias (16–17/09).
 ```sh
-gh api repos/adm01-debug/zapp-web-v2/branches/main/protection --jq '.enforce_admins.enabled'  # true
+gh api repos/adm01-debug/Zapp_Web_V2/branches/main/protection --jq '.enforce_admins.enabled'  # true
 ```
 - [ ] `enforce_admins=true` e um merge de rotina passando pelo fluxo normal
 
 ### E09 🔴 Auto-delete de branch no merge
 ```sh
-gh api repos/adm01-debug/zapp-web-v2 --jq '.delete_branch_on_merge'   # true
+gh api repos/adm01-debug/Zapp_Web_V2 --jq '.delete_branch_on_merge'   # true
 ```
 - [x] Setting ligado via API em 27/09 — `delete_branch_on_merge=true` confirmado na resposta da API
 
@@ -244,7 +244,7 @@ Eram 36 em 16/09 — cresceu sem decisão. Incluir `prokind='f'` retorno `trigge
 SELECT version FROM supabase_migrations.schema_migrations
 WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(add |resumo');
 ```
-- [ ] 0 statements-prosa fora das exceções `pinned-replay` do `migration-evidence.json`
+- [x] 0 statements-prosa fora das exceções `pinned-replay` — 11 hits do regex, 10 são falso positivo (campo SQL `resumo`); `20260827120100` já documentado em `scripts/db-audit/migration-evidence.json` como `pinned-replay/ledger-summary` (verificado 27/09)
 
 ### E24 🟢 Replay integral das 443 migrations em PG 17.6 efêmero (herda E20/16-09)
 - [ ] Job (ou doc de execução local) com replay verde ponta a ponta
@@ -256,7 +256,7 @@ WHERE EXISTS (SELECT 1 FROM unnest(statements) s WHERE s ~ '\.\.\.' OR s ~* '\(a
 ### E26 🟢 Projeção forward-only: 2 relações pendentes (herda E17/16-09)
 Guard reporta "projecao forward-only: 4 relacoes, 9 funcoes" — conferir se as 2 originais
 fecharam ou viraram 4.
-- [ ] Cada relação/função da projeção com dono e prazo, ou promovida ao catálogo
+- [x] Projeção zerada: `catalog.generated_at=2026-09-27` e migration mais recente é `20260926...` (prefixo < cutoff) → forward-only retorna 0 relações e 0 funções; guard reporta "projecao forward-only: 0 relacoes, 0 funcoes" (verificado 27/09)
 
 ## F4 — Edges e secrets (E27–E32)
 
@@ -361,7 +361,7 @@ invoca antes de escrever.
 ### E47 🟢 Padronizar nome do repo nas referências
 GitHub é `Zapp_Web_V2`, CLAUDE.md diz `zapp-web-v2` (case-insensitive funciona, mas
 confunde tooling e humanos).
-- [ ] Referências uniformizadas no CLAUDE.md/docs (sem renomear o repo)
+- [x] Referências uniformizadas: E07/E09 do PLANO corrigidas para `Zapp_Web_V2`; CLAUDE.md §3 já usa `adm01-debug/Zapp_Web_V2`; URLs Vercel (`zapp-web-v2.vercel.app`) e projeto Vercel (`zapp_web_v2`) mantidos como estão — são nomes de recurso externo, não refs do GitHub (verificado 27/09)
 
 ## F8 — Fechamento (E48–E50)
 
