@@ -45,6 +45,7 @@ interface ContactFormProps {
   onCancel: () => void;
   submitLabel: string;
   isSubmitting?: boolean;
+  excludeContactId?: string;
 }
 
 function FieldStatus({ error, isTouched, value }: { error?: string | null; isTouched?: boolean; value?: string | null }) {
@@ -69,14 +70,14 @@ function formatCep(digits: string): string {
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
 
-export const ContactForm = React.memo(function ContactForm({ values, onChange, onSubmit, onCancel, submitLabel, isSubmitting = false }: ContactFormProps) {
+export const ContactForm = React.memo(function ContactForm({ values, onChange, onSubmit, onCancel, submitLabel, isSubmitting = false, excludeContactId }: ContactFormProps) {
   const { data: externalCargos = [] } = useExternalCargos();
   const { data: externalEmpresas = [] } = useExternalEmpresas();
   const [empresaSearch, setEmpresaSearch] = useState('');
   const [showEmpresaDropdown, setShowEmpresaDropdown] = useState(false);
   const empresaBlurTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const v = useContactFormValidation(values, onChange, onSubmit);
+  const v = useContactFormValidation(values, onChange, onSubmit, excludeContactId);
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   useEffect(() => {
