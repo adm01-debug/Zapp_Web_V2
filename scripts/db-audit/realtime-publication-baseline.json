@@ -5,6 +5,7 @@
   "tables": [
     "public.agent_presence",
     "public.agent_stats",
+    "public.calls",
     "public.contacts",
     "public.conversation_sla",
     "public.email_messages",
