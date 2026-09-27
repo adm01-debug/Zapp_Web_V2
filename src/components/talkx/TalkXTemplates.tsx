@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Search, Image, Video, Music, X,
-  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff, Upload,
+  Check, Wand2, BookOpen, ChevronRight, BarChart3, Eye, EyeOff,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -48,10 +48,6 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
   const [eStatus, setEStatus] = useState<'draft'|'review'|'approved'>('approved');
   const [eTags, setETags] = useState<string[]>([]);
   const [eTagInput, setETagInput] = useState('');
-  // E48: importar templates
-  const importInputRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ ok: number; fail: number } | null>(null);
   const [showPreview, setShowPreview] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -87,61 +83,6 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
     withMedia: templates.filter((t) => t.media_url).length,
     bestRate: most[0]?.name,
   }), [templates, most]);
-
-  // E48: parser CSV/JSON e batch insert
-  const handleImport = useCallback(async (file: File) => {
-    setImporting(true);
-    setImportResult(null);
-    try {
-      const text = await file.text();
-      let rows: { name: string; content: string; category?: string; status?: string; description?: string }[] = [];
-      if (file.name.endsWith('.json')) {
-        rows = JSON.parse(text);
-        if (!Array.isArray(rows)) throw new Error('JSON deve ser um array');
-      } else {
-        const parseCsvRow = (line: string): string[] => {
-          const result: string[] = [];
-          let cur = '', inQ = false;
-          for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') { if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
-            else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-            else cur += ch;
-          }
-          result.push(cur.trim());
-          return result;
-        };
-        const allLines = text.trim().split(/\r?\n/);
-        const cols = parseCsvRow(allLines[0]);
-        rows = allLines.slice(1).filter(Boolean).map((line: string) => {
-          const vals = parseCsvRow(line);
-          return Object.fromEntries(cols.map((c: string, i: number) => [c, vals[i] ?? ''])) as typeof rows[0];
-        });
-      }
-      let ok = 0, fail = 0;
-      for (const row of rows) {
-        if (!row.name || !row.content) { fail++; continue; }
-        if (row.content.length > 1024) { fail++; continue; } // enforcar limite do editor
-        if (row.content.length > 1024) { fail++; continue; }
-        try {
-          await createTemplate.mutateAsync({
-            name: row.name,
-            content: row.content,
-            category: row.category || 'geral',
-            status: (['draft', 'review', 'approved'].includes(row.status ?? '') ? row.status : 'approved') as 'draft' | 'review' | 'approved',
-            description: row.description || null,
-          });
-          ok++;
-        } catch { fail++; }
-      }
-      setImportResult({ ok, fail });
-    } catch {
-      setImportResult({ ok: 0, fail: -1 });
-    } finally {
-      setImporting(false);
-      if (importInputRef.current) importInputRef.current.value = '';
-    }
-  }, [createTemplate]);
 
   if (mode === 'edit') {
     return (
@@ -195,31 +136,9 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero ou com IA" onClick={openNew} />
             <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? openEdit(selected) : openNew()} />
-            <RailAction
-              icon={Upload}
-              color="amber"
-              title={importing ? 'Importando...' : 'Importar templates'}
-              subtitle={
-                importResult
-                  ? importResult.fail === -1
-                    ? 'Erro ao ler arquivo'
-                    : `${importResult.ok} importados, ${importResult.fail} falhos`
-                  : 'JSON array ou CSV (name,category,content,status)'
-              }
-              onClick={() => !importing && importInputRef.current?.click()}
-            />
           </div>
         </RailCard>
       </div>
-
-      {/* E48: input file oculto para importar templates */}
-      <input
-        ref={importInputRef}
-        type="file"
-        accept=".json,.csv"
-        className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImport(f); }}
-      />
 
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent className="rounded-2xl border-border/70">

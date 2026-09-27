@@ -184,9 +184,9 @@ export function BulkActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {CONTACT_TYPES.map(ct => (
-              <DropdownMenuItem key={ct.value} onClick={() => handleBulkType(ct.value)}>
-                {ct.label}
+            {CONTACT_TYPES.map(type => (
+              <DropdownMenuItem key={type} onClick={() => handleBulkType(type)}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
