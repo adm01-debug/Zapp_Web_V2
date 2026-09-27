@@ -224,9 +224,14 @@ export function useConnectionsManager() {
     setQrCodeDialog((prev) => ({ ...prev, status: 'loading', qrCode: null }));
     try {
       const result = await connectInstance(connection.instance_id);
+      if (result?.status === 'connected') {
+        setQrCodeDialog((prev) => ({ ...prev, status: 'connected' }));
+        return;
+      }
       if (result?.qrcode?.base64) {
         setQrCodeDialog((prev) => ({ ...prev, qrCode: result.qrcode.base64, status: 'pending' }));
       }
+      startStatusPolling(connection.instance_id, connection.id);
     } catch (error: unknown) {
       setQrCodeDialog((prev) => ({
         ...prev, status: 'error',
