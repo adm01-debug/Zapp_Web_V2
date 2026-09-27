@@ -1,10 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Runs against the "chromium-authenticated" project (see playwright.config.ts),
-// which depends on "setup" (e2e/auth.setup.ts) for its storageState. These tests
-// only exercise navigation/rendering that depends on being logged in, not on
-// seeded campaign/segment/WhatsApp-connection data.
-
 // SidebarNavGroup defaults to closed (defaultOpen=false). Fresh auth storageState
 // has no saved group-open state, so the group must be expanded before clicking
 // any item inside "Automação & IA".
@@ -28,7 +23,8 @@ test.describe('Talk X module', () => {
 
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Visão geral' })).toHaveAttribute('data-state', 'active');
-    await expect(page.getByRole('button', { name: /nova campanha/i })).toBeVisible();
+    // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button
+    await expect(page.getByRole('button', { name: /nova campanha/i }).first()).toBeVisible();
   });
 
   test('new campaign wizard opens on the audience step', async ({ page }) => {
@@ -40,7 +36,8 @@ test.describe('Talk X module', () => {
       .first()
       .click();
 
-    await page.getByRole('button', { name: /nova campanha/i }).click();
+    // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button
+    await page.getByRole('button', { name: /nova campanha/i }).first().click();
     await expect(page.getByRole('heading', { name: /nova campanha/i })).toBeVisible();
 
     await page.getByLabel(/nome da campanha/i).fill('Campanha E2E de teste');
