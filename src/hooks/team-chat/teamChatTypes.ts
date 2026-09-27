@@ -6,6 +6,7 @@ export interface TeamConversation {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  department_id?: string | null;
   members?: TeamMember[];
   last_message?: TeamMessage | null;
   unread_count?: number;
