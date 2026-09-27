@@ -325,7 +325,13 @@ jobs:
               const lastCausa = lastCausaMatch ? lastCausaMatch[1] : null;
               const seisHorasMs = 6 * 60 * 60 * 1000;
               const idadeUltimoMs = last ? Date.now() - new Date(last.created_at).getTime() : Infinity;
-              if (lastCausa === causa && idadeUltimoMs < seisHorasMs) {
+              // A causa e um hash dos NOMES dos passos que falharam, nao do erro em
+              // si. "Comparar migrations com schema_migrations" e o passo com causas
+              // mais variaveis (qualquer drift de SQL): duas falhas reais e distintas
+              // desse passo dentro da mesma janela de 6h teriam a mesma causa e a
+              // segunda seria mascarada pelo dedupe. Nunca dedupar uma falha dele.
+              const migrationsFalhou = passos.includes('Comparar migrations com schema_migrations');
+              if (!migrationsFalhou && lastCausa === causa && idadeUltimoMs < seisHorasMs) {
                 core.info(`Dedupe: mesma causa (${causa}) ha menos de 6h; nao comentando de novo.`);
                 return;
               }
