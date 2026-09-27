@@ -196,6 +196,22 @@ describe('EditContactDialog', () => {
     });
   });
 
+  // P0 — detecta remoção de 'phone' de FIELD_NORMALIZERS (mutation blind identificada
+  // pela auditoria de mutation testing, Agent 2, 2026-09-27, 7a rodada): sem esta
+  // entrada no normalizer, editar o telefone descarta a mudança silenciosamente.
+  it('inclui phone no payload quando o campo telefone é alterado', async () => {
+    renderDialog();
+    const phoneInput = screen.getByDisplayValue('+5511999999999');
+    fireEvent.change(phoneInput, { target: { value: '+5521888888888' } });
+    fireEvent.click(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toHaveProperty('phone');
+      expect(updatePayload.phone).toBeTruthy();
+    });
+  });
+
   it('sends nullable fields as null when the user clears them', async () => {
     renderDialog();
     fireEvent.change(screen.getByDisplayValue('Johnny'), { target: { value: '' } });
