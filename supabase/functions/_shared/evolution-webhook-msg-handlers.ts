@@ -124,6 +124,23 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
         } else if (recorded === true) {
           console.warn(`TalkX delivery acknowledged: ${key.id}`);
         }
+        if (recorded !== true) {
+          // recorded===false: nao era destinatario Talk X (unique index de
+          // external_id nao bateu com talkx_recipients). deliveryError: o RPC
+          // do TalkX falhou por outro motivo (timeout de pooler, etc.) e isso
+          // nao prova que NAO seja um destinatario Multiplix -- tentar sempre
+          // que o TalkX nao confirmou, nao só quando ele respondeu sem erro.
+          // Mesmo padrao de idempotencia via RPC do lado Multiplix.
+          const { data: multiplixRecorded, error: multiplixError } = await supabase.rpc('record_multiplix_recipient_delivered', {
+            p_external_id: key.id,
+            p_connection_id: connection.id,
+          });
+          if (multiplixError) {
+            console.error(`Multiplix delivery acknowledgement failed for ${key.id}: ${multiplixError.message}`);
+          } else if (multiplixRecorded === true) {
+            console.warn(`Multiplix delivery acknowledged: ${key.id}`);
+          }
+        }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a
