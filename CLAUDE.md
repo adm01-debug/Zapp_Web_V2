@@ -82,13 +82,27 @@ vazio. Diagnóstico rápido (edge `evolution-api`): `connect` responde `success`
 mas sem `qrcode`; `disconnect` (logout GO) → 400; `restart-instance` (reconnect GO) → 500
 `no active session found`.
 
-Desde o fix de 2026-09-27 a edge `connect` faz poll do `/instance/qr` (o QR é assíncrono)
-e, quando nenhum QR sai, devolve `error:true`/409 em vez de `qrcode:undefined` — o front
-mostra erro com "Gerar novo código" (nada mais de spinner infinito). Para **destravar de
-fato** e voltar a gerar QR é preciso limpar as credenciais órfãs no Postgres interno da GO
-(`evolution-go-rxj2-postgres-1`, via MCP `HOSTINGER`), forçando registro novo — sem trocar
-o `EVOLUTION_INSTANCE_TOKEN` nem o nome `PRINCIPAL`. `logout`/`restart` pela API não
-resolvem esse estado.
+Diagnóstico ao vivo (2026-09-27, via `list-instances`): o registro da instância na GO vem
+com `jid` preenchido, `connected:false` e **`disconnect_reason:"Reconnecting"`**. É a
+assinatura exata: o device foi desvinculado no celular, mas o whatsmeow ainda tem
+`Store.ID` setado e fica em loop tentando retomar a sessão salva — `Connect()` com
+`Store.ID != nil` **não abre o canal de QR**. Por isso `/instance/qr` volta vazio e
+`logout`/`reconnect` respondem 400/500 (`no active session found`): `Logout()` precisa de
+conexão ativa para mandar o IQ ao WhatsApp.
+
+Desde o fix de 2026-09-27 a edge `connect` resolve isso sozinha, em três camadas:
+1. poll do `/instance/qr` (3× / 1,5s), porque o QR na GO é assíncrono;
+2. sem QR + não logado + registro na GO com `jid` → **recria a instância na GO**
+   (`DELETE /instance/delete/{id}` + `POST /instance/create` com o **mesmo**
+   `EVOLUTION_INSTANCE_TOKEN` e o mesmo nome `PRINCIPAL`), o que zera o device store;
+   em seguida reconecta e faz novo poll do QR, devolvendo `recovered:true`;
+3. se ainda assim não sair QR, devolve `error:true`/409 em vez de `qrcode:undefined` —
+   o front mostra erro com "Gerar novo código" (nada de spinner infinito).
+
+`whatsapp_connections` **não** é tocado nesse fluxo (só o estado interno da GO), e o token
+não muda — então nenhum secret precisa ser regerado. Não há mais passo manual no Postgres
+da GO: o MCP `HOSTINGER` não expõe docker-exec e o Portainer não enxerga esses containers,
+então esse caminho nunca foi executável por agente de qualquer forma.
 
 ---
 
