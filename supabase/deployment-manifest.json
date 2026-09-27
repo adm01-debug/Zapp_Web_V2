@@ -299,7 +299,7 @@
     {
       "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "bytes": 2860,
-      "sha256": "c1fca4eeef44f87bbc8add3798e8bc3ee842a5dbc8e26fd0873491c483e2874f"
+      "sha256": "9be28f78792260c363d8794479dcafaa6c73659236dbbe3854707a46d220e806"
     },
     {
       "path": "supabase/functions/elevenlabs-tts/index.ts",
