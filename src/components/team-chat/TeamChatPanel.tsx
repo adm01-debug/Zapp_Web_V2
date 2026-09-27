@@ -89,6 +89,8 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         onToggleStats={() => s.setShowStats(!s.showStats)}
         onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
         onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })}
+        canTransfer={s.canTransfer}
+        onTransfer={() => s.setShowTransferDialog(true)}
       />
 
       <AnimatePresence>
@@ -139,7 +141,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                   {s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}
                 </span>
               )}
-              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca">
+              <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca">
                 <X className="w-3.5 h-3.5" aria-hidden />
               </Button>
             </div>
@@ -216,7 +218,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
       {s.showScrollDown && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10">
-          <Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom} aria-label="Rolar para baixo">
+          <Button type="button" size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom} aria-label="Rolar para baixo">
             <ArrowDown className="w-4 h-4" aria-hidden />
           </Button>
         </div>

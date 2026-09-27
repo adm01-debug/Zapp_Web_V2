@@ -1,4 +1,4 @@
-import { TeamConversation } from '@/hooks/chat/useTeamChat';
+import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Users,
   User,
   UserPlus,
@@ -35,6 +36,7 @@ interface TeamChatHeaderProps {
   showSearch: boolean;
   showStats?: boolean;
   isMuted?: boolean;
+  canTransfer?: boolean;
   onBack: () => void;
   onToggleDetails?: () => void;
   onToggleSearch: () => void;
@@ -43,6 +45,7 @@ interface TeamChatHeaderProps {
   onVoiceChange: (voiceId: string) => void;
   onSpeedChange: (speed: number) => void;
   onToggleMute?: () => void;
+  onTransfer?: () => void;
 }
 
 export function TeamChatHeader({
@@ -53,6 +56,7 @@ export function TeamChatHeader({
   showSearch,
   showStats,
   isMuted,
+  canTransfer,
   onBack,
   onToggleDetails,
   onToggleSearch,
@@ -61,6 +65,7 @@ export function TeamChatHeader({
   onVoiceChange,
   onSpeedChange,
   onToggleMute,
+  onTransfer,
 }: TeamChatHeaderProps) {
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[56px] md:h-[65px] pr-24 border-b border-border bg-card shrink-0" role="banner" aria-label="Cabeçalho da conversa">
@@ -88,10 +93,13 @@ export function TeamChatHeader({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showSearch && "text-primary bg-primary/10")}
               onClick={onToggleSearch}
+              aria-label={showSearch ? 'Fechar busca' : 'Buscar mensagens'}
+              aria-pressed={showSearch}
             >
               <Search className="w-[18px] h-[18px]" />
             </Button>
@@ -103,6 +111,7 @@ export function TeamChatHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showStats && "text-primary bg-primary/10")}
@@ -120,6 +129,7 @@ export function TeamChatHeader({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               className="w-9 h-9 text-muted-foreground/40 cursor-not-allowed"
@@ -135,7 +145,7 @@ export function TeamChatHeader({
         {conversation.type === 'group' && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onAddMembers}>
+              <Button type="button" variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onAddMembers} aria-label="Adicionar membros">
                 <UserPlus className="w-[18px] h-[18px]" />
               </Button>
             </TooltipTrigger>
@@ -147,10 +157,13 @@ export function TeamChatHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showDetails && "text-primary bg-primary/10")}
                 onClick={onToggleDetails}
+                aria-label={showDetails ? 'Fechar detalhes' : 'Ver detalhes'}
+                aria-pressed={showDetails}
               >
                 {showDetails ? <PanelRightClose className="w-[18px] h-[18px]" /> : <PanelRightOpen className="w-[18px] h-[18px]" />}
               </Button>
@@ -163,7 +176,7 @@ export function TeamChatHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted">
+                <Button type="button" variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
                   <MoreVertical className="w-[18px] h-[18px]" />
                 </Button>
               </DropdownMenuTrigger>
@@ -184,6 +197,12 @@ export function TeamChatHeader({
                     Silenciar
                   </>
                 )}
+              </DropdownMenuItem>
+            )}
+            {canTransfer && onTransfer && (
+              <DropdownMenuItem onClick={onTransfer}>
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                Transferir departamento
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
