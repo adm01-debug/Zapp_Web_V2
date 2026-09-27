@@ -40,12 +40,11 @@ test.describe('Talk X module', () => {
     await page.getByRole('button', { name: /nova campanha/i }).first().click();
     await expect(page.getByRole('heading', { name: /nova campanha/i })).toBeVisible();
 
-    await page.getByLabel(/nome da campanha/i).fill('Campanha E2E de teste');
-
-    // Advancing past step 1 requires a seeded WhatsApp connection plus a
-    // segment or selected contacts (src/components/talkx/useCampaignEditor.ts
-    // canProceed[1]) — not available as test fixture data yet, so this test
-    // only verifies the wizard renders and "Continuar" is present.
+    // Do NOT fill the campaign name: useCampaignEditor's autosave timer fires
+    // ~3 s after the field is touched, creating real draft records on every run
+    // and retry. Advancing past step 1 also requires a seeded WhatsApp connection
+    // + segment — not available as fixture data, so this test only verifies the
+    // wizard renders and "Continuar" is present.
     await expect(page.getByRole('button', { name: /continuar/i })).toBeVisible();
 
     await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
