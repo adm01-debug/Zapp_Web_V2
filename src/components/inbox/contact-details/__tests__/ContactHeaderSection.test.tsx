@@ -320,11 +320,11 @@ describe('ContactHeaderSection', () => {
 
   // ========== BADGE CONTRASTE WCAG 1.4.3 ==========
   // Tokens brutos falham 4.5:1 com texto branco; getScoreBadgeBg usa L reduzido.
-  it('badge de alto engajamento usa cor acessível (hsl 160 70% 35%, ~5.1:1 com branco)', () => {
+  it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
     // baseEnriched: positive+high+company+customer = 100
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 35%)');
+    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 
   it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.5:1 com branco)', () => {

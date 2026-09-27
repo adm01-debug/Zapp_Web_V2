@@ -99,7 +99,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   // Badge com número: L reduzido para garantir ≥ 4.5:1 com texto branco (WCAG 1.4.3).
   // Os tokens brutos falham: --warning 38 92% 50% → ~2.1:1; --success 160 70% 42% → ~3.8:1;
   // --destructive 0 84% 60% → ~3.6:1. Ajuste só no badge, sem tocar tokens globais.
-  const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(160 70% 35%)' : s >= 50 ? 'hsl(38 90% 32%)' : 'hsl(0 84% 48%)';
+  const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(160 70% 28%)' : s >= 50 ? 'hsl(38 90% 32%)' : 'hsl(0 84% 48%)';
 
   if (isCompact) {
     return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
