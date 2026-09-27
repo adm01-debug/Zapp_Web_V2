@@ -11,7 +11,7 @@
   },
   "summary": {
     "function_count": 69,
-    "source_file_count": 95,
+    "source_file_count": 96,
     "verify_jwt_true": 59,
     "verify_jwt_false": 10
   },
@@ -110,6 +110,11 @@
       "path": "supabase/functions/_shared/notification-events.ts",
       "bytes": 3197,
       "sha256": "38a957bcc07ca5e4415bed67a34debea89f34fb50896600c9e7c1611e550ed98"
+    },
+    {
+      "path": "supabase/functions/_shared/postgrest-filters.ts",
+      "bytes": 849,
+      "sha256": "5570aa4f0459b218bd557d52d08ed7eb24b133ef65233c80589d5fffd725a4b8"
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
@@ -473,8 +478,8 @@
     },
     {
       "path": "supabase/functions/voice-copilot-action/index.ts",
-      "bytes": 7060,
-      "sha256": "d4af62870978176ed6c8f919e800ce6bb4addb4b7bbcddb512f2d5de14164554"
+      "bytes": 7158,
+      "sha256": "98ef60e5a17a3b95969f2497e01c4daf1d5b4c18b77acec6547a4c4736afc631"
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
@@ -1316,9 +1321,10 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dd28fd97744a8f4c8580140817c03f6e2f11c276eeb8fcfa908ef06be602e705",
+      "source_sha256": "fad56d5052e56ca9c83090a9d13a867953289d778a1a1e9255ab78c626a492f1",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/postgrest-filters.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-copilot-action/index.ts"
       ]
@@ -1360,5 +1366,5 @@
       ]
     }
   ],
-  "manifest_sha256": "cc111351f662e38ac74ee7ae0bc39fb0198cce265076b1737ff481b96760d5b6"
+  "manifest_sha256": "c82750faee6eab0b77395ed1fabcc6e80b3916c7ae77f4e44926eeb34f2ac7ad"
 }

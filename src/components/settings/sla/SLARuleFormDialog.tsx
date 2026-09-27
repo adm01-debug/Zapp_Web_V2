@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Search, Loader2, Bell, FileText } from 'lucide-react';
 import { CONTACT_TYPES, SCOPE_LABELS } from './sla-utils';
 import { cn } from '@/lib/utils';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 interface SLARuleFormDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
     queryKey: ['sla-scope-contacts', contactSearch],
     queryFn: async () => {
       const { data } = await supabase.from('contacts').select('id, name, phone')
-        .or(`name.ilike.%${contactSearch}%,phone.ilike.%${contactSearch}%`)
+        .or(`name.ilike.${escapeOrFilterValue(`%${contactSearch}%`)},phone.ilike.${escapeOrFilterValue(`%${contactSearch}%`)}`)
         .limit(20);
       return data || [];
     },
