@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowDown, Search, X } from 'lucide-react';
+import { ArrowDown, Search, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,18 +12,63 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
 import { useTeamChatPanel } from './useTeamChatPanel';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface Props { conversation: TeamConversation; onBack: () => void; onToggleDetails?: () => void; showDetails?: boolean; }
 
 export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetails }: Props) {
   const s = useTeamChatPanel(conversation);
+  const didInitialScrollRef = useRef(false);
+  const prevCountRef = useRef(0);
+
+  const rowVirtualizer = useVirtualizer({
+    count: s.filteredMessages.length,
+    getScrollElement: () => s.scrollRef.current,
+    estimateSize: () => 80,
+    overscan: 8,
+  });
 
   useEffect(() => {
-    if (s.isNearBottomRef.current && s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight;
+    didInitialScrollRef.current = false;
+    prevCountRef.current = 0;
+  }, [conversation.id]);
+
+  useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        s.setShowSearch(prev => !prev);
+        s.setSearchQuery('');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [s.setShowSearch, s.setSearchQuery]);
+
+  useEffect(() => {
+    const count = s.filteredMessages.length;
+    if (count === 0) return;
+    const el = s.scrollRef.current;
+    if (!el) return;
+    if (!didInitialScrollRef.current) {
+      didInitialScrollRef.current = true;
+      prevCountRef.current = count;
+      el.scrollTop = el.scrollHeight;
+      return;
+    }
+    if (count > prevCountRef.current && s.isNearBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+    prevCountRef.current = count;
   }, [s.filteredMessages.length]);
 
-  useEffect(() => { if (s.scrollRef.current) s.scrollRef.current.scrollTop = s.scrollRef.current.scrollHeight; }, [conversation.id]);
-  useEffect(() => { if (s.showSearch) s.searchInputRef.current?.focus(); }, [s.showSearch]);
+  const handleScroll = useCallback(() => {
+    s.checkNearBottom();
+    const el = s.scrollRef.current;
+    if (el && el.scrollTop < 100) void s.fetchOlderMessages();
+  }, [s.checkNearBottom, s.fetchOlderMessages]);
 
   const dateFirstIndexes = useMemo(() => {
     const seen = new Set<string>();
@@ -54,7 +99,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                 ref={s.searchInputRef} value={s.searchQuery}
                 onChange={e => s.setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
-                placeholder="Buscar nas mensagens..." className="h-8 text-sm"
+                placeholder="Buscar nas mensagens... (⌘K)" className="h-8 text-sm"
                 aria-label="Campo de busca"
               />
               {s.searchQuery && (
@@ -72,12 +117,17 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
 
       <div
         ref={s.scrollRef}
-        className="flex-1 overflow-auto p-4 space-y-1 bg-muted/5"
-        onScroll={s.checkNearBottom}
+        className="flex-1 overflow-auto bg-muted/5"
+        onScroll={handleScroll}
         role="log" aria-label="Mensagens da conversa" aria-live="polite"
       >
+        {s.isFetchingOlder && (
+          <div className="sticky top-0 z-10 flex justify-center py-2 bg-muted/5">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" aria-label="Carregando mensagens anteriores" />
+          </div>
+        )}
         {s.isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 p-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}>
                 <Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} />
@@ -89,39 +139,46 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             {s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}
           </div>
         ) : (
-          s.filteredMessages.map((msg, idx) => {
-            const isMine = msg.sender_id === s.profile?.id;
-            const repliedMsg = msg.reply_to_id ? s.messages.find(m => m.id === msg.reply_to_id) ?? null : null;
-            const isEditing = s.editingId === msg.id;
-            const ttsIsPlaying = s.tts.isPlaying && s.tts.currentMessageId === msg.id;
-            const ttsIsLoading = s.tts.isLoading && s.tts.currentMessageId === msg.id;
-            const msgReactions = s.reactions.aggregate(msg.id);
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map(virtualItem => {
+              const msg = s.filteredMessages[virtualItem.index];
+              const isMine = msg.sender_id === s.profile?.id;
+              const repliedMsg = msg.reply_to_id ? s.messages.find(m => m.id === msg.reply_to_id) ?? null : null;
+              const isEditing = s.editingId === msg.id;
+              const ttsIsPlaying = s.tts.isPlaying && s.tts.currentMessageId === msg.id;
+              const ttsIsLoading = s.tts.isLoading && s.tts.currentMessageId === msg.id;
 
-            return (
-              <TeamMessageItem
-                key={msg.id}
-                msg={msg}
-                isMine={isMine}
-                showDate={dateFirstIndexes.has(idx)}
-                conversationType={conversation.type}
-                repliedMsg={repliedMsg}
-                isEditing={isEditing}
-                editText={s.editText}
-                ttsIsPlaying={ttsIsPlaying}
-                ttsIsLoading={ttsIsLoading}
-                reactions={msgReactions}
-                onReply={() => s.setReplyTo(msg)}
-                onEdit={() => s.handleStartEdit(msg)}
-                onDelete={() => s.handleDelete(msg.id)}
-                onCopy={() => s.handleCopyMessage(msg.content)}
-                onTtsToggle={() => ttsIsPlaying ? s.tts.stop() : s.tts.speak(msg.content, msg.id)}
-                onSaveEdit={s.handleSaveEdit}
-                onCancelEdit={s.handleCancelEdit}
-                setEditText={s.setEditText}
-                onToggleReaction={(emoji) => s.reactions.toggle({ messageId: msg.id, emoji })}
-              />
-            );
-          })
+              return (
+                <div
+                  key={msg.id}
+                  data-index={virtualItem.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualItem.start}px)` }}
+                  className="px-4 py-0.5"
+                >
+                  <TeamMessageItem
+                    msg={msg}
+                    isMine={isMine}
+                    showDate={dateFirstIndexes.has(virtualItem.index)}
+                    conversationType={conversation.type}
+                    repliedMsg={repliedMsg}
+                    isEditing={isEditing}
+                    editText={s.editText}
+                    ttsIsPlaying={ttsIsPlaying}
+                    ttsIsLoading={ttsIsLoading}
+                    onReply={() => s.setReplyTo(msg)}
+                    onEdit={() => s.handleStartEdit(msg)}
+                    onDelete={() => s.handleDelete(msg.id)}
+                    onCopy={() => s.handleCopyMessage(msg.content)}
+                    onTtsToggle={() => ttsIsPlaying ? s.tts.stop() : s.tts.speak(msg.content, msg.id)}
+                    onSaveEdit={s.handleSaveEdit}
+                    onCancelEdit={s.handleCancelEdit}
+                    setEditText={s.setEditText}
+                  />
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

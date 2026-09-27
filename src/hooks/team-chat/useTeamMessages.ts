@@ -17,10 +17,10 @@ export function useTeamMessages(conversationId: string | null) {
         .from('team_messages')
         .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
         .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(200);
       if (error) throw error;
-      return (data || []) as TeamMessage[];
+      return ((data || []) as TeamMessage[]).reverse();
     },
     enabled: !!conversationId && !!profile,
   });
@@ -37,7 +37,6 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, queryClient]);
 
-  // Mark messages as read via receipts — once per conversation open, then again when new messages arrive
   useEffect(() => {
     if (!conversationId || !profile || !query.data?.length) return;
 
@@ -64,7 +63,6 @@ export function useTeamMessages(conversationId: string | null) {
       .upsert(receipts, { onConflict: 'message_id,profile_id' })
       .then();
 
-    // Also keep last_read_at on member record for unread count RPC
     supabase
       .from('team_conversation_members')
       .update({ last_read_at: now })
@@ -73,5 +71,5 @@ export function useTeamMessages(conversationId: string | null) {
       .then();
   }, [conversationId, profile, query.data]);
 
-  return query;
+  return { messages: query.data ?? [], isLoading: query.isLoading };
 }

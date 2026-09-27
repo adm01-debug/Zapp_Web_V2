@@ -1,14 +1,24 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
-import { useTeamMessages, useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const log = getLogger('TeamChatPanel');
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
 export function useTeamChatPanel(conversation: TeamConversation) {
   const { profile } = useAuth();
@@ -21,12 +31,17 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [olderMessages, setOlderMessages] = useState<TeamMessage[]>([]);
+  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [hasOlderMessages, setHasOlderMessages] = useState(true);
+  const [isFetchingOlder, setIsFetchingOlder] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isNearBottomRef = useRef(true);
+  const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages, isLoading } = useTeamMessages(conversation.id);
+  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -41,11 +56,75 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const tts = useTextToSpeech();
 
+  const messages = useMemo(() => {
+    const ids = new Set<string>();
+    const combined: TeamMessage[] = [];
+    for (const m of [...olderMessages, ...newestMessages]) {
+      if (!ids.has(m.id)) { ids.add(m.id); combined.push(m); }
+    }
+    return combined;
+  }, [olderMessages, newestMessages]);
+
+  useEffect(() => {
+    if (newestMessages.length > 0 && oldestCursor === null) {
+      setOldestCursor(newestMessages[0].created_at);
+    }
+  }, [newestMessages, oldestCursor]);
+
+  useEffect(() => {
+    setOlderMessages([]);
+    setOldestCursor(null);
+    setHasOlderMessages(true);
+  }, [conversation.id]);
+
+  useEffect(() => {
+    if (savedScrollFromBottomRef.current === null) return;
+    const delta = savedScrollFromBottomRef.current;
+    savedScrollFromBottomRef.current = null;
+    requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (el) el.scrollTop = el.scrollHeight - delta;
+    });
+  }, [olderMessages.length]);
+
+  const fetchOlderMessages = useCallback(async () => {
+    if (isFetchingOlder || !hasOlderMessages || !oldestCursor) return;
+    const el = scrollRef.current;
+    if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
+    setIsFetchingOlder(true);
+    try {
+      const { data, error } = await supabase
+        .from('team_messages')
+        .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
+        .eq('conversation_id', conversation.id)
+        .lt('created_at', oldestCursor)
+        .order('created_at', { ascending: false })
+        .limit(60);
+      if (error) throw error;
+      const older = ((data || []) as TeamMessage[]).reverse();
+      if (older.length === 0) {
+        setHasOlderMessages(false);
+      } else {
+        setOldestCursor(older[0].created_at);
+        setOlderMessages(prev => {
+          const ids = new Set(prev.map(m => m.id));
+          return [...older.filter(m => !ids.has(m.id)), ...prev];
+        });
+      }
+    } catch (err) {
+      log.error('Erro ao carregar mensagens anteriores', err);
+    } finally {
+      setIsFetchingOlder(false);
+    }
+  }, [isFetchingOlder, hasOlderMessages, oldestCursor, conversation.id]);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
+
   const filteredMessages = useMemo(() => {
-    if (!searchQuery.trim()) return messages;
-    const q = searchQuery.toLowerCase();
+    if (!debouncedSearchQuery.trim()) return messages;
+    const q = debouncedSearchQuery.toLowerCase();
     return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, searchQuery]);
+  }, [messages, debouncedSearchQuery]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -186,6 +265,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     filteredMessages,
     isLoading,
     isMuted,
+    isFetchingOlder,
+    hasOlderMessages,
+    fetchOlderMessages,
     text,
     setText,
     replyTo,
