@@ -84,11 +84,43 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader
         conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
-        showSearch={s.showSearch} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
+        showSearch={s.showSearch} showStats={s.showStats} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
         onToggleSearch={() => { s.setShowSearch(!s.showSearch); if (s.showSearch) s.setSearchQuery(''); }}
+        onToggleStats={() => s.setShowStats(!s.showStats)}
         onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
         onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })}
       />
+
+      <AnimatePresence>
+        {s.showStats && (
+          <motion.div
+            key="stats-slot"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-b border-border bg-muted/30 px-4 py-3 overflow-hidden"
+            aria-label="Painel de estatísticas"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estatísticas da conversa</span>
+              <span className="text-[10px] text-muted-foreground/60 italic">Disponível em breve</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Mensagens', icon: '💬' },
+                { label: 'Membros ativos', icon: '👥' },
+                { label: 'Tempo médio', icon: '⏱' },
+              ].map(({ label, icon }) => (
+                <div key={label} className="bg-background/60 rounded-lg px-3 py-2 text-center border border-border/30">
+                  <p className="text-base leading-none mb-1">{icon}</p>
+                  <p className="text-lg font-bold text-foreground/20 tabular-nums leading-none">—</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {s.showSearch && (

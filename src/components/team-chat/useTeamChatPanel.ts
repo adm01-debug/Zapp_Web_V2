@@ -31,6 +31,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [olderMessages, setOlderMessages] = useState<TeamMessage[]>([]);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
@@ -75,6 +76,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setOlderMessages([]);
     setOldestCursor(null);
     setHasOlderMessages(true);
+    setShowStats(false);
   }, [conversation.id]);
 
   useEffect(() => {
@@ -268,6 +270,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isFetchingOlder,
     hasOlderMessages,
     fetchOlderMessages,
+    showStats,
+    setShowStats,
     text,
     setText,
     replyTo,

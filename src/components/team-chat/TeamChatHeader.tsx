@@ -3,8 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +23,8 @@ import {
   Bell,
   BellOff,
   Pin,
+  BarChart2,
+  Activity,
 } from 'lucide-react';
 
 interface TeamChatHeaderProps {
@@ -33,10 +33,12 @@ interface TeamChatHeaderProps {
   voiceId: string;
   speed: number;
   showSearch: boolean;
+  showStats?: boolean;
   isMuted?: boolean;
   onBack: () => void;
   onToggleDetails?: () => void;
   onToggleSearch: () => void;
+  onToggleStats?: () => void;
   onAddMembers: () => void;
   onVoiceChange: (voiceId: string) => void;
   onSpeedChange: (speed: number) => void;
@@ -49,10 +51,12 @@ export function TeamChatHeader({
   voiceId,
   speed,
   showSearch,
+  showStats,
   isMuted,
   onBack,
   onToggleDetails,
   onToggleSearch,
+  onToggleStats,
   onAddMembers,
   onVoiceChange,
   onSpeedChange,
@@ -92,7 +96,40 @@ export function TeamChatHeader({
               <Search className="w-[18px] h-[18px]" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Buscar mensagens</TooltipContent>
+          <TooltipContent side="bottom">Buscar mensagens (⌘K)</TooltipContent>
+        </Tooltip>
+
+        {onToggleStats !== undefined && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showStats && "text-primary bg-primary/10")}
+                onClick={onToggleStats}
+                aria-label={showStats ? 'Fechar estatísticas' : 'Ver estatísticas'}
+                aria-pressed={showStats}
+              >
+                <BarChart2 className="w-[18px] h-[18px]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Estatísticas</TooltipContent>
+          </Tooltip>
+        )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-9 h-9 text-muted-foreground/40 cursor-not-allowed"
+              disabled
+              aria-label="Performance (em breve)"
+            >
+              <Activity className="w-[18px] h-[18px]" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Performance (em breve)</TooltipContent>
         </Tooltip>
 
         {conversation.type === 'group' && (
@@ -121,9 +158,6 @@ export function TeamChatHeader({
             <TooltipContent side="bottom">{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</TooltipContent>
           </Tooltip>
         )}
-
-        
-        
 
         <DropdownMenu>
           <Tooltip>
