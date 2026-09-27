@@ -11,8 +11,10 @@ name: CodeQL
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  # 2026-09-27: sem gatilho de pull_request. A varredura roda em cada merge na
+  # main e na segunda; em PR custava ~3 min de runner x 2 jobs por push, numa
+  # conta que disputa 40 runners entre ~40 repos. Removido tambem dos required
+  # checks da main na mesma data.
   # Fila de merge: sem este gatilho o check required nunca reportaria no merge
   # group e a fila travaria todos os merges do repo.
   merge_group:
