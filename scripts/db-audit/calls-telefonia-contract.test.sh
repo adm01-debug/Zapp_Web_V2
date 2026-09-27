@@ -14,6 +14,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260926800000_calls_telefonia_v2.sql"
 migration_fix_notes="$repo_root/supabase/migrations/20260926900000_fix_set_call_agent_notes_null_profile.sql"
+migration_fix_owner="$repo_root/supabase/migrations/20260927100000_fix_set_call_agent_notes_null_owner.sql"
 postgres_image="${CALLS_TELEFONIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-calls-telefonia-test-$$"
 
@@ -191,6 +192,7 @@ expect_eq 'pré-estado: calls na publicação Realtime' '0' \
 # ------------------------------------------------------------- aplica migration
 psql_file "$migration" >/dev/null
 psql_file "$migration_fix_notes" >/dev/null
+psql_file "$migration_fix_owner" >/dev/null
 
 # --------------------------------------------------------- estrutura e backfill
 expect_eq '9 colunas aditivas presentes' '9' \
@@ -270,10 +272,10 @@ NEW_CALL='40000000-0000-0000-0000-0000000000aa'
 psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ringing','voip','5511977776666',NULL,NULL,'callid-x');" >/dev/null
 expect_eq 'upsert criou 1 linha ringing com provider_call_id' 'ringing|5511977776666|callid-x|voip|1' \
   "$(psql_sql "SELECT status || '|' || peer_number || '|' || provider_call_id || '|' || channel || '|' || (answered_by IS NULL)::int FROM public.calls WHERE id='$NEW_CALL'")"
-psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','answered','voip',NULL,NULL,NULL,NULL,now());" >/dev/null
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','answered','voip',NULL,NULL,NULL,NULL,'2000-01-01 00:00:00+00'::timestamptz);" >/dev/null
 expect_eq 'upsert marcou answered e answered_by = agente' 'answered|true' \
   "$(psql_sql "SELECT status || '|' || (answered_by = '$P_A')::text FROM public.calls WHERE id='$NEW_CALL'")"
-psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ended','voip',NULL,NULL,NULL,NULL,NULL,now() + interval '42 seconds','completed');" >/dev/null
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ended','voip',NULL,NULL,NULL,NULL,NULL,'2000-01-01 00:00:42+00'::timestamptz,'completed');" >/dev/null
 expect_eq 'upsert calculou talk_seconds no encerramento' 'ended|42|completed|1' \
   "$(psql_sql "SELECT status || '|' || talk_seconds || '|' || end_reason || '|' || (SELECT count(*) FROM public.calls WHERE id='$NEW_CALL')::text FROM public.calls WHERE id='$NEW_CALL'")"
 expect_eq 'upsert não altera agent_id no update' "$P_A" \
@@ -297,6 +299,17 @@ expect_failure 'terceiro não anota chamada alheia' \
 # para NULL (não TRUE), então o IF era pulado sem levantar exceção e caía direto no UPDATE.
 expect_failure 'authenticated sem linha em profiles não anota chamada alheia' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$U_D'; SELECT public.set_call_agent_notes('40000000-0000-0000-0000-000000000001','sem-perfil');"
+# Chamada sem agent_id (dono NULL) — inbound ainda não atribuída a um agente.
+# Regressão do 2º bypass por NULL em PL/pgSQL, achado na auditoria de 27/09:
+# 'not (v_owner = v_profile or ...)' com v_owner NULL também avalia para NULL
+# (não FALSE), então um agente comum qualquer (não dono, não admin) conseguia
+# anotar a chamada. Fix: coalesce(v_owner = v_profile, false).
+psql_sql "INSERT INTO public.calls (id, agent_id, direction, status, channel) VALUES ('40000000-0000-0000-0000-0000000000df', NULL, 'inbound', 'ringing', 'voip');" >/dev/null
+expect_failure 'agente comum não anota chamada sem dono (agent_id NULL)' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.set_call_agent_notes('40000000-0000-0000-0000-0000000000df','tentativa-sem-dono');"
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_C'; SELECT public.set_call_agent_notes('40000000-0000-0000-0000-0000000000df','nota do admin em chamada sem dono');" >/dev/null
+expect_eq 'admin ainda pode anotar chamada sem dono' 'nota do admin em chamada sem dono' \
+  "$(psql_sql "SELECT agent_notes FROM public.calls WHERE id='40000000-0000-0000-0000-0000000000df'")"
 expect_failure 'anon não executa search_my_calls' \
   "SET ROLE anon; SELECT count(*) FROM public.search_my_calls();"
 expect_failure 'anon não executa my_calls_kpi' \

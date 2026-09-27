@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 export interface SearchOptions {
   columns: string[];
@@ -32,7 +33,7 @@ export function useSearch<T extends Record<string, unknown>>(
     queryKey: ['search', tableName, debouncedTerm, columns],
     queryFn: async () => {
       if (!shouldSearch) return [];
-      const orConditions = columns.map(col => `${col}.ilike.%${debouncedTerm}%`).join(',');
+      const orConditions = columns.map(col => `${col}.ilike.${escapeOrFilterValue(`%${debouncedTerm}%`)}`).join(',');
       
       let query = fromTable(tableName)
         .select('*')
