@@ -9528,11 +9528,11 @@ export type Database = {
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
       grant_agent_achievement: {
         Args: {
-          p_description: string
+          p_description?: string
           p_name: string
           p_profile_id: string
           p_type: string
-          p_xp_reward: number
+          p_xp_reward?: number
         }
         Returns: Json
       }
