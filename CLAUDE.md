@@ -84,7 +84,7 @@ O Postgres do `evolution-go-rxj2` é interno da Evolution GO (estado de sessões
 
 ---
 
-*Atualizado em 2026-09-25. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
+*Atualizado em 2026-09-27. Se algo aqui divergir do banco/infra real, corrija ESTE arquivo no mesmo commit do fix.*
 
 ## Auditoria e plano de correções (2026-09-16)
 
@@ -110,17 +110,17 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 7 required checks da seção abaixo.
+  deleção, e os 6 required checks da seção abaixo.
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
-  `required_status_checks.strict` está **`false`** ao vivo (confirmado via
-  `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
-  merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
-  manual do próprio ciclo de `BEHIND` descrito na seção "Fila de merge". Com `strict=false`, uma PR
-  não é automaticamente marcada `BEHIND` só por `main` ter avançado; o `auto-update-pr-branch.yml`
-  ainda existe e roda, mas o gatilho que o tornava necessário (toda PR reprovada por estar atrás)
-  não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
-  um dos dois lados.
+  `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
+  `github_get_branch_protection` em `main`).
+
+  **Correção de 2026-09-27:** `strict` voltou a ser **`true`** ao vivo (confirmado via
+  `github_get_branch_protection`). Uma PR marcada `BEHIND` bloqueia merge — é obrigatório chamar
+  `github_update_pr_branch` e aguardar CI passar no novo HEAD antes de tentar mergear. O erro
+  "N of N required status checks are expected" ao mergear indica branch desatualizado com
+  `strict=true`, não que os checks falharam. Confirmar o estado ao vivo antes de assumir.
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
@@ -135,10 +135,11 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
 Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
 
-**Required checks da `main`** (7; `strict` está `false` ao vivo — ver correção em 25/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🔬 CodeQL (javascript-typescript)` e
+**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção em 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge.
+sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
+(não bloqueia merge).
 
 **Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
 protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
@@ -185,8 +186,7 @@ primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correção acima, seção "Branch protection sem `Contrato DB
-vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+ligado (hoje está `true` ao vivo — ver correção de 27/09 acima), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
 adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem
