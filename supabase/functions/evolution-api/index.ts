@@ -125,6 +125,22 @@ serve(async (req) => {
       return null;
     };
 
+    // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
+    // possam usar sem depender de criar-connection ter rodado antes.
+    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
+    const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
+    const stripInstanceToken = (value: unknown): unknown => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+      for (const key of TOKEN_KEYS) delete clone[key];
+      for (const key of TOKEN_CONTAINER_KEYS) {
+        if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+          clone[key] = stripInstanceToken(clone[key]);
+        }
+      }
+      return clone;
+    };
+
     // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
     // Idempotente (set_instance_token faz update quando já existe secret_id).
     // Nunca ecoa o token na resposta nem em log.
@@ -270,20 +286,6 @@ serve(async (req) => {
       // v1/v2 original, de onde este projeto migrou —
       // docs/migration/GO_GAPS.md) ou "instance" — remove recursivamente em
       // qualquer um desses contêineres, nos dois branches.
-      const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
-      const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
-      const stripInstanceToken = (value: unknown): unknown => {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-        const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
-        for (const key of TOKEN_KEYS) delete clone[key];
-        for (const key of TOKEN_CONTAINER_KEYS) {
-          if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
-            clone[key] = stripInstanceToken(clone[key]);
-          }
-        }
-        return clone;
-      };
-
       // Libera a reserva quando algo falhar depois dela. Só existe uma linha
       // com este instance_id (o INSERT acima é quem garante isso), então esta
       // requisição é a única que pode legitimamente apagá-la.
@@ -382,9 +384,19 @@ serve(async (req) => {
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
       const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: connectBody });
-      const data = await response.json();
+      if (!response.ok) {
+        // deno-lint-ignore no-explicit-any
+        let errData: any = {};
+        try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
+        return new Response(JSON.stringify({ error: true, status: response.status, message: errData?.message ?? 'Falha ao conectar instância na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken } });
-      const qrData = await qrRes.json();
+      // deno-lint-ignore no-explicit-any
+      let qrData: any = {};
+      try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // A GO devolve o PNG do QR codificando 'https://wa.me/settings/linked_devices#2@...'.
       // O leitor de "Conectar aparelho" do WhatsApp so aceita o payload cru "2@...": com a URL
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
@@ -393,23 +405,24 @@ serve(async (req) => {
       let qrcode = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
       if (rawQrCode.startsWith('2@')) {
         try {
-          const { default: QRCode } = (await import('https://esm.sh/qrcode@1.5.3')) as unknown as {
-            default: { toString(text: string, opts: Record<string, unknown>): Promise<string> };
-          };
-          const svg = await QRCode.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+          // deno-lint-ignore no-explicit-any
+          const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
+          const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
           qrcode = `data:image/svg+xml;base64,${btoa(svg)}`;
         } catch (err: unknown) {
           new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
         }
       }
       if (qrcode) await supabase.from('whatsapp_connections').update({ qr_code: qrcode, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
-      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: rawQrCode || qrData?.data?.code } : undefined }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...data, qrcode: qrcode ? { base64: qrcode, code: rawQrCode || qrData?.data?.code } : undefined }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
-      const data = await response.json();
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // '||' e nao '??': loggedIn:false explicito nao pode curto-circuitar o
       // fallback por State — a GO manda os dois e nem sempre concordam.
       if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
@@ -426,7 +439,8 @@ serve(async (req) => {
         }
       }
       const status = data.state === 'open' ? 'connected' : 'disconnected';
-      return new Response(JSON.stringify({ ...data, status }), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao verificar status da instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...data, status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'instance-info') {
@@ -441,18 +455,31 @@ serve(async (req) => {
 
     if (action === 'disconnect') {
       const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
-      const data = await response.json();
+      // deno-lint-ignore no-explicit-any
+      let data: any = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance);
-      return new Response(JSON.stringify(data), { status: response.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'delete-instance') {
+      const adminError = await requireAdmin();
+      if (adminError) return adminError;
+      let deleteRes: Response;
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
         if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        return await proxy(`/instance/delete/${goId}`, 'DELETE');
+        deleteRes = await proxy(`/instance/delete/${goId}`, 'DELETE');
+      } else {
+        deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE', body);
       }
-      return await proxy(`/instance/delete/${instance}`, 'DELETE', body);
+      // deno-lint-ignore no-explicit-any
+      const deleteBody: any = await deleteRes.json().catch(() => ({}));
+      if (!deleteBody?.error) {
+        await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+      }
+      return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
