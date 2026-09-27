@@ -2,7 +2,9 @@
   "_comment": "Baseline (ratchet) do supabase-usage-guard. Cada chave e um .from()/.rpc() no cliente principal cujo alvo NAO existe no banco. O CI passa com estas e falha com qualquer nova. Ao resolver uma, REMOVA a chave daqui - o guard tambem falha se uma entrada ficar obsoleta.",
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
-  "known": [],
+  "known": [
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+  ],
   "_resolvido": {
     "store_reset_token": "DROP do subsistema de reset custom - migration 20260827170000; chamada removida do edge approve-password-reset",
     "inbox.service.ts": "modulo morto removido - src/services/inbox.service.ts deletado + linha do barrel services/index.ts",
