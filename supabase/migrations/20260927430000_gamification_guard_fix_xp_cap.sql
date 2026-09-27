@@ -9,7 +9,8 @@
 -- Vector 9: add_agent_xp sem teto em p_xp (qualquer usuário podia chegar ao nível máximo).
 --            Cap de 500 XP por chamada adicionado.
 --            grant_agent_achievement: daily_goal sem dedup diário.
---            Adicionado check em earned_at >= CURRENT_DATE após FOR UPDATE (serializa concorrência).
+--            Adicionado check em earned_at >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
+--            após FOR UPDATE (serializa concorrência; boundary SP e não UTC).
 
 CREATE OR REPLACE FUNCTION public.add_agent_xp(p_profile_id uuid, p_xp integer)
 RETURNS json
@@ -87,12 +88,12 @@ BEGIN
   SELECT * INTO v_row FROM agent_stats WHERE profile_id = p_profile_id FOR UPDATE;
   IF NOT FOUND THEN RETURN json_build_object('alreadyHad', false); END IF;
 
-  -- daily_goal dedup: one per calendar day (column is earned_at, not created_at)
+  -- daily_goal dedup: one per calendar day (São Paulo timezone boundary)
   IF p_type = 'daily_goal' AND EXISTS (
     SELECT 1 FROM agent_achievements
     WHERE profile_id = p_profile_id
       AND achievement_type = 'daily_goal'
-      AND earned_at >= CURRENT_DATE
+      AND earned_at >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
   ) THEN
     RETURN json_build_object('alreadyHad', true);
   END IF;
