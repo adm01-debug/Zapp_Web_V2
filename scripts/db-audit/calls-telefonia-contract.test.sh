@@ -272,10 +272,10 @@ NEW_CALL='40000000-0000-0000-0000-0000000000aa'
 psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ringing','voip','5511977776666',NULL,NULL,'callid-x');" >/dev/null
 expect_eq 'upsert criou 1 linha ringing com provider_call_id' 'ringing|5511977776666|callid-x|voip|1' \
   "$(psql_sql "SELECT status || '|' || peer_number || '|' || provider_call_id || '|' || channel || '|' || (answered_by IS NULL)::int FROM public.calls WHERE id='$NEW_CALL'")"
-psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','answered','voip',NULL,NULL,NULL,NULL,now());" >/dev/null
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','answered','voip',NULL,NULL,NULL,NULL,'2000-01-01 00:00:00+00'::timestamptz);" >/dev/null
 expect_eq 'upsert marcou answered e answered_by = agente' 'answered|true' \
   "$(psql_sql "SELECT status || '|' || (answered_by = '$P_A')::text FROM public.calls WHERE id='$NEW_CALL'")"
-psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ended','voip',NULL,NULL,NULL,NULL,NULL,now() + interval '42 seconds','completed');" >/dev/null
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U_A'; SELECT public.upsert_my_call('$NEW_CALL','outbound','ended','voip',NULL,NULL,NULL,NULL,NULL,'2000-01-01 00:00:42+00'::timestamptz,'completed');" >/dev/null
 expect_eq 'upsert calculou talk_seconds no encerramento' 'ended|42|completed|1' \
   "$(psql_sql "SELECT status || '|' || talk_seconds || '|' || end_reason || '|' || (SELECT count(*) FROM public.calls WHERE id='$NEW_CALL')::text FROM public.calls WHERE id='$NEW_CALL'")"
 expect_eq 'upsert não altera agent_id no update' "$P_A" \

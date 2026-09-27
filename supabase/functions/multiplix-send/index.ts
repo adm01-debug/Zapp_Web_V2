@@ -125,8 +125,8 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
     // Conexao WhatsApp: usa a escolhida no dispatch; sem uma, cai na primeira
     // conexao conectada (composer ainda nao oferece selecao de conexao).
     const connectionQuery = dispatch.whatsapp_connection_id
-      ? supabase.from("whatsapp_connections").select("status, instance_id").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
-      : supabase.from("whatsapp_connections").select("status, instance_id").eq("status", "connected").limit(1).maybeSingle();
+      ? supabase.from("whatsapp_connections").select("id, status, instance_id").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
+      : supabase.from("whatsapp_connections").select("id, status, instance_id").eq("status", "connected").limit(1).maybeSingle();
     const { data: connection } = await connectionQuery;
     const initialInstanceId = liveTalkXInstanceId(connection);
     if (!initialInstanceId) {
@@ -138,6 +138,24 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
         });
       } catch { /* ja pausado ou outro estado — ignora */ }
       return new Response(JSON.stringify({ error: "WhatsApp connection lost: dispatch paused" }), { status: 409, headers });
+    }
+
+    // Fixa a conexao resolvida no dispatch na primeira vez: sem isso
+    // whatsapp_connection_id fica sempre NULL (composer nao seleciona),
+    // record_multiplix_recipient_delivered nunca casa (NULL = uuid) e
+    // delivered_count fica travado em zero para sempre, alem de cada envio
+    // poder escolher uma conexao "primeira conectada" diferente em meio ao
+    // mesmo dispatch se houver mais de uma instancia.
+    if (!dispatch.whatsapp_connection_id && connection?.id) {
+      const { error: connectionPersistError } = await supabase
+        .from("multiplix_dispatches")
+        .update({ whatsapp_connection_id: connection.id })
+        .eq("id", dispatchId)
+        .is("whatsapp_connection_id", null);
+      if (connectionPersistError) {
+        throw new Error(`multiplix_dispatch_connection_persist_failed: ${connectionPersistError.message}`);
+      }
+      dispatch = { ...dispatch, whatsapp_connection_id: connection.id };
     }
 
     const windowStatus = deliveryWindowStatus(dispatch);

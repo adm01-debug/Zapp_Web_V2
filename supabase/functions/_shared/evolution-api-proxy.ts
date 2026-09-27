@@ -202,7 +202,7 @@ export async function proxyToEvolution(
         // 408 e a excecao: e timeout reportado pelo servidor, ja listado em
         // RETRYABLE_STATUSES, entao continua contando como falha.
         cbRecord(breakerKey, response.status < 500 && response.status !== 408);
-        return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage, details: data }), {
+        return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

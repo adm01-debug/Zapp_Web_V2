@@ -129,6 +129,7 @@ direta dentro de `IF`.
   ser anotada por admin/supervisor.
 - Teste novo em `scripts/db-audit/calls-telefonia-contract.test.sh`: insere chamada com `agent_id NULL`,
   confirma que agente comum falha e admin ainda consegue anotar.
+- **PR #945 mergeada em 27/09; DDL aplicado em produção (ver ledger `20260927100000`).**
 
 **Achados da mesma auditoria fora do escopo desta correção (não tocados aqui, ver Próximos Passos):**
 `handle_new_user_role` tem o mesmo padrão (`v_allowed` NULL quando `NEW.email` é NULL — login
@@ -345,7 +346,7 @@ npx vitest run src/lib/calls                -> 6 arquivos, 215 testes passando -
 npx vitest run src/components/calls src/hooks src/lib/calls   (MESMO filtro do baseline)
                                             -> 128 arquivos passando +1 skip, 1328 testes (antes: 122/1113) -> exit 0
 npx vitest run (suíte inteira do repo)      -> 290 arquivos passando +1 skip, 4029 testes, 41 todo -> exit 0
-bash scripts/db-audit/retry-disposable-postgres-test.sh \
+bash scripts/db-audit/retry-disposable-postgres-test.sh \\
      bash scripts/db-audit/calls-telefonia-contract.test.sh
                                             -> 61 asserções [PASS], "Telefonia v2 data contract (PostgreSQL 17): PASS" -> exit 0
 npm run db:guard                            -> "Violacoes totais: 0 | novas: 0" -> exit 0
