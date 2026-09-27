@@ -3167,6 +3167,7 @@
         "messages.messages_select_policy": "b8503d40a825a9c7dadbd3cd2ec5f00e",
         "calls.\"Users can view own calls\"": "214248a6bd1c260f961a3c1049555a4f",
         "queues.\"Admins can manage queues\"": "04f5b11e1ea6bda9d5b313ad3b3582db",
+        "webhook_failures.service_role_full": "c6bdba0b3ab9a641ce7f762d2c9743df",
         "departments.departments_admin_write": "04f5b11e1ea6bda9d5b313ad3b3582db",
         "calls.\"Users can update their calls\"": "fa6dc8df57985307f8d419996380b69c",
         "contact_identity_map.supervisor_read": "f8f0f3765f5fb7b2833be7afa578805d",
@@ -4367,7 +4368,7 @@
         "e:public.talkx_blacklist_reason|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.talkx_blacklist_reason|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-09-27T03:34:59Z",
+    "generated_at": "2026-09-27T04:16:17Z",
     "column_grants": {
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.name|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
