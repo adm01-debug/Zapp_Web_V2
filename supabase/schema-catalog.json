@@ -1598,6 +1598,7 @@
         "team_message_reactions.profile_id:uuid:not-null",
         "team_message_reactions.emoji:text:not-null",
         "team_message_reactions.created_at:timestamp with time zone:not-null",
+        "team_message_reactions.conversation_id:uuid:not-null",
         "team_message_receipts.id:uuid:not-null",
         "team_message_receipts.message_id:uuid:not-null",
         "team_message_receipts.profile_id:uuid:not-null",
