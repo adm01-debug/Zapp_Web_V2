@@ -67,6 +67,7 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
     <button
       ref={ref}
       type="button"
+      aria-label={label}
       data-testid={testId ?? 'contact-action-tile'}
       disabled={disabled}
       {...rest}
