@@ -508,6 +508,10 @@ serve(async (req) => {
         } catch { /* GO indisponível: cai no 409 abaixo */ }
       }
       if (goOrphan) {
+        if (!Deno.env.get('EVOLUTION_INSTANCE_TOKEN')) {
+          new Logger('evolution-api').error('connect: EVOLUTION_INSTANCE_TOKEN não configurado — recriação de instância órfã abortada', { instance });
+          return new Response(JSON.stringify({ error: true, status: 503, message: 'A recriação automática da instância exige que o secret EVOLUTION_INSTANCE_TOKEN esteja configurado na Edge Function. Configure o secret e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
@@ -562,9 +566,11 @@ serve(async (req) => {
       // deno-lint-ignore no-explicit-any
       let data: any = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
-      // '||' e nao '??': loggedIn:false explicito nao pode curto-circuitar o
-      // fallback por State — a GO manda os dois e nem sempre concordam.
-      if (data?.data && data.state === undefined) data.state = ((data.data.loggedIn ?? data.data.LoggedIn) || data.data.State === 'open') ? 'open' : 'close';
+      // Requer loggedIn E connected para mapear 'open'; '||' nao '??' porque
+      // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
+      // manda os dois e nem sempre concordam). Estado 'Reconnecting' tem
+      // loggedIn:true mas connected:false — mapear 'open' aqui era falso positivo.
+      if (data?.data && data.state === undefined) data.state = (((data.data.loggedIn ?? data.data.LoggedIn) && (data.data.connected ?? data.data.Connected)) || data.data.State === 'open') ? 'open' : 'close';
       if (response.ok) {
         const status = data.state === 'open' ? 'connected' : 'disconnected';
         // So zera o QR quando conecta de fato. O polling de status roda a cada 3s
