@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import {
   useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
-  type MultiplixSearchFilters,
+  type MultiplixSearchFilters, type MultiplixAudienceRow,
 } from '@/hooks/integrations/useMultiplixAudience';
 import { useMultiplixDispatchesList } from '@/hooks/integrations/useMultiplixDispatches';
 import { MultiplixComposerDialog } from './MultiplixComposerDialog';
@@ -33,6 +33,8 @@ const DESTINO_LABELS: Record<string, string> = {
   contato_pessoa: 'Contato', telefone_empresa: 'Empresa · sem pessoa cadastrada', sem_destino: 'Sem destino',
 };
 
+const PAGE_SIZE = 50;
+
 export default function MultiplixView() {
   const { data: ramos, isLoading: loadingRamos } = useMultiplixRamos();
   const { data: ufs, isLoading: loadingUfs } = useMultiplixUfs();
@@ -46,6 +48,8 @@ export default function MultiplixView() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [composerOpen, setComposerOpen] = useState(false);
   const [monitorId, setMonitorId] = useState<string | null>(null);
+  const [rows, setRows] = useState<MultiplixAudienceRow[]>([]);
+  const [page, setPage] = useState(0);
   const dispatches = useMultiplixDispatchesList();
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
@@ -57,8 +61,22 @@ export default function MultiplixView() {
 
   const runSearch = () => {
     setSelected(new Set());
+    setPage(0);
     count.mutate(filters);
-    search.mutate({ ...filters, page: 0, page_size: 50 });
+    search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => setRows(data) });
+  };
+
+  // P2 fix (auditoria de 5 agentes, 2026-09-27): a busca sempre pedia page:0,
+  // page_size:50 e nunca avancava -- filtros com mais de 50 empresas nunca
+  // mostravam nem permitiam selecionar o restante. Acumula paginas em 'rows'
+  // ate esgotar 'count.data'.
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    search.mutate(
+      { ...filters, page: nextPage, page_size: PAGE_SIZE },
+      { onSuccess: (data) => setRows((prev) => [...prev, ...data]) },
+    );
   };
 
   const toggleRow = (companyId: string) => {
@@ -70,7 +88,6 @@ export default function MultiplixView() {
   };
 
   const toggleAllVisible = () => {
-    const rows = search.data ?? [];
     const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.company_id));
     setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.company_id)));
   };
@@ -170,18 +187,18 @@ export default function MultiplixView() {
       {count.data !== undefined && (
         <p className="text-sm text-muted-foreground">
           <strong>{count.data}</strong> empresa(s) no filtro atual.
-          {search.data && search.data.length < count.data && ` Mostrando as primeiras ${search.data.length}.`}
+          {rows.length > 0 && rows.length < count.data && ` Mostrando ${rows.length}.`}
         </p>
       )}
 
-      {search.data && (
+      {count.data !== undefined && (
         <div className="overflow-hidden rounded-2xl border border-[--zapp-border]">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
-                    checked={search.data.length > 0 && search.data.every((r) => selected.has(r.company_id))}
+                    checked={rows.length > 0 && rows.every((r) => selected.has(r.company_id))}
                     onCheckedChange={toggleAllVisible}
                     aria-label="Selecionar todas as empresas visíveis"
                   />
@@ -194,7 +211,7 @@ export default function MultiplixView() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {search.data.map((row) => (
+              {rows.map((row) => (
                 <TableRow key={row.company_id}>
                   <TableCell>
                     <Checkbox
@@ -216,7 +233,7 @@ export default function MultiplixView() {
                   <TableCell className="text-xs text-muted-foreground">{row.motivo_inclusao}</TableCell>
                 </TableRow>
               ))}
-              {search.data.length === 0 && (
+              {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Nenhuma empresa encontrada para este filtro.
@@ -225,6 +242,14 @@ export default function MultiplixView() {
               )}
             </TableBody>
           </Table>
+          {rows.length < count.data && (
+            <div className="flex justify-center border-t border-[--zapp-border] p-3">
+              <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
+                {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Carregar mais ({count.data - rows.length} restante{count.data - rows.length === 1 ? '' : 's'})
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

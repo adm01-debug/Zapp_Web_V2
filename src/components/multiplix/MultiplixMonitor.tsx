@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, Download, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -94,13 +94,58 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     refetchInterval: 5_000,
   });
 
+  const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
+    // Debounce 500ms nos dois handlers: durante envio ativo cada destinatario
+    // processado gera 1 UPDATE em multiplix_dispatches (contadores) + 1 em
+    // multiplix_recipients -- sem debounce, um disparo de centenas de
+    // destinatarios dispara uma invalidateQueries por linha (mesmo padrao de
+    // rajada ja tratado em useTalkX.ts).
     const ch = supabase.channel(`multiplix-mon-${dispatchId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'multiplix_dispatches', filter: `id=eq.${dispatchId}` }, () => qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'multiplix_recipients', filter: `dispatch_id=eq.${dispatchId}` }, () => qc.invalidateQueries({ queryKey: ['multiplix-recipients', dispatchId, statusFilter] }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'multiplix_dispatches', filter: `id=eq.${dispatchId}` }, () => {
+        if (dispatchDebounceRef.current) clearTimeout(dispatchDebounceRef.current);
+        dispatchDebounceRef.current = setTimeout(() => qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] }), 500);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'multiplix_recipients', filter: `dispatch_id=eq.${dispatchId}` }, () => {
+        if (recipientsDebounceRef.current) clearTimeout(recipientsDebounceRef.current);
+        recipientsDebounceRef.current = setTimeout(() => qc.invalidateQueries({ queryKey: ['multiplix-recipients', dispatchId, statusFilter] }), 500);
+      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (dispatchDebounceRef.current) clearTimeout(dispatchDebounceRef.current);
+      if (recipientsDebounceRef.current) clearTimeout(recipientsDebounceRef.current);
+      supabase.removeChannel(ch);
+    };
   }, [dispatchId, statusFilter, qc]);
+
+  const handleExportCsv = async () => {
+    // P1 fix (auditoria de 5 agentes, 2026-09-27): a UI so mostra ate 500
+    // destinatarios (useMultiplixRecipients .limit(500)) -- exportar direto de
+    // 'recipients' truncava o CSV em silencio, sem aviso, em disparos maiores.
+    // Mesmo padrao de paginacao ja usado no handleExport da TalkX
+    // (TalkXLiveMonitor.tsx): pagina em lotes ate esgotar os destinatarios.
+    const PAGE = 1000;
+    let offset = 0;
+    const allRows: Parameters<typeof exportRecipientsCsv>[0] = [];
+    for (;;) {
+      let q = fromTable('multiplix_recipients')
+        .select('company_name_snapshot, destino_e164, status, sent_at, error_message')
+        .eq('dispatch_id', dispatchId)
+        .order('id')
+        .range(offset, offset + PAGE - 1);
+      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      const { data, error } = await q;
+      if (error) { toast.error(`Erro ao exportar CSV: ${error.message}`); return; } // aborta: nao exporta parcial
+      if (!data?.length) break;
+      allRows.push(...(data as typeof allRows));
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+    if (allRows.length === 0) return;
+    exportRecipientsCsv(allRows, dispatch?.name ?? 'disparo');
+  };
 
   const runAction = async (a: 'start' | 'pause' | 'cancel') => {
     try {
@@ -146,7 +191,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
               {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
-            <button type="button" onClick={() => exportRecipientsCsv(recipients, dispatch.name)} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
+            <button type="button" onClick={handleExportCsv} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium flex items-center gap-1.5 hover:bg-muted/50"><Download className="w-4 h-4" />CSV</button>
           </div>
         </div>
         <Progress value={progress} className="h-3 mb-1.5" />
