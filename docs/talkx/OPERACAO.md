@@ -29,8 +29,8 @@ Caminho: **Campanhas → Templates**
 - **Editar:** ícone de lápis no card ou na linha da lista.
 - **Duplicar:** ícone de cópia — gera uma cópia com sufixo "(cópia)".
 - **Excluir:** ícone de lixeira → confirmar no modal.
-- **Usar:** botão "Usar" → encaminha o template para o compositor de mensagem
-  da conversa ativa.
+- **Usar:** botão "Usar" → abre o wizard de nova campanha com esse template
+  pré-selecionado (não encaminha para o compositor de mensagem da conversa).
 - **Visualização:** toggle grade/lista no canto superior direito da tela.
 - **Status possíveis:** `draft` (rascunho), `review` (em revisão), `approved` (aprovado).
 

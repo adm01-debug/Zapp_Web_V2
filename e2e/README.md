@@ -97,5 +97,7 @@ nunca apagar essa linha do banco.
 `talkx.spec.ts` cobre navegação/render do módulo Talk X e roda via
 `chromium-e2e-core` no `e2e-logado.yml` (E99, 2026-09-27) — o usuário de
 teste tem perfil supervisor e enxerga "Campanhas". Para rodar localmente:
-`bunx playwright test --project=chromium-e2e-core e2e/talkx.spec.ts` (com
-as variáveis `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas).
+`bunx playwright test --project=setup --project=chromium-e2e-core` (com
+as variáveis `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` configuradas; não passar
+caminho de arquivo junto de `--project` — o filtro quebraria a dependência
+do `setup` e `e2e/.auth/user.json` nunca seria gerado).
