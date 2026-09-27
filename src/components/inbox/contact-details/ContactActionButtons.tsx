@@ -1,5 +1,5 @@
 import {
-  Phone, PhoneCall, Headphones, ArrowLeftRight, Video, UserPlus,
+  Phone, PhoneCall, Headphones, Mail, ArrowLeftRight, Video, UserPlus,
   Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
 import * as React from 'react';
@@ -14,6 +14,7 @@ import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnable
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
 import { RealtimeCollaboration } from '../RealtimeCollaboration';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface ContactActionButtonsProps {
   contact: { id: string; name: string; phone: string; email?: string };
@@ -112,7 +113,7 @@ export function ContactActionButtons({
   };
 
   return (
-    <div className="grid grid-cols-5 gap-2 justify-items-center mt-3">
+    <div className="grid grid-cols-6 gap-2 justify-items-center mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Tile icon={<Phone className="w-[18px] h-[18px]" />} label="Ligar" title="Opções de chamada" />
@@ -135,6 +136,14 @@ export function ContactActionButtons({
           label="Vídeo"
           title="Videochamada"
           onClick={() => toast.info('Em breve', { description: 'Videochamada estará disponível em breve.' })}
+        />
+
+        <Tile
+          icon={<Mail className="w-[18px] h-[18px]" />}
+          label="E-mail"
+          title={contact.email ? 'Abrir email' : 'Sem email'}
+          disabled={!contact.email}
+          onClick={() => { if (contact.email) navigateToView('email-chat'); }}
         />
 
         <Tile
