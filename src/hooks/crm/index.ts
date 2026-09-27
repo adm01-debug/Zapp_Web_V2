@@ -15,6 +15,5 @@ export * from './useExternalCargos';
 export * from './useExternalContact360';
 export * from './useExternalContact360Batch';
 export * from './useExternalEmpresas';
-export * from './useTags';
 export * from './useTeamProfiles';
 export * from './useVisibleAgents';
