@@ -216,3 +216,21 @@ export function useLeaveConversation() {
     onError: () => { toast({ title: 'Erro ao sair do grupo', variant: 'destructive' }); },
   });
 }
+
+export function useTransferConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, newOwnerId }: { conversationId: string; newOwnerId: string }) => {
+      const { error } = await supabase
+        .from('team_conversations')
+        .update({ created_by: newOwnerId })
+        .eq('id', conversationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      toast({ title: 'Propriedade do grupo transferida com sucesso' });
+    },
+    onError: () => { toast({ title: 'Erro ao transferir grupo', variant: 'destructive' }); },
+  });
+}

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AddMembersDialog } from './AddMembersDialog';
 import { GroupManagementDialog } from './GroupManagementDialog';
+import { TransferConversationDialog } from './TransferConversationDialog';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
@@ -284,6 +285,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           onRename={name => s.renameConvMutation.mutate({ conversationId: conversation.id, name })}
           onRemoveMember={profileId => s.removeMemberMutation.mutate({ conversationId: conversation.id, profileId })}
           onLeave={handleLeave}
+        />
+      )}
+
+      {s.showTransferDialog && s.profile && conversation.type === 'group' && (
+        <TransferConversationDialog
+          open={s.showTransferDialog}
+          onOpenChange={s.setShowTransferDialog}
+          conversation={conversation}
+          currentUserId={s.profile.id}
         />
       )}
     </div>
