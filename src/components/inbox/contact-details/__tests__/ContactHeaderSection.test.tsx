@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ContactHeaderSection } from '../ContactHeaderSection';
 import type { Conversation } from '@/types/chat';
 
@@ -16,6 +16,18 @@ vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEna
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('@/hooks/chat/useConversationActions', () => ({
+  useConversationActions: () => ({
+    isFavorite: () => false,
+    favoriteContact: vi.fn(),
+    unfavoriteContact: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
+  useSyncToCRM: () => ({ syncConversation: vi.fn(), syncConversationAsync: vi.fn(), isSyncing: false, isConfigured: false }),
 }));
 
 const baseContact = {
@@ -75,7 +87,7 @@ describe('ContactHeaderSection', () => {
   });
 
   // ========== EDIT ACTION ==========
-  it('calls onQuickAction with edit when triggered', () => {
+  it('aceita prop onQuickAction sem crash', () => {
     const mockAction = vi.fn();
     render(
       <ContactHeaderSection
@@ -84,9 +96,7 @@ describe('ContactHeaderSection', () => {
         onQuickAction={mockAction}
       />
     );
-    // Verify onQuickAction prop is accepted without crash
-    // The dropdown interaction requires Radix portal which is complex in jsdom
-    // We verify the function is wired by checking the component renders
+    // Verifica que o componente renderiza com o prop — o dispatch real requer Radix portal
     expect(screen.getByText('Maria')).toBeInTheDocument();
   });
 
@@ -147,7 +157,7 @@ describe('ContactHeaderSection', () => {
   });
 
   // ========== COLLAPSE ALL ==========
-  it('shows collapse button when hasExpandedSections', () => {
+  it('shows collapse button when hasExpandedSections', async () => {
     const mockCollapse = vi.fn();
     render(
       <ContactHeaderSection
@@ -157,9 +167,22 @@ describe('ContactHeaderSection', () => {
         onCollapseAll={mockCollapse}
       />
     );
-    // The collapse button should be visible
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBeGreaterThan(0);
+    // Radix DropdownMenu abre com pointerDown (não click) no trigger
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais' }), { button: 0, ctrlKey: false });
+    expect(await screen.findByText('Recolher seções')).toBeInTheDocument();
+  });
+
+  it('does not show collapse button when hasExpandedSections is false', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={null}
+        hasExpandedSections={false}
+      />
+    );
+    // Sem hasExpandedSections, o item não existe no dropdown
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais' }), { button: 0, ctrlKey: false });
+    expect(screen.queryByText('Recolher seções')).not.toBeInTheDocument();
   });
 
   // ========== NO EMAIL ==========
@@ -320,6 +343,21 @@ describe('ContactHeaderSection', () => {
 
   // ========== BADGE CONTRASTE WCAG 1.4.3 ==========
   // Tokens brutos falham 4.5:1 com texto branco; getScoreBadgeBg usa L reduzido.
+  // Ratios verificados matematicamente (HSL→RGB→luminância IEC 61966-2-1):
+  //   hsl(160 70% 28%) → L≈0.1461 → 5.35:1 ✅
+  //   hsl(38 90% 32%)  → L≈0.1634 → 4.92:1 ✅
+  //   hsl(0 84% 48%)   → L≈0.1660 → 4.86:1 ✅
+
+  // Smoke: prova que jsdom/cssstyle processa inline styles corretamente.
+  it('smoke: inline styles são processadas pelo jsdom (assertion positiva + negativa)', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('100');
+    // Positiva: badge tem a cor correta para score=100 (hot)
+    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    // Negativa: toHaveStyle distingue valores distintos
+    expect(badge).not.toHaveStyle('background-color: hsl(38 90% 32%)');
+  });
+
   it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
     // baseEnriched: positive+high+company+customer = 100
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
@@ -327,31 +365,62 @@ describe('ContactHeaderSection', () => {
     expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 
-  it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.5:1 com branco)', () => {
+  it('badge de alto engajamento usa texto branco (necessário para ratio WCAG)', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('100');
+    expect(badge).toHaveStyle('color: rgb(255, 255, 255)');
+  });
+
+  it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
+    // positive(+25) + low(nada) + company(+5) + no type(nada) = 50+25+5 = 80
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, ai_priority: 'low', contact_type: null }}
+      />
+    );
+    const badge = screen.getByText('80');
+    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+  });
+
+  it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.92:1 com branco)', () => {
     render(
       <ContactHeaderSection
         contact={baseContact}
         enrichedData={{ ...baseEnriched, ai_sentiment: 'neutral', ai_priority: 'low', company: null, contact_type: null }}
       />
     );
-    // score = 50 (base sem bônus)
+    // score = 50 (base sem bônus — mínimo alcançável pela fórmula atual)
     const badge = screen.getByText('50');
     expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
   });
 
-  it('badge de baixo engajamento usa cor acessível (hsl 0 84% 48%, ~4.7:1 com branco)', () => {
+  it('score mínimo é 50 — ramo s<50 em getScoreBadgeBg é código defensivo não alcançável', () => {
+    // A fórmula só faz adições (base 50 + bônus). Sentiment negativo não subtrai.
+    // Logo hsl(0 84% 48%) nunca é ativado com a implementação atual.
+    // Este teste documenta esse invariante: qualquer enrichedData produz score >= 50.
     render(
       <ContactHeaderSection
         contact={baseContact}
         enrichedData={{ ...baseEnriched, ai_sentiment: 'negative', ai_priority: 'low', company: null, contact_type: null }}
       />
     );
-    // score = 50 - 25 = 25 (negative perde 25 do base; na realidade o cálculo não subtrai)
-    // Veja: base 50, sentiment negativo não adiciona, priority low não adiciona → score = 50
-    // Preciso forçar score < 50. Sem dados = 50, não há como ir abaixo do baseScore.
-    // O badge de score < 50 só ocorre se o base + bônus < 50 — não é possível com os dados
-    // atuais pois o base começa em 50. Testamos em vez disso que o score mínimo é 50.
     const badge = screen.getByText('50');
     expect(badge).toBeInTheDocument();
+    // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
+    expect(badge).not.toHaveStyle('background-color: hsl(0 84% 48%)');
+  });
+
+  it('badge usa cor de médio engajamento na fronteira score=75 (abaixo do limiar hot 80)', () => {
+    // positive(+25) + low(0) + no company(0) + no type(0) = 50+25 = 75; 75 < 80 → warm
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={{ ...baseEnriched, ai_priority: 'low', company: null, contact_type: null }}
+      />
+    );
+    const badge = screen.getByText('75');
+    expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
+    expect(badge).not.toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 });

@@ -1,17 +1,16 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
-        "enforce_conversation_status_transition()",
-        "enqueue_crm_sync_from_closure()",
-        "handle_conversation_closure_gamification()",
-        "handle_message_gamification()",
-        "prevent_contact_assignee_hijack()",
-        "prevent_contact_queue_hijack()",
-        "prevent_conversation_task_field_forgery()",
-        "seed_default_goals_for_profile()",
-        "set_scheduled_report_config_owner()",
-        "trg_talkx_increment_replied_count()",
-        "trg_talkx_increment_template_use_count()"
+        "accept_department_invite(p_code text)",
+        "add_wa_tag_if_not_exists(p_contact_id uuid, p_prefix text, p_tag text)",
+        "find_or_create_direct_conversation(other_profile_id uuid)",
+        "get_team_conversation_previews()",
+        "get_team_unread_counts()",
+        "remove_wa_label_from_all_contacts(p_label_prefix text)",
+        "remove_wa_tag_by_prefix(p_contact_id uuid, p_prefix text)",
+        "rename_wa_label_on_all_contacts(p_label_prefix text, p_new_tag text)",
+        "set_team_member_role(p_conversation_id uuid, p_profile_id uuid, p_new_role text)",
+        "sync_contact_status_on_closure()"
     ],
     "generated_at": "2026-09-27",
     "anon_table_select": [
@@ -63,7 +62,9 @@
         "csat_surveys",
         "custom_emojis",
         "deal_activities",
+        "department_audit_logs",
         "department_invitations",
+        "department_invites",
         "email_attachments",
         "email_labels",
         "email_messages",
@@ -88,6 +89,7 @@
         "messages",
         "meta_capi_events",
         "mfa_sessions",
+        "multiplix_blocks",
         "multiplix_dispatches",
         "multiplix_recipients",
         "notifications",
@@ -137,6 +139,7 @@
         "team_conversation_members",
         "team_conversations",
         "team_message_reactions",
+        "team_message_receipts",
         "team_messages",
         "training_sessions",
         "user_devices",
@@ -159,6 +162,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 157,
-    "authenticated_execute_count": 95
+    "service_role_execute_count": 174,
+    "authenticated_execute_count": 110
 }

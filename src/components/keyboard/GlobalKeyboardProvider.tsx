@@ -1,6 +1,7 @@
 import React, { useEffect, useState, createContext, useContext, useCallback, useRef } from 'react';
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
 import { useCatalogQuickSearch } from '@/hooks/integrations/useCatalogQuickSearch';
+import { useTalkXCommandItems } from '@/hooks/integrations/useTalkXCommandItems';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { CommandPalette } from '@/components/ui/command-palette';
 
@@ -34,6 +35,7 @@ interface GlobalKeyboardProviderProps {
 
 export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboardProviderProps) {
   const searchCatalogProducts = useCatalogQuickSearch();
+  const talkxCommands = useTalkXCommandItems();
   const [showHelp, setShowHelp] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const navigationHandlerRef = useRef<((view: string) => void) | null>(null);
@@ -120,6 +122,7 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
         onOpenChange={setShowCommandPalette}
         onNavigate={handleNavigate}
         onSearch={searchCatalogProducts}
+        customCommands={talkxCommands}
         placeholder="Buscar ou digitar comando... (⌘K)"
       />
     </GlobalKeyboardContext.Provider>
