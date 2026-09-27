@@ -53,7 +53,7 @@ Tabelas principais do módulo:
 |---|---|
 | `talkx_templates` | Templates de mensagem WhatsApp (variáveis em `custom_variables[]`) |
 | `talkx_template_versions` | Versões históricas de cada template |
-| `talkx_campaigns` | Campanhas (em desenvolvimento — F2+) |
+| `talkx_campaigns` | Campanhas (operacional: criação via wizard, atualização, exclusão, gestão de destinatários; métricas consolidadas via `talkx-report`) |
 | `talkx_segments` | Segmentos de audiência |
 
 RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário autenticado.
@@ -66,7 +66,7 @@ RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário aute
 |---|---|---|
 | `talkx-send` | Manual / agendado | Disparo de mensagens via Evolution GO |
 | `talkx-scheduler` | Cron | Agenda e controla o ciclo de vida de campanhas |
-| `talkx-report` | Pós-envio | Consolida métricas de entrega por campanha |
+| `talkx-report` | Manual / UI | Consolida métricas de entrega por campanha |
 | `talkx-link` | Webhook | Rastreia cliques em links das mensagens enviadas |
 
 Deploy via: **Actions → `deploy-functions.yml` → `workflow_dispatch`** (requer
@@ -141,12 +141,44 @@ A coluna `category` é do tipo `text` (sem enum no banco). Para adicionar uma no
 **Nunca remover `supervisor` de `STAFF_ROLES`** — essa constante é compartilhada
 por ~30 itens de menu; removê-la esconderia toda a UI de supervisores.
 
-Para esconder só "Campanhas":
+Para esconder só "Campanhas" na interface:
 - **Só para supervisores:** alterar `roles: STAFF_ROLES` para `roles: ['admin']`
   na entrada `{ id: 'talkx' }` em `navigation.service.ts`.
 - **Para todos (admin + supervisor):** remover a entrada `{ id: 'talkx' }`
   dos items do grupo `'Automação & IA'` em `NavigationService.getGroups()`
   (`navigation.service.ts`, linha ~72).
+
+> ⚠️ **Esconder o menu NÃO para o backend.** O cron `talkx-scheduler-1min`
+> continua rodando a cada minuto e invocando `talkx-send` para campanhas
+> ativas ou agendadas — independente de a UI estar visível ou não.
+>
+> **Para pausar o envio de mensagens de verdade:**
+>
+> 1. Cancelar campanhas em andamento (se houver):
+>    ```sql
+>    UPDATE talkx_campaigns
+>    SET status = 'cancelled'
+>    WHERE status IN ('sending', 'scheduled', 'paused');
+>    ```
+>    Executar via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>
+> 2. Desativar o cron job:
+>    ```sql
+>    SELECT cron.unschedule('talkx-scheduler-1min');
+>    ```
+>    Ou: Supabase Dashboard → Database → Cron Jobs → desabilitar `talkx-scheduler-1min`.
+>
+> 3. Para **reativar**:
+>    - Se o cron foi **desativado via Dashboard** (`active = false`): reative com
+>      ```sql
+>      UPDATE cron.job SET active = true WHERE jobname = 'talkx-scheduler-1min';
+>      ```
+>      via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>    - Se o cron foi **desagendado** com `cron.unschedule()`: reaplique o
+>      `SELECT cron.schedule(...)` da migration `20260909000000_talkx_scheduler_cron.sql`
+>      via `db_query` no MCP `SUPABASE - ZAPP WEB V2 - MCP`.
+>
+>    Confirmar estado atual: `SELECT jobname, active FROM cron.job WHERE jobname = 'talkx-scheduler-1min';`
 
 ### 8.3 Rollback de migration de Talk X
 

@@ -51,6 +51,11 @@ if (sql.startsWith('SELECT max(version)')) {
   process.stdout.write(${JSON.stringify(maxVersionOutput)});
   process.exit(0);
 }
+// Verificacao de colisao de objeto por nome (extractObjectNames): retorna vazio = sem colisao
+if (sql.startsWith('SELECT DISTINCT version FROM supabase_migrations.schema_migrations')) {
+  process.stdout.write('');
+  process.exit(0);
+}
 if (${failOnInsert}) { process.exit(1); }
 process.stdout.write(${JSON.stringify(insertOutput)});
 `,
@@ -250,12 +255,15 @@ test('register --apply chama o psql com -q e ON_ERROR_STOP=1', () => {
 import fs from 'node:fs';
 fs.appendFileSync(${JSON.stringify(argvLog)}, JSON.stringify(process.argv.slice(2, -1)) + '\\n');
 const sql = process.argv[process.argv.length - 1];
-process.stdout.write(sql.startsWith('SELECT max(version)') ? '20260916210000' : '20260916999600|demo|1');
+// 3 chamadas: max(version), collision-check (retorna vazio = sem colisao), INSERT
+if (sql.startsWith('SELECT max(version)')) { process.stdout.write('20260916210000'); process.exit(0); }
+if (sql.startsWith('SELECT DISTINCT version FROM supabase_migrations.schema_migrations')) { process.exit(0); }
+process.stdout.write('20260916999600|demo|1');
 `, { mode: 0o755 });
     const result = runScript(filePath, { DESTINO_URL: FIXTURE_URL, DATABASE_IDENTITY_PATH: fixtureIdentity(tmp), PSQL_BIN: psql });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     const chamadas = fs.readFileSync(argvLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
-    assert.equal(chamadas.length, 2);
+    assert.equal(chamadas.length, 3, `esperado 3 chamadas (max_version, collision-check, INSERT); obtido ${chamadas.length}`);
     for (const argv of chamadas) {
       assert.ok(argv.includes('-q'), `sem -q: ${argv}`);
       assert.ok(argv.includes('ON_ERROR_STOP=1'), `sem ON_ERROR_STOP: ${argv}`);

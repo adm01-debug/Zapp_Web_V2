@@ -247,6 +247,14 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
             <FieldStatus error={null} isTouched={v.touched.email} value={!v.errors.email ? values.email : null} />
           </div>
           <AnimatePresence>{v.touched.email && v.errors.email && <FieldStatus error={v.errors.email} isTouched />}</AnimatePresence>
+          <AnimatePresence>
+            {v.duplicateEmailWarning && !v.errors.email && (
+              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="flex items-center gap-1.5 text-[hsl(38_92%_50%)] text-xs bg-[hsl(38_92%_50%)]/10 rounded-md px-2 py-1.5" role="alert">
+                <AlertCircle className="w-3 h-3 shrink-0" /><span>{v.duplicateEmailWarning}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Endereço */}
