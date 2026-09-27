@@ -3,7 +3,7 @@ import { MessageSquare, MessageSquarePlus, Search as SearchIcon } from 'lucide-r
 
 export function InboxEmptyChat() {
   return (
-    <div className="flex-1 flex items-center justify-center bg-background min-h-0 overflow-hidden">
+    <div className="flex-1 flex items-center justify-center bg-inbox-panel min-h-0 overflow-hidden">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="text-center p-8 max-w-md">
         <div className="relative w-28 h-28 mx-auto mb-8">
           <motion.div
