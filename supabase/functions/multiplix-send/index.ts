@@ -188,6 +188,9 @@ export async function handleMultiplixSend(req: Request): Promise<Response> {
       p_action: "start",
     });
     if (transitionError) {
+      if (transitionError.message === 'multiplix_dispatch_already_running') {
+        return new Response(JSON.stringify({ skipped: true, reason: 'already_running' }), { headers });
+      }
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
     }
 

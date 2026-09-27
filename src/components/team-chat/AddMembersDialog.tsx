@@ -5,13 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Loader2, UserPlus } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
-import { TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useActiveTeamProfiles, useAddConversationMembers } from '@/hooks/team-chat/useTeamChatMembers';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface Props {
   open: boolean;
@@ -21,7 +18,6 @@ interface Props {
 
 export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -30,12 +26,13 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
     [conversation.members]
   );
 
-  const { data: teamProfiles = [], isLoading } = useTeamProfiles(open && !!profile);
+  const { profiles, isLoading } = useActiveTeamProfiles(open && !!profile);
+
   const teammates = useMemo(
-    () => teamProfiles
+    () => profiles
       .filter(t => !existingMemberIds.has(t.id))
       .sort((a, b) => a.name.localeCompare(b.name)),
-    [teamProfiles, existingMemberIds]
+    [profiles, existingMemberIds]
   );
 
   const filtered = useMemo(() => {
@@ -46,27 +43,16 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
     );
   }, [teammates, search]);
 
-  const addMutation = useMutation({
-    mutationFn: async (memberIds: string[]) => {
-      const { error } = await supabase
-        .from('team_conversation_members')
-        .insert(memberIds.map(pid => ({
-          conversation_id: conversation.id,
-          profile_id: pid,
-        })));
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['team-messages', conversation.id] });
-      toast.success(`${selectedIds.length} membro(s) adicionado(s)`);
-      setSelectedIds([]);
-      setSearch('');
-      onOpenChange(false);
-    },
-    onError: () => {
-      toast.error('Erro ao adicionar membros');
-    },
+  const handleMutationSuccess = () => {
+    setSelectedIds([]);
+    setSearch('');
+    onOpenChange(false);
+  };
+
+  const addMutation = useAddConversationMembers({
+    conversationId: conversation.id,
+    existingMemberIds,
+    onSuccess: handleMutationSuccess,
   });
 
   const toggleMember = (id: string) => {
@@ -82,7 +68,7 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
@@ -122,22 +108,30 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
                 return (
                   <button
                     key={t.id}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => toggleMember(t.id)}
                     className={cn(
                       "w-full flex items-center gap-3 p-2.5 rounded-md transition-colors",
-                      "hover:bg-accent/50",
+                      "hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                       isSelected && "bg-primary/10"
                     )}
                   >
                     <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={t.avatar_url || undefined} alt={t.name || 'Membro'} />
+                      <AvatarImage src={t.avatar_url || undefined} alt="" />
                       <AvatarFallback className="text-xs bg-muted">{t.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{t.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{t.email}</p>
                     </div>
-                    <Checkbox checked={isSelected} className="shrink-0" />
+                    <Checkbox
+                      checked={isSelected}
+                      className="shrink-0 pointer-events-none"
+                      aria-hidden
+                      tabIndex={-1}
+                    />
                   </button>
                 );
               })
@@ -146,6 +140,7 @@ export function AddMembersDialog({ open, onOpenChange, conversation }: Props) {
         </div>
 
         <Button
+          type="button"
           onClick={handleAdd}
           disabled={selectedIds.length === 0 || addMutation.isPending}
           className="w-full mt-2 rounded-xl"
