@@ -49,12 +49,14 @@ function calculateEngagement(messageCount: number, lastMessageAt?: string | null
   const total = Math.min(100, recencyScore + frequencyScore + volumeScore);
 
   // WCAG 1.4.3: cores de texto calculadas com ratio ≥ 4.5:1 contra bg-card (light e dark).
-  // Light mode: L reduzido para passar com fundo claro (~4.5–5.5:1 com branco).
+  // Light mode: L reduzido para passar com fundo claro (~4.5–6.5:1 com branco).
   // Dark mode (dark:): L original mantido para fundo escuro (bg-card ≈ preto/cinza-escuro).
   if (total >= 70) return { score: total, level: 'hot', label: 'Muito Ativo', color: 'text-[hsl(25_95%_35%)] dark:text-[hsl(25_95%_53%)]', bgColor: 'bg-[hsl(25_95%_53%)]' };
   if (total >= 40) return { score: total, level: 'warm', label: 'Ativo', color: 'text-[hsl(45_93%_28%)] dark:text-[hsl(45_93%_47%)]', bgColor: 'bg-[hsl(45_93%_47%)]' };
   if (total >= 15) return { score: total, level: 'cold', label: 'Baixo', color: 'text-[hsl(210_40%_42%)] dark:text-[hsl(210_40%_60%)]', bgColor: 'bg-[hsl(210_40%_60%)]' };
-  return { score: total, level: 'frozen', label: 'Inativo', color: 'text-muted-foreground/50', bgColor: 'bg-muted-foreground/30' };
+  // frozen: text-muted-foreground/50 falha WCAG (~2:1 light). HSL explícito garante ≥4.5:1.
+  // hsl(215 15% 38%) → L≈0.111 → ~6.5:1 vs branco; hsl(215 15% 63%) → L≈0.339 → ~6.8:1 vs dark.
+  return { score: total, level: 'frozen', label: 'Inativo', color: 'text-[hsl(215_15%_38%)] dark:text-[hsl(215_15%_63%)]', bgColor: 'bg-muted-foreground/30' };
 }
 
 export function ContactEngagementScore({
