@@ -67,6 +67,7 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.grant_agent_achievement(uuid, text, text, text, int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.grant_agent_achievement(uuid, text, text, text, int)
   TO authenticated, service_role;
 
@@ -110,6 +111,7 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.add_agent_xp(uuid, int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.add_agent_xp(uuid, int) TO authenticated, service_role;
 
 -- 3. update_agent_streak
@@ -157,6 +159,7 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.update_agent_streak(uuid, boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.update_agent_streak(uuid, boolean) TO authenticated, service_role;
 
 -- 4. increment_agent_messages
@@ -202,6 +205,7 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.increment_agent_messages(uuid, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.increment_agent_messages(uuid, text) TO authenticated, service_role;
 
 -- 5. increment_agent_resolutions
@@ -237,4 +241,5 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.increment_agent_resolutions(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.increment_agent_resolutions(uuid) TO authenticated, service_role;
