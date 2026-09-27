@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AddMembersDialog } from './AddMembersDialog';
+import { GroupManagementDialog } from './GroupManagementDialog';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
@@ -80,17 +81,36 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     return result;
   }, [s.filteredMessages]);
 
+  const handleLeave = useCallback(() => {
+    s.leaveMutation.mutate(
+      { conversationId: conversation.id },
+      { onSuccess: onBack },
+    );
+  }, [s.leaveMutation, conversation.id, onBack]);
+
   return (
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader
-        conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
-        showSearch={s.showSearch} showStats={s.showStats} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
+        conversation={conversation}
+        showDetails={showDetails}
+        voiceId={s.tts.voiceId}
+        speed={s.tts.speed}
+        showSearch={s.showSearch}
+        showStats={s.showStats}
+        isMuted={s.isMuted}
+        isGroupCreator={s.isGroupCreator}
+        onBack={onBack}
+        onToggleDetails={onToggleDetails}
         onToggleSearch={() => { s.setShowSearch(!s.showSearch); if (s.showSearch) s.setSearchQuery(''); }}
         onToggleStats={() => s.setShowStats(!s.showStats)}
-        onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.handleVoiceChange} onSpeedChange={s.handleSpeedChange}
+        onAddMembers={() => s.setShowAddMembers(true)}
+        onVoiceChange={s.handleVoiceChange}
+        onSpeedChange={s.handleSpeedChange}
         onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })}
         canTransfer={s.canTransfer}
         onTransfer={() => s.setShowTransferDialog(true)}
+        onRenameGroup={() => s.setShowGroupManagement(true)}
+        onLeaveGroup={() => s.setShowGroupManagement(true)}
       />
 
       <AnimatePresence>
@@ -130,10 +150,12 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
               <Input
-                ref={s.searchInputRef} value={s.searchQuery}
+                ref={s.searchInputRef}
+                value={s.searchQuery}
                 onChange={e => s.setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
-                placeholder="Buscar nas mensagens... (⌘K)" className="h-8 text-sm"
+                placeholder="Buscar nas mensagens... (⌘K)"
+                className="h-8 text-sm"
                 aria-label="Campo de busca"
               />
               {s.searchQuery && (
@@ -153,7 +175,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         ref={s.scrollRef}
         className="flex-1 overflow-auto bg-muted/5"
         onScroll={handleScroll}
-        role="log" aria-label="Mensagens da conversa" aria-live="polite"
+        role="log"
+        aria-label="Mensagens da conversa"
+        aria-live="polite"
       >
         {s.isFetchingOlder && (
           <div className="sticky top-0 z-10 flex justify-center py-2 bg-muted/5">
@@ -225,14 +249,43 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
       )}
 
       <TeamChatInputArea
-        conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo}
-        isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}
-        onCancelReply={() => s.setReplyTo(null)} onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)}
-        onAudioSend={s.handleAudioSend} onSendSticker={s.handleSendSticker} onSendAudioMeme={s.handleSendAudioMeme}
-        onSendCustomEmoji={s.handleSendCustomEmoji} onFileSent={s.handleFileSent}
+        conversationId={conversation.id}
+        text={s.text}
+        setText={s.setText}
+        replyTo={s.replyTo}
+        isRecordingAudio={s.isRecordingAudio}
+        isPending={s.sendMutation.isPending}
+        onSend={s.handleSend}
+        onCancelReply={() => s.setReplyTo(null)}
+        onRecordToggle={() => s.setIsRecordingAudio(!s.isRecordingAudio)}
+        onAudioSend={s.handleAudioSend}
+        onSendSticker={s.handleSendSticker}
+        onSendAudioMeme={s.handleSendAudioMeme}
+        onSendCustomEmoji={s.handleSendCustomEmoji}
+        onFileSent={s.handleFileSent}
       />
 
-      <AddMembersDialog open={s.showAddMembers} onOpenChange={s.setShowAddMembers} conversation={conversation} />
+      <AddMembersDialog
+        open={s.showAddMembers}
+        onOpenChange={s.setShowAddMembers}
+        conversation={conversation}
+      />
+
+      {s.showGroupManagement && s.profile && (
+        <GroupManagementDialog
+          open={s.showGroupManagement}
+          onOpenChange={s.setShowGroupManagement}
+          conversation={conversation}
+          isGroupCreator={s.isGroupCreator}
+          currentUserId={s.profile.id}
+          isRenamePending={s.renameConvMutation.isPending}
+          isRemovePending={s.removeMemberMutation.isPending}
+          isLeavePending={s.leaveMutation.isPending}
+          onRename={name => s.renameConvMutation.mutate({ conversationId: conversation.id, name })}
+          onRemoveMember={profileId => s.removeMemberMutation.mutate({ conversationId: conversation.id, profileId })}
+          onLeave={handleLeave}
+        />
+      )}
     </div>
   );
 }

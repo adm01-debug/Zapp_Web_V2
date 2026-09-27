@@ -28,6 +28,8 @@ import {
   BarChart2,
   Activity,
   Volume2,
+  Pencil,
+  LogOut,
 } from 'lucide-react';
 
 const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5] as const;
@@ -41,6 +43,7 @@ interface TeamChatHeaderProps {
   showStats?: boolean;
   isMuted?: boolean;
   canTransfer?: boolean;
+  isGroupCreator?: boolean;
   onBack: () => void;
   onToggleDetails?: () => void;
   onToggleSearch: () => void;
@@ -50,6 +53,8 @@ interface TeamChatHeaderProps {
   onSpeedChange: (speed: number) => void;
   onToggleMute?: () => void;
   onTransfer?: () => void;
+  onRenameGroup?: () => void;
+  onLeaveGroup?: () => void;
 }
 
 export function TeamChatHeader({
@@ -61,6 +66,7 @@ export function TeamChatHeader({
   showStats,
   isMuted,
   canTransfer,
+  isGroupCreator,
   onBack,
   onToggleDetails,
   onToggleSearch,
@@ -70,7 +76,11 @@ export function TeamChatHeader({
   onSpeedChange,
   onToggleMute,
   onTransfer,
+  onRenameGroup,
+  onLeaveGroup,
 }: TeamChatHeaderProps) {
+  const isGroup = conversation.type === 'group';
+
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[56px] md:h-[65px] pr-24 border-b border-border bg-card shrink-0" role="banner" aria-label="Cabeçalho da conversa">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -100,7 +110,7 @@ export function TeamChatHeader({
               type="button"
               variant="ghost"
               size="icon"
-              className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showSearch && "text-primary bg-primary/10")}
+              className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showSearch && 'text-primary bg-primary/10')}
               onClick={onToggleSearch}
               aria-label={showSearch ? 'Fechar busca' : 'Buscar mensagens'}
               aria-pressed={showSearch}
@@ -118,7 +128,7 @@ export function TeamChatHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showStats && "text-primary bg-primary/10")}
+                className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showStats && 'text-primary bg-primary/10')}
                 onClick={onToggleStats}
                 aria-label={showStats ? 'Fechar estatísticas' : 'Ver estatísticas'}
                 aria-pressed={showStats}
@@ -146,10 +156,17 @@ export function TeamChatHeader({
           <TooltipContent side="bottom">Performance (em breve)</TooltipContent>
         </Tooltip>
 
-        {conversation.type === 'group' && (
+        {isGroup && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button type="button" variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onAddMembers} aria-label="Adicionar membros">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={onAddMembers}
+                aria-label="Adicionar membros"
+              >
                 <UserPlus className="w-[18px] h-[18px]" />
               </Button>
             </TooltipTrigger>
@@ -164,7 +181,7 @@ export function TeamChatHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={cn("w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted", showDetails && "text-primary bg-primary/10")}
+                className={cn('w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted', showDetails && 'text-primary bg-primary/10')}
                 onClick={onToggleDetails}
                 aria-label={showDetails ? 'Fechar detalhes' : 'Ver detalhes'}
                 aria-pressed={showDetails}
@@ -172,7 +189,7 @@ export function TeamChatHeader({
                 {showDetails ? <PanelRightClose className="w-[18px] h-[18px]" /> : <PanelRightOpen className="w-[18px] h-[18px]" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</TooltipContent>
+            <TooltipContent side="bottom"}>{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</TooltipContent>
           </Tooltip>
         )}
 
@@ -180,7 +197,13 @@ export function TeamChatHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted" aria-label="Mais ações">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  aria-label="Mais ações"
+                >
                   <MoreVertical className="w-[18px] h-[18px]" />
                 </Button>
               </DropdownMenuTrigger>
@@ -191,15 +214,9 @@ export function TeamChatHeader({
             {onToggleMute && (
               <DropdownMenuItem onClick={onToggleMute}>
                 {isMuted ? (
-                  <>
-                    <Bell className="w-4 h-4 mr-2" />
-                    Ativar notificações
-                  </>
+                  <><Bell className="w-4 h-4 mr-2" />Ativar notificações</>
                 ) : (
-                  <>
-                    <BellOff className="w-4 h-4 mr-2" />
-                    Silenciar
-                  </>
+                  <><BellOff className="w-4 h-4 mr-2" />Silenciar</>
                 )}
               </DropdownMenuItem>
             )}
@@ -207,6 +224,18 @@ export function TeamChatHeader({
               <DropdownMenuItem onClick={onTransfer}>
                 <ArrowLeftRight className="w-4 h-4 mr-2" />
                 Transferir departamento
+              </DropdownMenuItem>
+            )}
+            {isGroup && isGroupCreator && onRenameGroup && (
+              <DropdownMenuItem onClick={onRenameGroup}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Renomear grupo
+              </DropdownMenuItem>
+            )}
+            {isGroup && !isGroupCreator && onLeaveGroup && (
+              <DropdownMenuItem onClick={onLeaveGroup} className="text-destructive focus:text-destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair do grupo
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />

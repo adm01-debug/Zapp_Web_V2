@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
+import { useRenameConversation, useRemoveConversationMember, useLeaveConversation } from '@/hooks/team-chat/useTeamChatMutations';
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddMembers, setShowAddMembers] = useState(false);
+  const [showGroupManagement, setShowGroupManagement] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -48,6 +50,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
   const muteMutation = useToggleMuteConversation();
+  const renameConvMutation = useRenameConversation();
+  const removeMemberMutation = useRemoveConversationMember();
+  const leaveMutation = useLeaveConversation();
   const reactions = useTeamMessageReactions(conversation.id);
 
   const { settings, isLoading: settingsLoading } = useUserSettings();
@@ -60,6 +65,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const r = (profile as { role?: string } | null)?.role;
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
+
+  const isGroupCreator = useMemo(() => {
+    return !!(profile?.id && conversation.created_by === profile.id);
+  }, [profile?.id, conversation.created_by]);
 
   const ttsOptions = useMemo(() => ({
     initialVoiceId: settingsLoading ? undefined : settings.tts_voice_id,
@@ -107,6 +116,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setHasOlderMessages(true);
     setShowStats(false);
     setShowTransferDialog(false);
+    setShowGroupManagement(false);
   }, [conversation.id]);
 
   useEffect(() => {
@@ -298,6 +308,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isLoading,
     isMuted,
     canTransfer,
+    isGroupCreator,
     isFetchingOlder,
     hasOlderMessages,
     fetchOlderMessages,
@@ -305,6 +316,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setShowStats,
     showTransferDialog,
     setShowTransferDialog,
+    showGroupManagement,
+    setShowGroupManagement,
     text,
     setText,
     replyTo,
@@ -341,6 +354,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     handleSpeedChange,
     sendMutation,
     muteMutation,
+    renameConvMutation,
+    removeMemberMutation,
+    leaveMutation,
     tts,
     reactions,
   };
