@@ -99,6 +99,8 @@ export async function collectStableAttestation({
         const old = pre.get(name);
         if (!old) continue;
         const current = byName.get(name);
+        if (!current) throw Object.assign(
+          new Error(`Function ${name} absent from remote inventory`), { permanent: true });
         if (old.version === null || old.id !== current.id) {
           throw new Error('Selected deployment not yet observed');
         }
